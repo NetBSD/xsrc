@@ -32,7 +32,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 #include "Xlibint.h"
 #include "XKBlibint.h"
-#include <X11/extensions/XKBgeom.h>
+#include "X11/extensions/XKBgeom.h"
 #include <X11/extensions/XKBproto.h>
 
 /***====================================================================***/
@@ -69,8 +69,8 @@ _XkbFreeGeomLeafElems(Bool freeAll,
         ptr = *elems;
         extra = ((*num_inout) - (first + count)) * elem_sz;
         if (extra > 0)
-            memmove(&ptr[first * elem_sz], &ptr[(first + count) * elem_sz],
-                    extra);
+            memmove(&ptr[(unsigned) first * elem_sz], &ptr[(unsigned)(first + count) * elem_sz],
+                    (size_t) extra);
         (*num_inout) -= count;
     }
     return;
@@ -124,7 +124,7 @@ _XkbFreeGeomNonLeafElems(Bool freeAll,
     else {
         i = ((*num_inout) - (first + count)) * elem_sz;
         ptr = *elems;
-        memmove(&ptr[first * elem_sz], &ptr[(first + count) * elem_sz], i);
+        memmove(&ptr[(unsigned) first * elem_sz], &ptr[(unsigned)(first + count) * elem_sz], (size_t) i);
         (*num_inout) -= count;
     }
     return;

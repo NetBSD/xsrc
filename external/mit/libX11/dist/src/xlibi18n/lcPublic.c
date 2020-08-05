@@ -97,6 +97,7 @@ create(
     return lcd;
 
 err:
+    Xfree(lcd->core);
     Xfree(lcd);
     return (XLCd) NULL;
 }
@@ -218,7 +219,7 @@ initialize(
      * _XlMapOSLocaleName will return the same string or a substring
      * of name, so strlen(name) is okay
      */
-    if ((len = strlen(name)) < sizeof sinamebuf)
+    if ((len = (int) strlen(name)) < sizeof sinamebuf)
         siname = sinamebuf;
     else
         siname = Xmalloc (len + 1);

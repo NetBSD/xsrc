@@ -231,10 +231,9 @@ _XimReCreateIC(ic)
 
     _XimRegisterFilter(ic);
     MARK_IC_CONNECTED(ic);
-    if (save_ic->private.proto.ic_resources)
-	Xfree(save_ic->private.proto.ic_resources);
-    if (save_ic->private.proto.ic_inner_resources)
-	Xfree(save_ic->private.proto.ic_inner_resources);
+
+    Xfree(save_ic->private.proto.ic_resources);
+    Xfree(save_ic->private.proto.ic_inner_resources);
     Xfree(save_ic);
     return True;
 
@@ -351,7 +350,7 @@ _XimProtoGetICValues(
 	     + sizeof(INT16)
 	     + XIM_PAD(2 + buf_size);
 
-    if (!(buf = Xmalloc(buf_size)))
+    if (!(buf = Xcalloc(buf_size, 1)))
 	return arg->name;
     buf_s = (CARD16 *)&buf[XIM_HEADER_SIZE];
 
@@ -709,6 +708,7 @@ _XimProtoSetICValues(
 #endif /* XIM_CONNECTABLE */
 
     _XimGetCurrentICValues(ic, &ic_values);
+    memset(tmp_buf, 0, sizeof(tmp_buf32));
     buf = tmp_buf;
     buf_size = XIM_HEADER_SIZE
 	+ sizeof(CARD16) + sizeof(CARD16) + sizeof(INT16) + sizeof(CARD16);
@@ -731,7 +731,7 @@ _XimProtoSetICValues(
 
 	buf_size += ret_len;
 	if (buf == tmp_buf) {
-	    if (!(tmp = Xmalloc(buf_size + data_len))) {
+	    if (!(tmp = Xcalloc(buf_size + data_len, 1))) {
 		return tmp_name;
 	    }
 	    memcpy(tmp, buf, buf_size);
@@ -741,6 +741,7 @@ _XimProtoSetICValues(
 		Xfree(buf);
 		return tmp_name;
 	    }
+            memset(&tmp[buf_size], 0, data_len);
 	    buf = tmp;
 	}
     }
@@ -833,7 +834,7 @@ _XimDestroyICCheck(
      && (imid == im->private.proto.imid)
      && (buf_s[2] & XIM_ICID_VALID)
      && (icid == ic->private.proto.icid))
-    ret = False;
+        ret = False;
     return ret;
 }
 
@@ -845,22 +846,22 @@ _XimProtoICFree(
     Xim		 im = (Xim)ic->core.im;
 #endif
 
-    if (ic->private.proto.preedit_font) {
-	Xfree(ic->private.proto.preedit_font);
-	ic->private.proto.preedit_font = NULL;
-    }
-    if (ic->private.proto.status_font) {
-	Xfree(ic->private.proto.status_font);
-	ic->private.proto.status_font = NULL;
-    }
+
+    Xfree(ic->private.proto.preedit_font);
+    ic->private.proto.preedit_font = NULL;
+
+
+    Xfree(ic->private.proto.status_font);
+    ic->private.proto.status_font = NULL;
+
     if (ic->private.proto.commit_info) {
 	_XimFreeCommitInfo(ic);
 	ic->private.proto.commit_info = NULL;
     }
-    if (ic->private.proto.ic_inner_resources) {
-	Xfree(ic->private.proto.ic_inner_resources);
-	ic->private.proto.ic_inner_resources = NULL;
-    }
+
+    Xfree(ic->private.proto.ic_inner_resources);
+    ic->private.proto.ic_inner_resources = NULL;
+
 
 #ifdef XIM_CONNECTABLE
     if (IS_SERVER_CONNECTED(im) && IS_RECONNECTABLE(im)) {
@@ -868,18 +869,18 @@ _XimProtoICFree(
     }
 #endif /* XIM_CONNECTABLE */
 
-    if (ic->private.proto.saved_icvalues) {
-	Xfree(ic->private.proto.saved_icvalues);
-	ic->private.proto.saved_icvalues = NULL;
-    }
-    if (ic->private.proto.ic_resources) {
-	Xfree(ic->private.proto.ic_resources);
-	ic->private.proto.ic_resources = NULL;
-    }
-    if (ic->core.hotkey) {
-	Xfree(ic->core.hotkey);
-	ic->core.hotkey = NULL;
-    }
+
+    Xfree(ic->private.proto.saved_icvalues);
+    ic->private.proto.saved_icvalues = NULL;
+
+
+    Xfree(ic->private.proto.ic_resources);
+    ic->private.proto.ic_resources = NULL;
+
+
+    Xfree(ic->core.hotkey);
+    ic->core.hotkey = NULL;
+
 
     return;
 }

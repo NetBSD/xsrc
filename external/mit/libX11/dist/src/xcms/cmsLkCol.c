@@ -76,7 +76,8 @@ XcmsLookupColor (
     register int n;
     xLookupColorReply reply;
     register xLookupColorReq *req;
-    XColor def, scr;
+    XColor def = {0,};
+    XColor scr = {0,};
 
 /*
  * 0. Check for invalid arguments.
@@ -149,7 +150,7 @@ PassToServer:
     LockDisplay(dpy);
     GetReq (LookupColor, req);
     req->cmap = cmap;
-    req->nbytes = n = strlen(colorname);
+    req->nbytes = (CARD16)(n = (int)strlen(colorname));
     req->length += (n + 3) >> 2;
     Data (dpy, colorname, (long)n);
     if (!_XReply (dpy, (xReply *) &reply, 0, xTrue)) {

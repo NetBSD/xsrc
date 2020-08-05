@@ -66,6 +66,7 @@ from The Open Group.
 #endif
 #include <X11/Xutil.h>
 #include "XlcPubI.h"
+#include "reallocarray.h"
 
 #ifdef XTHREADS
 LockInfoPtr _Xi18n_lock;
@@ -110,8 +111,8 @@ Bool _XlcValidModSyntax(
 	if (*mods == '@')
 	    break;
 	for (ptr = valid_mods; *ptr; ptr++) {
-	    i = strlen(*ptr);
-	    if (strncmp(mods, *ptr, i) || ((mods[i] != '=')
+	    i = (int) strlen(*ptr);
+	    if (strncmp(mods, *ptr, (size_t) i) || ((mods[i] != '=')
 #ifdef WIN32
 					   && (mods[i] != '#')
 #endif
@@ -140,9 +141,9 @@ _XlcDefaultMapModifiers(
 	return (char *)NULL;
     if (!_XlcValidModSyntax(user_mods, im_valid))
 	return (char *)NULL;
-    i = strlen(prog_mods) + 1;
+    i = (int) strlen(prog_mods) + 1;
     if (user_mods)
-	i += strlen(user_mods);
+	i = (int) ((size_t) i + strlen(user_mods));
     mods = Xmalloc(i);
     if (mods) {
 	strcpy(mods, prog_mods);
@@ -261,7 +262,7 @@ _XOpenLC(
          * _XlMapOSLocaleName will return the same string or a substring
          * of name, so strlen(name) is okay
          */
-        if ((len = strlen(name)) >= sizeof sinamebuf) {
+        if ((len = (int) strlen(name)) >= sizeof sinamebuf) {
             siname = Xmalloc (len + 1);
             if (siname == NULL)
                 return NULL;
@@ -327,7 +328,7 @@ _XCloseLC(
     for (prev = &lcd_list; (cur = *prev); prev = &cur->next) {
 	if (cur->lcd == lcd) {
 	    if (--cur->ref_count < 1) {
-		(*lcd->methods->close)(lcd);
+		_XlcDestroyLC(lcd);
 		*prev = cur->next;
 		Xfree(cur);
 	    }
@@ -514,9 +515,9 @@ _XlcCopyFromArg(
     else if (size == sizeof(XPointer))
 	*((XPointer *) dst) = (XPointer) src;
     else if (size > sizeof(XPointer))
-	memcpy(dst, (char *) src, size);
+	memcpy(dst, (char *) src, (size_t) size);
     else
-	memcpy(dst, (char *) &src, size);
+	memcpy(dst, (char *) &src, (size_t) size);
 }
 
 void
@@ -540,7 +541,7 @@ _XlcCopyToArg(
     else if (size == sizeof(XPointer))
 	*((XPointer *) *dst) = *((XPointer *) src);
     else
-	memcpy(*dst, src, size);
+	memcpy(*dst, src, (size_t) size);
 }
 
 void
@@ -564,7 +565,7 @@ _XlcVaToArgList(
 {
     XlcArgList args;
 
-    *args_ret = args = Xmalloc(sizeof(XlcArg) * count);
+    *args_ret = args = Xmallocarray(count, sizeof(XlcArg));
     if (args == (XlcArgList) NULL)
 	return;
 

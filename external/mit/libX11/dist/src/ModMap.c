@@ -28,13 +28,14 @@ in this Software without prior written authorization from The Open Group.
 #include <config.h>
 #endif
 #include "Xlibint.h"
+#include "reallocarray.h"
 #include <limits.h>
 
 XModifierKeymap *
 XGetModifierMapping(register Display *dpy)
 {
     xGetModifierMappingReply rep;
-    register xReq *req;
+    _X_UNUSED register xReq *req;
     unsigned long nbytes;
     XModifierKeymap *res;
 
@@ -84,7 +85,7 @@ XSetModifierMapping(
     req->length += mapSize >> 2;
     req->numKeyPerModifier = modifier_map->max_keypermod;
 
-    Data(dpy, (char *)modifier_map->modifiermap, mapSize);
+    Data(dpy, (const char *)modifier_map->modifiermap, mapSize);
 
     (void) _XReply(dpy, (xReply *) & rep,
 	(SIZEOF(xSetModifierMappingReply) - SIZEOF(xReply)) >> 2, xTrue);
@@ -100,7 +101,7 @@ XNewModifiermap(int keyspermodifier)
     if (res) {
 	res->max_keypermod = keyspermodifier;
 	res->modifiermap = (keyspermodifier > 0 ?
-			    Xmalloc(8 * keyspermodifier)
+			    Xmallocarray(keyspermodifier, 8)
 			    : (KeyCode *) NULL);
 	if (keyspermodifier && (res->modifiermap == NULL)) {
 	    Xfree(res);

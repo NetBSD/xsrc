@@ -29,6 +29,7 @@ in this Software without prior written authorization from The Open Group.
 #include <config.h>
 #endif
 #include "Xlibint.h"
+#include "reallocarray.h"
 #include <limits.h>
 
 #ifdef MIN		/* some systems define this in <sys/param.h> */
@@ -45,7 +46,7 @@ int XGetPointerMapping (
     unsigned char mapping[256];	/* known fixed size */
     unsigned long nbytes, remainder = 0;
     xGetPointerMappingReply rep;
-    register xReq *req;
+    _X_UNUSED register xReq *req;
 
     LockDisplay(dpy);
     GetEmptyReq(GetPointerMapping, req);
@@ -112,8 +113,7 @@ XGetKeyboardMapping (Display *dpy,
     nkeysyms = rep.length;
     if (nkeysyms > 0) {
 	if (nkeysyms < (INT_MAX / sizeof (KeySym))) {
-	    nbytes = nkeysyms * sizeof (KeySym);
-	    mapping = Xmalloc (nbytes);
+	    mapping = Xmallocarray (nkeysyms, sizeof (KeySym));
 	}
 	if (! mapping) {
 	    _XEatDataWords(dpy, rep.length);

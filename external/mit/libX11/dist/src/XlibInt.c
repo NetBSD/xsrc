@@ -39,6 +39,7 @@ from The Open Group.
 #endif
 #include "Xlibint.h"
 #include "Xprivate.h"
+#include "reallocarray.h"
 #include <X11/Xpoll.h>
 #include <assert.h>
 #include <stdio.h>
@@ -46,8 +47,27 @@ from The Open Group.
 #include <direct.h>
 #endif
 
+/* Needed for FIONREAD on Solaris */
+#ifdef HAVE_SYS_FILIO_H
+#include <sys/filio.h>
+#endif
+
+/* Needed for FIONREAD on Cygwin */
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+/* Needed for ioctl() on Solaris */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef XTHREADS
 #include "locking.h"
+
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
 
 /* these pointers get initialized by XInitThreads */
 LockInfoPtr _Xglobal_lock = NULL;
@@ -168,7 +188,7 @@ void _XPollfdCacheDel(
 static int sync_hazard(Display *dpy)
 {
     /*
-     * "span" and "hazard" need to be signed such that the ">=" comparision
+     * "span" and "hazard" need to be signed such that the ">=" comparison
      * works correctly in the case that hazard is greater than 65525
      */
     int64_t span = X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy);
@@ -196,12 +216,14 @@ void _XSeqSyncFunction(
     register Display *dpy)
 {
     xGetInputFocusReply rep;
-    register xReq *req;
+    _X_UNUSED register xReq *req;
 
-    if ((X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy)) >= (65535 - BUFSIZE/SIZEOF(xReq))) {
+    if ((X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy)) >= (65535 - BUFSIZE/SIZEOF(xReq)) && !dpy->req_seq_syncing) {
+	dpy->req_seq_syncing = True;
 	GetEmptyReq(GetInputFocus, req);
 	(void) _XReply (dpy, (xReply *)&rep, 0, xTrue);
 	sync_while_locked(dpy);
+	dpy->req_seq_syncing = False;
     } else if (sync_hazard(dpy))
 	_XSetPrivSyncFunction(dpy);
 }
@@ -349,7 +371,7 @@ _XRegisterInternalConnection(
     new_conni = Xmalloc(sizeof(struct _XConnectionInfo));
     if (!new_conni)
 	return 0;
-    new_conni->watch_data = Xmalloc(dpy->watcher_count * sizeof(XPointer));
+    new_conni->watch_data = Xmallocarray(dpy->watcher_count, sizeof(XPointer));
     if (!new_conni->watch_data) {
 	Xfree(new_conni);
 	return 0;
@@ -435,7 +457,7 @@ XInternalConnectionNumbers(
     count = 0;
     for (info_list=dpy->im_fd_info; info_list; info_list=info_list->next)
 	count++;
-    fd_list = Xmalloc (count * sizeof(int));
+    fd_list = Xmallocarray (count, sizeof(int));
     if (!fd_list) {
 	UnlockDisplay(dpy);
 	return 0;
@@ -508,8 +530,8 @@ XAddConnectionWatch(
 
     /* allocate new watch data */
     for (info_list=dpy->im_fd_info; info_list; info_list=info_list->next) {
-	wd_array = Xrealloc(info_list->watch_data,
-			    (dpy->watcher_count + 1) * sizeof(XPointer));
+	wd_array = Xreallocarray(info_list->watch_data,
+                                 dpy->watcher_count + 1, sizeof(XPointer));
 	if (!wd_array) {
 	    UnlockDisplay(dpy);
 	    return 0;
@@ -1233,33 +1255,58 @@ _XWireToEvent(
 	return(True);
 }
 
+static int
+SocketBytesReadable(Display *dpy)
+{
+    int bytes = 0, last_error;
+#ifdef WIN32
+    last_error = WSAGetLastError();
+    ioctlsocket(ConnectionNumber(dpy), FIONREAD, &bytes);
+    WSASetLastError(last_error);
+#else
+    last_error = errno;
+    ioctl(ConnectionNumber(dpy), FIONREAD, &bytes);
+    errno = last_error;
+#endif
+    return bytes;
+}
 
 /*
  * _XDefaultIOError - Default fatal system error reporting routine.  Called
  * when an X internal system error is encountered.
  */
-int _XDefaultIOError(
+_X_NORETURN int _XDefaultIOError(
 	Display *dpy)
 {
-	if (ECHECK(EPIPE)) {
-	    (void) fprintf (stderr,
-	"X connection to %s broken (explicit kill or server shutdown).\r\n",
-			    DisplayString (dpy));
-	} else {
-	    (void) fprintf (stderr,
-			"XIO:  fatal IO error %d (%s) on X server \"%s\"\r\n",
-#ifdef WIN32
-			WSAGetLastError(), strerror(WSAGetLastError()),
-#else
-			errno, strerror (errno),
-#endif
-			DisplayString (dpy));
-	    (void) fprintf (stderr,
-	 "      after %lu requests (%lu known processed) with %d events remaining.\r\n",
-			NextRequest(dpy) - 1, LastKnownRequestProcessed(dpy),
-			QLength(dpy));
+	int killed = ECHECK(EPIPE);
 
-	}
+	/*
+	 * If the socket was closed on the far end, the final recvmsg in
+	 * xcb will have thrown EAGAIN because we're non-blocking. Detect
+	 * this to get the more informative error message.
+	 */
+	if (ECHECK(EAGAIN) && SocketBytesReadable(dpy) <= 0)
+	    killed = True;
+
+	if (killed) {
+	    fprintf (stderr,
+                     "X connection to %s broken (explicit kill or server shutdown).\r\n",
+                     DisplayString (dpy));
+	} else {
+            fprintf (stderr,
+                     "XIO:  fatal IO error %d (%s) on X server \"%s\"\r\n",
+#ifdef WIN32
+                      WSAGetLastError(), strerror(WSAGetLastError()),
+#else
+                      errno, strerror (errno),
+#endif
+                      DisplayString (dpy));
+	    fprintf (stderr,
+		     "      after %lu requests (%lu known processed) with %d events remaining.\r\n",
+		     NextRequest(dpy) - 1, LastKnownRequestProcessed(dpy),
+		     QLength(dpy));
+        }
+
 	exit(1);
 	/*NOTREACHED*/
 }
@@ -1382,6 +1429,16 @@ int _XDefaultError(
 	XErrorEvent *event)
 {
     if (_XPrintDefaultError (dpy, event, stderr) == 0) return 0;
+
+    /*
+     * Store in dpy flags that the client is exiting on an unhandled XError
+     * (pretend it is an IOError, since the application is dying anyway it
+     * does not make a difference).
+     * This is useful for _XReply not to hang if the application makes Xlib
+     * calls in _fini as part of process termination.
+     */
+    dpy->flags |= XlibDisplayIOError;
+
     exit(1);
     /*NOTREACHED*/
 }
@@ -1651,9 +1708,9 @@ int _XGetHostname (
 	return 0;
 
     uname (&name);
-    len = strlen (name.nodename);
+    len = (int) strlen (name.nodename);
     if (len >= maxlen) len = maxlen - 1;
-    strncpy (buf, name.nodename, len);
+    strncpy (buf, name.nodename, (size_t) len);
     buf[len] = '\0';
 #else
     if (maxlen <= 0 || buf == NULL)
@@ -1662,7 +1719,7 @@ int _XGetHostname (
     buf[0] = '\0';
     (void) gethostname (buf, maxlen);
     buf [maxlen - 1] = '\0';
-    len = strlen(buf);
+    len = (int) strlen(buf);
 #endif /* NEED_UTSNAME */
     return len;
 }

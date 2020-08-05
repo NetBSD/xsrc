@@ -39,6 +39,7 @@
 #include <X11/Xresource.h>
 #include "Xlibint.h"
 #include "XlcPubI.h"
+#include "reallocarray.h"
 
 #else	/* NOT_X_ENV */
 
@@ -294,7 +295,7 @@ zap_comment(
 	    int pos = p - str;
 	    if (pos == 0 ||
 	        (iswhite(p[-1]) && (pos == 1 || p[-2] != SYM_BACKSLASH))) {
-		int len = strlen(p);
+		int len = (int) strlen(p);
 		if (len > 0 && (p[len - 1] == SYM_NEWLINE || p[len-1] == SYM_CR)) {
 		    /* newline is the identifier for finding end of value.
 		       therefore, it should not be removed. */
@@ -326,7 +327,7 @@ read_line(
     while ((p = fgets(buf, BUFSIZE, fd)) != NULL) {
 	++line->seq;
 	zap_comment(p, &quoted);	/* remove comment line */
-	len = strlen(p);
+	len = (int) strlen(p);
 	if (len == 0) {
 	    if (cur > 0) {
 		break;
@@ -340,7 +341,7 @@ read_line(
 	    }
 	    str = line->str;
 	}
-	strncpy(str + cur, p, len);
+	strncpy(str + cur, p, (size_t) len);
 
 	cur += len;
 	str[cur] = '\0';
@@ -422,7 +423,7 @@ get_word(
 	} else if (token != T_COMMENT && token != T_DEFAULT) {
 	    break;
 	}
-	strncpy(w, p, token_len);
+	strncpy(w, p, (size_t) token_len);
 	p += token_len; w += token_len;
     }
     *w = '\0';
@@ -457,7 +458,7 @@ get_quoted_word(
 	    token = get_token(p);
 	    token_len = token_tbl[token].len;
 	}
-	strncpy(w, p, token_len);
+	strncpy(w, p, (size_t) token_len);
 	p += token_len; w += token_len;
     }
     /* error. cannot detect next double quote */
@@ -492,7 +493,7 @@ append_value_list (void)
 	char **prev_list = value_list;
 
 	value_list = (char **)
-	    Xrealloc(value_list, sizeof(char *) * (value_num + 2));
+	    Xreallocarray(value_list, value_num + 2, sizeof(char *));
 	if (value_list == NULL) {
 	    Xfree(prev_list);
 	}
@@ -526,7 +527,7 @@ append_value_list (void)
 
     value_list[value_num] = p = &value[value_len];
     value_list[value_num + 1] = NULL;
-    strncpy(p, str, len);
+    strncpy(p, str, (size_t) len);
     p[len] = 0;
 
     parse_info.value = value_list;
@@ -560,7 +561,7 @@ construct_name(
     char *p = name;
 
     for (i = 0; i <= parse_info.nest_depth; ++i) {
-	len += strlen(parse_info.name[i]) + 1;
+	len = (int) ((size_t) len + (strlen(parse_info.name[i]) + 1));
     }
     if (len >= size)
 	return 0;
@@ -664,8 +665,8 @@ check_category_end(
     while (iswhite(*p)) {
 	++p;
     }
-    len = strlen(parse_info.category);
-    if (strncmp(p, parse_info.category, len)) {
+    len = (int) strlen(parse_info.category);
+    if (strncmp(p, parse_info.category, (size_t) len)) {
 	return 0;
     }
     p += len;
@@ -790,7 +791,7 @@ f_right_brace(
     case S_VALUE:
 	if (! store_to_database(db))
 	    return 0;
-	/* fall into next case */
+	/* fall through - to next case */
     case S_CATEGORY:
 	if (parse_info.name[parse_info.nest_depth] != NULL) {
 	    Xfree(parse_info.name[parse_info.nest_depth]);
@@ -815,7 +816,7 @@ f_double_quote(
     char* wordp;
     int len;
 
-    if ((len = strlen (str)) < sizeof word)
+    if ((len = (int) strlen (str)) < sizeof word)
 	wordp = word;
     else
 	wordp = Xmalloc (len + 1);
@@ -834,12 +835,12 @@ f_double_quote(
 	    goto err;
 	if ((parse_info.bufsize + (int)strlen(wordp) + 1)
 					>= parse_info.bufMaxSize) {
-	    if (realloc_parse_info(strlen(wordp)+1) == False) {
+	    if (realloc_parse_info((int) strlen(wordp)+1) == False) {
 		goto err;
 	    }
 	}
 	strcpy(&parse_info.buf[parse_info.bufsize], wordp);
-	parse_info.bufsize += strlen(wordp);
+	parse_info.bufsize = (int) ((size_t) parse_info.bufsize + strlen(wordp));
 	parse_info.pre_state = S_VALUE;
 	break;
     default:
@@ -876,7 +877,7 @@ f_numeric(
     int len;
     int token_len;
 
-    if ((len = strlen (str)) < sizeof word)
+    if ((len = (int) strlen (str)) < sizeof word)
 	wordp = word;
     else
 	wordp = Xmalloc (len + 1);
@@ -896,12 +897,12 @@ f_numeric(
 	    goto err;
 	if ((parse_info.bufsize + token_len + (int)strlen(wordp) + 1)
 					>= parse_info.bufMaxSize) {
-	    if (realloc_parse_info(token_len + strlen(wordp) + 1) == False)
+	    if (realloc_parse_info((int)((size_t) token_len + strlen(wordp) + 1)) == False)
 		goto err;
 	}
-	strncpy(&parse_info.buf[parse_info.bufsize], str, token_len);
+	strncpy(&parse_info.buf[parse_info.bufsize], str, (size_t) token_len);
 	strcpy(&parse_info.buf[parse_info.bufsize + token_len], wordp);
-	parse_info.bufsize += token_len + strlen(wordp);
+	parse_info.bufsize = (int) ((size_t) parse_info.bufsize + ((size_t) token_len + strlen(wordp)));
 	parse_info.pre_state = S_VALUE;
 	break;
     default:
@@ -927,7 +928,7 @@ f_default(
     char* wordp;
     int len;
 
-    if ((len = strlen (str)) < sizeof word)
+    if ((len = (int) strlen (str)) < sizeof word)
 	wordp = word;
     else
 	wordp = Xmalloc (len + 1);
@@ -954,7 +955,7 @@ f_default(
 		/* end of category is detected.
 		   clear context and zap to end of this line */
 		clear_parse_info();
-		len = strlen(str);
+		len = (int) strlen(str);
 		break;
 	    }
 	}
@@ -971,11 +972,11 @@ f_default(
     case S_VALUE:
 	if ((parse_info.bufsize + (int)strlen(wordp) + 1)
 					>= parse_info.bufMaxSize) {
-	    if (realloc_parse_info(strlen(wordp) + 1) == False)
+	    if (realloc_parse_info((int) strlen(wordp) + 1) == False)
 		goto err;
 	}
 	strcpy(&parse_info.buf[parse_info.bufsize], wordp);
-	parse_info.bufsize += strlen(wordp);
+	parse_info.bufsize = (int) ((size_t) parse_info.bufsize + strlen(wordp));
 	parse_info.pre_state = S_VALUE;
 	break;
     default:
@@ -1232,7 +1233,7 @@ _XlcGetLocaleDataBase(
 /*	_XlcDestroyLocaleDataBase(lcd)					*/
 /*----------------------------------------------------------------------*/
 /*	This function destroy the XLocale Database that bound to the 	*/
-/*	specified lcd.  If the XLocale Database is refered from some 	*/
+/*	specified lcd.  If the XLocale Database is referred from some 	*/
 /*	other lcd, this function just decreases reference count of 	*/
 /*	the database.  If no locale refers the database, this function	*/
 /*	remove it from the cache list and free work area.		*/

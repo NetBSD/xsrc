@@ -95,7 +95,7 @@ _XcmsGetElement(
 
 /*
  *	NAME
- *		_XcmsGetProperty -- Determine the existance of a property
+ *		_XcmsGetProperty -- Determine the existence of a property
  *
  *	SYNOPSIS
  */
@@ -138,6 +138,7 @@ _XcmsGetProperty(
     if (xgwp_ret != Success || format_ret == 0 || nitems_ret == 0) {
 	/* the property does not exist or is of an unexpected type or
            getting window property failed */
+	XFree (prop_ret);
 	return(XcmsFailure);
     }
 

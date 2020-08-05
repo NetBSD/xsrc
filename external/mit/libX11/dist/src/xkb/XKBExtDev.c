@@ -36,7 +36,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 /***====================================================================***/
 
-extern void
+void
 XkbNoteDeviceChanges(XkbDeviceChangesPtr old,
                      XkbExtensionDeviceNotifyEvent *new,
                      unsigned int wanted)
@@ -651,7 +651,7 @@ _XkbWriteSetDeviceInfo(char *wire,
     if (changes->changed & XkbXI_ButtonActionsMask) {
         int size = changes->num_btns * SIZEOF(xkbActionWireDesc);
 
-        memcpy(wire, (char *) &devi->btn_acts[changes->first_btn], size);
+        memcpy(wire, (char *) &devi->btn_acts[changes->first_btn], (size_t) size);
         wire += size;
     }
     if (changes->changed & XkbXI_IndicatorsMask) {

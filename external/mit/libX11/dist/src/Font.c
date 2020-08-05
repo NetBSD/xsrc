@@ -31,6 +31,7 @@ authorization from the X Consortium and the XFree86 Project.
 #include <config.h>
 #endif
 #include "Xlibint.h"
+#include "reallocarray.h"
 #include <limits.h>
 
 #if defined(XF86BIGFONT)
@@ -106,7 +107,7 @@ XFontStruct *XLoadQueryFont(
     LockDisplay(dpy);
     GetReq(OpenFont, req);
     seq = dpy->request; /* Can't use extended sequence number here */
-    nbytes = req->nbytes  = name ? strlen(name) : 0;
+    nbytes = req->nbytes = (CARD16) (name ? strlen(name) : 0);
     req->fid = fid = XAllocID(dpy);
     req->length += (nbytes+3)>>2;
     Data (dpy, name, nbytes);
@@ -245,8 +246,8 @@ _XQueryFont (
 	    /* nFontProps is a CARD16 */
 	    nbytes = reply.nFontProps * SIZEOF(xFontProp);
 	    if ((nbytes >> 2) <= reply_left) {
-		size_t pbytes = reply.nFontProps * sizeof(XFontProp);
-		fs->properties = Xmalloc (pbytes);
+		fs->properties = Xmallocarray (reply.nFontProps,
+                                               sizeof(XFontProp));
 	    }
 	    if (! fs->properties) {
 		Xfree(fs);
@@ -266,8 +267,8 @@ _XQueryFont (
 	if (reply.nCharInfos < (INT_MAX / sizeof(XCharStruct))) {
 	    nbytes = reply.nCharInfos * SIZEOF(xCharInfo);
 	    if ((nbytes >> 2) <= reply_left) {
-		size_t cibytes = reply.nCharInfos * sizeof(XCharStruct);
-		fs->per_char = Xmalloc (cibytes);
+		fs->per_char = Xmallocarray (reply.nCharInfos,
+                                             sizeof(XCharStruct));
 	    }
 	}
 	if (! fs->per_char) {
@@ -489,8 +490,8 @@ _XF86BigfontQueryFont (
 	/* nFontProps is a CARD16 */
 	nbytes = reply.nFontProps * SIZEOF(xFontProp);
 	if ((nbytes >> 2) <= reply_left) {
-	    size_t pbytes = reply.nFontProps * sizeof(XFontProp);
-	    fs->properties = Xmalloc (pbytes);
+	    fs->properties = Xmallocarray (reply.nFontProps,
+                                           sizeof(XFontProp));
 	}
 	if (! fs->properties) {
 	    Xfree(fs);
@@ -529,7 +530,8 @@ _XF86BigfontQueryFont (
 		_XEatDataWords(dpy, reply_left);
 		return (XFontStruct *)NULL;
 	    }
-	    if (! (fs->per_char = Xmalloc (reply.nCharInfos * sizeof(XCharStruct)))) {
+	    if (! (fs->per_char = Xmallocarray (reply.nCharInfos,
+                                                sizeof(XCharStruct)))) {
 		Xfree(pUniqCI);
 		Xfree(fs->properties);
 		Xfree(fs);
@@ -660,7 +662,7 @@ int _XF86LoadQueryLocaleFont(
 
     if (!name)
 	return 0;
-    l = strlen(name);
+    l = (int) strlen(name);
     if (l < 2 || name[l - 1] != '*' || name[l - 2] != '-')
 	return 0;
     charset = NULL;
@@ -677,7 +679,7 @@ int _XF86LoadQueryLocaleFont(
 	return 0;
     if (_XlcNCompareISOLatin1(name + l - 2 - (p - charset), charset, p - charset))
 	return 0;
-    if (strlen(p + 1) + l - 1 >= sizeof(buf) - 1)
+    if (strlen(p + 1) + (size_t) l - 1 >= sizeof(buf) - 1)
 	return 0;
     strcpy(buf, name);
     strcpy(buf + l - 1, p + 1);

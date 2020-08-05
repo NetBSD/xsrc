@@ -702,7 +702,7 @@ parse_omit_name(
 
     switch (num_fields) {
     case 12:
-	/* This is the best way to have specifed the fontset.  In this
+	/* This is the best way to have specified the fontset.  In this
 	 * case, there is no original encoding. E.g.,
          *       -*-*-*-*-*-*-14-*-*-*-*-*
 	 * To this, we'll append a dash:
@@ -771,7 +771,7 @@ parse_omit_name(
     if ((font_data->xlfd_name = get_font_name(oc, buf)) != NULL)
 	return True;
 
-    /* This may mot be needed anymore as XListFonts() takes care of this */
+    /* This may not be needed anymore as XListFonts() takes care of this */
     if (num_fields < 12) {
 	if ((last - buf) > (XLFD_MAX_LEN - 2))
 	    return -1;
@@ -1113,7 +1113,7 @@ parse_fontname(
 		goto err;
 	    } else if(ret == True) {
 		/*
-		 * We can't just loop thru fontset->font_data to
+		 * We can't just loop through fontset->font_data to
 		 * find the first (ie. best) match: parse_fontdata
 		 * will try a substitute font if no primary one could
 		 * be matched. It returns the required information in
@@ -1617,15 +1617,14 @@ free_fontdataOM(
     FontData	font_data,
     int		font_data_count)
 {
+    if (!font_data)
+	return;
+
     for( ; font_data_count-- ; font_data++) {
-	if(font_data->name){
 	    Xfree(font_data->name);
 	    font_data->name = NULL;
-	}
-	if(font_data->scopes){
 	    Xfree(font_data->scopes);
 	    font_data->scopes = NULL;
-	}
     }
 }
 
@@ -1639,51 +1638,41 @@ close_om(
 
     if ((data = gen->data)) {
 	for (count = gen->data_num; count-- > 0; data++) {
-	    if (data->charset_list){
 		Xfree(data->charset_list);
 		data->charset_list = NULL;
-	    }
+	
 	    /* free font_data for om */
-	    if (data->font_data) {
 		free_fontdataOM(data->font_data,data->font_data_count);
 		Xfree(data->font_data);
 		data->font_data = NULL;
-	    }
+
 	    /* free substitute for om */
-	    if (data->substitute) {
 		free_fontdataOM(data->substitute,data->substitute_num);
 		Xfree(data->substitute);
 		data->substitute = NULL;
-	    }
+
 	    /* free vmap for om */
-	    if (data->vmap) {
 		free_fontdataOM(data->vmap,data->vmap_num);
 		Xfree(data->vmap);
 		data->vmap = NULL;
-	    }
+
 	    /* free vrotate for om */
-	    if (data->vrotate) {
 		Xfree(data->vrotate);
 		data->vrotate = NULL;
-	    }
 	}
 	Xfree(gen->data);
 	gen->data = NULL;
     }
 
-    if (gen->object_name){
 	Xfree(gen->object_name);
 	gen->object_name = NULL;
-    }
 
-    if (om->core.res_name){
 	Xfree(om->core.res_name);
 	om->core.res_name = NULL;
-    }
-    if (om->core.res_class){
+
 	Xfree(om->core.res_class);
 	om->core.res_class = NULL;
-    }
+
     if (om->core.required_charset.charset_list &&
 	om->core.required_charset.charset_count > 0){
 	XFreeStringList(om->core.required_charset.charset_list);
@@ -1692,10 +1681,9 @@ close_om(
 	Xfree((char*)om->core.required_charset.charset_list);
 	om->core.required_charset.charset_list = NULL;
     }
-    if (om->core.orientation_list.orientation){
+
 	Xfree(om->core.orientation_list.orientation);
 	om->core.orientation_list.orientation = NULL;
-    }
 
     Xfree(om);
 
@@ -2060,7 +2048,7 @@ init_om(
     /* directional dependent drawing */
     om->core.directional_dependent = False;
 
-    /* contexual drawing */
+    /* contextual drawing */
     om->core.contextual_drawing = False;
 
     /* context dependent */

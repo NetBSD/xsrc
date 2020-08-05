@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include "Xlibint.h"
 #include "XlcGeneric.h"
+#include "reallocarray.h"
 
 static XLCd create (const char *name, XLCdMethods methods);
 static Bool initialize (XLCd lcd);
@@ -77,6 +78,7 @@ create(
     return lcd;
 
 err:
+    Xfree(lcd->core);
     Xfree(lcd);
     return (XLCd) NULL;
 }
@@ -156,8 +158,8 @@ add_charset(
     int num;
 
     if ((num = codeset->num_charsets))
-        new_list = Xrealloc(codeset->charset_list,
-                                        (num + 1) * sizeof(XlcCharSet));
+        new_list = Xreallocarray(codeset->charset_list,
+                                 num + 1, sizeof(XlcCharSet));
     else
         new_list = Xmalloc(sizeof(XlcCharSet));
 
@@ -183,8 +185,8 @@ add_codeset(
         return NULL;
 
     if ((num = gen->codeset_num))
-        new_list = Xrealloc(gen->codeset_list,
-                                        (num + 1) * sizeof(CodeSet));
+        new_list = Xreallocarray(gen->codeset_list,
+                                 num + 1, sizeof(CodeSet));
     else
         new_list = Xmalloc(sizeof(CodeSet));
 
@@ -230,8 +232,8 @@ add_parse_list(
     }
 
     if ((num = gen->mb_parse_list_num))
-        new_list = Xrealloc(gen->mb_parse_list,
-                                          (num + 2) * sizeof(ParseInfo));
+        new_list = Xreallocarray(gen->mb_parse_list,
+                                 num + 2, sizeof(ParseInfo));
     else {
         new_list = Xmalloc(2 * sizeof(ParseInfo));
     }
@@ -349,7 +351,7 @@ _XlcParse_scopemaps(
     const char *str_sc;
 
     num = count_scopemap(str);
-    scope = Xmalloc(num * sizeof(FontScopeRec));
+    scope = Xmallocarray(num, sizeof(FontScopeRec));
     if (scope == NULL)
 	return NULL;
 
@@ -534,8 +536,8 @@ add_conversion(
     int num;
 
     if ((num = gen->segment_conv_num) > 0) {
-        new_list = Xrealloc(gen->segment_conv,
-                                        (num + 1) * sizeof(SegConvRec));
+        new_list = Xreallocarray(gen->segment_conv,
+                                 num + 1, sizeof(SegConvRec));
     } else {
         new_list = Xmalloc(sizeof(SegConvRec));
     }
@@ -666,7 +668,7 @@ create_ctextseg(
         ret->side =  XlcGLGR;
         strcpy(cset_name,ret->name);
     }
-    ret->area = Xmalloc((num - 1)*sizeof(FontScopeRec));
+    ret->area = Xmallocarray(num - 1, sizeof(FontScopeRec));
     if (ret->area == NULL) {
 	Xfree (cset_name);
 	Xfree (ret->name);
@@ -794,7 +796,7 @@ load_generic(
 		EncodingType type = E_SS;    /* for BC */
 		for (j = 0; shifts[j].str; j++) {
 		    if (!_XlcNCompareISOLatin1(tmp, shifts[j].str,
-					       strlen(shifts[j].str))) {
+					       (int) strlen(shifts[j].str))) {
 			type = shifts[j].type;
 			tmp += strlen(shifts[j].str);
 			break;
@@ -869,8 +871,8 @@ load_generic(
                     codeset->byteM = NULL;
                     break ;
                 }
-                codeset->byteM = Xmalloc(
-                         (codeset->length)*sizeof(ByteInfoListRec));
+                codeset->byteM = Xmallocarray(codeset->length,
+                                              sizeof(ByteInfoListRec));
                 if (codeset->byteM == NULL) {
                     goto err;
                 }
@@ -881,7 +883,7 @@ load_generic(
                 (codeset->byteM)[M-1].M = M;
                 (codeset->byteM)[M-1].byteinfo_num = num;
                 (codeset->byteM)[M-1].byteinfo =
-		    Xmalloc(num * sizeof(ByteInfoRec));
+		    Xmallocarray(num, sizeof(ByteInfoRec));
                 for (ii = 0 ; ii < num ; ii++) {
                     tmpb = (codeset->byteM)[M-1].byteinfo ;
                     /* default 0x00 - 0xff */
@@ -1027,10 +1029,8 @@ freeByteM(
     }
     blst = codeset->byteM;
     for (i = 0; i < codeset->length; i++) {
-	if (blst[i].byteinfo) {
 	    Xfree(blst[i].byteinfo);
 	    blst[i].byteinfo = NULL;
-	}
     }
     Xfree(codeset->byteM);
     codeset->byteM = NULL;
@@ -1044,20 +1044,18 @@ freeConversion(
     if (codeset->mbconv) {
 	mbconv = codeset->mbconv;
 	/*  ...  */
-	if (mbconv->convlist) {
-	    Xfree(mbconv->convlist);
-	    mbconv->convlist = NULL;
-	}
+	Xfree(mbconv->convlist);
+	mbconv->convlist = NULL;
+
 	Xfree(mbconv);
 	codeset->mbconv = NULL;
     }
     if (codeset->ctconv) {
 	ctconv = codeset->ctconv;
 	/*  ...  */
-	if (ctconv->convlist) {
-	    Xfree(ctconv->convlist);
-	    ctconv->convlist = NULL;
-	}
+	Xfree(ctconv->convlist);
+	ctconv->convlist = NULL;
+	
 	Xfree(ctconv);
 	codeset->ctconv = NULL;
     }
@@ -1072,14 +1070,12 @@ freeExtdSegment(
 	return;
     }
     ctextseg = codeset->ctextseg;
-    if (ctextseg->name) {
-	Xfree(ctextseg->name);
-	ctextseg->name = NULL;
-    }
-    if (ctextseg->area) {
-	Xfree(ctextseg->area);
-	ctextseg->area = NULL;
-    }
+    Xfree(ctextseg->name);
+    ctextseg->name = NULL;
+
+    Xfree(ctextseg->area);
+    ctextseg->area = NULL;
+
     Xfree(codeset->ctextseg);
     codeset->ctextseg = NULL;
 }
@@ -1093,10 +1089,10 @@ freeParseInfo(
 	return;
     }
     parse_info = codeset->parse_info;
-    if (parse_info->encoding) {
-	Xfree(parse_info->encoding);
-	parse_info->encoding = NULL;
-    }
+
+    Xfree(parse_info->encoding);
+    parse_info->encoding = NULL;
+
     Xfree(codeset->parse_info);
     codeset->parse_info = NULL;
 }
@@ -1115,10 +1111,10 @@ destroy_CodeSetList(
 	freeConversion(codeset[i]);
 	freeExtdSegment(codeset[i]);
 	freeParseInfo(codeset[i]);
-	if (codeset[i]->charset_list) {
-	    Xfree(codeset[i]->charset_list);
-	    codeset[i]->charset_list = NULL;
-	}
+
+	Xfree(codeset[i]->charset_list);
+	codeset[i]->charset_list = NULL;
+
 	Xfree(codeset[i]); codeset[i]=NULL;
     }
     Xfree(codeset); gen->codeset_list = NULL;
@@ -1130,21 +1126,20 @@ destroy_SegConv(
 {
     SegConv seg = gen->segment_conv;
     int i;
+
     if (gen->segment_conv_num == 0) {
 	return;
     }
     for (i=0;i<gen->segment_conv_num;i++) {
-	if (seg[i].source_encoding) {
+
 	    Xfree(seg[i].source_encoding);
 	    seg[i].source_encoding = NULL;
-	}
-	if (seg[i].destination_encoding) {
+
 	    Xfree(seg[i].destination_encoding);
 	    seg[i].destination_encoding = NULL;
-	}
-	if (seg[i].conv) {
-	    Xfree(seg[i].conv); seg[i].conv = NULL;
-	}
+
+	    Xfree(seg[i].conv);
+            seg[i].conv = NULL;
     }
     Xfree(seg); gen->segment_conv = NULL;
 }
@@ -1156,14 +1151,13 @@ destroy_gen(
     XLCdGenericPart *gen = XLC_GENERIC_PART(lcd);
     destroy_SegConv(gen);
     destroy_CodeSetList(gen);
-    if (gen->mb_parse_table) {
-	Xfree(gen->mb_parse_table);
-	gen->mb_parse_table = NULL;
-    }
-    if (gen->mb_parse_list) {
-	Xfree(gen->mb_parse_list);
-	gen->mb_parse_list = NULL;
-    }
+
+    Xfree(gen->mb_parse_table);
+    gen->mb_parse_table = NULL;
+
+    Xfree(gen->mb_parse_list);
+    gen->mb_parse_list = NULL;
+
 }
 /* VW/UDC end 95.01.08 */
 

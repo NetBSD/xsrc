@@ -54,6 +54,7 @@ SOFTWARE.
 #include "Xatomtype.h"
 #include <X11/Xatom.h>
 #include <X11/Xos.h>
+#include "reallocarray.h"
 
 #define safestrlen(s) ((s) ? strlen(s) : 0)
 
@@ -181,10 +182,8 @@ XSetIconSizes (
 {
 	register int i;
 	xPropIconSize *pp, *prop;
-#define size_of_the_real_thing sizeof	/* avoid grepping screwups */
-	unsigned nbytes = count * size_of_the_real_thing(xPropIconSize);
-#undef size_of_the_real_thing
-	if ((prop = pp = Xmalloc (nbytes))) {
+
+	if ((prop = pp = Xmallocarray (count, sizeof(xPropIconSize)))) {
 	    for (i = 0; i < count; i++) {
 		pp->minWidth  = list->min_width;
 		pp->minHeight = list->min_height;
@@ -211,7 +210,7 @@ XSetCommand (
 	int argc)
 {
 	register int i;
-	register int nbytes;
+	size_t nbytes;
 	register char *buf, *bp;
 	for (i = 0, nbytes = 0; i < argc; i++) {
 		nbytes += safestrlen(argv[i]) + 1;
@@ -261,7 +260,7 @@ XSetStandardProperties (
 	    XChangeProperty (dpy, w, XA_WM_ICON_NAME, XA_STRING, 8,
                              PropModeReplace,
                              (_Xconst unsigned char *)icon_string,
-                             safestrlen(icon_string));
+                             (int)safestrlen(icon_string));
 		}
 
 	if (icon_pixmap != None) {
@@ -295,7 +294,7 @@ XSetClassHint(
 {
 	char *class_string;
 	char *s;
-	int len_nm, len_cl;
+	size_t len_nm, len_cl;
 
 	len_nm = safestrlen(classhint->res_name);
 	len_cl = safestrlen(classhint->res_class);

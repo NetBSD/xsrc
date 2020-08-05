@@ -28,6 +28,7 @@ in this Software without prior written authorization from The Open Group.
 #include <config.h>
 #endif
 #include "Xlibint.h"
+#include "reallocarray.h"
 #include <limits.h>
 
 char **XListExtensions(
@@ -41,7 +42,7 @@ char **XListExtensions(
 	int count = 0;
 	register unsigned i;
 	register int length;
-	register xReq *req;
+	_X_UNUSED register xReq *req;
 	unsigned long rlen = 0;
 
 	LockDisplay(dpy);
@@ -54,7 +55,7 @@ char **XListExtensions(
 	}
 
 	if (rep.nExtensions) {
-	    list = Xmalloc (rep.nExtensions * sizeof (char *));
+	    list = Xmallocarray (rep.nExtensions, sizeof (char *));
 	    if (rep.length > 0 && rep.length < (INT_MAX >> 2)) {
 		rlen = rep.length << 2;
 		ch = Xmalloc (rlen + 1);
