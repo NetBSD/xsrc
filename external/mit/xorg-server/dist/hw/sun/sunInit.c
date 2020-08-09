@@ -130,6 +130,8 @@ static void sunCfbGetImage(DrawablePtr, int,int, int, int, unsigned int, unsigne
 static Bool	sunDevsInited = FALSE;
 
 Bool sunSwapLkeys = FALSE;
+Bool sunDebug = FALSE;
+Bool sunForceMono = FALSE;
 Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;
 Bool sunCG4Frob = FALSE;
@@ -589,10 +591,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	monitorResolution = 90;
     if (RunFromSigStopParent)
 	nonBlockConsole = 1;
-    for (i = 1; i < argc; i++) {
-	if (!strcmp(argv[i],"-debug"))
-	    nonBlockConsole = 0;
-    }
+    if (sunDebug)
+	nonBlockConsole = 0;
 
     /*
      *	Writes to /dev/console can block - causing an
