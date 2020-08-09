@@ -526,7 +526,13 @@ OsVendorInit(void)
 	if (sunPtrPriv.fd < 0)
 	    FatalError ("Cannot open /dev/mouse, error %d\n", errno);
 	getKbdType ();
-	if (sunKbdPriv.type == KB_SUN4) {
+	switch (sunKbdPriv.type) {
+	case KB_SUN2:
+	case KB_SUN3:
+	    LogMessage(X_INFO, "Sun type %d Keyboard\n", sunKbdPriv.type);
+	    break;
+	case KB_SUN4:
+#define LAYOUT_US5	33
 	    (void) ioctl (sunKbdPriv.fd, KIOCLAYOUT, &sunKbdPriv.layout);
 	    if (sunKbdPriv.layout < 0 ||
 		sunKbdPriv.layout > sunMaxLayout ||
@@ -534,6 +540,12 @@ OsVendorInit(void)
 		FatalError ("Unsupported keyboard type 4 layout %d\n",
 			    sunKbdPriv.layout);
 	    sunKeySyms[KB_SUN4].map = sunType4KeyMaps[sunKbdPriv.layout];
+	    LogMessage(X_INFO, "Sun type %d Keyboard, layout %d\n",
+		sunKbdPriv.layout >= LAYOUT_US5 ? 5 : 4, sunKbdPriv.layout);
+	    break;
+	default:
+	    LogMessage(X_INFO, "Unknown keyboard type\n");
+	    break;
         }
 	inited = 1;
     }
