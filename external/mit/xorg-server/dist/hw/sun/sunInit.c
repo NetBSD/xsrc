@@ -129,7 +129,6 @@ static void sunCfbGetImage(DrawablePtr, int,int, int, int, unsigned int, unsigne
 
 static Bool	sunDevsInited = FALSE;
 
-Bool sunAutoRepeatHandlersInstalled;	/* FALSE each time InitOutput called */
 Bool sunSwapLkeys = FALSE;
 Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;

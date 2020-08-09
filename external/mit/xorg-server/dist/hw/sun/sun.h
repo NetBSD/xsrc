@@ -293,7 +293,6 @@ typedef struct {
 } sunFbDataRec;
 
 /* sunInit.c */
-extern Bool		sunAutoRepeatHandlersInstalled;
 extern sunFbDataRec	sunFbData[];
 extern fbFd		sunFbs[];
 extern Bool		sunSwapLkeys;
