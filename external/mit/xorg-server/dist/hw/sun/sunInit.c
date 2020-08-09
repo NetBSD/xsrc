@@ -307,6 +307,11 @@ OpenFrameBuffer(
 	    }
 	}
 	if (ret) {
+	    int verb = 1;
+
+	    if (sunFbInfo)
+		verb = -1;
+
 	    devFbUsed = TRUE;
 	    if (fbattr) {
 		if (fbattr->fbtype.fb_type >= XFBTYPE_LASTPLUSONE) {
@@ -325,16 +330,14 @@ OpenFrameBuffer(
 		    if (sunFbData[fbattr->emu_types[_i]].init) {
 			sunFbs[screen].info.fb_type = fbattr->emu_types[_i];
 			ret = TRUE;
-			if (sunFbInfo)
-			    ErrorF ("%s is emulating a %s\n", device,
-				sunFbData[fbattr->fbtype.fb_type].name);
+			LogMessageVerb(X_INFO, verb, "%s is emulating a %s\n",
+			    device, sunFbData[fbattr->fbtype.fb_type].name);
 			break;
 		    }
 		}
 	    }
-	    if (sunFbInfo)
-		ErrorF ("%s is really a %s\n", device,
-		    sunFbData[fbattr ? fbattr->fbtype.fb_type : sunFbs[screen].info.fb_type].name);
+	    LogMessageVerb(X_INFO, verb, "%s is really a %s\n", device,
+		sunFbData[fbattr ? fbattr->fbtype.fb_type : sunFbs[screen].info.fb_type].name);
 	}
     }
     if (!ret)
