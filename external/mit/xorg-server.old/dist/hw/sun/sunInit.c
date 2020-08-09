@@ -130,8 +130,9 @@ static Bool	sunDevsInited = FALSE;
 
 EventList *sunEvents = NULL;
 
-Bool sunAutoRepeatHandlersInstalled;	/* FALSE each time InitOutput called */
 Bool sunSwapLkeys = FALSE;
+Bool sunDebug = FALSE;
+Bool sunForceMono = FALSE;
 Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;
 Bool sunCG4Frob = FALSE;
@@ -307,6 +308,11 @@ OpenFrameBuffer(
 	    }
 	}
 	if (ret) {
+	    int verb = 1;
+
+	    if (sunFbInfo)
+		verb = -1;
+
 	    devFbUsed = TRUE;
 	    if (fbattr) {
 		if (fbattr->fbtype.fb_type >= XFBTYPE_LASTPLUSONE) {
@@ -325,16 +331,14 @@ OpenFrameBuffer(
 		    if (sunFbData[fbattr->emu_types[_i]].init) {
 			sunFbs[screen].info.fb_type = fbattr->emu_types[_i];
 			ret = TRUE;
-			if (sunFbInfo)
-			    ErrorF ("%s is emulating a %s\n", device,
-				sunFbData[fbattr->fbtype.fb_type].name);
+			LogMessageVerb(X_INFO, verb, "%s is emulating a %s\n",
+			    device, sunFbData[fbattr->fbtype.fb_type].name);
 			break;
 		    }
 		}
 	    }
-	    if (sunFbInfo)
-		ErrorF ("%s is really a %s\n", device,
-		    sunFbData[fbattr ? fbattr->fbtype.fb_type : sunFbs[screen].info.fb_type].name);
+	    LogMessageVerb(X_INFO, verb, "%s is really a %s\n", device,
+		sunFbData[fbattr ? fbattr->fbtype.fb_type : sunFbs[screen].info.fb_type].name);
 	}
     }
     if (!ret)
@@ -527,7 +531,13 @@ OsVendorInit(void)
 	if (sunPtrPriv.fd < 0)
 	    FatalError ("Cannot open /dev/mouse, error %d\n", errno);
 	getKbdType ();
-	if (sunKbdPriv.type == KB_SUN4) {
+	switch (sunKbdPriv.type) {
+	case KB_SUN2:
+	case KB_SUN3:
+	    LogMessage(X_INFO, "Sun type %d Keyboard\n", sunKbdPriv.type);
+	    break;
+	case KB_SUN4:
+#define LAYOUT_US5	33
 	    (void) ioctl (sunKbdPriv.fd, KIOCLAYOUT, &sunKbdPriv.layout);
 	    if (sunKbdPriv.layout < 0 ||
 		sunKbdPriv.layout > sunMaxLayout ||
@@ -535,6 +545,12 @@ OsVendorInit(void)
 		FatalError ("Unsupported keyboard type 4 layout %d\n",
 			    sunKbdPriv.layout);
 	    sunKeySyms[KB_SUN4].map = sunType4KeyMaps[sunKbdPriv.layout];
+	    LogMessage(X_INFO, "Sun type %d Keyboard, layout %d\n",
+		sunKbdPriv.layout >= LAYOUT_US5 ? 5 : 4, sunKbdPriv.layout);
+	    break;
+	default:
+	    LogMessage(X_INFO, "Unknown keyboard type\n");
+	    break;
         }
 	inited = 1;
     }
@@ -572,10 +588,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	monitorResolution = 90;
     if (RunFromSigStopParent)
 	nonBlockConsole = 1;
-    for (i = 1; i < argc; i++) {
-	if (!strcmp(argv[i],"-debug"))
-	    nonBlockConsole = 0;
-    }
+    if (sunDebug)
+	nonBlockConsole = 0;
 
     /*
      *	Writes to /dev/console can block - causing an

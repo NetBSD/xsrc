@@ -98,7 +98,7 @@ static void CGSaveColormap(ScreenPtr);
 static void CGRestoreColormap(ScreenPtr);
 static void CGScreenInitCommon(ScreenPtr);
 static void CGScreenInit(ScreenPtr);
-static void checkMono(int, char **);
+static void checkMono(void);
 #ifdef INCLUDE_CG2_HEADER
 static void CG2UpdateColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
 static void CG2GetColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
@@ -307,13 +307,11 @@ CGScreenInit(ScreenPtr pScreen)
 }
 
 static void
-checkMono(int argc, char** argv)
+checkMono(void)
 {
-    int i;
 
-    for (i = 1; i < argc; i++)
-	if (strcmp (argv[i], "-mono") == 0)
-	    ErrorF ("-mono not appropriate for CG3/CG4/CG6\n");
+    if (sunForceMono)
+	ErrorF("-mono not appropriate for CG3/CG4/CG6\n");
 }
 
 /*
@@ -334,7 +332,7 @@ sunCG3Init(
     char    	  **argv   	/* The arguments themselves. Don't change! */
 )
 {
-    checkMono (argc, argv);
+    checkMono();
     sunFbs[screen].EnterLeave = (void (*)(ScreenPtr, int))NoopDDA;
     return sunInitCommon (screen, pScreen, (off_t) CG3_MMAP_OFFSET,
 	sunCfbScreenInit, CGScreenInit,
@@ -349,7 +347,7 @@ sunTCXInit(
     char    	  **argv   	/* The arguments themselves. Don't change! */
 )
 {
-    checkMono (argc, argv);
+    checkMono();
     sunFbs[screen].EnterLeave = (void (*)(ScreenPtr, int))NoopDDA;
     return sunInitCommon (screen, pScreen, (off_t) 0,
 	sunCfbScreenInit, CGScreenInit,
@@ -454,18 +452,12 @@ sunCG2Init(
     char**	argv	   	/* The arguments themselves. Don't change! */
 )
 {
-    int		i;
     Bool	ret;
-    Bool	mono = FALSE;
-
-    for (i = 1; i < argc; i++)
-	if (strcmp (argv[i], "-mono") == 0)
-	    mono = TRUE;
 
     sunFbs[screen].EnterLeave = (void (*)(ScreenPtr, int))NoopDDA;
     pScreen->SaveScreen = CG2SaveScreen;
 #ifndef LOWMEMFTPT
-    if (mono) {
+    if (sunForceMono) {
 	pScreen->whitePixel = 0;
 	pScreen->blackPixel = 1;
 	sunFbs[screen].info.fb_depth = 1;
@@ -514,7 +506,7 @@ sunCG4Init(
     char**	argv    	/* The arguments themselves. Don't change! */
 )
 {
-    checkMono (argc, argv);
+    checkMono();
     if (sunCG4Frob)
 	sunFbs[screen].EnterLeave = (void (*)(ScreenPtr, int))NoopDDA;
     else
@@ -539,7 +531,7 @@ sunCG6Init(
 {
     pointer	fb;
 
-    checkMono (argc, argv);
+    checkMono();
     if (!sunScreenAllocate (pScreen))
 	return FALSE;
     if (!sunFbs[screen].fb) {

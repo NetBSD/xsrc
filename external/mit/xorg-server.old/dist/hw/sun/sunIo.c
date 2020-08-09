@@ -205,6 +205,7 @@ ddxProcessArgument(int argc, char *argv[], int i)
 	return 1;
     }
     if (strcmp (argv[i], "-debug") == 0) {	/* -debug */
+	sunDebug = TRUE;
 	return 1;
     }
     if (strcmp (argv[i], "-dev") == 0) {	/* -dev /dev/mumble */
@@ -212,6 +213,7 @@ ddxProcessArgument(int argc, char *argv[], int i)
 	return 2;
     }
     if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
+	sunForceMono = TRUE;
 	return 1;
     }
     if (strcmp (argv[i], "-zaphod") == 0) {	/* -zaphod */
