@@ -298,6 +298,7 @@ extern fbFd		sunFbs[];
 extern Bool		sunSwapLkeys;
 extern Bool		sunForceMono;
 extern Bool		sunDebug;
+extern char		*sunDeviceList;
 extern Bool		sunFlipPixels;
 extern Bool		sunFbInfo;
 extern Bool		sunCG4Frob;
