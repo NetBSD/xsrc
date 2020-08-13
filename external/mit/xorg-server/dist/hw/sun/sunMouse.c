@@ -123,7 +123,7 @@ sunMouseCtrl(DeviceIntPtr device, PtrCtrl *ctrl)
 int
 sunMouseProc(DeviceIntPtr device, int what)
 {
-    DevicePtr	  pMouse = (DevicePtr) device;
+    DevicePtr	  pMouse = &device->public;
     int	    	  format;
     static int	  oformat;
     BYTE    	  map[4];
@@ -132,7 +132,7 @@ sunMouseProc(DeviceIntPtr device, int what)
 
     switch (what) {
 	case DEVICE_INIT:
-	    if (pMouse != (DevicePtr)sunPointerDevice) {
+	    if (pMouse != &sunPointerDevice->public) {
 		ErrorF ("Cannot open non-system mouse");
 		return !Success;
 	    }
