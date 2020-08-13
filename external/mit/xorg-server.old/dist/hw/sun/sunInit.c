@@ -132,6 +132,7 @@ EventList *sunEvents = NULL;
 
 Bool sunSwapLkeys = FALSE;
 Bool sunDebug = FALSE;
+char *sunDeviceList = NULL;
 Bool sunForceMono = FALSE;
 Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;
@@ -403,14 +404,9 @@ GetDeviceList(int argc, char **argv)
 {
     int		i;
     char	*envList = NULL;
-    char	*cmdList = NULL;
+    char	*cmdList = sunDeviceList;
     char	**deviceList = (char **)NULL;
 
-    for (i = 1; i < argc; i++)
-	if (strcmp (argv[i], "-dev") == 0 && i+1 < argc) {
-	    cmdList = argv[i + 1];
-	    break;
-	}
     if (!cmdList)
 	envList = getenv ("XDEVICE");
 

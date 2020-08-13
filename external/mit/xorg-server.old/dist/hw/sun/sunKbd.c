@@ -607,7 +607,7 @@ sunInitKbdNames(XkbRMLVOSet *rmlvo, sunKbdPrivPtr pKbd)
 int
 sunKbdProc(DeviceIntPtr device, int what)
 {
-    DevicePtr pKeyboard = (DevicePtr) device;
+    DevicePtr pKeyboard = &device->public;
     sunKbdPrivPtr pPriv;
     KeybdCtrl*	ctrl = &device->kbdfeed->ctrl;
     XkbRMLVOSet rmlvo;
@@ -617,7 +617,7 @@ sunKbdProc(DeviceIntPtr device, int what)
 
     switch (what) {
     case DEVICE_INIT:
-	if (pKeyboard != (DevicePtr)sunKeyboardDevice) {
+	if (pKeyboard != &sunKeyboardDevice->public) {
 	    ErrorF ("Cannot open non-system keyboard\n");
 	    return (!Success);
 	}

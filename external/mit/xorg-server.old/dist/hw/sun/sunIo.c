@@ -170,9 +170,10 @@ AbortDDX(void)
 #else
     (void) OsSignal (SIGIO, SIG_IGN);
 #endif
-    devPtr = (DevicePtr)sunKeyboardDevice;
-    if (devPtr)
+    if (sunKeyboardDevice) {
+        devPtr = &sunKeyboardDevice->public;
 	(void) sunChangeKbdTranslation (((sunKbdPrivPtr)(devPtr->devicePrivate))->fd, FALSE);
+    }
 #if defined(SVR4) || defined(CSRG_BASED)
     sunNonBlockConsoleOff ();
 #else
@@ -209,7 +210,9 @@ ddxProcessArgument(int argc, char *argv[], int i)
 	return 1;
     }
     if (strcmp (argv[i], "-dev") == 0) {	/* -dev /dev/mumble */
-	if (++i >= argc) UseMsg ();
+	if (++i >= argc)
+	    UseMsg();
+	sunDeviceList = argv[i];
 	return 2;
     }
     if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
@@ -227,14 +230,6 @@ ddxProcessArgument(int argc, char *argv[], int i)
     if (strcmp (argv[i], "-fbinfo") == 0) {	/* -fbinfo */
 	sunFbInfo = TRUE;
 	return 1;
-    }
-    if (strcmp (argv[i], "-kbd") == 0) {	/* -kbd */
-	if (++i >= argc) UseMsg();
-	return 2;
-    }
-    if (strcmp (argv[i], "-protect") == 0) {	/* -protect */
-	if (++i >= argc) UseMsg();
-	return 2;
     }
     if (strcmp (argv[i], "-cg4frob") == 0) {
 	sunCG4Frob = TRUE;
