@@ -1111,6 +1111,45 @@ extern _X_EXPORT WriteMemoryProcPtr wfbWriteMemory;
 #endif
 
 /*
+ * fbtile.c
+ */
+
+extern _X_EXPORT void
+
+fbEvenTile(FbBits * dst,
+           FbStride dstStride,
+           int dstX,
+           int width,
+           int height,
+           FbBits * tile,
+           FbStride tileStride,
+           int tileHeight, int alu, FbBits pm, int xRot, int yRot);
+
+extern _X_EXPORT void
+
+fbOddTile(FbBits * dst,
+          FbStride dstStride,
+          int dstX,
+          int width,
+          int height,
+          FbBits * tile,
+          FbStride tileStride,
+          int tileWidth,
+          int tileHeight, int alu, FbBits pm, int bpp, int xRot, int yRot);
+
+extern _X_EXPORT void
+
+fbTile(FbBits * dst,
+       FbStride dstStride,
+       int dstX,
+       int width,
+       int height,
+       FbBits * tile,
+       FbStride tileStride,
+       int tileWidth,
+       int tileHeight, int alu, FbBits pm, int bpp, int xRot, int yRot);
+
+/*
  * fbwindow.c
  */
 
