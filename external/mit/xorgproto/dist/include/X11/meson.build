@@ -59,4 +59,6 @@ install_headers(
 subdir('dri')
 subdir('extensions')
 subdir('fonts')
-subdir('PM')
+if get_option('legacy') == true
+    subdir('PM')
+endif
