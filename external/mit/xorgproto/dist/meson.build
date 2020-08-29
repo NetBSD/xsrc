@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-project('xorgproto', 'c', license : 'MIT', version : '2019.2')
+project('xorgproto', 'c', license : 'MIT', version : '2020.1')
 pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
 sed = find_program('sed')
@@ -29,6 +29,7 @@ pcs = [
         ['compositeproto',      '0.4.2'],
         ['damageproto',         '1.2.1'],
         ['dmxproto',            '2.3.1'],
+        ['dpmsproto',           '1.2'],
         ['dri2proto',           '2.8'],
         ['dri3proto',           '1.2'],
         ['fixesproto',          '5.0'],
@@ -42,18 +43,15 @@ pcs = [
         ['renderproto',         '0.11.1'],
         ['resourceproto',       '1.2.0'],
         ['scrnsaverproto',      '1.2.2'],
-        ['trapproto',           '3.4.3'],
         ['videoproto',          '2.3.3'],
         ['xcmiscproto',         '1.2.2'],
         ['xextproto',           '7.3.0'],
         ['xf86bigfontproto',    '1.2.0'],
         ['xf86dgaproto',        '2.1'],
         ['xf86driproto',        '2.1.1'],
-        ['xf86miscproto',       '0.9.3'],
         ['xf86vidmodeproto',    '2.3.1'],
         ['xineramaproto',       '1.2.1'],
         ['xproto',              '7.0.32'],
-        ['xproxymngproto',      '1.0.3'],
 ]
 
 foreach pc : pcs
@@ -78,9 +76,12 @@ if get_option('legacy') == true
         ['fontcacheproto', '0.1.3'],
         ['lg3dproto', '5.0'],
         ['printproto', '1.0.5'],
+        ['trapproto', '3.4.3'],
         ['windowswmproto', '1.0.4'],
         ['xcalibrateproto', '0.1.0'],
+        ['xf86miscproto', '0.9.3'],
         ['xf86rushproto', '1.2.2'],
+        ['xproxymngproto', '1.0.3'],
     ]
     foreach pc : legacy_pcs
         pkg.generate(

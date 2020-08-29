@@ -48,6 +48,9 @@ dmx_HEADERS = \
 dmxprotopkgconfigdir = $(datadir)/pkgconfig
 dmxprotopkgconfig_DATA = dmxproto.pc
 
+dpmsprotopkgconfigdir = $(datadir)/pkgconfig
+dpmsprotopkgconfig_DATA = dpmsproto.pc
+
 dri2dir = $(includedir)/X11/extensions
 dri2_HEADERS = \
 	include/X11/extensions/dri2proto.h \
