@@ -1,3 +1,91 @@
+commit 505420662577749e36640db48f6b6b9ae0236e09
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Mon Aug 24 15:42:25 2020 +0200
+
+    libX11 1.6.12
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit acdaaadcb3d85c61fd43669fc5dddf0f8c3f911d
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Thu Aug 13 18:02:58 2020 +0200
+
+    Fix an integer overflow in init_om()
+    
+    CVE-2020-14363
+    
+    This can lead to a double free later, as reported by Jayden Rivers.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit d15c24c8b44be5e4054c8ecd0ff9dcf2c8e18e5b
+Author: Niclas Zeising <zeising@daemonic.se>
+Date:   Tue Aug 11 13:44:38 2020 +0200
+
+    Fix input clients connecting to server
+    
+    Fix a bug where some input clients can't connect to the input server.
+    This fixes #117.
+    
+    FreeBSD bugzilla reference:
+    https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=248549
+    
+    Signed-off-by: Niclas Zeising <zeising@daemonic.se>
+
+commit 6dd618e5ea8e7558dd8e99a2777ab7b69211789c
+Author: Maya Rashish <maya@NetBSD.org>
+Date:   Sat Aug 15 00:48:56 2020 +0300
+
+    Avoid the use of "register" keyword in XkbTranslateKeySym.
+    
+    This causes issues when compiling code for C++17.
+    While here, make function prototype match the header with regards
+    to removal of another register keyword.
+
+commit 780d222343098b4bfe3ec529b4a0dc2aadea19bf
+Author: Christopher Chavez <chrischavez@gmx.us>
+Date:   Mon Aug 10 17:08:39 2020 +0000
+
+    Fix typo GCCLipYOrigin -> GCClipYOrigin in XCreateGC() manpage
+
+commit 29a8251a456bb7dc10146b4713f499a624d6dacd
+Author: Felix Yan <felixonmars@archlinux.org>
+Date:   Thu Aug 6 16:03:38 2020 +0000
+
+    Correct a typo in GetStCmap.c
+
+commit 0d8f038db83f68724a84ef9d4ccd0d5e33ec6a70
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 6 08:07:57 2020 -0700
+
+    libX11 1.6.11
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 93fce3f4e79cbc737d6468a4f68ba3de1b83953b
+Author: Yichao Yu <yyc1992@gmail.com>
+Date:   Sun Aug 2 13:43:58 2020 -0400
+
+    Fix size calculation in `_XimAttributeToValue`.
+    
+    The check here guards the read below.
+    For `XimType_XIMStyles`, these are `num` of `CARD32` and for `XimType_XIMHotKeyTriggers`
+    these are `num` of `XIMTRIGGERKEY` ref[1] which is defined as 3 x `CARD32`.
+    (There are data after the `XIMTRIGGERKEY` according to the spec but they are not read by this
+    function and doesn't need to be checked.)
+    
+    The old code here used the native datatype size instead of the wire protocol size causing
+    the check to always fail.
+    
+    Also fix the size calculation for the header (size). It is 2 x CARD16 for both types
+    despite the unused `CARD16` for `XimType_XIMStyles`.
+    
+    [1] https://www.x.org/releases/X11R7.6/doc/libX11/specs/XIM/xim.html#Input_Method_Styles
+    
+    This fixes a regression caused by 388b303c62aa35a245f1704211a023440ad2c488 in 1.6.10.
+    
+    Fix #116
+
 commit 9949364ea761ab7efa2a9930ec7718f966a740c0
 Author: Matthieu Herrb <matthieu@herrb.eu>
 Date:   Thu Jul 30 21:36:22 2020 +0200
