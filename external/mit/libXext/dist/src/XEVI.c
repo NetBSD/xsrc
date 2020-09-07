@@ -133,6 +133,8 @@ Status XeviGetVisualInfo(
 	        temp_visual[n_visual++] = vinfo[vinfoIndex].visualid;
     }
     else {	/* check if the visual is valid */
+	if (n_visual > 65536)
+		n_visual = 65536;
         for (visualIndex = 0; visualIndex < n_visual; visualIndex++) {
 	    isValid = False;
             for (vinfoIndex = 0; vinfoIndex < sz_info; vinfoIndex++) {
