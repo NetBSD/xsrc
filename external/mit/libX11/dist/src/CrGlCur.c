@@ -55,7 +55,7 @@ typedef void *XModuleType;
 #endif
 
 #ifndef LIBXCURSOR
-#define LIBXCURSOR "libXcursor.so.1"
+#define LIBXCURSOR "libXcursor.so"
 #endif
 
 static char libraryName[] = LIBXCURSOR;
