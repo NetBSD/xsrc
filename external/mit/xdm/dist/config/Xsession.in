@@ -62,5 +62,6 @@ else
 	if [ -r "$resources" ]; then
 		BINDIR/xrdb -load "$resources"
 	fi
-	exec BINDIR/xsm
+	$BINDIR/uxterm &
+	exec BINDIR/ctwm
 fi
