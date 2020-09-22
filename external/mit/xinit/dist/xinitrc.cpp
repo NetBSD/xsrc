@@ -49,4 +49,4 @@ if [ -d XINITDIR/xinitrc.d ] ; then
 fi
 
 UXTERM &
-exec CTWM
+exec CTWM -W

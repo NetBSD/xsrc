@@ -63,5 +63,5 @@ else
 		BINDIR/xrdb -load "$resources"
 	fi
 	$BINDIR/uxterm &
-	exec BINDIR/ctwm
+	exec BINDIR/ctwm -W
 fi
