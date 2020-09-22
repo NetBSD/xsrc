@@ -48,8 +48,5 @@ if [ -d XINITDIR/xinitrc.d ] ; then
 	unset f
 fi
 
-TWM &
-XCLOCK -geometry 50x50-1+1 &
-XTERM -geometry 80x50+494+51 &
-XTERM -geometry 80x20+494-0 &
-exec XTERM -geometry 80x66+0+0 -name login
+UXTERM &
+exec CTWM
