@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.6 2020/09/23 07:02:58 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.7 2020/09/23 15:32:13 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -195,15 +195,14 @@ menu "NetBSD"
     " Calculator"		!"xcalc &"
     " Clock"			!"xclock -digital &"
     " XEyes"			!"xeyes &"
-#    ""				f.separator
-#    " Applications"		f.menu "appmenu"
+    ""				f.separator
+    " Applications"		f.menu "appmenu"
     ""				f.separator
     " Restart CTWM"		f.twmrc
     " Quit"			f.quit
 }
 
-# TODO: import and integrate this script
-#syscmd(/usr/X11R7/libexec/ctwm_menu)
+syscmd(/usr/X11R7/libexec/ctwm_app_menu)
 
 menu "titleops"
 {
