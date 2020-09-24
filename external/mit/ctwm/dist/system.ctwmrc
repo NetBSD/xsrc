@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.7 2020/09/23 15:32:13 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.8 2020/09/24 05:38:16 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -325,6 +325,10 @@ Button3 = mod4	: window 	: f.resize
 "7"      = mod4 : all : f.gotoworkspace "7"
 "8"      = mod4 : all : f.gotoworkspace "8"
 "9"      = mod4 : all : f.gotoworkspace "9"
+
+"XF86AudioRaiseVolume" = : all : !"mixerctl -w outputs.master+=5"
+"XF86AudioLowerVolume" = : all : !"mixerctl -w outputs.master-=5"
+"XF86AudioMute"        = : all : !"mixerctl -w outputs.master=0"
 
 #
 # "Windows" style keyboard shortcuts
