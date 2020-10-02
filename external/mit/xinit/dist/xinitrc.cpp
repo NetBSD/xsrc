@@ -33,6 +33,14 @@ if [ -f "$userresources" ]; then
 #else
     XRDB -merge "$userresources"
 #endif
+else
+    XRDB -merge - <<EOF
+#if COLOR
+*customization: -color
+*VT100.foreground: grey90
+*VT100.background: black
+#endif
+EOF
 fi
 
 if [ -f "$usermodmap" ]; then
