@@ -33,6 +33,14 @@ if [ -f "$userresources" ]; then
 #else
     XRDB -merge "$userresources"
 #endif
+else
+    XRDB -merge - <<EOF
+#if COLOR
+*customization: -color
+*VT100.foreground: grey90
+*VT100.background: black
+#endif
+EOF
 fi
 
 if [ -f "$usermodmap" ]; then
@@ -48,8 +56,5 @@ if [ -d XINITDIR/xinitrc.d ] ; then
 	unset f
 fi
 
-TWM &
-XCLOCK -geometry 50x50-1+1 &
-XTERM -geometry 80x50+494+51 &
-XTERM -geometry 80x20+494-0 &
-exec XTERM -geometry 80x66+0+0 -name login
+UXTERM &
+exec CTWM -W

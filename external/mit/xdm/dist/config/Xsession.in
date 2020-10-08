@@ -61,6 +61,15 @@ if [ -s "$startup" ]; then
 else
 	if [ -r "$resources" ]; then
 		BINDIR/xrdb -load "$resources"
+	else
+		BINDIR/xrdb -load - <<EOF
+#if COLOR
+*customization: -color
+*VT100.foreground: grey90
+*VT100.background: black
+#endif
+EOF
 	fi
-	exec BINDIR/xsm
+	BINDIR/uxterm &
+	exec BINDIR/ctwm -W
 fi
