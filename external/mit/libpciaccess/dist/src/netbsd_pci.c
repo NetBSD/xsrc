@@ -66,7 +66,7 @@ typedef struct _pcibus {
 	int maxdevs;	/* maximum number of devices */
 } PciBus;
 
-static PciBus buses[32];	/* indexed by pci_device.domain */
+static PciBus *buses = NULL;	/* indexed by pci_device.domain */
 static int nbuses = 0;		/* number of buses found */
 
 /*
@@ -99,7 +99,7 @@ pci_read(int domain, int bus, int dev, int func, uint32_t reg, uint32_t *val)
 {
 	uint32_t rval;
 
-	if ((domain < 0) || (domain > nbuses))
+	if ((domain < 0) || (domain >= nbuses))
 		return -1;
 
 	if (pcibus_conf_read(buses[domain].fd, (unsigned int)bus,
@@ -115,7 +115,7 @@ static int
 pci_write(int domain, int bus, int dev, int func, uint32_t reg, uint32_t val)
 {
 
-	if ((domain < 0) || (domain > nbuses))
+	if ((domain < 0) || (domain >= nbuses))
 		return -1;
 
 	return pcibus_conf_write(buses[domain].fd, (unsigned int)bus,
@@ -127,7 +127,7 @@ pci_nfuncs(int domain, int bus, int dev)
 {
 	uint32_t hdr;
 
-	if ((domain < 0) || (domain > nbuses))
+	if ((domain < 0) || (domain >= nbuses))
 		return -1;
 
 	if (pci_read(domain, bus, dev, 0, PCI_BHLC_REG, &hdr) != 0)
@@ -907,13 +907,42 @@ static const struct pci_system_methods netbsd_pci_methods = {
 	.has_kernel_driver = pci_device_netbsd_has_kernel_driver,
 };
 
+static int
+pci_system_netbsd_open_device(int unit)
+{
+	char netbsd_devname[32];
+	int pcifd;
+
+	snprintf(netbsd_devname, 32, "/dev/pci%d", unit);
+	pcifd = open(netbsd_devname, O_RDWR | O_CLOEXEC);
+	if (pcifd == -1)
+		pcifd = open(netbsd_devname, O_RDONLY | O_CLOEXEC);
+
+	return pcifd;
+}
+
+static int
+pci_system_netbsd_count_buses(void)
+{
+	int pcifd, nbuses;
+
+	do {
+		pcifd = pci_system_netbsd_open_device(nbuses);
+		if (pcifd != -1) {
+			close(pcifd);
+			nbuses++;
+		}
+	} while (pcifd != -1);
+
+	return nbuses;
+}
+
 int
 pci_system_netbsd_create(void)
 {
 	struct pci_device_private *device;
-	int bus, dev, func, ndevs, nfuncs, domain, pcifd;
+	int bus, dev, func, ndevs, nfuncs, domain, pcifd, n;
 	uint32_t reg;
-	char netbsd_devname[32];
 	struct pciio_businfo businfo;
 
 	pci_sys = calloc(1, sizeof(struct pci_system));
@@ -921,19 +950,18 @@ pci_system_netbsd_create(void)
 	pci_sys->methods = &netbsd_pci_methods;
 
 	ndevs = 0;
-	nbuses = 0;
-	snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
-	pcifd = open(netbsd_devname, O_RDWR | O_CLOEXEC);
-	if (pcifd == -1)
-		pcifd = open(netbsd_devname, O_RDONLY | O_CLOEXEC);
+	nbuses = pci_system_netbsd_count_buses();
+	if (nbuses > 0)
+		buses = calloc(nbuses, sizeof(PciBus));
 
-	while (pcifd > 0) {
+	for (n = 0; n < nbuses; n++) {
+		pcifd = pci_system_netbsd_open_device(n);
+
 		ioctl(pcifd, PCI_IOC_BUSINFO, &businfo);
-		buses[nbuses].fd = pcifd;
-		buses[nbuses].num = bus = businfo.busno;
-		buses[nbuses].maxdevs = businfo.maxdevs;
-		domain = nbuses;
-		nbuses++;
+		buses[n].fd = pcifd;
+		buses[n].num = bus = businfo.busno;
+		buses[n].maxdevs = businfo.maxdevs;
+		domain = n;
 		for (dev = 0; dev < businfo.maxdevs; dev++) {
 			nfuncs = pci_nfuncs(domain, bus, dev);
 			for (func = 0; func < nfuncs; func++) {
@@ -947,10 +975,6 @@ pci_system_netbsd_create(void)
 				ndevs++;
 			}
 		}
-		snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
-		pcifd = open(netbsd_devname, O_RDWR);
-		if (pcifd == -1)
-			pcifd = open(netbsd_devname, O_RDONLY | O_CLOEXEC);
 	}
 
 	pci_sys->num_devices = ndevs;
