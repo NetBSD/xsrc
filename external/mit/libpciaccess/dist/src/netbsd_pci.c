@@ -924,7 +924,7 @@ pci_system_netbsd_open_device(int unit)
 static int
 pci_system_netbsd_count_buses(void)
 {
-	int pcifd, nbuses;
+	int pcifd;
 
 	do {
 		pcifd = pci_system_netbsd_open_device(nbuses);
