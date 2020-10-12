@@ -23,6 +23,11 @@ if [ -f $sysmodmap ]; then
     XMODMAP $sysmodmap
 fi
 
+fontsize=$(/usr/X11R7/libexec/ctwm_font_size)
+if ! [ -n "$fontsize" ]; then
+	fontsize=16
+fi
+
 if [ -f "$userresources" ]; then
 #ifdef __APPLE__
     if [ -x /usr/bin/cpp ] ; then
@@ -40,6 +45,23 @@ else
 *VT100.foreground: grey90
 *VT100.background: black
 #endif
+*VT100.allowBoldFonts:  false
+*VT100.font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Bitmap*font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Editres*font:   -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Viewres*font:   -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+XCalc*font:     -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+XClipboard*font:        -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+XConsole*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+XFontSel*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+XLoad*font:     -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xedit*font:     -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xfd*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xgc*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xmag*font:      -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xmessage*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 fi
 
