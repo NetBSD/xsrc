@@ -70,6 +70,7 @@ else
 #endif
 EOF
 	fi
+	BINDIR/xsetroot -cursor_name left_ptr
 	BINDIR/xsetroot -solid 'rgb:00/22/44'
 	BINDIR/uxterm &
 	exec BINDIR/ctwm -W

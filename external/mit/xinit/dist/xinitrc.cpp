@@ -56,6 +56,7 @@ if [ -d XINITDIR/xinitrc.d ] ; then
 	unset f
 fi
 
+XSETROOT -cursor_name left_ptr
 XSETROOT -solid 'rgb:00/22/44'
 UXTERM &
 exec CTWM -W
