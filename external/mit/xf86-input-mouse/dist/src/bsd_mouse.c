@@ -384,6 +384,42 @@ FindDevice(InputInfoPtr pInfo, const char *protocol, int flags)
 #define NUMEVENTS 64
 
 static void
+wsconsAutoCalibrate(InputInfoPtr pInfo)
+{
+    MouseDevPtr pMse;
+    int width, height;
+    struct wsmouse_calibcoords cal;
+
+    pMse = pInfo->private;
+    width = screenInfo.screens[pMse->screenNo]->width;
+    height = screenInfo.screens[pMse->screenNo]->height;
+
+    if (width != pMse->lastScreenWidth || height != pMse->lastScreenHeight) {
+        if (ioctl(pInfo->fd, WSMOUSEIO_GCALIBCOORDS, &cal) == 0 &&
+            cal.minx != cal.maxy && cal.miny != cal.maxy) {
+
+            xf86Msg(X_INFO, "%s: auto-calibrating abs pointer for %dx%d screen\n",
+                    pInfo->name, width, height);
+
+            pMse->minX = cal.minx;
+            pMse->minY = cal.miny;
+            pMse->maxX = cal.maxx;
+            pMse->maxY = cal.maxy;
+            pMse->translateAbs =
+                cal.samplelen == WSMOUSE_CALIBCOORDS_RESET;
+        }
+        pMse->lastScreenWidth = width;
+        pMse->lastScreenHeight = height;
+    }
+}
+
+static int
+wsconsTranslate(InputInfoPtr pInfo, int scrRange, int rawMin, int rawMax, int rawVal)
+{
+    return ((rawVal - rawMin) * scrRange) / (rawMax - rawMin);
+}
+
+static void
 wsconsReadInput(InputInfoPtr pInfo)
 {
     MouseDevPtr pMse;
@@ -393,6 +429,9 @@ wsconsReadInput(InputInfoPtr pInfo)
     unsigned char *pBuf;
 
     pMse = pInfo->private;
+
+    if (pMse->autoCalibrate)
+        wsconsAutoCalibrate(pInfo);
 
     XisbBlockDuration(pMse->buffer, -1);
     pBuf = (unsigned char *)eventList;
@@ -434,11 +473,17 @@ wsconsReadInput(InputInfoPtr pInfo)
 #endif
 	case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 	    x = event->value;
+            if (pMse->translateAbs)
+                x = wsconsTranslate(pInfo, pMse->lastScreenWidth,
+                                    pMse->minX, pMse->maxX, x);
 	    xf86PostMotionEvent(pInfo->dev, TRUE, 0, 1, x);
 	    ++event;
 	    continue;
 	case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 	    y = event->value;
+            if (pMse->translateAbs)
+                y = wsconsTranslate(pInfo, pMse->lastScreenWidth,
+                                    pMse->minY, pMse->maxY, y);
 	    xf86PostMotionEvent(pInfo->dev, TRUE, 1, 1, y);
 	    ++event;
 	    continue;
@@ -480,6 +525,19 @@ wsconsPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
     pInfo->flags |= XI86_CONFIGURED;
 #endif
+
+    pMse->autoCalibrate = xf86SetBoolOption(pInfo->options, "AutoCalibrate", TRUE);
+    xf86Msg(X_CONFIG, "%s: auto calibration %sabled\n",
+            pInfo->name, pMse->autoCalibrate ? "en" : "dis"); 
+
+    pMse->screenNo = xf86SetIntOption(pInfo->options, "ScreenNo", 0);
+    if (pMse->screenNo >= screenInfo.numScreens ||
+        pMse->screenNo < 0) {
+            pMse->screenNo = 0;
+    }
+    xf86Msg(X_CONFIG, "%s: associated screen: %d\n",
+            pInfo->name, pMse->screenNo); 
+
     return TRUE;
 }
 #endif

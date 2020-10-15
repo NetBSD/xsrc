@@ -262,6 +262,15 @@ typedef struct _MouseDevRec {
     int                 doubleClickOldSourceState;
     int                 lastMappedButtons;
     int                 buttonMap[MSE_MAXBUTTONS];
+    int                 autoCalibrate;
+    int                 lastScreenWidth;
+    int                 lastScreenHeight;
+    int                 screenNo;
+    int                 minX;
+    int                 minY;
+    int                 maxX;
+    int                 maxY;
+    int                 translateAbs;
 } MouseDevRec, *MouseDevPtr;
 
 #endif /* _XF86OSMOUSE_H_ */
