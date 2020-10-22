@@ -1,4 +1,4 @@
-/* $Id: pointer.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: pointer.c,v 1.2 2020/10/22 20:47:23 thorpej Exp $ */
 /** @file
  * VirtualBox X11 Additions graphics driver utility functions
  */
@@ -36,7 +36,7 @@
 #include "cursorstr.h"
 #include "servermd.h"
 
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 
 #ifdef XORG_7X
 # include <stdlib.h>

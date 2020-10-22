@@ -1,4 +1,4 @@
-/* $Id: vboxvideo.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: vboxvideo.c,v 1.2 2020/10/22 20:47:23 thorpej Exp $ */
 /** @file
  * Linux Additions X11 graphics driver
  */
@@ -42,7 +42,7 @@
  *          Michael Thayer <michael.thayer@oracle.com>
  */
 
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 #include <VBoxVideoVBE.h>
 
 /* Basic definitions and functions needed by all drivers. */

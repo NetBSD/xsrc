@@ -408,7 +408,7 @@ vboxvideo_drv_la_SOURCES = \
          vboxvideo.c \
          VBoxVideoErr.h \
          VBoxVideoGuest.h \
-         vboxvideo.h \
+         vboxvideo_drv.h \
          VBoxVideo.h \
          VBoxVideoIPRT.h \
          VBoxVideoVBE.h \

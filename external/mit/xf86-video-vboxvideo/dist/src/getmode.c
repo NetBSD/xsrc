@@ -1,4 +1,4 @@
-/* $Id: getmode.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: getmode.c,v 1.2 2020/10/22 20:47:23 thorpej Exp $ */
 /** @file
  * VirtualBox X11 Additions graphics driver dynamic video mode functions.
  */
@@ -25,7 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 
 #define NEED_XF86_TYPES
 #include "xf86.h"

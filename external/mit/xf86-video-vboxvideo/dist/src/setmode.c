@@ -1,4 +1,4 @@
-/* $Id: setmode.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: setmode.c,v 1.2 2020/10/22 20:47:23 thorpej Exp $ */
 /** @file
  * Linux Additions X11 graphics driver, mode setting
  */
@@ -46,7 +46,7 @@
 # define XF86_LIBC_H
 # include <string.h>
 #endif
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 #include "xf86.h"
 
 /* VGA hardware functions for setting and restoring text mode */

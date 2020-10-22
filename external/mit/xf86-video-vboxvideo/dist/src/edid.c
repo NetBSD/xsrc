@@ -1,4 +1,4 @@
-/* $Id: edid.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: edid.c,v 1.2 2020/10/22 20:47:23 thorpej Exp $ */
 /** @file
  *
  * Linux Additions X11 graphics driver, EDID construction
@@ -39,7 +39,7 @@
 #include "misc.h"
 #include "xf86DDC.h"
 #include "xf86Crtc.h"
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 
 enum { EDID_SIZE = 128 };
 

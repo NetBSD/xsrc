@@ -20,7 +20,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "vboxvideo.h"
+#include "vboxvideo_drv.h"
 #include "os.h"
 #include "propertyst.h"
 #include "windowstr.h"
