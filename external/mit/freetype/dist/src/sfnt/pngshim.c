@@ -260,6 +260,12 @@
     {
       FT_ULong  size;
 
+      /* reject too large bitmaps similarly to the rasterizer */
+      if ( map->rows > 0x7FFF || map->width > 0x7FFF )
+      {
+        error = FT_THROW( Array_Too_Large );
+        goto DestroyExit;
+      }
 
       metrics->width  = (FT_UShort)imgWidth;
       metrics->height = (FT_UShort)imgHeight;
@@ -269,13 +275,6 @@
       map->pixel_mode = FT_PIXEL_MODE_BGRA;
       map->pitch      = (int)( map->width * 4 );
       map->num_grays  = 256;
-
-      /* reject too large bitmaps similarly to the rasterizer */
-      if ( map->rows > 0x7FFF || map->width > 0x7FFF )
-      {
-        error = FT_THROW( Array_Too_Large );
-        goto DestroyExit;
-      }
 
       /* this doesn't overflow: 0x7FFF * 0x7FFF * 4 < 2^32 */
       size = map->rows * (FT_ULong)map->pitch;
