@@ -98,7 +98,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
+DIST_COMMON = $(srcdir)/Makefile.am $(dist_compat_DATA) \
+	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
@@ -149,7 +150,7 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(compatdir)"
-DATA = $(compat_DATA)
+DATA = $(dist_compat_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -299,16 +300,15 @@ top_srcdir = @top_srcdir@
 xkb_base = @xkb_base@
 xkb_rules_symlink = @xkb_rules_symlink@
 compatdir = $(xkb_base)/compat
-compat_DATA = \
-accessx basic caps complete \
-iso9995 \
-japan ledcaps ledcompose \
-lednum ledscroll level5 \
-misc mousekeys \
-olpc pc pc98 xfree86 \
-xtest README
+dist_compat_DATA = \
+    accessx basic caps complete \
+    iso9995 \
+    japan ledcaps ledcompose \
+    lednum ledscroll level5 \
+    misc mousekeys \
+    olpc pc pc98 xfree86 \
+    xtest README
 
-EXTRA_DIST = $(compat_DATA)
 all: all-am
 
 .SUFFIXES:
@@ -341,9 +341,9 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-compatDATA: $(compat_DATA)
+install-dist_compatDATA: $(dist_compat_DATA)
 	@$(NORMAL_INSTALL)
-	@list='$(compat_DATA)'; test -n "$(compatdir)" || list=; \
+	@list='$(dist_compat_DATA)'; test -n "$(compatdir)" || list=; \
 	if test -n "$$list"; then \
 	  echo " $(MKDIR_P) '$(DESTDIR)$(compatdir)'"; \
 	  $(MKDIR_P) "$(DESTDIR)$(compatdir)" || exit 1; \
@@ -357,9 +357,9 @@ install-compatDATA: $(compat_DATA)
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(compatdir)" || exit $$?; \
 	done
 
-uninstall-compatDATA:
+uninstall-dist_compatDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(compat_DATA)'; test -n "$(compatdir)" || list=; \
+	@list='$(dist_compat_DATA)'; test -n "$(compatdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(compatdir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
@@ -459,7 +459,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-compatDATA
+install-data-am: install-dist_compatDATA
 
 install-dvi: install-dvi-am
 
@@ -503,21 +503,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-compatDATA
+uninstall-am: uninstall-dist_compatDATA
 
 .MAKE: install-am install-strip
 
 .PHONY: all all-am check check-am clean clean-generic cscopelist-am \
 	ctags-am distclean distclean-generic distdir dvi dvi-am html \
-	html-am info info-am install install-am install-compatDATA \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags-am uninstall uninstall-am \
-	uninstall-compatDATA
+	html-am info info-am install install-am install-data \
+	install-data-am install-dist_compatDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic pdf pdf-am ps ps-am tags-am uninstall \
+	uninstall-am uninstall-dist_compatDATA
 
 .PRECIOUS: Makefile
 

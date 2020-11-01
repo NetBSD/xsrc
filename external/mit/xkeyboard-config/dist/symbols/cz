@@ -1,4 +1,4 @@
-default  partial alphanumeric_keys
+default partial alphanumeric_keys
 xkb_symbols "basic" {
 
     // This layout conforms to a new Czech compromise standard
@@ -476,8 +476,8 @@ xkb_symbols "prog_typo" {
     //
     // Contains typographic symbols in third and fourth level. 
 
-    name[Group1]="Czech (programming, typographic)";
-
     include "cz(prog)"
     include "cz(typo)"
+
+    name[Group1]="Czech (programming, typographic)";
 };
