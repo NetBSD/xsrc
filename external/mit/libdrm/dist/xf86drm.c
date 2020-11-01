@@ -3132,7 +3132,7 @@ static int drmParseSubsystemType(int maj, int min)
     int ret;
 
     /* Get the type of device we're looking for to pick the right pathname.  */
-    type = drmGetMinorType(min);
+    type = drmGetMinorType(maj, min);
     if (type == -1)
 	return -ENODEV;
 
@@ -3302,7 +3302,7 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
     int ret;
 
     /* Get the type of device we're looking for to pick the right pathname.  */
-    type = drmGetMinorType(min);
+    type = drmGetMinorType(maj, min);
     if (type == -1)
 	return -ENODEV;
 
