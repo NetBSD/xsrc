@@ -523,8 +523,9 @@ uninstall-am: uninstall-miscmanDATA
 @HAVE_XSLTPROC_TRUE@xkeyboard-config.man: $(top_srcdir)/rules/evdev.xml $(srcdir)/man.xsl
 @HAVE_XSLTPROC_TRUE@	$(XSLTPROC) -nonet $(srcdir)/man.xsl $(top_srcdir)/rules/evdev.xml > $@
 
+# First sed swaps @appmansuffix@ back to __appmansuffix__ for the MAN_SUBSTS
 @HAVE_XSLTPROC_TRUE@.man.$(MISC_MAN_SUFFIX):
-@HAVE_XSLTPROC_TRUE@	$(SED) $(MAN_SUBSTS) < $< > $@
+@HAVE_XSLTPROC_TRUE@	$(SED) -e 's|@\(\<[a-z_]*\>\)@|__\1__|g' < $< | $(SED) $(MAN_SUBSTS) > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

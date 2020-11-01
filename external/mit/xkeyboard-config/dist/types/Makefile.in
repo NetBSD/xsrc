@@ -98,7 +98,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
+DIST_COMMON = $(srcdir)/Makefile.am $(dist_types_DATA) \
+	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
@@ -149,7 +150,7 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(typesdir)"
-DATA = $(types_DATA)
+DATA = $(dist_types_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -299,13 +300,12 @@ top_srcdir = @top_srcdir@
 xkb_base = @xkb_base@
 xkb_rules_symlink = @xkb_rules_symlink@
 typesdir = $(xkb_base)/types
-types_DATA = \
-basic cancel caps \
-complete default extra \
-iso9995 level5 mousekeys nokia numpad \
-pc README
+dist_types_DATA = \
+    basic cancel caps \
+    complete default extra \
+    iso9995 level5 mousekeys nokia numpad \
+    pc README
 
-EXTRA_DIST = $(types_DATA)
 all: all-am
 
 .SUFFIXES:
@@ -338,9 +338,9 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-typesDATA: $(types_DATA)
+install-dist_typesDATA: $(dist_types_DATA)
 	@$(NORMAL_INSTALL)
-	@list='$(types_DATA)'; test -n "$(typesdir)" || list=; \
+	@list='$(dist_types_DATA)'; test -n "$(typesdir)" || list=; \
 	if test -n "$$list"; then \
 	  echo " $(MKDIR_P) '$(DESTDIR)$(typesdir)'"; \
 	  $(MKDIR_P) "$(DESTDIR)$(typesdir)" || exit 1; \
@@ -354,9 +354,9 @@ install-typesDATA: $(types_DATA)
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(typesdir)" || exit $$?; \
 	done
 
-uninstall-typesDATA:
+uninstall-dist_typesDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(types_DATA)'; test -n "$(typesdir)" || list=; \
+	@list='$(dist_types_DATA)'; test -n "$(typesdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(typesdir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
@@ -456,7 +456,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-typesDATA
+install-data-am: install-dist_typesDATA
 
 install-dvi: install-dvi-am
 
@@ -500,21 +500,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-typesDATA
+uninstall-am: uninstall-dist_typesDATA
 
 .MAKE: install-am install-strip
 
 .PHONY: all all-am check check-am clean clean-generic cscopelist-am \
 	ctags-am distclean distclean-generic distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip install-typesDATA \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags-am uninstall uninstall-am \
-	uninstall-typesDATA
+	install-data-am install-dist_typesDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic pdf pdf-am ps ps-am tags-am uninstall \
+	uninstall-am uninstall-dist_typesDATA
 
 .PRECIOUS: Makefile
 

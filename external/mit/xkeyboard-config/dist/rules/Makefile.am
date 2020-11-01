@@ -1,4 +1,9 @@
-SUBDIRS = compat
+rulesdir = $(xkb_base)/rules
+xmldir = $(rulesdir)
+
+EXTRA_DIST =
+CLEANFILES =
+BUILT_SOURCES =
 
 if CREATE_RULES_SYMLINK
 #  extra_rules_file = $(xkb_rules_symlink)
@@ -20,110 +25,117 @@ install-data-hook:
 
 endif
 
+# rules/compat parts
+# Because we rely on the generated sources of that file, we need to keep these
+# in the same Makefile.am
+
+layout_mappings=$(srcdir)/compat/layoutsMapping.lst
+variant_mappings=$(srcdir)/compat/variantsMapping.lst
+
+compat_dist_parts = \
+    compat/0003-lists.part \
+    compat/0028-lv_c.part   \
+    compat/0029-l1v1_c.part \
+    compat/0030-l2v2_c.part \
+    compat/0031-l3v3_c.part \
+    compat/0032-l4v4_c.part \
+    compat/0041-o_s.part \
+    compat/0041-o_s.part \
+    compat/0028-lv_c.part \
+    compat/0029-l1v1_c.part \
+    compat/0030-l2v2_c.part \
+    compat/0031-l3v3_c.part \
+    compat/0032-l4v4_c.part \
+    $(NULL)
+
+compat_generated_parts = \
+    compat/0012-ml_s.part \
+    compat/0014-ml1_s.part \
+    compat/0017-ml2_s.part \
+    compat/0019-ml3_s.part \
+    compat/0021-ml4_s.part \
+    compat/0010-mlv_s.part \
+    compat/0016-ml1v1_s.part \
+    compat/0023-ml2v2_s.part \
+    compat/0024-ml3v3_s.part \
+    compat/0025-ml4v4_s.part \
+    $(NULL)
+
+compat_parts = $(compat_generated_parts) $(compat_dist_parts)
 if USE_COMPAT_RULES
-
-parts = \
-	base.hdr.part base.lists.part \
-	RULESET.lists.base.part \
-	compat/base.lists.part \
-	RULESET.m_k.part \
-	base.l1_k.part \
-	base.l_k.part \
-	base.o_k.part \
-	base.ml_g.part \
-	base.m_g.part \
-	compat/base.mlv_s.part   base.mlv_s.part \
-	compat/base.ml_s.part    base.ml_s.part  \
-	compat/base.ml1_s.part   base.ml1_s.part \
-	compat/base.ml1v1_s.part \
-	compat/base.ml2_s.part    base.ml2_s.part  \
-	compat/base.ml3_s.part    base.ml3_s.part  \
-	compat/base.ml4_s.part    base.ml4_s.part  \
-	compat/base.ml2v2_s.part  \
-	compat/base.ml3v3_s.part  \
-	compat/base.ml4v4_s.part  \
-	RULESET.m_s.part \
-	RULESET.ml_s1.part \
-	compat/base.lv_c.part   \
-	compat/base.l1v1_c.part \
-	compat/base.l2v2_c.part \
-	compat/base.l3v3_c.part \
-	compat/base.l4v4_c.part \
-	base.ml_c.part \
-	base.ml1_c.part \
-	base.m_t.part \
-	base.lo_s.part \
-	base.l1o_s.part \
-	base.l2o_s.part \
-	base.l3o_s.part \
-	base.l4o_s.part \
-	compat/base.o_s.part     base.o_s.part \
-	base.o_c.part \
-	base.o_t.part
-
-else
-
-parts = \
-	base.hdr.part base.lists.part \
-	RULESET.lists.base.part \
-	RULESET.m_k.part \
-	base.l1_k.part \
-	base.l_k.part \
-	base.ml_g.part \
-	base.m_g.part \
-	base.mlv_s.part \
-	base.ml_s.part  \
-	base.ml1_s.part \
-	base.ml2_s.part  \
-	base.ml3_s.part  \
-	base.ml4_s.part  \
-	RULESET.m_s.part \
-	RULESET.ml_s1.part \
-	base.ml_c.part \
-	base.ml1_c.part \
-	base.m_t.part \
-	base.l1o_s.part \
-	base.l2o_s.part \
-	base.l3o_s.part \
-	base.l4o_s.part \
-	base.o_s.part \
-	base.o_c.part \
-	base.o_t.part
-
+BUILT_SOURCES += $(compat_parts)
 endif
 
-all_parts_dist = base.hdr.part \
-	base.lists.part \
-	base.lists.base.part \
-	evdev.lists.base.part \
-	base.m_k.part \
-	base.l1_k.part \
-	base.l_k.part \
-	base.o_k.part \
-	base.ml_g.part \
-	base.m_g.part \
-	base.mlv_s.part \
-	base.ml_s.part \
-	base.ml1_s.part \
-	base.ml2_s.part \
-	base.ml3_s.part \
-	base.ml4_s.part \
-	base.m_s.part \
-	base.ml_s1.part \
-	evdev.ml_s1.part \
-	base.ml_c.part \
-	base.ml1_c.part \
-	base.m_t.part \
-	base.lo_s.part \
-	base.l1o_s.part \
-	base.l2o_s.part \
-	base.l3o_s.part \
-	base.l4o_s.part \
-	base.o_s.part \
-	base.o_c.part \
-	base.o_t.part \
-	evdev.m_k.part \
-	evdev.m_s.part
+map_script = $(srcdir)/compat/map-variants.py
+
+compat/0014-ml1_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mls --number=1 $@ $(layout_mappings) $(variant_mappings)
+
+compat/0017-ml2_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mls --number=2 $@ $(layout_mappings) $(variant_mappings)
+
+compat/0019-ml3_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mls --number=3 $@ $(layout_mappings) $(variant_mappings)
+
+compat/0021-ml4_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mls --number=4 $@ $(layout_mappings) $(variant_mappings)
+
+compat/0016-ml1v1_s.part: $(map_script) $(variant_mappings)
+	$(map_script) --want=mlvs --number=1 $@ $(variant_mappings)
+
+compat/0023-ml2v2_s.part: $(map_script) $(variant_mappings)
+	$(map_script) --want=mlvs --number=2 $@ $(variant_mappings)
+
+compat/0024-ml3v3_s.part: $(map_script) $(variant_mappings)
+	$(map_script) --want=mlvs --number=3 $@ $(variant_mappings)
+
+compat/0025-ml4v4_s.part: $(map_script) $(variant_mappings)
+	$(map_script) --want=mlvs --number=4 $@ $(variant_mappings)
+
+compat/0012-ml_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mls $@ $(layout_mappings) $(variant_mappings)
+
+compat/0010-mlv_s.part: $(map_script) $(layout_mappings) $(variant_mappings)
+	$(map_script) --want=mlvs $@ $(variant_mappings)
+
+EXTRA_DIST += $(layout_mappings) $(variant_mappings) $(compat_dist_parts) $(map_script)
+CLEANFILES += $(compat_generated_parts)
+
+# end of the rules/compat parts, now for the parts in rules/
+
+parts = \
+	0000-hdr.part \
+	0001-lists.part \
+	0002-RULESET.lists.part \
+	0004-RULESET.m_k.part \
+	0005-l1_k.part \
+	0006-l_k.part \
+	0007-o_k.part \
+	0008-ml_g.part \
+	0009-m_g.part \
+	0011-mlv_s.part \
+	0013-ml_s.part \
+	0015-ml1_s.part \
+	0018-ml2_s.part  \
+	0020-ml3_s.part  \
+	0022-ml4_s.part  \
+	0026-RULESET.m_s.part \
+	0027-RULESET.ml_s1.part \
+	0033-ml_c.part \
+	0034-ml1_c.part \
+	0035-m_t.part \
+	0036-lo_s.part \
+	0037-l1o_s.part \
+	0038-l2o_s.part \
+	0039-l3o_s.part \
+	0040-l4o_s.part \
+	0042-o_s.part \
+	0043-o_c.part \
+	0044-o_t.part
+
+if USE_COMPAT_RULES
+parts += $(compat_parts)
+endif
 
 rules_files = base evdev xfree98
 
@@ -136,11 +148,11 @@ SUFFIXES = .xml .lst
 
 base_parts=$(subst RULESET,base,$(parts))
 base: $(base_parts) merge.py
-	$(srcdir)/merge.py $@ $(srcdir) $(builddir) $(base_parts)
+	$(srcdir)/merge.py --srcdir=$(srcdir) --builddir=$(builddir) $(base_parts) > $@
 
 evdev_parts=$(subst RULESET,evdev,$(parts))
 evdev: $(evdev_sources) merge.py
-	$(srcdir)/merge.py $@ $(srcdir) $(builddir) $(evdev_parts)
+	$(srcdir)/merge.py --srcdir=$(srcdir) --builddir=$(builddir) $(evdev_parts) > $@
 
 dist_files = xkb.dtd README
 
@@ -154,11 +166,8 @@ $(srcdir)/evdev.xml: base.xml
 $(srcdir)/evdev.extras.xml: base.extras.xml
 	cp $(srcdir)/base.extras.xml $@
 
-EXTRA_DIST= $(xml_DATA) xfree98 \
-            $(all_parts_dist) \
-            xml2lst.pl merge.py xkb.its $(dist_files)
+EXTRA_DIST += $(xml_DATA) xfree98 \
+              $(base_parts) $(evdev_parts) $(compat_parts) \
+              xml2lst.pl merge.py xkb.its $(dist_files)
 
-CLEANFILES = base base.lst evdev evdev.lst
-
-rulesdir = $(xkb_base)/rules
-xmldir = $(rulesdir)
+CLEANFILES += base base.lst evdev evdev.lst

@@ -219,9 +219,11 @@ xkb_symbols "evdev" {
     key <I255>   {      [ XF86RFKill            ]       }; // KEY_RFKILL
 
     key <I372>  {       [ XF86Favorites          ]       };
-    key <I382>  {       [ XF86Keyboard           ]       };
-    key <I569>  {       [ XF86RotationLockToggle ]       };
     key <I380>  {       [ XF86FullScreen         ]       };
+    key <I382>  {       [ XF86Keyboard           ]       };
+    key <I442>  {       [ dollar                 ]       };
+    key <I443>  {       [ EuroSign               ]       };
+    key <I569>  {       [ XF86RotationLockToggle ]       };
 
     key <FK13>   {      [ XF86Tools         ]       };
     key <FK14>   {      [ XF86Launch5       ]       };

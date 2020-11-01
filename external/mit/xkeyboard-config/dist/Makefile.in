@@ -192,7 +192,7 @@ CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(srcdir)/xkeyboard-config.pc.in ABOUT-NLS AUTHORS COPYING \
-	ChangeLog NEWS README TODO compile config.guess config.rpath \
+	ChangeLog NEWS README compile config.guess config.rpath \
 	config.sub install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)

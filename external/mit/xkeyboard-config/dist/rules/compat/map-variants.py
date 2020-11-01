@@ -1,7 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import re
+import sys
+from pathlib import Path
 
 
 class Layout(object):
@@ -12,8 +14,8 @@ class Layout(object):
             assert variant is None
             # parse a layout(variant) string
             match = re.match(r'([^(]+)\(([^)]+)\)', layout)
-            self.layout = match[1]
-            self.variant = match[2]
+            self.layout = match.groups()[0]
+            self.variant = match.groups()[1]
 
     def __str__(self):
         if self.variant:
@@ -101,6 +103,9 @@ def write_layout_n_variant_n(dest, mappings, number, write_header):
 
 
 def map_variant(dest, files, want='mls', number=None):
+    if number == 0:
+        number = None
+
     for idx, f in enumerate(files):
         write_header = idx == 0
 
@@ -129,5 +134,9 @@ if __name__ == '__main__':
     parser.add_argument('files', nargs='+', type=str)
     ns = parser.parse_args()
 
-    with open(ns.dest, 'w') as fd:
+    dest = None
+    if ns.dest == '-':
+        dest = sys.stdout
+
+    with dest or open(ns.dest, 'w') as fd:
         map_variant(fd, ns.files, ns.want, ns.number)

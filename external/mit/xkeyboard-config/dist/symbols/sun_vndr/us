@@ -27,7 +27,7 @@
 // of the copyright holder.
 //
 
-partial default alphanumeric_keys
+default partial alphanumeric_keys
 xkb_symbols "sunbasic" {
 
     include "us(basic)"
@@ -260,6 +260,16 @@ partial alphanumeric_keys
 };
 
 partial alphanumeric_keys
+	xkb_symbols "3l-emacs" {
+	include "us(3l-emacs)"
+};
+
+partial alphanumeric_keys
 	xkb_symbols "drix" {
 	include "us(drix)"
+};
+
+partial alphanumeric_keys
+	xkb_symbols "de_se_fi" {
+	include "us(de_se_fi)"
 };

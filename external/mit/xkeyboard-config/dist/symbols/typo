@@ -7,7 +7,7 @@
 // Mainly based on the layout proposed by Ilya Birman
 // http://ilyabirman.ru/projects/typography-layout/
 
-default  partial
+default partial
 xkb_symbols "base" {
 
     // 1st keyboard row
