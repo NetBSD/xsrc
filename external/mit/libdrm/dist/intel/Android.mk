@@ -28,16 +28,11 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/Makefile.sources
 
 LOCAL_MODULE := libdrm_intel
-LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(LIBDRM_INTEL_FILES)
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
-
-LOCAL_CFLAGS := \
-	-DHAVE_LIBDRM_ATOMIC_PRIMITIVES=1
 
 LOCAL_SHARED_LIBRARIES := \
-	libdrm \
-	libpciaccess
+	libdrm
 
+include $(LIBDRM_COMMON_MK)
 include $(BUILD_SHARED_LIBRARY)

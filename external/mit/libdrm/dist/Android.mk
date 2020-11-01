@@ -21,27 +21,54 @@
 # IN THE SOFTWARE.
 #
 
+LIBDRM_ANDROID_MAJOR_VERSION := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
+ifneq ($(filter 2 4, $(LIBDRM_ANDROID_MAJOR_VERSION)),)
+$(error "Android 4.4 and earlier not supported")
+endif
+
+LIBDRM_COMMON_MK := $(call my-dir)/Android.common.mk
+
 LOCAL_PATH := $(call my-dir)
+LIBDRM_TOP := $(LOCAL_PATH)
+
 include $(CLEAR_VARS)
 
-# Import variables LIBDRM_{,H_,INCLUDE_H_,INCLUDE_VMWGFX_H_}FILES
+# Import variables LIBDRM_{,H,INCLUDE_H,INCLUDE_ANDROID_H,INCLUDE_VMWGFX_H}_FILES
 include $(LOCAL_PATH)/Makefile.sources
 
+#static library for the device (recovery)
+include $(CLEAR_VARS)
 LOCAL_MODULE := libdrm
-LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(LIBDRM_FILES)
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH) \
-	$(LOCAL_PATH)/include/drm
+	$(LOCAL_PATH)/include/drm \
+	$(LOCAL_PATH)/android
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/include/drm
 
-LOCAL_CFLAGS := \
-	-DHAVE_VISIBILITY=1 \
-	-DHAVE_LIBDRM_ATOMIC_PRIMITIVES=1
+include $(LIBDRM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
 
+# Shared library for the device
+include $(CLEAR_VARS)
+LOCAL_MODULE := libdrm
+
+LOCAL_SRC_FILES := $(LIBDRM_FILES)
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
+	$(LOCAL_PATH) \
+	$(LOCAL_PATH)/include/drm \
+	$(LOCAL_PATH)/android
+
+LOCAL_SHARED_LIBRARIES := \
+	libcutils
+
+LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)/include/drm
+
+include $(LIBDRM_COMMON_MK)
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
