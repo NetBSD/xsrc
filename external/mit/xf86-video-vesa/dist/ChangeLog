@@ -1,3 +1,89 @@
+commit 68f2589c687c132fc9abfd1501930bf191701165
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Sep 10 18:01:44 2020 -0400
+
+    vesa 2.5.0
+
+commit 51a73f2fc2548d9b699d2a9c016bf5892c41d48a
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed May 30 11:46:46 2018 -0400
+
+    Disable shadow by default on known-virtual GPUs
+    
+    Device memory is the same domain as host memory, in this case, so the
+    shadow just introduces more memcpy.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 53c7796e8ddc6aaaef79df8c852c0d9d151a8559
+Author: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+Date:   Fri May 10 08:40:05 2019 +0200
+
+    Refuse to run on UEFI machines running older kernels
+    
+    Prior to kernel v3.12, the efi framebuffer driver was named "efifb".
+    This cause problem on RHEL 7 as the base kernel is 3.10.
+    
+    "efi-framebuffer.0" was added by commit 2645e0aa for that reason
+    (don't run on UEFI machine).
+    The change from "efifb" to "efi-framebuffer" was done with commit
+    e6816a8 in the kernel
+    
+    Signed-off-by: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+    [ofourdan: updated commit message with commit references]
+    Reviewed-by: Olivier Fourdan <ofourdan@redhat.com>
+
+commit 634dae745cf71c257554b4c18bde7710cd1716e8
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Mar 6 12:45:11 2019 -0500
+
+    Try harder to avoid 24bpp
+    
+    We're preferring depth 24 even if that means 24bpp. Newer servers don't
+    support 24bpp anymore, and even for old servers it's suboptimal. Change
+    the heuristic to only try 24bpp if the alternative is pseudocolor.
+    
+    Fixes: xorg/driver/xf86-video-vesa#3
+
+commit 637c968d1a2fecfb25bd6d14e4fe285e3ceafc13
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:19:22 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 503665924c77a1a4c5f82651aa08b9e5c5e0d4f6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:43:51 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2645e0aa9c17c2c966a0533e52ad00510311483e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Aug 29 11:04:23 2018 -0400
+
+    Refuse to run on UEFI machines
+    
+    No possible good can come of this.
+    
+    v2: Check for .../efi-framebuffer.0 ("is there an EFI framebuffer")
+    instead of /sys/firmware/efi ("is this an EFI machine"). Suggested by
+    Peter Jones.
+    
+    Reviewed-by: Peter Jones <pjones@redhat.com>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 366622333bc1b81cab6d4aa325a18fcd27bf5db4
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Aug 28 15:26:46 2018 -0400
+
+    Newline-terminate a few error messages
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 07e4a0f0b3bd6308da2e000c12230b1e171e65a7
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Feb 15 14:33:38 2018 -0500
