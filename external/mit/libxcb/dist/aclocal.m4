@@ -366,7 +366,7 @@ AS_IF([test "$AS_TR_SH([with_]m4_tolower([$1]))" = "yes"],
 
 dnl xorg-macros.m4.  Generated from xorg-macros.m4.in xorgversion.m4 by configure.
 dnl
-dnl Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -403,7 +403,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.0])
+m4_define([vers_have], [1.19.2])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -480,6 +480,17 @@ AC_DEFUN([XORG_MANPAGE_SECTIONS],[
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_SED])
 
+case $host_os in
+    solaris*)
+        # Solaris 2.0 - 11.3 use SysV man page section numbers, so we
+        # check for a man page file found in later versions that use
+        # traditional section numbers instead
+        AC_CHECK_FILE([/usr/share/man/man7/attributes.7],
+                [SYSV_MAN_SECTIONS=false], [SYSV_MAN_SECTIONS=true])
+        ;;
+    *) SYSV_MAN_SECTIONS=false ;;
+esac
+
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
 fi
@@ -495,9 +506,9 @@ if test x$LIB_MAN_DIR = x    ; then
 fi
 
 if test x$FILE_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	FILE_MAN_SUFFIX=4  ;;
-	*)		FILE_MAN_SUFFIX=5  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				FILE_MAN_SUFFIX=4  ;;
+	*)				FILE_MAN_SUFFIX=5  ;;
     esac
 fi
 if test x$FILE_MAN_DIR = x    ; then
@@ -505,9 +516,9 @@ if test x$FILE_MAN_DIR = x    ; then
 fi
 
 if test x$MISC_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	MISC_MAN_SUFFIX=5  ;;
-	*)		MISC_MAN_SUFFIX=7  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				MISC_MAN_SUFFIX=5  ;;
+	*)				MISC_MAN_SUFFIX=7  ;;
     esac
 fi
 if test x$MISC_MAN_DIR = x    ; then
@@ -515,9 +526,9 @@ if test x$MISC_MAN_DIR = x    ; then
 fi
 
 if test x$DRIVER_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	DRIVER_MAN_SUFFIX=7  ;;
-	*)		DRIVER_MAN_SUFFIX=4  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				DRIVER_MAN_SUFFIX=7  ;;
+	*)				DRIVER_MAN_SUFFIX=4  ;;
     esac
 fi
 if test x$DRIVER_MAN_DIR = x    ; then
@@ -525,9 +536,9 @@ if test x$DRIVER_MAN_DIR = x    ; then
 fi
 
 if test x$ADMIN_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	ADMIN_MAN_SUFFIX=1m ;;
-	*)		ADMIN_MAN_SUFFIX=8  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				ADMIN_MAN_SUFFIX=1m ;;
+	*)				ADMIN_MAN_SUFFIX=8  ;;
     esac
 fi
 if test x$ADMIN_MAN_DIR = x    ; then
@@ -2201,8 +2212,9 @@ AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 macros_datadir=`$PKG_CONFIG --print-errors --variable=pkgdatadir xorg-macros`
 INSTALL_CMD="(cp -f "$macros_datadir/INSTALL" \$(top_srcdir)/.INSTALL.tmp && \
 mv \$(top_srcdir)/.INSTALL.tmp \$(top_srcdir)/INSTALL) \
-|| (rm -f \$(top_srcdir)/.INSTALL.tmp; touch \$(top_srcdir)/INSTALL; \
-echo 'util-macros \"pkgdatadir\" from xorg-macros.pc not found: installing possibly empty INSTALL.' >&2)"
+|| (rm -f \$(top_srcdir)/.INSTALL.tmp; test -e \$(top_srcdir)/INSTALL || ( \
+touch \$(top_srcdir)/INSTALL; \
+echo 'failed to copy INSTALL from util-macros: installing empty INSTALL.' >&2))"
 AC_SUBST([INSTALL_CMD])
 ]) # XORG_INSTALL
 dnl Copyright 2005 Red Hat, Inc
@@ -2263,10 +2275,11 @@ AC_DEFUN([XORG_RELEASE_VERSION],[
 #
 #
 AC_DEFUN([XORG_CHANGELOG], [
-CHANGELOG_CMD="(GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp && \
+CHANGELOG_CMD="((GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp) 2>/dev/null && \
 mv \$(top_srcdir)/.changelog.tmp \$(top_srcdir)/ChangeLog) \
-|| (rm -f \$(top_srcdir)/.changelog.tmp; touch \$(top_srcdir)/ChangeLog; \
-echo 'git directory not found: installing possibly empty changelog.' >&2)"
+|| (rm -f \$(top_srcdir)/.changelog.tmp; test -e \$(top_srcdir)/ChangeLog || ( \
+touch \$(top_srcdir)/ChangeLog; \
+echo 'git failed to create ChangeLog: installing empty ChangeLog.' >&2))"
 AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
