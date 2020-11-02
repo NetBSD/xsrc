@@ -10,8 +10,10 @@
 /* build WGL tests */
 /* #undef BUILD_WGL */
 
+#if 0 /* in Makefile */
 /* Whether EGL support is enabled */
 #define ENABLE_EGL 1
+#endif
 
 /* Whether GLX support is enabled */
 #define ENABLE_GLX 1
