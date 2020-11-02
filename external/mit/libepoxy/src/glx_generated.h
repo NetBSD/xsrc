@@ -1,5 +1,20 @@
 /* GL dispatch header.
  * This is code-generated from the GL API XML files from Khronos.
+ * 
+ * Copyright (c) 2013-2018 The Khronos Group Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  */
 
 #pragma once
@@ -107,6 +122,7 @@ typedef struct {
 #define GLX_AMD_gpu_association 1
 #define GLX_ARB_context_flush_control 1
 #define GLX_ARB_create_context 1
+#define GLX_ARB_create_context_no_error 1
 #define GLX_ARB_create_context_profile 1
 #define GLX_ARB_create_context_robustness 1
 #define GLX_ARB_fbconfig_float 1
@@ -117,12 +133,14 @@ typedef struct {
 #define GLX_ARB_robustness_share_group_isolation 1
 #define GLX_ARB_vertex_buffer_object 1
 #define GLX_EXT_buffer_age 1
+#define GLX_EXT_context_priority 1
 #define GLX_EXT_create_context_es2_profile 1
 #define GLX_EXT_create_context_es_profile 1
 #define GLX_EXT_fbconfig_packed_float 1
 #define GLX_EXT_framebuffer_sRGB 1
 #define GLX_EXT_import_context 1
 #define GLX_EXT_libglvnd 1
+#define GLX_EXT_no_config_context 1
 #define GLX_EXT_stereo_tree 1
 #define GLX_EXT_swap_control 1
 #define GLX_EXT_swap_control_tear 1
@@ -136,6 +154,7 @@ typedef struct {
 #define GLX_MESA_query_renderer 1
 #define GLX_MESA_release_buffers 1
 #define GLX_MESA_set_3dfx_mode 1
+#define GLX_MESA_swap_control 1
 #define GLX_NV_copy_buffer 1
 #define GLX_NV_copy_image 1
 #define GLX_NV_delay_before_swap 1
@@ -316,6 +335,11 @@ typedef struct {
 #define GLX_TRANSPARENT_ALPHA_VALUE                              0x28
 #define GLX_TRANSPARENT_ALPHA_VALUE_EXT                          0x28
 #define GLX_EXTENSIONS                                           0x3
+#define GLX_CONTEXT_PRIORITY_LEVEL_EXT                           0x3100
+#define GLX_CONTEXT_PRIORITY_HIGH_EXT                            0x3101
+#define GLX_CONTEXT_PRIORITY_MEDIUM_EXT                          0x3102
+#define GLX_CONTEXT_PRIORITY_LOW_EXT                             0x3103
+#define GLX_CONTEXT_OPENGL_NO_ERROR_ARB                          0x31B3
 #define GLX_NONE                                                 0x8000
 #define GLX_NONE_EXT                                             0x8000
 #define GLX_SLOW_CONFIG                                          0x8001
@@ -409,7 +433,6 @@ typedef struct {
 #define GLX_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_MESA   0x818B
 #define GLX_RENDERER_OPENGL_ES_PROFILE_VERSION_MESA              0x818C
 #define GLX_RENDERER_OPENGL_ES2_PROFILE_VERSION_MESA             0x818D
-#define GLX_RENDERER_ID_MESA                                     0x818E
 #define GLX_LOSE_CONTEXT_ON_RESET_ARB                            0x8252
 #define GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB              0x8256
 #define GLX_NO_RESET_NOTIFICATION_ARB                            0x8261
@@ -520,8 +543,9 @@ typedef __GLXextFuncPtr (GLAPIENTRY *PFNGLXGETPROCADDRESSPROC)(const GLubyte * p
 typedef __GLXextFuncPtr (GLAPIENTRY *PFNGLXGETPROCADDRESSARBPROC)(const GLubyte * procName);
 typedef void (GLAPIENTRY *PFNGLXGETSELECTEDEVENTPROC)(Display * dpy, GLXDrawable draw, unsigned long * event_mask);
 typedef void (GLAPIENTRY *PFNGLXGETSELECTEDEVENTSGIXPROC)(Display * dpy, GLXDrawable drawable, unsigned long * mask);
+typedef int (GLAPIENTRY *PFNGLXGETSWAPINTERVALMESAPROC)(void);
 typedef Bool (GLAPIENTRY *PFNGLXGETSYNCVALUESOMLPROC)(Display * dpy, GLXDrawable drawable, int64_t * ust, int64_t * msc, int64_t * sbc);
-typedef Status (GLAPIENTRY *PFNGLXGETTRANSPARENTINDEXSUNPROC)(Display * dpy, Window overlay, Window underlay, long * pTransparentIndex);
+typedef Status (GLAPIENTRY *PFNGLXGETTRANSPARENTINDEXSUNPROC)(Display * dpy, Window overlay, Window underlay, unsigned long * pTransparentIndex);
 typedef int (GLAPIENTRY *PFNGLXGETVIDEODEVICENVPROC)(Display * dpy, int screen, int numVideoDevices, GLXVideoDeviceNV * pVideoDevice);
 typedef int (GLAPIENTRY *PFNGLXGETVIDEOINFONVPROC)(Display * dpy, int screen, GLXVideoDeviceNV VideoDevice, unsigned long * pulCounterOutputPbuffer, unsigned long * pulCounterOutputVideo);
 typedef int (GLAPIENTRY *PFNGLXGETVIDEOSYNCSGIPROC)(unsigned int * count);
@@ -549,7 +573,7 @@ typedef void (GLAPIENTRY *PFNGLXQUERYDRAWABLEPROC)(Display * dpy, GLXDrawable dr
 typedef Bool (GLAPIENTRY *PFNGLXQUERYEXTENSIONPROC)(Display * dpy, int * errorb, int * event);
 typedef const char * (GLAPIENTRY *PFNGLXQUERYEXTENSIONSSTRINGPROC)(Display * dpy, int screen);
 typedef Bool (GLAPIENTRY *PFNGLXQUERYFRAMECOUNTNVPROC)(Display * dpy, int screen, GLuint * count);
-typedef int (GLAPIENTRY *PFNGLXQUERYGLXPBUFFERSGIXPROC)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
+typedef void (GLAPIENTRY *PFNGLXQUERYGLXPBUFFERSGIXPROC)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
 typedef int (GLAPIENTRY *PFNGLXQUERYHYPERPIPEATTRIBSGIXPROC)(Display * dpy, int timeSlice, int attrib, int size, void * returnAttribList);
 typedef int (GLAPIENTRY *PFNGLXQUERYHYPERPIPEBESTATTRIBSGIXPROC)(Display * dpy, int timeSlice, int attrib, int size, void * attribList, void * returnAttribList);
 typedef GLXHyperpipeConfigSGIX * (GLAPIENTRY *PFNGLXQUERYHYPERPIPECONFIGSGIXPROC)(Display * dpy, int hpId, int * npipes);
@@ -571,10 +595,11 @@ typedef Bool (GLAPIENTRY *PFNGLXRESETFRAMECOUNTNVPROC)(Display * dpy, int screen
 typedef void (GLAPIENTRY *PFNGLXSELECTEVENTPROC)(Display * dpy, GLXDrawable draw, unsigned long event_mask);
 typedef void (GLAPIENTRY *PFNGLXSELECTEVENTSGIXPROC)(Display * dpy, GLXDrawable drawable, unsigned long mask);
 typedef int (GLAPIENTRY *PFNGLXSENDPBUFFERTOVIDEONVPROC)(Display * dpy, GLXPbuffer pbuf, int iBufferType, unsigned long * pulCounterPbuffer, GLboolean bBlock);
-typedef Bool (GLAPIENTRY *PFNGLXSET3DFXMODEMESAPROC)(int mode);
+typedef GLboolean (GLAPIENTRY *PFNGLXSET3DFXMODEMESAPROC)(GLint mode);
 typedef void (GLAPIENTRY *PFNGLXSWAPBUFFERSPROC)(Display * dpy, GLXDrawable drawable);
 typedef int64_t (GLAPIENTRY *PFNGLXSWAPBUFFERSMSCOMLPROC)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder);
 typedef void (GLAPIENTRY *PFNGLXSWAPINTERVALEXTPROC)(Display * dpy, GLXDrawable drawable, int interval);
+typedef int (GLAPIENTRY *PFNGLXSWAPINTERVALMESAPROC)(unsigned int interval);
 typedef int (GLAPIENTRY *PFNGLXSWAPINTERVALSGIPROC)(int interval);
 typedef void (GLAPIENTRY *PFNGLXUSEXFONTPROC)(Font font, int first, int count, int list);
 typedef Bool (GLAPIENTRY *PFNGLXWAITFORMSCOMLPROC)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * ust, int64_t * msc, int64_t * sbc);
@@ -718,9 +743,11 @@ EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEvent)(Display * dpy, GLX
 
 EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEventSGIX)(Display * dpy, GLXDrawable drawable, unsigned long * mask);
 
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetSwapIntervalMESA)(void);
+
 EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXGetSyncValuesOML)(Display * dpy, GLXDrawable drawable, int64_t * ust, int64_t * msc, int64_t * sbc);
 
-EPOXY_PUBLIC Status (EPOXY_CALLSPEC *epoxy_glXGetTransparentIndexSUN)(Display * dpy, Window overlay, Window underlay, long * pTransparentIndex);
+EPOXY_PUBLIC Status (EPOXY_CALLSPEC *epoxy_glXGetTransparentIndexSUN)(Display * dpy, Window overlay, Window underlay, unsigned long * pTransparentIndex);
 
 EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetVideoDeviceNV)(Display * dpy, int screen, int numVideoDevices, GLXVideoDeviceNV * pVideoDevice);
 
@@ -776,7 +803,7 @@ EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXQueryExtensionsString)(Displ
 
 EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryFrameCountNV)(Display * dpy, int screen, GLuint * count);
 
-EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXQueryGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
 
 EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * returnAttribList);
 
@@ -820,13 +847,15 @@ EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSelectEventSGIX)(Display * dpy, GLXD
 
 EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXSendPbufferToVideoNV)(Display * dpy, GLXPbuffer pbuf, int iBufferType, unsigned long * pulCounterPbuffer, GLboolean bBlock);
 
-EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXSet3DfxModeMESA)(int mode);
+EPOXY_PUBLIC GLboolean (EPOXY_CALLSPEC *epoxy_glXSet3DfxModeMESA)(GLint mode);
 
 EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSwapBuffers)(Display * dpy, GLXDrawable drawable);
 
 EPOXY_PUBLIC int64_t (EPOXY_CALLSPEC *epoxy_glXSwapBuffersMscOML)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder);
 
 EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSwapIntervalEXT)(Display * dpy, GLXDrawable drawable, int interval);
+
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXSwapIntervalMESA)(unsigned int interval);
 
 EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXSwapIntervalSGI)(int interval);
 
@@ -910,6 +939,7 @@ EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXWaitX)(void);
 #define glXGetProcAddressARB epoxy_glXGetProcAddressARB
 #define glXGetSelectedEvent epoxy_glXGetSelectedEvent
 #define glXGetSelectedEventSGIX epoxy_glXGetSelectedEventSGIX
+#define glXGetSwapIntervalMESA epoxy_glXGetSwapIntervalMESA
 #define glXGetSyncValuesOML epoxy_glXGetSyncValuesOML
 #define glXGetTransparentIndexSUN epoxy_glXGetTransparentIndexSUN
 #define glXGetVideoDeviceNV epoxy_glXGetVideoDeviceNV
@@ -965,6 +995,7 @@ EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXWaitX)(void);
 #define glXSwapBuffers epoxy_glXSwapBuffers
 #define glXSwapBuffersMscOML epoxy_glXSwapBuffersMscOML
 #define glXSwapIntervalEXT epoxy_glXSwapIntervalEXT
+#define glXSwapIntervalMESA epoxy_glXSwapIntervalMESA
 #define glXSwapIntervalSGI epoxy_glXSwapIntervalSGI
 #define glXUseXFont epoxy_glXUseXFont
 #define glXWaitForMscOML epoxy_glXWaitForMscOML

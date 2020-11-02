@@ -1,11 +1,8 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* build APPLE is apple (for testing) */
-/* #undef BUILD_APPLE */
-
 /* build EGL tests */
-/* #undef BUILD_EGL */
+#define BUILD_EGL 1
 
 /* build GLX tests */
 #define BUILD_GLX 1
@@ -14,16 +11,22 @@
 /* #undef BUILD_WGL */
 
 /* Whether EGL support is enabled */
-/* #undef ENABLE_EGL */
+#define ENABLE_EGL 1
 
 /* Whether GLX support is enabled */
 #define ENABLE_GLX 1
+
+/* Whether X11 support is enabled */
+#define ENABLE_X11 1
 
 /* defines how to decorate public symbols while building */
 #define EPOXY_PUBLIC __attribute__((visibility("default"))) extern
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the `dlvsym' function. */
+#define HAVE_DLVSYM 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -68,7 +71,7 @@
 #define PACKAGE_NAME "libepoxy"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libepoxy 1.4.3"
+#define PACKAGE_STRING "libepoxy 1.5.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libepoxy"
@@ -77,22 +80,22 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.3"
+#define PACKAGE_VERSION "1.5.4"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 4
+#define PACKAGE_VERSION_MINOR 5
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
+#define PACKAGE_VERSION_PATCHLEVEL 4
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.4.3"
+#define VERSION "1.5.4"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

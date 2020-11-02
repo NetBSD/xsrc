@@ -3,7 +3,7 @@
 # Identity of this package.
 PACKAGE_NAME='libepoxy'
 PACKAGE_TARNAME='libepoxy'
-PACKAGE_VERSION='1.4.3'
-PACKAGE_STRING='libepoxy 1.4.3'
+PACKAGE_VERSION='1.5.4'
+PACKAGE_STRING='libepoxy 1.5.4'
 PACKAGE_BUGREPORT='https://github.com/anholt/libepoxy'
 PACKAGE_URL=''

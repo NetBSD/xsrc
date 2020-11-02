@@ -1,5 +1,20 @@
 /* GL dispatch code.
  * This is code-generated from the GL API XML files from Khronos.
+ * 
+ * Copyright (c) 2013-2018 The Khronos Group Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  */
 
 #include "config.h"
@@ -11,8 +26,8 @@
 #include "dispatch_common.h"
 #include "epoxy/glx.h"
 
-#if defined(__GNUC__) || defined(__lint__)
-#define EPOXY_NOINLINE __attribute__((__noinline__))
+#ifdef __GNUC__
+#define EPOXY_NOINLINE __attribute__((noinline))
 #elif defined (_MSC_VER)
 #define EPOXY_NOINLINE __declspec(noinline)
 #endif
@@ -85,6 +100,7 @@ struct dispatch_table {
     PFNGLXGETPROCADDRESSARBPROC epoxy_glXGetProcAddressARB;
     PFNGLXGETSELECTEDEVENTPROC epoxy_glXGetSelectedEvent;
     PFNGLXGETSELECTEDEVENTSGIXPROC epoxy_glXGetSelectedEventSGIX;
+    PFNGLXGETSWAPINTERVALMESAPROC epoxy_glXGetSwapIntervalMESA;
     PFNGLXGETSYNCVALUESOMLPROC epoxy_glXGetSyncValuesOML;
     PFNGLXGETTRANSPARENTINDEXSUNPROC epoxy_glXGetTransparentIndexSUN;
     PFNGLXGETVIDEODEVICENVPROC epoxy_glXGetVideoDeviceNV;
@@ -140,6 +156,7 @@ struct dispatch_table {
     PFNGLXSWAPBUFFERSPROC epoxy_glXSwapBuffers;
     PFNGLXSWAPBUFFERSMSCOMLPROC epoxy_glXSwapBuffersMscOML;
     PFNGLXSWAPINTERVALEXTPROC epoxy_glXSwapIntervalEXT;
+    PFNGLXSWAPINTERVALMESAPROC epoxy_glXSwapIntervalMESA;
     PFNGLXSWAPINTERVALSGIPROC epoxy_glXSwapIntervalSGI;
     PFNGLXUSEXFONTPROC epoxy_glXUseXFont;
     PFNGLXWAITFORMSCOMLPROC epoxy_glXWaitForMscOML;
@@ -157,43 +174,44 @@ get_dispatch_table(void);
 
 enum glx_provider {
     glx_provider_terminator = 0,
-    GLX_10,
-    GLX_11,
-    GLX_12,
-    GLX_13,
-    GLX_extension_GLX_AMD_gpu_association,
-    GLX_extension_GLX_ARB_create_context,
-    GLX_extension_GLX_ARB_get_proc_address,
-    GLX_extension_GLX_EXT_import_context,
-    GLX_extension_GLX_EXT_swap_control,
-    GLX_extension_GLX_EXT_texture_from_pixmap,
-    GLX_extension_GLX_MESA_agp_offset,
-    GLX_extension_GLX_MESA_copy_sub_buffer,
-    GLX_extension_GLX_MESA_pixmap_colormap,
-    GLX_extension_GLX_MESA_query_renderer,
-    GLX_extension_GLX_MESA_release_buffers,
-    GLX_extension_GLX_MESA_set_3dfx_mode,
-    GLX_extension_GLX_NV_copy_buffer,
-    GLX_extension_GLX_NV_copy_image,
-    GLX_extension_GLX_NV_delay_before_swap,
-    GLX_extension_GLX_NV_present_video,
-    GLX_extension_GLX_NV_swap_group,
-    GLX_extension_GLX_NV_video_capture,
-    GLX_extension_GLX_NV_video_out,
-    GLX_extension_GLX_OML_sync_control,
-    GLX_extension_GLX_SGIX_fbconfig,
-    GLX_extension_GLX_SGIX_hyperpipe,
-    GLX_extension_GLX_SGIX_pbuffer,
-    GLX_extension_GLX_SGIX_swap_barrier,
-    GLX_extension_GLX_SGIX_swap_group,
-    GLX_extension_GLX_SGIX_video_resize,
-    GLX_extension_GLX_SGIX_video_source,
-    GLX_extension_GLX_SGI_cushion,
-    GLX_extension_GLX_SGI_make_current_read,
-    GLX_extension_GLX_SGI_swap_control,
-    GLX_extension_GLX_SGI_video_sync,
-    GLX_extension_GLX_SUN_get_transparent_index,
-    always_present,
+    PROVIDER_GLX_10,
+    PROVIDER_GLX_11,
+    PROVIDER_GLX_12,
+    PROVIDER_GLX_13,
+    PROVIDER_GLX_AMD_gpu_association,
+    PROVIDER_GLX_ARB_create_context,
+    PROVIDER_GLX_ARB_get_proc_address,
+    PROVIDER_GLX_EXT_import_context,
+    PROVIDER_GLX_EXT_swap_control,
+    PROVIDER_GLX_EXT_texture_from_pixmap,
+    PROVIDER_GLX_MESA_agp_offset,
+    PROVIDER_GLX_MESA_copy_sub_buffer,
+    PROVIDER_GLX_MESA_pixmap_colormap,
+    PROVIDER_GLX_MESA_query_renderer,
+    PROVIDER_GLX_MESA_release_buffers,
+    PROVIDER_GLX_MESA_set_3dfx_mode,
+    PROVIDER_GLX_MESA_swap_control,
+    PROVIDER_GLX_NV_copy_buffer,
+    PROVIDER_GLX_NV_copy_image,
+    PROVIDER_GLX_NV_delay_before_swap,
+    PROVIDER_GLX_NV_present_video,
+    PROVIDER_GLX_NV_swap_group,
+    PROVIDER_GLX_NV_video_capture,
+    PROVIDER_GLX_NV_video_out,
+    PROVIDER_GLX_OML_sync_control,
+    PROVIDER_GLX_SGIX_fbconfig,
+    PROVIDER_GLX_SGIX_hyperpipe,
+    PROVIDER_GLX_SGIX_pbuffer,
+    PROVIDER_GLX_SGIX_swap_barrier,
+    PROVIDER_GLX_SGIX_swap_group,
+    PROVIDER_GLX_SGIX_video_resize,
+    PROVIDER_GLX_SGIX_video_source,
+    PROVIDER_GLX_SGI_cushion,
+    PROVIDER_GLX_SGI_make_current_read,
+    PROVIDER_GLX_SGI_swap_control,
+    PROVIDER_GLX_SGI_video_sync,
+    PROVIDER_GLX_SUN_get_transparent_index,
+    PROVIDER_always_present,
 } PACKED;
 ENDPACKED
 
@@ -202,80 +220,82 @@ static const char *enum_string =
     "GLX 11\0"
     "GLX 12\0"
     "GLX 13\0"
-    "GLX extension \"GLX_AMD_gpu_association\"\0"
-    "GLX extension \"GLX_ARB_create_context\"\0"
-    "GLX extension \"GLX_ARB_get_proc_address\"\0"
-    "GLX extension \"GLX_EXT_import_context\"\0"
-    "GLX extension \"GLX_EXT_swap_control\"\0"
-    "GLX extension \"GLX_EXT_texture_from_pixmap\"\0"
-    "GLX extension \"GLX_MESA_agp_offset\"\0"
-    "GLX extension \"GLX_MESA_copy_sub_buffer\"\0"
-    "GLX extension \"GLX_MESA_pixmap_colormap\"\0"
-    "GLX extension \"GLX_MESA_query_renderer\"\0"
-    "GLX extension \"GLX_MESA_release_buffers\"\0"
-    "GLX extension \"GLX_MESA_set_3dfx_mode\"\0"
-    "GLX extension \"GLX_NV_copy_buffer\"\0"
-    "GLX extension \"GLX_NV_copy_image\"\0"
-    "GLX extension \"GLX_NV_delay_before_swap\"\0"
-    "GLX extension \"GLX_NV_present_video\"\0"
-    "GLX extension \"GLX_NV_swap_group\"\0"
-    "GLX extension \"GLX_NV_video_capture\"\0"
-    "GLX extension \"GLX_NV_video_out\"\0"
-    "GLX extension \"GLX_OML_sync_control\"\0"
-    "GLX extension \"GLX_SGIX_fbconfig\"\0"
-    "GLX extension \"GLX_SGIX_hyperpipe\"\0"
-    "GLX extension \"GLX_SGIX_pbuffer\"\0"
-    "GLX extension \"GLX_SGIX_swap_barrier\"\0"
-    "GLX extension \"GLX_SGIX_swap_group\"\0"
-    "GLX extension \"GLX_SGIX_video_resize\"\0"
-    "GLX extension \"GLX_SGIX_video_source\"\0"
-    "GLX extension \"GLX_SGI_cushion\"\0"
-    "GLX extension \"GLX_SGI_make_current_read\"\0"
-    "GLX extension \"GLX_SGI_swap_control\"\0"
-    "GLX extension \"GLX_SGI_video_sync\"\0"
-    "GLX extension \"GLX_SUN_get_transparent_index\"\0"
+    "GLX_AMD_gpu_association\0"
+    "GLX_ARB_create_context\0"
+    "GLX_ARB_get_proc_address\0"
+    "GLX_EXT_import_context\0"
+    "GLX_EXT_swap_control\0"
+    "GLX_EXT_texture_from_pixmap\0"
+    "GLX_MESA_agp_offset\0"
+    "GLX_MESA_copy_sub_buffer\0"
+    "GLX_MESA_pixmap_colormap\0"
+    "GLX_MESA_query_renderer\0"
+    "GLX_MESA_release_buffers\0"
+    "GLX_MESA_set_3dfx_mode\0"
+    "GLX_MESA_swap_control\0"
+    "GLX_NV_copy_buffer\0"
+    "GLX_NV_copy_image\0"
+    "GLX_NV_delay_before_swap\0"
+    "GLX_NV_present_video\0"
+    "GLX_NV_swap_group\0"
+    "GLX_NV_video_capture\0"
+    "GLX_NV_video_out\0"
+    "GLX_OML_sync_control\0"
+    "GLX_SGIX_fbconfig\0"
+    "GLX_SGIX_hyperpipe\0"
+    "GLX_SGIX_pbuffer\0"
+    "GLX_SGIX_swap_barrier\0"
+    "GLX_SGIX_swap_group\0"
+    "GLX_SGIX_video_resize\0"
+    "GLX_SGIX_video_source\0"
+    "GLX_SGI_cushion\0"
+    "GLX_SGI_make_current_read\0"
+    "GLX_SGI_swap_control\0"
+    "GLX_SGI_video_sync\0"
+    "GLX_SUN_get_transparent_index\0"
     "always present\0"
      ;
 
 static const uint16_t enum_string_offsets[] = {
     -1, /* glx_provider_terminator, unused */
-    0, /* GLX_10 */
-    7, /* GLX_11 */
-    14, /* GLX_12 */
-    21, /* GLX_13 */
-    28, /* GLX_extension_GLX_AMD_gpu_association */
-    68, /* GLX_extension_GLX_ARB_create_context */
-    107, /* GLX_extension_GLX_ARB_get_proc_address */
-    148, /* GLX_extension_GLX_EXT_import_context */
-    187, /* GLX_extension_GLX_EXT_swap_control */
-    224, /* GLX_extension_GLX_EXT_texture_from_pixmap */
-    268, /* GLX_extension_GLX_MESA_agp_offset */
-    304, /* GLX_extension_GLX_MESA_copy_sub_buffer */
-    345, /* GLX_extension_GLX_MESA_pixmap_colormap */
-    386, /* GLX_extension_GLX_MESA_query_renderer */
-    426, /* GLX_extension_GLX_MESA_release_buffers */
-    467, /* GLX_extension_GLX_MESA_set_3dfx_mode */
-    506, /* GLX_extension_GLX_NV_copy_buffer */
-    541, /* GLX_extension_GLX_NV_copy_image */
-    575, /* GLX_extension_GLX_NV_delay_before_swap */
-    616, /* GLX_extension_GLX_NV_present_video */
-    653, /* GLX_extension_GLX_NV_swap_group */
-    687, /* GLX_extension_GLX_NV_video_capture */
-    724, /* GLX_extension_GLX_NV_video_out */
-    757, /* GLX_extension_GLX_OML_sync_control */
-    794, /* GLX_extension_GLX_SGIX_fbconfig */
-    828, /* GLX_extension_GLX_SGIX_hyperpipe */
-    863, /* GLX_extension_GLX_SGIX_pbuffer */
-    896, /* GLX_extension_GLX_SGIX_swap_barrier */
-    934, /* GLX_extension_GLX_SGIX_swap_group */
-    970, /* GLX_extension_GLX_SGIX_video_resize */
-    1008, /* GLX_extension_GLX_SGIX_video_source */
-    1046, /* GLX_extension_GLX_SGI_cushion */
-    1078, /* GLX_extension_GLX_SGI_make_current_read */
-    1120, /* GLX_extension_GLX_SGI_swap_control */
-    1157, /* GLX_extension_GLX_SGI_video_sync */
-    1192, /* GLX_extension_GLX_SUN_get_transparent_index */
-    1238, /* always_present */
+    0, /* GLX 10 */
+    7, /* GLX 11 */
+    14, /* GLX 12 */
+    21, /* GLX 13 */
+    28, /* GLX_AMD_gpu_association */
+    52, /* GLX_ARB_create_context */
+    75, /* GLX_ARB_get_proc_address */
+    100, /* GLX_EXT_import_context */
+    123, /* GLX_EXT_swap_control */
+    144, /* GLX_EXT_texture_from_pixmap */
+    172, /* GLX_MESA_agp_offset */
+    192, /* GLX_MESA_copy_sub_buffer */
+    217, /* GLX_MESA_pixmap_colormap */
+    242, /* GLX_MESA_query_renderer */
+    266, /* GLX_MESA_release_buffers */
+    291, /* GLX_MESA_set_3dfx_mode */
+    314, /* GLX_MESA_swap_control */
+    336, /* GLX_NV_copy_buffer */
+    355, /* GLX_NV_copy_image */
+    373, /* GLX_NV_delay_before_swap */
+    398, /* GLX_NV_present_video */
+    419, /* GLX_NV_swap_group */
+    437, /* GLX_NV_video_capture */
+    458, /* GLX_NV_video_out */
+    475, /* GLX_OML_sync_control */
+    496, /* GLX_SGIX_fbconfig */
+    514, /* GLX_SGIX_hyperpipe */
+    533, /* GLX_SGIX_pbuffer */
+    550, /* GLX_SGIX_swap_barrier */
+    572, /* GLX_SGIX_swap_group */
+    592, /* GLX_SGIX_video_resize */
+    614, /* GLX_SGIX_video_source */
+    636, /* GLX_SGI_cushion */
+    652, /* GLX_SGI_make_current_read */
+    678, /* GLX_SGI_swap_control */
+    699, /* GLX_SGI_video_sync */
+    718, /* GLX_SUN_get_transparent_index */
+    748, /* always present */
 };
 
 static const char entrypoint_strings[] = {
@@ -1796,6 +1816,29 @@ static const char entrypoint_strings[] = {
    'e',
    't',
    'S',
+   'w',
+   'a',
+   'p',
+   'I',
+   'n',
+   't',
+   'e',
+   'r',
+   'v',
+   'a',
+   'l',
+   'M',
+   'E',
+   'S',
+   'A',
+   0, // glXGetSwapIntervalMESA
+   'g',
+   'l',
+   'X',
+   'G',
+   'e',
+   't',
+   'S',
    'y',
    'n',
    'c',
@@ -3076,6 +3119,26 @@ static const char entrypoint_strings[] = {
    'v',
    'a',
    'l',
+   'M',
+   'E',
+   'S',
+   'A',
+   0, // glXSwapIntervalMESA
+   'g',
+   'l',
+   'X',
+   'S',
+   'w',
+   'a',
+   'p',
+   'I',
+   'n',
+   't',
+   'e',
+   'r',
+   'v',
+   'a',
+   'l',
    'S',
    'G',
    'I',
@@ -3173,152 +3236,158 @@ static void *glx_provider_resolver(const char *name,
 {
     int i;
     for (i = 0; providers[i] != glx_provider_terminator; i++) {
+        const char *provider_name = enum_string + enum_string_offsets[providers[i]];
         switch (providers[i]) {
-        case GLX_10:
+
+        case PROVIDER_GLX_10:
             if (true)
                 return epoxy_glx_dlsym(entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_11:
+        case PROVIDER_GLX_11:
             if (true)
                 return epoxy_glx_dlsym(entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_12:
+        case PROVIDER_GLX_12:
             if (true)
                 return epoxy_glx_dlsym(entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_13:
+        case PROVIDER_GLX_13:
             if (true)
                 return epoxy_glx_dlsym(entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_AMD_gpu_association:
-            if (epoxy_conservative_has_glx_extension("GLX_AMD_gpu_association"))
+        case PROVIDER_GLX_AMD_gpu_association:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_ARB_create_context:
-            if (epoxy_conservative_has_glx_extension("GLX_ARB_create_context"))
+        case PROVIDER_GLX_ARB_create_context:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_ARB_get_proc_address:
-            if (epoxy_conservative_has_glx_extension("GLX_ARB_get_proc_address"))
+        case PROVIDER_GLX_ARB_get_proc_address:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_EXT_import_context:
-            if (epoxy_conservative_has_glx_extension("GLX_EXT_import_context"))
+        case PROVIDER_GLX_EXT_import_context:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_EXT_swap_control:
-            if (epoxy_conservative_has_glx_extension("GLX_EXT_swap_control"))
+        case PROVIDER_GLX_EXT_swap_control:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_EXT_texture_from_pixmap:
-            if (epoxy_conservative_has_glx_extension("GLX_EXT_texture_from_pixmap"))
+        case PROVIDER_GLX_EXT_texture_from_pixmap:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_agp_offset:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_agp_offset"))
+        case PROVIDER_GLX_MESA_agp_offset:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_copy_sub_buffer:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_copy_sub_buffer"))
+        case PROVIDER_GLX_MESA_copy_sub_buffer:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_pixmap_colormap:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_pixmap_colormap"))
+        case PROVIDER_GLX_MESA_pixmap_colormap:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_query_renderer:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_query_renderer"))
+        case PROVIDER_GLX_MESA_query_renderer:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_release_buffers:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_release_buffers"))
+        case PROVIDER_GLX_MESA_release_buffers:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_MESA_set_3dfx_mode:
-            if (epoxy_conservative_has_glx_extension("GLX_MESA_set_3dfx_mode"))
+        case PROVIDER_GLX_MESA_set_3dfx_mode:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_copy_buffer:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_copy_buffer"))
+        case PROVIDER_GLX_MESA_swap_control:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_copy_image:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_copy_image"))
+        case PROVIDER_GLX_NV_copy_buffer:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_delay_before_swap:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_delay_before_swap"))
+        case PROVIDER_GLX_NV_copy_image:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_present_video:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_present_video"))
+        case PROVIDER_GLX_NV_delay_before_swap:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_swap_group:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_swap_group"))
+        case PROVIDER_GLX_NV_present_video:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_video_capture:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_video_capture"))
+        case PROVIDER_GLX_NV_swap_group:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_NV_video_out:
-            if (epoxy_conservative_has_glx_extension("GLX_NV_video_out"))
+        case PROVIDER_GLX_NV_video_capture:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_OML_sync_control:
-            if (epoxy_conservative_has_glx_extension("GLX_OML_sync_control"))
+        case PROVIDER_GLX_NV_video_out:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_fbconfig:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_fbconfig"))
+        case PROVIDER_GLX_OML_sync_control:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_hyperpipe:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_hyperpipe"))
+        case PROVIDER_GLX_SGIX_fbconfig:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_pbuffer:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_pbuffer"))
+        case PROVIDER_GLX_SGIX_hyperpipe:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_swap_barrier:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_swap_barrier"))
+        case PROVIDER_GLX_SGIX_pbuffer:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_swap_group:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_swap_group"))
+        case PROVIDER_GLX_SGIX_swap_barrier:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_video_resize:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_video_resize"))
+        case PROVIDER_GLX_SGIX_swap_group:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGIX_video_source:
-            if (epoxy_conservative_has_glx_extension("GLX_SGIX_video_source"))
+        case PROVIDER_GLX_SGIX_video_resize:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGI_cushion:
-            if (epoxy_conservative_has_glx_extension("GLX_SGI_cushion"))
+        case PROVIDER_GLX_SGIX_video_source:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGI_make_current_read:
-            if (epoxy_conservative_has_glx_extension("GLX_SGI_make_current_read"))
+        case PROVIDER_GLX_SGI_cushion:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGI_swap_control:
-            if (epoxy_conservative_has_glx_extension("GLX_SGI_swap_control"))
+        case PROVIDER_GLX_SGI_make_current_read:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SGI_video_sync:
-            if (epoxy_conservative_has_glx_extension("GLX_SGI_video_sync"))
+        case PROVIDER_GLX_SGI_swap_control:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case GLX_extension_GLX_SUN_get_transparent_index:
-            if (epoxy_conservative_has_glx_extension("GLX_SUN_get_transparent_index"))
+        case PROVIDER_GLX_SGI_video_sync:
+            if (epoxy_conservative_has_glx_extension(provider_name))
                 return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
             break;
-        case always_present:
+        case PROVIDER_GLX_SUN_get_transparent_index:
+            if (epoxy_conservative_has_glx_extension(provider_name))
+                return glXGetProcAddress((const GLubyte *)entrypoint_strings + entrypoints[i]);
+            break;
+        case PROVIDER_always_present:
             if (true)
                 return epoxy_glx_dlsym(entrypoint_strings + entrypoints[i]);
             break;
@@ -3326,6 +3395,9 @@ static void *glx_provider_resolver(const char *name,
             abort(); /* Not reached */
         }
     }
+
+    if (epoxy_resolver_failure_handler)
+        return epoxy_resolver_failure_handler(name);
 
     fprintf(stderr, "No provider of %s found.  Requires one of:\n", name);
     for (i = 0; providers[i] != glx_provider_terminator; i++) {
@@ -3355,781 +3427,793 @@ glx_single_resolver(enum glx_provider provider, uint32_t entrypoint_offset)
 static PFNGLXBINDCHANNELTOWINDOWSGIXPROC
 epoxy_glXBindChannelToWindowSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_resize, 0 /* glXBindChannelToWindowSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_resize, 0 /* glXBindChannelToWindowSGIX */);
 }
 
 static PFNGLXBINDHYPERPIPESGIXPROC
 epoxy_glXBindHyperpipeSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 27 /* glXBindHyperpipeSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 27 /* glXBindHyperpipeSGIX */);
 }
 
 static PFNGLXBINDSWAPBARRIERNVPROC
 epoxy_glXBindSwapBarrierNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 48 /* glXBindSwapBarrierNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 48 /* glXBindSwapBarrierNV */);
 }
 
 static PFNGLXBINDSWAPBARRIERSGIXPROC
 epoxy_glXBindSwapBarrierSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_swap_barrier, 69 /* glXBindSwapBarrierSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_swap_barrier, 69 /* glXBindSwapBarrierSGIX */);
 }
 
 static PFNGLXBINDTEXIMAGEEXTPROC
 epoxy_glXBindTexImageEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_texture_from_pixmap, 92 /* glXBindTexImageEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_texture_from_pixmap, 92 /* glXBindTexImageEXT */);
 }
 
 static PFNGLXBINDVIDEOCAPTUREDEVICENVPROC
 epoxy_glXBindVideoCaptureDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_capture, 111 /* glXBindVideoCaptureDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_capture, 111 /* glXBindVideoCaptureDeviceNV */);
 }
 
 static PFNGLXBINDVIDEODEVICENVPROC
 epoxy_glXBindVideoDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_present_video, 139 /* glXBindVideoDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_present_video, 139 /* glXBindVideoDeviceNV */);
 }
 
 static PFNGLXBINDVIDEOIMAGENVPROC
 epoxy_glXBindVideoImageNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 160 /* glXBindVideoImageNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 160 /* glXBindVideoImageNV */);
 }
 
 static PFNGLXBLITCONTEXTFRAMEBUFFERAMDPROC
 epoxy_glXBlitContextFramebufferAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 180 /* glXBlitContextFramebufferAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 180 /* glXBlitContextFramebufferAMD */);
 }
 
 static PFNGLXCHANNELRECTSGIXPROC
 epoxy_glXChannelRectSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_resize, 209 /* glXChannelRectSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_resize, 209 /* glXChannelRectSGIX */);
 }
 
 static PFNGLXCHANNELRECTSYNCSGIXPROC
 epoxy_glXChannelRectSyncSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_resize, 228 /* glXChannelRectSyncSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_resize, 228 /* glXChannelRectSyncSGIX */);
 }
 
 static PFNGLXCHOOSEFBCONFIGPROC
 epoxy_glXChooseFBConfig_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 251 /* glXChooseFBConfig */);
+    return glx_single_resolver(PROVIDER_GLX_13, 251 /* glXChooseFBConfig */);
 }
 
 static PFNGLXCHOOSEFBCONFIGSGIXPROC
 epoxy_glXChooseFBConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 269 /* glXChooseFBConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 269 /* glXChooseFBConfigSGIX */);
 }
 
 static PFNGLXCHOOSEVISUALPROC
 epoxy_glXChooseVisual_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 291 /* glXChooseVisual */);
+    return glx_single_resolver(PROVIDER_GLX_10, 291 /* glXChooseVisual */);
 }
 
 static PFNGLXCOPYBUFFERSUBDATANVPROC
 epoxy_glXCopyBufferSubDataNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_copy_buffer, 307 /* glXCopyBufferSubDataNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_copy_buffer, 307 /* glXCopyBufferSubDataNV */);
 }
 
 static PFNGLXCOPYCONTEXTPROC
 epoxy_glXCopyContext_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 330 /* glXCopyContext */);
+    return glx_single_resolver(PROVIDER_GLX_10, 330 /* glXCopyContext */);
 }
 
 static PFNGLXCOPYIMAGESUBDATANVPROC
 epoxy_glXCopyImageSubDataNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_copy_image, 345 /* glXCopyImageSubDataNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_copy_image, 345 /* glXCopyImageSubDataNV */);
 }
 
 static PFNGLXCOPYSUBBUFFERMESAPROC
 epoxy_glXCopySubBufferMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_copy_sub_buffer, 367 /* glXCopySubBufferMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_copy_sub_buffer, 367 /* glXCopySubBufferMESA */);
 }
 
 static PFNGLXCREATEASSOCIATEDCONTEXTAMDPROC
 epoxy_glXCreateAssociatedContextAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 388 /* glXCreateAssociatedContextAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 388 /* glXCreateAssociatedContextAMD */);
 }
 
 static PFNGLXCREATEASSOCIATEDCONTEXTATTRIBSAMDPROC
 epoxy_glXCreateAssociatedContextAttribsAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 418 /* glXCreateAssociatedContextAttribsAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 418 /* glXCreateAssociatedContextAttribsAMD */);
 }
 
 static PFNGLXCREATECONTEXTPROC
 epoxy_glXCreateContext_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 455 /* glXCreateContext */);
+    return glx_single_resolver(PROVIDER_GLX_10, 455 /* glXCreateContext */);
 }
 
 static PFNGLXCREATECONTEXTATTRIBSARBPROC
 epoxy_glXCreateContextAttribsARB_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_ARB_create_context, 472 /* glXCreateContextAttribsARB */);
+    return glx_single_resolver(PROVIDER_GLX_ARB_create_context, 472 /* glXCreateContextAttribsARB */);
 }
 
 static PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC
 epoxy_glXCreateContextWithConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 499 /* glXCreateContextWithConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 499 /* glXCreateContextWithConfigSGIX */);
 }
 
 static PFNGLXCREATEGLXPBUFFERSGIXPROC
 epoxy_glXCreateGLXPbufferSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_pbuffer, 530 /* glXCreateGLXPbufferSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_pbuffer, 530 /* glXCreateGLXPbufferSGIX */);
 }
 
 static PFNGLXCREATEGLXPIXMAPPROC
 epoxy_glXCreateGLXPixmap_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 554 /* glXCreateGLXPixmap */);
+    return glx_single_resolver(PROVIDER_GLX_10, 554 /* glXCreateGLXPixmap */);
 }
 
 static PFNGLXCREATEGLXPIXMAPMESAPROC
 epoxy_glXCreateGLXPixmapMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_pixmap_colormap, 573 /* glXCreateGLXPixmapMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_pixmap_colormap, 573 /* glXCreateGLXPixmapMESA */);
 }
 
 static PFNGLXCREATEGLXPIXMAPWITHCONFIGSGIXPROC
 epoxy_glXCreateGLXPixmapWithConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 596 /* glXCreateGLXPixmapWithConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 596 /* glXCreateGLXPixmapWithConfigSGIX */);
 }
 
 static PFNGLXCREATENEWCONTEXTPROC
 epoxy_glXCreateNewContext_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 629 /* glXCreateNewContext */);
+    return glx_single_resolver(PROVIDER_GLX_13, 629 /* glXCreateNewContext */);
 }
 
 static PFNGLXCREATEPBUFFERPROC
 epoxy_glXCreatePbuffer_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 649 /* glXCreatePbuffer */);
+    return glx_single_resolver(PROVIDER_GLX_13, 649 /* glXCreatePbuffer */);
 }
 
 static PFNGLXCREATEPIXMAPPROC
 epoxy_glXCreatePixmap_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 666 /* glXCreatePixmap */);
+    return glx_single_resolver(PROVIDER_GLX_13, 666 /* glXCreatePixmap */);
 }
 
 static PFNGLXCREATEWINDOWPROC
 epoxy_glXCreateWindow_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 682 /* glXCreateWindow */);
+    return glx_single_resolver(PROVIDER_GLX_13, 682 /* glXCreateWindow */);
 }
 
 static PFNGLXCUSHIONSGIPROC
 epoxy_glXCushionSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_cushion, 698 /* glXCushionSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_cushion, 698 /* glXCushionSGI */);
 }
 
 static PFNGLXDELAYBEFORESWAPNVPROC
 epoxy_glXDelayBeforeSwapNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_delay_before_swap, 712 /* glXDelayBeforeSwapNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_delay_before_swap, 712 /* glXDelayBeforeSwapNV */);
 }
 
 static PFNGLXDELETEASSOCIATEDCONTEXTAMDPROC
 epoxy_glXDeleteAssociatedContextAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 733 /* glXDeleteAssociatedContextAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 733 /* glXDeleteAssociatedContextAMD */);
 }
 
 static PFNGLXDESTROYCONTEXTPROC
 epoxy_glXDestroyContext_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 763 /* glXDestroyContext */);
+    return glx_single_resolver(PROVIDER_GLX_10, 763 /* glXDestroyContext */);
 }
 
 static PFNGLXDESTROYGLXPBUFFERSGIXPROC
 epoxy_glXDestroyGLXPbufferSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_pbuffer, 781 /* glXDestroyGLXPbufferSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_pbuffer, 781 /* glXDestroyGLXPbufferSGIX */);
 }
 
 static PFNGLXDESTROYGLXPIXMAPPROC
 epoxy_glXDestroyGLXPixmap_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 806 /* glXDestroyGLXPixmap */);
+    return glx_single_resolver(PROVIDER_GLX_10, 806 /* glXDestroyGLXPixmap */);
 }
 
 static PFNGLXDESTROYGLXVIDEOSOURCESGIXPROC
 epoxy_glXDestroyGLXVideoSourceSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_source, 826 /* glXDestroyGLXVideoSourceSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_source, 826 /* glXDestroyGLXVideoSourceSGIX */);
 }
 
 static PFNGLXDESTROYHYPERPIPECONFIGSGIXPROC
 epoxy_glXDestroyHyperpipeConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 855 /* glXDestroyHyperpipeConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 855 /* glXDestroyHyperpipeConfigSGIX */);
 }
 
 static PFNGLXDESTROYPBUFFERPROC
 epoxy_glXDestroyPbuffer_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 885 /* glXDestroyPbuffer */);
+    return glx_single_resolver(PROVIDER_GLX_13, 885 /* glXDestroyPbuffer */);
 }
 
 static PFNGLXDESTROYPIXMAPPROC
 epoxy_glXDestroyPixmap_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 903 /* glXDestroyPixmap */);
+    return glx_single_resolver(PROVIDER_GLX_13, 903 /* glXDestroyPixmap */);
 }
 
 static PFNGLXDESTROYWINDOWPROC
 epoxy_glXDestroyWindow_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 920 /* glXDestroyWindow */);
+    return glx_single_resolver(PROVIDER_GLX_13, 920 /* glXDestroyWindow */);
 }
 
 static PFNGLXENUMERATEVIDEOCAPTUREDEVICESNVPROC
 epoxy_glXEnumerateVideoCaptureDevicesNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_capture, 937 /* glXEnumerateVideoCaptureDevicesNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_capture, 937 /* glXEnumerateVideoCaptureDevicesNV */);
 }
 
 static PFNGLXENUMERATEVIDEODEVICESNVPROC
 epoxy_glXEnumerateVideoDevicesNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_present_video, 971 /* glXEnumerateVideoDevicesNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_present_video, 971 /* glXEnumerateVideoDevicesNV */);
 }
 
 static PFNGLXFREECONTEXTEXTPROC
 epoxy_glXFreeContextEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_import_context, 998 /* glXFreeContextEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_import_context, 998 /* glXFreeContextEXT */);
 }
 
 static PFNGLXGETAGPOFFSETMESAPROC
 epoxy_glXGetAGPOffsetMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_agp_offset, 1016 /* glXGetAGPOffsetMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_agp_offset, 1016 /* glXGetAGPOffsetMESA */);
 }
 
 static PFNGLXGETCLIENTSTRINGPROC
 epoxy_glXGetClientString_resolver(void)
 {
-    return glx_single_resolver(GLX_11, 1036 /* glXGetClientString */);
+    return glx_single_resolver(PROVIDER_GLX_11, 1036 /* glXGetClientString */);
 }
 
 static PFNGLXGETCONFIGPROC
 epoxy_glXGetConfig_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 1055 /* glXGetConfig */);
+    return glx_single_resolver(PROVIDER_GLX_10, 1055 /* glXGetConfig */);
 }
 
 static PFNGLXGETCONTEXTGPUIDAMDPROC
 epoxy_glXGetContextGPUIDAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 1068 /* glXGetContextGPUIDAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 1068 /* glXGetContextGPUIDAMD */);
 }
 
 static PFNGLXGETCONTEXTIDEXTPROC
 epoxy_glXGetContextIDEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_import_context, 1090 /* glXGetContextIDEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_import_context, 1090 /* glXGetContextIDEXT */);
 }
 
 static PFNGLXGETCURRENTASSOCIATEDCONTEXTAMDPROC
 epoxy_glXGetCurrentAssociatedContextAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 1109 /* glXGetCurrentAssociatedContextAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 1109 /* glXGetCurrentAssociatedContextAMD */);
 }
 
 static PFNGLXGETCURRENTCONTEXTPROC
 epoxy_glXGetCurrentContext_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 1143 /* glXGetCurrentContext */);
+    return glx_single_resolver(PROVIDER_GLX_10, 1143 /* glXGetCurrentContext */);
 }
 
 static PFNGLXGETCURRENTDISPLAYPROC
 epoxy_glXGetCurrentDisplay_resolver(void)
 {
-    return glx_single_resolver(GLX_12, 1164 /* glXGetCurrentDisplay */);
+    return glx_single_resolver(PROVIDER_GLX_12, 1164 /* glXGetCurrentDisplay */);
 }
 
 static PFNGLXGETCURRENTDISPLAYEXTPROC
 epoxy_glXGetCurrentDisplayEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_import_context, 1185 /* glXGetCurrentDisplayEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_import_context, 1185 /* glXGetCurrentDisplayEXT */);
 }
 
 static PFNGLXGETCURRENTDRAWABLEPROC
 epoxy_glXGetCurrentDrawable_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 1209 /* glXGetCurrentDrawable */);
+    return glx_single_resolver(PROVIDER_GLX_10, 1209 /* glXGetCurrentDrawable */);
 }
 
 static PFNGLXGETCURRENTREADDRAWABLEPROC
 epoxy_glXGetCurrentReadDrawable_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1231 /* glXGetCurrentReadDrawable */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1231 /* glXGetCurrentReadDrawable */);
 }
 
 static PFNGLXGETCURRENTREADDRAWABLESGIPROC
 epoxy_glXGetCurrentReadDrawableSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_make_current_read, 1257 /* glXGetCurrentReadDrawableSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_make_current_read, 1257 /* glXGetCurrentReadDrawableSGI */);
 }
 
 static PFNGLXGETFBCONFIGATTRIBPROC
 epoxy_glXGetFBConfigAttrib_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1286 /* glXGetFBConfigAttrib */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1286 /* glXGetFBConfigAttrib */);
 }
 
 static PFNGLXGETFBCONFIGATTRIBSGIXPROC
 epoxy_glXGetFBConfigAttribSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 1307 /* glXGetFBConfigAttribSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 1307 /* glXGetFBConfigAttribSGIX */);
 }
 
 static PFNGLXGETFBCONFIGFROMVISUALSGIXPROC
 epoxy_glXGetFBConfigFromVisualSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 1332 /* glXGetFBConfigFromVisualSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 1332 /* glXGetFBConfigFromVisualSGIX */);
 }
 
 static PFNGLXGETFBCONFIGSPROC
 epoxy_glXGetFBConfigs_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1361 /* glXGetFBConfigs */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1361 /* glXGetFBConfigs */);
 }
 
 static PFNGLXGETGPUIDSAMDPROC
 epoxy_glXGetGPUIDsAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 1377 /* glXGetGPUIDsAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 1377 /* glXGetGPUIDsAMD */);
 }
 
 static PFNGLXGETGPUINFOAMDPROC
 epoxy_glXGetGPUInfoAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 1393 /* glXGetGPUInfoAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 1393 /* glXGetGPUInfoAMD */);
 }
 
 static PFNGLXGETMSCRATEOMLPROC
 epoxy_glXGetMscRateOML_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_OML_sync_control, 1410 /* glXGetMscRateOML */);
+    return glx_single_resolver(PROVIDER_GLX_OML_sync_control, 1410 /* glXGetMscRateOML */);
 }
 
 static PFNGLXGETPROCADDRESSPROC
 epoxy_glXGetProcAddress_resolver(void)
 {
-    return glx_single_resolver(always_present, 1427 /* glXGetProcAddress */);
+    return glx_single_resolver(PROVIDER_always_present, 1427 /* glXGetProcAddress */);
 }
 
 static PFNGLXGETPROCADDRESSARBPROC
 epoxy_glXGetProcAddressARB_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_ARB_get_proc_address, 1445 /* glXGetProcAddressARB */);
+    return glx_single_resolver(PROVIDER_GLX_ARB_get_proc_address, 1445 /* glXGetProcAddressARB */);
 }
 
 static PFNGLXGETSELECTEDEVENTPROC
 epoxy_glXGetSelectedEvent_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1466 /* glXGetSelectedEvent */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1466 /* glXGetSelectedEvent */);
 }
 
 static PFNGLXGETSELECTEDEVENTSGIXPROC
 epoxy_glXGetSelectedEventSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_pbuffer, 1486 /* glXGetSelectedEventSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_pbuffer, 1486 /* glXGetSelectedEventSGIX */);
+}
+
+static PFNGLXGETSWAPINTERVALMESAPROC
+epoxy_glXGetSwapIntervalMESA_resolver(void)
+{
+    return glx_single_resolver(PROVIDER_GLX_MESA_swap_control, 1510 /* glXGetSwapIntervalMESA */);
 }
 
 static PFNGLXGETSYNCVALUESOMLPROC
 epoxy_glXGetSyncValuesOML_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_OML_sync_control, 1510 /* glXGetSyncValuesOML */);
+    return glx_single_resolver(PROVIDER_GLX_OML_sync_control, 1533 /* glXGetSyncValuesOML */);
 }
 
 static PFNGLXGETTRANSPARENTINDEXSUNPROC
 epoxy_glXGetTransparentIndexSUN_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SUN_get_transparent_index, 1530 /* glXGetTransparentIndexSUN */);
+    return glx_single_resolver(PROVIDER_GLX_SUN_get_transparent_index, 1553 /* glXGetTransparentIndexSUN */);
 }
 
 static PFNGLXGETVIDEODEVICENVPROC
 epoxy_glXGetVideoDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 1556 /* glXGetVideoDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 1579 /* glXGetVideoDeviceNV */);
 }
 
 static PFNGLXGETVIDEOINFONVPROC
 epoxy_glXGetVideoInfoNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 1576 /* glXGetVideoInfoNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 1599 /* glXGetVideoInfoNV */);
 }
 
 static PFNGLXGETVIDEOSYNCSGIPROC
 epoxy_glXGetVideoSyncSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_video_sync, 1594 /* glXGetVideoSyncSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_video_sync, 1617 /* glXGetVideoSyncSGI */);
 }
 
 static PFNGLXGETVISUALFROMFBCONFIGPROC
 epoxy_glXGetVisualFromFBConfig_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1613 /* glXGetVisualFromFBConfig */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1636 /* glXGetVisualFromFBConfig */);
 }
 
 static PFNGLXGETVISUALFROMFBCONFIGSGIXPROC
 epoxy_glXGetVisualFromFBConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_fbconfig, 1638 /* glXGetVisualFromFBConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_fbconfig, 1661 /* glXGetVisualFromFBConfigSGIX */);
 }
 
 static PFNGLXHYPERPIPEATTRIBSGIXPROC
 epoxy_glXHyperpipeAttribSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 1667 /* glXHyperpipeAttribSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 1690 /* glXHyperpipeAttribSGIX */);
 }
 
 static PFNGLXHYPERPIPECONFIGSGIXPROC
 epoxy_glXHyperpipeConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 1690 /* glXHyperpipeConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 1713 /* glXHyperpipeConfigSGIX */);
 }
 
 static PFNGLXIMPORTCONTEXTEXTPROC
 epoxy_glXImportContextEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_import_context, 1713 /* glXImportContextEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_import_context, 1736 /* glXImportContextEXT */);
 }
 
 static PFNGLXISDIRECTPROC
 epoxy_glXIsDirect_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 1733 /* glXIsDirect */);
+    return glx_single_resolver(PROVIDER_GLX_10, 1756 /* glXIsDirect */);
 }
 
 static PFNGLXJOINSWAPGROUPNVPROC
 epoxy_glXJoinSwapGroupNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 1745 /* glXJoinSwapGroupNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 1768 /* glXJoinSwapGroupNV */);
 }
 
 static PFNGLXJOINSWAPGROUPSGIXPROC
 epoxy_glXJoinSwapGroupSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_swap_group, 1764 /* glXJoinSwapGroupSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_swap_group, 1787 /* glXJoinSwapGroupSGIX */);
 }
 
 static PFNGLXLOCKVIDEOCAPTUREDEVICENVPROC
 epoxy_glXLockVideoCaptureDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_capture, 1785 /* glXLockVideoCaptureDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_capture, 1808 /* glXLockVideoCaptureDeviceNV */);
 }
 
 static PFNGLXMAKEASSOCIATEDCONTEXTCURRENTAMDPROC
 epoxy_glXMakeAssociatedContextCurrentAMD_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_AMD_gpu_association, 1813 /* glXMakeAssociatedContextCurrentAMD */);
+    return glx_single_resolver(PROVIDER_GLX_AMD_gpu_association, 1836 /* glXMakeAssociatedContextCurrentAMD */);
 }
 
 static PFNGLXMAKECONTEXTCURRENTPROC
 epoxy_glXMakeContextCurrent_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1848 /* glXMakeContextCurrent */);
+    return glx_single_resolver(PROVIDER_GLX_13, 1871 /* glXMakeContextCurrent */);
 }
 
 static PFNGLXMAKECURRENTPROC
 epoxy_glXMakeCurrent_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 1870 /* glXMakeCurrent */);
+    return glx_single_resolver(PROVIDER_GLX_10, 1893 /* glXMakeCurrent */);
 }
 
 static PFNGLXMAKECURRENTREADSGIPROC
 epoxy_glXMakeCurrentReadSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_make_current_read, 1885 /* glXMakeCurrentReadSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_make_current_read, 1908 /* glXMakeCurrentReadSGI */);
 }
 
 static PFNGLXNAMEDCOPYBUFFERSUBDATANVPROC
 epoxy_glXNamedCopyBufferSubDataNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_copy_buffer, 1907 /* glXNamedCopyBufferSubDataNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_copy_buffer, 1930 /* glXNamedCopyBufferSubDataNV */);
 }
 
 static PFNGLXQUERYCHANNELDELTASSGIXPROC
 epoxy_glXQueryChannelDeltasSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_resize, 1935 /* glXQueryChannelDeltasSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_resize, 1958 /* glXQueryChannelDeltasSGIX */);
 }
 
 static PFNGLXQUERYCHANNELRECTSGIXPROC
 epoxy_glXQueryChannelRectSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_video_resize, 1961 /* glXQueryChannelRectSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_video_resize, 1984 /* glXQueryChannelRectSGIX */);
 }
 
 static PFNGLXQUERYCONTEXTPROC
 epoxy_glXQueryContext_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 1985 /* glXQueryContext */);
+    return glx_single_resolver(PROVIDER_GLX_13, 2008 /* glXQueryContext */);
 }
 
 static PFNGLXQUERYCONTEXTINFOEXTPROC
 epoxy_glXQueryContextInfoEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_import_context, 2001 /* glXQueryContextInfoEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_import_context, 2024 /* glXQueryContextInfoEXT */);
 }
 
 static PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC
 epoxy_glXQueryCurrentRendererIntegerMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_query_renderer, 2024 /* glXQueryCurrentRendererIntegerMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_query_renderer, 2047 /* glXQueryCurrentRendererIntegerMESA */);
 }
 
 static PFNGLXQUERYCURRENTRENDERERSTRINGMESAPROC
 epoxy_glXQueryCurrentRendererStringMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_query_renderer, 2059 /* glXQueryCurrentRendererStringMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_query_renderer, 2082 /* glXQueryCurrentRendererStringMESA */);
 }
 
 static PFNGLXQUERYDRAWABLEPROC
 epoxy_glXQueryDrawable_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 2093 /* glXQueryDrawable */);
+    return glx_single_resolver(PROVIDER_GLX_13, 2116 /* glXQueryDrawable */);
 }
 
 static PFNGLXQUERYEXTENSIONPROC
 epoxy_glXQueryExtension_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2110 /* glXQueryExtension */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2133 /* glXQueryExtension */);
 }
 
 static PFNGLXQUERYEXTENSIONSSTRINGPROC
 epoxy_glXQueryExtensionsString_resolver(void)
 {
-    return glx_single_resolver(GLX_11, 2128 /* glXQueryExtensionsString */);
+    return glx_single_resolver(PROVIDER_GLX_11, 2151 /* glXQueryExtensionsString */);
 }
 
 static PFNGLXQUERYFRAMECOUNTNVPROC
 epoxy_glXQueryFrameCountNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 2153 /* glXQueryFrameCountNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 2176 /* glXQueryFrameCountNV */);
 }
 
 static PFNGLXQUERYGLXPBUFFERSGIXPROC
 epoxy_glXQueryGLXPbufferSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_pbuffer, 2174 /* glXQueryGLXPbufferSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_pbuffer, 2197 /* glXQueryGLXPbufferSGIX */);
 }
 
 static PFNGLXQUERYHYPERPIPEATTRIBSGIXPROC
 epoxy_glXQueryHyperpipeAttribSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 2197 /* glXQueryHyperpipeAttribSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 2220 /* glXQueryHyperpipeAttribSGIX */);
 }
 
 static PFNGLXQUERYHYPERPIPEBESTATTRIBSGIXPROC
 epoxy_glXQueryHyperpipeBestAttribSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 2225 /* glXQueryHyperpipeBestAttribSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 2248 /* glXQueryHyperpipeBestAttribSGIX */);
 }
 
 static PFNGLXQUERYHYPERPIPECONFIGSGIXPROC
 epoxy_glXQueryHyperpipeConfigSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 2257 /* glXQueryHyperpipeConfigSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 2280 /* glXQueryHyperpipeConfigSGIX */);
 }
 
 static PFNGLXQUERYHYPERPIPENETWORKSGIXPROC
 epoxy_glXQueryHyperpipeNetworkSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_hyperpipe, 2285 /* glXQueryHyperpipeNetworkSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_hyperpipe, 2308 /* glXQueryHyperpipeNetworkSGIX */);
 }
 
 static PFNGLXQUERYMAXSWAPBARRIERSSGIXPROC
 epoxy_glXQueryMaxSwapBarriersSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_swap_barrier, 2314 /* glXQueryMaxSwapBarriersSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_swap_barrier, 2337 /* glXQueryMaxSwapBarriersSGIX */);
 }
 
 static PFNGLXQUERYMAXSWAPGROUPSNVPROC
 epoxy_glXQueryMaxSwapGroupsNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 2342 /* glXQueryMaxSwapGroupsNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 2365 /* glXQueryMaxSwapGroupsNV */);
 }
 
 static PFNGLXQUERYRENDERERINTEGERMESAPROC
 epoxy_glXQueryRendererIntegerMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_query_renderer, 2366 /* glXQueryRendererIntegerMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_query_renderer, 2389 /* glXQueryRendererIntegerMESA */);
 }
 
 static PFNGLXQUERYRENDERERSTRINGMESAPROC
 epoxy_glXQueryRendererStringMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_query_renderer, 2394 /* glXQueryRendererStringMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_query_renderer, 2417 /* glXQueryRendererStringMESA */);
 }
 
 static PFNGLXQUERYSERVERSTRINGPROC
 epoxy_glXQueryServerString_resolver(void)
 {
-    return glx_single_resolver(GLX_11, 2421 /* glXQueryServerString */);
+    return glx_single_resolver(PROVIDER_GLX_11, 2444 /* glXQueryServerString */);
 }
 
 static PFNGLXQUERYSWAPGROUPNVPROC
 epoxy_glXQuerySwapGroupNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 2442 /* glXQuerySwapGroupNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 2465 /* glXQuerySwapGroupNV */);
 }
 
 static PFNGLXQUERYVERSIONPROC
 epoxy_glXQueryVersion_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2462 /* glXQueryVersion */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2485 /* glXQueryVersion */);
 }
 
 static PFNGLXQUERYVIDEOCAPTUREDEVICENVPROC
 epoxy_glXQueryVideoCaptureDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_capture, 2478 /* glXQueryVideoCaptureDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_capture, 2501 /* glXQueryVideoCaptureDeviceNV */);
 }
 
 static PFNGLXRELEASEBUFFERSMESAPROC
 epoxy_glXReleaseBuffersMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_release_buffers, 2507 /* glXReleaseBuffersMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_release_buffers, 2530 /* glXReleaseBuffersMESA */);
 }
 
 static PFNGLXRELEASETEXIMAGEEXTPROC
 epoxy_glXReleaseTexImageEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_texture_from_pixmap, 2529 /* glXReleaseTexImageEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_texture_from_pixmap, 2552 /* glXReleaseTexImageEXT */);
 }
 
 static PFNGLXRELEASEVIDEOCAPTUREDEVICENVPROC
 epoxy_glXReleaseVideoCaptureDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_capture, 2551 /* glXReleaseVideoCaptureDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_capture, 2574 /* glXReleaseVideoCaptureDeviceNV */);
 }
 
 static PFNGLXRELEASEVIDEODEVICENVPROC
 epoxy_glXReleaseVideoDeviceNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 2582 /* glXReleaseVideoDeviceNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 2605 /* glXReleaseVideoDeviceNV */);
 }
 
 static PFNGLXRELEASEVIDEOIMAGENVPROC
 epoxy_glXReleaseVideoImageNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 2606 /* glXReleaseVideoImageNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 2629 /* glXReleaseVideoImageNV */);
 }
 
 static PFNGLXRESETFRAMECOUNTNVPROC
 epoxy_glXResetFrameCountNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_swap_group, 2629 /* glXResetFrameCountNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_swap_group, 2652 /* glXResetFrameCountNV */);
 }
 
 static PFNGLXSELECTEVENTPROC
 epoxy_glXSelectEvent_resolver(void)
 {
-    return glx_single_resolver(GLX_13, 2650 /* glXSelectEvent */);
+    return glx_single_resolver(PROVIDER_GLX_13, 2673 /* glXSelectEvent */);
 }
 
 static PFNGLXSELECTEVENTSGIXPROC
 epoxy_glXSelectEventSGIX_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGIX_pbuffer, 2665 /* glXSelectEventSGIX */);
+    return glx_single_resolver(PROVIDER_GLX_SGIX_pbuffer, 2688 /* glXSelectEventSGIX */);
 }
 
 static PFNGLXSENDPBUFFERTOVIDEONVPROC
 epoxy_glXSendPbufferToVideoNV_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_NV_video_out, 2684 /* glXSendPbufferToVideoNV */);
+    return glx_single_resolver(PROVIDER_GLX_NV_video_out, 2707 /* glXSendPbufferToVideoNV */);
 }
 
 static PFNGLXSET3DFXMODEMESAPROC
 epoxy_glXSet3DfxModeMESA_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_MESA_set_3dfx_mode, 2708 /* glXSet3DfxModeMESA */);
+    return glx_single_resolver(PROVIDER_GLX_MESA_set_3dfx_mode, 2731 /* glXSet3DfxModeMESA */);
 }
 
 static PFNGLXSWAPBUFFERSPROC
 epoxy_glXSwapBuffers_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2727 /* glXSwapBuffers */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2750 /* glXSwapBuffers */);
 }
 
 static PFNGLXSWAPBUFFERSMSCOMLPROC
 epoxy_glXSwapBuffersMscOML_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_OML_sync_control, 2742 /* glXSwapBuffersMscOML */);
+    return glx_single_resolver(PROVIDER_GLX_OML_sync_control, 2765 /* glXSwapBuffersMscOML */);
 }
 
 static PFNGLXSWAPINTERVALEXTPROC
 epoxy_glXSwapIntervalEXT_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_EXT_swap_control, 2763 /* glXSwapIntervalEXT */);
+    return glx_single_resolver(PROVIDER_GLX_EXT_swap_control, 2786 /* glXSwapIntervalEXT */);
+}
+
+static PFNGLXSWAPINTERVALMESAPROC
+epoxy_glXSwapIntervalMESA_resolver(void)
+{
+    return glx_single_resolver(PROVIDER_GLX_MESA_swap_control, 2805 /* glXSwapIntervalMESA */);
 }
 
 static PFNGLXSWAPINTERVALSGIPROC
 epoxy_glXSwapIntervalSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_swap_control, 2782 /* glXSwapIntervalSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_swap_control, 2825 /* glXSwapIntervalSGI */);
 }
 
 static PFNGLXUSEXFONTPROC
 epoxy_glXUseXFont_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2801 /* glXUseXFont */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2844 /* glXUseXFont */);
 }
 
 static PFNGLXWAITFORMSCOMLPROC
 epoxy_glXWaitForMscOML_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_OML_sync_control, 2813 /* glXWaitForMscOML */);
+    return glx_single_resolver(PROVIDER_GLX_OML_sync_control, 2856 /* glXWaitForMscOML */);
 }
 
 static PFNGLXWAITFORSBCOMLPROC
 epoxy_glXWaitForSbcOML_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_OML_sync_control, 2830 /* glXWaitForSbcOML */);
+    return glx_single_resolver(PROVIDER_GLX_OML_sync_control, 2873 /* glXWaitForSbcOML */);
 }
 
 static PFNGLXWAITGLPROC
 epoxy_glXWaitGL_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2847 /* glXWaitGL */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2890 /* glXWaitGL */);
 }
 
 static PFNGLXWAITVIDEOSYNCSGIPROC
 epoxy_glXWaitVideoSyncSGI_resolver(void)
 {
-    return glx_single_resolver(GLX_extension_GLX_SGI_video_sync, 2857 /* glXWaitVideoSyncSGI */);
+    return glx_single_resolver(PROVIDER_GLX_SGI_video_sync, 2900 /* glXWaitVideoSyncSGI */);
 }
 
 static PFNGLXWAITXPROC
 epoxy_glXWaitX_resolver(void)
 {
-    return glx_single_resolver(GLX_10, 2877 /* glXWaitX */);
+    return glx_single_resolver(PROVIDER_GLX_10, 2920 /* glXWaitX */);
 }
 
 GEN_THUNKS_RET(int, glXBindChannelToWindowSGIX, (Display * display, int screen, int channel, Window window), (display, screen, channel, window))
@@ -4200,8 +4284,9 @@ GEN_THUNKS_RET(__GLXextFuncPtr, glXGetProcAddress, (const GLubyte * procName), (
 GEN_THUNKS_RET(__GLXextFuncPtr, glXGetProcAddressARB, (const GLubyte * procName), (procName))
 GEN_THUNKS(glXGetSelectedEvent, (Display * dpy, GLXDrawable draw, unsigned long * event_mask), (dpy, draw, event_mask))
 GEN_THUNKS(glXGetSelectedEventSGIX, (Display * dpy, GLXDrawable drawable, unsigned long * mask), (dpy, drawable, mask))
+GEN_THUNKS_RET(int, glXGetSwapIntervalMESA, (void), ())
 GEN_THUNKS_RET(Bool, glXGetSyncValuesOML, (Display * dpy, GLXDrawable drawable, int64_t * ust, int64_t * msc, int64_t * sbc), (dpy, drawable, ust, msc, sbc))
-GEN_THUNKS_RET(Status, glXGetTransparentIndexSUN, (Display * dpy, Window overlay, Window underlay, long * pTransparentIndex), (dpy, overlay, underlay, pTransparentIndex))
+GEN_THUNKS_RET(Status, glXGetTransparentIndexSUN, (Display * dpy, Window overlay, Window underlay, unsigned long * pTransparentIndex), (dpy, overlay, underlay, pTransparentIndex))
 GEN_THUNKS_RET(int, glXGetVideoDeviceNV, (Display * dpy, int screen, int numVideoDevices, GLXVideoDeviceNV * pVideoDevice), (dpy, screen, numVideoDevices, pVideoDevice))
 GEN_THUNKS_RET(int, glXGetVideoInfoNV, (Display * dpy, int screen, GLXVideoDeviceNV VideoDevice, unsigned long * pulCounterOutputPbuffer, unsigned long * pulCounterOutputVideo), (dpy, screen, VideoDevice, pulCounterOutputPbuffer, pulCounterOutputVideo))
 GEN_THUNKS_RET(int, glXGetVideoSyncSGI, (unsigned int * count), (count))
@@ -4229,7 +4314,7 @@ GEN_THUNKS(glXQueryDrawable, (Display * dpy, GLXDrawable draw, int attribute, un
 GEN_THUNKS_RET(Bool, glXQueryExtension, (Display * dpy, int * errorb, int * event), (dpy, errorb, event))
 GEN_THUNKS_RET(const char *, glXQueryExtensionsString, (Display * dpy, int screen), (dpy, screen))
 GEN_THUNKS_RET(Bool, glXQueryFrameCountNV, (Display * dpy, int screen, GLuint * count), (dpy, screen, count))
-GEN_THUNKS_RET(int, glXQueryGLXPbufferSGIX, (Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value), (dpy, pbuf, attribute, value))
+GEN_THUNKS(glXQueryGLXPbufferSGIX, (Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value), (dpy, pbuf, attribute, value))
 GEN_THUNKS_RET(int, glXQueryHyperpipeAttribSGIX, (Display * dpy, int timeSlice, int attrib, int size, void * returnAttribList), (dpy, timeSlice, attrib, size, returnAttribList))
 GEN_THUNKS_RET(int, glXQueryHyperpipeBestAttribSGIX, (Display * dpy, int timeSlice, int attrib, int size, void * attribList, void * returnAttribList), (dpy, timeSlice, attrib, size, attribList, returnAttribList))
 GEN_THUNKS_RET(GLXHyperpipeConfigSGIX *, glXQueryHyperpipeConfigSGIX, (Display * dpy, int hpId, int * npipes), (dpy, hpId, npipes))
@@ -4251,10 +4336,11 @@ GEN_THUNKS_RET(Bool, glXResetFrameCountNV, (Display * dpy, int screen), (dpy, sc
 GEN_THUNKS(glXSelectEvent, (Display * dpy, GLXDrawable draw, unsigned long event_mask), (dpy, draw, event_mask))
 GEN_THUNKS(glXSelectEventSGIX, (Display * dpy, GLXDrawable drawable, unsigned long mask), (dpy, drawable, mask))
 GEN_THUNKS_RET(int, glXSendPbufferToVideoNV, (Display * dpy, GLXPbuffer pbuf, int iBufferType, unsigned long * pulCounterPbuffer, GLboolean bBlock), (dpy, pbuf, iBufferType, pulCounterPbuffer, bBlock))
-GEN_THUNKS_RET(Bool, glXSet3DfxModeMESA, (int mode), (mode))
+GEN_THUNKS_RET(GLboolean, glXSet3DfxModeMESA, (GLint mode), (mode))
 GEN_THUNKS(glXSwapBuffers, (Display * dpy, GLXDrawable drawable), (dpy, drawable))
 GEN_THUNKS_RET(int64_t, glXSwapBuffersMscOML, (Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder), (dpy, drawable, target_msc, divisor, remainder))
 GEN_THUNKS(glXSwapIntervalEXT, (Display * dpy, GLXDrawable drawable, int interval), (dpy, drawable, interval))
+GEN_THUNKS_RET(int, glXSwapIntervalMESA, (unsigned int interval), (interval))
 GEN_THUNKS_RET(int, glXSwapIntervalSGI, (int interval), (interval))
 GEN_THUNKS(glXUseXFont, (Font font, int first, int count, int list), (font, first, count, list))
 GEN_THUNKS_RET(Bool, glXWaitForMscOML, (Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * ust, int64_t * msc, int64_t * sbc), (dpy, drawable, target_msc, divisor, remainder, ust, msc, sbc))
@@ -4333,6 +4419,7 @@ static struct dispatch_table resolver_table = {
     epoxy_glXGetProcAddressARB_dispatch_table_rewrite_ptr, /* glXGetProcAddressARB */
     epoxy_glXGetSelectedEvent_dispatch_table_rewrite_ptr, /* glXGetSelectedEvent */
     epoxy_glXGetSelectedEventSGIX_dispatch_table_rewrite_ptr, /* glXGetSelectedEventSGIX */
+    epoxy_glXGetSwapIntervalMESA_dispatch_table_rewrite_ptr, /* glXGetSwapIntervalMESA */
     epoxy_glXGetSyncValuesOML_dispatch_table_rewrite_ptr, /* glXGetSyncValuesOML */
     epoxy_glXGetTransparentIndexSUN_dispatch_table_rewrite_ptr, /* glXGetTransparentIndexSUN */
     epoxy_glXGetVideoDeviceNV_dispatch_table_rewrite_ptr, /* glXGetVideoDeviceNV */
@@ -4388,6 +4475,7 @@ static struct dispatch_table resolver_table = {
     epoxy_glXSwapBuffers_dispatch_table_rewrite_ptr, /* glXSwapBuffers */
     epoxy_glXSwapBuffersMscOML_dispatch_table_rewrite_ptr, /* glXSwapBuffersMscOML */
     epoxy_glXSwapIntervalEXT_dispatch_table_rewrite_ptr, /* glXSwapIntervalEXT */
+    epoxy_glXSwapIntervalMESA_dispatch_table_rewrite_ptr, /* glXSwapIntervalMESA */
     epoxy_glXSwapIntervalSGI_dispatch_table_rewrite_ptr, /* glXSwapIntervalSGI */
     epoxy_glXUseXFont_dispatch_table_rewrite_ptr, /* glXUseXFont */
     epoxy_glXWaitForMscOML_dispatch_table_rewrite_ptr, /* glXWaitForMscOML */
@@ -4484,6 +4572,7 @@ glx_switch_to_dispatch_table(void)
     epoxy_glXGetProcAddressARB = epoxy_glXGetProcAddressARB_dispatch_table_thunk;
     epoxy_glXGetSelectedEvent = epoxy_glXGetSelectedEvent_dispatch_table_thunk;
     epoxy_glXGetSelectedEventSGIX = epoxy_glXGetSelectedEventSGIX_dispatch_table_thunk;
+    epoxy_glXGetSwapIntervalMESA = epoxy_glXGetSwapIntervalMESA_dispatch_table_thunk;
     epoxy_glXGetSyncValuesOML = epoxy_glXGetSyncValuesOML_dispatch_table_thunk;
     epoxy_glXGetTransparentIndexSUN = epoxy_glXGetTransparentIndexSUN_dispatch_table_thunk;
     epoxy_glXGetVideoDeviceNV = epoxy_glXGetVideoDeviceNV_dispatch_table_thunk;
@@ -4539,6 +4628,7 @@ glx_switch_to_dispatch_table(void)
     epoxy_glXSwapBuffers = epoxy_glXSwapBuffers_dispatch_table_thunk;
     epoxy_glXSwapBuffersMscOML = epoxy_glXSwapBuffersMscOML_dispatch_table_thunk;
     epoxy_glXSwapIntervalEXT = epoxy_glXSwapIntervalEXT_dispatch_table_thunk;
+    epoxy_glXSwapIntervalMESA = epoxy_glXSwapIntervalMESA_dispatch_table_thunk;
     epoxy_glXSwapIntervalSGI = epoxy_glXSwapIntervalSGI_dispatch_table_thunk;
     epoxy_glXUseXFont = epoxy_glXUseXFont_dispatch_table_thunk;
     epoxy_glXWaitForMscOML = epoxy_glXWaitForMscOML_dispatch_table_thunk;
@@ -4685,6 +4775,8 @@ PFNGLXGETSELECTEDEVENTPROC epoxy_glXGetSelectedEvent = epoxy_glXGetSelectedEvent
 
 PFNGLXGETSELECTEDEVENTSGIXPROC epoxy_glXGetSelectedEventSGIX = epoxy_glXGetSelectedEventSGIX_global_rewrite_ptr;
 
+PFNGLXGETSWAPINTERVALMESAPROC epoxy_glXGetSwapIntervalMESA = epoxy_glXGetSwapIntervalMESA_global_rewrite_ptr;
+
 PFNGLXGETSYNCVALUESOMLPROC epoxy_glXGetSyncValuesOML = epoxy_glXGetSyncValuesOML_global_rewrite_ptr;
 
 PFNGLXGETTRANSPARENTINDEXSUNPROC epoxy_glXGetTransparentIndexSUN = epoxy_glXGetTransparentIndexSUN_global_rewrite_ptr;
@@ -4794,6 +4886,8 @@ PFNGLXSWAPBUFFERSPROC epoxy_glXSwapBuffers = epoxy_glXSwapBuffers_global_rewrite
 PFNGLXSWAPBUFFERSMSCOMLPROC epoxy_glXSwapBuffersMscOML = epoxy_glXSwapBuffersMscOML_global_rewrite_ptr;
 
 PFNGLXSWAPINTERVALEXTPROC epoxy_glXSwapIntervalEXT = epoxy_glXSwapIntervalEXT_global_rewrite_ptr;
+
+PFNGLXSWAPINTERVALMESAPROC epoxy_glXSwapIntervalMESA = epoxy_glXSwapIntervalMESA_global_rewrite_ptr;
 
 PFNGLXSWAPINTERVALSGIPROC epoxy_glXSwapIntervalSGI = epoxy_glXSwapIntervalSGI_global_rewrite_ptr;
 
