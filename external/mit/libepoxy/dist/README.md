@@ -17,7 +17,7 @@ Features
 --------
 
   * Automatically initializes as new GL functions are used.
-  * GL 4.5 core and compatibility context support.
+  * GL 4.6 core and compatibility context support.
   * GLES 1/2/3 context support.
   * Knows about function aliases so (e.g.) `glBufferData()` can be
     used with `GL_ARB_vertex_buffer_object` implementations, along
@@ -91,7 +91,6 @@ GLEW has several issues:
     `glPointParameterfv()`, for example, and you don't want to have to
     choose which one to call when they're all the same).
   * Doesn't support OpenGL ES.
-  * Doesn't support EGL.
   * Has a hard-to-maintain parser of extension specification text
     instead of using the old .spec file or the new .xml.
   * Has significant startup time overhead when `glewInit()`

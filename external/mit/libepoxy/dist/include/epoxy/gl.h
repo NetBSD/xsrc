@@ -91,6 +91,21 @@ EPOXY_BEGIN_DECLS
 EPOXY_PUBLIC bool epoxy_has_gl_extension(const char *extension);
 EPOXY_PUBLIC bool epoxy_is_desktop_gl(void);
 EPOXY_PUBLIC int epoxy_gl_version(void);
+EPOXY_PUBLIC int epoxy_glsl_version(void);
+
+/*
+ * the type of the stub function that the failure handler must return;
+ * this function will be called on subsequent calls to the same bogus
+ * function name
+ */
+typedef void (*epoxy_resolver_stub_t)(void);
+
+/* the type of the failure handler itself */
+typedef epoxy_resolver_stub_t
+(*epoxy_resolver_failure_handler_t)(const char *name);
+
+EPOXY_PUBLIC epoxy_resolver_failure_handler_t
+epoxy_set_resolver_failure_handler(epoxy_resolver_failure_handler_t handler);
 
 EPOXY_END_DECLS
 
