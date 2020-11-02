@@ -28,7 +28,7 @@
 #define PLATFORM_HAS_GLX ENABLE_GLX
 #define PLATFORM_HAS_WGL 1
 #elif defined(__APPLE__)
-#define PLATFORM_HAS_EGL ENABLE_EGL
+#define PLATFORM_HAS_EGL 0 
 #define PLATFORM_HAS_GLX ENABLE_GLX
 #define PLATFORM_HAS_WGL 0
 #elif defined(ANDROID)
@@ -56,6 +56,13 @@
 #include "epoxy/glx.h"
 #endif
 #if PLATFORM_HAS_EGL
+# if !ENABLE_X11
+/* Mesa uses this symbol to avoid including X11 headers when including
+ * EGL.h; since X11 was explicitly disabled at configuration time, we
+ * should do the same
+ */
+#  define MESA_EGL_NO_X11_HEADERS 1
+# endif
 #include "epoxy/egl.h"
 #endif
 #if PLATFORM_HAS_WGL
@@ -88,10 +95,11 @@
 #define WRAPPER(x) x ## _wrapped
 
 #define GEN_GLOBAL_REWRITE_PTR(name, args, passthrough)          \
-    static void EPOXY_CALLSPEC                                        \
+    static void EPOXY_CALLSPEC                                   \
     name##_global_rewrite_ptr args                               \
     {                                                            \
-        name = (void *)name##_resolver();                        \
+        if (name == (void *)name##_global_rewrite_ptr)           \
+            name = (void *)name##_resolver();                    \
         name passthrough;                                        \
     }
 
@@ -99,7 +107,8 @@
     static ret EPOXY_CALLSPEC                                    \
     name##_global_rewrite_ptr args                               \
     {                                                            \
-        name = (void *)name##_resolver();                        \
+        if (name == (void *)name##_global_rewrite_ptr)           \
+            name = (void *)name##_resolver();                    \
         return name passthrough;                                 \
     }
 
@@ -175,12 +184,15 @@ bool epoxy_conservative_has_wgl_extension(const char *name);
 void *epoxy_conservative_egl_dlsym(const char *name, bool exit_if_fails);
 void *epoxy_conservative_glx_dlsym(const char *name, bool exit_if_fails);
 
-bool epoxy_extension_in_string(const char *extension_list, const char *ext);
+bool epoxy_load_glx(bool exit_if_fails, bool load);
+bool epoxy_load_egl(bool exit_if_fails, bool load);
 
 #define glBegin_unwrapped epoxy_glBegin_unwrapped
 #define glEnd_unwrapped epoxy_glEnd_unwrapped
 extern void UNWRAPPED_PROTO(glBegin_unwrapped)(GLenum primtype);
 extern void UNWRAPPED_PROTO(glEnd_unwrapped)(void);
+
+extern epoxy_resolver_failure_handler_t epoxy_resolver_failure_handler;
 
 #if USING_DISPATCH_TABLE
 void gl_init_dispatch_table(void);
