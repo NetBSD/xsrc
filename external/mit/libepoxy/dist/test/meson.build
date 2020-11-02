@@ -1,11 +1,17 @@
+dl_dep = cc.find_library('dl', required: false)
+has_dlvsym = cc.has_function('dlvsym', dependencies: dl_dep)
+
 has_gles1 = gles1_dep.found()
 has_gles2 = gles2_dep.found()
-build_x11_tests = build_glx and x11_dep.found()
+build_x11_tests = enable_x11 and x11_dep.found()
 
-test_cflags = common_cflags + [
+test_cflags = common_cflags
+if not has_dlvsym
+test_cflags += [
   '-D_XOPEN_SOURCE',
   '-D_POSIX_C_SOURCE=200809L',
 ]
+endif
 
 # Unconditionally built tests
 test('header_guards',
@@ -27,6 +33,12 @@ test('khronos_typedefs',
                 c_args: common_cflags,
                 dependencies: libepoxy_dep,
                 include_directories: libepoxy_inc))
+test('gl_version',
+     executable('gl_version',
+                'gl_version.c',
+                c_args: common_cflags,
+                dependencies: libepoxy_dep,
+                include_directories: libepoxy_inc))
 
 if build_egl and build_x11_tests
   egl_common_sources = [ 'egl_common.h', 'egl_common.c', ]
@@ -39,10 +51,16 @@ if build_egl and build_x11_tests
 
   egl_tests = [
     [ 'egl_has_extension_nocontext', [], [ 'egl_has_extension_nocontext.c' ], true, ],
-    [ 'egl_gl', [], [ 'egl_gl.c' ], true, ],
+    [ 'egl_epoxy_api', [], [ 'egl_epoxy_api.c' ], true ],
     [ 'egl_gles1_without_glx', [ '-DGLES_VERSION=1', ], [ 'egl_without_glx.c' ], has_gles1, ],
     [ 'egl_gles2_without_glx', [ '-DGLES_VERSION=2', ], [ 'egl_without_glx.c' ], has_gles2, ],
   ]
+
+  if build_glx
+    egl_tests += [
+      [ 'egl_gl', [], [ 'egl_gl.c' ], true, ],
+    ]
+  endif
 
   foreach test: egl_tests
     test_name = test[0]
@@ -62,7 +80,7 @@ if build_egl and build_x11_tests
   endforeach
 endif
 
-if build_glx
+if build_glx and build_x11_tests
   glx_common_sources = [ 'glx_common.h', 'glx_common.c', ]
   glx_common_lib = static_library('glx_common',
                                   sources: glx_common_sources,
@@ -86,8 +104,8 @@ if build_glx
     [ 'glx_has_extension_nocontext', [ 'glx_has_extension_nocontext.c' ], [], [], true ],
     [ 'glx_static', [ 'glx_static.c' ], [ '-DNEEDS_TO_BE_STATIC'], [ '-static' ], libtype == 'static' ],
     [ 'glx_shared_znow', [ 'glx_static.c', ], [], [ '-Wl,-z,now' ], has_znow ],
-    [ 'glx_alias_prefer_same_name', [ 'glx_alias_prefer_same_name.c', 'dlwrap.c', 'dlwrap.h' ], [], [ '-rdynamic' ], not build_apple ],
-    [ 'glx_gles2', [ 'glx_gles2.c', 'dlwrap.c', 'dlwrap.h' ], [], [ '-rdynamic' ], not build_apple ],
+    [ 'glx_alias_prefer_same_name', [ 'glx_alias_prefer_same_name.c', 'dlwrap.c', 'dlwrap.h' ], [], [ '-rdynamic' ], has_dlvsym ],
+    [ 'glx_gles2', [ 'glx_gles2.c', 'dlwrap.c', 'dlwrap.h' ], [], [ '-rdynamic' ], has_dlvsym ],
   ]
 
   foreach test: glx_tests
@@ -107,41 +125,6 @@ if build_glx
       test(test_name, test_bin)
     endif
   endforeach
-
-  if not build_apple
-    # GLX/EGL tests
-    if build_egl
-      glx_egl_sources = [
-        'egl_and_glx_different_pointers.c',
-        'dlwrap.c',
-        'dlwrap.h',
-      ]
-
-      glx_egl_deps = [ libepoxy_dep, x11_dep, dl_dep ]
-      glx_egl_link_flags = [ '-rdynamic' ]
-      glx_egl_link_with = [ glx_common_lib, egl_common_lib ]
-
-      glx_egl_tests = [
-        [ 'egl_and_glx_different_pointers_glx', [ '-DUSE_GLX' ], false ],
-        [ 'egl_and_glx_different_pointers_egl', [ '-DUSE_EGL' ], false ],
-        [ 'egl_and_glx_different_pointers_egl_glx', [ '-DUSE_EGL', '-DUSE_GLX' ], true ],
-      ]
-
-      foreach test: glx_egl_tests
-        test_name = test[0]
-        test_c_args = test[1]
-        test_should_fail = test[2]
-
-        test_bin = executable(test_name, glx_egl_sources,
-                              c_args: common_cflags + test_c_args,
-                              include_directories: libepoxy_inc,
-                              dependencies: glx_egl_deps,
-                              link_with: glx_egl_link_with,
-                              link_args: glx_egl_link_flags)
-        test(test_name, test_bin, should_fail: test_should_fail)
-      endforeach
-    endif
-  endif
 endif
 
 # WGL
@@ -173,5 +156,29 @@ if build_wgl
                           link_with: wgl_common_lib)
 
     test(test_name, test_bin)
+  endforeach
+endif
+
+# Apple
+if host_machine.system().contains('darwin')
+  opengl_dep = dependency('appleframeworks', modules: ['OpenGL', 'Carbon'], required: true)
+
+  cgl_tests = [
+    [ 'cgl_core', [ 'cgl_core.c' ] ],
+    [ 'cgl_epoxy_api', [ 'cgl_epoxy_api.c' ] ],
+  ]
+
+  foreach t: cgl_tests
+    test_name = t[0]
+    test_sources = t[1]
+
+    test(test_name,
+      executable(
+        test_name, test_sources,
+        c_args: test_cflags,
+        include_directories: libepoxy_inc,
+        dependencies: [ libepoxy_dep, opengl_dep ],
+      ),
+    )
   endforeach
 endif

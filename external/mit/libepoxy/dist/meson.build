@@ -1,11 +1,11 @@
-project('libepoxy', 'c', version: '1.4.3',
+project('libepoxy', 'c', version: '1.5.4',
         default_options: [
           'buildtype=debugoptimized',
           'c_std=gnu99',
           'warning_level=1',
         ],
         license: 'MIT',
-        meson_version: '>= 0.39.1')
+        meson_version: '>= 0.47.0')
 
 epoxy_version = meson.project_version().split('.')
 epoxy_major_version = epoxy_version[0].to_int()
@@ -28,66 +28,50 @@ conf.set_quoted('PACKAGE_DATADIR', join_paths(get_option('prefix'), get_option('
 conf.set_quoted('PACKAGE_LIBDIR', join_paths(get_option('prefix'), get_option('libdir')))
 conf.set_quoted('PACKAGE_LOCALEDIR', join_paths(get_option('prefix'), get_option('datadir'), 'locale'))
 conf.set_quoted('PACKAGE_LIBEXECDIR', join_paths(get_option('prefix'), get_option('libexecdir')))
-conf.set('HAVE_KHRPLATFORM_H', cc.has_header('KHR/khrplatform.h', required: false))
+conf.set('HAVE_KHRPLATFORM_H', cc.has_header('KHR/khrplatform.h'))
 
 # GLX can be used on different platforms, so we expose a
 # configure time switch to enable or disable it; in case
 # the "auto" default value is set, we only enable GLX
 # support on Linux and Unix
-enable_glx = get_option('enable-glx')
+enable_glx = get_option('glx')
 if enable_glx == 'auto'
-  if host_system == 'windows'
-    build_glx = false
-  elif host_system == 'darwin'
-    build_glx = false
-  elif host_system == 'android'
-    build_glx = false
-  elif host_system == 'haiku'
-    build_glx = false
-  else
-    build_glx = true
-  endif
-elif enable_glx == 'yes'
-  build_glx = true
-elif enable_glx == 'no'
-  build_glx = false
+  build_glx = not ['windows', 'darwin', 'android', 'haiku'].contains(host_system)
+else
+  build_glx = enable_glx == 'yes'
 endif
 
-enable_egl = get_option('enable-egl')
+enable_egl = get_option('egl')
 if enable_egl == 'auto'
-  if host_system == 'windows'
-    build_egl = false
-  elif host_system == 'darwin'
-    build_egl = false
-  elif host_system == 'android'
-    build_egl = true
-  else
-    build_egl = true
+  build_egl = not ['windows', 'darwin'].contains(host_system)
+else
+  build_egl = enable_egl == 'yes'
+endif
+
+enable_x11 = get_option('x11')
+if not enable_x11
+  if enable_glx == 'yes'
+    error('GLX support is explicitly enabled, but X11 was disabled')
   endif
-elif enable_egl == 'yes'
-  build_egl = true
-elif enable_egl == 'no'
-  build_egl = false
+  build_glx = false
 endif
 
 # The remaining platform specific API for GL/GLES are enabled
 # depending on the platform we're building for
 if host_system == 'windows'
-  build_apple = false
   build_wgl = true
   has_znow = true
 elif host_system == 'darwin'
-  build_apple = true
   build_wgl = false
   has_znow = false
 else
-  build_apple = false
   build_wgl = false
   has_znow = true
 endif
 
 conf.set10('ENABLE_GLX', build_glx)
 conf.set10('ENABLE_EGL', build_egl)
+conf.set10('ENABLE_X11', enable_x11)
 
 # Compiler flags, taken from the Xorg macros
 if cc.get_id() == 'msvc'
@@ -150,18 +134,13 @@ else
   test_cflags = []
 endif
 
-common_cflags = []
-foreach cflag: test_cflags
-  if cc.has_argument(cflag)
-    common_cflags += cflag
-  endif
-endforeach
+common_cflags = cc.get_supported_arguments(test_cflags)
 
 libtype = get_option('default_library')
 
 # Visibility compiler flags; we only use this for shared libraries
+visibility_cflags = []
 if libtype == 'shared'
-  visibility_cflags = []
   if host_system == 'windows'
     conf.set('DLL_EXPORT', true)
     conf.set('EPOXY_PUBLIC', '__declspec(dllexport) extern')
@@ -204,7 +183,7 @@ if not gles1_dep.found()
 endif
 
 # On windows, the DLL has to have all of its functions
-# resolved at link time, so we have to link directly aginst
+# resolved at link time, so we have to link directly against
 # opengl32.  But that's the only GL provider, anyway.
 if host_system == 'windows'
   opengl32_dep = cc.find_library('opengl32', required: true)
@@ -216,26 +195,6 @@ if host_system == 'windows'
   # versions of Meson.
   gdi32_dep = cc.find_library('gdi32', required: true)
 endif
-
-# PkgConfig file
-pkgconf = configuration_data()
-pkgconf.set('prefix', epoxy_prefix)
-pkgconf.set('exec_prefix', epoxy_prefix)
-pkgconf.set('libdir', epoxy_libdir)
-pkgconf.set('includedir', epoxy_includedir)
-pkgconf.set10('epoxy_has_glx', build_glx)
-pkgconf.set10('epoxy_has_egl', build_egl)
-pkgconf.set10('epoxy_has_wgl', build_wgl)
-pkgconf.set('PACKAGE_VERSION', meson.project_version())
-if dl_dep.found()
-  pkgconf.set('DLOPEN_LIBS', '-ldl')
-endif
-
-configure_file(input: 'epoxy.pc.in',
-               output: 'epoxy.pc',
-               configuration: pkgconf,
-               install: true,
-               install_dir: join_paths(epoxy_libdir, 'pkgconfig'))
 
 # Python
 python = import('python3').find_python()
@@ -258,9 +217,12 @@ libepoxy_inc = [
 
 subdir('include/epoxy')
 subdir('src')
-subdir('test')
 
-if get_option('enable-docs')
+if get_option('tests')
+  subdir('test')
+endif
+
+if get_option('docs')
   doxygen = find_program('doxygen', required: false)
   if doxygen.found()
     subdir('doc')

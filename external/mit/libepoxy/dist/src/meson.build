@@ -49,17 +49,13 @@ epoxy_sources = sources + gen_sources
 
 common_ldflags = []
 
-if host_system == 'linux'
-  foreach f: [ '-Wl,-Bsymbolic', '-Wl,-z,relro', '-Wl,-z,now', ]
-    if cc.has_argument(f)
-      common_ldflags += f
-    endif
-  endforeach
+if host_system == 'linux' and cc.get_id() == 'gcc'
+  common_ldflags += cc.get_supported_link_arguments([ '-Wl,-Bsymbolic-functions', '-Wl,-z,relro' ])
 endif
 
 # Maintain compatibility with autotools; see: https://github.com/anholt/libepoxy/issues/108
 if host_system == 'darwin'
-  common_ldflags += [ '-compatibility_version=1', '-current_version=1.0', ]
+  common_ldflags += [ '-compatibility_version 1', '-current_version 1.0', ]
 endif
 
 epoxy_deps = [ dl_dep, ]
@@ -67,31 +63,50 @@ if host_system == 'windows'
   epoxy_deps += [ opengl32_dep, gdi32_dep ]
 endif
 
-# Allow building a static version of epoxy
-if libtype != 'shared'
-  libepoxy_static = static_library('epoxy',
-                                   sources: epoxy_sources + epoxy_headers,
-                                   install: true,
-                                   dependencies: epoxy_deps,
-                                   include_directories: libepoxy_inc,
-                                   c_args: common_cflags + visibility_cflags,
-                                   link_args: common_ldflags)
-  libepoxy = libepoxy_static
+libepoxy = library(
+  'epoxy',
+  sources: epoxy_sources + epoxy_headers,
+  version: '0.0.0',
+  install: true,
+  dependencies: epoxy_deps,
+  include_directories: libepoxy_inc,
+  c_args: common_cflags + visibility_cflags,
+  link_args: common_ldflags,
+)
+
+libepoxy_dep = declare_dependency(
+  link_with: libepoxy,
+  include_directories: libepoxy_inc,
+  dependencies: epoxy_deps,
+  sources: epoxy_headers,
+)
+
+epoxy_has_glx = build_glx ? '1' : '0'
+epoxy_has_egl = build_egl ? '1' : '0'
+epoxy_has_wgl = build_wgl ? '1' : '0'
+
+# We don't want to add these dependencies to the library, as they are
+# not needed when building Epoxy; we do want to add them to the generated
+# pkg-config file, for consumers of Epoxy
+gl_reqs = []
+if gl_dep.found() and gl_dep.type_name() == 'pkgconfig'
+  gl_reqs += 'gl'
+endif
+if build_egl and egl_dep.found() and egl_dep.type_name() == 'pkgconfig'
+  gl_reqs += 'egl'
 endif
 
-if libtype != 'static'
-  libepoxy_shared = shared_library('epoxy',
-                                   sources: epoxy_sources + epoxy_headers,
-                                   version: '0.0.0',
-                                   install: true,
-                                   dependencies: epoxy_deps,
-                                   include_directories: libepoxy_inc,
-                                   c_args: common_cflags + visibility_cflags,
-                                   link_args: common_ldflags)
-  libepoxy = libepoxy_shared
-endif
-
-libepoxy_dep = declare_dependency(link_with: libepoxy,
-                                  include_directories: libepoxy_inc,
-                                  dependencies: epoxy_deps,
-                                  sources: epoxy_headers)
+pkg = import('pkgconfig')
+pkg.generate(
+  libraries: libepoxy,
+  name: 'epoxy',
+  description: 'GL dispatch library',
+  version: meson.project_version(),
+  variables: [
+    'epoxy_has_glx=@0@'.format(epoxy_has_glx),
+    'epoxy_has_egl=@0@'.format(epoxy_has_egl),
+    'epoxy_has_wgl=@0@'.format(epoxy_has_wgl),
+  ],
+  filebase: 'epoxy',
+  requires_private: ' '.join(gl_reqs),
+)

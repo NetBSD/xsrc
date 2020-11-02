@@ -22,7 +22,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([libepoxy],
-        [1.4.3],
+        [1.5.4],
         [https://github.com/anholt/libepoxy],
         [libepoxy])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -58,6 +58,11 @@ AC_CHECK_HEADER([KHR/khrplatform.h],
 # OS X defaults to having -Wint-conversion ("warn when passing
 # uintptr_t to a void *") by default.  Kill that.
 XORG_TESTSET_CFLAG(CWARNFLAGS, [-Wno-int-conversion])
+
+AC_ARG_ENABLE([x11],
+              [AC_HELP_STRING([--enable-x11=@<:@yes,no@:>@], [Enable X11 support @<:@default=yes@:>@])],
+              [enable_x11=$enableval],
+              [enable_x11=yes])
 
 AC_ARG_ENABLE([glx],
               [AC_HELP_STRING([--enable-glx=@<:@auto,yes,no@:>@], [Enable GLX support @<:@default=auto@:>@])],
@@ -119,7 +124,7 @@ AS_CASE([$host_os],
     build_wgl=yes
     has_znow=yes
     # On windows, the DLL has to have all of its functions
-    # resolved at link time, so we have to link directly aginst
+    # resolved at link time, so we have to link directly against
     # opengl32.dll.  But that's the only GL provider, anyway.
     EPOXY_LINK_LIBS="-lopengl32"
 
@@ -132,7 +137,6 @@ AS_CASE([$host_os],
 
   [darwin*], [
     build_wgl=no
-    build_apple=yes
     has_znow=no
     EPOXY_LINK_LIBS=""
   ],
@@ -147,6 +151,15 @@ AS_CASE([$host_os],
 )
 
 AC_SUBST(EPOXY_LINK_LIBS)
+
+if test x$enable_x11 = xno; then
+    if test x$enable_glx = xyes; then
+        AC_MSG_ERROR([GLX support is explicitly enabled, but X11 was disabled])
+    fi
+    build_glx=no
+else
+    AC_DEFINE([ENABLE_X11], [1], [Whether X11 support is enabled])
+fi
 
 AM_CONDITIONAL(BUILD_EGL, test x$build_egl = xyes)
 if test x$build_egl = xyes; then
@@ -165,11 +178,6 @@ if test x$build_wgl = xyes; then
     AC_DEFINE([BUILD_WGL], [1], [build WGL tests])
 fi
 
-AM_CONDITIONAL(BUILD_APPLE, test x$build_apple = xyes)
-if test x$build_apple = xyes; then
-    AC_DEFINE([BUILD_APPLE], [1], [build APPLE is apple (for testing)])
-fi
-
 AM_CONDITIONAL(HAS_ZNOW, test x$has_znow = xyes)
 
 AC_CHECK_LIB([GLESv1_CM], [glFlush], [has_gles1=yes], [has_gles1=no])
@@ -177,6 +185,12 @@ AM_CONDITIONAL(HAS_GLES1, test x$has_gles1 = xyes)
 
 AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])
 AC_SUBST([DLOPEN_LIBS])
+
+savelibs=$LIBS
+LIBS=$DLOPEN_LIBS
+AC_CHECK_FUNCS([dlvsym], [have_dlvsym=1], [have_dlvsym=0])
+AM_CONDITIONAL(HAVE_DLVSYM, test $have_dlvsym = 1)
+LIBS=$savelibs
 
 VISIBILITY_CFLAGS=""
 AS_CASE(["$host"],
@@ -214,19 +228,28 @@ AS_CASE(["$host"],
 
 AC_SUBST([VISIBILITY_CFLAGS])
 
-if test x$build_glx = xyes; then
-  PKG_CHECK_MODULES(X11, [x11], [x11=yes], [x11=no])
-  if test x$x11 = xno -a x$build_glx = xyes; then
-      AC_MSG_ERROR([libX11 headers (libx11-dev) required to build with GLX support])
-  fi
-  AC_DEFINE(ENABLE_GLX, [1], [Whether GLX support is enabled])
+if test x$enable_x11 = xyes; then
+    PKG_CHECK_MODULES(X11, [x11], [x11=yes], [x11=no])
+    if test x$x11 = xno -a x$build_glx = xyes; then
+        AC_MSG_ERROR([libX11 headers (libx11-dev) are required to build with GLX support])
+    fi
 else
-  x11=no
+    x11=no
+fi
+
+if test x$build_glx = xyes; then
+  AC_DEFINE(ENABLE_GLX, [1], [Whether GLX support is enabled])
 fi
 
 AM_CONDITIONAL(HAVE_X11, test x$x11 = xyes)
 
 PKG_CHECK_MODULES(GL, [gl], [gl=yes], [gl=no])
+PKG_CHECK_MODULES(EGL, [egl], [egl=yes], [egl=no])
+
+GL_REQS=""
+AS_IF([test x$gl = xyes], [GL_REQS="$GL_REQS gl"])
+AS_IF([test x$build_egl = xyes && test x$egl = xyes], [GL_REQS="$GL_REQS egl"])
+AC_SUBST(GL_REQS)
 
 # Variables for the pkg-config file; AC_SUBST does not do `test` substitutions,
 # so we need to specify the boolean values here
