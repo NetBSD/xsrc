@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.7 2020/08/01 20:21:00 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.8 2020/11/03 16:59:38 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -264,9 +264,9 @@ x68kCfbFinishScreenInit(
 
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)malloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
-        vid = (VisualID *)malloc( sizeof(VisualID) );
+        depths = malloc( sizeof(DepthRec) );
+        visuals = malloc( sizeof(VisualRec) );
+        vid = malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
             free( depths );
             free( visuals );
@@ -296,9 +296,9 @@ x68kCfbFinishScreenInit(
 
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)malloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
-        vid = (VisualID *)malloc( sizeof(VisualID) );
+        depths = malloc( sizeof(DepthRec) );
+        visuals = malloc( sizeof(VisualRec) );
+        vid = malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
             free( depths );
             free( visuals );
