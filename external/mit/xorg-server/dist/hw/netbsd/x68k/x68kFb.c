@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.5 2020/11/03 15:25:21 tsutsui Exp $ */
+/* $NetBSD: x68kFb.c,v 1.6 2020/11/03 15:52:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -113,7 +113,7 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
     x68kRegSetup(pPriv);
 
     /* unmap and close frame buffer */
-    if ( munmap(__UNVOLATILE(pPriv->reg), pPriv->mapsize) == -1 )
+    if ( munmap(pPriv->reg, pPriv->mapsize) == -1 )
         ErrorF("Can't unmap frame buffer");
     close(pPriv->fd);
 }

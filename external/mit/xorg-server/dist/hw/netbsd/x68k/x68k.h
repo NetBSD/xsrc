@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.5 2020/07/22 21:24:20 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.6 2020/11/03 15:52:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -79,7 +79,7 @@ typedef struct _X68kScreenRec {
     int scr_height;             /* screen height       */
     int dpi;                    /* dots per inch       */
     uint8_t *fb;                /* frame buffer VA     */
-    volatile FbReg *reg;        /* control register VA */
+    FbReg *reg;                 /* control register VA */
     X68kFbReg x68kreg;          /* control register    */
     int mapsize;                /* size of mapped memory */
     ColormapPtr installedMap;   /* installed colormap    */

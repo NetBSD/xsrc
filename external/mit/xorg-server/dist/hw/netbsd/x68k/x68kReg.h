@@ -1,4 +1,4 @@
-/* $NetBSD: x68kReg.h,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kReg.h,v 1.4 2020/11/03 15:52:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -28,11 +28,11 @@
  * CRT controller
  */
 typedef struct {
-    u_short r00, r01, r02, r03, r04, r05, r06, r07;
-    u_short r08, r09, r10, r11, r12, r13, r14, r15;
-    u_short r16, r17, r18, r19, r20, r21, r22, r23;
+    volatile u_short r00, r01, r02, r03, r04, r05, r06, r07;
+    volatile u_short r08, r09, r10, r11, r12, r13, r14, r15;
+    volatile u_short r16, r17, r18, r19, r20, r21, r22, r23;
     char pad0[0x450];
-    u_short ctrl;
+    volatile u_short ctrl;
     char pad1[0x1b7e];
 } Crtc;
 
@@ -47,11 +47,11 @@ typedef struct {
  * video controller
  */
 typedef struct {
-    u_short r0;
+    volatile u_short r0;
     char pad0[0xfe];
-    u_short r1;
+    volatile u_short r1;
     char pad1[0xfe];
-    u_short r2;
+    volatile u_short r2;
     char pad2[0x19fe];
 } Videoc;
 
@@ -63,9 +63,9 @@ typedef struct {
 
 /* system port */
 typedef struct {
-    u_short r1, r2, r3, r4;
+    volatile u_short r1, r2, r3, r4;
     u_short pad0[2];
-    u_short r5, r6;
+    volatile u_short r5, r6;
     u_short pad[0x1ff0];
 } Sysport;
 
@@ -74,8 +74,8 @@ typedef struct {
  */
 typedef struct {
     Crtc crtc;
-    u_short gpal[256];    /* graphic palette */
-    u_short tpal[256];     /* text palette */
+    volatile u_short gpal[256];    /* graphic palette */
+    volatile u_short tpal[256];     /* text palette */
     Videoc videoc;
     u_short pad0[0xa000];
     Sysport sysport;
