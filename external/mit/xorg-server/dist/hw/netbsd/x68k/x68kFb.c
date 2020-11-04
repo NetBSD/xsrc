@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.6 2020/11/03 15:52:57 tsutsui Exp $ */
+/* $NetBSD: x68kFb.c,v 1.7 2020/11/04 17:16:13 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -132,7 +132,7 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
 static void
 x68kRegSetup(X68kScreenRec *pPriv)
 {
-    u_short pr20 = pPriv->reg->crtc.r20;
+    uint16_t pr20 = pPriv->reg->crtc.r20;
 
     /* timing registers */
     if ( (pr20 & 0x0003) < (pPriv->x68kreg.crtc.r20 & 0x0003) ||
@@ -175,7 +175,7 @@ x68kSaveScreen(ScreenPtr pScreen, Bool on)
 {
     X68kScreenRec *pPriv = x68kGetScreenPrivate(pScreen);
     static int status = FALSE;
-    static u_short r2;
+    static uint16_t r2;
 
     if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE) {
         if (!status) {

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.9 2020/11/01 11:44:55 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.10 2020/11/04 17:16:13 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -93,7 +93,7 @@ static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, void *, int);
 static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
-static void x68kSetLeds(X68kKbdPrivPtr, u_char);
+static void x68kSetLeds(X68kKbdPrivPtr, uint8_t);
 
 static void
 x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
@@ -149,7 +149,7 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
                 ErrorF("Async keyboard I/O failed");
                 return !Success;
             }
-	    x68kSetLeds(&x68kKbdPriv, (u_char)x68kKbdPriv.leds);
+	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
             SetNotifyFd(x68kKbdPriv.fd, x68kKbdHandlerNotify,
 		X_NOTIFY_READ, NULL);
             pKeyboard->on = TRUE;
@@ -381,7 +381,7 @@ x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
     X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
 
     if (pPriv->leds != ctrl->leds) {
-        x68kSetLeds(pPriv, (u_char)ctrl->leds);
+        x68kSetLeds(pPriv, (uint8_t)ctrl->leds);
 	pPriv->leds = ctrl->leds;
     }
 }
@@ -391,11 +391,11 @@ x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
  *
  *  purpose:  set keyboard leds to specified state
  *  argument: (X68kKbdPrivPtr)pPriv
- *            (u_char)data;
+ *            (uint8_t)data;
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 static void
-x68kSetLeds(X68kKbdPrivPtr pPriv, u_char data)
+x68kSetLeds(X68kKbdPrivPtr pPriv, uint8_t data)
 {
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)
