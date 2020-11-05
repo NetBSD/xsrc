@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.3 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -43,12 +43,12 @@
 #include <machine/grfioctl.h>
 
 /* generic X */
-#include <X.h>
-#include <Xmd.h>
+#include <X11/X.h>
+#include <X11/Xmd.h>
 #define XK_KATAKANA
-#include <keysym.h>
+#include <X11/keysym.h>
 #define NEED_EVENTS
-#include <Xproto.h>
+#include <X11/Xproto.h>
 
 /* dix */
 #include <misc.h>
@@ -79,7 +79,7 @@ typedef struct _X68kScreenRec {
     int scr_height;             /* screen height       */
     int dpi;                    /* dots per inch       */
     uint8_t *fb;                /* frame buffer VA     */
-    volatile FbReg *reg;        /* control register VA */
+    FbReg *reg;                 /* control register VA */
     X68kFbReg x68kreg;          /* control register    */
     int mapsize;                /* size of mapped memory */
     ColormapPtr installedMap;   /* installed colormap    */

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.4 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -125,7 +125,7 @@ static int x68kListInstalledColormaps(ScreenPtr pScreen, Colormap *pCmapList);
 static void x68kStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs);
 
 static void x68kUpdateColormap(ScreenPtr pScreen, int dex, int count,
-                               u_char *rmap, u_char *gmap, u_char *bmap);
+                               uint8_t *rmap, uint8_t *gmap, uint8_t *bmap);
 
 /*-------------------------------------------------------------------------
  * function "x68kGraphOpen"                          [ X68kFBProc function ]
@@ -147,7 +147,7 @@ x68kGraphOpen(X68kScreenRec *pPriv)
     if (pPriv->depth == 15 && pPriv->class == TrueColor) {
         /* for 32768 TrueColor mode */
 	int i;
-	u_short x = 0x0001;
+	uint16_t x = 0x0001;
 	for ( i = 0; i < 256; ) {
 	    pPriv->reg->gpal[i++] = x;
 	    pPriv->reg->gpal[i++] = x;
@@ -265,9 +265,9 @@ x68kCfbFinishScreenInit(
 
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)malloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
-        vid = (VisualID *)malloc( sizeof(VisualID) );
+        depths = malloc( sizeof(DepthRec) );
+        visuals = malloc( sizeof(VisualRec) );
+        vid = malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
             free( depths );
             free( visuals );
@@ -297,9 +297,9 @@ x68kCfbFinishScreenInit(
 
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)malloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
-        vid = (VisualID *)malloc( sizeof(VisualID) );
+        depths = malloc( sizeof(DepthRec) );
+        visuals = malloc( sizeof(VisualRec) );
+        vid = malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
             free( depths );
             free( visuals );
@@ -355,7 +355,7 @@ x68kInstallColormap(ColormapPtr cmap)
     register int i;
     register Entry *pent;
     register VisualPtr pVisual = cmap->pVisual;
-    u_char   rmap[256], gmap[256], bmap[256];
+    uint8_t   rmap[256], gmap[256], bmap[256];
     unsigned long rMask, gMask, bMask;
     int	oRed, oGreen, oBlue;
 
@@ -453,7 +453,7 @@ static void
 x68kStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs)
 {
     X68kScreenRec *pPriv = x68kGetScreenPrivate(pmap->pScreen);
-    u_char     rmap[256], gmap[256], bmap[256];
+    uint8_t     rmap[256], gmap[256], bmap[256];
     xColorItem expanddefs[256];
     register int i;
 
@@ -480,20 +480,20 @@ x68kStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs)
  *  argument: (ScreenPtr)pScreen: screen
  *            (int)dex          : colormap index
  *            (int)count        : count for updating
- *            (u_char *)[rgb]map: each map
+ *            (uint8_t *)[rgb]map: each map
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 static void
 x68kUpdateColormap(ScreenPtr pScreen, int dex, int count,
-                               u_char *rmap, u_char *gmap, u_char *bmap)
+                               uint8_t *rmap, uint8_t *gmap, uint8_t *bmap)
 {
     X68kScreenRec *pPriv = x68kGetScreenPrivate(pScreen);
-    volatile u_short *pal = pPriv->reg->gpal;
+    volatile uint16_t *pal = pPriv->reg->gpal;
 
     for( ; count > 0; count--,dex++ ) {
-        pal[dex] = (u_short)gmap[dex] << 11 |
-                   (u_short)rmap[dex] << 6 |
-                   (u_short)bmap[dex] << 1;
+        pal[dex] = (uint16_t)gmap[dex] << 11 |
+                   (uint16_t)rmap[dex] << 6 |
+                   (uint16_t)bmap[dex] << 1;
     }
 }
 

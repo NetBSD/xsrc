@@ -1,4 +1,4 @@
-;; $NetBSD: X68kConfig,v 1.1.1.1 2016/06/09 09:07:59 mrg Exp $
+;; $NetBSD: X68kConfig,v 1.2 2020/11/05 16:06:08 tsutsui Exp $
 ;;----------------------------------------------------------------
 ;; X68kConfig: sample configuration for X68k
 ;; written by Yasushi Yamasaki
@@ -52,6 +52,14 @@
         91    9   17   81  567    5   40  552   27
        789    3    0)
 
+;
+; 640x480x4bit PseudoColor
+; CRTC-R20 = 0x0417(1047) VIDEOC-R0 = 0x0004
+;
+(ModeDef Pseudo16Color640x480 Graphic 4 PseudoColor  640 480
+        99   11   13   93  524    1   33  513   27
+      1047    4    0)
+
 ;;----------------------------------------------------------------
 ;; tricky modes
 ;;----------------------------------------------------------------
@@ -100,6 +108,7 @@
 ;(Mode Monochrome1024x768)
 ;(Mode Pseudo16Color1024x768)
 ;(Mode NeedsMultiScan)
+;(Mode Pseudo16Color640x480)
 
 ;;----------------------------------------------------------------
 ;; input devices

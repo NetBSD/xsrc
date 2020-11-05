@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kFb.c,v 1.4 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -29,6 +29,8 @@
 static void x68kRegSetup(X68kScreenRec *pPriv);
 
 DevPrivateKeyRec x68kScreenPrivateKeyRec;
+
+static int cons_dwidth;
 
 /*-------------------------------------------------------------------------
  * function "x68kFbCommonOpen"
@@ -68,6 +70,7 @@ x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
     pPriv->fb = (uint8_t *)((uint32_t)pPriv->reg + gi.gd_regsize);
 
     x68kRegSetup( pPriv );
+    cons_dwidth = gi.gd_dwidth;
 
     return TRUE;
 }
@@ -83,7 +86,8 @@ x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
 void
 x68kFbCommonClose(X68kScreenRec *pPriv)
 {
-    X68kFbReg graphNone = {
+    static const X68kFbReg graphNone_mode16 = {
+	/* CRT mode 16 (768x512 31.5kHz) */
         { 137,14, 28, 124,
           567, 5, 40, 552,
            27, 0,  0,   0,
@@ -93,12 +97,23 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
         { 0x0004, 0x21e4, 0x0020 },
         0
     };
+    static const X68kFbReg graphNone_mode19 = {
+	/* CRT mode 19 (640x480 31.5kHz VGA mode) */
+        {  99,11, 13,  93,
+          524, 1, 33, 513,
+           27, 0,  0,   0,
+            0, 0,  0,   0,
+            0, 0,  0,   0,
+       0x0417, 0,  0,   0, 0 },
+        { 0x0004, 0x21e4, 0x0020 },
+        0
+    };
     /* change video mode */
-    pPriv->x68kreg = graphNone;
+    pPriv->x68kreg = (cons_dwidth == 640) ? graphNone_mode19 : graphNone_mode16;
     x68kRegSetup(pPriv);
 
     /* unmap and close frame buffer */
-    if ( munmap(__UNVOLATILE(pPriv->reg), pPriv->mapsize) == -1 )
+    if ( munmap(pPriv->reg, pPriv->mapsize) == -1 )
         Error("Can't unmap frame buffer");
     close(pPriv->fd);
 }
@@ -117,7 +132,7 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
 static void
 x68kRegSetup(X68kScreenRec *pPriv)
 {
-    u_short pr20 = pPriv->reg->crtc.r20;
+    uint16_t pr20 = pPriv->reg->crtc.r20;
 
     /* timing registers */
     if ( (pr20 & 0x0003) < (pPriv->x68kreg.crtc.r20 & 0x0003) ||
@@ -160,7 +175,7 @@ x68kSaveScreen(ScreenPtr pScreen, Bool on)
 {
     X68kScreenRec *pPriv = x68kGetScreenPrivate(pScreen);
     static int status = FALSE;
-    static u_short r2;
+    static uint16_t r2;
 
     if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE) {
         if (!status) {

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.4 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.5 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -68,7 +68,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 *******************************************************/
 
-#include "Xos.h"
+#include <X11/Xos.h>
 #include "x68k.h"
 #include "mi.h"
 
@@ -76,9 +76,35 @@ EventList *x68kEvents = NULL;
 
 static int nscreens;
 
+/* default log file paths */
+#ifndef DEFAULT_LOGDIR
+#define DEFAULT_LOGDIR "/var/log"
+#endif
+#ifndef DEFAULT_LOGPREFIX
+#define DEFAULT_LOGPREFIX "X68K."
+#endif
+
 void
 OsVendorInit(void)
 {
+    static int inited;
+
+    if (!inited) {
+	const char *logfile;
+	char *lf;
+
+#define LOGSUFFIX ".log"
+#define LOGOLDSUFFIX ".old"
+	logfile = DEFAULT_LOGDIR "/" DEFAULT_LOGPREFIX;
+	if (asprintf(&lf, "%s%%s" LOGSUFFIX, logfile) == -1)
+	    FatalError("Cannot allocate space for the log file name\n");
+	LogInit(lf, LOGOLDSUFFIX);
+#undef LOGSUFFIX
+#undef LOGOLDSUFFIX
+	free(lf);
+
+	inited = 1;
+    }
 }
 
 /*-------------------------------------------------------------------------
@@ -173,6 +199,7 @@ AbortDDX(void)
         fb = x68kGetFbProcRec(i);
         (*fb->close)(screen);
     }
+    LogClose();
 }
 
 /*-------------------------------------------------------------------------

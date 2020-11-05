@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.4 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.5 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -91,7 +91,7 @@ static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, pointer, int);
 static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
-static void x68kSetLeds(X68kKbdPrivPtr, u_char);
+static void x68kSetLeds(X68kKbdPrivPtr, uint8_t);
 
 /*------------------------------------------------------------------------
  * x68kKbdProc --
@@ -142,7 +142,7 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
                 Error("Async keyboard I/O failed");
                 return !Success;
             }
-	    x68kSetLeds(&x68kKbdPriv, (u_char)x68kKbdPriv.leds);
+	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
             (void) AddEnabledDevice(x68kKbdPriv.fd);
             pKeyboard->on = TRUE;
             break;
@@ -177,10 +177,8 @@ x68kInitModMap(KeySymsRec *KeySyms, CARD8 *x68kModMap)
         KeySyms->minKeyCode += MIN_KEYCODE;
         KeySyms->maxKeyCode += MIN_KEYCODE;
     }
-#if 0
     if (KeySyms->maxKeyCode > MAX_KEYCODE)
-        KeySyms->maxKeyCode += MAX_KEYCODE;
-#endif
+        KeySyms->maxKeyCode = MAX_KEYCODE;
     for (i = KeySyms->minKeyCode;
          i < KeySyms->maxKeyCode; i++) {
         switch (KeySyms->map[(i-KeySyms->minKeyCode)*4]) {
@@ -379,7 +377,7 @@ x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
     X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
 
     if (pPriv->leds != ctrl->leds) {
-        x68kSetLeds(pPriv, (u_char)ctrl->leds);
+        x68kSetLeds(pPriv, (uint8_t)ctrl->leds);
 	pPriv->leds = ctrl->leds;
     }
 }
@@ -389,11 +387,11 @@ x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
  *
  *  purpose:  set keyboard leds to specified state
  *  argument: (X68kKbdPrivPtr)pPriv
- *            (u_char)data;
+ *            (uint8_t)data;
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 static void
-x68kSetLeds(X68kKbdPrivPtr pPriv, u_char data)
+x68kSetLeds(X68kKbdPrivPtr pPriv, uint8_t data)
 {
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.4 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -176,7 +176,7 @@ getToken(void)
     static int line = 1;
     Token *ret;
 
-    ret = (Token *)malloc(sizeof(Token));
+    ret = malloc(sizeof(Token));
     if (ret == NULL)
         FatalError("Out of memory");
     while (TRUE) {
@@ -202,7 +202,7 @@ getToken(void)
     /* is a symbol? */
     if (isalpha(c)) {
         int i = 0;
-        ret->content.symbol = (char *)malloc(32 * sizeof(char));
+        ret->content.symbol = malloc(32 * sizeof(char));
         if (ret->content.symbol == NULL)
             FatalError("Out of memory");
         do {
@@ -295,7 +295,7 @@ parseCommand(void)
             break;
         }
         argc++;
-        argv = (Token **)realloc(argv, sizeof(Token *) * argc);
+        argv = realloc(argv, sizeof(Token *) * argc);
         if (argv == NULL)
             FatalError("Out of memory");
         argv[argc-1] = token;
@@ -395,7 +395,7 @@ parseModeDef(int argc, Token **argv)
 
     checkArguments(18, argtype, argc-1, argv);
 
-    mode = (Mode *)malloc(sizeof(Mode));
+    mode = malloc(sizeof(Mode));
     if (mode == NULL)
         FatalError("Out of memory");
     mode->name = strdup(argv[1]->content.symbol);
@@ -545,7 +545,7 @@ parseMode(int argc, Token **argv)
             x68kFbProc[0].open = x68kGraphOpen;
             x68kFbProc[0].init = x68kGraphInit;
             x68kFbProc[0].close = x68kGraphClose;
-	    x68kFormat = (PixmapFormatRec*) malloc (sizeof(PixmapFormatRec));
+	    x68kFormat = malloc (sizeof(PixmapFormatRec));
 	    x68kFormat->scanlinePad = BITMAP_SCANLINE_PAD;
             x68kFormat->bitsPerPixel = 16;
             switch (mode->depth) {

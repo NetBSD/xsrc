@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kText.c,v 1.4 2020/11/05 16:06:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -38,9 +38,9 @@
  *  returns:  (Bool): TRUE  if succeeded
  *                    FALSE otherwise
  *-----------------------------------------------------------------------*/
-static u_short r21;
-static u_short tpal0;
-static u_short tpal15;
+static uint16_t r21;
+static uint16_t tpal0;
+static uint16_t tpal15;
 
 Bool
 x68kTextOpen(X68kScreenRec *pPriv)
