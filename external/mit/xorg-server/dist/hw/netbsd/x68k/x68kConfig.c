@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.6 2020/11/03 16:59:38 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.7 2020/11/16 16:46:28 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -112,16 +112,20 @@ const char *hostConfigFilename = "/etc/X68kConfig";
 const char *siteConfigFilename = X11_LIBDIR "/X68kConfig";
 const char *configFilename = NULL;
 static FILE *config;
-char modeSet = FALSE;
+static char modeSet = FALSE;
 
 static int parseCommand(void);
+static void logConfig(void);
 
 int
 x68kConfig(void)
 {
-    if (configFilename)
+    MessageType filefrom = X_DEFAULT;
+
+    if (configFilename) {
 	config = fopen(configFilename, "r");
-    else {
+	filefrom = X_CMDLINE;
+    } else {
 	configFilename = hostConfigFilename;
 	config = fopen(configFilename, "r");
 	if (config == NULL) {
@@ -131,11 +135,15 @@ x68kConfig(void)
     }
     if (config == NULL)
 	FatalError("Can't open X68kConfig file");
+
+    LogMessage(filefrom, "Using config file: \"%s\"\n", configFilename);
+
     while (parseCommand())
         ;
     fclose(config);
     if (!modeSet)
         FatalError("No mode set.");
+    logConfig();
     return 1;
 }
 
@@ -143,7 +151,7 @@ x68kConfig(void)
 /*-------------------------------------------------------------------------
  *                       X68KConfig parsing part
  *-----------------------------------------------------------------------*/
-void parseError(int line, const char *str, ...);
+static void parseError(int line, const char *str, ...);
 
 enum TokenType {
     TOKEN_EOF,
@@ -255,13 +263,31 @@ static void parseMouse(int argc, Token **argv);
 static void parseKeyboard(int argc, Token **argv);
 static void parseMode(int argc, Token **argv);
 
-Command command[] = {
+static const Command command[] = {
     { "ModeDef", parseModeDef },
     { "Mouse", parseMouse },
     { "Keyboard", parseKeyboard },
     { "Mode", parseMode },
 };
 #define NCOMMANDS (sizeof(command)/sizeof(command[0]))
+
+static const char *x68kTypeStr[] = {
+	[X68K_FB_NULL]    = NULL,
+	[X68K_FB_TEXT]    = "Text",
+	[X68K_FB_GRAPHIC] = "Graphic",
+};
+#define NTYPES (sizeof(x68kTypeStr) / sizeof(x68kTypeStr[0]))
+
+static const char *x68kClassStr[] = {
+	[StaticGray]  = "StaticGray",
+	[GrayScale]   = "GrayScale",
+	[StaticColor] = "StaticColor",
+	[PseudoColor] = "PseudoColor",
+	[TrueColor]   = "TrueColor",
+	[DirectColor] = "DirectColor",
+};
+#define NCLASSES (sizeof(x68kClassStr) / sizeof(x68kClassStr[0]))
+#define ClassInvalid	(-1)
 
 /*-------------------------------------------------------------------------
  * function "parseCommand"
@@ -333,13 +359,13 @@ parseCommand(void)
  *  purpose:  examine the number of arguments and the type of each
  *            argument.
  *  argument: (int)n                 : correct number of arguments
- *            (enum TokenType *)type : table of types
+ *            (const enum TokenType *)type : table of types
  *            (int)argc_m1           : actual number of arguments
  *            (Token **)argv         : command and arguments
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 static void
-checkArguments(int n, enum TokenType *type, int argc_m1, Token **argv)
+checkArguments(int n, const enum TokenType *type, int argc_m1, Token **argv)
 {
     int i;
 
@@ -359,7 +385,7 @@ checkArguments(int n, enum TokenType *type, int argc_m1, Token **argv)
 
 typedef struct _Mode {
     struct _Mode *next;
-    char *name;
+    const char *name;
     int type;
     int depth;
     int class;
@@ -367,7 +393,8 @@ typedef struct _Mode {
     X68kFbReg reg;
 } Mode;
 
-Mode *modeList = NULL;
+static Mode *modeList = NULL;
+static Mode *modeChosen;
 
 /*-------------------------------------------------------------------------
  * function "parseModeDef"
@@ -379,7 +406,7 @@ Mode *modeList = NULL;
 static void
 parseModeDef(int argc, Token **argv)
 {
-    enum TokenType argtype[] = {
+    const enum TokenType argtype[] = {
         /* name       type          depth          class      */
         TOKEN_SYMBOL, TOKEN_SYMBOL, TOKEN_LITERAL, TOKEN_SYMBOL,
         /* width       height       */
@@ -391,7 +418,7 @@ parseModeDef(int argc, Token **argv)
     };
     Mode *mode;
     char *symbol;
-    int class, width, height;
+    int type, class, width, height;
 
     checkArguments(18, argtype, argc-1, argv);
 
@@ -402,38 +429,36 @@ parseModeDef(int argc, Token **argv)
 
     /* parse frame buffer type */
     symbol = argv[2]->content.symbol;
-    if (strcasecmp("Text", symbol) == 0)
-        mode->type = X68K_FB_TEXT;
-    else if (strcasecmp("Graphic", symbol) == 0)
-        mode->type = X68K_FB_GRAPHIC;
-    else
-        parseError(argv[2]->line, "unknown frame buffer type");
+    mode->type = X68K_FB_NULL;
+    for (type = 1; type < NTYPES; type++) {
+        if (strcasecmp(x68kTypeStr[type], symbol) == 0) {
+            mode->type = type;
+            break;
+        }
+    }
+    if (mode->type == X68K_FB_NULL)
+        parseError(argv[2]->line, "unknown frame buffer type `%s'", symbol);
+
     mode->depth = argv[3]->content.literal;
 
     /* parse frame buffer class */
     symbol = argv[4]->content.symbol;
-    if (strcasecmp("StaticGray", symbol) == 0)
-        mode->class = StaticGray;
-    else if (strcasecmp("GrayScale", symbol) == 0)
-        mode->class = GrayScale;
-    else if (strcasecmp("StaticColor", symbol) == 0)
-        mode->class = StaticColor;
-    else if (strcasecmp("PseudoColor", symbol) == 0)
-        mode->class = PseudoColor;
-    else if (strcasecmp("TrueColor", symbol) == 0)
-        mode->class = TrueColor;
-    else if (strcasecmp("DirectColor", symbol) == 0)
-        mode->class = DirectColor;
-    else
-        parseError(argv[4]->line, "unknown frame buffer class");
+    mode->class = ClassInvalid;
+    for (class = 0; class < NCLASSES; class++) {
+	if (strcasecmp(x68kClassStr[class], symbol) == 0) {
+            mode->class = class;
+            break;
+	}
+    }
+    if (mode->class == ClassInvalid)
+        parseError(argv[4]->line, "unknown frame buffer class `%s'", symbol);
 
-    class = mode->class;
     width = mode->width = argv[5]->content.literal;
     height = mode->height = argv[6]->content.literal;
 
     /* examine whether type, depth, class, width, and height are
        a legal combination or not, and then set mode registers */
-    switch (mode->type) {
+    switch (type) {
         case X68K_FB_TEXT:
             if (mode->depth == 1 && class == StaticGray &&
                 width <= 1024 && height <= 1024) {
@@ -509,7 +534,7 @@ parseModeDef(int argc, Token **argv)
 static void
 parseMode(int argc, Token **argv)
 {
-    enum TokenType argtype[]= { TOKEN_SYMBOL };
+    const enum TokenType argtype[]= { TOKEN_SYMBOL };
     Mode *mode;
 
     checkArguments(1, argtype, argc-1, argv);
@@ -566,6 +591,7 @@ parseMode(int argc, Token **argv)
             }
     }
     modeSet = TRUE;
+    modeChosen = mode;
 }
 
 /*-------------------------------------------------------------------------
@@ -578,7 +604,7 @@ parseMode(int argc, Token **argv)
 static void
 parseMouse(int argc, Token **argv)
 {
-    enum TokenType argtype[] = { TOKEN_SYMBOL };
+    const enum TokenType argtype[] = { TOKEN_SYMBOL };
 
     checkArguments(1, argtype, argc-1, argv);
     /* only `standard' mouse allowed */
@@ -597,7 +623,7 @@ parseMouse(int argc, Token **argv)
 static void
 parseKeyboard(int argc, Token **argv)
 {
-    enum TokenType argtype[] = { TOKEN_SYMBOL };
+    const enum TokenType argtype[] = { TOKEN_SYMBOL };
 
     checkArguments(1, argtype, argc-1, argv);
     if (strcasecmp("standard", argv[1]->content.symbol) == 0) {
@@ -614,29 +640,46 @@ parseKeyboard(int argc, Token **argv)
 /*-------------------------------------------------------------------------
  * function "parseError"
  *
- *  purpose:  print error message to stderr and abort Xserver.
- *            this uses the same procedure of the function "FatalError"
- *  argument: (int)line   : the line in which some error was detected
- *            (char *)str : error message
+ *  purpose:  print error message to log and stderr and abort Xserver.
+ *  argument: (int)line         : the line in which some error was detected
+ *            (const char *)str : error message
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
-void
+static void
 parseError(int line, const char *str, ...)
 {
     va_list arglist;
 
-    fprintf(stderr, "%s:%d: ", configFilename, line);
+    LogMessageVerb(X_ERROR, 0, "parse error in %s at line %d",
+        configFilename, line);
     if (str != NULL) {
+        LogMessageVerb(X_NONE, 0, ":\n\t");
 	va_start(arglist, str);
-	vfprintf(stderr, str, arglist);
+	LogVMessageVerb(X_NONE, 0, str, arglist);
 	va_end(arglist);
-	fputc('\n', stderr);
-    } else
-        fprintf(stderr, "parse error\n");
-    fflush(stderr);
-    if (CoreDump)
-        abort();
-    exit(1);
+    }
+    LogMessageVerb(X_NONE, 0, "\n");
+    FatalError("Error in X68k server config file. Exiting.\n");
+}
+
+/*-------------------------------------------------------------------------
+ * function "logConfig"
+ *
+ *  purpose:  print specified config settings to log.
+ *  argument: nothing
+ *  returns:  nothing
+ *-----------------------------------------------------------------------*/
+static void
+logConfig(void)
+{
+
+    LogMessage(X_CONFIG, "Using specified mode: \"%s\"\n", modeChosen->name);
+    LogMessage(X_CONFIG, "Type: %s, Class: %s, Size: %dx%d, Depth: %d\n",
+        x68kTypeStr[modeChosen->type], x68kClassStr[modeChosen->class],
+        modeChosen->width, modeChosen->height, modeChosen->depth);
+    LogMessage(X_CONFIG, "Keyboard: %s\n",
+        x68kKbdPriv.type == X68K_KB_ASCII ? "ascii" : "standard");
+    LogMessage(X_CONFIG, "Mouse: %s\n", "standard");
 }
 
 /* EOF x68kConfig.c */
