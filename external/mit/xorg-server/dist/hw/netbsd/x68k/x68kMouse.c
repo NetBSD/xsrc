@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.7 2020/08/01 20:21:00 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.8 2020/11/20 19:06:56 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -299,7 +299,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	    }
 	}
 	flag = POINTER_RELATIVE;
-	valuator_mask_set_range(&mask, 0, 0, NULL);
+	valuator_mask_zero(&mask);
 	QueuePointerEvents(device, type, buttons, flag, &mask);
 	break;
     case LOC_X_DELTA:
