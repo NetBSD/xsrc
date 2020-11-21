@@ -283,7 +283,7 @@ sunMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	    }
 	}
 	flag = POINTER_RELATIVE;
-	valuator_mask_set_range(&mask, 0, 0, NULL);
+	valuator_mask_zero(&mask);
 	QueuePointerEvents(device, type, buttons, flag, &mask);
 	break;
     case LOC_X_DELTA:
