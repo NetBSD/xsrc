@@ -115,6 +115,9 @@ extern _X_EXPORT void glamor_set_pixmap_texture(PixmapPtr pixmap,
 
 extern _X_EXPORT void glamor_set_pixmap_type(PixmapPtr pixmap,
                                              glamor_pixmap_type_t type);
+
+extern _X_EXPORT void glamor_clear_pixmap(PixmapPtr pixmap);
+
 extern _X_EXPORT void glamor_block_handler(ScreenPtr screen);
 
 extern _X_EXPORT PixmapPtr glamor_create_pixmap(ScreenPtr screen, int w, int h,
@@ -394,6 +397,8 @@ extern _X_EXPORT Bool
  glamor_egl_create_textured_pixmap_from_gbm_bo(PixmapPtr pixmap,
                                                struct gbm_bo *bo,
                                                Bool used_modifiers);
+
+extern _X_EXPORT const char *glamor_egl_get_driver_name(ScreenPtr screen);
 
 #endif
 

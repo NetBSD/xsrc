@@ -51,6 +51,7 @@ typedef enum {
     OPTION_PAGEFLIP,
     OPTION_ZAPHOD_HEADS,
     OPTION_DOUBLE_SHADOW,
+    OPTION_ATOMIC,
 } modesettingOpts;
 
 typedef struct
@@ -96,6 +97,7 @@ typedef struct _modesettingRec {
 
     CreateScreenResourcesProcPtr createScreenResources;
     ScreenBlockHandlerProcPtr BlockHandler;
+    miPointerSpriteFuncPtr SpriteFuncs;
     void *driver;
 
     drmmode_rec drmmode;

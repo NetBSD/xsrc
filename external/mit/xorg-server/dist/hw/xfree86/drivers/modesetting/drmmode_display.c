@@ -34,8 +34,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include "dumb_bo.h"
+#include "inputstr.h"
 #include "xf86str.h"
 #include "X11/Xatom.h"
+#include "mi.h"
 #include "micmap.h"
 #include "xf86cmap.h"
 #include "xf86DDC.h"
@@ -754,6 +756,7 @@ drmmode_crtc_set_mode(xf86CrtcPtr crtc, Bool test_only)
     xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
     drmmode_ptr drmmode = drmmode_crtc->drmmode;
+    ScreenPtr screen = crtc->scrn->pScreen;
     drmModeModeInfo kmode;
     int output_count = 0;
     uint32_t *output_ids = NULL;
@@ -763,6 +766,12 @@ drmmode_crtc_set_mode(xf86CrtcPtr crtc, Bool test_only)
 
     if (!drmmode_crtc_get_fb_id(crtc, &fb_id, &x, &y))
         return 1;
+
+#ifdef GLAMOR_HAS_GBM
+    /* Make sure any pending drawing will be visible in a new scanout buffer */
+    if (drmmode->glamor)
+        glamor_finish(screen);
+#endif
 
     if (ms->atomic_modeset) {
         drmModeAtomicReq *req = drmModeAtomicAlloc();
@@ -1452,8 +1461,6 @@ drmmode_copy_fb(ScrnInfoPtr pScrn, drmmode_ptr drmmode)
 
     FreeScratchGC(gc);
 
-    glamor_finish(pScreen);
-
     pScreen->canDoBGNoneRoot = TRUE;
 
     if (drmmode->fbcon_pixmap)
@@ -1788,6 +1795,19 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 
     return drmmode_set_target_scanout_pixmap(crtc, ppix,
                                              &drmmode_crtc->prime_pixmap);
+}
+
+static void
+drmmode_clear_pixmap(PixmapPtr pixmap)
+{
+    ScreenPtr screen = pixmap->drawable.pScreen;
+    GCPtr gc;
+
+    gc = GetScratchGC(pixmap->drawable.depth, screen);
+    if (gc) {
+        miClearDrawable(&pixmap->drawable, gc);
+        FreeScratchGC(gc);
+    }
 }
 
 static void *
@@ -2419,7 +2439,7 @@ drmmode_output_add_gtf_modes(xf86OutputPtr output, DisplayModePtr Modes)
     int max_x = 0, max_y = 0;
     float max_vrefresh = 0.0;
 
-    if (mon && GTF_SUPPORTED(mon->features.msc))
+    if (mon && gtf_supported(mon))
         return Modes;
 
     if (!has_panel_fitter(output))
@@ -3174,6 +3194,8 @@ drmmode_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
     if (!drmmode_glamor_handle_new_screen_pixmap(drmmode))
         goto fail;
 
+    drmmode_clear_pixmap(ppix);
+
     for (i = 0; i < xf86_config->num_crtc; i++) {
         xf86CrtcPtr crtc = xf86_config->crtc[i];
 
@@ -3184,10 +3206,10 @@ drmmode_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
                                crtc->rotation, crtc->x, crtc->y);
     }
 
-    if (old_fb_id) {
+    if (old_fb_id)
         drmModeRmFB(drmmode->fd, old_fb_id);
-        drmmode_bo_destroy(drmmode, &old_front);
-    }
+
+    drmmode_bo_destroy(drmmode, &old_front);
 
     return TRUE;
 
@@ -3206,12 +3228,18 @@ static void
 drmmode_validate_leases(ScrnInfoPtr scrn)
 {
     ScreenPtr screen = scrn->pScreen;
-    rrScrPrivPtr scr_priv = rrGetScrPriv(screen);
+    rrScrPrivPtr scr_priv;
     modesettingPtr ms = modesettingPTR(scrn);
     drmmode_ptr drmmode = &ms->drmmode;
     drmModeLesseeListPtr lessees;
     RRLeasePtr lease, next;
     int l;
+
+    /* Bail out if RandR wasn't initialized. */
+    if (!dixPrivateKeyRegistered(rrPrivKey))
+        return;
+
+    scr_priv = rrGetScrPriv(screen);
 
     /* We can't talk to the kernel about leases when VT switched */
     if (!scrn->vtSema)
@@ -3429,9 +3457,11 @@ drmmode_adjust_frame(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int x, int y)
 }
 
 Bool
-drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode, Bool set_hw)
+drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode, Bool set_hw,
+                          Bool ign_err)
 {
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+    Bool success = TRUE;
     int c;
 
     for (c = 0; c < config->num_crtc; c++) {
@@ -3479,8 +3509,17 @@ drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode, Bool set_hw)
         if (set_hw) {
             if (!crtc->funcs->
                 set_mode_major(crtc, &crtc->desiredMode, crtc->desiredRotation,
-                               crtc->desiredX, crtc->desiredY))
-                return FALSE;
+                               crtc->desiredX, crtc->desiredY)) {
+                if (!ign_err)
+                    return FALSE;
+                else {
+                    success = FALSE;
+                    crtc->enabled = FALSE;
+                    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+                               "Failed to set the desired mode on connector %s\n",
+                               output->name);
+                }
+            }
         } else {
             crtc->mode = crtc->desiredMode;
             crtc->rotation = crtc->desiredRotation;
@@ -3494,7 +3533,7 @@ drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode, Bool set_hw)
     /* Validate leases on VT re-entry */
     drmmode_validate_leases(pScrn);
 
-    return TRUE;
+    return success;
 }
 
 static void
@@ -3579,29 +3618,18 @@ drmmode_setup_colormap(ScreenPtr pScreen, ScrnInfoPtr pScrn)
     return TRUE;
 }
 
-#ifdef CONFIG_UDEV_KMS
-
 #define DRM_MODE_LINK_STATUS_GOOD       0
 #define DRM_MODE_LINK_STATUS_BAD        1
 
-static void
-drmmode_handle_uevents(int fd, void *closure)
+void
+drmmode_update_kms_state(drmmode_ptr drmmode)
 {
-    drmmode_ptr drmmode = closure;
     ScrnInfoPtr scrn = drmmode->scrn;
-    struct udev_device *dev;
     drmModeResPtr mode_res;
     xf86CrtcConfigPtr  config = XF86_CRTC_CONFIG_PTR(scrn);
     int i, j;
     Bool found = FALSE;
     Bool changed = FALSE;
-
-    while ((dev = udev_monitor_receive_device(drmmode->uevent_monitor))) {
-        udev_device_unref(dev);
-        found = TRUE;
-    }
-    if (!found)
-        return;
 
     /* Try to re-set the mode on all the connectors with a BAD link-state:
      * This may happen if a link degrades and a new modeset is necessary, using
@@ -3650,7 +3678,7 @@ drmmode_handle_uevents(int fd, void *closure)
         goto out;
 
     if (mode_res->count_crtcs != config->num_crtc) {
-        ErrorF("number of CRTCs changed - failed to handle, %d vs %d\n", mode_res->count_crtcs, config->num_crtc);
+        /* this triggers with Zaphod mode where we don't currently support connector hotplug or MST. */
         goto out_free_res;
     }
 
@@ -3699,15 +3727,16 @@ drmmode_handle_uevents(int fd, void *closure)
         drmmode_output_init(scrn, drmmode, mode_res, i, TRUE, 0);
     }
 
-    /* Check to see if a lessee has disappeared */
-    drmmode_validate_leases(scrn);
-
     if (changed) {
         RRSetChanged(xf86ScrnToScreen(scrn));
         RRTellChanged(xf86ScrnToScreen(scrn));
     }
 
 out_free_res:
+
+    /* Check to see if a lessee has disappeared */
+    drmmode_validate_leases(scrn);
+
     drmModeFreeResources(mode_res);
 out:
     RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
@@ -3715,6 +3744,25 @@ out:
 
 #undef DRM_MODE_LINK_STATUS_BAD
 #undef DRM_MODE_LINK_STATUS_GOOD
+
+#ifdef CONFIG_UDEV_KMS
+
+static void
+drmmode_handle_uevents(int fd, void *closure)
+{
+    drmmode_ptr drmmode = closure;
+    struct udev_device *dev;
+    Bool found = FALSE;
+
+    while ((dev = udev_monitor_receive_device(drmmode->uevent_monitor))) {
+        udev_device_unref(dev);
+        found = TRUE;
+    }
+    if (!found)
+        return;
+
+    drmmode_update_kms_state(drmmode);
+}
 
 #endif
 
@@ -3910,3 +3958,102 @@ drmmode_get_default_bpp(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int *depth,
     drmModeFreeResources(mode_res);
     return;
 }
+
+/*
+ * We hook the screen's cursor-sprite (swcursor) functions to see if a swcursor
+ * is active. When a swcursor is active we disabe page-flipping.
+ */
+
+static void drmmode_sprite_do_set_cursor(msSpritePrivPtr sprite_priv,
+                                         ScrnInfoPtr scrn, int x, int y)
+{
+    modesettingPtr ms = modesettingPTR(scrn);
+    CursorPtr cursor = sprite_priv->cursor;
+    Bool sprite_visible = sprite_priv->sprite_visible;
+
+    if (cursor) {
+        x -= cursor->bits->xhot;
+        y -= cursor->bits->yhot;
+
+        sprite_priv->sprite_visible =
+            x < scrn->virtualX && y < scrn->virtualY &&
+            (x + cursor->bits->width > 0) &&
+            (y + cursor->bits->height > 0);
+    } else {
+        sprite_priv->sprite_visible = FALSE;
+    }
+
+    ms->drmmode.sprites_visible += sprite_priv->sprite_visible - sprite_visible;
+}
+
+static void drmmode_sprite_set_cursor(DeviceIntPtr pDev, ScreenPtr pScreen,
+                                      CursorPtr pCursor, int x, int y)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+    msSpritePrivPtr sprite_priv = msGetSpritePriv(pDev, ms, pScreen);
+
+    sprite_priv->cursor = pCursor;
+    drmmode_sprite_do_set_cursor(sprite_priv, scrn, x, y);
+
+    ms->SpriteFuncs->SetCursor(pDev, pScreen, pCursor, x, y);
+}
+
+static void drmmode_sprite_move_cursor(DeviceIntPtr pDev, ScreenPtr pScreen,
+                                       int x, int y)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+    msSpritePrivPtr sprite_priv = msGetSpritePriv(pDev, ms, pScreen);
+
+    drmmode_sprite_do_set_cursor(sprite_priv, scrn, x, y);
+
+    ms->SpriteFuncs->MoveCursor(pDev, pScreen, x, y);
+}
+
+static Bool drmmode_sprite_realize_realize_cursor(DeviceIntPtr pDev,
+                                                  ScreenPtr pScreen,
+                                                  CursorPtr pCursor)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+
+    return ms->SpriteFuncs->RealizeCursor(pDev, pScreen, pCursor);
+}
+
+static Bool drmmode_sprite_realize_unrealize_cursor(DeviceIntPtr pDev,
+                                                    ScreenPtr pScreen,
+                                                    CursorPtr pCursor)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+
+    return ms->SpriteFuncs->UnrealizeCursor(pDev, pScreen, pCursor);
+}
+
+static Bool drmmode_sprite_device_cursor_initialize(DeviceIntPtr pDev,
+                                                    ScreenPtr pScreen)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+
+    return ms->SpriteFuncs->DeviceCursorInitialize(pDev, pScreen);
+}
+
+static void drmmode_sprite_device_cursor_cleanup(DeviceIntPtr pDev,
+                                                 ScreenPtr pScreen)
+{
+    ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
+    modesettingPtr ms = modesettingPTR(scrn);
+
+    ms->SpriteFuncs->DeviceCursorCleanup(pDev, pScreen);
+}
+
+miPointerSpriteFuncRec drmmode_sprite_funcs = {
+    .RealizeCursor = drmmode_sprite_realize_realize_cursor,
+    .UnrealizeCursor = drmmode_sprite_realize_unrealize_cursor,
+    .SetCursor = drmmode_sprite_set_cursor,
+    .MoveCursor = drmmode_sprite_move_cursor,
+    .DeviceCursorInitialize = drmmode_sprite_device_cursor_initialize,
+    .DeviceCursorCleanup = drmmode_sprite_device_cursor_cleanup,
+};
