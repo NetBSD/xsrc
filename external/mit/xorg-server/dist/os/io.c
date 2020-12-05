@@ -559,6 +559,11 @@ void
 ResetCurrentRequest(ClientPtr client)
 {
     OsCommPtr oc = (OsCommPtr) client->osPrivate;
+
+    /* ignore dying clients */
+    if (!oc)
+        return;
+
     register ConnectionInputPtr oci = oc->input;
     register xReq *request;
     int gotnow, needed;

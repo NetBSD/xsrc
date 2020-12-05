@@ -26,9 +26,9 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ(2.60)
-AC_INIT([xorg-server], 1.20.6, [https://gitlab.freedesktop.org/xorg/xserver/issues], xorg-server)
-RELEASE_DATE="2019-11-22"
-RELEASE_NAME="Enchiladas de Queso"
+AC_INIT([xorg-server], 1.20.10, [https://gitlab.freedesktop.org/xorg/xserver/issues], xorg-server)
+RELEASE_DATE="2020-12-01"
+RELEASE_NAME="Chicken Pot Pie"
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
@@ -1064,9 +1064,11 @@ if test "x$SCREENSAVER" = xyes; then
 	SDK_REQUIRED_MODULES="$SDK_REQUIRED_MODULES $SCRNSAVERPROTO"
 fi
 
+HASHTABLE=no
 AM_CONDITIONAL(RES, [test "x$RES" = xyes])
 if test "x$RES" = xyes; then
 	AC_DEFINE(RES, 1, [Support X resource extension])
+	HASHTABLE=yes
 	REQUIRED_MODULES="$REQUIRED_MODULES $RESOURCEPROTO"
 	SDK_REQUIRED_MODULES="$SDK_REQUIRED_MODULES $RESOURCEPROTO"
 fi
@@ -1250,12 +1252,15 @@ if test "x$GLX" = xyes; then
 	PKG_CHECK_MODULES([GL], $GLPROTO $LIBGL)
 	AC_SUBST(XLIB_CFLAGS)
 	AC_DEFINE(GLXEXT, 1, [Build GLX extension])
+	HASHTABLE=yes
 	GLX_LIBS='$(top_builddir)/glx/libglx.la $(top_builddir)/glx/libglxvnd.la'
 	GLX_SYS_LIBS="$GLX_SYS_LIBS $GL_LIBS"
 else
         GLX=no
 fi
 AM_CONDITIONAL(GLX, test "x$GLX" = xyes)
+
+AM_CONDITIONAL(HASHTABLE, test "x$HASHTABLE" = xyes)
 
 AC_SUBST([GLX_DEFINES])
 AC_SUBST([GLX_SYS_LIBS])
@@ -2051,6 +2056,10 @@ if test "x$GLAMOR" = xyes; then
 
 	PKG_CHECK_EXISTS(epoxy >= 1.4.4,
 			 [AC_DEFINE(GLAMOR_HAS_EGL_QUERY_DMABUF, 1, [Have GLAMOR_HAS_EGL_QUERY_DMABUF])],
+			 [])
+
+	PKG_CHECK_EXISTS(epoxy >= 1.5.4,
+			 [AC_DEFINE(GLAMOR_HAS_EGL_QUERY_DRIVER, 1, [Have GLAMOR_HAS_EGL_QUERY_DRIVER])],
 			 [])
 
 	PKG_CHECK_MODULES(GBM, "$LIBGBM", [GBM=yes], [GBM=no])

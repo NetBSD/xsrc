@@ -497,8 +497,12 @@
 /* GBM has modifiers support */
 /* #undef GBM_BO_WITH_MODIFIERS */
 
+/* XXXMRG check this and query driver */
 /* Glamor can use eglQueryDmaBuf* functions */
 /* #undef GLAMOR_HAS_EGL_QUERY_DMABUF */
+
+/* Glamor can use EGL_MESA_query_driver functions */
+/* #undef GLAMOR_HAS_EGL_QUERY_DRIVER */
 
 #if 0
 /* byte order */
