@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.1.  */
+/* A Bison parser, made by GNU Bison 3.7.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YY_PARSER_H_INCLUDED
 # define YY_YY_PARSER_H_INCLUDED
 /* Debug traces.  */
@@ -40,25 +45,33 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    T_VIRTUAL = 258,
-    T_DISPLAY = 259,
-    T_WALL = 260,
-    T_OPTION = 261,
-    T_PARAM = 262,
-    T_STRING = 263,
-    T_DIMENSION = 264,
-    T_OFFSET = 265,
-    T_ORIGIN = 266,
-    T_COMMENT = 267,
-    T_LINE_COMMENT = 268
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    T_VIRTUAL = 258,               /* T_VIRTUAL  */
+    T_DISPLAY = 259,               /* T_DISPLAY  */
+    T_WALL = 260,                  /* T_WALL  */
+    T_OPTION = 261,                /* T_OPTION  */
+    T_PARAM = 262,                 /* T_PARAM  */
+    T_STRING = 263,                /* T_STRING  */
+    T_DIMENSION = 264,             /* T_DIMENSION  */
+    T_OFFSET = 265,                /* T_OFFSET  */
+    T_ORIGIN = 266,                /* T_ORIGIN  */
+    T_COMMENT = 267,               /* T_COMMENT  */
+    T_LINE_COMMENT = 268           /* T_LINE_COMMENT  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define T_VIRTUAL 258
 #define T_DISPLAY 259
 #define T_WALL 260
@@ -73,10 +86,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 57 "parser.y" /* yacc.c:1913  */
+#line 57 "parser.y"
 
     DMXConfigTokenPtr      token;
     DMXConfigStringPtr     string;
@@ -93,9 +105,9 @@ union YYSTYPE
     DMXConfigVirtualPtr    virtual;
     DMXConfigEntryPtr      entry;
 
-#line 97 "parser.h" /* yacc.c:1913  */
-};
+#line 109 "parser.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

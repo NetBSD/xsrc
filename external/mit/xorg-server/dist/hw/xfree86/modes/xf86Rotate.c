@@ -176,7 +176,7 @@ xf86RotateRedisplay(ScreenPtr pScreen)
     DamagePtr damage = xf86_config->rotation_damage;
     RegionPtr region;
 
-    if (!damage)
+    if (!damage || !pScreen->root)
         return FALSE;
     xf86RotatePrepare(pScreen);
     region = DamageRegion(damage);
@@ -485,6 +485,9 @@ xf86CrtcRotate(xf86CrtcPtr crtc)
 
     if (damage)
         xf86CrtcDamageShadow(crtc);
+    else if (crtc->rotatedData && !crtc->rotatedPixmap)
+        /* Make sure the new rotate buffer has valid transformed contents */
+        xf86RotateRedisplay(pScreen);
 
     /* All done */
     return TRUE;
