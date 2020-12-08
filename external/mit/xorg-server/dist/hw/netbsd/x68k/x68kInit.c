@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.9 2020/11/01 11:40:53 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.10 2020/12/08 10:33:47 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -260,5 +260,14 @@ _X_EXPORT void
 OsVendorFatalError(const char *f, va_list args)
 {
 }
+
+#if INPUTTHREAD
+/** This function is called in Xserver/os/inputthread.c when starting
+    the input thread. */
+void
+ddxInputThreadInit(void)
+{
+}
+#endif
 
 /* EOF x68kInit.c */
