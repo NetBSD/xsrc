@@ -650,14 +650,14 @@ static void
 #ifdef __NetBSD__
 __attribute__ ((__destructor__))
 #endif
-XF86cleanup(int sig)
+XF86cleanup_atexit(void)
 {
     ScrPtr sp;
     int i;
     static char beenhere = 0;
 
     if (beenhere)
-	_exit(3);
+	return;
     beenhere = 1;
 
     for (i = 0; i < numScrs; i++) {
@@ -665,6 +665,14 @@ XF86cleanup(int sig)
 	XF86DGADirectVideo(sp->display, sp->screen, 0);
 	XSync(sp->display, False);
     }
+}
+
+static void
+XF86cleanup(int sig)
+{
+    /* XXX FIXME XF86cleanup_atexit() is not async-signal-safe */
+    XF86cleanup_atexit();
+
     _exit(3);
 }
 
@@ -707,7 +715,7 @@ XF86DGAGetVideo(
     if (!beenHere) {
 	beenHere = 1;
 #ifndef __NetBSD__
-	atexit((void(*)(void))XF86cleanup);
+	atexit((void(*)(void))XF86cleanup_atexit);
 #endif
 	/* one shot XF86cleanup attempts */
 	signal(SIGSEGV, XF86cleanup);
