@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.8 2020/11/20 19:06:56 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.9 2021/02/07 16:55:18 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -128,6 +128,9 @@ x68kMouseProc(DeviceIntPtr device, int what)
     BYTE	map[4];
     Atom btn_labels[3] = {0};
     Atom axes_labels[2] = { 0, 0 };
+    MouseEmu3btnPtr pEmu3btn;
+    Bool emu3enable;
+    int emu3timeout;
 
     switch (what) {
 	case DEVICE_INIT:
@@ -149,6 +152,15 @@ x68kMouseProc(DeviceIntPtr device, int what)
 	    InitPointerDeviceStruct(pMouse, map, 3, btn_labels,
 		x68kMouseCtrl, GetMotionHistorySize(),
 		2, axes_labels);
+
+	    /* Initialize emulation 3 buttons settings */
+	    emu3enable = TRUE;			/* XXX should be configurable */
+	    emu3timeout = EMU3B_DEF_TIMEOUT;	/* XXX should be configurable */
+	    if (emu3enable) {
+		pEmu3btn = &x68kMousePriv.emu3btn;
+		Emulate3ButtonsEnable(pEmu3btn, device, emu3timeout);
+	    }
+
 	    break;
 
 	case DEVICE_ON:
@@ -279,10 +291,14 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	 * for a single state change. Should we get a button event which
 	 * reflects the current state of affairs, that event is discarded.
 	 *
-	 * Mouse buttons start at 1.
+	 * Mouse buttons start at 1 as defined in <X11/X.h>.
+	 *
+	 * The bmask stores which buttons are currently pressed.
+	 * This bmask is also used for Emulate3Buttons functions that
+	 * assume the left button is LSB as defined in mouseEmu3btn.c.
 	 */
 	buttons = (fe->id - MS_LEFT) + 1;
-	bmask = 1 << buttons;
+	bmask = 1 << (buttons - 1);
 	if (fe->value == VKEY_UP) {
 	    if (pPriv->bmask & bmask) {
 		type = ButtonRelease;
@@ -298,9 +314,14 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 		return;
 	    }
 	}
-	flag = POINTER_RELATIVE;
-	valuator_mask_zero(&mask);
-	QueuePointerEvents(device, type, buttons, flag, &mask);
+	if (buttons == Button1 || buttons == Button3) {
+	    /* Handle middle button emulation */
+	    Emulate3ButtonsQueueEvent(&pPriv->emu3btn, type, buttons, pPriv->bmask);
+	} else {
+	    flag = POINTER_RELATIVE;
+	    valuator_mask_zero(&mask);
+	    QueuePointerEvents(device, type, buttons, flag, &mask);
+	}
 	break;
     case LOC_X_DELTA:
 	valuators[0] = fe->value;

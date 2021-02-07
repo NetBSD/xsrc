@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.6 2020/11/03 15:52:57 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.7 2021/02/07 16:55:18 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -64,6 +64,7 @@
 #include <mipointer.h>
 
 #include "x68kReg.h"
+#include "mouseEmu3btn.h"
 
 /*
  * X68k dependent screen record
@@ -106,6 +107,7 @@ typedef struct _X68kFbProcRec {
 typedef struct _X68kMousePriv {
     int fd;
     int bmask;
+    MouseEmu3btn emu3btn;
 } X68kMousePriv, *X68kMousePrivPtr;
 
 typedef struct _X68kKbdPriv {
