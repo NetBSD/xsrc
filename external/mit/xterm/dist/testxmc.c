@@ -1,7 +1,7 @@
-/* $XTermId: testxmc.c,v 1.52 2014/05/11 14:05:38 tom Exp $ */
+/* $XTermId: testxmc.c,v 1.54 2020/11/08 20:12:21 tom Exp $ */
 
 /*
- * Copyright 1997-2011,2014 by Thomas E. Dickey
+ * Copyright 1997-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -102,8 +102,13 @@ Mark_XMC(XtermWidget xw, int param)
     if (glitch == 0) {
 	unsigned len = screen->xmc_glitch;
 	glitch = TypeMallocN(IChar, len);
-	while (len--)
-	    glitch[len] = XMC_GLITCH;
+	if (glitch == NULL) {
+	    xtermWarning("Not enough core for xmc glitch mode\n");
+	    return;
+	} else {
+	    while (len--)
+		glitch[len] = XMC_GLITCH;
+	}
     }
     switch (param) {
     case -1:			/* DEFAULT */
@@ -145,7 +150,7 @@ Mark_XMC(XtermWidget xw, int param)
 	xw->flags ^= whichone;
 	TRACE(("XMC Writing glitch (%d/%d) after SGR %d\n", my_attrs,
 	       whichone, param));
-	dotext(xw, '?', glitch, screen->xmc_glitch);
+	dotext(xw, (DECNRCM_codes) '?', glitch, screen->xmc_glitch);
 	xw->flags = save;
     }
 }

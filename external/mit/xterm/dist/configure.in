@@ -1,12 +1,12 @@
-dnl $XTermId: configure.in,v 1.345 2017/05/31 08:38:47 tom Exp $
+dnl $XTermId: configure.in,v 1.378 2021/01/06 20:58:29 tom Exp $
 dnl
 dnl -----------------------------------------------------------------------------
 dnl this file is part of xterm
 dnl
-dnl Copyright 1997-2016,2017 by Thomas E. Dickey
-dnl 
+dnl Copyright 1997-2020,2021 by Thomas E. Dickey
+dnl
 dnl                         All Rights Reserved
-dnl 
+dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the
 dnl "Software"), to deal in the Software without restriction, including
@@ -14,10 +14,10 @@ dnl without limitation the rights to use, copy, modify, merge, publish,
 dnl distribute, sublicense, and/or sell copies of the Software, and to
 dnl permit persons to whom the Software is furnished to do so, subject to
 dnl the following conditions:
-dnl 
+dnl
 dnl The above copyright notice and this permission notice shall be included
 dnl in all copies or substantial portions of the Software.
-dnl 
+dnl
 dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 dnl MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -25,7 +25,7 @@ dnl IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
 dnl CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 dnl TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 dnl SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-dnl 
+dnl
 dnl Except as contained in this notice, the name(s) of the above copyright
 dnl holders shall not be used in advertising or otherwise to promote the
 dnl sale, use or other dealings in this Software without prior written
@@ -33,7 +33,7 @@ dnl authorization.
 dnl ---------------------------------------------------------------------------
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_PREREQ(2.52.20170501)
+AC_PREREQ(2.52.20210105)
 AC_INIT
 AC_CONFIG_SRCDIR([charproc.c])
 AC_CONFIG_HEADER(xtermcfg.h:xtermcfg.hin)
@@ -44,12 +44,12 @@ CF_CHECK_CACHE
 dnl Only add to this case statement when a system has a compiler that is not
 dnl detected by AC_PROG_CC.
 case "$host_os" in
-(openedition)	: ${CFLAGS="-O2 -Wc,dll -Wl,EDIT=NO"}
-		: ${CPPFLAGS="-D_ALL_SOURCE"}
-		: ${LIBS="/usr/lib/Xaw.x /usr/lib/SM.x /usr/lib/ICE.x /usr/lib/X11.x"}
-		: ${CC=c89};;
+(openedition)	: "${CFLAGS=\"-O2 -Wc,dll -Wl,EDIT=NO\"}"
+		: "${CPPFLAGS=\"-D_ALL_SOURCE\"}"
+		: "${LIBS=\"/usr/lib/Xaw.x /usr/lib/SM.x /usr/lib/ICE.x /usr/lib/X11.x\"}"
+		: "${CC=c89}";;
 (darwin*)
-		: ${LDFLAGS}="${LDFLAGS} -Wl,-bind_at_load";;
+		: "${LDFLAGS}=\"${LDFLAGS} -Wl,-bind_at_load\"";;
 esac
 
 CF_PROG_CC
@@ -90,6 +90,8 @@ AC_TYPE_OFF_T
 ###	checks for library functions
 AC_CHECK_FUNCS( \
 	gethostname \
+	getusershell \
+	endusershell \
 	getlogin \
 	initgroups \
 	mkdtemp \
@@ -111,9 +113,30 @@ CF_FUNC_TGETENT
 
 CF_WITH_APP_CLASS(XTerm)
 CF_WITH_APP_DEFAULTS
-CF_WITH_ICON_NAME(xterm-color)
+CF_WITH_ICON_NAME(mini.xterm)
 CF_WITH_ICON_SYMLINK(xterm)
-CF_WITH_ICON_THEME([icons/$ICON_NAME icons/${ICON_NAME}_48x48],,,icons/${ICON_NAME}_48x48)
+
+# Install all icons except for the overused "terminal".
+cf_cv_icon_list=
+for my_item in $srcdir/icons/*.svg
+do
+	test -f "$my_item" || continue
+	cf_icon_name=`echo "$my_item" |sed -e "s,.svg,," -e "s,^$srcdir/,,"`
+	case $cf_icon_name in
+	(*_48x48)
+		continue
+		;;
+	esac
+	CF_VERBOSE(adding $cf_icon_name to icon-list)
+	cf_cv_icon_list="$cf_cv_icon_list $cf_icon_name"
+	if test -f "${cf_icon_name}_48x48.png"
+	then
+		CF_VERBOSE(adding ${cf_icon_name}_48x48 to icon-list)
+		cf_cv_icon_list="$cf_cv_icon_list ${cf_icon_name}_48x48"
+	fi
+done
+CF_WITH_ICON_THEME([$cf_cv_icon_list],,,icons/${ICON_NAME}_48x48)
+
 CF_DISABLE_DESKTOP(xterm)
 CF_WITH_DESKTOP_CATEGORY(xterm,
 	[*rxvt*|*konsole|*[[Tt]]erminal],
@@ -146,7 +169,7 @@ AC_MSG_RESULT($with_symlink)
 test "$with_symlink" = yes && with_symlink=xterm
 test -n "$with_symlink" && \
 	test "$with_symlink" != no && \
-	test "$with_symlink" != $cf_name && \
+	test "$with_symlink" != "$cf_name" && \
 	XTERM_SYMLINK="$with_symlink"
 fi
 
@@ -242,6 +265,7 @@ CF_TTY_GROUP
 
 ###	checks for system services and user specified options
 
+AC_PATH_XTRA
 CF_POSIX_WAIT
 CF_SYSV
 CF_SVR4
@@ -252,6 +276,7 @@ AC_CHECK_HEADERS( \
 	X11/Sunkeysym.h \
 	X11/XF86keysym.h \
 	X11/XKBlib.h \
+	X11/TranslateI.h \
 	X11/Xpoll.h \
 	X11/extensions/XKB.h \
 	)
@@ -261,9 +286,10 @@ CF_WITH_XINERAMA
 CF_X_ATHENA
 CF_TYPE_FD_MASK
 CF_TERMIO_C_ISPEED
+CF_TERMIOS_TYPES
 
 # If we notice Xcursor, there is a workaround needed.
-AC_CHECK_LIB(Xcursor, XcursorGetTheme,[AC_DEFINE(HAVE_LIB_XCURSOR)])
+AC_CHECK_LIB(Xcursor, XcursorGetTheme,[AC_DEFINE(HAVE_LIB_XCURSOR,1,[Define to 1 if we have the Xcursor library])])
 
 LIBS="$LIBS $X_EXTRA_LIBS"
 
@@ -363,6 +389,17 @@ CF_XBOOL_RESULT(DEF_META_SENDS_ESC,meta_sends_esc,[Define to 1 if meta should se
 ###############################################################################
 AC_CHECK_PROG(cf_tic_prog,tic,yes,no)
 if test "$cf_tic_prog" = yes ; then
+	if test -n "$TERMINFO"
+	then
+		case "$TERMINFO" in
+		(/*)
+			test -d "$TERMINFO" || unset TERMINFO
+			;;
+		(*)
+			unset TERMINFO
+			;;
+		esac
+	fi
 	AC_MSG_CHECKING(for private terminfo-directory)
 	AC_ARG_WITH(own-terminfo,
 		[  --with-own-terminfo=P   set default $TERMINFO (default: from environment)],
@@ -372,7 +409,7 @@ if test "$cf_tic_prog" = yes ; then
 	if test "$TERMINFO_DIR" = yes ; then
 		AC_MSG_WARN(no value given)
 	elif test "$TERMINFO_DIR" != none ; then
-		if test -d $TERMINFO_DIR ; then
+		if test -d "$TERMINFO_DIR" ; then
 			AC_DEFINE_UNQUOTED(OWN_TERMINFO_DIR,"$TERMINFO_DIR",[Define to override default TERMINFO value])
 			AC_MSG_CHECKING(if \$TERMINFO should also be set)
 			AC_ARG_ENABLE(env-terminfo,
@@ -439,27 +476,42 @@ if test "$enable_ansi_color" = yes ; then
 	test "$enable_16_color" = no && AC_DEFINE(OPT_AIX_COLORS,0,[Define to 0 to disable 16-color support])
 
 	AC_MSG_CHECKING(if you want 256 colors)
-	CF_ARG_ENABLE(256-color,
-		[  --enable-256-color      enable 256-color support],
-		[enable_256_color=yes],
-		[enable_256_color=no])
+	CF_ARG_DISABLE(256-color,
+		[  --disable-256-color     disable 256-color support],
+		[enable_256_color=no],
+		[enable_256_color=yes])
 	AC_MSG_RESULT($enable_256_color)
+
 	if test "$enable_256_color" = yes ; then
+
 		CHARPROC_DEPS="$CHARPROC_DEPS 256colres.h"
 		EXTRAHDRS="$EXTRAHDRS 256colres.h"
 		AC_DEFINE(OPT_256_COLORS,1,[Define to 1 to enable 256-color support])
+
+		AC_MSG_CHECKING(if you want direct-color support)
+		CF_ARG_DISABLE(direct-color,
+			[  --disable-direct-color  disable direct-color support],
+			[enable_direct_color=no],
+			[enable_direct_color=yes])
+		AC_MSG_RESULT($enable_direct_color)
+		if test "$enable_direct_color" = yes ; then
+			AC_DEFINE(OPT_DIRECT_COLOR,1,[Define to 1 to enable direct-color support])
+		fi
+
 	else
-	AC_MSG_CHECKING(if you want 88 colors)
-	CF_ARG_ENABLE(88-color,
-		[  --enable-88-color       enable 88-color support],
-		[enable_88_color=yes],
-		[enable_88_color=no])
-	AC_MSG_RESULT($enable_88_color)
-	if test "$enable_88_color" = yes ; then
-		CHARPROC_DEPS="$CHARPROC_DEPS 88colres.h"
-		EXTRAHDRS="$EXTRAHDRS 88colres.h"
-		AC_DEFINE(OPT_88_COLORS,1,[Define to 1 to enable 88-color support])
-	fi
+
+		AC_MSG_CHECKING(if you want 88 colors)
+		CF_ARG_DISABLE(88-color,
+			[  --disable-88-color      disable 88-color support],
+			[enable_88_color=no],
+			[enable_88_color=yes])
+		AC_MSG_RESULT($enable_88_color)
+		if test "$enable_88_color" = yes ; then
+			CHARPROC_DEPS="$CHARPROC_DEPS 88colres.h"
+			EXTRAHDRS="$EXTRAHDRS 88colres.h"
+			AC_DEFINE(OPT_88_COLORS,1,[Define to 1 to enable 88-color support])
+		fi
+
 	fi
 
 fi
@@ -585,22 +637,22 @@ if test "$enable_exec_xterm" = yes ; then
 	fi
 fi
 
-AC_MSG_CHECKING(if you want to use double-buffering)
-CF_ARG_ENABLE(double-buffer,
-	[  --enable-double-buffer  enable double-buffering],
-	[enable_double_bfr=yes],
-	[enable_double_bfr=no])
-AC_MSG_RESULT($enable_double_bfr)
-if test "$enable_double_bfr" = yes ; then
-	case "x$LIBS" in
-	(*Xext*)
-		;;
-	(*)
-		CF_X_EXT 
-		;;
-	esac
-	AC_DEFINE(OPT_DOUBLE_BUFFER,1,[Define to 1 to enable double-buffering])
+CF_X_EXT
+CF_X_EXT_DOUBLE_BUFFER
+double_buffer=False
+if test "$cf_x_ext_double_buffer" = yes ; then
+	AC_MSG_CHECKING(if you want to enable double-buffering in default resources)
+	CF_ARG_ENABLE(double-buffer,
+		[  --enable-double-buffer  enable double-buffering in default resources],
+		[enable_double_bfr=yes],
+		[enable_double_bfr=no])
+	AC_MSG_RESULT($enable_double_bfr)
+	if test "$enable_double_bfr" = yes ; then
+		AC_DEFINE(OPT_DOUBLE_BUFFER,1,[Define to 1 to enable double-buffering in default resources])
+		double_buffer=True
+	fi
 fi
+AC_SUBST(double_buffer)
 
 AC_MSG_CHECKING(if you want to use FreeType library)
 CF_ARG_DISABLE(freetype,
@@ -678,10 +730,16 @@ AC_MSG_CHECKING(if you want support for input-method)
 CF_ARG_DISABLE(input-method,
 	[  --disable-input-method  disable input-method],
 	[enable_ximp=no],
-	[enable_ximp=yes])
+	[enable_ximp=$enable_i18n])
 AC_MSG_RESULT($enable_ximp)
 CF_INPUT_METHOD
 test "$cf_cv_input_method" = no && enable_ximp=no
+if test "$enable_ximp" != no ; then
+	if test "$enable_i18n" = no ; then
+		AC_MSG_WARN(input-methor relies upon internationalization)
+		enable_ximp=no
+	fi
+fi
 if test "$enable_ximp" = no ; then
 	AC_DEFINE(OPT_INPUT_METHOD,0,[Define to 0 to disable input-method])
 fi
@@ -774,11 +832,14 @@ CF_ARG_DISABLE(regex,
 	[enable_regex=yes])
 AC_MSG_RESULT($enable_regex)
 if test "$enable_regex" = yes ; then
-	CF_WITH_PCRE
-	if test "$with_pcre" = no ; then
-		CF_REGEX
-		if test "X$cf_cv_regex_hdrs" != "Xregex.h" ; then
-			AC_MSG_ERROR(Only POSIX or PCRE regular expressions are supported)
+	CF_WITH_PCRE2
+	if test "$with_pcre2" = no ; then
+		CF_WITH_PCRE
+		if test "$with_pcre" = no ; then
+			CF_REGEX
+			if test "X$cf_cv_regex_hdrs" != "Xregex.h" ; then
+				AC_MSG_ERROR([Only POSIX, PCRE, or PCRE2 regular expressions are supported])
+			fi
 		fi
 	fi
 	AC_DEFINE(OPT_SELECT_REGEX,1,[Define to 1 to enable regular-expression selections])
@@ -873,13 +934,18 @@ CF_ARG_DISABLE(wide-attrs,
 	[enable_wattr=yes])
 AC_MSG_RESULT($enable_wattr)
 
+if test x$enable_wattr = xno && test x$enable_direct_color = xyes ; then
+	AC_MSG_WARN(overriding wide-attributes to support direct color)
+	enable_wattr=yes
+fi
+
 AC_MSG_CHECKING(if you want wide-character support)
 CF_ARG_DISABLE(wide-chars,
 	[  --disable-wide-chars    disable wide-character support],
 	[enable_wchar=no],
 	[enable_wchar=yes])
 AC_MSG_RESULT($enable_wchar)
-test "$enable_wattr" = no && AC_DEFINE(OPT_WIDE_ATTRS,0,[Define to 0 to disable rarely-used SGR features])
+test "x$enable_wattr" = xno && AC_DEFINE(OPT_WIDE_ATTRS,0,[Define to 0 to disable rarely-used SGR features])
 
 AC_MSG_CHECKING(if you want only 16-bit character support)
 CF_ARG_ENABLE(16bit-chars,
@@ -943,15 +1009,16 @@ if test "$enable_dec_locator" = yes ; then
 fi
 
 AC_MSG_CHECKING(if you want XHTML and SVG screen dump support)
-CF_ARG_ENABLE(screen-dumps,
-	[  --enable-screen-dumps   enable XHTML and SVG screen dumps],
-	[enable_screen_dumps=yes],
-	[enable_screen_dumps=no])
+CF_ARG_DISABLE(screen-dumps,
+	[  --disable-screen-dumps  disable XHTML and SVG screen dumps],
+	[enable_screen_dumps=no],
+	[enable_screen_dumps=yes])
 AC_MSG_RESULT($enable_screen_dumps)
 if test "$enable_screen_dumps" = yes ; then
-	AC_DEFINE(OPT_SCREEN_DUMPS,1,[Define to 1 to enable XHTML and SVG screen dump support])
 	EXTRASRCS="$EXTRASRCS html.c svg.c"
 	EXTRAOBJS="$EXTRAOBJS html.o svg.o"
+else
+	AC_DEFINE(OPT_SCREEN_DUMPS,0,[Define to 0 to disable XHTML and SVG screen dump support])
 fi
 
 AC_MSG_CHECKING(if you want ReGIS graphics support)
@@ -969,10 +1036,10 @@ if test "$enable_regis_graphics" = yes ; then
 fi
 
 AC_MSG_CHECKING(if you want sixel graphics support)
-CF_ARG_ENABLE(sixel-graphics,
-	[  --enable-sixel-graphics enable sixel graphics support],
-	[enable_sixel_graphics=yes],
-	[enable_sixel_graphics=no])
+CF_ARG_DISABLE(sixel-graphics,
+	[  --disable-sixel-graphics disable sixel graphics support],
+	[enable_sixel_graphics=no],
+	[enable_sixel_graphics=yes])
 AC_MSG_RESULT($enable_sixel_graphics)
 if test "$enable_sixel_graphics" = yes ; then
 	AC_DEFINE(OPT_SIXEL_GRAPHICS,1,[Define to 1 to enable sixel graphics support])
@@ -986,6 +1053,16 @@ if test "$enable_regis_graphics" = yes || test "$enable_sixel_graphics" = yes ; 
 	EXTRAHDRS="$EXTRAHDRS graphics.h"
 	EXTRASRCS="$EXTRASRCS graphics.c"
 	EXTRAOBJS="$EXTRAOBJS graphics.o"
+fi
+
+AC_MSG_CHECKING(if you want sixel screen dump support)
+CF_ARG_DISABLE(print-graphics,
+	[  --disable-print-graphics disable screen dump to sixel support],
+	[enable_print_graphics=no],
+	[enable_print_graphics=$enable_regis_graphics])
+AC_MSG_RESULT($enable_print_graphics)
+if test "$enable_print_graphics" = yes ; then
+	AC_DEFINE(OPT_PRINT_GRAPHICS,1,[Define to 1 to enable screen dump to sixel support])
 fi
 
 AC_MSG_CHECKING(if you want VT420 rectangle support)
@@ -1044,19 +1121,7 @@ if test -n "$cf_cv_lib_part_tgetent"; then
     AC_CHECK_FUNCS(use_extended_names)
 fi
 
-if test -n "$GCC" ; then
-AC_MSG_CHECKING(if you want to turn on gcc warnings)
-CF_ARG_ENABLE(warnings,
-	[  --enable-warnings       test: turn on GCC compiler warnings],
-	[with_warnings=yes],
-	[with_warnings=no])
-AC_MSG_RESULT($with_warnings)
-if test "$with_warnings" = yes
-then
-	CF_GCC_ATTRIBUTES
-	CF_GCC_WARNINGS(Wdeclaration-after-statement Wextra Wno-unknown-pragmas Wswitch-enum)
-fi
-fi
+CF_ENABLE_WARNINGS(Wdeclaration-after-statement Wextra Wno-unknown-pragmas Wswitch-enum Wno-cast-qual)
 
 AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(CHARPROC_DEPS)
