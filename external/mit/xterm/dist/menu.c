@@ -1,7 +1,7 @@
-/* $XTermId: menu.c,v 1.344 2017/01/02 23:46:03 tom Exp $ */
+/* $XTermId: menu.c,v 1.364 2020/10/13 08:07:27 tom Exp $ */
 
 /*
- * Copyright 1999-2016,2017 by Thomas E. Dickey
+ * Copyright 1999-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -30,7 +30,7 @@
  * authorization.
  *
  *
- * Copyright 1989  The Open Group
+ * Copyright 1989  X Consortium
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,9 +48,9 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Except as contained in this notice, the name of The Open Group shall not be
+ * Except as contained in this notice, the name of the X Consortium shall not be
  * used in advertising or otherwise to promote the sale, use or other dealings
- * in this Software without prior written authorization from The Open Group.
+ * in this Software without prior written authorization from the X Consortium.
  */
 
 #include <xterm.h>
@@ -58,8 +58,6 @@
 #include <menu.h>
 #include <fontutils.h>
 #include <xstrings.h>
-
-#include <locale.h>
 
 #include <X11/Xmu/CharSet.h>
 
@@ -151,14 +149,14 @@ static void do_autolinefeed    PROTO_XT_CALLBACK_ARGS;
 static void do_autowrap        PROTO_XT_CALLBACK_ARGS;
 static void do_backarrow       PROTO_XT_CALLBACK_ARGS;
 static void do_bellIsUrgent    PROTO_XT_CALLBACK_ARGS;
-static void do_clearsavedlines PROTO_XT_CALLBACK_ARGS;
+static void do_clearsavedlines PROTO_XT_CALLBACK_ARGS GCC_NORETURN;
 static void do_continue        PROTO_XT_CALLBACK_ARGS;
 static void do_delete_del      PROTO_XT_CALLBACK_ARGS;
 #if OPT_SCREEN_DUMPS
 static void do_dump_html       PROTO_XT_CALLBACK_ARGS;
 static void do_dump_svg        PROTO_XT_CALLBACK_ARGS;
 #endif
-static void do_hardreset       PROTO_XT_CALLBACK_ARGS;
+static void do_hardreset       PROTO_XT_CALLBACK_ARGS GCC_NORETURN;
 static void do_interrupt       PROTO_XT_CALLBACK_ARGS;
 static void do_jumpscroll      PROTO_XT_CALLBACK_ARGS;
 static void do_keepClipboard   PROTO_XT_CALLBACK_ARGS;
@@ -168,7 +166,7 @@ static void do_old_fkeys       PROTO_XT_CALLBACK_ARGS;
 static void do_poponbell       PROTO_XT_CALLBACK_ARGS;
 static void do_print           PROTO_XT_CALLBACK_ARGS;
 static void do_print_redir     PROTO_XT_CALLBACK_ARGS;
-static void do_quit            PROTO_XT_CALLBACK_ARGS;
+static void do_quit            PROTO_XT_CALLBACK_ARGS GCC_NORETURN;
 static void do_redraw          PROTO_XT_CALLBACK_ARGS;
 static void do_reversevideo    PROTO_XT_CALLBACK_ARGS;
 static void do_reversewrap     PROTO_XT_CALLBACK_ARGS;
@@ -177,7 +175,7 @@ static void do_scrollkey       PROTO_XT_CALLBACK_ARGS;
 static void do_scrollttyoutput PROTO_XT_CALLBACK_ARGS;
 static void do_securekbd       PROTO_XT_CALLBACK_ARGS;
 static void do_selectClipboard PROTO_XT_CALLBACK_ARGS;
-static void do_softreset       PROTO_XT_CALLBACK_ARGS;
+static void do_softreset       PROTO_XT_CALLBACK_ARGS GCC_NORETURN;
 static void do_suspend         PROTO_XT_CALLBACK_ARGS;
 static void do_terminate       PROTO_XT_CALLBACK_ARGS;
 static void do_titeInhibit     PROTO_XT_CALLBACK_ARGS;
@@ -371,6 +369,9 @@ MenuEntry vtMenuEntries[] = {
     { "scrollttyoutput",do_scrollttyoutput, NULL },
     { "allow132",	do_allow132,	NULL },
     { "keepSelection",	do_keepSelection, NULL },
+#if OPT_MENU_KEEPCLIPBOARD
+    { "keepClipboard",	do_keepClipboard, NULL },
+#endif
     { "selectToClipboard",do_selectClipboard, NULL },
     { "visualbell",	do_visualbell,	NULL },
     { "bellIsUrgent",	do_bellIsUrgent, NULL },
@@ -409,6 +410,7 @@ MenuEntry fontMenuEntries[] = {
     { "font4",		do_vtfont,	NULL },
     { "font5",		do_vtfont,	NULL },
     { "font6",		do_vtfont,	NULL },
+    { "font7",		do_vtfont,	NULL },
     /* this is after the last builtin font; the other entries are special */
     { "fontescape",	do_vtfont,	NULL },
     { "fontsel",	do_vtfont,	NULL },
@@ -476,15 +478,17 @@ typedef struct {
 } MenuHeader;
 
     /* This table is ordered to correspond with MenuIndex */
+#define DATA(name) { (char *)#name, name ## Entries, XtNumber(name ## Entries ) }
 static const MenuHeader menu_names[] = {
-    { "mainMenu", mainMenuEntries, XtNumber(mainMenuEntries) },
-    { "vtMenu",   vtMenuEntries,   XtNumber(vtMenuEntries)   },
-    { "fontMenu", fontMenuEntries, XtNumber(fontMenuEntries) },
+    DATA( mainMenu),
+    DATA( vtMenu),
+    DATA( fontMenu),
 #if OPT_TEK4014
-    { "tekMenu",  tekMenuEntries,  XtNumber(tekMenuEntries)  },
+    DATA( tekMenu),
 #endif
-    { 0,          0,               0 },
+    { NULL, 0, 0 },
 };
+#undef DATA
 /* *INDENT-ON* */
 
 /*
@@ -503,31 +507,11 @@ static MenuList vt_shell[NUM_POPUP_MENUS];
 static MenuList tek_shell[NUM_POPUP_MENUS];
 #endif
 
-static String
-setMenuLocale(Bool before, String substitute)
-{
-    String result = setlocale(LC_CTYPE, 0);
-
-    if (before) {
-	result = x_strdup(result);
-    }
-    (void) setlocale(LC_CTYPE, substitute);
-    TRACE(("setMenuLocale %s:%s\n",
-	   (before
-	    ? "before"
-	    : "after"),
-	   NonNull(result)));
-    if (!before) {
-	free((void *) substitute);
-    }
-    return result;
-}
-
 /*
  * Returns a pointer to the MenuList entry that matches the popup menu.
  */
 static MenuList *
-select_menu(Widget w GCC_UNUSED, MenuIndex num)
+select_menu(Widget w, MenuIndex num)
 {
 #if OPT_TEK4014 && OPT_TOOLBAR
     while (w != 0) {
@@ -536,6 +520,8 @@ select_menu(Widget w GCC_UNUSED, MenuIndex num)
 	}
 	w = XtParent(w);
     }
+#else
+    (void) w;
 #endif
     return &vt_shell[num];
 }
@@ -613,7 +599,7 @@ unusedEntries(XtermWidget xw, MenuIndex num)
 	}
 	break;
     case vtMenu:
-#ifndef NO_ACTIVE_ICON
+#if !defined(NO_ACTIVE_ICON) && !OPT_TOOLBAR
 	if (!getIconicFont(screen)->fs || !screen->iconVwin.window) {
 	    result[vtMenu_activeicon] = True;
 	}
@@ -640,6 +626,30 @@ unusedEntries(XtermWidget xw, MenuIndex num)
 }
 
 /*
+ * When using the toolbar configuration, some systems (seen with Solaris 11)
+ * give a warning that (Xt) cannot find a usable font-set.  This does not stop
+ * the toolbars from working - ignore for now.
+ */
+#if OPT_TOOLBAR
+static void
+ignoreWarning(
+		 String p_name,
+		 String p_type,
+		 String p_class,
+		 String p_default,
+		 String *p_params,
+		 Cardinal *p_num_params)
+{
+    (void) p_name;
+    (void) p_type;
+    (void) p_class;
+    (void) p_default;
+    (void) p_params;
+    (void) p_num_params;
+}
+#endif
+
+/*
  * create_menu - create a popup shell and stuff the menu into it.
  */
 static Widget
@@ -658,7 +668,7 @@ create_menu(Widget w, XtermWidget xw, MenuIndex num)
     struct _MenuEntry *entries = data->entry_list;
     Cardinal nentries = data->entry_len;
 #if !OPT_TOOLBAR
-    String saveLocale;
+    char *saveLocale;
 #endif
 
     if (screen->menu_item_bitmap == None) {
@@ -679,7 +689,7 @@ create_menu(Widget w, XtermWidget xw, MenuIndex num)
 				  (char *) check_bits, check_width, check_height);
     }
 #if !OPT_TOOLBAR
-    saveLocale = setMenuLocale(True, resource.menuLocale);
+    saveLocale = xtermSetLocale(LC_CTYPE, resource.menuLocale);
     list->w = XtCreatePopupShell(data->internal_name,
 				 simpleMenuWidgetClass,
 				 toplevel,
@@ -688,6 +698,12 @@ create_menu(Widget w, XtermWidget xw, MenuIndex num)
     if (list->w != 0) {
 	Boolean *unused = unusedEntries(xw, num);
 	Cardinal n;
+#if OPT_TOOLBAR
+	Boolean useLocale = !strcmp(resource.menuLocale, "");
+	XtErrorMsgHandler warningHandler = 0;
+	if (!useLocale)
+	    warningHandler = XtAppSetWarningMsgHandler(app_con, ignoreWarning);
+#endif
 
 	list->entries = 0;
 
@@ -704,9 +720,13 @@ create_menu(Widget w, XtermWidget xw, MenuIndex num)
 		list->entries++;
 	    }
 	}
+#if OPT_TOOLBAR
+	if (!useLocale)
+	    XtAppSetWarningMsgHandler(app_con, warningHandler);
+#endif
     }
 #if !OPT_TOOLBAR
-    (void) setMenuLocale(False, saveLocale);
+    xtermResetLocale(LC_CTYPE, saveLocale);
 #endif
 
     /* do not realize at this point */
@@ -788,7 +808,7 @@ domenu(Widget w,
 	    update_keyboard_type();
 #ifdef OPT_PRINT_ON_EXIT
 	    screen->write_error = !IsEmpty(resource.printFileOnXError);
-	    SetItemSensitivity(mainMenuEntries[mainMenu_write_now].widget, False);
+	    SetItemSensitivity(mainMenuEntries[mainMenu_write_now].widget, True);
 	    SetItemSensitivity(mainMenuEntries[mainMenu_write_error].widget, screen->write_error);
 #endif
 	}
@@ -829,7 +849,7 @@ domenu(Widget w,
 	    int n;
 
 	    set_menu_font(True);
-	    for (n = fontMenu_font1; n <= fontMenu_font6; ++n) {
+	    for (n = fontMenu_font1; n <= fontMenu_font7; ++n) {
 		if (IsEmpty(screen->menu_font_names[n][fNorm]))
 		    SetItemSensitivity(fontMenuEntries[n].widget, False);
 	    }
@@ -837,9 +857,6 @@ domenu(Widget w,
 	    update_menu_allowBoldFonts();
 #if OPT_BOX_CHARS
 	    update_font_boxchars();
-	    SetItemSensitivity(
-				  fontMenuEntries[fontMenu_font_boxchars].widget,
-				  True);
 	    update_font_packed();
 	    SetItemSensitivity(
 				  fontMenuEntries[fontMenu_font_packedfont].widget,
@@ -970,6 +987,18 @@ handle_send_signal(Widget gw GCC_UNUSED, int sig)
 	kill_process_group(screen->pid, sig);
 #endif
 }
+
+#if OPT_VT52_MODE
+static void
+DisableIfVT52(MenuEntry * menu, int which)
+{
+    Widget mi = menu[which].widget;
+    SetItemSensitivity(mi, TScreenOf(term)->vtXX_level != 0);
+}
+
+#else
+#define DisableIfVT52(which,val)	/* nothing */
+#endif
 
 static void
 UpdateMenuItem(
@@ -1126,6 +1155,15 @@ do_write_now(Widget gw GCC_UNUSED,
 			  resource.printModeNow);
 }
 
+void
+HandlePrintImmediate(Widget w GCC_UNUSED,
+		     XEvent *event GCC_UNUSED,
+		     String *params GCC_UNUSED,
+		     Cardinal *param_count GCC_UNUSED)
+{
+    do_write_now((Widget) 0, (XtPointer) 0, (XtPointer) 0);
+}
+
 static void
 do_write_error(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
@@ -1138,6 +1176,15 @@ do_write_error(Widget gw GCC_UNUSED,
     }
     TScreenOf(xw)->write_error = (Boolean) (!TScreenOf(xw)->write_error);
     update_write_error();
+}
+
+void
+HandlePrintOnError(Widget w GCC_UNUSED,
+		   XEvent *event GCC_UNUSED,
+		   String *params GCC_UNUSED,
+		   Cardinal *param_count GCC_UNUSED)
+{
+    do_write_error((Widget) 0, (XtPointer) 0, (XtPointer) 0);
 }
 #endif
 
@@ -1490,6 +1537,17 @@ do_scrollttyoutput(Widget gw GCC_UNUSED,
     update_scrollttyoutput();
 }
 
+#if OPT_MENU_KEEPCLIPBOARD
+void
+update_keepClipboard(void)
+{
+    UpdateCheckbox("update_keepClipboard",
+		   vtMenuEntries,
+		   vtMenu_keepClipboard,
+		   TScreenOf(term)->keepClipboard);
+}
+#endif
+
 static void
 do_keepClipboard(Widget gw GCC_UNUSED,
 		 XtPointer closure GCC_UNUSED,
@@ -1600,8 +1658,7 @@ do_cursorblink(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
 	       XtPointer data GCC_UNUSED)
 {
-    TScreen *screen = TScreenOf(term);
-    ToggleCursorBlink(screen);
+    ToggleCursorBlink(term);
 }
 #endif
 
@@ -2105,8 +2162,8 @@ HandleWriteError(Widget w,
 void
 HandlePrintScreen(Widget w GCC_UNUSED,
 		  XEvent *event GCC_UNUSED,
-		  String *params GCC_UNUSED,
-		  Cardinal *param_count GCC_UNUSED)
+		  String *params,
+		  Cardinal *param_count)
 {
     xtermPrintScreen(term, True, getPrinterFlags(term, params, param_count));
 }
@@ -2237,8 +2294,8 @@ do_fullscreen(Widget gw GCC_UNUSED,
 void
 HandleFullscreen(Widget w,
 		 XEvent *event GCC_UNUSED,
-		 String *params GCC_UNUSED,
-		 Cardinal *param_count GCC_UNUSED)
+		 String *params,
+		 Cardinal *param_count)
 {
     XtermWidget xw = term;
 
@@ -2603,7 +2660,6 @@ HandleCursorBlink(Widget w,
 		  String *params,
 		  Cardinal *param_count)
 {
-    /* eventually want to see if sensitive or not */
     handle_vt_toggle(do_cursorblink, TScreenOf(term)->cursor_blink,
 		     params, *param_count, w);
 }
@@ -2967,7 +3023,7 @@ SetupShell(Widget *menus, MenuList * shell, int n, int m)
     char *external_name = 0;
     Dimension button_height;
     Dimension button_border;
-    String saveLocale = setMenuLocale(True, resource.menuLocale);
+    char *saveLocale = xtermSetLocale(LC_CTYPE, resource.menuLocale);
 
     shell[n].w = XtVaCreatePopupShell(menu_names[n].internal_name,
 				      simpleMenuWidgetClass,
@@ -3000,7 +3056,7 @@ SetupShell(Widget *menus, MenuList * shell, int n, int m)
 		  XtNborderWidth, &button_border,
 		  (XtPointer) 0);
 
-    (void) setMenuLocale(False, saveLocale);
+    xtermResetLocale(LC_CTYPE, saveLocale);
     return (Dimension) (button_height + (button_border * 2));
 }
 #endif /* OPT_TOOLBAR */
@@ -3230,13 +3286,35 @@ ShowToolbar(Bool enable)
 	resource.toolBar = (Boolean) enable;
 	update_toolbar();
     }
+#if OPT_TOOLBAR
+    /*
+     * Layout for the toolbar confuses the Shell widget.  Remind it that we
+     * would like to be iconified if the corresponding resource was set.
+     */
+    {
+	static Bool first = True;
+	if (first && XtIsRealized(toplevel)) {
+	    Boolean iconic = 0;
+
+	    XtVaGetValues(toplevel,
+			  XtNiconic, &iconic,
+			  (XtPointer) 0);
+
+	    if (iconic) {
+		TRACE(("...please iconify window %#lx\n", XtWindow(toplevel)));
+		xtermIconify(xw);
+	    }
+	    first = False;
+	}
+    }
+#endif
 }
 
 void
 HandleToolbar(Widget w,
 	      XEvent *event GCC_UNUSED,
-	      String *params GCC_UNUSED,
-	      Cardinal *param_count GCC_UNUSED)
+	      String *params,
+	      Cardinal *param_count)
 {
     XtermWidget xw = term;
 
@@ -3477,6 +3555,8 @@ update_reversevideo(void)
 void
 update_autowrap(void)
 {
+    DisableIfVT52(vtMenuEntries,
+		  vtMenu_autowrap);
     UpdateCheckbox("update_autowrap",
 		   vtMenuEntries,
 		   vtMenu_autowrap,
@@ -3486,6 +3566,8 @@ update_autowrap(void)
 void
 update_reversewrap(void)
 {
+    DisableIfVT52(vtMenuEntries,
+		  vtMenu_reversewrap);
     UpdateCheckbox("update_reversewrap",
 		   vtMenuEntries,
 		   vtMenu_reversewrap,
@@ -3495,6 +3577,8 @@ update_reversewrap(void)
 void
 update_autolinefeed(void)
 {
+    DisableIfVT52(vtMenuEntries,
+		  vtMenu_autolinefeed);
     UpdateCheckbox("update_autolinefeed",
 		   vtMenuEntries,
 		   vtMenu_autolinefeed,
@@ -3504,6 +3588,8 @@ update_autolinefeed(void)
 void
 update_appcursor(void)
 {
+    DisableIfVT52(vtMenuEntries,
+		  vtMenu_appcursor);
     UpdateCheckbox("update_appcursor",
 		   vtMenuEntries,
 		   vtMenu_appcursor,
@@ -3558,6 +3644,8 @@ update_selectToClipboard(void)
 void
 update_allow132(void)
 {
+    DisableIfVT52(vtMenuEntries,
+		  vtMenu_allow132);
     UpdateCheckbox("update_allow132",
 		   vtMenuEntries,
 		   vtMenu_allow132,
@@ -3615,10 +3703,17 @@ update_marginbell(void)
 void
 update_cursorblink(void)
 {
+    BlinkOps check = TScreenOf(term)->cursor_blink;
+
+    if (check == cbAlways ||
+	check == cbNever) {
+	SetItemSensitivity(vtMenuEntries[vtMenu_cursorblink].widget, False);
+    }
     UpdateCheckbox("update_cursorblink",
 		   vtMenuEntries,
 		   vtMenu_cursorblink,
-		   TScreenOf(term)->cursor_blink);
+		   (check == cbTrue ||
+		    check == cbAlways));
 }
 #endif
 
@@ -3679,10 +3774,13 @@ update_font_doublesize(void)
 void
 update_font_boxchars(void)
 {
+    SetItemSensitivity(fontMenuEntries[fontMenu_font_boxchars].widget,
+		       !TScreenOf(term)->broken_box_chars);
     UpdateCheckbox("update_font_boxchars",
 		   fontMenuEntries,
 		   fontMenu_font_boxchars,
-		   TScreenOf(term)->force_box_chars);
+		   TScreenOf(term)->force_box_chars ||
+		   TScreenOf(term)->broken_box_chars);
 }
 
 void
@@ -3716,6 +3814,16 @@ update_font_renderfont(void)
 		   (term->work.render_font == True));
     SetItemSensitivity(fontMenuEntries[fontMenu_render_font].widget,
 		       !IsEmpty(CurrentXftFont(term)));
+
+#if OPT_BOX_CHARS
+    if (term->work.render_font) {
+	TScreenOf(term)->broken_box_chars = term->work.broken_box_chars;
+    } else {
+	TScreenOf(term)->broken_box_chars = False;
+    }
+#endif
+    update_font_boxchars();
+
     update_fontmenu(term);
 }
 #endif
@@ -3752,8 +3860,8 @@ update_font_utf8_fonts(void)
 void
 update_font_utf8_title(void)
 {
-    Bool active = (TScreenOf(term)->utf8_mode != uFalse);
-    Bool enable = (TScreenOf(term)->utf8_title);
+    Bool active = (TScreenOf(term)->utf8_mode != uAlways);
+    Bool enable = (TScreenOf(term)->utf8_mode != uFalse);
 
     TRACE(("update_font_utf8_title active %d, enable %d\n", active, enable));
     SetItemSensitivity(fontMenuEntries[fontMenu_utf8_title].widget, active);

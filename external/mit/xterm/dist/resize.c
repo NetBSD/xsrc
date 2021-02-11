@@ -1,7 +1,7 @@
-/* $XTermId: resize.c,v 1.139 2017/05/31 08:58:56 tom Exp $ */
+/* $XTermId: resize.c,v 1.144 2020/06/03 00:26:23 tom Exp $ */
 
 /*
- * Copyright 2003-2015,2017 by Thomas E. Dickey
+ * Copyright 2003-2018,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -103,6 +103,7 @@ int ignore_unused;
 #define	SHELL_UNKNOWN	0
 #define	SHELL_C		1
 #define	SHELL_BOURNE	2
+
 /* *INDENT-OFF* */
 static struct {
     const char *name;
@@ -180,6 +181,11 @@ static const char *wsize[EMULATIONS] =
     ESCAPE("[4;%hd;%hdt"),
 };
 #endif /* USE_STRUCT_WINSIZE */
+
+static void failed(const char *) GCC_NORETURN;
+static void onintr(int) GCC_NORETURN;
+static void resize_timeout(int) GCC_NORETURN;
+static void Usage(void) GCC_NORETURN;
 
 static void
 failed(const char *s)
@@ -416,7 +422,7 @@ main(int argc, char **argv ENVP_ARG)
     tty = fileno(ttyfp);
 #ifdef USE_TERMCAP
     if ((env = x_getenv("TERM")) == 0) {
-	env = DFT_TERMTYPE;
+	env = x_strdup(DFT_TERMTYPE);
 	if (SHELL_BOURNE == shell_type) {
 	    setname = "TERM=" DFT_TERMTYPE ";\nexport TERM;\n";
 	} else {

@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
-# $XTermId: query-fonts.pl,v 1.6 2014/02/26 20:14:50 tom Exp $
+# $XTermId: query-fonts.pl,v 1.8 2019/05/19 08:57:31 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
-# Copyright 2010,2014 by Thomas E. Dickey
+# Copyright 2010-2018,2019 by Thomas E. Dickey
 #
 #                         All Rights Reserved
 #
@@ -48,6 +48,8 @@ use Getopt::Std;
 use IO::Handle;
 
 our ( $opt_a, $opt_r, $opt_s );
+
+$Getopt::Std::STANDARD_HELP_VERSION = 1;
 &getopts('ars') || die(
     "Usage: $0 [options]\n
 Options:\n
@@ -58,17 +60,6 @@ Options:\n
 );
 
 our $ST = $opt_s ? "\007" : "\x1b\\";
-
-sub no_reply($) {
-    open TTY, "+</dev/tty" or die("Cannot open /dev/tty\n");
-    autoflush TTY 1;
-    my $old = `stty -g`;
-    system "stty raw -echo min 0 time 5";
-
-    print TTY @_;
-    close TTY;
-    system "stty $old";
-}
 
 sub get_reply($) {
     open TTY, "+</dev/tty" or die("Cannot open /dev/tty\n");
