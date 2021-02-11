@@ -1,7 +1,7 @@
-/* $XTermId: linedata.c,v 1.85 2014/11/13 01:17:59 tom Exp $ */
+/* $XTermId: linedata.c,v 1.97 2019/06/30 19:10:53 tom Exp $ */
 
 /*
- * Copyright 2009-2013,2014 by Thomas E. Dickey
+ * Copyright 2009-2018,2019 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -31,6 +31,7 @@
  */
 
 #include <xterm.h>
+#include <data.h>
 
 #include <assert.h>
 
@@ -61,18 +62,6 @@ getLineData(TScreen *screen, int row)
     }
     if (row >= 0 && row <= max_row) {
 	result = (LineData *) scrnHeadAddr(screen, buffer, (unsigned) row);
-	if (result != 0) {
-#if 1				/* FIXME - these should be done in setupLineData, etc. */
-	    result->lineSize = (Dimension) MaxCols(screen);
-#if OPT_WIDE_CHARS
-	    if (screen->wide_chars) {
-		result->combSize = (Char) screen->max_combining;
-	    } else {
-		result->combSize = 0;
-	    }
-#endif
-#endif /* FIXME */
-	}
     }
 
     return result;
@@ -87,6 +76,9 @@ getLineData(TScreen *screen, int row)
 void
 copyLineData(LineData *dst, CLineData *src)
 {
+    if (dst == NULL || src == NULL)
+	return;
+
     dst->bufHead = src->bufHead;
 
 #if OPT_WIDE_CHARS
@@ -133,7 +125,7 @@ copyLineData(LineData *dst, CLineData *src)
 	for (col = limit; col < dst->lineSize; ++col) {
 	    dst->attribs[col] = 0;
 #if OPT_ISO_COLORS
-	    dst->color[col] = 0;
+	    dst->color[col] = initCColor;
 #endif
 	    dst->charData[col] = 0;
 #if OPT_WIDE_CHARS
@@ -147,11 +139,24 @@ copyLineData(LineData *dst, CLineData *src)
 
 #if OPT_WIDE_CHARS
 #define initLineExtra(screen) \
-    screen->lineExtra = ((size_t) (screen->max_combining) * sizeof(IChar *))
+    screen->lineExtra = ((size_t) (screen->max_combining) * sizeof(IChar *)); \
+    screen->cellExtra = ((size_t) (screen->max_combining) * sizeof(IChar))
 #else
 #define initLineExtra(screen) \
-    screen->lineExtra = 0
+    screen->lineExtra = 0; \
+    screen->cellExtra = 0
 #endif
+
+/*
+ * CellData size depends on the "combiningChars" resource.
+ */
+#define CellDataSize(screen) (SizeOfCellData + screen->cellExtra)
+
+#define CellDataAddr(screen, data, cell) \
+	( (CellData *)(void *) ((char *)data + (cell * CellDataSize(screen))) )
+#define ConstCellDataAddr(screen, data, cell) \
+	( (const CellData *)(const void *) ( \
+	      (const char *)data + (cell * CellDataSize(screen))) )
 
 void
 initLineData(XtermWidget xw)
@@ -160,36 +165,53 @@ initLineData(XtermWidget xw)
 
     initLineExtra(screen);
 
-    TRACE(("initLineData %lu\n", (unsigned long) screen->lineExtra));
-    TRACE(("...sizeof(LineData)  %lu\n", (unsigned long) sizeof(LineData)));
-#if OPT_ISO_COLORS
-    TRACE(("...sizeof(CellColor) %lu\n", (unsigned long) sizeof(CellColor)));
-#endif
-    TRACE(("...sizeof(RowData)   %lu\n", (unsigned long) sizeof(RowData)));
-    TRACE(("...offset(lineSize)  %lu\n", (unsigned long) offsetof(LineData, lineSize)));
-    TRACE(("...offset(bufHead)   %lu\n", (unsigned long) offsetof(LineData, bufHead)));
 #if OPT_WIDE_CHARS
-    TRACE(("...offset(combSize)  %lu\n", (unsigned long) offsetof(LineData, combSize)));
+    TRACE(("initLineData %lu (%d combining chars)\n",
+	   (unsigned long) screen->lineExtra, screen->max_combining));
+#else
+    TRACE(("initLineData\n"));
 #endif
-    TRACE(("...offset(attribs)   %lu\n", (unsigned long) offsetof(LineData, attribs)));
+
+    /*
+     * Per-line size/offsets.
+     */
+    TRACE(("** sizeof(LineData)  %lu\n", (unsigned long) sizeof(LineData)));
+    TRACE(("   offset(lineSize)  %lu\n", (unsigned long) offsetof(LineData, lineSize)));
+    TRACE(("   offset(bufHead)   %lu\n", (unsigned long) offsetof(LineData, bufHead)));
+#if OPT_WIDE_CHARS
+    TRACE(("   offset(combSize)  %lu\n", (unsigned long) offsetof(LineData, combSize)));
+#endif
+    TRACE(("   offset(*attribs)  %lu\n", (unsigned long) offsetof(LineData, attribs)));
 #if OPT_ISO_COLORS
-    TRACE(("...offset(color)     %lu\n", (unsigned long) offsetof(LineData, color)));
+    TRACE(("   offset(*color)    %lu\n", (unsigned long) offsetof(LineData, color)));
 #endif
-    TRACE(("...offset(charData)  %lu\n", (unsigned long) offsetof(LineData, charData)));
-    TRACE(("...offset(combData)  %lu\n", (unsigned long) offsetof(LineData, combData)));
+    TRACE(("   offset(*charData) %lu\n", (unsigned long) offsetof(LineData, charData)));
+    TRACE(("   offset(*combData) %lu\n", (unsigned long) offsetof(LineData, combData)));
+
+    /*
+     * Per-cell size/offsets.
+     */
+    TRACE(("** sizeof(CellData)  %lu\n", (unsigned long) CellDataSize(screen)));
+    TRACE(("   offset(attribs)   %lu\n", (unsigned long) offsetof(CellData, attribs)));
+#if OPT_WIDE_CHARS
+    TRACE(("   offset(combSize)  %lu\n", (unsigned long) offsetof(CellData, combSize)));
+#endif
+#if OPT_ISO_COLORS
+    TRACE(("   offset(color)     %lu\n", (unsigned long) offsetof(CellData, color)));
+#endif
+    TRACE(("   offset(charData)  %lu\n", (unsigned long) offsetof(CellData, charData)));
+    TRACE(("   offset(combData)  %lu\n", (unsigned long) offsetof(CellData, combData)));
+
+    /*
+     * Data-type sizes.
+     */
+#if OPT_ISO_COLORS
+    TRACE(("** sizeof(CellColor) %lu\n", (unsigned long) sizeof(CellColor)));
+#endif
+    TRACE(("** sizeof(IAttr)     %lu\n", (unsigned long) sizeof(IAttr)));
+    TRACE(("** sizeof(IChar)     %lu\n", (unsigned long) sizeof(IChar)));
+    TRACE(("** sizeof(RowData)   %lu\n", (unsigned long) sizeof(RowData)));
 }
-
-/*
- * CellData size depends on the "combiningChars" resource.
- * FIXME - revise this to reduce arithmetic...
- */
-#define CellDataSize(screen) (SizeOfCellData + screen->lineExtra)
-
-#define CellDataAddr(screen, data, cell) \
-	( (CellData *)(void *) ((char *)data + (cell * CellDataSize(screen))) )
-#define ConstCellDataAddr(screen, data, cell) \
-	( (const CellData *)(const void *) ( \
-	      (const char *)data + (cell * CellDataSize(screen))) )
 
 CellData *
 newCellData(XtermWidget xw, Cardinal count)
@@ -207,23 +229,36 @@ saveCellData(TScreen *screen,
 	     CellData *data,
 	     Cardinal cell,
 	     CLineData *ld,
+	     XTermRect *limits,
 	     int column)
 {
     CellData *item = CellDataAddr(screen, data, cell);
 
+    (void) limits;
     if (column < MaxCols(screen)) {
 	item->attribs = ld->attribs[column];
-#if OPT_ISO_COLORS
-	item->color = ld->color[column];
-#endif
+	if_OPT_ISO_COLORS(screen, {
+	    item->color = ld->color[column];
+	});
 	item->charData = ld->charData[column];
 	if_OPT_WIDE_CHARS(screen, {
 	    size_t off;
-	    item->combSize = ld->combSize;
-	    for_each_combData(off, ld) {
+	    Bool blank = (((item->charData == HIDDEN_CHAR)
+			   && (limits == NULL
+			       || (column + 1) == limits->left))
+			  || (item->charData != HIDDEN_CHAR
+			      && WideCells(item->charData) > 1
+			      && (limits == NULL
+				  || (column + 1) >= limits->right)));
+	    if (blank) {
+		item->charData = (Char) ' ';
+	    }
+	    item->combSize = blank ? 0 : ld->combSize;
+	    for_each_combData(off, item) {
 		item->combData[off] = ld->combData[off][column];
 	    }
-	})
+	});
+	TRACE2(("SAVED::%s\n", visibleIChars(&(item->charData), 1)));
     }
 }
 
@@ -232,15 +267,18 @@ restoreCellData(TScreen *screen,
 		const CellData *data,
 		Cardinal cell,
 		LineData *ld,
+		XTermRect *limits,
 		int column)
 {
     const CellData *item = ConstCellDataAddr(screen, data, cell);
 
+    (void) limits;
     if (column < MaxCols(screen)) {
 	ld->attribs[column] = item->attribs;
-#if OPT_ISO_COLORS
-	ld->color[column] = item->color;
-#endif
+	TRACE2(("BEFORE:%2d:%s\n", column + 1, visibleIChars(ld->charData, ld->lineSize)));
+	if_OPT_ISO_COLORS(screen, {
+	    ld->color[column] = item->color;
+	});
 	ld->charData[column] = item->charData;
 	if_OPT_WIDE_CHARS(screen, {
 	    size_t off;
@@ -248,6 +286,7 @@ restoreCellData(TScreen *screen,
 	    for_each_combData(off, ld) {
 		ld->combData[off][column] = item->combData[off];
 	    }
-	})
+	});
+	TRACE2(("AFTER::%2d:%s\n", column + 1, visibleIChars(ld->charData, ld->lineSize)));
     }
 }
