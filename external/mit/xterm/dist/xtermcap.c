@@ -1,7 +1,7 @@
-/* $XTermId: xtermcap.c,v 1.49 2016/05/22 18:31:20 tom Exp $ */
+/* $XTermId: xtermcap.c,v 1.56 2020/10/12 18:51:05 tom Exp $ */
 
 /*
- * Copyright 2007-2014,2016 by Thomas E. Dickey
+ * Copyright 2007-2018,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -50,8 +50,10 @@
 
 #if USE_TERMINFO
 #define TcapInit(buffer, name) (setupterm(name, fileno(stdout), &ignored) == OK)
+#define TcapFree()             (del_curterm(cur_term))
 #else
 #define TcapInit(buffer, name) (tgetent(buffer, name) == 1)
+#define TcapFree()		/*nothing */
 #endif
 
 #define NO_STRING (char *)(-1)
@@ -180,6 +182,11 @@ static const TCAPINFO table[] = {
 # if OPT_TCAP_QUERY && OPT_ISO_COLORS
 	/* XK_COLORS is a fake code. */
 	DATA(	"Co",	"colors",	XK_COLORS,	0	),
+#  if OPT_DIRECT_COLOR
+	/* note - termcap cannot support RGB */
+	DATA(	"Co",	"RGB",		XK_RGB,		0	),
+
+#  endif
 # endif
 	DATA(	"TN",	"name",		XK_TCAPNAME,	0	),
 #if USE_EXTENDED_NAMES
@@ -225,7 +232,7 @@ loadTermcapStrings(TScreen *screen)
     if (screen->tcap_fkeys == 0) {
 	Cardinal want = XtNumber(table);
 	Cardinal have;
-#ifdef USE_TERMCAP
+#if !USE_TERMINFO
 	char *area = screen->tcap_area;
 #endif
 
@@ -236,7 +243,7 @@ loadTermcapStrings(TScreen *screen)
 		char name[80];
 		char *fkey;
 
-#ifndef USE_TERMCAP
+#if USE_TERMINFO
 		fkey = tigetstr(strcpy(name, table[have].ti));
 #else
 		fkey = tgetstr(strcpy(name, table[have].tc), &area);
@@ -287,7 +294,7 @@ keyIsDistinct(XtermWidget xw, int which)
 		}
 	    } else {
 		/* there is no data for the shifted key */
-		result = -1;
+		result = False;
 	    }
 	}
 #endif
@@ -538,14 +545,15 @@ get_tcap_buffer(XtermWidget xw)
  * Retrieve the erase-key, for initialization in main program.
  */
 char *
-get_tcap_erase(XtermWidget xw GCC_UNUSED)
+get_tcap_erase(XtermWidget xw)
 {
-#ifdef USE_TERMCAP
+#if !USE_TERMINFO
     char *area = TScreenOf(xw)->tcap_area;
 #endif
     char *fkey;
 
-#ifndef USE_TERMCAP
+    (void) xw;
+#if USE_TERMINFO
     fkey = tigetstr("kbs");
 #else
     fkey = tgetstr("kb", &area);
@@ -633,12 +641,12 @@ free_termcap(XtermWidget xw)
 
 	for (have = 0; have < want; ++have) {
 	    char *fkey = screen->tcap_fkeys[have];
-	    if (fkey != 0 && fkey != NO_STRING) {
+	    if (fkey != NO_STRING) {
 		free(fkey);
 	    }
 	}
-	free(screen->tcap_fkeys);
-	screen->tcap_fkeys = 0;
+	FreeAndNull(screen->tcap_fkeys);
     }
 #endif
+    TcapFree();
 }

@@ -1,0 +1,6 @@
+$NetBSD: distinfo,v 1.1.1.1.4.2 2021/02/17 09:48:39 martin Exp $
+
+SHA1 (xterm-349.tgz) = fd4f1029148dac5a2b23de87330ba6599cf6b21e
+RMD160 (xterm-349.tgz) = b419e56c1391fa2d582a0c9f5c1dae9965f90ba7
+SHA512 (xterm-349.tgz) = a93b35a9086bd33685ac6b8a030b43287978e769c6d446faeedeeaec8789c5fb173deab10e85ee8b800c22026bfdf8f5143afad309c327710c25832e02404715
+Size (xterm-349.tgz) = 1381954 bytes

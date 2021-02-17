@@ -1,7 +1,7 @@
-/* $XTermId: scrollback.c,v 1.18 2016/05/22 16:34:38 tom Exp $ */
+/* $XTermId: scrollback.c,v 1.21 2020/10/12 19:22:13 tom Exp $ */
 
 /*
- * Copyright 2009-2014,2016 by Thomas E. Dickey
+ * Copyright 2009-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -67,7 +67,7 @@ addScrollback(TScreen *screen)
     ScrnBuf where = 0;
     unsigned ncols = (unsigned) MaxCols(screen);
 
-    if (screen->saveBuf_index != 0) {
+    if (screen->saveBuf_index != 0 && screen->savelines != 0) {
 	unsigned which;
 	Char *block;
 
@@ -87,8 +87,7 @@ addScrollback(TScreen *screen)
 	    if (prior->attribs != 0) {
 		TRACE(("...freeing prior FIFO data in slot %d: %p->%p\n",
 		       which, (void *) prior, (void *) prior->attribs));
-		free(prior->attribs);
-		prior->attribs = 0;
+		FreeAndNull(prior->attribs);
 	    }
 	    if (screen->saved_fifo > 2 * screen->savelines) {
 		screen->saved_fifo -= screen->savelines;
@@ -122,8 +121,7 @@ deleteScrollback(TScreen *screen)
     if (prior->attribs != 0) {
 	TRACE(("...freeing prior FIFO data in slot %d: %p->%p\n",
 	       which, (void *) prior, (void *) prior->attribs));
-	free(prior->attribs);
-	prior->attribs = 0;
+	FreeAndNull(prior->attribs);
     }
     screen->saved_fifo--;
 }

@@ -1,7 +1,7 @@
-/* $XTermId: main.h,v 1.61 2013/04/24 08:52:20 tom Exp $ */
+/* $XTermId: main.h,v 1.74 2020/12/19 00:19:51 tom Exp $ */
 
 /*
- * Copyright 2000-2012,2013 by Thomas E. Dickey
+ * Copyright 2000-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -92,7 +92,7 @@
 #endif
 
 #ifndef DEFFACESIZE
-#define DEFFACESIZE		"14.0"
+#define DEFFACESIZE		"8.0"
 #endif
 
 #ifndef DEF_ALLOW_COLOR
@@ -101,6 +101,10 @@
 
 #ifndef DEF_ALLOW_FONT
 #define DEF_ALLOW_FONT		True
+#endif
+
+#ifndef DEF_ALLOW_MOUSE
+#define DEF_ALLOW_MOUSE		True
 #endif
 
 #ifndef DEF_ALLOW_TCAP
@@ -123,6 +127,14 @@
 #define DEF_DISALLOWED_FONT	"SetFont,GetFont"
 #endif
 
+#ifndef DEF_DISALLOWED_MOUSE
+#define DEF_DISALLOWED_MOUSE	"*"
+#endif
+
+#ifndef DEF_DISALLOWED_PASTE_CONTROLS
+#define DEF_DISALLOWED_PASTE_CONTROLS	"BS,DEL,ENQ,EOT,ESC,NUL"
+#endif
+
 #ifndef DEF_DISALLOWED_TCAP
 #define DEF_DISALLOWED_TCAP	"SetTcap,GetTcap"
 #endif
@@ -135,6 +147,12 @@
 #define DEFBLINKASBOLD		False
 #else
 #define DEFBLINKASBOLD		True
+#endif
+
+#if OPT_DOUBLE_BUFFER
+#define DEF_DOUBLE_BUFFER	True
+#else
+#define DEF_DOUBLE_BUFFER	False
 #endif
 
 #ifndef DEFDELETE_DEL
@@ -189,8 +207,28 @@
 #endif
 #endif
 
+#ifndef DEF_BUFFER_RATE
+#define DEF_BUFFER_RATE		40	/* frames/second, limited to 100 */
+#endif
+
+#ifndef DEF_LIMIT_RESPONSE
+#define DEF_LIMIT_RESPONSE	1024
+#endif
+
+#ifndef DEF_SAVE_LINES
+#define DEF_SAVE_LINES		1024
+#endif
+
+#ifndef DEF_SCROLL_LINES
+#define DEF_SCROLL_LINES	1
+#endif
+
 #ifndef DEF_TITLE_MODES
 #define DEF_TITLE_MODES		0
+#endif
+
+#ifndef DEF_XFT_CACHE
+#define DEF_XFT_CACHE		50
 #endif
 
 #ifndef PROJECTROOT
@@ -216,6 +254,9 @@
 #define DEFLOCALEFILTER1(x)	DEFLOCALEFILTER2(x)
 #define DEFLOCALEFILTER		DEFLOCALEFILTER1(PROJECTROOT) "/bin/luit"
 #endif
+
+#define MIN_SCALE_HEIGHT	0.9f
+#define MAX_SCALE_HEIGHT	1.5f
 
 /*
  * See lib/Xt/Resources.c

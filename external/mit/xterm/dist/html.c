@@ -1,7 +1,8 @@
-/* $XTermId: html.c,v 1.5 2016/02/12 00:20:24 tom Exp $ */
+/* $XTermId: html.c,v 1.19 2020/06/02 23:24:26 tom Exp $ */
 
 /*
- * Copyright 2015 Jens Schweikhardt
+ * Copyright 2018-2019,2020	Thomas E. Dickey
+ * Copyright 2015,2018		Jens Schweikhardt
  *
  * All Rights Reserved
  *
@@ -32,58 +33,36 @@
 #include <xterm.h>
 #include <version.h>
 
-#define NO_COLOR	((unsigned)-1)
-#define RGBPCT(c) c.red / 655.35, c.green / 655.35, c.blue / 655.35
+#define MakeDim(color) \
+	color = (unsigned short) ((2 * (unsigned) color) / 3)
 
-#define DUMP_PREFIX "xterm"
-#define DUMP_SUFFIX ".xhtml"
-#define DEFAULTNAME DUMP_PREFIX DUMP_SUFFIX
-
-#ifdef VMS
-#define VMS_HTML_FILE "sys$scratch:" DEFAULTNAME
-#endif
+#define RGBPCT(c) \
+ 	((double)c.red   / 655.35), \
+	((double)c.green / 655.35), \
+	((double)c.blue  / 655.35)
 
 static void dumpHtmlHeader(XtermWidget xw, FILE *fp);
 static void dumpHtmlScreen(XtermWidget xw, FILE *fp);
 static void dumpHtmlLine(XtermWidget xw, int row, FILE *fp);
 static void dumpHtmlFooter(XtermWidget, FILE *fp);
 static void writeStyle(XtermWidget, FILE *fp);
-char *PixelToCSSColor(XtermWidget xw, Pixel p);
 
 void
 xtermDumpHtml(XtermWidget xw)
 {
+    char *saveLocale;
     FILE *fp;
 
     TRACE(("xtermDumpHtml...\n"));
-#ifdef VMS
-    fp = fopen(VMS_HTML_FILE, "wb");
-#elif defined(HAVE_STRFTIME)
-    {
-	char fname[sizeof(DEFAULTNAME) + LEN_TIMESTAMP];
-	time_t now;
-	struct tm *ltm;
-
-	now = time((time_t *) 0);
-	ltm = localtime(&now);
-
-	if (strftime(fname, sizeof fname,
-		     DUMP_PREFIX FMT_TIMESTAMP DUMP_SUFFIX, ltm) > 0) {
-	    fp = fopen(fname, "wb");
-	} else {
-	    fp = fopen(DEFAULTNAME, "wb");
-	}
-    }
-#else
-    fp = fopen(DEFAULTNAME, "wb");
-#endif
-
+    saveLocale = xtermSetLocale(LC_NUMERIC, "C");
+    fp = create_printfile(xw, ".xhtml");
     if (fp != 0) {
 	dumpHtmlHeader(xw, fp);
 	dumpHtmlScreen(xw, fp);
 	dumpHtmlFooter(xw, fp);
 	fclose(fp);
     }
+    xtermResetLocale(LC_NUMERIC, saveLocale);
     TRACE(("...xtermDumpHtml done\n"));
 }
 
@@ -92,8 +71,7 @@ dumpHtmlHeader(XtermWidget xw, FILE *fp)
 {
     fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
     fputs("<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'\n", fp);
-    fputs("  'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'\n", fp);
-    fputs("  [<!ENTITY s \"&#160;\">]>\n", fp);
+    fputs("  'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>\n", fp);
     fputs("<html xmlns='http://www.w3.org/1999/xhtml' lang='en' xml:lang='en'>\n", fp);
     fputs(" <head>\n", fp);
     fprintf(fp, "  <meta name='generator' content='%s'/>\n", xtermVersion());
@@ -105,6 +83,7 @@ dumpHtmlHeader(XtermWidget xw, FILE *fp)
     fputs(" <body>\n", fp);
     fputs("  <div id='vt100'>\n", fp);
     fputs("   <pre>", fp);
+    xevents(xw);
 }
 
 static void
@@ -128,6 +107,7 @@ writeStyle(XtermWidget xw, FILE *fp)
     fputs("  .st { text-decoration: line-through }\n", fp);
     fputs("  .lu { text-decoration: line-through underline }\n", fp);
     fputs("  </style>\n", fp);
+    xevents(xw);
 }
 
 static void
@@ -176,17 +156,29 @@ dumpHtmlLine(XtermWidget xw, int row, FILE *fp)
 	bgcolor.pixel = xw->old_background;
 #if OPT_ISO_COLORS
 	if (ld->attribs[col] & FG_COLOR) {
-	    unsigned fg = extract_fg(xw, ld->color[col], ld->attribs[col]);
-	    fgcolor.pixel = s->Acolors[fg].value;
+	    Pixel fg = extract_fg(xw, ld->color[col], ld->attribs[col]);
+#if OPT_DIRECT_COLOR
+	    if (ld->attribs[col] & ATR_DIRECT_FG)
+		fgcolor.pixel = fg;
+	    else
+#endif
+		fgcolor.pixel = s->Acolors[fg].value;
 	}
 	if (ld->attribs[col] & BG_COLOR) {
-	    unsigned bg = extract_bg(xw, ld->color[col], ld->attribs[col]);
-	    bgcolor.pixel = s->Acolors[bg].value;
+	    Pixel bg = extract_bg(xw, ld->color[col], ld->attribs[col]);
+#if OPT_DIRECT_COLOR
+	    if (ld->attribs[col] & ATR_DIRECT_BG)
+		bgcolor.pixel = bg;
+	    else
+#endif
+		bgcolor.pixel = s->Acolors[bg].value;
 	}
 #endif
 
 	XQueryColor(xw->screen.display, xw->core.colormap, &fgcolor);
 	XQueryColor(xw->screen.display, xw->core.colormap, &bgcolor);
+	xevents(xw);
+
 	if (ld->attribs[col] & BLINK) {
 	    /* White on red. */
 	    fgcolor.red = fgcolor.green = fgcolor.blue = 65535u;
@@ -195,9 +187,9 @@ dumpHtmlLine(XtermWidget xw, int row, FILE *fp)
 	}
 #if OPT_WIDE_ATTRS
 	if (ld->attribs[col] & ATR_FAINT) {
-	    fgcolor.red = (unsigned short) ((2 * fgcolor.red) / 3);
-	    fgcolor.green = (unsigned short) ((2 * fgcolor.green) / 3);
-	    fgcolor.blue = (unsigned short) ((2 * fgcolor.blue) / 3);
+	    MakeDim(fgcolor.red);
+	    MakeDim(fgcolor.green);
+	    MakeDim(fgcolor.blue);
 	}
 #endif
 	if (ld->attribs[col] & INVERSE) {
@@ -235,8 +227,8 @@ dumpHtmlLine(XtermWidget xw, int row, FILE *fp)
 	slen += sprintf(attr + slen,
 			" ' style='color: rgb(%.2f%%, %.2f%%, %.2f%%);",
 			RGBPCT(fgcolor));
-	slen += sprintf(attr + slen,
-			" background: rgb(%.2f%%, %.2f%%, %.2f%%)'>", RGBPCT(bgcolor));
+	(void) sprintf(attr + slen,
+		       " background: rgb(%.2f%%, %.2f%%, %.2f%%)'>", RGBPCT(bgcolor));
 	if (col == 0) {
 	    fputs(attr, fp);
 	    attr = &attrs[attr_index ^= 1][0];
@@ -260,7 +252,7 @@ dumpHtmlLine(XtermWidget xw, int row, FILE *fp)
 #endif
 	    switch (chr) {
 	    case 0:
-		/* This sometimes happens when resizing... ignore. */
+		fputc(' ', fp);
 		break;
 	    case '&':
 		fputs("&amp;", fp);
@@ -272,22 +264,25 @@ dumpHtmlLine(XtermWidget xw, int row, FILE *fp)
 		fputs("&gt;", fp);
 		break;
 	    case ' ':
-		fputs("&s;", fp);
+		fputs("\302\240", fp);
 		break;
 	    default:
 		fputc((int) chr, fp);
 	    }
+	xevents(xw);
     }
     fprintf(fp, "</span>\n");
+    xevents(xw);
 }
 
 static void
-dumpHtmlFooter(XtermWidget xw GCC_UNUSED, FILE *fp)
+dumpHtmlFooter(XtermWidget xw, FILE *fp)
 {
     fputs("</pre>\n", fp);
     fputs("  </div>\n", fp);
     fputs(" </body>\n", fp);
     fputs("</html>\n", fp);
+    xevents(xw);
 }
 
 char *
@@ -301,4 +296,3 @@ PixelToCSSColor(XtermWidget xw, Pixel p)
     sprintf(rgb, "rgb(%.2f%%, %.2f%%, %.2f%%)", RGBPCT(c));
     return rgb;
 }
-/* vim: set ts=8 sw=4 et: */

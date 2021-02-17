@@ -1,14 +1,16 @@
--- $XTermId: THANKS,v 1.15 2015/08/28 08:17:31 tom Exp $
--- vile:txtmode fk=8bit
+-- $XTermId: THANKS,v 1.30 2021/02/09 01:32:10 tom Exp $
+-- vile:txtmode fk=utf-8
 There's no AUTHORS file in this distribution; it would be redundant since
 I (Thomas E. Dickey) have done more than 80% of the work on xterm since 1996.
 
-There's no reliable history before that point.
+There is no reliable history before that point.
 For some insight, see
 
-	http://invisible-island.net/xterm/xterm.faq.html#who_did_it
+	https://invisible-island.net/xterm/xterm.faq.html#who_did_it
+	https://invisible-island.net/personal/changelogs.html#categories
 
-Here's a list from xterm.log.html of people who have contributed changes.
+Here is a list from xterm.log.html of people who have contributed changes,
+or whose suggested change could be adapted:
 
 Adam M Costello
 Adam Sulmicki
@@ -28,32 +30,44 @@ Andrey Panov
 Andries E Brouwer
 Anton Kovalenko
 Balazs Kezes
+Ben Wiley Sittler
+Ben Wong
 Ben Yoshino
 Bernhard R Link
 Bernhard Rosenkraenzer
 Bertram Felgenhauer
 Bill Nottingham
+Bjarni Ingi Gislason
 Bob Maynard
+Brad Town
 Bradd W Szonye
 Bram Moolenaar
 Branden Robinson
 Bruno Haible
+Cade Foster
 Caetano Jimenez Carezzato
 Chris Adams
 Chris Clayton
 Christian Biere
 Christian Weisgerber
 Chuck Blake
+Chuck Silvers
+Colum Paget
 D Roland Walker
+Dan Church
+Dan Gohman
+Dan Thompson
 Daniel Colascione
 Daniel Drake
 Daniel Jacobowitz
+Dave Coffin
 Dave Simmons
 David Dawes
 David Krause
 David Madore
-David MartÌnez Moreno
+David Mart√≠nez Moreno
 David Mathog
+David Michael
 David Wolfskill
 David Wood
 David Yeo
@@ -73,6 +87,7 @@ Frank Giessler
 Frank Guangxin Liu
 Frank Liu
 Gael Roualland
+George Kouryachy
 George Nachman
 George Peter Staplin
 Gertjan Halkes
@@ -83,8 +98,10 @@ H Merijn Brand
 Hasso Tepper
 Holger Veit
 Ilya Zakharevich
+Ingo Br√ºckl
 Iwamoto Kouichi
 James Armstrong
+Jan Engelhardt
 Jason Bacon
 Jason Vas Dias
 Jeff Chua
@@ -95,14 +112,18 @@ Jeremy Huddleston
 Jeroen Ruigrok
 Jess Thrysoee
 Jim Paris
+Jimmy Aguilar Mena
+Jiri Bohac
 Jochen Voss
 Joe Allen
 Joe Peterson
 Johnny Billquist
+Jonathan Irwin
 Julien Cristau
 Juliusz Chroboczek
 Jungshik Shin
-J¸rgen Keil
+J√ºrgen Keil
+KUGA Tsutomu
 Kean Johnston
 Keith Packard
 Ken Martin
@@ -110,15 +131,19 @@ Kevin Buhr
 Kevin Ryde
 Kevin Schoedel
 Kiyokazu Suto
+Larry Hynes
 Larry Riedel
+Lauri Tirkkonen
+Leandro Lupori
 Lee Olsen
-LoÔc Minier
+Lo√Øc Minier
 Marc Bevand
 Marc La France
 Marco Peereboom
 Marius Tolzmann
 Mark Waggoner
 Markus Kuhn
+Martin Hostettler
 Martin Pirker
 Martin Tournoij
 Matthew Green
@@ -126,57 +151,79 @@ Matthias Baake
 Matthias Scheler
 Matthieu Herrb
 Matthieu Lagouge
+Mattias Engdeg√•rd
 Max Mikhanosha
+Michael Gulick
 Michael Riepe
 Michael Rohleder
 Michael Schroeder
 Mike Castle
 Mike Fabian
+Mike Frysinger
 Mike Hopkirk
+Mike Thornburg
+Mikulas Patocka
+Milan Mehner
 Min Sik Kim
 Miroslav Lichvar
 Nam SungHyun
 Nelson Beebe
-NÈmeth M·rton
+Nicholas Marriott
 Nicolas George
+N√©meth M√°rton
+Olaf Rogalsky
 Ovidiu Gheorghioiu
 Paul Bolle
 Paul Gilmartin
 Paul Giordano
 Paul Lampert
 Paul Maier
+Paul Szabo
 Paul Vojta
 Paul Williams
 Pavel Roskin
 Peder Stray
 Per Hedeland
 Peter Berg Larsen
+Phil Sidler
+Philipp Klaus Krause
 Pierre Lombard
+Pierre Pronchery
+Quinn Strahl
+Rajesh Mandalemula
 Richard Braakman
 Richard Griswold
 Richard Tollerton
 Rob Braun
 Robert Brady
 Robert Earl
+Robert Ross
 Robin Cutshaw
 Romain Francoise
 Ross Combs
 Ross Paterson
 Ryan Johnson
+Sam Stephenson
+Samuel Thibault
 Scott Sewall
+Sean C Farley
 Semen A Ustimenko
 Sergei Laskavy
 Sergey Vlasov
 Slava Semushin
+Stefan Assmann
 Stefan Dirsch
 Stephen P Wall
 Stuart Lissaman
+Sven Joachim
 Sven Verdoolaege
 Taketo Kabe
 Taneli Huuskonen
+Tavis Ormandy
 Ted Phelps
 Thierry Reding
 Thomas Wolff
+Thorsten Glaser
 Tim Adye
 Tim Pope
 Tobias Stoeckmann
@@ -189,8 +236,12 @@ Tomohiro Kubota
 Tor Lillqvist
 Torrey Lyons
 Victor Stinner
-Vincent Lefevre
+Victor Vaile
+Vincent Lef√®vre
+Walter Harms
 Werner Fink
 Werner Lemberg
 Will Day
+YOKOTA Hiroshi
+Zarick Lau
 Zdenek Sekera

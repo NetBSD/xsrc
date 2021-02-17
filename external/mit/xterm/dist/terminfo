@@ -1,10 +1,10 @@
-# $XTermId: terminfo,v 1.164 2016/05/30 21:13:46 tom Exp $
+# $XTermId: terminfo,v 1.190 2020/12/11 09:23:14 tom Exp $
 #
 # Updates/notes/new entries (e.g., xterm-8bit, xterm-16color, xterm-256color)
 # - Thomas E. Dickey
 #
 #------------------------------------------------------------------------------
-# Copyright 1996-2014,2016 by Thomas E. Dickey
+# Copyright 1996-2019,2020 by Thomas E. Dickey
 #
 #                         All Rights Reserved
 #
@@ -31,6 +31,8 @@
 # holders shall not be used in advertising or otherwise to promote the
 # sale, use or other dealings in this Software without prior written
 # authorization.
+#------------------------------------------------------------------------------
+# format (ncurses 6.1): tic -I -W -1 -f -x terminfo
 #------------------------------------------------------------------------------
 #
 # Special Capabilities:
@@ -130,14 +132,33 @@
 xterm-new|modern xterm terminal emulator,
 	npc,
 	indn=\E[%p1%dS,
-	kb2=\EOE,
 	kcbt=\E[Z,
 	kent=\EOM,
 	rin=\E[%p1%dT,
+	use=xterm+keypad,
+	use=vt420+lrmm,
+	use=xterm+sm+1006,
+	use=ansi+rep,
+	use=ecma+strikeout,
 	use=xterm+pcfkeys,
 	use=xterm+tmux,
 	use=xterm-basic,
-#
+
+# Left/right margins are supported in xterm since patch #279 (2012/05/10)
+vt420+lrmm|VT420 left/right margins,
+	mgc=\E[?69l,
+	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
+
+# These "ansi+XXX" blocks were added in ncurses 5.0:
+ansi+rep,
+	rep=%p1%c\E[%p2%{1}%-%db,
+
+ansi+enq|ncurses extension for ANSI ENQ,
+	u6=\E[%i%d;%dR,
+	u7=\E[6n,
+	u8=\E[?%[;0123456789]c,
+	u9=\E[c,
+
 # Encode modifiers using parameters (see "Xterm Control Sequences" ctlseqs.ms).
 # Note that this is unrelated to PCTERM.
 #
@@ -210,18 +231,19 @@ xterm+pcfkeys|fragment for PC-style keys,
 # Ms modifies the selection/clipboard.  Its parameters are
 #	p1 = the storage unit (clipboard, selection or cut buffer)
 #	p2 = the base64-encoded clipboard content.
-# 
+#
 # Ss is used to set the cursor style as described by the DECSCUSR
 #	function to a block or underline.
 # Se resets the cursor style to the terminal power-on default.
-#  
+#
 # Cs and Ce set and reset the cursor colour.
 xterm+tmux|advanced xterm features used in tmux,
 	Cr=\E]112\007,
 	Cs=\E]12;%p1%s\007,
-	Ms=\E]52;%p1%s;%p2%s\007,
-	Se=\E[2 q,
-	Ss=\E[%p1%d q,
+	Ms=\E]52;%p1%s;%p2%s
+	   \007,
+	Se=\E[2\sq,
+	Ss=\E[%p1%d\sq,
 #
 # The ctrlFKeys resource is only relevant to the xterm+pcfn and xterm+pcfN
 # entries, since the modifyFunctionKeys resource overrides ctrlFKeys when it is
@@ -881,7 +903,51 @@ xterm+pce0|fragment with modifyCursorKeys:0,
 	kPRV6=\E[5;6~,
 	kPRV7=\E[5;7~,
 	use=xterm+edit,
-#
+
+# The rmxx/smxx capabilities are an ncurses extension
+ecma+strikeout|ECMA-48 strikeout/crossed-out,
+	rmxx=\E[29m,
+	smxx=\E[9m,
+
+# The XM capability is an ncurses extension
+xterm+sm+1006|xterm SGR-mouse,
+	kmous=\E[<,
+	XM=\E[?1006;1000
+		%?
+			%p1%{1}%=
+			%th
+		%e
+			l
+		%;,
+	xm=\E[<%i
+		%p3%d;%p1%d;%p2%d;
+		%?
+			%p4
+			%tM
+		%e
+			m
+		%;,
+
+# By default, ncurses knows that xterm private mode 1000 enables/disables
+# the X11 xterm mouse protocol.  So XM is not needed here, except for clarity.
+xterm+x11mouse|X11 xterm mouse protocol,
+	kmous=\E[M,
+	XM=\E[?1000
+		%?
+			%p1%{1}%=
+			%th
+		%e
+			l
+		%;,
+	xm=\E[M
+		%?
+			%p4
+			%t%p3
+		%e%{3}
+		%;
+		%'\s'%+%c
+		%p2%'!'%+%c%p1%'!'%+%c,
+
 # This chunk is used for building the VT220/Sun/PC keyboard variants.
 xterm-basic|modern xterm terminal emulator - common,
 	OTbs,
@@ -899,7 +965,8 @@ xterm-basic|modern xterm terminal emulator - common,
 	it#8,
 	lines#24,
 	pairs#64,
-	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqr
+	     rssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	blink=\E[5m,
 	bold=\E[1m,
@@ -907,12 +974,12 @@ xterm-basic|modern xterm terminal emulator - common,
 	civis=\E[?25l,
 	clear=\E[H\E[2J,
 	cnorm=\E[?12l\E[?25h,
-	cr=^M,
+	cr=\r,
 	csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD,
 	cub1=^H,
 	cud=\E[%p1%dB,
-	cud1=^J,
+	cud1=\n,
 	cuf=\E[%p1%dC,
 	cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH,
@@ -936,7 +1003,7 @@ xterm-basic|modern xterm terminal emulator - common,
 	ich=\E[%p1%d@,
 	il=\E[%p1%dL,
 	il1=\E[L,
-	ind=^J,
+	ind=\n,
 	invis=\E[8m,
 	is2=\E[!p\E[?3;4l\E[4l\E>,
 	kmous=\E[M,
@@ -945,6 +1012,7 @@ xterm-basic|modern xterm terminal emulator - common,
 	mc5=\E[5i,
 	meml=\El,
 	memu=\Em,
+	nel=\EE,
 	op=\E[39;49m,
 	rc=\E8,
 	rev=\E[7m,
@@ -952,7 +1020,6 @@ xterm-basic|modern xterm terminal emulator - common,
 	ritm=\E[23m,
 	rmacs=\E(B,
 	rmam=\E[?7l,
-	rmcup=\E[?1049l,
 	rmir=\E[4l,
 	rmkx=\E[?1l\E>,
 	rmm=\E[?1034l,
@@ -963,26 +1030,87 @@ xterm-basic|modern xterm terminal emulator - common,
 	sc=\E7,
 	setab=\E[4%p1%dm,
 	setaf=\E[3%p1%dm,
-	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+	setb=\E[4
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	setf=\E[3
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	sgr=
+		%?
+			%p9
+			%t\E(0
+		%e
+			\E(B
+		%;
+		\E[0
+		%?
+			%p6
+			%t;1
+		%;
+		%?
+			%p5
+			%t;2
+		%;
+		%?
+			%p2
+			%t;4
+		%;
+		%?
+			%p1%p3%|
+			%t;7
+		%;
+		%?
+			%p4
+			%t;5
+		%;
+		%?
+			%p7
+			%t;8
+		%;
+		m,
 	sgr0=\E(B\E[m,
 	sitm=\E[3m,
 	smacs=\E(0,
 	smam=\E[?7h,
-	smcup=\E[?1049h,
 	smir=\E[4h,
 	smkx=\E[?1h\E=,
 	smm=\E[?1034h,
 	smso=\E[7m,
 	smul=\E[4m,
 	tbc=\E[3g,
-	u6=\E[%i%d;%dR,
-	u7=\E[6n,
-	u8=\E[?1;2c,
-	u9=\E[c,
 	vpa=\E[%i%p1%dd,
 	E3=\E[3J,
+	use=ansi+enq,
+	use=xterm+alt+title,
 	use=xterm+kbs,
 #
 # The xterm-new description has all of the features, but is not completely
@@ -1043,29 +1171,71 @@ xterm-vt52|xterm emulating dec vt52,
 	cols#80,
 	it#8,
 	lines#24,
-	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggjjkkllmmnnooppqqrrs
+	     sttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	clear=\EH\EJ,
-	cr=^M,
+	cr=\r,
 	cub1=\ED,
 	cud1=\EB,
 	cuf1=\EC,
-	cup=\EY%p1%' '%+%c%p2%' '%+%c,
+	cup=\EY%p1%'\s'%+%c%p2%'\s'%+%c,
 	cuu1=\EA,
 	ed=\EJ,
 	el=\EK,
 	home=\EH,
 	ht=^I,
-	ind=^J,
+	ind=\n,
 	kcub1=\ED,
 	kcud1=\EB,
 	kcuf1=\EC,
 	kcuu1=\EA,
-	nel=^M^J,
+	nel=\r\n,
 	ri=\EI,
 	rmacs=\EG,
 	smacs=\EF,
 	use=xterm+kbs,
+	use=vt52+keypad,
+
+# from ncurses 6.2:
+# DECScope of course had no "function keys", but this building block assigns
+# the three blank keys at the top of the auxiliary (numeric) keypad, using
+# the same analogy as vt100 (also lacking function-keys).
+#
+# These assignments use the same layout for 0-9 as vt100+keypad; the vt52
+# keypad had its cursor-keys on the right-column as shown -TD
+#   _______________________________________
+#  |   PF1   |   PF2   |   PF3   | c-up    |
+#  |   \EP   |   \EQ   |   \ER   |   \EA   |
+#  |_kf1__k1_|_kf2__k2_|_kf3__k3_|kcuu1_k4_|
+#  |    7         8         9      c-down  |
+#  |   \E?w  |   \E?x  |   \E?y  |   \EB   |
+#  |_kf9__k9_|_kf10_k;_|_kf0__k0_|kcud1____|
+#  |    4    |    5    |    6    | c-right |
+#  |   \E?t  |   \E?u  |   \E?v  |   \EC   |
+#  |_kf5__k5_|_kf6__k6_|_kf7__k7_|kcuf1_k8_|
+#  |    1    |    2    |    3    | c-left  |
+#  |   \E?q  |   \E?r  |   \E?s  |   \ED   |
+#  |_ka1__K1_|_kb2__K2_|_ka3__K3_|kcub1____|
+#  |         0         |   .     |  enter  |
+#  |        \E?p       |  \E?n   |  \E?M   |
+#  |___kc1_______K4____|_kc3__K5_|_kent_@8_|
+#
+vt52+keypad|DECScope auxiliary keypad,
+	ka1=\E?q,
+	ka3=\E?s,
+	kb2=\E?r,
+	kc1=\E?p,
+	kc3=\E?n,
+	kf0=\E?y,
+	kf1=\EP,
+	kf2=\EQ,
+	kf3=\ER,
+	kf5=\E?t,
+	kf6=\E?u,
+	kf7=\E?v,
+	kf8=\E?w,
+	kf9=\E?x,
 #
 # Sun does not number the function keys this way in their sparse termcap; their
 # terminal descriptions ignore the keypads.  kb(7M) states that there are codes
@@ -1191,7 +1361,7 @@ xterm-hp|xterm with hpterm function keys,
 #
 xterm-sco|xterm with SCO function keys,
 	kbeg=\E[E,
-	kdch1=\177,
+	kdch1=^?,
 	kf1=\E[M,
 	kf10=\E[V,
 	kf11=\E[W,
@@ -1255,7 +1425,27 @@ xterm-65|xterm with tall window 65x80 (X Window System),
 	lines#65,
 	use=xterm-old,
 xterm-bold|xterm with bold instead of underline (X Window System),
-	sgr=%?%p9%t\016%e\017%;B\E[0%?%p6%t;1%;%?%p2%t;1%;%?%p1%p3%|%t;7%;m,
+	sgr=
+		%?
+			%p9
+			%t\016
+		%e
+			\017
+		%;
+		B\E[0
+		%?
+			%p6
+			%t;1
+		%;
+		%?
+			%p2
+			%t;1
+		%;
+		%?
+			%p1%p3%|
+			%t;7
+		%;
+		m,
 	smso=\E[7m,
 	smul=\E[1m,
 	use=xterm-old,
@@ -1358,6 +1548,95 @@ xterm+vt+edit|fragment for vt220-style editing keypad,
 	kfnd=\E[1~,
 	kslt=\E[4~,
 
+xterm+noalt|xterm without altscreen,
+	rmcup@,
+	smcup@,
+
+xterm+alt1049|xterm 90 feature,
+	rmcup=\E[?1049l,
+	smcup=\E[?1049h,
+
+xterm+titlestack|xterm 251 feature,
+	rmcup=\E[23;0;0t,
+	smcup=\E[22;0;0t,
+
+xterm+alt+title|xterm 90 and 251 features combined,
+	rmcup=\E[?1049l\E[23;0;0t,
+	smcup=\E[?1049h\E[22;0;0t,
+
+# from development after ncurses 6.1:
+# Xterm's emulation of the VT100 numeric keypad on a PC-keyboard runs into the
+# problem that the keypad layout is different, and that the natural choice for
+# PF1 is NumLock (which happens to be reserved for other use).  To work around
+# that, PF1-PF4 are emulated via F1-F4, which leaves the "/", "*" and "+" not
+# directly related to VT100.
+#
+# With the VT220 keypad block that uses the 1-9 keys as suggested in
+# terminfo(5), the other keys can be handled with user-defined capabilities:
+#
+#   _______________________________________
+#  | NumLock |    /    |    *    |    -    |
+#  |         |   $Oo   |   $Oj   |   $OS   |
+#  |_________|__kpDIV__|__kpMUL__|__kpSUB__|
+#  |    7         8         9    |         |
+#  |   $Ow   |   $Ox   |   $Oy   |    +    |
+#  |_ka1__K1_|_________|_ka3__K3_|   $Ok   |
+#  |    4    |    5    |    6    |  kpADD  |
+#  |   $Ot   |   $Ou   |   $Ov   |         |
+#  |_________|_kb2__K2_|_________|_________|
+#  |    1    |    2    |    3    |         |
+#  |   $Oq   |   $Or   |   $Os   |         |
+#  |_kc1__K4_|_________|_kc3__K5_|  enter  |
+#  |         0         |   .     |   $OM   |
+#  |        $Op        |  $On    |         |
+#  |___________________|_________|_kent_@8_|
+xterm+keypad|xterm emulating VT100/VT220 numeric keypad,
+	kp5=\EOE,
+	kpADD=\EOk,
+	kpCMA=\EOl,
+	kpDIV=\EOo,
+	kpDOT=\EOn,
+	kpMUL=\EOj,
+	kpSUB=\EOm,
+	kpZRO=\EOp,
+	use=vt220+keypad,
+
+# from development after ncurses 5.2:
+# A better adaptation to modern keyboards such as the PC's, which have a dozen
+# function keys and the keypad 2,4,6,8 keys are labeled with arrows keys, is to
+# use the 5-key arrangement to model the arrow keys as suggested in the
+# terminfo guidelines:
+#   _______________________________________
+#  |   PF1   |   PF2   |   PF3   |   PF4   |
+#  |   $OP   |   $OQ   |   $OR   |   $OS   |
+#  |_kf1__k1_|_kf2__k2_|_kf3__k3_|_kf4__k4_|
+#  |    7         8         9         -    |
+#  |   $Ow   |   $Ox   |   $Oy   |   $Om   |
+#  |_ka1__K1_|_________|_ka3__K3_|_________|
+#  |    4    |    5    |    6    |    ,    |
+#  |   $Ot   |   $Ou   |   $Ov   |   $Ol   |
+#  |_________|_kb2__K2_|_________|_________|
+#  |    1    |    2    |    3    |         |
+#  |   $Oq   |   $Or   |   $Os   |  enter  |
+#  |_kc1__K4_|_________|_kc3__K5_|  $OM    |
+#  |         0         |   .     |         |
+#  |        $Op        |  $On    |         |
+#  |___________________|_________|_kent_@8_|
+vt220+keypad|dec vt220 numeric keypad,
+	ka1=\EOw,
+	ka3=\EOy,
+	kb2=\EOu,
+	kc1=\EOq,
+	kc3=\EOs,
+	kent=\EOM,
+	kf1=\EOP,
+	kf2=\EOQ,
+	kf3=\EOR,
+	kf4=\EOS,
+	ka2=\EOx,
+	kb1=\EOt,
+	kb3=\EOv,
+	kc2=\EOr,
 #
 # This should work for the commonly used "color xterm" variations (XFree86
 # xterm, color_xterm, nxterm, rxvt).  Note that it does not set 'bce', so for
@@ -1389,9 +1668,18 @@ xterm-xmc|xterm with magic-cookie glitch,
 	xmc#1,
 	use=xterm-new,
 #
-# This one also is primarily for testing ncurses; while the ISO 6429 defines
-# the REP control, none of the DEC VTxxx terminals (VT52 through VT420) support
-# it.
+# This one was originally for testing ncurses.  While the ISO 6429 defines the
+# REP control, none of the DEC VTxxx terminals (VT52 through VT525) support it.
+#
+# The feature's inclusion in xterm was prompted by changes in ncurses to
+# support testing repeat_char by Alexander Lukyanov, since no readily-available
+# terminal supported this:
+#
+# + Alexander's patch was integrated in ncurses 1996/09/28
+# + xterm patch #32 1996/11/21 was released in XFree86 3.2A 1997/01/26
+#
+# In July 2017, the feature was added to xterm-new in ncurses, making this
+# entry obsolete (but it is kept for reference).
 xterm-rep|xterm with repeat-character control,
 	rep=%p1%c\E[%p2%{1}%-%db,
 	use=xterm-new,
@@ -1402,8 +1690,100 @@ xterm-rep|xterm with repeat-character control,
 # normally used only for printers).  The parameter to csnm and scs is the same
 # in both cases:  the keyboard language parameter returned by CSI ? 2 6 n.
 xterm-nrc|xterm with VT220 national replacement character sets,
-	csnm=%?%p1%{1}%=%tNorth American%e%p1%{2}%=%tBritish%e%p1%{3}%=%tFlemish%e%p1%{4}%=%tFrench Canadian%e%p1%{5}%=%tDanish%e%p1%{6}%=%tFinnish%e%p1%{7}%=%tGerman%e%p1%{8}%=%tDutch%e%p1%{9}%=%tItalian%e%p1%{10}%=%tSwiss (French)%e%p1%{11}%=%tSwiss (German)%e%p1%{12}%=%tSwedish%e%p1%{13}%=%tNorwegian%e%p1%{14}%=%tFrench/Belgian%e%p1%{15}%=%tSpanish%;,
-	scs=%?%p1%{1}%=%t\E(B%e%p1%{2}%=%t\E(A%e%p1%{3}%=%t\E(R%e%p1%{4}%=%t\E(9%e%p1%{5}%=%t\E(E%e%p1%{6}%=%t\E(5%e%p1%{7}%=%t\E(K%e%p1%{8}%=%t\E(4%e%p1%{9}%=%t\E(Y%e%p1%{10}%=%t\E(=%e%p1%{11}%=%t\E(=%e%p1%{12}%=%t\E(7%e%p1%{13}%=%t\E(E%e%p1%{14}%=%t\E(R%e%p1%{15}%=%t\E(Z%;,
+	csnm=
+		%?
+			%p1%{1}%=
+			%tNorth\sAmerican
+		%e
+			%p1%{2}%=
+			%tBritish
+		%e
+			%p1%{3}%=
+			%tFlemish
+		%e
+			%p1%{4}%=
+			%tFrench\sCanadian
+		%e
+			%p1%{5}%=
+			%tDanish
+		%e
+			%p1%{6}%=
+			%tFinnish
+		%e
+			%p1%{7}%=
+			%tGerman
+		%e
+			%p1%{8}%=
+			%tDutch
+		%e
+			%p1%{9}%=
+			%tItalian
+		%e
+			%p1%{10}%=
+			%tSwiss\s(French)
+		%e
+			%p1%{11}%=
+			%tSwiss\s(German)
+		%e
+			%p1%{12}%=
+			%tSwedish
+		%e
+			%p1%{13}%=
+			%tNorwegian
+		%e
+			%p1%{14}%=
+			%tFrench/Belgian
+		%e
+			%p1%{15}%=
+			%tSpanish
+		%;,
+	scs=
+		%?
+			%p1%{1}%=
+			%t\E(B
+		%e
+			%p1%{2}%=
+			%t\E(A
+		%e
+			%p1%{3}%=
+			%t\E(R
+		%e
+			%p1%{4}%=
+			%t\E(9
+		%e
+			%p1%{5}%=
+			%t\E(E
+		%e
+			%p1%{6}%=
+			%t\E(5
+		%e
+			%p1%{7}%=
+			%t\E(K
+		%e
+			%p1%{8}%=
+			%t\E(4
+		%e
+			%p1%{9}%=
+			%t\E(Y
+		%e
+			%p1%{10}%=
+			%t\E(=
+		%e
+			%p1%{11}%=
+			%t\E(=
+		%e
+			%p1%{12}%=
+			%t\E(7
+		%e
+			%p1%{13}%=
+			%t\E(E
+		%e
+			%p1%{14}%=
+			%t\E(R
+		%e
+			%p1%{15}%=
+			%t\E(Z
+		%;,
 	use=xterm-new,
 #
 # Foreground 0-15 maps (with toggles) into 30-37 & 90-97
@@ -1418,36 +1798,176 @@ xterm-nrc|xterm with VT220 national replacement character sets,
 # either for terminfo-level applications or via ncurses.
 xterm-16color|xterm with 16 colors,
 	colors#16,
-	pairs#256,
-	setab=\E[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm,
-	setaf=\E[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm,
-	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
-	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
-	use=xterm+256color,
+	pairs#0x100,
+	setab=\E[
+		%?
+			%p1%{8}%<
+			%t%p1%{40}%+
+		%e
+			%p1%{92}%+
+		%;
+		%dm,
+	setaf=\E[
+		%?
+			%p1%{8}%<
+			%t%p1%{30}%+
+		%e
+			%p1%{82}%+
+		%;
+		%dm,
+	setb=
+		%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa
+		%?%ga%{1}%=
+			%t4
+		%e%ga%{3}%=
+			%t6
+		%e%ga%{4}%=
+			%t1
+		%e%ga%{6}%=
+			%t3
+		%e%ga%d
+		%;
+		m,
+	setf=
+		%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa
+		%?%ga%{1}%=
+			%t4
+		%e%ga%{3}%=
+			%t6
+		%e%ga%{4}%=
+			%t1
+		%e%ga%{6}%=
+			%t3
+		%e%ga%d
+		%;
+		m,
+	use=xterm+256color2,
+	use=xterm+osc104,
 	use=xterm-new,
-#
-# This uses RGB values 0..1000
-#
-# 256 colors should give 65536 pairs, but terminfo stores numbers in a signed
-# short.  Most people will not notice problems with only 32767 pairs.
-xterm+256color|xterm 256-color feature,
-	ccc,
-	colors#256,
-	pairs#32767,
-	initc=\E]4;%p1%d;rgb\:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\E\\,
+
+# xterm OSC 104 resets the color palette.  Using it as part of xterm+256color
+# has the drawback that some of the xterm-alikes which use that building block
+# require a different approach to rs1 -TD
+xterm+osc104|reset color palette,
 	oc=\E]104\007,
 	rs1=\Ec\E]104\007,
-	setab=\E[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m,
-	setaf=\E[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m,
+
+# "indexed color" is mentioned without definition in ISO 8613-6 (ITU T.416).
+#
+# This implementation uses a 256-element color map where the first 16 entries
+# are shared with the aixterm-compatible colors (and in turn the first 8 are
+# shared with the ANSI colors).  The three levels (256, 16, 8) account for the
+# use of a conditional expression in setaf/setab which reduces the number of
+# characters sent to the screen for typical applications.
+#
+# 256 colors should give 65536 pairs, but SVr4 (legacy) terminfo stores numbers
+# in a signed short.  Most people will not notice problems with only 32767
+# pairs.  With ncurses 6.1, numbers are stored in a signed integer (at least
+# 32-bits), and the inconsistency regarding pairs is eliminated.
+xterm+256color|original xterm 256-color feature,
+	ccc,
+	colors#0x100,
+	pairs#0x10000,
+	initc=\E]4;
+		%p1%d;rgb\:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\E\\,
+	oc=\E]104\007,
+	setab=\E[
+		%?
+			%p1%{8}%<
+			%t4%p1%d
+		%e
+			%p1%{16}%<
+			%t10%p1%{8}%-%d
+		%e48;5;
+			%p1%d
+		%;
+		m,
+	setaf=\E[
+		%?
+			%p1%{8}%<
+			%t3%p1%d
+		%e
+			%p1%{16}%<
+			%t9%p1%{8}%-%d
+		%e38;5;
+			%p1%d
+		%;
+		m,
 	setb@,
 	setf@,
-xterm-256color|xterm with 256 colors,
+xterm+256color2|xterm 256-color feature,
+	setab=\E[
+		%?
+			%p1%{8}%<
+			%t4%p1%d
+		%e
+			%p1%{16}%<
+			%t10%p1%{8}%-%d
+		%e48\:5\:
+			%p1%d
+		%;
+		m,
+	setaf=\E[
+		%?
+			%p1%{8}%<
+			%t3%p1%d
+		%e
+			%p1%{16}%<
+			%t9%p1%{8}%-%d
+		%e38\:5\:
+			%p1%d
+		%;
+		m,
 	use=xterm+256color,
+xterm-256color|xterm with 256 colors,
+	use=xterm+256color2,
+	use=xterm+osc104,
 	use=xterm-new,
 xterm-88color|xterm with 88 colors,
 	colors#88,
 	pairs#7744,
 	use=xterm-256color,
+
+# "direct color" is mentioned without definition in ISO 8613-6 (ITU T.416).
+#
+# This is a particular implementation which assume 8-bit values for red, green,
+# and blue.  Other encodings are possible; none are addressed by that standard.
+#
+# The "RGB" flag is an ncurses 6.1 extension which tells the library how to
+# quickly compute the color-content for a given color value.
+#
+# Like xterm+256color, this uses a conditional expression.  But it does that
+# for a different reason: to make it readily usable for applications which
+# print text but also use RGB colors, it uses a color map for the usual ANSI
+# colors (0-7) and RGB colors for the remaining range of the color value.
+xterm+direct|xterm with direct-color indexing,
+	RGB,
+	colors#0x1000000,
+	pairs#0x10000,
+	CO#8,
+	initc@,
+	op=\E[39;49m,
+	setab=\E[
+		%?
+			%p1%{8}%<
+			%t4%p1%d
+		%e48\:2\:\:
+			%p1%{65536}%/%d\:%p1%{256}%/%{255}%&%d\:%p1%{255}%&%d
+		%;
+		m,
+	setaf=\E[
+		%?
+			%p1%{8}%<
+			%t3%p1%d
+		%e38\:2\:\:
+			%p1%{65536}%/%d\:%p1%{256}%/%{255}%&%d\:%p1%{255}%&%d
+		%;
+		m,
+	setb@,
+	setf@,
+xterm-direct|xterm with direct-color indexing,
+	use=xterm+direct,
+	use=xterm,
 #
 # This is an 8-bit version of xterm, which emulates DEC vt220 with ANSI color.
 # To use it, your decTerminalID resource must be set to 200 or above, and the
@@ -1474,7 +1994,8 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	it#8,
 	lines#24,
 	pairs#64,
-	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqr
+	     rssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	blink=\2335m,
 	bold=\2331m,
@@ -1482,12 +2003,12 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	civis=\233?25l,
 	clear=\233H\2332J,
 	cnorm=\233?25l\233?25h,
-	cr=^M,
+	cr=\r,
 	csr=\233%i%p1%d;%p2%dr,
 	cub=\233%p1%dD,
 	cub1=^H,
 	cud=\233%p1%dB,
-	cud1=^J,
+	cud1=\n,
 	cuf=\233%p1%dC,
 	cuf1=\233C,
 	cup=\233%i%p1%d;%p2%dH,
@@ -1510,9 +2031,11 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	ich=\233%p1%d@,
 	il=\233%p1%dL,
 	il1=\233L,
-	ind=^J,
+	ind=\n,
 	invis=\2338m,
-	is2=\E[62"p\E G\233m\233?7h\E>\E7\233?1;3;4;6l\2334l\233r\E8,
+	is2=\E[62"p\E\sG\233m\233?7h\E>
+	    \E7\233?1;3;4;6l\2334l\233r
+	    \E8,
 	ka1=\217w,
 	ka3=\217u,
 	kb2=\217y,
@@ -1569,13 +2092,74 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	rmso=\23327m,
 	rmul=\23324m,
 	rs1=\Ec,
-	rs2=\E[62"p\E G\233m\233?7h\E>\E7\233?1;3;4;6l\2334l\233r\E8,
+	rs2=\E[62"p\E\sG\233m\233?7h\E>
+	    \E7\233?1;3;4;6l\2334l\233r
+	    \E8,
 	sc=\E7,
 	setab=\2334%p1%dm,
 	setaf=\2333%p1%dm,
-	setb=\2334%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	setf=\2333%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\E(0%e\E(B%;,
+	setb=\2334
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	setf=\2333
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	sgr=\2330
+		%?
+			%p6
+			%t;1
+		%;
+		%?
+			%p2
+			%t;4
+		%;
+		%?
+			%p1%p3%|
+			%t;7
+		%;
+		%?
+			%p4
+			%t;5
+		%;
+		%?
+			%p7
+			%t;8
+		%;
+		m
+		%?
+			%p9
+			%t\E(0
+		%e
+			\E(B
+		%;,
 	sgr0=\2330m\E(B,
 	smacs=\E(0,
 	smam=\233?7h,
@@ -1587,7 +2171,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	tbc=\2333g,
 	u6=\233[%i%d;%dR,
 	u7=\E[6n,
-	u8=\233[?1;2c,
+	u8=\233[?%[;0123456789]c,
 	u9=\E[c,
 	vpa=\233%i%p1%dd,
 	use=xterm+kbs,
@@ -1609,7 +2193,8 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	it#8,
 	lines#24,
 	pairs#64,
-	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqr
+	     rssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	blink=\E[5m,
 	bold=\E[1m,
@@ -1617,12 +2202,12 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	civis=\E[?25l,
 	clear=\E[H\E[2J,
 	cnorm=\E[?12l\E[?25h,
-	cr=^M,
+	cr=\r,
 	csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD,
 	cub1=^H,
 	cud=\E[%p1%dB,
-	cud1=^J,
+	cud1=\n,
 	cuf=\E[%p1%dC,
 	cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH,
@@ -1646,7 +2231,7 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	ich=\E[%p1%d@,
 	il=\E[%p1%dL,
 	il1=\E[L,
-	ind=^J,
+	ind=\n,
 	indn=\E[%p1%dS,
 	invis=\E[8m,
 	is2=\E[!p\E[?3;4l\E[4l\E>,
@@ -1732,7 +2317,6 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	rin=\E[%p1%dT,
 	rmacs=^O,
 	rmam=\E[?7l,
-	rmcup=\E[?1049l,
 	rmir=\E[4l,
 	rmkx=\E[?1l\E>,
 	rmso=\E[27m,
@@ -1742,13 +2326,71 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	sc=\E7,
 	setab=\E[4%p1%dm,
 	setaf=\E[3%p1%dm,
-	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	setb=\E[4
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	setf=\E[3
+		%?
+			%p1%{1}%=
+			%t4
+		%e
+			%p1%{3}%=
+			%t6
+		%e
+			%p1%{4}%=
+			%t1
+		%e
+			%p1%{6}%=
+			%t3
+		%e
+			%p1%d
+		%;
+		m,
+	sgr=\E[0
+		%?
+			%p6
+			%t;1
+		%;
+		%?
+			%p2
+			%t;4
+		%;
+		%?
+			%p1%p3%|
+			%t;7
+		%;
+		%?
+			%p4
+			%t;5
+		%;
+		%?
+			%p7
+			%t;8
+		%;
+		m
+		%?
+			%p9
+			%t\016
+		%e
+			\017
+		%;,
 	sgr0=\E[m\017,
 	smacs=^N,
 	smam=\E[?7h,
-	smcup=\E[?1049h,
 	smir=\E[4h,
 	smkx=\E[?1h\E=,
 	smso=\E[7m,
@@ -1763,6 +2405,7 @@ xterm-xf86-v44|xterm terminal emulator (XFree86 4.4 Window System),
 	kb1=\EOt,
 	kb3=\EOv,
 	kc2=\EOr,
+	use=xterm+alt1049,
 	use=xterm+kbs,
 xterm-xfree86|xterm terminal emulator (XFree86 4.4 Window System),
 	use=xterm-xf86-v44,
@@ -1783,16 +2426,17 @@ xterm-r6|xterm X11R6 version,
 	cols#80,
 	it#8,
 	lines#24,
-	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqr
+	     rssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	bold=\E[1m,
 	clear=\E[H\E[2J,
-	cr=^M,
+	cr=\r,
 	csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD,
 	cub1=^H,
 	cud=\E[%p1%dB,
-	cud1=^J,
+	cud1=\n,
 	cuf=\E[%p1%dC,
 	cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH,
@@ -1810,8 +2454,9 @@ xterm-r6|xterm X11R6 version,
 	hts=\EH,
 	il=\E[%p1%dL,
 	il1=\E[L,
-	ind=^J,
-	is2=\E[m\E[?7h\E[4l\E>\E7\E[r\E[?1;3;4;6l\E8,
+	ind=\n,
+	is2=\E[m\E[?7h\E[4l\E>\E7\E[r\E[
+	    ?1;3;4;6l\E8,
 	kcub1=\EOD,
 	kcud1=\EOB,
 	kcuf1=\EOC,
@@ -1849,7 +2494,8 @@ xterm-r6|xterm X11R6 version,
 	rmkx=\E[?1l\E>,
 	rmso=\E[m,
 	rmul=\E[m,
-	rs2=\E[m\E[?7h\E[4l\E>\E7\E[r\E[?1;3;4;6l\E8,
+	rs2=\E[m\E[?7h\E[4l\E>\E7\E[r\E[
+	    ?1;3;4;6l\E8,
 	sc=\E7,
 	sgr0=\E[m,
 	smacs=^N,
@@ -1892,12 +2538,12 @@ xterm-r5|xterm R5 version,
 	bel=^G,
 	bold=\E[1m,
 	clear=\E[H\E[2J,
-	cr=^M,
+	cr=\r,
 	csr=\E[%i%p1%d;%p2%dr,
 	cub=\E[%p1%dD,
 	cub1=^H,
 	cud=\E[%p1%dB,
-	cud1=^J,
+	cud1=\n,
 	cuf=\E[%p1%dC,
 	cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH,
@@ -1916,7 +2562,7 @@ xterm-r5|xterm R5 version,
 	ich1=\E[@,
 	il=\E[%p1%dL,
 	il1=\E[L,
-	ind=^J,
+	ind=\n,
 	kcub1=\EOD,
 	kcud1=\EOB,
 	kcuf1=\EOC,
@@ -1951,9 +2597,31 @@ xterm-r5|xterm R5 version,
 	rmkx=\E[?1l\E>,
 	rmso=\E[m,
 	rmul=\E[m,
-	rs2=\E>\E[?1;3;4;5;6l\E[4l\E[?7h\E[m\E[r\E[2J\E[H,
+	rs2=\E>\E[?1;3;4;5;6l\E[4l\E[?7h
+	    \E[m\E[r\E[2J\E[H,
 	sc=\E7,
-	sgr=\E[%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;m,
+	sgr=\E[
+		%?
+			%p1
+			%t;7
+		%;
+		%?
+			%p2
+			%t;4
+		%;
+		%?
+			%p3
+			%t;7
+		%;
+		%?
+			%p4
+			%t;5
+		%;
+		%?
+			%p6
+			%t;1
+		%;
+		m,
 	sgr0=\E[m,
 	smir=\E[4h,
 	smkx=\E[?1h\E=,

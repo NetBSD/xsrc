@@ -1,7 +1,7 @@
-/* $XTermId: xstrings.c,v 1.63 2016/05/22 18:28:27 tom Exp $ */
+/* $XTermId: xstrings.c,v 1.78 2020/10/12 18:50:28 tom Exp $ */
 
 /*
- * Copyright 2000-2015,2016 by Thomas E. Dickey
+ * Copyright 2000-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -49,6 +49,14 @@ alloc_pw(struct passwd *target, struct passwd *source)
     target->pw_shell = x_strdup(source->pw_shell);
 }
 
+static void
+free_pw(struct passwd *source)
+{
+    free(source->pw_dir);
+    free(source->pw_name);
+    free(source->pw_shell);
+}
+
 void
 x_appendargv(char **target, char **source)
 {
@@ -94,8 +102,8 @@ x_decode_hex(const char *source, const char **next)
     for (pass = 0; pass < 2; ++pass) {
 	for (j = k = 0; isxdigit(CharOf(source[j])); ++j) {
 	    if ((pass != 0) && (j & 1) != 0) {
-		result[k++] = (char) ((x_hex2int(source[j - 1]) << 4)
-				      | x_hex2int(source[j]));
+		result[k++] = (char) ((CharOf(x_hex2int(source[j - 1])) << 4)
+				      | CharOf(x_hex2int(source[j])));
 	    }
 	}
 	*next = (source + j);
@@ -126,6 +134,7 @@ x_encode_hex(const char *source)
 
     if (result != 0) {
 	unsigned j, k;
+	result[0] = '\0';
 	for (j = k = 0; source[j] != '\0'; ++j) {
 	    sprintf(result + k, "%02X", CharOf(source[j]));
 	    k += 2;
@@ -154,19 +163,24 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
     if (!IsEmpty(login_name)
 	&& strcmp(login_name, in_out->pw_name)) {
 	struct passwd pw2;
+	Boolean ok2;
 
-	if (x_getpwnam(login_name, &pw2)) {
+	if ((ok2 = x_getpwnam(login_name, &pw2))) {
 	    uid_t uid2 = pw2.pw_uid;
 	    struct passwd pw3;
+	    Boolean ok3;
 
-	    if (x_getpwuid(uid, &pw3)
+	    if ((ok3 = x_getpwuid(uid, &pw3))
 		&& ((uid_t) pw3.pw_uid == uid2)) {
 		/* use the other passwd-data including shell */
 		alloc_pw(in_out, &pw2);
 	    } else {
-		free(login_name);
-		login_name = NULL;
+		FreeAndNull(login_name);
 	    }
+	    if (ok2)
+		free_pw(&pw2);
+	    if (ok3)
+		free_pw(&pw3);
 	}
     }
     return login_name;
@@ -181,7 +195,7 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
 char *
 x_getlogin(uid_t uid, struct passwd *in_out)
 {
-    char *login_name = NULL;
+    char *login_name;
 
     login_name = login_alias(x_getenv("LOGNAME"), uid, in_out);
     if (IsEmpty(login_name)) {
@@ -373,8 +387,7 @@ void
 x_freeargs(char **argv)
 {
     if (argv != 0) {
-	if (*argv != 0)
-	    free(*argv);
+	free(*argv);
 	free(argv);
     }
 }
@@ -400,7 +413,8 @@ x_strncasecmp(const char *s1, const char *s2, unsigned n)
 	    return 1;
 	if (c1 == 0)
 	    break;
-	s1++, s2++;
+	s1++;
+	s2++;
     }
 
     return 0;
@@ -415,7 +429,7 @@ x_strdup(const char *s)
     char *result = 0;
 
     if (s != 0) {
-	char *t = CastMallocN(char, strlen(s) + 1);
+	char *t = malloc(strlen(s) + 5);
 	if (t != 0) {
 	    strcpy(t, s);
 	}
@@ -450,7 +464,9 @@ x_strtrim(const char *source)
 {
     char *result;
 
-    if (source != 0 && *source != '\0') {
+    if (IsEmpty(source)) {
+	result = x_strdup("");
+    } else {
 	char *t = x_strdup(source);
 	if (t != 0) {
 	    char *s = t;
@@ -468,8 +484,6 @@ x_strtrim(const char *source)
 	    }
 	}
 	result = t;
-    } else {
-	result = x_strdup("");
     }
     return result;
 }
@@ -482,20 +496,19 @@ x_strrtrim(const char *source)
 {
     char *result;
 
-    if (source != 0 && *source != '\0') {
+    if (IsEmpty(source)) {
+	result = x_strdup("");
+    } else {
 	char *t = x_strdup(source);
 	if (t != 0) {
-	    char *s = t;
 	    if (*t != '\0') {
-		s = t + strlen(t);
+		char *s = t + strlen(t);
 		while (s != t && IsSpace(CharOf(s[-1]))) {
 		    *--s = '\0';
 		}
 	    }
 	}
 	result = t;
-    } else {
-	result = x_strdup("");
     }
     return result;
 }
@@ -523,5 +536,43 @@ x_toupper(int ch)
 	result = table[CharOf(ch)];
     }
 
+    return result;
+}
+
+/*
+ * Match strings ignoring case and allowing glob-like '*' and '?'
+ */
+int
+x_wildstrcmp(const char *pattern, const char *actual)
+{
+    int result = 0;
+
+    while (*pattern && *actual) {
+	char c1 = x_toupper(*pattern);
+	char c2 = x_toupper(*actual);
+
+	if (c1 == '*') {
+	    Boolean found = False;
+	    pattern++;
+	    while (*actual != '\0') {
+		if (!x_wildstrcmp(pattern, actual++)) {
+		    found = True;
+		    break;
+		}
+	    }
+	    if (!found) {
+		result = 1;
+		break;
+	    }
+	} else if (c1 == '?') {
+	    ++pattern;
+	    ++actual;
+	} else if ((result = (c1 != c2)) == 0) {
+	    ++pattern;
+	    ++actual;
+	} else {
+	    break;
+	}
+    }
     return result;
 }

@@ -1,7 +1,7 @@
-/* $XTermId: data.h,v 1.127 2016/06/01 09:13:59 tom Exp $ */
+/* $XTermId: data.h,v 1.138 2019/10/06 20:16:02 tom Exp $ */
 
 /*
- * Copyright 2002-2014,2016 by Thomas E. Dickey
+ * Copyright 2002-2018,2019 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -129,6 +129,8 @@ extern Arg ourTopLevelShellArgs[];
 extern Cardinal number_ourTopLevelShellArgs;
 extern Atom wm_delete_window;
 
+extern CellColor initCColor;
+
 #if HANDLE_STRUCT_NOTIFY
 /* Flag icon name with "*** "  on window output when iconified.
  * I'd like to do something like reverse video, but I don't
@@ -153,6 +155,7 @@ typedef struct XTERM_RESOURCE {
     char *icon_name;
     char *term_name;
     char *tty_modes;
+    char *valid_shells;
 
     int minBufSize;
     int maxBufSize;
@@ -208,11 +211,20 @@ typedef struct XTERM_RESOURCE {
     Boolean ptyHandshake;	/* use pty-handshaking */
     Boolean ptySttySize;	/* reset TTY size after pty handshake */
 #endif
+#if OPT_REPORT_CCLASS
+    Boolean reportCClass;	/* show character-class information */
+#endif
 #if OPT_REPORT_COLORS
     Boolean reportColors;	/* show color information as allocated */
 #endif
 #if OPT_REPORT_FONTS
     Boolean reportFonts;	/* show bitmap-font information as loaded */
+#endif
+#if OPT_XRES_QUERY
+    Boolean reportXRes;		/* show vt100 resources after initialization */
+#endif
+#if OPT_REPORT_ICONS
+    Boolean reportIcons;	/* show icon information as loaded */
 #endif
 #if OPT_SAME_NAME
     Boolean sameName;		/* Don't change the title or icon name if it is
@@ -232,9 +244,13 @@ typedef struct XTERM_RESOURCE {
     String fullscreen_s;	/* resource for "fullscreen" */
     int fullscreen;		/* derived from fullscreen_s */
 #endif
+#if USE_DOUBLE_BUFFER
+    Boolean buffered;
+    int buffered_fps;
+#endif
 } XTERM_RESOURCE;
 
-Boolean guard_keyboard_type;
+extern Boolean guard_keyboard_type;
 extern XTERM_RESOURCE resource;
 
 #ifdef USE_IGNORE_RC

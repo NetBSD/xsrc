@@ -1,9 +1,9 @@
 #!/bin/sh
-# $XTermId: run-tic.sh,v 1.4 2007/06/17 15:30:03 tom Exp $
+# $XTermId: run-tic.sh,v 1.13 2021/01/27 01:04:54 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
-# Copyright 2006,2007 by Thomas E. Dickey
+# Copyright 2006-2020,2021 by Thomas E. Dickey
 # 
 #                         All Rights Reserved
 # 
@@ -36,23 +36,100 @@
 # messages for the extensions which are otherwise ignored by other versions of
 # tic.
 
-TMP=run-tic$$.log
+USE_NCURSES=20190609
+
+failed() {
+	echo "? $*" >&2
+	exit 1
+}
+
+need_ncurses() {
+	failed "This terminal description relies on ncurses 6.1 $USE_NCURSES"
+}
+
+use_ncurses6() {
+	VER=`infocmp6 -V 2>/dev/null`
+	test -n "$VER" && INFOCMP_PROG=infocmp6
+	VER=`tic6 -V 2>/dev/null`
+	test -n "$VER" && TIC_PROG=tic6
+	test -z "$VER" && need_ncurses
+}
+
+MYTEMP=`mktemp -d 2>/dev/null`
+if test -z "$MYTEMP"
+then
+	MYTEMP=${TMPDIR:-/tmp}/run-tic$$
+fi
+mkdir -p "$MYTEMP" || failed "cannot mkdir $MYTEMP"
+trap "rm -rf $MYTEMP" EXIT INT QUIT HUP TERM
+
+STDERR=$MYTEMP/run-tic$$.log
 VER=`tic -V 2>/dev/null`
 OPT=
 
-case .$VER in
-.ncurses*)
+TIC_PROG=tic
+INFOCMP_PROG=infocmp
+unset TERM
+unset TERMINFO_DIRS
+
+PASS1="$*"
+PASS2="$*"
+
+case "x$VER" in
+*ncurses*)
 	OPT="-x"
+	# Prefer ncurses 6.1 over 6.0 over any 5, if we can get it, to support
+	# large numbers (used in xterm-direct) and large entries (an issue with
+	# xterm-nrc).
+	case "$VER" in
+	*\ [7-9].*|*\ 6.[1-9].20[12][0-9]*)
+		check=`echo "$VER" | sed -e 's/^.*\.//' -e 's/[^0-9].*$//'`
+		[ "$check" -lt "$USE_NCURSES" ] && use_ncurses6
+		;;
+	*)
+		# On systems with only ncurses 5, check for development version
+		# of ncurses.
+		use_ncurses6
+		;;
+	esac
+	echo "** using tic from $VER"
+	# If this is 6.1.20180127 or later and using ABI 6, then it supports
+	# entries larger than 4096 bytes (up to 32768).
+	case "$VER" in
+	*\ [7-9].*|*\ 6.[1-9].20[12][0-9]*)
+		expect="	cols#100000,"
+		cat >"$MYTEMP"/fake.ti <<EOF
+fake|test 32-bit numbers,
+$expect
+EOF
+		TERMINFO="$MYTEMP" $TIC_PROG $OPT "$MYTEMP"/fake.ti 2>/dev/null
+		check=`TERMINFO="$MYTEMP" TERM=fake $INFOCMP_PROG -1 fake 2>/dev/null |grep "$expect"`
+		test "x$check" = "x$expect" || BIG=no
+		;;
+	*)
+		BIG=no
+		;;
+	esac
+	if test "$BIG" = no
+	then
+		# Trim out the SGR 1006 feature, to keep "xterm-nrc" smaller
+		# than 4096 bytes.
+		echo "...this version does not support large terminal descriptions"
+		PASS2=$MYTEMP/input
+		sed -e 's/use=xterm+sm+1006,//' -e '/^[	 ][	 ]*$/d' "$PASS1" >"$PASS2"
+		set "$PASS2"
+	fi
 	;;
 esac
 
-echo "** tic $OPT" "$@"
-tic $OPT "$@" 2>$TMP
+echo "** $TIC_PROG $OPT $PASS1"
+$TIC_PROG $OPT "$PASS2" 2>"$STDERR"
 RET=$?
 
-fgrep -v 'Unknown Capability' $TMP | \
-fgrep -v 'Capability is not recognized:' | \
-fgrep -v 'tic: Warning near line ' >&2
-rm -f $TMP
+sed -e "s%$PASS2%$PASS1%" "$STDERR" | \
+${FGREP-fgrep} -v 'Unknown Capability' | \
+${FGREP-fgrep} -v 'Capability is not recognized:' | \
+${FGREP-fgrep} -v 'tic: Warning near line ' >&2
+rm -f "$STDERR"
 
 exit $RET

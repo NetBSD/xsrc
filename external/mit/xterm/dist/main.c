@@ -1,7 +1,7 @@
-/* $XTermId: main.c,v 1.784 2016/10/07 00:40:34 tom Exp $ */
+/* $XTermId: main.c,v 1.872 2021/02/10 00:33:22 tom Exp $ */
 
 /*
- * Copyright 2002-2015,2016 by Thomas E. Dickey
+ * Copyright 2002-2020,2021 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -29,7 +29,7 @@
  * sale, use or other dealings in this Software without prior written
  * authorization.
  *
- * Copyright 1987, 1988  The Open Group
+ * Copyright 1987, 1988  X Consortium
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,9 +47,9 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Except as contained in this notice, the name of The Open Group shall not be
+ * Except as contained in this notice, the name of the X Consortium shall not be
  * used in advertising or otherwise to promote the sale, use or other dealings
- * in this Software without prior written authorization from The Open Group.
+ * in this Software without prior written authorization from the X Consortium.
  *
  * Copyright 1987, 1988 by Digital Equipment Corporation, Maynard.
  *
@@ -94,7 +94,6 @@
 #include <graphics.h>
 
 #include <X11/cursorfont.h>
-#include <X11/Xlocale.h>
 
 #if OPT_TOOLBAR
 
@@ -104,10 +103,17 @@
 #include <X11/Xaw3d/Form.h>
 #elif defined(HAVE_LIB_XAW3DXFT)
 #include <X11/Xaw3dxft/Form.h>
+#include <X11/Xaw3dxft/Xaw3dXft.h>
 #elif defined(HAVE_LIB_NEXTAW)
 #include <X11/neXtaw/Form.h>
 #elif defined(HAVE_LIB_XAWPLUS)
 #include <X11/XawPlus/Form.h>
+#endif
+
+#else
+
+#if defined(HAVE_LIB_XAW3DXFT)
+#include <X11/Xaw3dxft/Xaw3dXft.h>
 #endif
 
 #endif /* OPT_TOOLBAR */
@@ -137,6 +143,7 @@
 #include <grp.h>		/* initgroups() */
 #endif
 
+static void hungtty(int) GCC_NORETURN;
 static void Syntax(char *) GCC_NORETURN;
 static void HsSysError(int) GCC_NORETURN;
 
@@ -185,7 +192,7 @@ static void HsSysError(int) GCC_NORETURN;
 #define WTMP
 #endif
 
-#if defined(USE_TTY_GROUP) || defined(USE_UTMP_SETGID)
+#if defined(USE_TTY_GROUP) || defined(USE_UTMP_SETGID) || defined(HAVE_INITGROUPS)
 #include <grp.h>
 #endif
 
@@ -323,6 +330,13 @@ ttyslot(void)
 
 #if defined(USE_UTEMPTER)
 #include <utempter.h>
+#if 1
+#define UTEMPTER_ADD(pty,hostname,master_fd) utempter_add_record(master_fd, hostname)
+#define UTEMPTER_DEL()                       utempter_remove_added_record ()
+#else
+#define UTEMPTER_ADD(pty,hostname,master_fd) addToUtmp(pty, hostname, master_fd)
+#define UTEMPTER_DEL()                       removeFromUtmp()
+#endif
 #endif
 
 #if defined(I_FIND) && defined(I_PUSH)
@@ -594,6 +608,16 @@ static unsigned command_length_with_luit = 0;
 */
 static TERMIO_STRUCT d_tio;
 
+#ifndef ONLCR
+#define ONLCR 0
+#endif
+
+#ifndef OPOST
+#define OPOST 0
+#endif
+
+#define D_TIO_FLAGS (OPOST | ONLCR)
+
 #ifdef HAS_LTCHARS
 static struct ltchars d_ltc;
 #endif /* HAS_LTCHARS */
@@ -603,9 +627,12 @@ static unsigned int d_lmode;
 #endif /* TIOCLSET */
 
 #else /* !TERMIO_STRUCT */
+
+#define D_SG_FLAGS (EVENP | ODDP | ECHO | CRMOD)
+
 static struct sgttyb d_sg =
 {
-    0, 0, 0177, CKILL, (EVENP | ODDP | ECHO | XTABS | CRMOD)
+    0, 0, 0177, CKILL, (D_SG_FLAGS | XTABS)
 };
 static struct tchars d_tc =
 {
@@ -637,12 +664,12 @@ static struct jtchars d_jtc =
 #define TTYMODE(name) { name, sizeof(name)-1, 0, 0 }
 static Boolean override_tty_modes = False;
 /* *INDENT-OFF* */
-static struct _xttymodes {
+static struct {
     const char *name;
     size_t len;
     int set;
     int value;
-} ttymodelist[] = {
+} ttyModes[] = {
     TTYMODE("intr"),		/* tchars.t_intrc ; VINTR */
 #define XTTYMODE_intr	0
     TTYMODE("quit"),		/* tchars.t_quitc ; VQUIT */
@@ -681,18 +708,47 @@ static struct _xttymodes {
 #define XTTYMODE_erase2	17
     TTYMODE("eol2"),		/* VEOL2 */
 #define XTTYMODE_eol2	18
-    { NULL,	0, 0, '\0' },	/* end of data */
+    TTYMODE("tabs"),		/* TAB0 */
+#define XTTYMODE_tabs	19
+    TTYMODE("-tabs"),		/* TAB3 */
+#define XTTYMODE__tabs	20
 };
 
+#ifndef TAB0
+#define TAB0 0
+#endif
+
+#ifndef TAB3
+#if defined(OXTABS)
+#define TAB3 OXTABS
+#elif defined(XTABS)
+#define TAB3 XTABS
+#endif
+#endif
+
+#ifndef TABDLY
+#define TABDLY (TAB0|TAB3)
+#endif
+
+#define isTtyMode(p,q) (ttyChars[p].myMode == q && ttyModes[q].set)
+
+#define isTabMode(n) \
+	(isTtyMode(n, XTTYMODE_tabs) || \
+	 isTtyMode(n, XTTYMODE__tabs))
+
+#define TMODE(ind,var) \
+	if (ttyModes[ind].set) \
+	    var = (cc_t) ttyModes[ind].value
+
 #define validTtyChar(data, n) \
-	    (known_ttyChars[n].sysMode >= 0 && \
-	     known_ttyChars[n].sysMode < (int) XtNumber(data.c_cc))
+	    (ttyChars[n].sysMode >= 0 && \
+	     ttyChars[n].sysMode < (int) XtNumber(data.c_cc))
 
 static const struct {
     int sysMode;
     int myMode;
     int myDefault;
-} known_ttyChars[] = {
+} ttyChars[] = {
 #ifdef VINTR
     { VINTR,    XTTYMODE_intr,   CINTR },
 #endif
@@ -747,12 +803,12 @@ static const struct {
 #ifdef VEOL2
     { VEOL2,    XTTYMODE_eol2,   CNUL },
 #endif
+    { -1,       XTTYMODE_tabs,   TAB0 },
+    { -1,       XTTYMODE__tabs,  TAB3 },
 };
 /* *INDENT-ON* */
 
-#define TMODE(ind,var) if (ttymodelist[ind].set) var = (cc_t) ttymodelist[ind].value
-
-static int parse_tty_modes(char *s, struct _xttymodes *modelist);
+static int parse_tty_modes(char *s);
 
 #ifndef USE_UTEMPTER
 #ifdef USE_SYSV_UTMP
@@ -807,7 +863,8 @@ static sigjmp_buf env;
 #define SetUtmpHost(dst, screen) \
 	{ \
 	    char host[sizeof(dst) + 1]; \
-	    strncpy(host, DisplayString(screen->display), sizeof(host)); \
+	    strncpy(host, DisplayString(screen->display), sizeof(host) - 1); \
+	    host[sizeof(dst)] = '\0'; \
 	    TRACE(("DisplayString(%s)\n", host)); \
 	    if (!resource.utmpDisplayId) { \
 		char *endptr = strrchr(host, ':'); \
@@ -823,7 +880,7 @@ static sigjmp_buf env;
 #  define SetUtmpSysLen(utmp) 			   \
 	{ \
 	    utmp.ut_host[sizeof(utmp.ut_host)-1] = '\0'; \
-	    utmp.ut_syslen = strlen(utmp.ut_host) + 1; \
+	    utmp.ut_syslen = (short) ((int) strlen(utmp.ut_host) + 1); \
 	}
 #endif
 
@@ -837,6 +894,7 @@ static XtResource application_resources[] =
     Sres(XtNiconName, XtCIconName, icon_name, NULL),
     Sres("termName", "TermName", term_name, NULL),
     Sres("ttyModes", "TtyModes", tty_modes, NULL),
+    Sres("validShells", "ValidShells", valid_shells, NULL),
     Bres("hold", "Hold", hold_screen, False),
     Bres("utmpInhibit", "UtmpInhibit", utmpInhibit, False),
     Bres("utmpDisplayId", "UtmpDisplayId", utmpDisplayId, True),
@@ -883,11 +941,20 @@ static XtResource application_resources[] =
     Bres("ptyHandshake", "PtyHandshake", ptyHandshake, True),
     Bres("ptySttySize", "PtySttySize", ptySttySize, DEF_PTY_STTY_SIZE),
 #endif
+#if OPT_REPORT_CCLASS
+    Bres("reportCClass", "ReportCClass", reportCClass, False),
+#endif
 #if OPT_REPORT_COLORS
     Bres("reportColors", "ReportColors", reportColors, False),
 #endif
 #if OPT_REPORT_FONTS
     Bres("reportFonts", "ReportFonts", reportFonts, False),
+#endif
+#if OPT_REPORT_ICONS
+    Bres("reportIcons", "ReportIcons", reportIcons, False),
+#endif
+#if OPT_XRES_QUERY
+    Bres("reportXRes", "ReportXRes", reportXRes, False),
 #endif
 #if OPT_SAME_NAME
     Bres("sameName", "SameName", sameName, True),
@@ -901,6 +968,10 @@ static XtResource application_resources[] =
 #if OPT_MAXIMIZE
     Bres(XtNmaximized, XtCMaximized, maximized, False),
     Sres(XtNfullscreen, XtCFullscreen, fullscreen_s, "off"),
+#endif
+#if USE_DOUBLE_BUFFER
+    Bres(XtNbuffered, XtCBuffered, buffered, DEF_DOUBLE_BUFFER),
+    Ires(XtNbufferedFPS, XtCBufferedFPS, buffered_fps, 40),
 #endif
 };
 
@@ -925,212 +996,225 @@ static String fallback_resources[] =
 /* Command line options table.  Only resources are entered here...there is a
    pass over the remaining options after XrmParseCommand is let loose. */
 /* *INDENT-OFF* */
+#define DATA(option,pattern,type,value) { (char *) option, (char *) pattern, type, (XPointer) value }
 static XrmOptionDescRec optionDescList[] = {
-{"-geometry",	"*vt100.geometry",XrmoptionSepArg,	(XPointer) NULL},
-{"-132",	"*c132",	XrmoptionNoArg,		(XPointer) "on"},
-{"+132",	"*c132",	XrmoptionNoArg,		(XPointer) "off"},
-{"-ah",		"*alwaysHighlight", XrmoptionNoArg,	(XPointer) "on"},
-{"+ah",		"*alwaysHighlight", XrmoptionNoArg,	(XPointer) "off"},
-{"-aw",		"*autoWrap",	XrmoptionNoArg,		(XPointer) "on"},
-{"+aw",		"*autoWrap",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-geometry",	"*vt100.geometry",XrmoptionSepArg,	NULL),
+DATA("-132",		"*c132",	XrmoptionNoArg,		"on"),
+DATA("+132",		"*c132",	XrmoptionNoArg,		"off"),
+DATA("-ah",		"*alwaysHighlight", XrmoptionNoArg,	"on"),
+DATA("+ah",		"*alwaysHighlight", XrmoptionNoArg,	"off"),
+DATA("-aw",		"*autoWrap",	XrmoptionNoArg,		"on"),
+DATA("+aw",		"*autoWrap",	XrmoptionNoArg,		"off"),
 #ifndef NO_ACTIVE_ICON
-{"-ai",		"*activeIcon",	XrmoptionNoArg,		(XPointer) "off"},
-{"+ai",		"*activeIcon",	XrmoptionNoArg,		(XPointer) "on"},
+DATA("-ai",		"*activeIcon",	XrmoptionNoArg,		"off"),
+DATA("+ai",		"*activeIcon",	XrmoptionNoArg,		"on"),
 #endif /* NO_ACTIVE_ICON */
-{"-b",		"*internalBorder",XrmoptionSepArg,	(XPointer) NULL},
-{"-bc",		"*cursorBlink",	XrmoptionNoArg,		(XPointer) "on"},
-{"+bc",		"*cursorBlink",	XrmoptionNoArg,		(XPointer) "off"},
-{"-bcf",	"*cursorOffTime",XrmoptionSepArg,	(XPointer) NULL},
-{"-bcn",	"*cursorOnTime",XrmoptionSepArg,	(XPointer) NULL},
-{"-bdc",	"*colorBDMode",	XrmoptionNoArg,		(XPointer) "off"},
-{"+bdc",	"*colorBDMode",	XrmoptionNoArg,		(XPointer) "on"},
-{"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (XPointer) "off"},
-{"+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (XPointer) "on"},
-{"-cc",		"*charClass",	XrmoptionSepArg,	(XPointer) NULL},
-{"-cm",		"*colorMode",	XrmoptionNoArg,		(XPointer) "off"},
-{"+cm",		"*colorMode",	XrmoptionNoArg,		(XPointer) "on"},
-{"-cn",		"*cutNewline",	XrmoptionNoArg,		(XPointer) "off"},
-{"+cn",		"*cutNewline",	XrmoptionNoArg,		(XPointer) "on"},
-{"-cr",		"*cursorColor",	XrmoptionSepArg,	(XPointer) NULL},
-{"-cu",		"*curses",	XrmoptionNoArg,		(XPointer) "on"},
-{"+cu",		"*curses",	XrmoptionNoArg,		(XPointer) "off"},
-{"-dc",		"*dynamicColors",XrmoptionNoArg,	(XPointer) "off"},
-{"+dc",		"*dynamicColors",XrmoptionNoArg,	(XPointer) "on"},
-{"-fb",		"*boldFont",	XrmoptionSepArg,	(XPointer) NULL},
-{"-fbb",	"*freeBoldBox", XrmoptionNoArg,		(XPointer)"off"},
-{"+fbb",	"*freeBoldBox", XrmoptionNoArg,		(XPointer)"on"},
-{"-fbx",	"*forceBoxChars", XrmoptionNoArg,	(XPointer)"off"},
-{"+fbx",	"*forceBoxChars", XrmoptionNoArg,	(XPointer)"on"},
+DATA("-b",		"*internalBorder",XrmoptionSepArg,	NULL),
+DATA("-bc",		"*cursorBlink",	XrmoptionNoArg,		"on"),
+DATA("+bc",		"*cursorBlink",	XrmoptionNoArg,		"off"),
+DATA("-bcf",		"*cursorOffTime",XrmoptionSepArg,	NULL),
+DATA("-bcn",		"*cursorOnTime",XrmoptionSepArg,	NULL),
+DATA("-bdc",		"*colorBDMode",	XrmoptionNoArg,		"off"),
+DATA("+bdc",		"*colorBDMode",	XrmoptionNoArg,		"on"),
+DATA("-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, "off"),
+DATA("+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, "on"),
+DATA("-cc",		"*charClass",	XrmoptionSepArg,	NULL),
+DATA("-cm",		"*colorMode",	XrmoptionNoArg,		"off"),
+DATA("+cm",		"*colorMode",	XrmoptionNoArg,		"on"),
+DATA("-cn",		"*cutNewline",	XrmoptionNoArg,		"off"),
+DATA("+cn",		"*cutNewline",	XrmoptionNoArg,		"on"),
+DATA("-cr",		"*cursorColor",	XrmoptionSepArg,	NULL),
+DATA("-cu",		"*curses",	XrmoptionNoArg,		"on"),
+DATA("+cu",		"*curses",	XrmoptionNoArg,		"off"),
+DATA("-dc",		"*dynamicColors",XrmoptionNoArg,	"off"),
+DATA("+dc",		"*dynamicColors",XrmoptionNoArg,	"on"),
+DATA("-fb",		"*boldFont",	XrmoptionSepArg,	NULL),
+DATA("-fbb",		"*freeBoldBox", XrmoptionNoArg,		"off"),
+DATA("+fbb",		"*freeBoldBox", XrmoptionNoArg,		"on"),
+DATA("-fbx",		"*forceBoxChars", XrmoptionNoArg,	"off"),
+DATA("+fbx",		"*forceBoxChars", XrmoptionNoArg,	"on"),
+DATA("-fc",		"*initialFont",	XrmoptionSepArg,	NULL),
 #ifndef NO_ACTIVE_ICON
-{"-fi",		"*iconFont",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-fi",		"*iconFont",	XrmoptionSepArg,	NULL),
 #endif /* NO_ACTIVE_ICON */
 #if OPT_RENDERFONT
-{"-fa",		"*faceName",	XrmoptionSepArg,	(XPointer) NULL},
-{"-fd",		"*faceNameDoublesize", XrmoptionSepArg,	(XPointer) NULL},
-{"-fs",		"*faceSize",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-fa",		"*faceName",	XrmoptionSepArg,	NULL),
+DATA("-fd",		"*faceNameDoublesize", XrmoptionSepArg,	NULL),
+DATA("-fs",		"*faceSize",	XrmoptionSepArg,	NULL),
 #endif
 #if OPT_WIDE_ATTRS && OPT_ISO_COLORS
-{"-itc",	"*colorITMode",	XrmoptionNoArg,		(XPointer) "off"},
-{"+itc",	"*colorITMode",	XrmoptionNoArg,		(XPointer) "on"},
+DATA("-itc",		"*colorITMode",	XrmoptionNoArg,		"off"),
+DATA("+itc",		"*colorITMode",	XrmoptionNoArg,		"on"),
 #endif
 #if OPT_WIDE_CHARS
-{"-fw",		"*wideFont",	XrmoptionSepArg,	(XPointer) NULL},
-{"-fwb",	"*wideBoldFont", XrmoptionSepArg,	(XPointer) NULL},
+DATA("-fw",		"*wideFont",	XrmoptionSepArg,	NULL),
+DATA("-fwb",		"*wideBoldFont", XrmoptionSepArg,	NULL),
 #endif
 #if OPT_INPUT_METHOD
-{"-fx",		"*ximFont",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-fx",		"*ximFont",	XrmoptionSepArg,	NULL),
 #endif
 #if OPT_HIGHLIGHT_COLOR
-{"-hc",		"*highlightColor", XrmoptionSepArg,	(XPointer) NULL},
-{"-hm",		"*highlightColorMode", XrmoptionNoArg,	(XPointer) "on"},
-{"+hm",		"*highlightColorMode", XrmoptionNoArg,	(XPointer) "off"},
-{"-selfg",	"*highlightTextColor", XrmoptionSepArg,	(XPointer) NULL},
-{"-selbg",	"*highlightColor", XrmoptionSepArg,	(XPointer) NULL},
+DATA("-hc",		"*highlightColor", XrmoptionSepArg,	NULL),
+DATA("-hm",		"*highlightColorMode", XrmoptionNoArg,	"on"),
+DATA("+hm",		"*highlightColorMode", XrmoptionNoArg,	"off"),
+DATA("-selfg",		"*highlightTextColor", XrmoptionSepArg,	NULL),
+DATA("-selbg",		"*highlightColor", XrmoptionSepArg,	NULL),
 #endif
 #if OPT_HP_FUNC_KEYS
-{"-hf",		"*hpFunctionKeys",XrmoptionNoArg,	(XPointer) "on"},
-{"+hf",		"*hpFunctionKeys",XrmoptionNoArg,	(XPointer) "off"},
+DATA("-hf",		"*hpFunctionKeys",XrmoptionNoArg,	"on"),
+DATA("+hf",		"*hpFunctionKeys",XrmoptionNoArg,	"off"),
 #endif
-{"-hold",	"*hold",	XrmoptionNoArg,		(XPointer) "on"},
-{"+hold",	"*hold",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-hold",		"*hold",	XrmoptionNoArg,		"on"),
+DATA("+hold",		"*hold",	XrmoptionNoArg,		"off"),
 #if OPT_INITIAL_ERASE
-{"-ie",		"*ptyInitialErase", XrmoptionNoArg,	(XPointer) "on"},
-{"+ie",		"*ptyInitialErase", XrmoptionNoArg,	(XPointer) "off"},
+DATA("-ie",		"*ptyInitialErase", XrmoptionNoArg,	"on"),
+DATA("+ie",		"*ptyInitialErase", XrmoptionNoArg,	"off"),
 #endif
-{"-j",		"*jumpScroll",	XrmoptionNoArg,		(XPointer) "on"},
-{"+j",		"*jumpScroll",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-j",		"*jumpScroll",	XrmoptionNoArg,		"on"),
+DATA("+j",		"*jumpScroll",	XrmoptionNoArg,		"off"),
 #if OPT_C1_PRINT
-{"-k8",		"*allowC1Printable", XrmoptionNoArg,	(XPointer) "on"},
-{"+k8",		"*allowC1Printable", XrmoptionNoArg,	(XPointer) "off"},
+DATA("-k8",		"*allowC1Printable", XrmoptionNoArg,	"on"),
+DATA("+k8",		"*allowC1Printable", XrmoptionNoArg,	"off"),
 #endif
-{"-kt",		"*keyboardType", XrmoptionSepArg,	(XPointer) NULL},
+DATA("-kt",		"*keyboardType", XrmoptionSepArg,	NULL),
 /* parse logging options anyway for compatibility */
-{"-l",		"*logging",	XrmoptionNoArg,		(XPointer) "on"},
-{"+l",		"*logging",	XrmoptionNoArg,		(XPointer) "off"},
-{"-lf",		"*logFile",	XrmoptionSepArg,	(XPointer) NULL},
-{"-ls",		"*loginShell",	XrmoptionNoArg,		(XPointer) "on"},
-{"+ls",		"*loginShell",	XrmoptionNoArg,		(XPointer) "off"},
-{"-mb",		"*marginBell",	XrmoptionNoArg,		(XPointer) "on"},
-{"+mb",		"*marginBell",	XrmoptionNoArg,		(XPointer) "off"},
-{"-mc",		"*multiClickTime", XrmoptionSepArg,	(XPointer) NULL},
-{"-mesg",	"*messages",	XrmoptionNoArg,		(XPointer) "off"},
-{"+mesg",	"*messages",	XrmoptionNoArg,		(XPointer) "on"},
-{"-ms",		"*pointerColor",XrmoptionSepArg,	(XPointer) NULL},
-{"-nb",		"*nMarginBell",	XrmoptionSepArg,	(XPointer) NULL},
-{"-nul",	"*underLine",	XrmoptionNoArg,		(XPointer) "off"},
-{"+nul",	"*underLine",	XrmoptionNoArg,		(XPointer) "on"},
-{"-pc",		"*boldColors",	XrmoptionNoArg,		(XPointer) "on"},
-{"+pc",		"*boldColors",	XrmoptionNoArg,		(XPointer) "off"},
-{"-rw",		"*reverseWrap",	XrmoptionNoArg,		(XPointer) "on"},
-{"+rw",		"*reverseWrap",	XrmoptionNoArg,		(XPointer) "off"},
-{"-s",		"*multiScroll",	XrmoptionNoArg,		(XPointer) "on"},
-{"+s",		"*multiScroll",	XrmoptionNoArg,		(XPointer) "off"},
-{"-sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "on"},
-{"+sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-l",		"*logging",	XrmoptionNoArg,		"on"),
+DATA("+l",		"*logging",	XrmoptionNoArg,		"off"),
+DATA("-lf",		"*logFile",	XrmoptionSepArg,	NULL),
+DATA("-ls",		"*loginShell",	XrmoptionNoArg,		"on"),
+DATA("+ls",		"*loginShell",	XrmoptionNoArg,		"off"),
+DATA("-mb",		"*marginBell",	XrmoptionNoArg,		"on"),
+DATA("+mb",		"*marginBell",	XrmoptionNoArg,		"off"),
+DATA("-mc",		"*multiClickTime", XrmoptionSepArg,	NULL),
+DATA("-mesg",		"*messages",	XrmoptionNoArg,		"off"),
+DATA("+mesg",		"*messages",	XrmoptionNoArg,		"on"),
+DATA("-ms",		"*pointerColor",XrmoptionSepArg,	NULL),
+DATA("-nb",		"*nMarginBell",	XrmoptionSepArg,	NULL),
+DATA("-nul",		"*underLine",	XrmoptionNoArg,		"off"),
+DATA("+nul",		"*underLine",	XrmoptionNoArg,		"on"),
+DATA("-pc",		"*boldColors",	XrmoptionNoArg,		"on"),
+DATA("+pc",		"*boldColors",	XrmoptionNoArg,		"off"),
+DATA("-pf",		"*pointerFont",	XrmoptionSepArg,	NULL),
+DATA("-rw",		"*reverseWrap",	XrmoptionNoArg,		"on"),
+DATA("+rw",		"*reverseWrap",	XrmoptionNoArg,		"off"),
+DATA("-s",		"*multiScroll",	XrmoptionNoArg,		"on"),
+DATA("+s",		"*multiScroll",	XrmoptionNoArg,		"off"),
+DATA("-sb",		"*scrollBar",	XrmoptionNoArg,		"on"),
+DATA("+sb",		"*scrollBar",	XrmoptionNoArg,		"off"),
+#if OPT_REPORT_CCLASS
+DATA("-report-charclass","*reportCClass", XrmoptionNoArg,	"on"),
+#endif
 #if OPT_REPORT_COLORS
-{"-report-colors","*reportColors", XrmoptionNoArg,	(XPointer) "on"},
+DATA("-report-colors",	"*reportColors", XrmoptionNoArg,	"on"),
+#endif
+#if OPT_REPORT_ICONS
+DATA("-report-icons",	"*reportIcons",	XrmoptionNoArg,		"on"),
 #endif
 #if OPT_REPORT_FONTS
-{"-report-fonts","*reportFonts", XrmoptionNoArg,	(XPointer) "on"},
+DATA("-report-fonts",	"*reportFonts", XrmoptionNoArg,		"on"),
+#endif
+#if OPT_XRES_QUERY
+DATA("-report-xres",	"*reportXRes",	XrmoptionNoArg,		"on"),
 #endif
 #ifdef SCROLLBAR_RIGHT
-{"-leftbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "off"},
-{"-rightbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "on"},
+DATA("-leftbar",	"*rightScrollBar", XrmoptionNoArg,	"off"),
+DATA("-rightbar",	"*rightScrollBar", XrmoptionNoArg,	"on"),
 #endif
-{"-rvc",	"*colorRVMode",	XrmoptionNoArg,		(XPointer) "off"},
-{"+rvc",	"*colorRVMode",	XrmoptionNoArg,		(XPointer) "on"},
-{"-sf",		"*sunFunctionKeys", XrmoptionNoArg,	(XPointer) "on"},
-{"+sf",		"*sunFunctionKeys", XrmoptionNoArg,	(XPointer) "off"},
-{"-sh",		"*scaleHeight", XrmoptionSepArg,	(XPointer) NULL},
-{"-si",		"*scrollTtyOutput", XrmoptionNoArg,	(XPointer) "off"},
-{"+si",		"*scrollTtyOutput", XrmoptionNoArg,	(XPointer) "on"},
-{"-sk",		"*scrollKey",	XrmoptionNoArg,		(XPointer) "on"},
-{"+sk",		"*scrollKey",	XrmoptionNoArg,		(XPointer) "off"},
-{"-sl",		"*saveLines",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-rvc",		"*colorRVMode",	XrmoptionNoArg,		"off"),
+DATA("+rvc",		"*colorRVMode",	XrmoptionNoArg,		"on"),
+DATA("-sf",		"*sunFunctionKeys", XrmoptionNoArg,	"on"),
+DATA("+sf",		"*sunFunctionKeys", XrmoptionNoArg,	"off"),
+DATA("-sh",		"*scaleHeight", XrmoptionSepArg,	NULL),
+DATA("-si",		"*scrollTtyOutput", XrmoptionNoArg,	"off"),
+DATA("+si",		"*scrollTtyOutput", XrmoptionNoArg,	"on"),
+DATA("-sk",		"*scrollKey",	XrmoptionNoArg,		"on"),
+DATA("+sk",		"*scrollKey",	XrmoptionNoArg,		"off"),
+DATA("-sl",		"*saveLines",	XrmoptionSepArg,	NULL),
 #if OPT_SUNPC_KBD
-{"-sp",		"*sunKeyboard", XrmoptionNoArg,		(XPointer) "on"},
-{"+sp",		"*sunKeyboard", XrmoptionNoArg,		(XPointer) "off"},
+DATA("-sp",		"*sunKeyboard", XrmoptionNoArg,		"on"),
+DATA("+sp",		"*sunKeyboard", XrmoptionNoArg,		"off"),
 #endif
 #if OPT_TEK4014
-{"-t",		"*tekStartup",	XrmoptionNoArg,		(XPointer) "on"},
-{"+t",		"*tekStartup",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-t",		"*tekStartup",	XrmoptionNoArg,		"on"),
+DATA("+t",		"*tekStartup",	XrmoptionNoArg,		"off"),
 #endif
-{"-ti",		"*decTerminalID",XrmoptionSepArg,	(XPointer) NULL},
-{"-tm",		"*ttyModes",	XrmoptionSepArg,	(XPointer) NULL},
-{"-tn",		"*termName",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-ti",		"*decTerminalID",XrmoptionSepArg,	NULL),
+DATA("-tm",		"*ttyModes",	XrmoptionSepArg,	NULL),
+DATA("-tn",		"*termName",	XrmoptionSepArg,	NULL),
 #if OPT_WIDE_CHARS
-{"-u8",		"*utf8",	XrmoptionNoArg,		(XPointer) "2"},
-{"+u8",		"*utf8",	XrmoptionNoArg,		(XPointer) "0"},
+DATA("-u8",		"*utf8",	XrmoptionNoArg,		"2"),
+DATA("+u8",		"*utf8",	XrmoptionNoArg,		"0"),
 #endif
 #if OPT_LUIT_PROG
-{"-lc",		"*locale",	XrmoptionNoArg,		(XPointer) "on"},
-{"+lc",		"*locale",	XrmoptionNoArg,		(XPointer) "off"},
-{"-lcc",	"*localeFilter",XrmoptionSepArg,	(XPointer) NULL},
-{"-en",		"*locale",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-lc",		"*locale",	XrmoptionNoArg,		"on"),
+DATA("+lc",		"*locale",	XrmoptionNoArg,		"off"),
+DATA("-lcc",		"*localeFilter",XrmoptionSepArg,	NULL),
+DATA("-en",		"*locale",	XrmoptionSepArg,	NULL),
 #endif
-{"-uc",		"*cursorUnderLine", XrmoptionNoArg,	(XPointer) "on"},
-{"+uc",		"*cursorUnderLine", XrmoptionNoArg,	(XPointer) "off"},
-{"-ulc",	"*colorULMode",	XrmoptionNoArg,		(XPointer) "off"},
-{"+ulc",	"*colorULMode",	XrmoptionNoArg,		(XPointer) "on"},
-{"-ulit",       "*italicULMode", XrmoptionNoArg,        (XPointer) "off"},
-{"+ulit",       "*italicULMode", XrmoptionNoArg,        (XPointer) "on"},
-{"-ut",		"*utmpInhibit",	XrmoptionNoArg,		(XPointer) "on"},
-{"+ut",		"*utmpInhibit",	XrmoptionNoArg,		(XPointer) "off"},
-{"-im",		"*useInsertMode", XrmoptionNoArg,	(XPointer) "on"},
-{"+im",		"*useInsertMode", XrmoptionNoArg,	(XPointer) "off"},
-{"-vb",		"*visualBell",	XrmoptionNoArg,		(XPointer) "on"},
-{"+vb",		"*visualBell",	XrmoptionNoArg,		(XPointer) "off"},
-{"-pob",	"*popOnBell",	XrmoptionNoArg,		(XPointer) "on"},
-{"+pob",	"*popOnBell",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-uc",		"*cursorUnderLine", XrmoptionNoArg,	"on"),
+DATA("+uc",		"*cursorUnderLine", XrmoptionNoArg,	"off"),
+DATA("-ulc",		"*colorULMode",	XrmoptionNoArg,		"off"),
+DATA("+ulc",		"*colorULMode",	XrmoptionNoArg,		"on"),
+DATA("-ulit",       	"*italicULMode", XrmoptionNoArg,        "off"),
+DATA("+ulit",       	"*italicULMode", XrmoptionNoArg,        "on"),
+DATA("-ut",		"*utmpInhibit",	XrmoptionNoArg,		"on"),
+DATA("+ut",		"*utmpInhibit",	XrmoptionNoArg,		"off"),
+DATA("-im",		"*useInsertMode", XrmoptionNoArg,	"on"),
+DATA("+im",		"*useInsertMode", XrmoptionNoArg,	"off"),
+DATA("-vb",		"*visualBell",	XrmoptionNoArg,		"on"),
+DATA("+vb",		"*visualBell",	XrmoptionNoArg,		"off"),
+DATA("-pob",		"*popOnBell",	XrmoptionNoArg,		"on"),
+DATA("+pob",		"*popOnBell",	XrmoptionNoArg,		"off"),
 #if OPT_WIDE_CHARS
-{"-wc",		"*wideChars",	XrmoptionNoArg,		(XPointer) "on"},
-{"+wc",		"*wideChars",	XrmoptionNoArg,		(XPointer) "off"},
-{"-mk_width",	"*mkWidth",	XrmoptionNoArg,		(XPointer) "on"},
-{"+mk_width",	"*mkWidth",	XrmoptionNoArg,		(XPointer) "off"},
-{"-cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(XPointer) "on"},
-{"+cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-wc",		"*wideChars",	XrmoptionNoArg,		"on"),
+DATA("+wc",		"*wideChars",	XrmoptionNoArg,		"off"),
+DATA("-mk_width",	"*mkWidth",	XrmoptionNoArg,		"on"),
+DATA("+mk_width",	"*mkWidth",	XrmoptionNoArg,		"off"),
+DATA("-cjk_width",	"*cjkWidth",	XrmoptionNoArg,		"on"),
+DATA("+cjk_width",	"*cjkWidth",	XrmoptionNoArg,		"off"),
 #endif
-{"-wf",		"*waitForMap",	XrmoptionNoArg,		(XPointer) "on"},
-{"+wf",		"*waitForMap",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-wf",		"*waitForMap",	XrmoptionNoArg,		"on"),
+DATA("+wf",		"*waitForMap",	XrmoptionNoArg,		"off"),
 #if OPT_ZICONBEEP
-{"-ziconbeep",	"*zIconBeep",	XrmoptionSepArg,	(XPointer) NULL},
+DATA("-ziconbeep",	"*zIconBeep",	XrmoptionSepArg,	NULL),
 #endif
 #if OPT_SAME_NAME
-{"-samename",	"*sameName",	XrmoptionNoArg,		(XPointer) "on"},
-{"+samename",	"*sameName",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-samename",	"*sameName",	XrmoptionNoArg,		"on"),
+DATA("+samename",	"*sameName",	XrmoptionNoArg,		"off"),
 #endif
 #if OPT_SESSION_MGT
-{"-sm",		"*sessionMgt",	XrmoptionNoArg,		(XPointer) "on"},
-{"+sm",		"*sessionMgt",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-sm",		"*sessionMgt",	XrmoptionNoArg,		"on"),
+DATA("+sm",		"*sessionMgt",	XrmoptionNoArg,		"off"),
 #endif
 #if OPT_TOOLBAR
-{"-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(XPointer) "on"},
-{"+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		"on"),
+DATA("+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		"off"),
 #endif
 #if OPT_MAXIMIZE
-{"-maximized",	"*maximized",	XrmoptionNoArg,		(XPointer) "on"},
-{"+maximized",	"*maximized",	XrmoptionNoArg,		(XPointer) "off"},
-{"-fullscreen",	"*fullscreen",	XrmoptionNoArg,		(XPointer) "on"},
-{"+fullscreen",	"*fullscreen",	XrmoptionNoArg,		(XPointer) "off"},
+DATA("-maximized",	"*maximized",	XrmoptionNoArg,		"on"),
+DATA("+maximized",	"*maximized",	XrmoptionNoArg,		"off"),
+DATA("-fullscreen",	"*fullscreen",	XrmoptionNoArg,		"on"),
+DATA("+fullscreen",	"*fullscreen",	XrmoptionNoArg,		"off"),
 #endif
 /* options that we process ourselves */
-{"-help",	NULL,		XrmoptionSkipNArgs,	(XPointer) NULL},
-{"-version",	NULL,		XrmoptionSkipNArgs,	(XPointer) NULL},
-{"-baudrate",	NULL,		XrmoptionSkipArg,	(XPointer) NULL},
-{"-class",	NULL,		XrmoptionSkipArg,	(XPointer) NULL},
-{"-e",		NULL,		XrmoptionSkipLine,	(XPointer) NULL},
-{"-into",	NULL,		XrmoptionSkipArg,	(XPointer) NULL},
+DATA("-help",		NULL,		XrmoptionSkipNArgs,	NULL),
+DATA("-version",	NULL,		XrmoptionSkipNArgs,	NULL),
+DATA("-baudrate",	NULL,		XrmoptionSkipArg,	NULL),
+DATA("-class",		NULL,		XrmoptionSkipArg,	NULL),
+DATA("-e",		NULL,		XrmoptionSkipLine,	NULL),
+DATA("-into",		NULL,		XrmoptionSkipArg,	NULL),
 /* bogus old compatibility stuff for which there are
    standard XtOpenApplication options now */
-{"%",		"*tekGeometry",	XrmoptionStickyArg,	(XPointer) NULL},
-{"#",		".iconGeometry",XrmoptionStickyArg,	(XPointer) NULL},
-{"-T",		".title",	XrmoptionSepArg,	(XPointer) NULL},
-{"-n",		"*iconName",	XrmoptionSepArg,	(XPointer) NULL},
-{"-r",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "on"},
-{"+r",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "off"},
-{"-rv",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "on"},
-{"+rv",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "off"},
-{"-w",		".borderWidth", XrmoptionSepArg,	(XPointer) NULL},
+DATA("%",		"*tekGeometry",	XrmoptionStickyArg,	NULL),
+DATA("#",		".iconGeometry",XrmoptionStickyArg,	NULL),
+DATA("-T",		".title",	XrmoptionSepArg,	NULL),
+DATA("-n",		"*iconName",	XrmoptionSepArg,	NULL),
+DATA("-r",		"*reverseVideo",XrmoptionNoArg,		"on"),
+DATA("+r",		"*reverseVideo",XrmoptionNoArg,		"off"),
+DATA("-rv",		"*reverseVideo",XrmoptionNoArg,		"on"),
+DATA("+rv",		"*reverseVideo",XrmoptionNoArg,		"off"),
+DATA("-w",		".borderWidth", XrmoptionSepArg,	NULL),
+#undef DATA
 };
 
 static OptionHelp xtermOptions[] = {
@@ -1145,6 +1229,7 @@ static OptionHelp xtermOptions[] = {
 { "-bw number",            "border width in pixels" },
 { "-fn fontname",          "normal text font" },
 { "-fb fontname",          "bold text font" },
+{ "-fc fontmenu",          "start with named fontmenu choice" },
 { "-/+fbb",                "turn on/off normal/bold font comparison inhibit"},
 { "-/+fbx",                "turn off/on linedrawing characters"},
 #if OPT_RENDERFONT
@@ -1180,6 +1265,7 @@ static OptionHelp xtermOptions[] = {
 { "-cc classrange",        "specify additional character classes" },
 { "-/+cm",                 "turn off/on ANSI color mode" },
 { "-/+cn",                 "turn on/off cut newline inhibit" },
+{ "-pf fontname",          "cursor font for text area pointer" },
 { "-cr color",             "text cursor color" },
 { "-/+cu",                 "turn on/off curses emulation" },
 { "-/+dc",                 "turn off/on dynamic color selection" },
@@ -1204,7 +1290,7 @@ static OptionHelp xtermOptions[] = {
 { "-kt keyboardtype",      "set keyboard type:" KEYBOARD_TYPES },
 #ifdef ALLOWLOGGING
 { "-/+l",                  "turn on/off logging" },
-{ "-lf filename",          "logging filename" },
+{ "-lf filename",          "logging filename (use '-' for standard out)" },
 #else
 { "-/+l",                  "turn on/off logging (not supported)" },
 { "-lf filename",          "logging filename (not supported)" },
@@ -1221,11 +1307,20 @@ static OptionHelp xtermOptions[] = {
 { "-/+rw",                 "turn on/off reverse wraparound" },
 { "-/+s",                  "turn on/off multiscroll" },
 { "-/+sb",                 "turn on/off scrollbar" },
+#if OPT_REPORT_CCLASS
+{"-report-charclass",      "report \"charClass\" after initialization"},
+#endif
 #if OPT_REPORT_COLORS
 { "-report-colors",        "report colors as they are allocated" },
 #endif
 #if OPT_REPORT_FONTS
 { "-report-fonts",         "report fonts as loaded to stdout" },
+#endif
+#if OPT_REPORT_ICONS
+{ "-report-icons",	   "report title/icon updates" },
+#endif
+#if OPT_XRES_QUERY
+{ "-report-xres",          "report X resources for VT100 widget" },
 #endif
 #ifdef SCROLLBAR_RIGHT
 { "-rightbar",             "force scrollbar right (default left)" },
@@ -1440,7 +1535,7 @@ parseArg(int *num, char **argv, char **valuep)
 {
     /* table adapted from XtInitialize, used here to improve abbreviations */
     /* *INDENT-OFF* */
-#define DATA(option,kind) { option, NULL, kind, (XtPointer) NULL }
+#define DATA(option,kind) { (char *) option, NULL, kind, (XtPointer) NULL }
     static XrmOptionDescRec opTable[] = {
 	DATA("+synchronous",	   XrmoptionNoArg),
 	DATA("-background",	   XrmoptionSepArg),
@@ -1472,7 +1567,6 @@ parseArg(int *num, char **argv, char **valuep)
     };
 #undef DATA
     /* *INDENT-ON* */
-
     XrmOptionDescRec *result = 0;
     Cardinal inlist;
     Cardinal limit = XtNumber(optionDescList) + XtNumber(opTable);
@@ -1640,6 +1734,15 @@ Help(void)
 	puts(*cpp);
     putchar('\n');
     fflush(stdout);
+}
+
+static void
+NeedParam(XrmOptionDescRec * option_ptr, const char *option_val)
+{
+    if (IsEmpty(option_val)) {
+	xtermWarning("option %s requires a value\n", option_ptr->option);
+	exit(1);
+    }
 }
 
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
@@ -2113,6 +2216,9 @@ main(int argc, char *argv[]ENVP_ARG)
     char *my_class = x_strdup(DEFCLASS);
     unsigned line_speed = VAL_LINE_SPEED;
     Window winToEmbedInto = None;
+#if defined(HAVE_LIB_XAW3DXFT)
+    Xaw3dXftData *xaw3dxft_data;
+#endif
 
     ProgramName = argv[0];
 
@@ -2194,11 +2300,13 @@ main(int argc, char *argv[]ENVP_ARG)
 		Help();
 		quit = True;
 	    } else if (!strcmp(option_ptr->option, "-baudrate")) {
+		NeedParam(option_ptr, option_value);
 		if ((line_speed = lookup_baudrate(option_value)) == 0) {
 		    Help();
 		    quit = True;
 		}
 	    } else if (!strcmp(option_ptr->option, "-class")) {
+		NeedParam(option_ptr, option_value);
 		free(my_class);
 		if ((my_class = x_strdup(option_value)) == 0) {
 		    Help();
@@ -2206,6 +2314,7 @@ main(int argc, char *argv[]ENVP_ARG)
 		}
 	    } else if (!strcmp(option_ptr->option, "-into")) {
 		char *endPtr;
+		NeedParam(option_ptr, option_value);
 		winToEmbedInto = (Window) strtol(option_value, &endPtr, 0);
 		if (!FullS2L(option_value, endPtr)) {
 		    Help();
@@ -2229,6 +2338,12 @@ main(int argc, char *argv[]ENVP_ARG)
     XtSetLanguageProc(NULL, NULL, NULL);
 #endif
 
+    /* enable Xft support in Xaw3DXft */
+#if defined(HAVE_LIB_XAW3DXFT)
+    GET_XAW3DXFT_DATA(xaw3dxft_data);
+    xaw3dxft_data->encoding = -1;
+#endif
+
 #ifdef TERMIO_STRUCT		/* { */
     /* Initialization is done here rather than above in order
      * to prevent any assumptions about the order of the contents
@@ -2237,23 +2352,15 @@ main(int argc, char *argv[]ENVP_ARG)
      */
     memset(&d_tio, 0, sizeof(d_tio));
     d_tio.c_iflag = ICRNL | IXON;
-#ifdef TAB3
-    d_tio.c_oflag = OPOST | ONLCR | TAB3;
-#else
-#ifdef ONLCR
-    d_tio.c_oflag = OPOST | ONLCR;
-#else
-    d_tio.c_oflag = OPOST;
-#endif
-#endif
+    d_tio.c_oflag = TAB3 | D_TIO_FLAGS;
     {
 	Cardinal nn;
 
 	/* fill in default-values */
-	for (nn = 0; nn < XtNumber(known_ttyChars); ++nn) {
+	for (nn = 0; nn < XtNumber(ttyChars); ++nn) {
 	    if (validTtyChar(d_tio, nn)) {
-		d_tio.c_cc[known_ttyChars[nn].sysMode] =
-		    (cc_t) known_ttyChars[nn].myDefault;
+		d_tio.c_cc[ttyChars[nn].sysMode] =
+		    (cc_t) ttyChars[nn].myDefault;
 	    }
 	}
     }
@@ -2321,10 +2428,10 @@ main(int argc, char *argv[]ENVP_ARG)
 	for (i = 0; i <= 2; i++) {
 	    TERMIO_STRUCT deftio;
 	    if (ttyGetAttr(i, &deftio) == 0) {
-		for (nn = 0; nn < XtNumber(known_ttyChars); ++nn) {
+		for (nn = 0; nn < XtNumber(ttyChars); ++nn) {
 		    if (validTtyChar(d_tio, nn)) {
-			d_tio.c_cc[known_ttyChars[nn].sysMode] =
-			    deftio.c_cc[known_ttyChars[nn].sysMode];
+			d_tio.c_cc[ttyChars[nn].sysMode] =
+			    deftio.c_cc[ttyChars[nn].sysMode];
 		    }
 		}
 		break;
@@ -2361,7 +2468,7 @@ main(int argc, char *argv[]ENVP_ARG)
 					my_class,
 					optionDescList,
 					XtNumber(optionDescList),
-					&argc, (String *) argv,
+					&argc, argv,
 					fallback_resources,
 					sessionShellWidgetClass,
 					NULL, 0);
@@ -2370,10 +2477,16 @@ main(int argc, char *argv[]ENVP_ARG)
 				  application_resources,
 				  XtNumber(application_resources), NULL, 0);
 	TRACE_XRES();
+#if USE_DOUBLE_BUFFER
+	if (resource.buffered_fps <= 0)
+	    resource.buffered_fps = DEF_BUFFER_RATE;
+	if (resource.buffered_fps > 100)
+	    resource.buffered_fps = 100;
+#endif
 #if OPT_MAXIMIZE
 	resource.fullscreen = extendedBoolean(resource.fullscreen_s,
 					      tblFullscreen,
-					      XtNumber(tblFullscreen));
+					      esLAST);
 #endif
 	VTInitTranslations();
 #if OPT_PTY_HANDSHAKE
@@ -2402,7 +2515,7 @@ main(int argc, char *argv[]ENVP_ARG)
      * fill in terminal modes
      */
     if (resource.tty_modes) {
-	int n = parse_tty_modes(resource.tty_modes, ttymodelist);
+	int n = parse_tty_modes(resource.tty_modes);
 	if (n < 0) {
 	    xtermWarning("bad tty modes \"%s\"\n", resource.tty_modes);
 	} else if (n > 0) {
@@ -2484,12 +2597,14 @@ main(int argc, char *argv[]ENVP_ARG)
 	case 'b':
 	    if (strcmp(argv[0], "-baudrate"))
 		Syntax(*argv);
-	    argc--, argv++;
+	    argc--;
+	    argv++;
 	    continue;
 	case 'c':
 	    if (strcmp(argv[0], "-class"))
 		Syntax(*argv);
-	    argc--, argv++;
+	    argc--;
+	    argv++;
 	    continue;
 	case 'e':
 	    if (strcmp(argv[0], "-e"))
@@ -2499,7 +2614,8 @@ main(int argc, char *argv[]ENVP_ARG)
 	case 'i':
 	    if (strcmp(argv[0], "-into"))
 		Syntax(*argv);
-	    argc--, argv++;
+	    argc--;
+	    argv++;
 	    continue;
 
 	default:
@@ -2610,7 +2726,7 @@ main(int argc, char *argv[]ENVP_ARG)
 	command_length_with_luit = x_countargv(command_to_exec_with_luit);
 	if (count_exec) {
 	    static char *fixup_shell[] =
-	    {"sh", "-c", 0};
+	    {(char *) "sh", (char *) "-c", 0};
 	    char *delimiter[2];
 	    delimiter[0] = x_strdup("--");
 	    delimiter[1] = 0;
@@ -2819,17 +2935,7 @@ get_pty(int *pty, char *from GCC_UNUSED)
     result = pty_search(pty);
 #else
 #if defined(USE_USG_PTYS) || defined(__CYGWIN__)
-#ifdef __GLIBC__		/* if __GLIBC__ and USE_USG_PTYS, we know glibc >= 2.1 */
-    /* GNU libc 2 allows us to abstract away from having to know the
-       master pty device name. */
-    if ((*pty = getpt()) >= 0) {
-	char *name = ptsname(*pty);
-	if (name != 0) {	/* if filesystem is trashed, this may be null */
-	    strcpy(ttydev, name);
-	    result = 0;
-	}
-    }
-#elif defined(__MVS__)
+#if defined(__MVS__)
     result = pty_search(pty);
 #else
     result = ((*pty = open("/dev/ptmx", O_RDWR)) < 0);
@@ -2923,14 +3029,14 @@ set_pty_permissions(uid_t uid, unsigned gid, unsigned mode)
     struct group *ttygrp;
 
     if ((ttygrp = getgrnam(TTY_GROUP_NAME)) != 0) {
-	gid = ttygrp->gr_gid;
+	gid = (unsigned) ttygrp->gr_gid;
 	mode &= 0660U;
     }
     endgrent();
 #endif /* USE_TTY_GROUP */
 
     TRACE_IDS;
-    set_owner(ttydev, uid, gid, mode);
+    set_owner(ttydev, (unsigned) uid, gid, mode);
 }
 
 #ifdef get_pty			/* USE_UTMP_SETGID */
@@ -3074,7 +3180,7 @@ static const char *const vtterm[] =
     "x11term",			/* for people who want special term name */
 #endif
     DFT_TERMTYPE,		/* for people who want special term name */
-    "xterm",			/* the prefered name, should be fastest */
+    "xterm",			/* the preferred name, should be fastest */
     "vt102",
     "vt100",
     "ansi",
@@ -3107,6 +3213,8 @@ typedef enum {			/* c == child, p == parent                        */
     PTY_EXEC			/* p->c: window has been mapped the first time    */
 } status_t;
 
+#define HANDSHAKE_LEN	1024
+
 typedef struct {
     status_t status;
     int error;
@@ -3114,8 +3222,12 @@ typedef struct {
     int tty_slot;
     int rows;
     int cols;
-    char buffer[1024];
+    char buffer[HANDSHAKE_LEN];
 } handshake_t;
+
+/* the buffer is large enough that we can always have a trailing null */
+#define copy_handshake(dst, src) \
+	strncpy(dst.buffer, src, (size_t)HANDSHAKE_LEN - 1)[HANDSHAKE_LEN - 1] = '\0'
 
 #if OPT_TRACE
 static void
@@ -3177,7 +3289,7 @@ HsSysError(int error)
     handshake.status = PTY_FATALERROR;
     handshake.error = errno;
     handshake.fatal_error = error;
-    strncpy(handshake.buffer, ttydev, sizeof(handshake.buffer));
+    copy_handshake(handshake, ttydev);
 
     if (resource.ptyHandshake && (cp_pipe[1] >= 0)) {
 	TRACE(("HsSysError errno=%d, error=%d device \"%s\"\n",
@@ -3203,16 +3315,16 @@ void
 first_map_occurred(void)
 {
     if (resource.wait_for_map) {
-	handshake_t handshake;
-	TScreen *screen = TScreenOf(term);
-
-	memset(&handshake, 0, sizeof(handshake));
-	handshake.status = PTY_EXEC;
-	handshake.rows = screen->max_row;
-	handshake.cols = screen->max_col;
-
 	if (pc_pipe[1] >= 0) {
-	    TRACE(("first_map_occurred: %dx%d\n", handshake.rows, handshake.cols));
+	    handshake_t handshake;
+	    TScreen *screen = TScreenOf(term);
+
+	    memset(&handshake, 0, sizeof(handshake));
+	    handshake.status = PTY_EXEC;
+	    handshake.rows = screen->max_row;
+	    handshake.cols = screen->max_col;
+
+	    TRACE(("first_map_occurred: %dx%d\n", MaxRows(screen), MaxCols(screen)));
 	    TRACE_HANDSHAKE("writing", &handshake);
 	    IGNORE_RC(write(pc_pipe[1],
 			    (const char *) &handshake,
@@ -3246,7 +3358,7 @@ set_owner(char *device, unsigned uid, unsigned gid, unsigned mode)
     TRACE(("set_owner(%s, uid=%d, gid=%d, mode=%#o\n",
 	   device, (int) uid, (int) gid, (unsigned) mode));
 
-    if (chown(device, uid, gid) < 0) {
+    if (chown(device, (uid_t) uid, (gid_t) gid) < 0) {
 	why = errno;
 	if (why != ENOENT
 	    && save_ruid == 0) {
@@ -3254,7 +3366,7 @@ set_owner(char *device, unsigned uid, unsigned gid, unsigned mode)
 			device, (long) uid, (long) gid);
 	}
 	TRACE(("...chown failed: %s\n", strerror(why)));
-    } else if (chmod(device, mode) < 0) {
+    } else if (chmod(device, (mode_t) mode) < 0) {
 	why = errno;
 	if (why != ENOENT) {
 	    struct stat sb;
@@ -3301,7 +3413,7 @@ static void
 init_utmp(int type, struct UTMP_STR *tofind)
 {
     memset(tofind, 0, sizeof(*tofind));
-    tofind->ut_type = type;
+    tofind->ut_type = (short) type;
     copy_filled(tofind->ut_id, my_utmp_id(ttydev), sizeof(tofind->ut_id));
     copy_filled(tofind->ut_line, my_pty_name(ttydev), sizeof(tofind->ut_line));
 }
@@ -3376,60 +3488,137 @@ same_file(const char *a, const char *b)
     return result;
 }
 
+static int
+findValidShell(const char *haystack, const char *needle)
+{
+    int result = -1;
+    int count = -1;
+    const char *s, *t;
+    size_t have;
+    size_t want = strlen(needle);
+
+    TRACE(("findValidShell:\n%s\n", NonNull(haystack)));
+
+    for (s = haystack; (s != 0) && (*s != '\0'); s = t) {
+	++count;
+	if ((t = strchr(s, '\n')) == 0) {
+	    t = s + strlen(s);
+	}
+	have = (size_t) (t - s);
+
+	if ((have >= want) && (*s != '#')) {
+	    char *p = malloc(have + 1);
+
+	    if (p != 0) {
+		char *q;
+
+		memcpy(p, s, have);
+		p[have] = '\0';
+		if ((q = x_strtrim(p)) != 0) {
+		    TRACE(("...test %s\n", q));
+		    if (!strcmp(q, needle)) {
+			result = count;
+		    } else if (same_leaf(q, (char *) needle) &&
+			       same_file(q, needle)) {
+			result = count;
+		    }
+		    free(q);
+		}
+		free(p);
+	    }
+	    if (result >= 0)
+		break;
+	}
+	while (*t == '\n') {
+	    ++t;
+	}
+    }
+    return result;
+}
+
+static int
+ourValidShell(const char *pathname)
+{
+    return findValidShell(x_strtrim(resource.valid_shells), pathname);
+}
+
+#if defined(HAVE_GETUSERSHELL) && defined(HAVE_ENDUSERSHELL)
+static Boolean
+validShell(const char *pathname)
+{
+    int result = -1;
+
+    if (validProgram(pathname)) {
+	char *q;
+	int count = -1;
+
+	TRACE(("validShell:getusershell\n"));
+	while ((q = getusershell()) != 0) {
+	    ++count;
+	    TRACE(("...test \"%s\"\n", q));
+	    if (!strcmp(q, pathname)) {
+		result = count;
+		break;
+	    }
+	}
+	endusershell();
+
+	if (result < 0)
+	    result = ourValidShell(pathname);
+    }
+
+    TRACE(("validShell %s ->%d\n", NonNull(pathname), result));
+    return (result >= 0);
+}
+#else
 /*
  * Only set $SHELL for paths found in the standard location.
  */
 static Boolean
 validShell(const char *pathname)
 {
-    Boolean result = False;
+    int result = -1;
     const char *ok_shells = "/etc/shells";
     char *blob;
     struct stat sb;
     size_t rc;
     FILE *fp;
 
-    if (validProgram(pathname)
-	&& stat(ok_shells, &sb) == 0
-	&& (sb.st_mode & S_IFMT) == S_IFREG
-	&& ((size_t) sb.st_size > 0)
-	&& ((size_t) sb.st_size < (((size_t) ~0) - 2))
-	&& (blob = calloc((size_t) sb.st_size + 2, sizeof(char))) != 0) {
-	if ((fp = fopen(ok_shells, "r")) != 0) {
-	    rc = fread(blob, sizeof(char), (size_t) sb.st_size, fp);
-	    if (rc == (size_t) sb.st_size) {
-		char *p = blob;
-		char *q, *r;
-		blob[rc] = '\0';
-		while (!result && (q = strtok(p, "\n")) != 0) {
-		    if ((r = x_strtrim(q)) != 0) {
-			TRACE(("...test \"%s\"\n", q));
-			if (!strcmp(q, pathname)) {
-			    result = True;
-			} else if (same_leaf(q, (char *) pathname) &&
-				   same_file(q, pathname)) {
-			    result = True;
-			}
-			free(r);
-		    }
-		    p = 0;
+    if (validProgram(pathname)) {
+
+	TRACE(("validShell:%s\n", ok_shells));
+
+	if (stat(ok_shells, &sb) == 0
+	    && (sb.st_mode & S_IFMT) == S_IFREG
+	    && ((size_t) sb.st_size > 0)
+	    && ((size_t) sb.st_size < (((size_t) ~0) - 2))
+	    && (blob = calloc((size_t) sb.st_size + 2, sizeof(char))) != 0) {
+
+	    if ((fp = fopen(ok_shells, "r")) != 0) {
+		rc = fread(blob, sizeof(char), (size_t) sb.st_size, fp);
+		fclose(fp);
+
+		if (rc == (size_t) sb.st_size) {
+		    blob[rc] = '\0';
+		    result = findValidShell(blob, pathname);
 		}
 	    }
-	    fclose(fp);
+	    free(blob);
 	}
-	free(blob);
+	if (result < 0)
+	    result = ourValidShell(pathname);
     }
     TRACE(("validShell %s ->%d\n", NonNull(pathname), result));
-    return result;
+    return (result > 0);
 }
+#endif
 
 static char *
 resetShell(char *oldPath)
 {
     char *newPath = x_strdup("/bin/sh");
     char *envPath = getenv("SHELL");
-    if (oldPath != 0)
-	free(oldPath);
+    free(oldPath);
     if (!IsEmpty(envPath))
 	xtermSetenv("SHELL", newPath);
     return newPath;
@@ -3551,9 +3740,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	 * defaults.
 	 */
 
-	signal(SIGALRM, hungtty);
-	alarm(2);		/* alarm(1) might return too soon */
 	if (!sigsetjmp(env, 1)) {
+	    signal(SIGALRM, hungtty);
+	    alarm(2);		/* alarm(1) might return too soon */
 	    ttyfd = open("/dev/tty", O_RDWR);
 	    alarm(0);
 	    tty_got_hung = False;
@@ -3680,7 +3869,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	if (get_pty(&screen->respond, XDisplayString(screen->display))) {
 	    SysError(ERROR_PTYS);
 	}
-	TRACE_TTYSIZE(screen->respond, "after get_pty");
+	TRACE_GET_TTYSIZE(screen->respond, "after get_pty");
 #if OPT_INITIAL_ERASE
 	if (resource.ptyInitialErase) {
 #ifdef TERMIO_STRUCT
@@ -3762,7 +3951,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	}
     }
     if (ok_termcap) {
-	resource.term_name = TermName;
+	resource.term_name = x_strdup(TermName);
 	resize_termcap(xw);
     }
 
@@ -3774,8 +3963,8 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
     TRACE(("resource ptyInitialErase is %sset\n",
 	   resource.ptyInitialErase ? "" : "not "));
     setInitialErase = False;
-    if (override_tty_modes && ttymodelist[XTTYMODE_erase].set) {
-	initial_erase = ttymodelist[XTTYMODE_erase].value;
+    if (override_tty_modes && ttyModes[XTTYMODE_erase].set) {
+	initial_erase = ttyModes[XTTYMODE_erase].value;
 	setInitialErase = True;
     } else if (resource.ptyInitialErase) {
 	/* EMPTY */ ;
@@ -3811,21 +4000,14 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
     /* tell tty how big window is */
 #if OPT_TEK4014
     if (TEK4014_ACTIVE(xw)) {
-	TTYSIZE_ROWS(ts) = 38;
-	TTYSIZE_COLS(ts) = 81;
-#if defined(USE_STRUCT_WINSIZE)
-	ts.ws_xpixel = TFullWidth(TekScreenOf(tekWidget));
-	ts.ws_ypixel = TFullHeight(TekScreenOf(tekWidget));
-#endif
+	setup_winsize(ts, TDefaultRows, TDefaultCols,
+		      TFullHeight(TekScreenOf(tekWidget)),
+		      TFullWidth(TekScreenOf(tekWidget)));
     } else
 #endif
     {
-	TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
-	TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
-#if defined(USE_STRUCT_WINSIZE)
-	ts.ws_xpixel = (ttySize_t) FullWidth(screen);
-	ts.ws_ypixel = (ttySize_t) FullHeight(screen);
-#endif
+	setup_winsize(ts, MaxRows(screen), MaxCols(screen),
+		      FullHeight(screen), FullWidth(screen));
     }
     TRACE_RC(i, SET_TTYSIZE(screen->respond, ts));
     TRACE(("spawn SET_TTYSIZE %dx%d return %d\n",
@@ -3843,7 +4025,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 #endif
 #if !defined(USE_USG_PTYS) && defined(HAVE_POSIX_OPENPT)
     unlockpt(screen->respond);
-    TRACE_TTYSIZE(screen->respond, "after unlockpt");
+    TRACE_GET_TTYSIZE(screen->respond, "after unlockpt");
 #endif
 #endif /* !USE_OPENPTY */
 
@@ -3857,7 +4039,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	SetUtmpHost(dummy.ut_host, screen);
 	TRACE(("...calling addToUtmp(pty=%s, hostname=%s, master_fd=%d)\n",
 	       ttydev, dummy.ut_host, screen->respond));
-	addToUtmp(ttydev, dummy.ut_host, screen->respond);
+	UTEMPTER_ADD(ttydev, dummy.ut_host, screen->respond);
 	added_utmp_entry = True;
     }
 #endif
@@ -3893,7 +4075,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		setpgrp();
 #endif
 	    unlockpt(screen->respond);
-	    TRACE_TTYSIZE(screen->respond, "after unlockpt");
+	    TRACE_GET_TTYSIZE(screen->respond, "after unlockpt");
 	    if ((pty_name = ptsname(screen->respond)) == 0) {
 		SysError(ERROR_PTSNAME);
 	    } else if ((ptyfd = open(pty_name, O_RDWR)) < 0) {
@@ -3927,22 +4109,16 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	    /* tell tty how big window is */
 #if OPT_TEK4014
 	    if (TEK4014_ACTIVE(xw)) {
-		TTYSIZE_ROWS(ts) = 24;
-		TTYSIZE_COLS(ts) = 80;
-#ifdef USE_STRUCT_WINSIZE
-		ts.ws_xpixel = TFullWidth(TekScreenOf(tekWidget));
-		ts.ws_ypixel = TFullHeight(TekScreenOf(tekWidget));
-#endif
+		setup_winsize(ts, TDefaultRows, TDefaultCols,
+			      TFullHeight(TekScreenOf(tekWidget)),
+			      TFullWidth(TekScreenOf(tekWidget)));
 	    } else
 #endif /* OPT_TEK4014 */
 	    {
-		TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
-		TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
-#ifdef USE_STRUCT_WINSIZE
-		ts.ws_xpixel = (ttySize_t) FullWidth(screen);
-		ts.ws_ypixel = (ttySize_t) FullHeight(screen);
-#endif
+		setup_winsize(ts, MaxRows(screen), MaxCols(screen),
+			      FullHeight(screen), FullWidth(screen));
 	    }
+	    trace_winsize(ts, "initial tty size");
 #endif /* TTYSIZE_STRUCT */
 
 #endif /* USE_USG_PTYS */
@@ -4018,9 +4194,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    IGNORE_RC(revoke(ttydev));
 #endif
 		    if ((ttyfd = open(ttydev, O_RDWR)) >= 0) {
-			TRACE_TTYSIZE(ttyfd, "after open");
+			TRACE_GET_TTYSIZE(ttyfd, "after open");
 			TRACE_RC(i, SET_TTYSIZE(ttyfd, ts));
-			TRACE_TTYSIZE(ttyfd, "after fixup");
+			TRACE_GET_TTYSIZE(ttyfd, "after SET_TTYSIZE fixup");
 #if defined(CRAY) && defined(TCSETCTTY)
 			/* make /dev/tty work */
 			ioctl(ttyfd, TCSETCTTY, 0);
@@ -4051,7 +4227,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    /* let our master know that the open failed */
 		    handshake.status = PTY_BAD;
 		    handshake.error = errno;
-		    strncpy(handshake.buffer, ttydev, sizeof(handshake.buffer));
+		    copy_handshake(handshake, ttydev);
 		    TRACE_HANDSHAKE("writing", &handshake);
 		    IGNORE_RC(write(cp_pipe[1],
 				    (const char *) &handshake,
@@ -4074,6 +4250,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    if (ttyfd >= 0)
 			close(ttyfd);
 		    free(ttydev);
+		    handshake.buffer[HANDSHAKE_LEN - 1] = '\0';
 		    ttydev = x_strdup(handshake.buffer);
 		}
 
@@ -4088,7 +4265,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 #endif /* OPT_PTY_HANDSHAKE -- from near fork */
 
 	    set_pty_permissions(screen->uid,
-				screen->gid,
+				(unsigned) screen->gid,
 				(resource.messages
 				 ? 0622U
 				 : 0600U));
@@ -4120,7 +4297,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    if (screen->utf8_mode)
 			tio.c_iflag |= IUTF8;
 #endif
-		/* ouput: cr->cr, nl is not return, no delays, ln->cr/nl */
+		/* output: cr->cr, nl is not return, no delays, ln->cr/nl */
 #ifndef USE_POSIX_TERMIOS
 		UIntClr(tio.c_oflag,
 			(OCRNL
@@ -4132,12 +4309,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 			 | VTDLY
 			 | FFDLY));
 #endif /* USE_POSIX_TERMIOS */
-#ifdef ONLCR
-		tio.c_oflag |= ONLCR;
-#endif /* ONLCR */
-#ifdef OPOST
-		tio.c_oflag |= OPOST;
-#endif /* OPOST */
+		tio.c_oflag |= D_TIO_FLAGS;
 #ifndef USE_POSIX_TERMIOS
 # if defined(Lynx) && !defined(CBAUD)
 #  define CBAUD V_CBAUD
@@ -4171,9 +4343,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 #ifdef ECHOCTL
 		tio.c_lflag |= ECHOCTL | IEXTEN;
 #endif
-		for (nn = 0; nn < XtNumber(known_ttyChars); ++nn) {
+		for (nn = 0; nn < XtNumber(ttyChars); ++nn) {
 		    if (validTtyChar(tio, nn)) {
-			int sysMode = known_ttyChars[nn].sysMode;
+			int sysMode = ttyChars[nn].sysMode;
 #ifdef __MVS__
 			if (tio.c_cc[sysMode] != 0) {
 			    switch (sysMode) {
@@ -4183,15 +4355,21 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 			    }
 			}
 #endif
-			tio.c_cc[sysMode] = (cc_t) known_ttyChars[nn].myDefault;
+			tio.c_cc[sysMode] = (cc_t) ttyChars[nn].myDefault;
 		    }
 		}
 
 		if (override_tty_modes) {
-		    for (nn = 0; nn < XtNumber(known_ttyChars); ++nn) {
+		    TRACE(("applying termios ttyModes\n"));
+		    for (nn = 0; nn < XtNumber(ttyChars); ++nn) {
 			if (validTtyChar(tio, nn)) {
-			    TMODE(known_ttyChars[nn].myMode,
-				  tio.c_cc[known_ttyChars[nn].sysMode]);
+			    TMODE(ttyChars[nn].myMode,
+				  tio.c_cc[ttyChars[nn].sysMode]);
+			} else if (isTabMode(nn)) {
+			    unsigned tmp = (unsigned) tio.c_oflag;
+			    tmp = tmp & (unsigned) ~TABDLY;
+			    tmp |= (unsigned) ttyModes[ttyChars[nn].myMode].value;
+			    tio.c_oflag = tmp;
 			}
 		    }
 #ifdef HAS_LTCHARS
@@ -4208,8 +4386,11 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 #ifdef __hpux
 		/* ioctl chokes when the "reserved" process group controls
 		 * are not set to _POSIX_VDISABLE */
-		ltc.t_rprntc = ltc.t_rprntc = ltc.t_flushc =
-		    ltc.t_werasc = ltc.t_lnextc = _POSIX_VDISABLE;
+		ltc.t_rprntc = _POSIX_VDISABLE;
+		ltc.t_rprntc = _POSIX_VDISABLE;
+		ltc.t_flushc = _POSIX_VDISABLE;
+		ltc.t_werasc = _POSIX_VDISABLE;
+		ltc.t_lnextc = _POSIX_VDISABLE;
 #endif /* __hpux */
 		if (ioctl(ttyfd, TIOCSLTC, &ltc) == -1)
 		    HsSysError(ERROR_TIOCSETC);
@@ -4250,6 +4431,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		ltc = d_ltc;
 
 		if (override_tty_modes) {
+		    TRACE(("applying sgtty ttyModes\n"));
 		    TMODE(XTTYMODE_intr, tc.t_intrc);
 		    TMODE(XTTYMODE_quit, tc.t_quitc);
 		    TMODE(XTTYMODE_erase, sg.sg_erase);
@@ -4265,6 +4447,12 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    TMODE(XTTYMODE_flush, ltc.t_flushc);
 		    TMODE(XTTYMODE_weras, ltc.t_werasc);
 		    TMODE(XTTYMODE_lnext, ltc.t_lnextc);
+		    if (ttyModes[XTTYMODE_tabs].set
+			|| ttyModes[XTTYMODE__tabs].set) {
+			sg.sg_flags &= ~XTABS;
+			if (ttyModes[XTTYMODE__tabs].set.set)
+			    sg.sg_flags |= XTABS;
+		    }
 		}
 
 		if (ioctl(ttyfd, TIOCSETP, (char *) &sg) == -1)
@@ -4324,7 +4512,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		   setInitialErase ? "YES" : "NO",
 		   resource.ptyInitialErase,
 		   override_tty_modes,
-		   ttymodelist[XTTYMODE_erase].set));
+		   ttyModes[XTTYMODE_erase].set));
 	    if (setInitialErase) {
 #if OPT_TRACE
 		int old_erase;
@@ -4619,9 +4807,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 #ifdef USE_LASTLOGX
 	    if (xw->misc.login_shell) {
 		memset(&lastlogx, 0, sizeof(lastlogx));
-		(void) strncpy(lastlogx.ll_line,
-			       my_pty_name(ttydev),
-			       sizeof(lastlogx.ll_line));
+		copy_filled(lastlogx.ll_line,
+			    my_pty_name(ttydev),
+			    sizeof(lastlogx.ll_line));
 		X_GETTIMEOFDAY(&lastlogx.ll_tv);
 		SetUtmpHost(lastlogx.ll_host, screen);
 		updlastlogx(_PATH_LASTLOGX, screen->uid, &lastlogx);
@@ -4632,12 +4820,12 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	    if (xw->misc.login_shell &&
 		(i = open(etc_lastlog, O_WRONLY)) >= 0) {
 		size_t size = sizeof(struct lastlog);
-		off_t offset = (off_t) (screen->uid * size);
+		off_t offset = (off_t) ((size_t) screen->uid * size);
 
 		memset(&lastlog, 0, size);
-		(void) strncpy(lastlog.ll_line,
-			       my_pty_name(ttydev),
-			       sizeof(lastlog.ll_line));
+		copy_filled(lastlog.ll_line,
+			    my_pty_name(ttydev),
+			    sizeof(lastlog.ll_line));
 		SetUtmpHost(lastlog.ll_host, screen);
 		lastlog.ll_time = time((time_t *) 0);
 		if (lseek(i, offset, 0) != (off_t) (-1)) {
@@ -4659,7 +4847,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	    if (resource.ptyHandshake) {
 		handshake.status = UTMP_ADDED;
 		handshake.error = 0;
-		strncpy(handshake.buffer, ttydev, sizeof(handshake.buffer));
+		copy_handshake(handshake, ttydev);
 		TRACE_HANDSHAKE("writing", &handshake);
 		IGNORE_RC(write(cp_pipe[1], (char *) &handshake, sizeof(handshake)));
 	    }
@@ -4693,7 +4881,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		 */
 		handshake.status = PTY_GOOD;
 		handshake.error = 0;
-		(void) strncpy(handshake.buffer, ttydev, sizeof(handshake.buffer));
+		copy_handshake(handshake, ttydev);
 		TRACE_HANDSHAKE("writing", &handshake);
 		IGNORE_RC(write(cp_pipe[1],
 				(const char *) &handshake,
@@ -4708,18 +4896,15 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 			exit(ERROR_PTY_EXEC);
 		    }
 		    if (handshake.rows > 0 && handshake.cols > 0) {
-			TRACE(("handshake ttysize: %dx%d\n",
+			TRACE(("handshake read ttysize: %dx%d\n",
 			       handshake.rows, handshake.cols));
 			set_max_row(screen, handshake.rows);
 			set_max_col(screen, handshake.cols);
 #ifdef TTYSIZE_STRUCT
 			got_handshake_size = True;
-			TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
-			TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
-#if defined(USE_STRUCT_WINSIZE)
-			ts.ws_xpixel = (ttySize_t) FullWidth(screen);
-			ts.ws_ypixel = (ttySize_t) FullHeight(screen);
-#endif
+			setup_winsize(ts, MaxRows(screen), MaxCols(screen),
+				      FullHeight(screen), FullWidth(screen));
+			trace_winsize(ts, "got handshake");
 #endif /* TTYSIZE_STRUCT */
 		    }
 		}
@@ -4742,9 +4927,6 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    xtermSetenv("SHELL", pw.pw_shell);
 	    }
 #endif /* HAVE_UTMP */
-#ifdef OWN_TERMINFO_DIR
-	    xtermSetenv("TERMINFO", OWN_TERMINFO_DIR);
-#endif
 #else /* USE_SYSV_ENVVARS */
 	    if (*(newtc = get_tcap_buffer(xw)) != '\0') {
 		resize_termcap(xw);
@@ -4778,6 +4960,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		}
 	    }
 #endif /* USE_SYSV_ENVVARS */
+#ifdef OWN_TERMINFO_ENV
+	    xtermSetenv("TERMINFO", OWN_TERMINFO_DIR);
+#endif
 
 #if OPT_PTY_HANDSHAKE
 	    /*
@@ -4786,14 +4971,17 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	     * If we expect the waitForMap logic to set the handshake-size,
 	     * use that to prevent races.
 	     */
+	    TRACE(("should we reset screensize after pty-handshake?\n"));
+	    TRACE(("... ptyHandshake      :%d\n", resource.ptyHandshake));
+	    TRACE(("... ptySttySize       :%d\n", resource.ptySttySize));
+	    TRACE(("... got_handshake_size:%d\n", got_handshake_size));
+	    TRACE(("... wait_for_map0     :%d\n", resource.wait_for_map0));
 	    if (resource.ptyHandshake
 		&& resource.ptySttySize
 		&& (got_handshake_size || !resource.wait_for_map0)) {
 #ifdef TTYSIZE_STRUCT
 		TRACE_RC(i, SET_TTYSIZE(0, ts));
-		TRACE(("ptyHandshake SET_TTYSIZE %dx%d return %d\n",
-		       TTYSIZE_ROWS(ts),
-		       TTYSIZE_COLS(ts), i));
+		trace_winsize(ts, "ptyHandshake SET_TTYSIZE");
 #endif /* TTYSIZE_STRUCT */
 	    }
 #endif /* OPT_PTY_HANDSHAKE */
@@ -4870,7 +5058,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	    signal(SIGHUP, SIG_DFL);
 #endif
 
-	    if ((shname_minus = CastMallocN(char, strlen(shname) + 2)) != 0) {
+	    if ((shname_minus = malloc(strlen(shname) + 2)) != 0) {
 		(void) strcpy(shname_minus, "-");
 		(void) strcat(shname_minus, shname);
 	    } else {
@@ -4963,7 +5151,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 			exit(ERROR_PTYS);
 		    }
 		    handshake.status = PTY_NEW;
-		    (void) strncpy(handshake.buffer, ttydev, sizeof(handshake.buffer));
+		    copy_handshake(handshake, ttydev);
 		    TRACE_HANDSHAKE("writing", &handshake);
 		    IGNORE_RC(write(pc_pipe[1],
 				    (const char *) &handshake,
@@ -4986,6 +5174,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		    tslot = handshake.tty_slot;
 #endif /* USE_SYSV_UTMP */
 		    free(ttydev);
+		    handshake.buffer[HANDSHAKE_LEN - 1] = '\0';
 		    ttydev = x_strdup(handshake.buffer);
 		    break;
 		case PTY_NEW:
@@ -5073,7 +5262,7 @@ Exit(int n)
     DEBUG_MSG("handle:Exit USE_UTEMPTER\n");
     if (!resource.utmpInhibit && added_utmp_entry) {
 	TRACE(("...calling removeFromUtmp\n"));
-	removeFromUtmp();
+	UTEMPTER_DEL();
     }
 #elif defined(HAVE_UTMP)
 #ifdef USE_SYSV_UTMP
@@ -5412,46 +5601,72 @@ remove_termcap_entry(char *buf, const char *str)
  *
  *         [SETTING] ...
  *
- * where setting consists of the words in the modelist followed by a character
- * or ^char.
+ * where setting consists of the words in the ttyModes[] array followed by a
+ * character or ^char.
  */
 static int
-parse_tty_modes(char *s, struct _xttymodes *modelist)
+parse_tty_modes(char *s)
 {
-    struct _xttymodes *mp;
     int c;
+    Cardinal j, k;
     int count = 0;
+    Boolean found;
 
     TRACE(("parse_tty_modes\n"));
     for (;;) {
 	size_t len;
 
-	while (*s && isascii(CharOf(*s)) && isspace(CharOf(*s)))
+	while (*s && isspace(CharOf(*s))) {
 	    s++;
-	if (!*s)
+	}
+	if (!*s) {
 	    return count;
+	}
 
-	for (len = 0; isalnum(CharOf(s[len])); ++len) ;
-	for (mp = modelist; mp->name; mp++) {
-	    if (len == mp->len
-		&& strncmp(s, mp->name, mp->len) == 0)
+	for (len = 0; s[len] && !isspace(CharOf(s[len])); ++len) {
+	    ;
+	}
+	found = False;
+	for (j = 0; j < XtNumber(ttyModes); ++j) {
+	    if (len == ttyModes[j].len
+		&& strncmp(s,
+			   ttyModes[j].name,
+			   ttyModes[j].len) == 0) {
+		found = True;
 		break;
+	    }
 	}
-	if (!mp->name)
+	if (!found) {
 	    return -1;
+	}
 
-	s += mp->len;
-	while (*s && isascii(CharOf(*s)) && isspace(CharOf(*s)))
+	s += ttyModes[j].len;
+	while (*s && isspace(CharOf(*s))) {
 	    s++;
-	if (!*s)
-	    return -1;
-
-	if ((c = decode_keyvalue(&s, False)) != -1) {
-	    mp->value = c;
-	    mp->set = 1;
-	    count++;
-	    TRACE(("...parsed #%d: %s=%#x\n", count, mp->name, c));
 	}
+
+	/* check if this needs a parameter */
+	found = False;
+	for (k = 0, c = 0; k < XtNumber(ttyChars); ++k) {
+	    if ((int) j == ttyChars[k].myMode) {
+		if (ttyChars[k].sysMode < 0) {
+		    found = True;
+		    c = ttyChars[k].myDefault;
+		}
+		break;
+	    }
+	}
+
+	if (!found) {
+	    if (!*s
+		|| (c = decode_keyvalue(&s, False)) == -1) {
+		return -1;
+	    }
+	}
+	ttyModes[j].value = c;
+	ttyModes[j].set = 1;
+	count++;
+	TRACE(("...parsed #%d: %s=%#x\n", count, ttyModes[j].name, c));
     }
 }
 

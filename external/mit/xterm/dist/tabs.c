@@ -1,7 +1,7 @@
-/* $XTermId: tabs.c,v 1.43 2012/06/10 16:53:59 tom Exp $ */
+/* $XTermId: tabs.c,v 1.47 2019/11/13 23:19:01 tom Exp $ */
 
 /*
- * Copyright 2000-2011,2012 by Thomas E. Dickey
+ * Copyright 2000-2018,2019 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -58,7 +58,7 @@
 #include <data.h>
 
 #define TAB_INDEX(n) ((n) >> TAB_BITS_SHIFT)
-#define TAB_MASK(n)  (1 << ((n) & (TAB_BITS_WIDTH-1)))
+#define TAB_MASK(n)  (1U << ((n) & (TAB_BITS_WIDTH-1)))
 
 #define SET_TAB(tabs,n) UIntSet(tabs[TAB_INDEX(n)], TAB_MASK(n))
 #define CLR_TAB(tabs,n) UIntClr(tabs[TAB_INDEX(n)], TAB_MASK(n))
@@ -84,7 +84,7 @@ TabReset(Tabs tabs)
 void
 TabSet(Tabs tabs, int col)
 {
-    if (col >= 0 && col < MAX_TABS) {
+    if (OkTAB(col)) {
 	SET_TAB(tabs, col);
     }
 }
@@ -95,7 +95,7 @@ TabSet(Tabs tabs, int col)
 void
 TabClear(Tabs tabs, int col)
 {
-    if (col >= 0 && col < MAX_TABS) {
+    if (OkTAB(col)) {
 	CLR_TAB(tabs, col);
     }
 }
@@ -186,4 +186,13 @@ void
 TabZonk(Tabs tabs)
 {
     memset(tabs, 0, sizeof(*tabs) * TAB_ARRAY_SIZE);
+}
+
+/*
+ * Check if a tab is set for the given column
+ */
+Bool
+TabIsSet(Tabs tabs, int col)
+{
+    return TST_TAB(tabs, col) ? True : False;
 }

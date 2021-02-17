@@ -1,7 +1,7 @@
-/* $XTermId: menu.h,v 1.138 2016/01/28 02:15:29 tom Exp $ */
+/* $XTermId: menu.h,v 1.145 2020/09/15 11:09:06 tom Exp $ */
 
 /*
- * Copyright 1999-2015,2016 by Thomas E. Dickey
+ * Copyright 1999-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -30,7 +30,7 @@
  * authorization.
  *
  *
- * Copyright 1989  The Open Group
+ * Copyright 1989  X Consortium
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,11 +49,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Except as contained in this notice, the name of The Open Group shall
+ * Except as contained in this notice, the name of the X Consortium shall
  * not be used in advertising or otherwise to promote the sale, use or
  * other dealings in this Software without prior written authorization
- * from The Open Group.
- *
+ * from the X Consortium.
  */
 
 #ifndef included_menu_h
@@ -61,6 +60,10 @@
 /* *INDENT-OFF* */
 
 #include <xterm.h>
+
+#ifndef OPT_MENU_KEEPCLIPBOARD 
+#define OPT_MENU_KEEPCLIPBOARD 0	/* useful for debugging */
+#endif
 
 typedef struct _MenuEntry {
     const char *name;
@@ -79,6 +82,7 @@ extern void HandleAllow132         PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowBoldFonts   PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowColorOps    PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowFontOps     PROTO_XT_ACTIONS_ARGS;
+extern void HandleAllowMouseOps    PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowSends       PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowTcapOps     PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowTitleOps    PROTO_XT_ACTIONS_ARGS;
@@ -91,7 +95,7 @@ extern void HandleAutoLineFeed     PROTO_XT_ACTIONS_ARGS;
 extern void HandleAutoWrap         PROTO_XT_ACTIONS_ARGS;
 extern void HandleBackarrow        PROTO_XT_ACTIONS_ARGS;
 extern void HandleBellIsUrgent     PROTO_XT_ACTIONS_ARGS;
-extern void HandleClearSavedLines  PROTO_XT_ACTIONS_ARGS;
+extern void HandleClearSavedLines  PROTO_XT_ACTIONS_ARGS GCC_NORETURN;
 extern void HandleCreateMenu       PROTO_XT_ACTIONS_ARGS;
 extern void HandleCursesEmul       PROTO_XT_ACTIONS_ARGS;
 extern void HandleCursorBlink      PROTO_XT_ACTIONS_ARGS;
@@ -103,7 +107,7 @@ extern void HandleFontDoublesize   PROTO_XT_ACTIONS_ARGS;
 extern void HandleFontLoading      PROTO_XT_ACTIONS_ARGS;
 extern void HandleFontPacked       PROTO_XT_ACTIONS_ARGS;
 extern void HandleFullscreen       PROTO_XT_ACTIONS_ARGS;
-extern void HandleHardReset        PROTO_XT_ACTIONS_ARGS;
+extern void HandleHardReset        PROTO_XT_ACTIONS_ARGS GCC_NORETURN;
 extern void HandleHpFunctionKeys   PROTO_XT_ACTIONS_ARGS;
 extern void HandleJumpscroll       PROTO_XT_ACTIONS_ARGS;
 extern void HandleKeepClipboard    PROTO_XT_ACTIONS_ARGS;
@@ -116,8 +120,10 @@ extern void HandleOldFunctionKeys  PROTO_XT_ACTIONS_ARGS;
 extern void HandlePopupMenu        PROTO_XT_ACTIONS_ARGS;
 extern void HandlePrintControlMode PROTO_XT_ACTIONS_ARGS;
 extern void HandlePrintEverything  PROTO_XT_ACTIONS_ARGS;
+extern void HandlePrintImmediate   PROTO_XT_ACTIONS_ARGS;
+extern void HandlePrintOnError     PROTO_XT_ACTIONS_ARGS;
 extern void HandlePrintScreen      PROTO_XT_ACTIONS_ARGS;
-extern void HandleQuit             PROTO_XT_ACTIONS_ARGS;
+extern void HandleQuit             PROTO_XT_ACTIONS_ARGS GCC_NORETURN;
 extern void HandleRedraw           PROTO_XT_ACTIONS_ARGS;
 extern void HandleRenderFont       PROTO_XT_ACTIONS_ARGS;
 extern void HandleReverseVideo     PROTO_XT_ACTIONS_ARGS;
@@ -135,7 +141,7 @@ extern void HandleSetTekText       PROTO_XT_ACTIONS_ARGS;
 extern void HandleSetTerminalType  PROTO_XT_ACTIONS_ARGS;
 extern void HandleSetVisualBell    PROTO_XT_ACTIONS_ARGS;
 extern void HandleSixelScrolling   PROTO_XT_ACTIONS_ARGS;
-extern void HandleSoftReset        PROTO_XT_ACTIONS_ARGS;
+extern void HandleSoftReset        PROTO_XT_ACTIONS_ARGS GCC_NORETURN;
 extern void HandleSunFunctionKeys  PROTO_XT_ACTIONS_ARGS;
 extern void HandleSunKeyboard      PROTO_XT_ACTIONS_ARGS;
 extern void HandleTekCopy          PROTO_XT_ACTIONS_ARGS;
@@ -242,6 +248,9 @@ typedef enum {
     vtMenu_scrollttyoutput,
     vtMenu_allow132,
     vtMenu_keepSelection,
+#if OPT_MENU_KEEPCLIPBOARD
+    vtMenu_keepClipboard,
+#endif
     vtMenu_selectToClipboard,
     vtMenu_visualbell,
     vtMenu_bellIsUrgent,
@@ -284,7 +293,8 @@ typedef enum {
     fontMenu_font4,
     fontMenu_font5,
     fontMenu_font6,
-#define fontMenu_lastBuiltin fontMenu_font6
+    fontMenu_font7,
+#define fontMenu_lastBuiltin fontMenu_font7
     fontMenu_fontescape,
     fontMenu_fontsel,
 /* number of non-line items down to here should match NMENUFONTS in ptyx.h */
@@ -319,6 +329,7 @@ typedef enum {
     fontMenu_line3,
     fontMenu_allowColorOps,
     fontMenu_allowFontOps,
+    fontMenu_allowMouseOps,
     fontMenu_allowTcapOps,
     fontMenu_allowTitleOps,
     fontMenu_allowWindowOps,
@@ -457,7 +468,12 @@ extern void update_visualbell(void);
 extern void update_bellIsUrgent(void);
 extern void update_poponbell(void);
 
+#if OPT_MENU_KEEPCLIPBOARD
+extern void update_keepClipboard(void);
+#else
 #define update_keepClipboard() /* nothing */
+#endif
+
 #define update_marginbell() /* nothing */
 
 #if OPT_LOAD_VTFONTS
@@ -469,6 +485,7 @@ extern void update_font_escape(void);
 #if OPT_ALLOW_XXX_OPS
 extern void update_menu_allowColorOps(void);
 extern void update_menu_allowFontOps(void);
+extern void update_menu_allowMouseOps(void);
 extern void update_menu_allowTcapOps(void);
 extern void update_menu_allowTitleOps(void);
 extern void update_menu_allowWindowOps(void);

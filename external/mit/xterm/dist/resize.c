@@ -1,7 +1,7 @@
-/* $XTermId: resize.c,v 1.135 2015/04/10 09:00:41 tom Exp $ */
+/* $XTermId: resize.c,v 1.144 2020/06/03 00:26:23 tom Exp $ */
 
 /*
- * Copyright 2003-2014,2015 by Thomas E. Dickey
+ * Copyright 2003-2018,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -103,6 +103,7 @@ int ignore_unused;
 #define	SHELL_UNKNOWN	0
 #define	SHELL_C		1
 #define	SHELL_BOURNE	2
+
 /* *INDENT-OFF* */
 static struct {
     const char *name;
@@ -135,7 +136,7 @@ static char *myname;
 static int shell_type = SHELL_UNKNOWN;
 static const char *const getsize[EMULATIONS] =
 {
-    ESCAPE("7") ESCAPE("[r") ESCAPE("[999;999H") ESCAPE("[6n"),
+    ESCAPE("7") ESCAPE("[r") ESCAPE("[9999;9999H") ESCAPE("[6n"),
     ESCAPE("[18t"),
 };
 #if defined(USE_STRUCT_WINSIZE)
@@ -180,6 +181,11 @@ static const char *wsize[EMULATIONS] =
     ESCAPE("[4;%hd;%hdt"),
 };
 #endif /* USE_STRUCT_WINSIZE */
+
+static void failed(const char *) GCC_NORETURN;
+static void onintr(int) GCC_NORETURN;
+static void resize_timeout(int) GCC_NORETURN;
+static void Usage(void) GCC_NORETURN;
 
 static void
 failed(const char *s)
@@ -416,7 +422,7 @@ main(int argc, char **argv ENVP_ARG)
     tty = fileno(ttyfp);
 #ifdef USE_TERMCAP
     if ((env = x_getenv("TERM")) == 0) {
-	env = DFT_TERMTYPE;
+	env = x_strdup(DFT_TERMTYPE);
 	if (SHELL_BOURNE == shell_type) {
 	    setname = "TERM=" DFT_TERMTYPE ";\nexport TERM;\n";
 	} else {
@@ -510,20 +516,17 @@ main(int argc, char **argv ENVP_ARG)
 	    fprintf(stderr, "%s: Can't get window size\r\n", myname);
 	    onintr(0);
 	}
-	TTYSIZE_ROWS(ts) = (ttySize_t) rows;
-	TTYSIZE_COLS(ts) = (ttySize_t) cols;
+	setup_winsize(ts, rows, cols, 0, 0);
 	SET_TTYSIZE(tty, ts);
     } else if (ioctl(tty, TIOCGWINSZ, &ts) != -1) {
 	/* we don't have any way of directly finding out
 	   the current height & width of the window in pixels.  We try
 	   our best by computing the font height and width from the "old"
 	   window-size values, and multiplying by these ratios... */
-	if (TTYSIZE_COLS(ts) != 0)
-	    ts.ws_xpixel = (ttySize_t) (cols * (ts.ws_xpixel / TTYSIZE_COLS(ts)));
-	if (TTYSIZE_ROWS(ts) != 0)
-	    ts.ws_ypixel = (ttySize_t) (rows * (ts.ws_ypixel / TTYSIZE_ROWS(ts)));
-	TTYSIZE_ROWS(ts) = (ttySize_t) rows;
-	TTYSIZE_COLS(ts) = (ttySize_t) cols;
+#define scaled(old,new,len) (old)?((unsigned)(new)*(len)/(old)):(len)
+	setup_winsize(ts, rows, cols,
+		      scaled(TTYSIZE_ROWS(ts), rows, ts.ws_ypixel),
+		      scaled(TTYSIZE_COLS(ts), cols, ts.ws_xpixel));
 	SET_TTYSIZE(tty, ts);
     }
 #endif /* USE_STRUCT_WINSIZE */

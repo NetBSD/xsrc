@@ -1,7 +1,7 @@
-/* $XTermId: trace.c,v 1.166 2016/10/05 09:16:01 tom Exp $ */
+/* $XTermId: trace.c,v 1.232 2021/02/02 00:20:30 tom Exp $ */
 
 /*
- * Copyright 1997-2015,2016 by Thomas E. Dickey
+ * Copyright 1997-2020,2021 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -35,6 +35,8 @@
  */
 
 #include <xterm.h>		/* for definition of GCC_UNUSED */
+#include <xstrings.h>
+#include <wcwidth.h>
 #include <version.h>
 
 #if OPT_TRACE
@@ -48,11 +50,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <assert.h>
 
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/Error.h>
 
 #ifdef HAVE_X11_TRANSLATEI_H
 #include <X11/ConvertI.h>
@@ -74,11 +76,10 @@ const char *trace_who = "parent";
 
 static FILE *trace_fp;
 
-void
-Trace(const char *fmt,...)
+static FILE *
+TraceOpen(void)
 {
     static const char *trace_out;
-    va_list ap;
 
     if (trace_fp != 0
 	&& trace_who != trace_out) {
@@ -88,37 +89,30 @@ Trace(const char *fmt,...)
     trace_out = trace_who;
 
     if (!trace_fp) {
-	unsigned oldmask = (unsigned) umask(077);
-	char name[BUFSIZ];
-#if 0				/* usually I do not want unique names */
+	static char dot[] = ".";
+	mode_t oldmask = umask(077);
+	/*
+	 * Put the trace-file in user's home-directory if the current
+	 * directory is not writable.
+	 */
+	char *home = (access(dot, R_OK | W_OK) == 0) ? dot : getenv("HOME");
+	char *name = malloc(strlen(home) + strlen(trace_who) + 50);
+#if OPT_TRACE_UNIQUE		/* usually I do not want unique names */
 	int unique;
 	for (unique = 0;; ++unique) {
 	    if (unique)
-		sprintf(name, "Trace-%s.out-%d", trace_who, unique);
+		sprintf(name, "%s/Trace-%s.out-%d", home, trace_who, unique);
 	    else
-		sprintf(name, "Trace-%s.out", trace_who);
+		sprintf(name, "%s/Trace-%s.out", home, trace_who);
 	    if ((trace_fp = fopen(name, "r")) == 0) {
 		break;
 	    }
 	    fclose(trace_fp);
 	}
 #else
-	sprintf(name, "Trace-%s.out", trace_who);
+	sprintf(name, "%s/Trace-%s.out", home, trace_who);
 #endif
 	trace_fp = fopen(name, "w");
-	/*
-	 * Try to put the trace-file in user's home-directory if the current
-	 * directory is not writable.
-	 */
-	if (trace_fp == 0) {
-	    char *home = getenv("HOME");
-	    if (home != 0) {
-		sprintf(name, "%.*s/Trace-%.8s.out",
-			(BUFSIZ - 21), home,
-			trace_who);
-		trace_fp = fopen(name, "w");
-	    }
-	}
 	if (trace_fp != 0) {
 	    fprintf(trace_fp, "%s\n", xtermVersion());
 	    TraceIds(NULL, 0);
@@ -128,12 +122,30 @@ Trace(const char *fmt,...)
 	    exit(EXIT_FAILURE);
 	}
 	(void) umask(oldmask);
+	free(name);
     }
+    return trace_fp;
+}
+
+void
+Trace(const char *fmt, ...)
+{
+    va_list ap;
+    FILE *fp = TraceOpen();
 
     va_start(ap, fmt);
-    vfprintf(trace_fp, fmt, ap);
-    (void) fflush(trace_fp);
+    vfprintf(fp, fmt, ap);
+    (void) fflush(fp);
     va_end(ap);
+}
+
+void
+TraceVA(const char *fmt, va_list ap)
+{
+    FILE *fp = TraceOpen();
+
+    vfprintf(fp, fmt, ap);
+    (void) fflush(fp);
 }
 
 void
@@ -147,6 +159,14 @@ TraceClose(void)
 	(void) visibleIChars(NULL, 0);
 	trace_fp = 0;
     }
+}
+
+void
+TraceXError(Display *d, XErrorEvent *ev)
+{
+    FILE *fp = TraceOpen();
+    (void) XmuPrintDefaultErrorMessage(d, ev, fp);
+    (void) fflush(fp);
 }
 
 void
@@ -230,15 +250,15 @@ visibleDblChrset(unsigned chrset)
 #endif
 
 const char *
-visibleScsCode(int chrset)
+visibleScsCode(DECNRCM_codes chrset)
 {
-#define MAP(to,from) case from: result = to; break
+#define MAP(to,from) case from: result = to ":" #from; break
     const char *result = "<ERR>";
     switch ((DECNRCM_codes) chrset) {
 	MAP("B", nrc_ASCII);
 	MAP("A", nrc_British);
 	MAP("A", nrc_British_Latin_1);
-	MAP("&4", nrc_Cyrillic);
+	MAP("&4", nrc_DEC_Cyrillic);
 	MAP("0", nrc_DEC_Spec_Graphic);
 	MAP("1", nrc_DEC_Alt_Chars);
 	MAP("2", nrc_DEC_Alt_Graphics);
@@ -253,14 +273,17 @@ visibleScsCode(int chrset)
 	MAP("Q", nrc_French_Canadian);
 	MAP("9", nrc_French_Canadian2);
 	MAP("K", nrc_German);
-	MAP("\"?", nrc_Greek);
-	MAP("F", nrc_Greek_Supp);
-	MAP("\"4", nrc_Hebrew);
-	MAP("%=", nrc_Hebrew2);
-	MAP("H", nrc_Hebrew_Supp);
+	MAP("\"?", nrc_DEC_Greek_Supp);
+	MAP("\">", nrc_Greek);
+	MAP("F", nrc_ISO_Greek_Supp);
+	MAP("\"4", nrc_DEC_Hebrew_Supp);
+	MAP("%=", nrc_Hebrew);
+	MAP("H", nrc_ISO_Hebrew_Supp);
 	MAP("Y", nrc_Italian);
-	MAP("M", nrc_Latin_5_Supp);
-	MAP("L", nrc_Latin_Cyrillic);
+	MAP("A", nrc_ISO_Latin_1_Supp);
+	MAP("B", nrc_ISO_Latin_2_Supp);
+	MAP("M", nrc_ISO_Latin_5_Supp);
+	MAP("L", nrc_ISO_Latin_Cyrillic);
 	MAP("`", nrc_Norwegian_Danish);
 	MAP("E", nrc_Norwegian_Danish2);
 	MAP("6", nrc_Norwegian_Danish3);
@@ -271,8 +294,8 @@ visibleScsCode(int chrset)
 	MAP("7", nrc_Swedish);
 	MAP("H", nrc_Swedish2);
 	MAP("=", nrc_Swiss);
-	MAP("%0", nrc_Turkish);
-	MAP("%2", nrc_Turkish2);
+	MAP("%2", nrc_Turkish);
+	MAP("%0", nrc_DEC_Turkish_Supp);
 	MAP("<UNK>", nrc_Unknown);
     }
 #undef MAP
@@ -301,12 +324,32 @@ visibleChars(const Char *buf, unsigned len)
 		dst += strlen(dst);
 	    }
 	}
-    } else if (result != 0) {
-	free(result);
-	result = 0;
+    } else {
+	FreeAndNull(result);
 	used = 0;
     }
     return NonNull(result);
+}
+
+const char *
+visibleEventMode(EventMode value)
+{
+    const char *result;
+    switch (value) {
+    case NORMAL:
+	result = "NORMAL";
+	break;
+    case LEFTEXTENSION:
+	result = "LEFTEXTENSION";
+	break;
+    case RIGHTEXTENSION:
+	result = "RIGHTEXTENSION";
+	break;
+    default:
+	result = "?";
+	break;
+    }
+    return result;
 }
 
 const char *
@@ -316,7 +359,7 @@ visibleIChars(const IChar *buf, unsigned len)
     static unsigned used;
 
     if (buf != 0) {
-	unsigned limit = ((len + 1) * 8) + 1;
+	unsigned limit = ((len + 1) * 12) + 1;
 
 	if (limit > used) {
 	    used = limit;
@@ -329,16 +372,15 @@ visibleIChars(const IChar *buf, unsigned len)
 		unsigned value = *buf++;
 #if OPT_WIDE_CHARS
 		if (value > 255)
-		    sprintf(dst, "\\u+%04X", value);
+		    sprintf(dst, "\\U+%04X", value);
 		else
 #endif
 		    formatAscii(dst, value);
 		dst += strlen(dst);
 	    }
 	}
-    } else if (result != 0) {
-	free(result);
-	result = 0;
+    } else {
+	FreeAndNull(result);
 	used = 0;
     }
     return NonNull(result);
@@ -348,7 +390,7 @@ const char *
 visibleUChar(unsigned chr)
 {
     IChar buf[1];
-    buf[0] = chr;
+    buf[0] = (IChar) chr;
     return visibleIChars(buf, 1);
 }
 
@@ -390,6 +432,18 @@ visibleEventType(int type)
 	CASETYPE(ColormapNotify);
 	CASETYPE(ClientMessage);
 	CASETYPE(MappingNotify);
+    }
+    return result;
+}
+
+const char *
+visibleMappingMode(int code)
+{
+    const char *result = "?";
+    switch (code) {
+	CASETYPE(MappingModifier);
+	CASETYPE(MappingKeyboard);
+	CASETYPE(MappingPointer);
     }
     return result;
 }
@@ -576,6 +630,19 @@ LineTstFlag(LineData ld, int flag)
 }
 #endif /* OPT_TRACE_FLAGS */
 
+const char *
+TraceAtomName(Display *dpy, Atom atom)
+{
+    static char *result;
+    free(result);
+    if (atom != 0) {
+	result = XGetAtomName(dpy, atom);
+    } else {
+	result = x_strdup("NONE");
+    }
+    return result;
+}
+
 /*
  * Trace the normal or alternate screen, showing color values up to 16, e.g.,
  * for debugging with vttest.
@@ -606,6 +673,7 @@ TraceScreen(XtermWidget xw, int whichBuf)
 		}
 		TRACE((":\n"));
 
+#if 0
 		TRACE(("  xx:"));
 		for (col = 0; col < ld->lineSize; ++col) {
 		    unsigned attrs = ld->attribs[col];
@@ -622,6 +690,7 @@ TraceScreen(XtermWidget xw, int whichBuf)
 		    TRACE(("%c", ch));
 		}
 		TRACE((":\n"));
+#endif
 
 #if 0
 		TRACE(("  fg:"));
@@ -650,6 +719,262 @@ TraceScreen(XtermWidget xw, int whichBuf)
 	TRACE(("TraceScreen %d is nil\n", whichBuf));
     }
 }
+
+static char *
+formatEventMask(char *target, unsigned source, Boolean buttons)
+{
+#define DATA(name) { name ## Mask, #name }
+    static struct {
+	unsigned mask;
+	const char *name;
+    } table[] = {
+	DATA(Shift),
+	    DATA(Lock),
+	    DATA(Control),
+	    DATA(Mod1),
+	    DATA(Mod2),
+	    DATA(Mod3),
+	    DATA(Mod4),
+	    DATA(Mod5),
+	    DATA(Button1),
+	    DATA(Button2),
+	    DATA(Button3),
+	    DATA(Button4),
+	    DATA(Button5),
+    };
+#undef DATA
+    Cardinal n;
+    char marker = L_CURL;
+    char *base = target;
+
+    for (n = 0; n < XtNumber(table); ++n) {
+	if (!buttons && (table[n].mask >= Button1Mask))
+	    continue;
+	if ((table[n].mask & source)) {
+	    UIntClr(source, table[n].mask);
+	    sprintf(target, "%c%s", marker, table[n].name);
+	    target += strlen(target);
+	    marker = '|';
+	}
+    }
+
+    if (source != 0) {
+	sprintf(target, "%c?%#x", marker, source);
+	target += strlen(target);
+	marker = '|';
+    }
+
+    if (marker == L_CURL)
+	*target++ = L_CURL;
+    *target++ = R_CURL;
+
+    *target = '\0';
+    return base;
+}
+
+void
+TraceEvent(const char *tag, XEvent *ev, String *params, Cardinal *num_params)
+{
+    char mask_buffer[160];
+
+    TRACE(("Event #%lu %s: %#lx %s",
+	   ev->xany.serial,
+	   tag,
+	   ev->xany.window,
+	   visibleEventType(ev->type)));
+
+    switch (ev->type) {
+    case KeyPress:
+	/* FALLTHRU */
+    case KeyRelease:
+	TRACE((" keycode 0x%04X %s",
+	       ev->xkey.keycode,
+	       formatEventMask(mask_buffer, ev->xkey.state, False)));
+	break;
+    case ButtonPress:
+	/* FALLTHRU */
+    case ButtonRelease:
+	TRACE((" button %u state %#x %s",
+	       ev->xbutton.button,
+	       ev->xbutton.state,
+	       formatEventMask(mask_buffer, ev->xbutton.state, True)));
+	break;
+    case MotionNotify:
+	TRACE((" (%d,%d) state %#x %s",
+	       ev->xmotion.y_root,
+	       ev->xmotion.x_root,
+	       ev->xmotion.state,
+	       formatEventMask(mask_buffer, ev->xmotion.state, True)));
+	break;
+    case EnterNotify:
+    case LeaveNotify:
+	TRACE((" at %d,%d root %d,%d %s %s",
+	       ev->xcrossing.y,
+	       ev->xcrossing.x,
+	       ev->xcrossing.y_root,
+	       ev->xcrossing.x_root,
+	       visibleNotifyMode(ev->xcrossing.mode),
+	       visibleNotifyDetail(ev->xcrossing.detail)));
+	break;
+    case FocusIn:
+    case FocusOut:
+	TRACE((" %s %s",
+	       visibleNotifyMode(ev->xfocus.mode),
+	       visibleNotifyDetail(ev->xfocus.detail)));
+	break;
+    case MapNotify:
+	TRACE((" event %#lx %s",
+	       ev->xmap.event,
+	       ev->xmap.override_redirect ? "override" : ""));
+	break;
+    case UnmapNotify:
+	TRACE((" event %#lx %s",
+	       ev->xunmap.event,
+	       ev->xunmap.from_configure ? "configure" : ""));
+	break;
+    case ReparentNotify:
+	TRACE((" at %d,%d event %#lx parent %#lx %s",
+	       ev->xreparent.y,
+	       ev->xreparent.x,
+	       ev->xreparent.event,
+	       ev->xreparent.parent,
+	       ev->xreparent.override_redirect ? "override" : ""));
+	break;
+    case ConfigureNotify:
+	TRACE((" at %d,%d size %dx%d bd %d above %#lx",
+	       ev->xconfigure.y,
+	       ev->xconfigure.x,
+	       ev->xconfigure.height,
+	       ev->xconfigure.width,
+	       ev->xconfigure.border_width,
+	       ev->xconfigure.above));
+	break;
+    case CreateNotify:
+	TRACE((" at %d,%d size %dx%d bd %d",
+	       ev->xcreatewindow.y,
+	       ev->xcreatewindow.x,
+	       ev->xcreatewindow.height,
+	       ev->xcreatewindow.width,
+	       ev->xcreatewindow.border_width));
+	break;
+    case ResizeRequest:
+	TRACE((" size %dx%d",
+	       ev->xresizerequest.height,
+	       ev->xresizerequest.width));
+	break;
+    case PropertyNotify:
+	TRACE((" %s %s",
+	       TraceAtomName(XtDisplay(toplevel), ev->xproperty.atom),
+	       ((ev->xproperty.state == PropertyNewValue)
+		? "NewValue"
+		: ((ev->xproperty.state == PropertyDelete)
+		   ? "Delete"
+		   : "?"))));
+
+	break;
+    case Expose:
+	TRACE((" at %d,%d size %dx%d count %d",
+	       ev->xexpose.y,
+	       ev->xexpose.x,
+	       ev->xexpose.height,
+	       ev->xexpose.width,
+	       ev->xexpose.count));
+	break;
+    case MappingNotify:
+	TRACE((" %s first_keycode %d count %d",
+	       visibleMappingMode(ev->xmapping.request),
+	       ev->xmapping.first_keycode,
+	       ev->xmapping.count));
+	break;
+    case VisibilityNotify:
+	TRACE((" state %d",
+	       ev->xvisibility.state));
+	break;
+    case KeymapNotify:
+	{
+	    Cardinal j;
+	    for (j = 0; j < XtNumber(ev->xkeymap.key_vector); ++j) {
+		if (ev->xkeymap.key_vector[j] != 0) {
+		    Cardinal k;
+		    for (k = 0; k < 8; ++k) {
+			if (ev->xkeymap.key_vector[j] & (1 << k)) {
+			    TRACE((" key%u", (j * 8) + k));
+			}
+		    }
+		}
+	    }
+	}
+	break;
+    case NoExpose:
+	TRACE((" send_event:%d display %p major:%d minor:%d",
+	       ev->xnoexpose.send_event,
+	       (void *) ev->xnoexpose.display,
+	       ev->xnoexpose.major_code,
+	       ev->xnoexpose.minor_code));
+	break;
+    case SelectionClear:
+	TRACE((" selection:%s",
+	       TraceAtomName(ev->xselectionclear.display,
+			     ev->xselectionclear.selection)));
+	break;
+    case SelectionRequest:
+	TRACE((" owner:%#lx requestor:%#lx",
+	       ev->xselectionrequest.owner,
+	       ev->xselectionrequest.requestor));
+	TRACE((" selection:%s",
+	       TraceAtomName(ev->xselectionrequest.display,
+			     ev->xselectionrequest.selection)));
+	TRACE((" target:%s",
+	       TraceAtomName(ev->xselectionrequest.display,
+			     ev->xselectionrequest.target)));
+	TRACE((" property:%s",
+	       TraceAtomName(ev->xselectionrequest.display,
+			     ev->xselectionrequest.property)));
+	break;
+    default:
+	TRACE((":FIXME"));
+	break;
+    }
+    TRACE(("\n"));
+    if (params != 0 && *num_params != 0) {
+	Cardinal n;
+	for (n = 0; n < *num_params; ++n) {
+	    TRACE(("  param[%d] = %s\n", n, params[n]));
+	}
+    }
+}
+
+#if OPT_RENDERFONT && OPT_WIDE_CHARS
+void
+TraceFallback(XtermWidget xw, const char *tag, unsigned wc, int n, XftFont *font)
+{
+    TScreen *screen = TScreenOf(xw);
+    XGlyphInfo gi;
+    int expect = my_wcwidth((wchar_t) wc);
+    int hijack = mk_wcwidth_cjk((wchar_t) wc);
+    int actual;
+
+    XftTextExtents32(screen->display, font, &wc, 1, &gi);
+    actual = ((gi.xOff + FontWidth(screen) - 1)
+	      / FontWidth(screen));
+
+    TRACE(("FALLBACK #%d %s U+%04X %d,%d pos,"
+	   " %d,%d off," " %dx%d size,"
+	   " %d/%d next," " %d vs %d/%d cells%s\n",
+	   n + 1, tag, wc,
+	   gi.y, gi.x,
+	   gi.yOff, gi.xOff,
+	   gi.height, gi.width,
+	   font->max_advance_width,
+	   FontWidth(screen),
+	   actual, expect, hijack,
+	   ((actual != expect)
+	    ? ((actual == hijack)
+	       ? " OOPS"
+	       : " oops")
+	    : "")));
+}
+#endif /* OPT_RENDERFONT */
 
 void
 TraceFocus(Widget w, XEvent *ev)
@@ -689,30 +1014,37 @@ void
 TraceSizeHints(XSizeHints * hints)
 {
     TRACE(("size hints:\n"));
-    if (hints->flags & (USPosition | PPosition))
+    if (hints->flags & (USPosition | PPosition)) {
 	TRACE(("   position   %d,%d%s%s\n", hints->y, hints->x,
 	       (hints->flags & USPosition) ? " user" : "",
 	       (hints->flags & PPosition) ? " prog" : ""));
-    if (hints->flags & (USSize | PSize))
+    }
+    if (hints->flags & (USSize | PSize)) {
 	TRACE(("   size       %d,%d%s%s\n", hints->height, hints->width,
 	       (hints->flags & USSize) ? " user" : "",
 	       (hints->flags & PSize) ? " prog" : ""));
-    if (hints->flags & PMinSize)
+    }
+    if (hints->flags & PMinSize) {
 	TRACE(("   min        %d,%d\n", hints->min_height, hints->min_width));
-    if (hints->flags & PMaxSize)
+    }
+    if (hints->flags & PMaxSize) {
 	TRACE(("   max        %d,%d\n", hints->max_height, hints->max_width));
-    if (hints->flags & PResizeInc)
+    }
+    if (hints->flags & PResizeInc) {
 	TRACE(("   inc        %d,%d\n", hints->height_inc, hints->width_inc));
-    else
+    } else {
 	TRACE(("   inc        NONE!\n"));
-    if (hints->flags & PAspect)
+    }
+    if (hints->flags & PAspect) {
 	TRACE(("   min aspect %d/%d\n", hints->min_aspect.y, hints->min_aspect.y));
-    if (hints->flags & PAspect)
 	TRACE(("   max aspect %d/%d\n", hints->max_aspect.y, hints->max_aspect.y));
-    if (hints->flags & PBaseSize)
+    }
+    if (hints->flags & PBaseSize) {
 	TRACE(("   base       %d,%d\n", hints->base_height, hints->base_width));
-    if (hints->flags & PWinGravity)
+    }
+    if (hints->flags & PWinGravity) {
 	TRACE(("   gravity    %d\n", hints->win_gravity));
+    }
 }
 
 static void
@@ -802,17 +1134,6 @@ TraceWMSizeHints(XtermWidget xw)
     xw->hints = sizehints;
 }
 
-/*
- * Some calls to XGetAtom() will fail, and we don't want to stop.  So we use
- * our own error-handler.
- */
-/* ARGSUSED */
-static int
-no_error(Display *dpy GCC_UNUSED, XErrorEvent *event GCC_UNUSED)
-{
-    return 1;
-}
-
 const char *
 ModifierName(unsigned modifier)
 {
@@ -840,11 +1161,12 @@ void
 TraceTranslations(const char *name, Widget w)
 {
     String result;
-    XErrorHandler save = XSetErrorHandler(no_error);
+    XErrorHandler save = XSetErrorHandler(ignore_x11_error);
     XtTranslations xlations;
     Widget xcelerat;
 
-    TRACE(("TraceTranslations for %s (widget %#lx) {{\n", name, (long) w));
+    TRACE(("TraceTranslations for %s (widget %#lx) " TRACE_L "\n",
+	   name, (long) w));
     if (w) {
 	XtVaGetValues(w,
 		      XtNtranslations, &xlations,
@@ -859,7 +1181,7 @@ TraceTranslations(const char *name, Widget w)
     } else {
 	TRACE(("none (widget is null)\n"));
     }
-    TRACE(("}}\n"));
+    TRACE((TRACE_R "\n"));
     XSetErrorHandler(save);
 }
 
@@ -943,11 +1265,17 @@ TraceXtermResources(void)
     XRES_B(ptyHandshake);
     XRES_B(ptySttySize);
 #endif
+#if OPT_REPORT_CCLASS
+    XRES_B(reportCClass);
+#endif
 #if OPT_REPORT_COLORS
     XRES_B(reportColors);
 #endif
 #if OPT_REPORT_FONTS
     XRES_B(reportFonts);
+#endif
+#if OPT_REPORT_ICONS
+    XRES_B(reportIcons);
 #endif
 #if OPT_SAME_NAME
     XRES_B(sameName);
@@ -962,16 +1290,22 @@ TraceXtermResources(void)
     XRES_B(maximized);
     XRES_S(fullscreen_s);
 #endif
+#if USE_DOUBLE_BUFFER
+    XRES_B(buffered);
+    XRES_I(buffered_fps);
+#endif
 }
 
 void
 TraceArgv(const char *tag, char **argv)
 {
-    int n = 0;
-
     TRACE(("%s:\n", tag));
-    while (*argv != 0) {
-	TRACE(("  %d:%s\n", n++, *argv++));
+    if (argv != 0) {
+	int n = 0;
+
+	while (*argv != 0) {
+	    TRACE(("  %d:%s\n", n++, *argv++));
+	}
     }
 }
 

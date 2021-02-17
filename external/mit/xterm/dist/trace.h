@@ -1,7 +1,7 @@
-/* $XTermId: trace.h,v 1.78 2016/10/05 08:56:36 tom Exp $ */
+/* $XTermId: trace.h,v 1.92 2021/02/01 23:58:05 tom Exp $ */
 
 /*
- * Copyright 1997-2015,2016 by Thomas E. Dickey
+ * Copyright 1997-2020,2021 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -41,10 +41,18 @@
 
 #if OPT_TRACE
 
+#include <stdarg.h>
+
 extern	void	Trace ( const char *, ... ) GCC_PRINTFLIKE(1,2);
+extern	void	TraceVA ( const char *fmt, va_list ap );
+extern	void	TraceXError (Display *d, XErrorEvent *ev);
 
 #undef  TRACE
 #define TRACE(p) Trace p
+
+#undef  TRACE_VA
+#define TRACE_VA(p) TraceVA p
+#define TRACE_X_ERR(d,e) TraceXError(d,e)
 
 extern	void	TraceClose (void);
 
@@ -55,18 +63,25 @@ extern	void	TraceClose (void);
 #define TRACE2(p) Trace p
 #endif
 
+#define TRACE_L "{{"
+#define TRACE_R "}}"
+
 extern	const char * visibleChars(const Char * /* buf */, unsigned /* len */);
+extern	const char * visibleEventMode(EventMode);
 extern	const char * visibleIChars(const IChar * /* buf */, unsigned /* len */);
 extern	const char * visibleUChar(unsigned);
 extern	const char * visibleDblChrset(unsigned /* chrset */);
 extern	const char * visibleEventType (int);
+extern	const char * visibleMappingMode (int);
 extern	const char * visibleNotifyDetail(int /* code */);
 extern	const char * visibleNotifyMode (int /* code */);
-extern	const char * visibleScsCode(int /* chrset */);
+extern	const char * visibleScsCode(DECNRCM_codes /* chrset */);
 extern	const char * visibleSelectionTarget(Display * /* d */, Atom /* a */);
 extern	const char * visibleTekparse (int);
 extern	const char * visibleVTparse (int);
 extern	const char * visibleXError (int /* code */);
+
+extern	const char * TraceAtomName(Display * /* d */, Atom /* a */);
 
 extern	void	TraceArgv(const char * /* tag */, char ** /* argv */);
 #undef  TRACE_ARGV
@@ -75,6 +90,18 @@ extern	void	TraceArgv(const char * /* tag */, char ** /* argv */);
 extern	const	char *trace_who;
 #undef  TRACE_CHILD
 #define TRACE_CHILD int tracing_child = (trace_who = "child") != 0; (void) tracing_child;
+
+extern	void	TraceEvent(const char *, XEvent *, String *, Cardinal *);
+#undef  TRACE_EVENT
+#define	TRACE_EVENT(t,e,s,n) TraceEvent(t, (XEvent *)e, s, n)
+
+#undef  TRACE_FALLBACK
+#if OPT_RENDERFONT && OPT_WIDE_CHARS
+extern	void	TraceFallback(XtermWidget, const char *, unsigned, int, XftFont *);
+#define TRACE_FALLBACK(w,t,c,n,f) TraceFallback(w, t, c, n, f)
+#else
+#define TRACE_FALLBACK(w,t,c,n,f) /*nothing*/
+#endif
 
 extern	void	TraceFocus(Widget, XEvent *);
 #undef  TRACE_FOCUS
@@ -138,6 +165,26 @@ extern const char * ModifierName(unsigned /* modifier */);
 			    (Dimension) (reqwide), (Dimension) (reqhigh), \
 			    (gotwide), (gothigh))
 
+#define TRACE(p)		/*nothing*/
+#define TRACE_CLOSE()		/*nothing*/
+#define TRACE_ARGV(tag,argv)	/*nothing*/
+#define TRACE_CHILD		/*nothing*/
+#define TRACE_EVENT(t,e,s,n)	/*nothing*/
+#define TRACE_FALLBACK(w,t,c,n,f) /*nothing*/
+#define TRACE_FOCUS(w,e)	/*nothing*/
+#define TRACE_HINTS(hints)	/*nothing*/
+#define TRACE_IDS		/*nothing*/
+#define TRACE_OPTS(opts,ress,lens) /*nothing*/
+#define TRACE_TRANS(name,w)	/*nothing*/
+#define TRACE_WIN_ATTRS(w)	/*nothing*/
+#define TRACE_WM_HINTS(w)	/*nothing*/
+#define TRACE_X_ERR(d,e)	/*nothing*/
+#define TRACE_XRES()		/*nothing*/
+
+#endif
+
+#ifndef TRACE2
+#define TRACE2(p)		/*nothing*/
 #endif
 
 extern void TraceScreen(XtermWidget /* xw */, int /* whichBuf */);
