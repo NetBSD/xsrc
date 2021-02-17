@@ -1,7 +1,8 @@
-/* $XTermId: svg.c,v 1.6 2016/05/22 19:09:17 tom Exp $ */
+/* $XTermId: svg.c,v 1.17 2020/06/02 23:24:31 tom Exp $ */
 
 /*
- * Copyright 2015,2016 Jens Schweikhardt
+ * Copyright 2017-2019,2020	Thomas E. Dickey
+ * Copyright 2015-2016,2017	Jens Schweikhardt
  *
  * All Rights Reserved
  *
@@ -32,20 +33,16 @@
 #include <xterm.h>
 #include <version.h>
 
-#define NO_COLOR	((unsigned)-1)
-#define RGBPCT(c) c.red / 655.35, c.green / 655.35, c.blue / 655.35
+#define MakeDim(color) \
+	color = (unsigned short) ((2 * (unsigned) color) / 3)
+
+#define RGBPCT(c) \
+ 	((double)c.red   / 655.35), \
+	((double)c.green / 655.35), \
+	((double)c.blue  / 655.35)
+
 #define CELLW 10
 #define CELLH 20
-
-#define DUMP_PREFIX "xterm"
-#define DUMP_SUFFIX ".svg"
-#define DEFAULTNAME DUMP_PREFIX DUMP_SUFFIX
-
-#ifdef VMS
-#define VMS_SVG_FILE "sys$scratch:" DEFAULTNAME
-#endif
-
-extern char *PixelToCSSColor(XtermWidget xw, Pixel p);	/* in html.c */
 
 static void dumpSvgHeader(XtermWidget xw, FILE *fp);
 static void dumpSvgScreen(XtermWidget xw, FILE *fp);
@@ -60,37 +57,19 @@ static int ib = 0;		/* internalBorder */
 void
 xtermDumpSvg(XtermWidget xw)
 {
+    char *saveLocale;
     FILE *fp;
 
     TRACE(("xtermDumpSvg...\n"));
-#ifdef VMS
-    fp = fopen(VMS_HTML_FILE, "wb");
-#elif defined(HAVE_STRFTIME)
-    {
-	char fname[sizeof(DEFAULTNAME) + LEN_TIMESTAMP];
-	time_t now;
-	struct tm *ltm;
-
-	now = time((time_t *) 0);
-	ltm = localtime(&now);
-
-	if (strftime(fname, sizeof fname,
-		     DUMP_PREFIX FMT_TIMESTAMP DUMP_SUFFIX, ltm) > 0) {
-	    fp = fopen(fname, "wb");
-	} else {
-	    fp = fopen(DEFAULTNAME, "wb");
-	}
-    }
-#else
-    fp = fopen(DEFAULTNAME, "wb");
-#endif
-
+    saveLocale = xtermSetLocale(LC_NUMERIC, "C");
+    fp = create_printfile(xw, ".svg");
     if (fp != 0) {
 	dumpSvgHeader(xw, fp);
 	dumpSvgScreen(xw, fp);
 	dumpSvgFooter(xw, fp);
 	fclose(fp);
     }
+    xtermResetLocale(LC_NUMERIC, saveLocale);
     TRACE(("...xtermDumpSvg done\n"));
 }
 
@@ -116,6 +95,7 @@ dumpSvgHeader(XtermWidget xw, FILE *fp)
     fprintf(fp,
 	    " <g font-size='%.2f' font-family='monospace, monospace'>\n",
 	    0.80 * CELLH);
+    xevents(xw);
 }
 
 static void
@@ -156,7 +136,7 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 	/* Count how many consecutive cells have the same color & attributes. */
 	for (sal = 1; col + sal < MaxCols(s); ++sal) {
 #if OPT_ISO_COLORS
-	    if (ld->color[col] != ld->color[col + sal])
+	    if (!isSameCColor(ld->color[col], ld->color[col + sal]))
 		break;
 #endif
 	    if (ld->attribs[col] != ld->attribs[col + sal])
@@ -167,17 +147,29 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 	bgcolor.pixel = xw->old_background;
 #if OPT_ISO_COLORS
 	if (ld->attribs[col] & FG_COLOR) {
-	    unsigned fg = extract_fg(xw, ld->color[col], ld->attribs[col]);
-	    fgcolor.pixel = s->Acolors[fg].value;
+	    Pixel fg = extract_fg(xw, ld->color[col], ld->attribs[col]);
+#if OPT_DIRECT_COLOR
+	    if (ld->attribs[col] & ATR_DIRECT_FG)
+		fgcolor.pixel = fg;
+	    else
+#endif
+		fgcolor.pixel = s->Acolors[fg].value;
 	}
 	if (ld->attribs[col] & BG_COLOR) {
-	    unsigned bg = extract_bg(xw, ld->color[col], ld->attribs[col]);
-	    bgcolor.pixel = s->Acolors[bg].value;
+	    Pixel bg = extract_bg(xw, ld->color[col], ld->attribs[col]);
+#if OPT_DIRECT_COLOR
+	    if (ld->attribs[col] & ATR_DIRECT_BG)
+		bgcolor.pixel = bg;
+	    else
+#endif
+		bgcolor.pixel = s->Acolors[bg].value;
 	}
 #endif
 
 	XQueryColor(xw->screen.display, xw->core.colormap, &fgcolor);
 	XQueryColor(xw->screen.display, xw->core.colormap, &bgcolor);
+	xevents(xw);
+
 	if (ld->attribs[col] & BLINK) {
 	    /* White on red. */
 	    fgcolor.red = fgcolor.green = fgcolor.blue = 65535u;
@@ -186,9 +178,9 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 	}
 #if OPT_WIDE_ATTRS
 	if (ld->attribs[col] & ATR_FAINT) {
-	    fgcolor.red = (unsigned short) ((2 * fgcolor.red) / 3);
-	    fgcolor.green = (unsigned short) ((2 * fgcolor.green) / 3);
-	    fgcolor.blue = (unsigned short) ((2 * fgcolor.blue) / 3);
+	    MakeDim(fgcolor.red);
+	    MakeDim(fgcolor.green);
+	    MakeDim(fgcolor.blue);
 	}
 #endif
 	if (ld->attribs[col] & INVERSE) {
@@ -239,7 +231,7 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 #endif
 		switch (chr) {
 		case 0:
-		    /* This sometimes happens when resizing... ignore. */
+		    fputc(' ', fp);
 		    break;
 		case '&':
 		    fputs("&amp;", fp);
@@ -254,8 +246,10 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 		    fputc((int) chr, fp);
 		}
 	    fprintf(fp, "</text>\n");
+	    xevents(xw);
 	}
 	fprintf(fp, "  </g>\n");
+	xevents(xw);
 
 #define HLINE(x) \
   fprintf(fp, "  <line x1='%d' y1='%d' " \
@@ -278,13 +272,14 @@ dumpSvgLine(XtermWidget xw, int row, FILE *fp)
 	    HLINE(1);
 	}
 #endif
+	xevents(xw);
     }
+    xevents(xw);
 }
 
 static void
-dumpSvgFooter(XtermWidget xw GCC_UNUSED, FILE *fp)
+dumpSvgFooter(XtermWidget xw, FILE *fp)
 {
     fputs(" </g>\n</svg>\n", fp);
+    xevents(xw);
 }
-
-/* vim: set ts=8 sw=4 et: */

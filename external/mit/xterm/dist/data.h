@@ -1,7 +1,7 @@
-/* $XTermId: data.h,v 1.130 2017/05/31 01:13:01 tom Exp $ */
+/* $XTermId: data.h,v 1.138 2019/10/06 20:16:02 tom Exp $ */
 
 /*
- * Copyright 2002-2016,2017 by Thomas E. Dickey
+ * Copyright 2002-2018,2019 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -129,6 +129,8 @@ extern Arg ourTopLevelShellArgs[];
 extern Cardinal number_ourTopLevelShellArgs;
 extern Atom wm_delete_window;
 
+extern CellColor initCColor;
+
 #if HANDLE_STRUCT_NOTIFY
 /* Flag icon name with "*** "  on window output when iconified.
  * I'd like to do something like reverse video, but I don't
@@ -153,6 +155,7 @@ typedef struct XTERM_RESOURCE {
     char *icon_name;
     char *term_name;
     char *tty_modes;
+    char *valid_shells;
 
     int minBufSize;
     int maxBufSize;
@@ -217,6 +220,12 @@ typedef struct XTERM_RESOURCE {
 #if OPT_REPORT_FONTS
     Boolean reportFonts;	/* show bitmap-font information as loaded */
 #endif
+#if OPT_XRES_QUERY
+    Boolean reportXRes;		/* show vt100 resources after initialization */
+#endif
+#if OPT_REPORT_ICONS
+    Boolean reportIcons;	/* show icon information as loaded */
+#endif
 #if OPT_SAME_NAME
     Boolean sameName;		/* Don't change the title or icon name if it is
 				 * the same.  This prevents flicker on the
@@ -234,6 +243,10 @@ typedef struct XTERM_RESOURCE {
     Boolean maximized;
     String fullscreen_s;	/* resource for "fullscreen" */
     int fullscreen;		/* derived from fullscreen_s */
+#endif
+#if USE_DOUBLE_BUFFER
+    Boolean buffered;
+    int buffered_fps;
 #endif
 } XTERM_RESOURCE;
 

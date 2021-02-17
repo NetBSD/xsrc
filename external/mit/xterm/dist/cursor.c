@@ -1,7 +1,7 @@
-/* $XTermId: cursor.c,v 1.71 2017/05/06 00:58:27 tom Exp $ */
+/* $XTermId: cursor.c,v 1.77 2019/07/12 01:11:59 tom Exp $ */
 
 /*
- * Copyright 2002-2016,2017 by Thomas E. Dickey
+ * Copyright 2002-2018,2019 by Thomas E. Dickey
  * 
  *                         All Rights Reserved
  * 
@@ -124,13 +124,18 @@ CursorBack(XtermWidget xw, int n)
 	if (rev) {
 	    int in_row = ScrnRightMargin(xw) - left + 1;
 	    int offset = (in_row * screen->cur_row) + screen->cur_col - left;
-	    if (offset < 0) {
+	    if ((before == left) &&
+		ScrnIsColInMargins(screen, before) &&
+		ScrnIsRowInMargins(screen, screen->cur_row) &&
+		screen->cur_row == screen->top_marg) {
+		offset = (screen->bot_marg + 1) * in_row - 1;
+	    } else if (offset < 0) {
 		int length = in_row * MaxRows(screen);
 		offset += ((-offset) / length + 1) * length;
 	    }
 	    set_cur_row(screen, (offset / in_row));
 	    set_cur_col(screen, (offset % in_row) + left);
-	    do_xevents();
+	    do_xevents(xw);
 	} else {
 	    set_cur_col(screen, left);
 	}
@@ -284,7 +289,7 @@ CarriageReturn(XtermWidget xw)
 
     set_cur_col(screen, col);
     ResetWrap(screen);
-    do_xevents();
+    do_xevents(xw);
 }
 
 /*
@@ -327,8 +332,9 @@ CursorSave(XtermWidget xw)
     sc->cur_foreground = xw->cur_foreground;
     sc->cur_background = xw->cur_background;
     sc->sgr_foreground = xw->sgr_foreground;
+    sc->sgr_38_xcolors = xw->sgr_38_xcolors;
 #endif
-    memmove(sc->gsets, screen->gsets, sizeof(screen->gsets));
+    saveCharsets(screen, sc->gsets);
 }
 
 /*
@@ -350,7 +356,7 @@ CursorRestore(XtermWidget xw)
      * In that case, we'll reset the character sets.
      */
     if (sc->saved) {
-	memmove(screen->gsets, sc->gsets, sizeof(screen->gsets));
+	restoreCharsets(screen, sc->gsets);
 	screen->curgl = sc->curgl;
 	screen->curgr = sc->curgr;
     } else {
@@ -359,15 +365,21 @@ CursorRestore(XtermWidget xw)
 
     UIntClr(xw->flags, DECSC_FLAGS);
     UIntSet(xw->flags, sc->flags & DECSC_FLAGS);
-    CursorSet(screen,
-	      ((xw->flags & ORIGIN)
-	       ? sc->row - screen->top_marg
-	       : sc->row),
-	      sc->col, xw->flags);
+    if ((xw->flags & ORIGIN)) {
+	CursorSet(screen,
+		  sc->row - screen->top_marg,
+		  ((xw->flags & LEFT_RIGHT)
+		   ? sc->col - screen->lft_marg
+		   : sc->col),
+		  xw->flags);
+    } else {
+	CursorSet(screen, sc->row, sc->col, xw->flags);
+    }
     screen->do_wrap = sc->wrap_flag;	/* after CursorSet/ResetWrap */
 
 #if OPT_ISO_COLORS
     xw->sgr_foreground = sc->sgr_foreground;
+    xw->sgr_38_xcolors = sc->sgr_38_xcolors;
     SGR_Foreground(xw, (xw->flags & FG_COLOR) ? sc->cur_foreground : -1);
     SGR_Background(xw, (xw->flags & BG_COLOR) ? sc->cur_background : -1);
 #endif
@@ -383,7 +395,7 @@ CursorNextLine(XtermWidget xw, int count)
 
     CursorDown(screen, count < 1 ? 1 : count);
     CarriageReturn(xw);
-    do_xevents();
+    do_xevents(xw);
 }
 
 /*
@@ -396,7 +408,7 @@ CursorPrevLine(XtermWidget xw, int count)
 
     CursorUp(screen, count < 1 ? 1 : count);
     CarriageReturn(xw);
-    do_xevents();
+    do_xevents(xw);
 }
 
 /*

@@ -1,7 +1,7 @@
-/* $XTermId: xutf8.c,v 1.16 2017/05/31 09:05:00 tom Exp $ */
+/* $XTermId: xutf8.c,v 1.18 2020/06/23 22:45:51 tom Exp $ */
 
 /*
- * Copyright 2002-2016,2017 by Thomas E. Dickey
+ * Copyright 2002-2019,2020 by Thomas E. Dickey
  * Copyright (c) 2001 by Juliusz Chroboczek
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -137,11 +137,11 @@ utf8l1strcpy(char *d, char *s)
 		*d++ = (char) (((*s & 0x03) << 6) | (s[1] & 0x3F));
 		s += 2;
 	    } else {
-		*d++ = '?';
+		*d++ = BAD_ASCII;
 		SKIP;
 	    }
 	} else {
-	    *d++ = '?';
+	    *d++ = BAD_ASCII;
 	    SKIP;
 	}
     }
@@ -226,7 +226,7 @@ Xutf8TextPropertyToTextList(Display *dpy,
     else
 	len = l1countUtf8Bytes((char *) tp->value, datalen);
 
-    start = TextAlloc(len);
+    start = malloc(len + 1);
     if (!start) {
 	free(list);
 	return XNoMemory;

@@ -1,38 +1,20 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #330 - 2017/06/20
+                            Patch #366 - 2021/02/10
 
-     * updates for ReGIS (Ross Combs):
-          + remove redundant text command error check which broke T(B) and
-            T(E).
-          + retain  the  loading  alphabet  number across multiple “L”
-            commands.
-          + add S(T) delay handler.
-          + fix some color handling error messages.
-          + add stubbed-out macrograph handling.
-          + use  fragment_remaining()  and  fragment_consumed() instead of
-            manually checking position / length in various places.
-          + rename  some  local  variables  in  string  /  extent / option
-            parsing
-          + wrap some long lines.
-          + move macrograph command handling out of the top-level.
-     * add a summary of the italic fonts loaded to -report-fonts option.
-     * modify the font-lookup for italics to allow for “-i-” if no match
-       is found with slant “-o-” (prompted by patch by Ben Wong).
-     * change  default values for mkSamplePass and mkSampleSize to reflect
-       generally-improved  locale  support  in  various  operating systems
-       (FreeBSD #219800).
-     * modify  wcwidth.c to return -1 for non-Unicode values, and adjust a
-       couple  of blocks to better match assumptions about ambiguous-width
-       characters  in  other  implementations.  Also  modify  wcwidth.c to
-       support  configurable soft-hyphen, so there is no drawback to using
-       this version rather than a system wcwidth.
-     * amend  change  made  in  patch #328 for cursor-visibility to handle
-       case  where  an  application  is  updating  the reverse-video state
-       (FreeBSD #219800).
-     * update  tables  of  combining  and  ambiguous-width  characters  in
-       wcwidth.c based on Unicode 10.0.0.
-     * build-fix         for        --enable-sixel-graphics        without
-       --enable-regis-graphics (reports by Sven Joachim, FreeBSD #219945).
+     * correct   a  compiler-warning  fix  in  patch  #352  which  allowed
+       sign-extension of coordinate values (report by "CismonX").
+     * correct  upper-limit for selection buffer, accounting for combining
+       characters (report/testcase by Tavis Ormandy).
+     * with alwaysHighlight true, xterm does not properly track focus. The
+       screen->select   FOCUS  flag  remains  always  on,  which  prevents
+       bellIsUrgent  from  working, as the urgent WM_HINT flag is only set
+       in  setXUrgency()  when  the  window  is  not  focused. Fix this by
+       updating screen->select in unselectwindow() regardless of the value
+       of always_highlight (patch by Jiri Bohac).
+     * improve  fix  for  interaction between SRM and ENQ (report by Grant
+       Taylor).
+     * build-fix   for  --with-Xaw3dxft,  needed  when  --with-toolbar  is
+       omitted (report by Jimmy Olgeni, Emanuel Haupt).
 

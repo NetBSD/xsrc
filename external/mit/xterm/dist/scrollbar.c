@@ -1,7 +1,7 @@
-/* $XTermId: scrollbar.c,v 1.200 2016/05/22 16:43:12 tom Exp $ */
+/* $XTermId: scrollbar.c,v 1.211 2021/02/02 00:19:32 tom Exp $ */
 
 /*
- * Copyright 2000-2014,2016 by Thomas E. Dickey
+ * Copyright 2000-2020,2021 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -234,7 +234,7 @@ DoResizeScreen(XtermWidget xw)
 #endif
     XSync(screen->display, False);	/* synchronize */
     if (xtermAppPending())
-	xevents();
+	xevents(xw);
 
 #ifndef NO_ACTIVE_ICON
     WhichVWin(screen) = saveWin;
@@ -308,19 +308,33 @@ ScrollBarReverseVideo(Widget scrollWidget)
 }
 
 void
-ScrollBarDrawThumb(Widget scrollWidget)
+ScrollBarDrawThumb(XtermWidget xw, int mode)
 {
-    XtermWidget xw = getXtermWidget(scrollWidget);
+    TScreen *screen = TScreenOf(xw);
 
-    if (xw != 0) {
-	TScreen *screen = TScreenOf(xw);
+    if (screen->scrollWidget != 0) {
 	int thumbTop, thumbHeight, totalHeight;
+
+#if USE_DOUBLE_BUFFER
+	if (resource.buffered) {
+	    if (mode == 1) {
+		screen->buffered_sb++;
+		return;
+	    } else if (mode == 2) {
+		if (screen->buffered_sb == 0)
+		    return;
+	    }
+	}
+	screen->buffered_sb = 0;
+#else
+	(void) mode;
+#endif
 
 	thumbTop = ROW2INX(screen, screen->savedlines);
 	thumbHeight = MaxRows(screen);
 	totalHeight = thumbHeight + screen->savedlines;
 
-	XawScrollbarSetThumb(scrollWidget,
+	XawScrollbarSetThumb(screen->scrollWidget,
 			     ((float) thumbTop) / (float) totalHeight,
 			     ((float) thumbHeight) / (float) totalHeight);
     }
@@ -354,15 +368,16 @@ ResizeScrollBar(XtermWidget xw)
 			     (Dimension) width,
 			     (Dimension) height,
 			     BorderWidth(screen->scrollWidget));
-	ScrollBarDrawThumb(screen->scrollWidget);
+	ScrollBarDrawThumb(xw, 1);
     }
 }
 
 void
-WindowScroll(XtermWidget xw, int top, Bool always GCC_UNUSED)
+WindowScroll(XtermWidget xw, int top, Bool always)
 {
     TScreen *screen = TScreenOf(xw);
 
+    (void) always;
 #if OPT_SCROLL_LOCK
     if (screen->allowScrollLock && (screen->scroll_lock && !always)) {
 	if (screen->scroll_dirty) {
@@ -385,7 +400,7 @@ WindowScroll(XtermWidget xw, int top, Bool always GCC_UNUSED)
 	    int scrolltop, scrollheight, refreshtop;
 
 	    if (screen->cursor_state)
-		HideCursor();
+		HideCursor(xw);
 	    lines = i > 0 ? i : -i;
 	    if (lines > MaxRows(screen))
 		lines = MaxRows(screen);
@@ -401,31 +416,19 @@ WindowScroll(XtermWidget xw, int top, Bool always GCC_UNUSED)
 
 	    ScrollSelection(screen, i, True);
 
-#if OPT_DOUBLE_BUFFER
-	    XFillRectangle(screen->display,
-			   VDrawable(screen),
-			   ReverseGC(xw, screen),
-			   OriginX(screen),
-			   OriginY(screen) + refreshtop * FontHeight(screen),
-			   (unsigned) Width(screen),
-			   (unsigned) (lines * FontHeight(screen)));
-#else
-	    XClearArea(screen->display,
-		       VWindow(screen),
-		       OriginX(screen),
-		       OriginY(screen) + refreshtop * FontHeight(screen),
-		       (unsigned) Width(screen),
-		       (unsigned) (lines * FontHeight(screen)),
-		       False);
-#endif
+	    xtermClear2(xw,
+			OriginX(screen),
+			OriginY(screen) + refreshtop * FontHeight(screen),
+			(unsigned) Width(screen),
+			(unsigned) (lines * FontHeight(screen)));
 	    ScrnRefresh(xw, refreshtop, 0, lines, MaxCols(screen), False);
 
 #if OPT_BLINK_CURS || OPT_BLINK_TEXT
-	    RestartBlinking(screen);
+	    RestartBlinking(xw);
 #endif
 	}
     }
-    ScrollBarDrawThumb(screen->scrollWidget);
+    ScrollBarDrawThumb(xw, 1);
 }
 
 #ifdef SCROLLBAR_RIGHT
@@ -488,7 +491,7 @@ ScrollBarOn(XtermWidget xw, Bool init)
 	       screen->scrollWidget->core.width,
 	       BorderWidth(screen->scrollWidget)));
 
-	ScrollBarDrawThumb(screen->scrollWidget);
+	ScrollBarDrawThumb(xw, 1);
 	DoResizeScreen(xw);
 
 #ifdef SCROLLBAR_RIGHT
@@ -538,14 +541,14 @@ ToggleScrollBar(XtermWidget xw)
     if (IsIcon(screen)) {
 	Bell(xw, XkbBI_MinorError, 0);
     } else {
-	TRACE(("ToggleScrollBar{{\n"));
+	TRACE(("ToggleScrollBar" TRACE_L "\n"));
 	if (screen->fullVwin.sb_info.width) {
 	    ScrollBarOff(xw);
 	} else {
 	    ScrollBarOn(xw, False);
 	}
 	update_scrollbar();
-	TRACE(("...ToggleScrollBar}}\n"));
+	TRACE((TRACE_R " ToggleScrollBar\n"));
     }
 }
 
@@ -620,7 +623,8 @@ CompareWidths(const char *a, const char *b, int *modifier)
 	cb = x_toupper(*b);
 	if (ca != cb || ca == '\0')
 	    break;		/* if not eq else both nul */
-	a++, b++;
+	a++;
+	b++;
     }
     if (cb != '\0')
 	return 0;
@@ -724,6 +728,36 @@ AlternateScroll(Widget w, long amount)
 	}
     } else {
 	ScrollTextUpDownBy(w, (XtPointer) 0, (XtPointer) amount);
+    }
+}
+
+/*ARGSUSED*/
+void
+HandleScrollTo(
+		  Widget w,
+		  XEvent *event GCC_UNUSED,
+		  String *params,
+		  Cardinal *nparams)
+{
+    XtermWidget xw;
+    TScreen *screen;
+
+    if ((xw = getXtermWidget(w)) != 0 &&
+	(screen = TScreenOf(xw)) != 0 &&
+	*nparams > 0) {
+	long amount;
+	int value;
+	int to_top = (screen->topline - screen->savedlines);
+	if (!x_strcasecmp(params[0], "begin")) {
+	    amount = to_top * FontHeight(screen);
+	} else if (!x_strcasecmp(params[0], "end")) {
+	    amount = -to_top * FontHeight(screen);
+	} else if ((value = atoi(params[0])) >= 0) {
+	    amount = (value + to_top) * FontHeight(screen);
+	} else {
+	    amount = 0;
+	}
+	AlternateScroll(w, amount);
     }
 }
 

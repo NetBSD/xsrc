@@ -1,7 +1,7 @@
-/* $XTermId: xstrings.c,v 1.70 2017/06/11 21:20:37 tom Exp $ */
+/* $XTermId: xstrings.c,v 1.78 2020/10/12 18:50:28 tom Exp $ */
 
 /*
- * Copyright 2000-2016,2017 by Thomas E. Dickey
+ * Copyright 2000-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -102,8 +102,8 @@ x_decode_hex(const char *source, const char **next)
     for (pass = 0; pass < 2; ++pass) {
 	for (j = k = 0; isxdigit(CharOf(source[j])); ++j) {
 	    if ((pass != 0) && (j & 1) != 0) {
-		result[k++] = (char) ((x_hex2int(source[j - 1]) << 4)
-				      | x_hex2int(source[j]));
+		result[k++] = (char) ((CharOf(x_hex2int(source[j - 1])) << 4)
+				      | CharOf(x_hex2int(source[j])));
 	    }
 	}
 	*next = (source + j);
@@ -134,6 +134,7 @@ x_encode_hex(const char *source)
 
     if (result != 0) {
 	unsigned j, k;
+	result[0] = '\0';
 	for (j = k = 0; source[j] != '\0'; ++j) {
 	    sprintf(result + k, "%02X", CharOf(source[j]));
 	    k += 2;
@@ -174,8 +175,7 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
 		/* use the other passwd-data including shell */
 		alloc_pw(in_out, &pw2);
 	    } else {
-		free(login_name);
-		login_name = NULL;
+		FreeAndNull(login_name);
 	    }
 	    if (ok2)
 		free_pw(&pw2);
@@ -195,7 +195,7 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
 char *
 x_getlogin(uid_t uid, struct passwd *in_out)
 {
-    char *login_name = NULL;
+    char *login_name;
 
     login_name = login_alias(x_getenv("LOGNAME"), uid, in_out);
     if (IsEmpty(login_name)) {
@@ -387,8 +387,7 @@ void
 x_freeargs(char **argv)
 {
     if (argv != 0) {
-	if (*argv != 0)
-	    free(*argv);
+	free(*argv);
 	free(argv);
     }
 }
@@ -414,7 +413,8 @@ x_strncasecmp(const char *s1, const char *s2, unsigned n)
 	    return 1;
 	if (c1 == 0)
 	    break;
-	s1++, s2++;
+	s1++;
+	s2++;
     }
 
     return 0;
@@ -429,7 +429,7 @@ x_strdup(const char *s)
     char *result = 0;
 
     if (s != 0) {
-	char *t = TextAlloc(4 + strlen(s));
+	char *t = malloc(strlen(s) + 5);
 	if (t != 0) {
 	    strcpy(t, s);
 	}
@@ -464,7 +464,9 @@ x_strtrim(const char *source)
 {
     char *result;
 
-    if (source != 0 && *source != '\0') {
+    if (IsEmpty(source)) {
+	result = x_strdup("");
+    } else {
 	char *t = x_strdup(source);
 	if (t != 0) {
 	    char *s = t;
@@ -482,8 +484,6 @@ x_strtrim(const char *source)
 	    }
 	}
 	result = t;
-    } else {
-	result = x_strdup("");
     }
     return result;
 }
@@ -496,7 +496,9 @@ x_strrtrim(const char *source)
 {
     char *result;
 
-    if (source != 0 && *source != '\0') {
+    if (IsEmpty(source)) {
+	result = x_strdup("");
+    } else {
 	char *t = x_strdup(source);
 	if (t != 0) {
 	    if (*t != '\0') {
@@ -507,8 +509,6 @@ x_strrtrim(const char *source)
 	    }
 	}
 	result = t;
-    } else {
-	result = x_strdup("");
     }
     return result;
 }

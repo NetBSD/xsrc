@@ -1,8 +1,8 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.212 2016/05/30 20:42:13 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.220 2020/10/05 22:42:06 tom Exp $ */
 
 /*
- * Copyright 1997-2015,2016 by Thomas E. Dickey
+ * Copyright 1997-2019,2020 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -35,18 +35,16 @@
 #define included_xtermcfg_h 1
 
 /* This is a template for <xtermcfg.h> */
-  
+
 /*
  * There are no configure options for these features:
  * ALLOWLOGFILECHANGES
  * ALLOWLOGFILEONOFF
  * CANT_OPEN_DEV_TTY
  * DEBUG* (any debug-option)
- * DUMP_BITMAP
- * DUMP_COLORS
+ * DUMP_* (mostly in the ReGIS/SIXEL code)
  * HAS_LTCHARS
  * HAVE_SYS_PTEM_H
- * HAVE_X11_TRANSLATEI_H
  * PUCC_PTYD
  * USE_LOGIN_DASH_P
  * USE_X11TERM
@@ -61,32 +59,36 @@
 #define DEF_ALT_SENDS_ESC False	/* CF_ARG_ENABLE(alt-sends-esc) */
 #define DEF_BACKARO_BS True		/* CF_ARG_DISABLE(backarrow-key) */
 #define DEF_BACKARO_ERASE False	/* CF_ARG_ENABLE(backarrow-is-erase) */
-#define DEF_INITIAL_ERASE False /* CF_ARG_DISABLE(initial-erase) */
+#define DEF_INITIAL_ERASE False	/* CF_ARG_DISABLE(initial-erase) */
 #define DEF_META_SENDS_ESC False	/* CF_ARG_ENABLE(meta-sends-esc) */
 /* #undef DFT_COLORMODE */		/* AC_ARG_WITH(default-color-mode) */
 #define DFT_DECID "420"		/* AC_ARG_WITH(default-terminal-id) */
 #define DFT_TERMTYPE "xterm"		/* AC_ARG_WITH(default-term-type) */
 /* #undef DISABLE_SETGID */		/* CF_ARG_DISABLE(setgid) */
 /* #undef DISABLE_SETUID */		/* CF_ARG_DISABLE(setuid) */
+#define HAVE_ENDUSERSHELL 1	/* AC_CHECK_FUNCS(endusershell) */
 #define HAVE_GETHOSTNAME 1		/* AC_CHECK_FUNCS(gethostname) */
 #define HAVE_GETLOGIN 1		/* AC_CHECK_FUNCS(getlogin) */
+#define HAVE_GETUSERSHELL 1	/* AC_CHECK_FUNCS(getusershell) */
 #define HAVE_GRANTPT 1		/* CF_FUNC_GRANTPT */
-#define HAVE_INITGROUPS 1		/* AC_CHECK_FUNCS(initgroups) */
 /* #undef HAVE_GRANTPT_PTY_ISATTY */	/* CF_FUNC_GRANTPT */
+#define HAVE_INITGROUPS 1		/* AC_CHECK_FUNCS(initgroups) */
 #define HAVE_LANGINFO_CODESET 1	/* AM_LANGINFO_CODESET */
 /* #undef HAVE_LASTLOG_H */		/* CF_LASTLOG */
 #define HAVE_LIBXPM 1		/* CF_WITH_XPM */
 /* #undef HAVE_LIB_NEXTAW */		/* CF_X_ATHENA(--with-neXtaw) */
 /* #undef HAVE_LIB_PCRE */		/* CF_WITH_PCRE */
+/* #undef HAVE_LIB_PCRE2 */		/* CF_WITH_PCRE2 */
 #define HAVE_LIB_XAW 1		/* CF_X_ATHENA */
 /* #undef HAVE_LIB_XAW3D */		/* CF_X_ATHENA(--with-Xaw3d) */
-/* #undef HAVE_LIB_XAW3DXFT */		/* CF_X_ATHENA(--with-Xaw3dxft) */
+/* #undef HAVE_LIB_XAW3DXFT */	/* CF_X_ATHENA(--with-Xaw3dxft) */
 /* #undef HAVE_LIB_XAWPLUS */		/* CF_X_ATHENA(--with-XawPlus) */
 #define HAVE_LIB_XCURSOR 1		/* AC_CHECK_LIB(Xcursor) */
 #define HAVE_MKDTEMP 1		/* AC_CHECK_FUNCS(mkdtemp) */
 /* #undef HAVE_NCURSES_CURSES_H */	/* AC_CHECK_HEADERS(ncurses/curses.h) */
 /* #undef HAVE_NCURSES_TERM_H */	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #define HAVE_PATHS_H 1		/* CF_LASTLOG */
+/* #undef HAVE_PCRE2POSIX_H */	/* CF_WITH_PCRE2 */
 /* #undef HAVE_PCREPOSIX_H */		/* CF_WITH_PCRE */
 #define HAVE_POSIX_OPENPT 1	/* CF_FUNC_GRANTPT */
 #define HAVE_POSIX_SAVED_IDS 1	/* CF_POSIX_SAVED_IDS */
@@ -120,18 +122,21 @@
 #define HAVE_WCSWIDTH 1		/* AC_CHECK_FUNCS(wcswidth) */
 #define HAVE_WCWIDTH 1		/* AC_CHECK_FUNCS(wcwidth) */
 #define HAVE_X11_DECKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/DECkeysym.h) */
-#define HAVE_X11_EXTENSIONS_XINERAMA_H 1	 /* AC_CHECK_HEADERS(X11/extensions/Xinerama.h) */
+#define HAVE_X11_EXTENSIONS_XDBE_H 1 /* AC_CHECK_HEADERS(X11/extensions/Xdbe.h) */
+#define HAVE_X11_EXTENSIONS_XINERAMA_H 1 /* AC_CHECK_HEADERS(X11/extensions/Xinerama.h) */
 #define HAVE_X11_EXTENSIONS_XKB_H 1 /* AC_CHECK_HEADERS(X11/extensions/XKB.h) */
 #define HAVE_X11_SUNKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/Sunkeysym.h) */
+#define HAVE_X11_TRANSLATEI_H 1	/* AC_CHECK_HEADERS(X11/TranslateI.h) */
 #define HAVE_X11_XF86KEYSYM_H 1	/* AC_CHECK_HEADERS(X11/XF86keysym.h) */
 #define HAVE_X11_XKBLIB_H 1	/* AC_CHECK_HEADERS(X11/XKBlib.h) */
 #define HAVE_X11_XPOLL_H 1		/* AC_CHECK_HEADERS(X11/Xpoll.h) */
+#define HAVE_XDBESWAPBUFFERS 1	/* AC_CHECK_FUNC(XdbeSwapBuffers) */
 #define HAVE_XFTDRAWSETCLIP 1	/* CF_X_FREETYPE */
 #define HAVE_XFTDRAWSETCLIPRECTANGLES 1 /* CF_X_FREETYPE */
 #define HAVE_XKBKEYCODETOKEYSYM 1	/* AC_CHECK_FUNCS(XkbKeycodeToKeysym) */
 #define HAVE_XKBQUERYEXTENSION 1	/* AC_CHECK_FUNCS(XkbQueryExtension) */
 #define HAVE_XKB_BELL_EXT 1	/* CF_XKB_BELL_EXT */
-#define LUIT_PATH "/usr/X11R7/bin/luit"	/* CF_ARG_ENABLE(luit) */
+#define LUIT_PATH "/usr/X11R7/bin/luit"		/* CF_ARG_ENABLE(luit) */
 /* #undef NO_ACTIVE_ICON */		/* CF_ARG_DISABLE(active-icon) */
 /* #undef NO_LEAKS */			/* CF_ARG_DISABLE(leaks) */
 #define OPT_256_COLORS 1		/* CF_ARG_ENABLE(256-color) */
@@ -148,10 +153,12 @@
 /* #undef OPT_DABBREV */		/* CF_ARG_ENABLE(dabbrev) */
 /* #undef OPT_DEC_CHRSET */		/* CF_ARG_DISABLE(doublechars) */
 /* #undef OPT_DEC_LOCATOR */		/* CF_ARG_ENABLE(dec-locator) */
-/* #undef OPT_DOUBLE_BUFFER */	/* CF_ARG_ENABLE(double-buffer) */
 #define OPT_DEC_RECTOPS 1		/* CF_ARG_ENABLE(rectangles) */
+#define OPT_DIRECT_COLOR 1		/* CF_ARG_ENABLE(direct-color) */
+/* #undef OPT_DOUBLE_BUFFER */	/* CF_ARG_ENABLE(double-buffer) */
 /* #undef OPT_EXEC_XTERM */		/* CF_ARG_ENABLE(exec-xterm) */
 #define OPT_FIFO_LINES 1		/* CF_ARG_ENABLE(fifo-lines) */
+#define OPT_GRAPHICS 1		/* CF_ARG_ENABLE(graphics) */
 /* #undef OPT_HIGHLIGHT_COLOR */	/* CF_ARG_DISABLE(highlighting) */
 /* #undef OPT_HP_FUNC_KEYS */		/* CF_ARG_ENABLE(hp-fkeys) */
 /* #undef OPT_I18N_SUPPORT */		/* CF_ARG_DISABLE(i18n) */
@@ -159,22 +166,23 @@
 /* #undef OPT_INPUT_METHOD */		/* CF_ARG_DISABLE(input-method) */
 /* #undef OPT_ISO_COLORS */		/* CF_ARG_DISABLE(ansi-color) */
 /* #undef OPT_LOAD_VTFONTS */		/* CF_ARG_ENABLE(load-vt-fonts) */
-#define OPT_LUIT_PROG 1			/* CF_ARG_ENABLE(luit) */
+#define OPT_LUIT_PROG 1		/* CF_ARG_ENABLE(luit) */
 /* #undef OPT_MAXIMIZE */		/* CF_ARG_DISABLE(maximize) */
-/* #undef OPT_MINI_LUIT */		/* CF_ARG_ENABLE(mini-luit) */
+#define OPT_MINI_LUIT 1		/* CF_ARG_ENABLE(mini-luit) */
 /* #undef OPT_NUM_LOCK */		/* CF_ARG_DISABLE(num-lock) */
 #define OPT_PASTE64 1		/* CF_ARG_ENABLE(past64) */
 /* #undef OPT_PC_COLORS */		/* CF_ARG_DISABLE(pc-color) */
-/* #undef OPT_SCREEN_DUMPS */		/* CF_ARG_ENABLE(screen-dumps) */
+/* #undef OPT_PRINT_GRAPHICS */	/* CF_ARG_ENABLE(print-graphics) */
 #define OPT_PTY_HANDSHAKE 1	/* CF_ARG_ENABLE(pty-handshake) */
-/* #undef OPT_READLINE */		/* CF_ARG_ENABLE(readline-mouse) */
+#define OPT_READLINE 1		/* CF_ARG_ENABLE(readline-mouse) */
+/* #undef OPT_REGIS_GRAPHICS */	/* CF_ARG_ENABLE(regis-graphics) */
 /* #undef OPT_SAME_NAME */		/* CF_ARG_DISABLE(samename) */
 /* #undef OPT_SCO_FUNC_KEYS */	/* CF_ARG_ENABLE(sco-fkeys) */
+/* #undef OPT_SCREEN_DUMPS */		/* CF_ARG_ENABLE(screen-dumps) */
 /* #undef OPT_SELECTION_OPS */	/* CF_ARG_DISABLE(selection-ops) */
 #define OPT_SELECT_REGEX 1		/* CF_ARG_DISABLE(regex) */
 /* #undef OPT_SESSION_MGT */		/* CF_ARG_DISABLE(session-mgt) */
-/* #undef OPT_REGIS_GRAPHICS */	/* CF_ARG_ENABLE(regis-graphics) */
-/* #undef OPT_SIXEL_GRAPHICS */	/* CF_ARG_ENABLE(sixel-graphics) */
+#define OPT_SIXEL_GRAPHICS 1	/* CF_ARG_ENABLE(sixel-graphics) */
 /* #undef OPT_SUN_FUNC_KEYS */	/* CF_ARG_ENABLE(sun-fkeys) */
 #define OPT_TCAP_FKEYS 1		/* CF_ARG_ENABLE(tcap-fkeys) */
 #define OPT_TCAP_QUERY 1		/* CF_ARG_ENABLE(tcap-query) */
@@ -182,8 +190,8 @@
 /* #undef OPT_TOOLBAR */		/* CF_ARG_ENABLE(toolbar) */
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
-#define OPT_WIDE_ATTRS 1		/* CF_ARG_OPTION(wide-attrs) */
-#define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
+/* #undef OPT_WIDE_ATTRS */		/* CF_ARG_DISABLE(wide-attrs) */
+#define OPT_WIDE_CHARS 1		/* CF_ARG_DISABLE(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
 /* #undef OWN_TERMINFO_DIR */		/* AC_ARG_WITH(own-terminfo) */
@@ -207,7 +215,6 @@
 /* #undef USE_UTMP_SETGID */		/* AC_ARG_WITH(utmp-setgid) */
 #define UTMPX_FOR_UTMP 1		/* CF_UTMP */
 #define XRENDERFONT 1		/* CF_X_FREETYPE */
-#define XFREE86_FT2 1
 /* #undef cc_t */			/* CF_TYPE_CC_T */
 /* #undef gid_t */			/* AC_TYPE_UID_T */
 /* #undef mode_t */			/* AC_TYPE_MODE_T */
@@ -231,10 +238,10 @@
  * g++ support for __attribute__() is haphazard.
  */
 #ifndef __cplusplus
-#define GCC_PRINTF 	1
-#define GCC_PRINTFLIKE(fmt,var) __attribute__((__format__(__printf__,fmt,var)))
-#define GCC_NORETURN 	__attribute__((__noreturn__))
-#define GCC_UNUSED 	__attribute__((__unused__))
+#define GCC_PRINTF	1
+#define GCC_PRINTFLIKE(fmt,var)	__attribute__((format(printf,fmt,var)))
+#define GCC_NORETURN	__attribute__((__noreturn__))
+#define GCC_UNUSED	__attribute__((__unused__))
 #endif
 
 #ifndef HAVE_X11_XPOLL_H
