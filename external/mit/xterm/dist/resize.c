@@ -57,11 +57,15 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#ifdef RESIZE_ONLY
+#include "resize.h"
+#else
 #include <xterm.h>
 #include <version.h>
 #include <xstrings.h>
 #include <xtermcap.h>
 #include <xterm_io.h>
+#endif
 
 #ifndef USE_TERMINFO		/* avoid conflict with configure script */
 #if defined(__QNX__) || defined(__SCO__) || defined(linux) || defined(__OpenBSD__) || defined(__UNIXWARE__)
