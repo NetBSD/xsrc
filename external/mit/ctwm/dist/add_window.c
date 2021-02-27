@@ -862,7 +862,7 @@ TwmWindow *AddWindow(Window w, int iconm, IconMgr *iconp)
 			   tmp_win->name, namelen,
 			   &ink_rect, &logical_rect);
 	    width = SIZE_HINDENT + ink_rect.width;
-	    height = logical_rect.height + SIZE_VINDENT * 2;
+	    height = Scr->SizeFont.height + SIZE_VINDENT * 2;
 	    XmbTextExtents(Scr->SizeFont.font_set,
 			   ": ", 2,  &logical_rect, &logical_rect);
 	    Scr->SizeStringOffset = width + logical_rect.width;
