@@ -133,7 +133,7 @@ sunMouseProc(DeviceIntPtr device, int what)
     switch (what) {
 	case DEVICE_INIT:
 	    if (pMouse != &sunPointerDevice->public) {
-		ErrorF ("Cannot open non-system mouse");
+		ErrorF ("Cannot open non-system mouse\n");
 		return !Success;
 	    }
 	    if (sunPtrPriv.fd == -1)
@@ -156,12 +156,12 @@ sunMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 	    if (ioctl (sunPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		ErrorF("sunMouseProc ioctl VUIDGFORMAT");
+		ErrorF("sunMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (sunPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
-		ErrorF("sunMouseProc ioctl VUIDSFORMAT");
+		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
 	    sunPtrPriv.bmask = 0;
@@ -173,7 +173,7 @@ sunMouseProc(DeviceIntPtr device, int what)
 	case DEVICE_CLOSE:
 	    pMouse->on = FALSE;
 	    if (ioctl (sunPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
-		ErrorF("sunMouseProc ioctl VUIDSFORMAT");
+		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
 	    break;
 
 	case DEVICE_OFF:
@@ -210,7 +210,7 @@ sunMouseGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    ErrorF("sunMouseGetEvents read");
+	    ErrorF("sunMouseGetEvents read\n");
 	    FatalError ("Could not read from mouse");
 	}
     } else {

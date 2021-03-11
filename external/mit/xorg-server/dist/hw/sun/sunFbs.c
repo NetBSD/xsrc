@@ -99,7 +99,7 @@ sunMemoryMap(size_t len, off_t off, int fd)
 
 #if !defined(__bsdi__) && !defined(_MAP_NEW) && !defined(__NetBSD__) && !defined(__OpenBSD__)
     if ((addr = (caddr_t) valloc (mapsize)) == NULL) {
-	ErrorF("Couldn't allocate frame buffer memory");
+	ErrorF("Couldn't allocate frame buffer memory\n");
 	(void) close (fd);
 	return NULL;
     }
@@ -121,7 +121,7 @@ sunMemoryMap(size_t len, off_t off, int fd)
 		    PROT_READ | PROT_WRITE, MAP_SHARED,
 		    fd, off);
     if (mapaddr == (void *) -1) {
-	ErrorF("mapping frame buffer memory");
+	ErrorF("mapping frame buffer memory\n");
 	(void) close (fd);
 	mapaddr = NULL;
     }
@@ -134,7 +134,7 @@ sunScreenAllocate(ScreenPtr pScreen)
     sunScreenPtr    pPrivate;
 
     if (!dixRegisterPrivateKey(&sunScreenPrivateKeyRec, PRIVATE_SCREEN, 0)) {
-	ErrorF("dixRegisterPrivateKey failed");
+	ErrorF("dixRegisterPrivateKey failed\n");
 	return FALSE;
     }
     pPrivate = calloc(1, sizeof (sunScreenRec));

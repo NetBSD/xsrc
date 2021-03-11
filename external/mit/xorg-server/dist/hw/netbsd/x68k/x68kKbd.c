@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.10 2020/11/04 17:16:13 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.11 2021/03/11 12:08:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -121,7 +121,7 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
         case DEVICE_INIT:
             pKeyboard->devicePrivate = (void *)&x68kKbdPriv;
             if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY)) == -1 ) {
-                ErrorF("Can't open keyboard device");
+                ErrorF("Can't open keyboard device\n");
                 return !Success;
             }
             pKeyboard->on = FALSE;
@@ -146,7 +146,7 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
             if ( fcntl(x68kKbdPriv.fd, F_SETOWN, getpid()) == -1 ||
                  fcntl(x68kKbdPriv.fd, F_SETFL, O_NONBLOCK|O_ASYNC) == -1 ||
                  ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1 ) {
-                ErrorF("Async keyboard I/O failed");
+                ErrorF("Async keyboard I/O failed\n");
                 return !Success;
             }
 	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
@@ -271,7 +271,7 @@ x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    ErrorF("Reading keyboard");
+	    ErrorF("Reading keyboard\n");
 	    FatalError ("Could not read the keyboard");
 	}
     } else {
@@ -324,13 +324,13 @@ x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
 
     kbdCmd = KBD_CMD_BELL;
     if (ioctl (pPriv->fd, KIOCCMD, &kbdCmd) == -1) {
-	ErrorF("Failed to activate bell");
+	ErrorF("Failed to activate bell\n");
 	return;
     }
     usleep (duration * 1000);
     kbdCmd = KBD_CMD_NOBELL;
     if (ioctl (pPriv->fd, KIOCCMD, &kbdCmd) == -1)
-	ErrorF("Failed to deactivate bell");
+	ErrorF("Failed to deactivate bell\n");
 }
 
 static void
@@ -399,7 +399,7 @@ x68kSetLeds(X68kKbdPrivPtr pPriv, uint8_t data)
 {
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)
-        ErrorF("Failed to set keyboard lights");
+        ErrorF("Failed to set keyboard lights\n");
 }
 
 Bool

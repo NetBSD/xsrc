@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.7 2020/11/04 17:16:13 tsutsui Exp $ */
+/* $NetBSD: x68kFb.c,v 1.8 2021/03/11 12:08:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -50,12 +50,12 @@ x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
 
     /* open frame buffer */
     if ( ( pPriv->fd = open(device, O_RDWR, 0)) < 0) {
-        ErrorF( "Can't open frame buffer" );
+        ErrorF( "Can't open frame buffer\n" );
         return FALSE;
     }
     /* get frame buffer infomation */
     if ( ioctl( pPriv->fd, GRFIOCGINFO, &gi ) == -1 ) {
-        ErrorF( "Can't get grfinfo" );
+        ErrorF( "Can't get grfinfo\n" );
         return FALSE;
     }
     pPriv->mapsize = gi.gd_regsize + gi.gd_fbsize;
@@ -64,7 +64,7 @@ x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
     pPriv->reg = (FbReg *)mmap(0, pPriv->mapsize, PROT_READ | PROT_WRITE,
                                MAP_FILE | MAP_SHARED, pPriv->fd, 0 );
     if ( pPriv->reg == (FbReg *)-1) {
-        ErrorF( "Can't map frame buffer" );
+        ErrorF( "Can't map frame buffer\n" );
         return FALSE;
     }
     pPriv->fb = (uint8_t *)((uint32_t)pPriv->reg + gi.gd_regsize);
@@ -114,7 +114,7 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
 
     /* unmap and close frame buffer */
     if ( munmap(pPriv->reg, pPriv->mapsize) == -1 )
-        ErrorF("Can't unmap frame buffer");
+        ErrorF("Can't unmap frame buffer\n");
     close(pPriv->fd);
 }
 

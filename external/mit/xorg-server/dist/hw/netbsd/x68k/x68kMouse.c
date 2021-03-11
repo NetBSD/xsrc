@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.9 2021/02/07 16:55:18 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.10 2021/03/11 12:08:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -136,7 +136,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
 	case DEVICE_INIT:
             pMouse->devicePrivate = (void *) &x68kMousePriv;
             if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY)) == -1 ) {
-                ErrorF("Can't open mouse device");
+                ErrorF("Can't open mouse device\n");
                 return !Success;
             }
 	    pMouse->on = FALSE;
@@ -165,18 +165,18 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 	    if (ioctl (x68kMousePriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDGFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &format) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
             if ( fcntl(x68kMousePriv.fd, F_SETOWN, getpid()) == -1 ||
                  fcntl(x68kMousePriv.fd, F_SETFL, O_NONBLOCK | O_ASYNC) == -1
                  ) {
-                ErrorF("Async mouse I/O failed");
+                ErrorF("Async mouse I/O failed\n");
                 return !Success;
             }
 	    x68kMousePriv.bmask = 0;
@@ -192,7 +192,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_CLOSE:
 	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &oformat) == -1)
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 	    break;
 
     }
@@ -246,7 +246,7 @@ x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    ErrorF("x68kMouseGetEvents read");
+	    ErrorF("x68kMouseGetEvents read\n");
 	    FatalError ("Could not read from mouse");
 	}
     } else {

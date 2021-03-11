@@ -120,7 +120,7 @@ CGUpdateColormap(ScreenPtr pScreen, int dex, int count, u_char *rmap, u_char *gm
     sunCmap.blue = &bmap[dex];
 
     if (ioctl(sunFbs[pScreen->myNum].fd, FBIOPUTCMAP, &sunCmap) < 0) {
-	ErrorF("CGUpdateColormap");
+	ErrorF("CGUpdateColormap\n");
 	FatalError( "CGUpdateColormap: FBIOPUTCMAP failed\n" );
     }
 }
@@ -137,7 +137,7 @@ CGGetColormap(ScreenPtr pScreen, int dex, int count, u_char *rmap, u_char *gmap,
     sunCmap.blue = &bmap[dex];
 
     if (ioctl(sunFbs[pScreen->myNum].fd, FBIOGETCMAP, &sunCmap) < 0) {
-	ErrorF("CGGetColormap");
+	ErrorF("CGGetColormap\n");
 	FatalError( "CGGetColormap: FBIOGETCMAP failed\n" );
     }
 }

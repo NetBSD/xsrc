@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.9 2020/11/04 17:16:13 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.10 2021/03/11 12:08:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -195,7 +195,7 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
 
     /* store private record into screen */
     if (!dixRegisterPrivateKey(&x68kScreenPrivateKeyRec, PRIVATE_SCREEN, 0)) {
-        ErrorF("dixRegisterPrivateKey failed");
+        ErrorF("dixRegisterPrivateKey failed\n");
         return FALSE;
     }
     x68kSetScreenPrivate(pScreen, pPriv);

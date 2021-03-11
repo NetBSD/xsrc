@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.5 2020/11/04 17:16:13 tsutsui Exp $ */
+/* $NetBSD: x68kText.c,v 1.6 2021/03/11 12:08:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -99,7 +99,7 @@ x68kTextInit(ScreenPtr pScreen, int argc, char *argv[])
     pPriv = x68kGetScreenRecByType(X68K_FB_TEXT);
 
     if ( !dixRegisterPrivateKey(&x68kScreenPrivateKeyRec, PRIVATE_SCREEN, 0) ) {
-            ErrorF("dixRegisterPrivateKey failed");
+            ErrorF("dixRegisterPrivateKey failed\n");
             return FALSE;
     }
     x68kSetScreenPrivate(pScreen, pPriv);
