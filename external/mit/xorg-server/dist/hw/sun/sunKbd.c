@@ -191,7 +191,7 @@ SetLights(KeybdCtrl* ctrl, int fd)
 #endif
     };
     if (ioctl (fd, KIOCSLED, (caddr_t)&led_tab[ctrl->leds & SUN_LED_MASK]) == -1)
-	ErrorF("Failed to set keyboard lights\n");
+	LogMessage(X_ERROR, "Failed to set keyboard lights\n");
 #endif
 }
 
@@ -218,13 +218,13 @@ bell(int fd, int duration)
 
     kbdCmd = KBD_CMD_BELL;
     if (ioctl (fd, KIOCCMD, &kbdCmd) == -1) {
- 	ErrorF("Failed to activate bell\n");
+ 	LogMessage(X_ERROR, "Failed to activate bell\n");
 	return;
     }
     if (duration) usleep (duration);
     kbdCmd = KBD_CMD_NOBELL;
     if (ioctl (fd, KIOCCMD, &kbdCmd) == -1)
-	ErrorF("Failed to deactivate bell\n");
+	LogMessage(X_ERROR, "Failed to deactivate bell\n");
 }
 
 static void
@@ -394,7 +394,7 @@ sunKbdCtrl(DeviceIntPtr device, KeybdCtrl* ctrl)
 	pPriv->click = ctrl->click;
 	kbdClickCmd = pPriv->click ? KBD_CMD_CLICK : KBD_CMD_NOCLICK;
     	if (ioctl (pPriv->fd, KIOCCMD, &kbdClickCmd) == -1)
- 	    ErrorF("Failed to set keyclick\n");
+ 	    LogMessage(X_ERROR, "Failed to set keyclick\n");
     }
     if ((pPriv->type == KB_SUN4) && (pPriv->leds != (ctrl->leds & SUN_LED_MASK)))
 	DoLEDs(device, ctrl, pPriv);
