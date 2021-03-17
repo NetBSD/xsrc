@@ -180,6 +180,9 @@ sunMouseProc(DeviceIntPtr device, int what)
 	    pMouse->on = FALSE;
 	    RemoveNotifyFd(sunPtrPriv.fd);
 	    break;
+
+	case DEVICE_ABORT:
+	    break;
     }
     return Success;
 }

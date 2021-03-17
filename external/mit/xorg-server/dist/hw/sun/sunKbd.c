@@ -692,8 +692,9 @@ sunKbdProc(DeviceIntPtr device, int what)
 	RemoveNotifyFd(pPriv->fd);
 	pKeyboard->on = FALSE;
 	break;
-    default:
-	FatalError("Unknown keyboard operation\n");
+
+    case DEVICE_ABORT:
+	break;
     }
     return Success;
 }

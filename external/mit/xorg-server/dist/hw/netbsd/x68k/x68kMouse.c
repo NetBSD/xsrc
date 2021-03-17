@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.10 2021/03/11 12:08:57 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.11 2021/03/17 15:02:27 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -195,6 +195,8 @@ x68kMouseProc(DeviceIntPtr device, int what)
 		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 	    break;
 
+	case DEVICE_ABORT:
+	    break;
     }
     return Success;
 }

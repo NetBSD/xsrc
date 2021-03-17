@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.11 2021/03/11 12:08:57 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.12 2021/03/17 15:02:27 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -160,8 +160,9 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
             RemoveNotifyFd(x68kKbdPriv.fd);
             pKeyboard->on = FALSE;
             break;
-        default:
-            FatalError("Unknown keyboard operation\n");
+
+        case DEVICE_ABORT:
+            break;
     }
     return Success;
 }
