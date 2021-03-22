@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.7 2021/02/07 16:55:18 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.8 2021/03/22 14:10:06 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <X11/Xproto.h>
 
 /* dix */
+#include <dix-config.h>
 #include <misc.h>
 #include <scrnintstr.h>
 #include <screenint.h>
