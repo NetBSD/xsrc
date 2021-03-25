@@ -25,7 +25,15 @@
 #include "config.h"
 #endif
 
+#include "xf86Priv.h"
+#include "xf86Privstr.h"
 #include "nv_include.h"
+
+#ifdef __NetBSD__
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#endif
 
 /*
  * Override VGA I/O routines.
@@ -233,6 +241,26 @@ NVProbeDDC (ScrnInfoPtr pScrn, int bus)
     MonInfo = xf86DoEEDID(XF86_SCRN_ARG(pScrn), pNv->I2C, TRUE);
 #else
     MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), pNv->I2C);
+#endif
+#ifdef __NetBSD__
+    if (!MonInfo) {
+	/* ask wsdisplay */
+	struct wsdisplayio_edid_info ei;
+	char *buffer;
+	xf86MonPtr tmp;
+
+	buffer = malloc(1024);
+	ei.edid_data = buffer;
+	ei.buffer_size = 1024;
+	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n",
+	    	ei.data_size);
+	    tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
+	    tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	    MonInfo = tmp;
+	}
+	free(buffer);
+    }
 #endif
     if (MonInfo) {
        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
