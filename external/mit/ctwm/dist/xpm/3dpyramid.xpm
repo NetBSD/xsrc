@@ -1,0 +1,23 @@
+/* XPM */
+static char * 3dpyramid_xpm[] = {
+"14 16 4 1",
+" 	c #EEEE1313E8E8",
+".	c #AEAE9696F8F8",
+"X	c #3C3C08082424",
+"o	c #545446466767",
+"              ",
+"              ",
+"       .X     ",
+"       .X     ",
+"      ..XX    ",
+"     ...Xo    ",
+"     ...Xoo   ",
+"    ....Xoo   ",
+"    ...XXooo  ",
+"   ...XXXXXX  ",
+"  ...XXXXXXX  ",
+"  .XXXXXXXXX  ",
+"  XXXXXXXX X  ",
+"              ",
+"              ",
+"              "};

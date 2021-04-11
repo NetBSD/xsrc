@@ -1,0 +1,63 @@
+/*
+ * Compile-time config settings.  This gets processed by cmake into the
+ * file that's actually used.
+ */
+
+
+/*
+ * Defined paths etc
+ */
+#define SYSTEM_INIT_FILE "@ETCDIR@/system.ctwmrc"
+#define PIXMAP_DIRECTORY "@PIXMAPDIR@"
+
+
+/*
+ * Various on/off configs
+ */
+
+/* Using XPM? */
+#cmakedefine USE_XPM
+#ifdef USE_XPM
+# define XPM
+#endif
+
+/* libjpeg */
+#cmakedefine USE_JPEG
+#ifdef USE_JPEG
+# define JPEG
+#endif
+
+/* m4 preprocessing of config */
+#cmakedefine USE_M4
+#ifdef USE_M4
+# define USEM4
+# define M4CMD "@M4_CMD@"
+#endif
+
+/* rplay? */
+#cmakedefine USE_RPLAY
+#ifdef USE_RPLAY
+/*
+ * This mismatched naming is a historical remnant.  User-facing stuff
+ * (build-time config, config file params, etc) has been moved as much as
+ * possible to RPLAY-based to start building up compatibility for any
+ * future where we support other sound methods.  I've left internal stuff
+ * based around SOUNDS / sound.c / something_sound_something() / etc
+ * since that would be a lot of churn, and there aren't the compat
+ * concerns so we can just do those at the time they become necessary
+ * without worrying further.
+ */
+# define SOUNDS
+#endif
+
+/* How about EWMH properties */
+#cmakedefine USE_EWMH
+#ifdef USE_EWMH
+# define EWMH
+#endif
+
+/* Does libc provide regex funcs we use? */
+#cmakedefine USE_SREGEX
+#ifdef USE_SREGEX
+# define USE_SYS_REGEX
+#endif

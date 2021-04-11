@@ -1,0 +1,23 @@
+/* XPM */
+static char * 3dleopard_xpm[] = {
+"100 16 4 1",
+" 	c #A8A88C8CCFCF s Background",
+".	c #545446466767 s HiShadow",
+"X	c #D4D4C6C6E7E7 s LoShadow",
+"o	c #000000000000",
+"           ...  XX  ...   XXX.          X             X      ..       X       . X    .  XXXXX  X    ",
+"   XX   XX     X  X     XX   .   XX  XXXXXXX    XXXX. X   ....  XXXXX X       .  X   . X    . X     ",
+"  X  X. X XXXX X   XXX  X     . X  . XX    .. XX   .. X  .      X   .  X      . X    . X   . XX   ..",
+"  X   . X    . X     .  X    .  X  .  X     . X   .. X  . XXXX. X    . X      . X    . X  . X    .. ",
+" X    . X    . X     ..  X ... X   .. X   ... X  .  X  . X    .  X    . .. ...  XX   . X  .XX.... XX",
+"X     . X    . X      .. X .   X    . X...    X  .  X.. X      .. X   ..  .       X  . X.. ...   X  ",
+"      . X   .. X     ..  X.   X     . X. XXX. X  .      X       .  X   ..   XXXXX  X .          XX  ",
+"      .  ....  X .....       X       .   X  .  X  . XX. X        . XX   .   X..  XX ..  XXX  XX X   ",
+"     ..       X...  XXX  XX   ..     .  X   .. X .. X X X        .  X   .     .X   .   X .. X . X   ",
+"   ..   XXX.  X.  XX  .. X XXX  XX    . X    . X.. XX . X....    .. X  .  XXXX X    . X   .... X    ",
+"  .   XX   ..   XX     . X    .  X    ..X.   .XX. XX  .     ..    . X..  X   . X    . XX   .   X    ",
+" .   XX     . XX       . X    .. X     . .   .   X   .   XX  ..  .     XX    . X    .  X   .    XX  ",
+".   X      .  X..      . X     .  .....   .   .  X  . XXX  .   . . XXXX      X X   .  XX   . XX.  XX",
+"  XX       .    ........  .    ..         ..  . XX . X      ..  . X        .. X   .. X    ..X   ..  ",
+" XX        . XX       XX  ......  XXXXXXXX .  . X .. X        .   X        .  X  .. XX   .. X     . ",
+"X          . X .  XXXXXXX        XX      .. . . X .  X         .  X       ..  X..   X....    X   .. "};

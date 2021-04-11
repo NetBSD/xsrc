@@ -1,0 +1,22 @@
+/* XPM */
+static char * 3dpie_xpm[] = {
+"19 16 3 1",
+" 	c #659510403CF3 s Background",
+".	c #B2CA8A289E79 s HiShadow",
+"X	c #3CF308202492 s LoShadow",
+"        ..X        ",
+"      ...XXXX      ",
+"     ...   XXX     ",
+"    ..       XX    ",
+"   ..         XX   ",
+"   ..         XX   ",
+"  ..           XX  ",
+"  ..           XX  ",
+" ..             XX ",
+" ..             XX ",
+" ..             XX ",
+"..               XX",
+"..               XX",
+"..XXXXXXXXXXXXXXXXX",
+"..XXXXXXXXXXXXXXXXX",
+"                   "};

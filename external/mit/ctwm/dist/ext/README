@@ -1,0 +1,11 @@
+This directory is for 3rd party code we pull in.  Principally intended
+for small util-ish functions, or possibly optionally-built  local
+implementations of common-but-not-universal library functions.  Each file
+should include information about its source and licensing.  Unless
+otherwise specified, that information in the file is complete;
+specifically, none of them automatically inherit from the base COPYRIGHT
+file.
+
+These are kept in a separate dir both for easy identification, and to
+move them out of the way of 'make indent', since we generally want them
+kept as closely as possible in sync with their upstreams.

@@ -1,0 +1,10 @@
+/* XPM */
+static char * 3dslant_xpm[] = {
+"4 5 2 1",
+" 	c #3CF308202492 s LoShadow",
+".	c #B2CA8A289E79 s HiShadow",
+"  ..",
+" .. ",
+"..  ",
+".  .",
+"  .."};

@@ -1,0 +1,47 @@
+# Code formatting for ctwm
+# See <http://astyle.sourceforge.net/astyle.html> for reference of
+# options.
+
+# K&R bracing
+style=kr
+
+# Tabs for indent.  8 is here mostly for the initial transformation, not
+# necessarily as suggested tabstop for working with the code.
+indent=tab=8
+
+# Indent switch() and case's.
+indent-switches
+# It looks like this actually makes cases with blocks indent twice.
+# That's not what we want.
+#indent-cases
+
+# Don't push too far
+# Astyle refuses to accept less than 40.  Brilliant.
+#max-instatement-indent=16
+
+# Space around operators
+pad-oper
+
+# Get rid of spaces around parens (I actually wish this were a little
+# more discriminating, but this is an improvement on the current state)
+unpad-paren
+
+# Align * and & and such to the name
+align-pointer=name
+align-reference=name
+
+# Don't cuddle elses
+break-closing-brackets
+
+# Bracket one-liners.  This has the nice side effect that we break up
+# one-liners.
+add-brackets
+
+# Use tabs only for indent levels, spaces for alignment below that
+convert-tabs
+
+# 80 char lines
+max-code-length=80
+
+# \n
+lineend=linux

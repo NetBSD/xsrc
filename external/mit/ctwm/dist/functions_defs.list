@@ -1,0 +1,173 @@
+# Controls for generating various function (f.whatever) related handling.
+#
+# Each section (delimieted by "START(section)" and "END(section)" has a
+# potentially different format.  But all of them begin with the function
+# name in lowercase (sans leading 'f.').
+
+
+# First section: the main meat of functions.  Almost everything should
+# wind up here.
+#
+# Format: "<name> <conftype> <defcursor> <ifdef>"
+# conftype -> for the config file parsing, defining the keyword type.
+#             'S' -> FSKEYWORD    '-' -> FKEYWORD
+# defcurs -> Deferral cursor for deferring function.  x-ref
+#            should_defer(), defer_cursor(), and related.
+#            - -> DC_NONE, CS -> _SELECT, CM -> _MOVE, CD -> _DESTROY
+# ifdef -> whether the pieces for this function should be hidden behind
+#          an #ifdef.  - for no, otherwise a string of what it should
+#          #ifdef.
+#
+# START(main)
+addtoworkspace        S CS -
+adoptwindow           - -  -
+altcontext            - -  -
+altkeymap             S -  -
+autolower             - CS -
+autoraise             - CS -
+backiconmgr           - -  -
+backmapiconmgr        - -  -
+beep                  - -  -
+bottomzoom            - CS -
+changepriority        S CS -
+changesize            S CS -
+circledown            - -  -
+circleup              - -  -
+colormap              S -  -
+deiconify             - CS -
+delete                - CD -
+deleteordestroy       - CD -
+deltastop             - -  -
+destroy               - CD -
+downiconmgr           - -  -
+downworkspace         - -  -
+exec                  S -  -
+fill                  S CS -
+fittocontent          - CS -
+focus                 - CS -
+forcemove             - CM -
+forwiconmgr           - -  -
+forwmapiconmgr        - -  -
+fullscreenzoom        - CS -
+fullzoom              - CS -
+function              S -  -
+gotoworkspace         S -  -
+hideiconmgr           - -  -
+hideworkspacemgr      - -  -
+horizoom              - CS -
+hypermove             - CM -
+iconify               - CS -
+identify              - CS -
+initsize              - CS -
+jumpdown              S CM -
+jumpleft              S CM -
+jumpright             S CM -
+jumpup                S CM -
+lefticonmgr           - -  -
+leftworkspace         - -  -
+leftzoom              - CS -
+lower                 - CS -
+menu                  S -  -
+move                  - CM -
+movepack              - CM -
+movepush              - CM -
+moveresize            S CS -
+movetitlebar          - CM -
+movetonextworkspace   - CS -
+movetonextworkspaceandfollow - CS -
+movetoprevworkspace   - CS -
+movetoprevworkspaceandfollow - CS -
+nexticonmgr           - -  -
+nextworkspace         - -  -
+nop                   - -  -
+occupy                - CS -
+occupyall             - CS -
+pack                  S CS -
+pin                   - -  -
+previconmgr           - -  -
+prevworkspace         - -  -
+priorityswitching     - CS -
+quit                  - -  -
+raise                 - CS -
+raiseicons            - -  -
+raiselower            - CS -
+raiseorsqueeze        - CS -
+refresh               - -  -
+removefromworkspace   S CS -
+rereadsounds          - -  SOUNDS
+rescuewindows         - -  -
+resize                - CM -
+restart               - -  -
+restoregeometry       - CS -
+righticonmgr          - -  -
+rightworkspace        - -  -
+rightzoom             - CS -
+ring                  - CS -
+savegeometry          - CS -
+saveyourself          - CS -
+separator             - -  -
+setbuttonsstate       - -  -
+setmapstate           - -  -
+setpriority           S CS -
+showbackground        - -  -
+showiconmgr           - -  -
+showworkspacemgr      - -  -
+slowdownanimation     - -  -
+sorticonmgr           - CS -
+speedupanimation      - -  -
+squeeze               - CS -
+startanimation        - -  -
+stopanimation         - -  -
+switchpriority        - CS -
+tinylower             - CS -
+tinyraise             - CS -
+title                 - -  -
+toggleoccupation      S CS -
+togglesound           - -  SOUNDS
+togglestate           - -  -
+toggleworkspacemgr    - -  -
+topzoom               - CS -
+trace                 S -  -
+unfocus               - -  -
+unsqueeze             - CS -
+upiconmgr             - -  -
+upworkspace           - -  -
+vanish                - CS -
+version               - -  -
+warphere              S -  -
+warpring              S -  -
+warpto                S -  -
+warptoiconmgr         S -  -
+warptoscreen          S -  -
+winrefresh            - CS -
+zoom                  - CS -
+# END(main)
+
+
+# Aliases: These are additional names we permit in config files for
+# existing functions.
+# Format: "<name> <aliasfor>"
+# START(aliases)
+hbzoom bottomzoom
+hzoom  horizoom
+vlzoom leftzoom
+vrzoom rightzoom
+htzoom topzoom
+
+twmrc  restart
+# END(aliases)
+
+
+# Synthetic functions; these are things used internally.  Mostly in
+# synthetic magic menus like TwmWindows.  So the dispatcher for executing
+# functions needs to handle them, and we need numbers defined for them.
+# But they can't be in config files or the like, so there's no parsing
+# needed for them.
+# Format: "<name>"
+# START(synthetic)
+popup
+winwarp
+# END(synthetic)
+
+
+# vim:ft=conf

@@ -1,0 +1,48 @@
+# Doxygen
+
+
+## Overview
+
+Some code (hopefully more, over time) has inline documentation intended
+to be generated via http://www.stack.nl/~dimitri/doxygen/[Doxygen].  If
+Doxygen is installed on your system, the standard CMake toolchain will
+find it and provide build targets.  If it's not...   well, install it.
+
+If it's available, a `make doxygen` target is created to generate the
+HTML docs.  They'll wind up in a directory under `build/` (or wherever
+you're building it).  See the output of running the target; it'll tell
+you where the files are.
+
+Currently a few large data structures have their existing documentation
+transferred into doxygen format, and more added to flesh them out a
+little more.  It's hoped that over time more of them will be, and further
+documentation of various functions etc. will be so moved and/or written.
+
+The Doxygen manual at the link above is a useful reference to the various
+commands available.
+
+
+## Special notes
+
+We make use of both ``/**``-style and ``///``-style comments, in various
+combinations.  Post-comments, particularly in ``///<``-style at EOL are
+used mostly when they fit on the single line.  If they start wrapping to
+multiple lines, they usually get converted to pre-comments on prior
+lines.  Exceptions may exist, but usually work poorly when confronted
+with `make indent` and so are very rare.
+
+Some seemingly odd constructions get used, like a `/**` block comment
+immediately followed by a `///` line, or multiple `///` lines separated
+by blanks.  These might be mistakes, but are often ways of separating
+things so doxygen gets the right idea.  In particular, see places in the
+`struct ScreenInfo` docs where we create groups for documentation
+purposes, and then document a field; without that separator, doxygen
+doesn't notice that we're moving from the `@{` that defines the group, to
+documenting the first field in it.  See e.g. the `BorderTileC` field, at
+the time of writing.
+
+The rules for when doxygen auto-links things are a little unclear, and
+don't seem entirely consistent.  So for most intentional links to _e.g._
+structure members, they're fully specified even when they seem to work
+without being so.  Escaping with `\` or `%` are done in various places on
+an as-needed basis.

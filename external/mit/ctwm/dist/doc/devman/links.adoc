@@ -1,0 +1,53 @@
+= Useful Links
+
+This is a conglomeration of links to various references materials that
+may be useful.
+
+
+== X References
+
+A lot of bits of X documentation are commonly referenced.
+
+* https://www.x.org/releases/current/doc/ is the current version of
+X.org's documentation.  This includes many things that are very commonly
+called for, like the
+https://www.x.org/releases/current/doc/libX11/libX11/libX11.html[Xlib
+manual] and the
+https://www.x.org/releases/current/doc/xorg-docs/icccm/icccm.html[ICCCM
+description].
+
+* https://www.freedesktop.org/ also hosts a number of things related to
+current X.  In particular, the
+https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html[EWMH
+specification].
+
+There are also various other bits of X discussion that can be useful.
+
+* https://www.x.org/wiki/guide/[The X New Developer's Guide] talks a lot
+about how the pieces of X are put together.
+
+* http://blog.mecheye.net/[Jasper St. Pierre] has talked a lot about X in
+his blog, most particularly in the original
+http://blog.mecheye.net/2012/06/the-linux-graphics-stack/[The Linux
+Graphics Stack] post, and later in the full
+http://magcius.github.io/xplain/article/[Xplain] guide.
+
+
+== Programming Language Refs
+
+If you're messing with the source, you better know C already.  But there
+are always corner cases.
+
+* http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf is a draft of
+the C99 standard with all the current amendments and corrections; ctwm
+defines C99 as the standard we're writing to.
+
+* http://pubs.opengroup.org/onlinepubs/009695399/ is "`Issue 6`" of
+POSIX.1-2004 or IEEE 1003.1 or SUS or whatever you want to call it.  This
+is generally the minimum system conformance level we expect.
+
+** http://pubs.opengroup.org/onlinepubs/9699919799/ is "`Issue 7`",
+POSIX.1-2008.  This is a little newer (though still almost a decade old
+as of this writing), and may tell a little more in some cases.  Things
+this requires but the -2004 above doesn't may be useful, but should be
+approached with a little more caution.
