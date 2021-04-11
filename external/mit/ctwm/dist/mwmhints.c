@@ -1,28 +1,5 @@
-/* 
- *  [ ctwm ]
- *
- *  Copyright 2014 Olaf Seibert
- *
- * Permission to use, copy, modify and distribute this software [ctwm]
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of Olaf Seibert not be
- * used in advertising or publicity pertaining to distribution of the
- * software without specific, written prior permission. Olaf Seibert
- * makes no representations about the suitability of this software for
- * any purpose. It is provided "as is" without express or implied
- * warranty.
- *
- * Olaf Seibert DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
- * NO EVENT SHALL Olaf Seibert BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Author:  Olaf Seibert [ rhialto@falu.nl ][ May 2014 ]
+/*
+ * Copyright 2014 Olaf Seibert
  */
 
 /*
@@ -35,78 +12,141 @@
  * the manual page VendorShell(3) from the Motif library.
  */
 
+#include "ctwm.h"
+
 #include <stdio.h>
 
-#include "twm.h"
+#include "ctwm_atoms.h"
+#include "list.h"
 #include "mwmhints.h"
+#include "screen.h"
 
-static Atom MOTIF_WM_HINTS = None;
-
-int GetMWMHints(Window w, MotifWmHints *mwmHints)
+bool
+GetMWMHints(Window w, MotifWmHints *mwmHints)
 {
-    int success;
-    Atom actual_type;
-    int actual_format;
-    unsigned long nitems;
-    unsigned long bytes_after;
-    unsigned long *prop = NULL;
+	int success;
+	Atom actual_type;
+	int actual_format;
+	unsigned long nitems;
+	unsigned long bytes_after;
+	unsigned long *prop = NULL;
 
-    /* Defaults for when not found */
-    mwmHints->flags = 0;
-    mwmHints->functions = 0;
-    mwmHints->decorations = 0;
+	/* Defaults for when not found */
+	mwmHints->flags = 0;
+	mwmHints->functions = 0;
+	mwmHints->decorations = 0;
 #ifdef FULL_MWM_DATA
-    mwmHints->input_mode = 0;
-    mwmHints->status = 0;
+	mwmHints->input_mode = 0;
+	mwmHints->status = 0;
 #endif
 
-    if (MOTIF_WM_HINTS == (Atom)None) {
-	MOTIF_WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
-    }
+	success = XGetWindowProperty(
+	                  dpy, w, XA__MOTIF_WM_HINTS,
+	                  0, 5,           /* long_offset, long long_length, */
+	                  False,          /* Bool delete, */
+	                  AnyPropertyType,/* Atom req_type */
+	                  &actual_type,   /* Atom *actual_type_return, */
+	                  &actual_format, /* int *actual_format_return, */
+	                  &nitems,        /* unsigned long *nitems_return,  */
+	                  &bytes_after,   /* unsigned long * */
+	                  (unsigned char **)&prop);       /* unsigned char ** */
 
-    success = XGetWindowProperty(
-			dpy, w, MOTIF_WM_HINTS,
-			0, 5, 		/* long_offset, long long_length, */
-			False,		/* Bool delete, */
-			AnyPropertyType,/* Atom req_type */
-			&actual_type, 	/* Atom *actual_type_return, */
-			&actual_format, /* int *actual_format_return, */
-			&nitems, 	/* unsigned long *nitems_return,  */
-			&bytes_after, 	/* unsigned long * */
-			(unsigned char **)&prop);	/* unsigned char ** */
-
-    if (success == Success &&
-	    actual_type == MOTIF_WM_HINTS &&
-	    actual_format == 32 &&
-	    nitems >= 3) {
-	mwmHints->flags = (int)prop[0];
-	mwmHints->functions = (int)prop[1];
-	mwmHints->decorations = (int)prop[2];
+	if(success == Success &&
+	                actual_type == XA__MOTIF_WM_HINTS &&
+	                actual_format == 32 &&
+	                nitems >= 3) {
+		mwmHints->flags = (int)prop[0];
+		mwmHints->functions = (int)prop[1];
+		mwmHints->decorations = (int)prop[2];
 #ifdef FULL_MWM_DATA
-	mwmHints->input_mode = (int)prop[3];
-	mwmHints->status = (int)prop[4];
+		mwmHints->input_mode = (int)prop[3];
+		mwmHints->status = (int)prop[4];
 #endif
 
-	if (mwmHints->flags & MWM_HINTS_FUNCTIONS) {
-	    if (mwmHints->functions & MWM_FUNC_ALL) {
-		mwmHints->functions ^= ~0;
-	    }
+		if(mwmHints->flags & MWM_HINTS_FUNCTIONS) {
+			if(mwmHints->functions & MWM_FUNC_ALL) {
+				mwmHints->functions ^= ~0;
+			}
+		}
+		if(mwmHints->flags & MWM_HINTS_DECORATIONS) {
+			if(mwmHints->decorations & MWM_DECOR_ALL) {
+				mwmHints->decorations ^= ~0;
+			}
+		}
+
+		success = true;
 	}
-	if (mwmHints->flags & MWM_HINTS_DECORATIONS) {
-	    if (mwmHints->decorations & MWM_DECOR_ALL) {
-		mwmHints->decorations ^= ~0;
-	    }
+	else {
+		success = false;
 	}
 
-	success = True;
-    } else {
-	success = False;
-    }
+	if(prop != NULL) {
+		XFree(prop);
+	}
 
-    if (prop != NULL) {
-    	XFree(prop);
-    }
-
-    return success;
+	return success;
 }
 
+
+
+/*
+ * Simple test wrappers
+ */
+static bool
+mwm_sets_decorations(MotifWmHints *hints)
+{
+	return (hints->flags & MWM_HINTS_DECORATIONS) ? true : false;
+}
+
+
+/* 1 = yes   0 = no   -1 = no opinion */
+int
+mwm_has_border(MotifWmHints *hints)
+{
+	/* No opinion if hints don't set decoration info */
+	if(!mwm_sets_decorations(hints)) {
+		return -1;
+	}
+
+	/* No opinion if the user told us to ignore it */
+	if(LookInNameList(Scr->MWMIgnore, "DECOR_BORDER")) {
+		return -1;
+	}
+
+	/* No border if hints said so */
+	if((hints->decorations & MWM_DECOR_BORDER) == 0) {
+		return 0;
+	}
+
+	/* Else border */
+	return 1;
+}
+
+
+bool
+mwm_sets_title(MotifWmHints *hints)
+{
+	/* Not if we don't have decoration info */
+	if(!mwm_sets_decorations(hints)) {
+		return false;
+	}
+
+	/* Not if the user wants to ignore title frobbing */
+	if(LookInNameList(Scr->MWMIgnore, "DECOR_TITLE")) {
+		return false;
+	}
+
+	/* Else we do have info to use */
+	return true;
+}
+
+
+bool
+mwm_has_title(MotifWmHints *hints)
+{
+	if(mwm_sets_decorations(hints)
+	                && ((hints->decorations & MWM_DECOR_TITLE) == 0)) {
+		return false;
+	}
+	return true;
+}

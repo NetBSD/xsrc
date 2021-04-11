@@ -1,0 +1,57 @@
+PROJECT_NAME = "CTWM"
+OUTPUT_DIRECTORY = @DOXYGEN_DIR@
+
+# What files we should look at
+FILE_PATTERNS = *.c *.h
+INPUT = @CMAKE_SOURCE_DIR@ \
+        @CMAKE_SOURCE_DIR@/build \
+        @CMAKE_SOURCE_DIR@/ext
+
+# These need to be set so we can properly expand #ifdef sections in
+# headers (e.g., in screen.h) by redundantly including config.
+PREDEFINED = DOXYGEN
+INCLUDE_PATH = @CMAKE_SOURCE_DIR@ \
+        @CMAKE_SOURCE_DIR@/build \
+        @CMAKE_SOURCE_DIR@/ext
+
+# It's all C
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+# We only care about HTML
+GENERATE_LATEX = NO
+
+# Quiet down
+WARN_IF_UNDOCUMENTED = NO
+QUIET = YES
+
+# Do full macro expansion; this is necessary for e.g. the DFHANDLER()
+# stuff we use in building f.<function> handlers.  It's still a little
+# wonky, but it's mostly good.
+MACRO_EXPANSION = YES
+
+# Misc output settings
+SOURCE_BROWSER = YES
+EXTRACT_ALL = YES
+EXTRACT_STATIC = YES
+JAVADOC_AUTOBRIEF = YES
+
+# This makes the source listings a little noisier, but also makes them
+# match the actual file.  Probably a reasonable tradeoff.
+STRIP_CODE_COMMENTS = NO
+
+# Text x-refs of used/used-by functions, data structs, etc.
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION = YES
+REFERENCES_LINK_SOURCE = NO
+
+# Graphical x-refs of the same.  Conditional because they're expensive to
+# build and big.
+CALL_GRAPH = @DOXYGEN_GRAPHIC_CALLGRAPHS@
+CALLER_GRAPH = @DOXYGEN_GRAPHIC_CALLGRAPHS@
+
+# dot(1) allows the above
+HAVE_DOT = @DOXYGEN_HAVE_DOT@
+DOT_MULTI_TARGETS = YES  # Requires dot 1.9, Jan 2003
+# Assume decent browser
+DOT_IMAGE_FORMAT = svg
+INTERACTIVE_SVG = YES

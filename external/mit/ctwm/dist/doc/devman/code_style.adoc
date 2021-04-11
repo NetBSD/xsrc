@@ -1,0 +1,106 @@
+# Style Guidelines
+
+
+## Overall
+
+Most of these rules are meant to be general guidelines.  The overriding
+goal is for the code to _work_; if it doesn't do that, it's worthless.
+Given that it works, it should be _readable_.  These guidelines are aimed
+at achieving that goal; if you have to break a rule to be more readable,
+then do it.  If you have to bend a rule to match surrounding code, do it.
+
+ctwm is written in **C99**, to run in a generally **POSIX environment**,
+and is intimately related with **X11**.  Those worlds, in roughly that
+order, should be considered when making style choices.
+
+
+## Automatic
+
+http://astyle.sourceforge.net/[Artistic Style] is used to maintain
+gross code styling.  The `make indent` target will run it over the
+codebase, and should be used regularly to keep things in shape.
+
+These are thus hard rules; in theory, at any given time, running `make
+indent` should yield no changes.  This is the primary exception to the
+"`break the rules`" guideline above.  Code should always follow these
+rules, because it makes life simpler.
+
+
+## Include files and ordering
+
+* All source files should include `ctwm.h`, and always include it first.
+
+* Includes should be generally ordered as:
+
+** `ctwm.h`
+
+** (some vertical whitespace separator)
+
+** System includes (`stdio.h`, `X11/foo.h`, etc)
+
+** (some vertical whitespace separator)
+
+** Other local includes
+
+** However some special cases exist where we have to pull system files
+after the locals; _e.g._, when something in one of our headers is needed
+to figure what else to `#include`.  That's fine.
+
+* Generally, local includes should avoid ``#include``ing system includes
+where possible, and avoid ``#include``ing other local includes where
+practical.  If the file itself needs something from another header file
+(_e.g._, a  prototype or var extern needs a type from elsewhere), it
+should `#include` that; if however some `.c` file that ``#include``s the
+`.h` needs something from another header, generally the `#include` should
+be put there.
++
+Bear in mind that this is a *guideline*.  There are extant exceptions,
+and may be more over time.  Make it readable and maintainable.
+
+* Try to avoid including things already brought in elsewhere.  For
+instance, `ctwm.h` already includes our `types.h`, the system
+`stdbool.h`, and many of Xlib's includes, so no other file in our tree
+need `#include` them.
+
+
+## Standards and Types
+
+ctwm is written in C, and currently against the **C99** standard.  Types,
+headers, functions, types, etc. defined there are assumed available, and
+should be the initial goto choice for such.
+
+It is also written to run in a **POSIX** environment, using **X11**, so
+the headers, functions, and types related to them are also considered
+available, and should be used when appropriate.
+
+### Boolean
+
+The case of boolean types gives a useful example.  C99 defines the `bool`
+type for booleans, with the boolean values `true` and `false` (defined to
+be numerically `1` and `0`).  The type and constants should be used in
+code in ctwm itself needing boolean variables or values.
+
+Xlib defined a `Bool` type, and the boolean values `True` and `False`
+(which are also numerically `1` and `0`).  They should be used in
+interactions with Xlib.  There are also some odder fringe cases we might
+hit; libjpeg has a `boolean` type, and `TRUE`/`FALSE` values.  Xt
+("Intrinsics") has a `Boolean` type, with `TRUE`/`FALSE` values.  When
+dealing with an external lib, use its types and values.
+
+Because of C's conversion rules, assigning values from one type to the
+other, via boolean conditional expressions, or via literal or numeric
+1/0, should always work as expected.  However, the type representations
+aren't the same, so e.g.  passing a `+bool *+` to a function expecting a
+`+Bool *+` will go *very badly*.
+
+
+## Comments
+
+There is no part of the codebase with too many comments.  I dream of the
+day when we'll have to edit that line; please help hasten it!
+
+C99 allows both `+/* enclosed */+` and `// to EOL` comment styles.  We
+generally lean toward `+/* enclosed */+`, but `// to EOL` are acceptable
+as well.  In particular comments at the end of the line (like
+documentation of structure elements) are excellent candidates for `//`
+comments, particularly when they would otherwise wrap.

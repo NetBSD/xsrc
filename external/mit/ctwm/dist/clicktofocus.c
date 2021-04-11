@@ -1,31 +1,34 @@
-#include "clicktofocus.h"
-
-#include "twm.h"
-#include "util.h"
+#include "ctwm.h"
 #include "screen.h"
+#include "clicktofocus.h"
+#include "win_ops.h"
 
-TwmWindow * get_last_window(WorkSpace *current)
+static TwmWindow *get_last_window(WorkSpace *current)
 {
-    TwmWindow		*t;
-    TwmWindow  *first = NULL;
+	TwmWindow           *t;
+	TwmWindow  *first = NULL;
 
-    if (! current) return NULL;
+	if(! current) {
+		return NULL;
+	}
 
-    for (t = Scr->FirstWindow; t != NULL; t = t->next) {
-      if (!first && !t->iconmgr && OCCUPY (t, current) && t->mapped)
-	first = t;
-      if (t->hasfocusvisible && OCCUPY (t, current))
-	return t;
-    }
+	for(t = Scr->FirstWindow; t != NULL; t = t->next) {
+		if(!first && !t->isiconmgr && OCCUPY(t, current) && t->mapped) {
+			first = t;
+		}
+		if(t->hasfocusvisible && OCCUPY(t, current)) {
+			return t;
+		}
+	}
 
-    return first;
+	return first;
 }
 
 void set_last_window(WorkSpace *current)
 {
-  TwmWindow * t;
+	TwmWindow *t;
 
-  t = get_last_window(current);
+	t = get_last_window(current);
 
-  SetFocus(t, CurrentTime);
+	SetFocus(t, CurrentTime);
 }

@@ -1,0 +1,4154 @@
+'\" t
+.\"     Title: ctwm
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-07-21
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "CTWM" "1" "2019-07-21" "\ \&" "\ \&"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+ctwm \- Claude\(aqs Tab Window Manager for the X Window System
+.SH "SYNTAX"
+.sp
+.if n .RS 4
+.nf
+ctwm [(\-\-display | \-d) dpy]  [\-\-replace]  [\-\-single]
+     [(\-\-file | \-f) initfile]  [\-\-cfgchk]  [\-\-dumpcfg]
+     [\-\-nom4 | \-n]  [(\-\-keep\-defs | \-k)]  [(\-\-keep | \-K) m4file]
+     [\-\-verbose | \-v]  [\-\-quiet | \-q]  [\-\-mono]  [\-\-xrm resource]
+     [\-\-version]  [\-\-info]  [\-\-nowelcome | \-W]
+     [(\-\-window | \-w) [win\-id]]  [\-\-name name]
+     [\-\-clientId clid]  [\-\-restore resfname]
+     [\-\-help | \-h]
+.fi
+.if n .RE
+.SH "DESCRIPTION"
+.sp
+ctwm is a window manager for the X Window System.  It provides
+titlebars, shaped windows, virtual screens (workspaces),
+several forms of icon management, user\-defined macro functions,
+click\-to\-type and pointer\-driven keyboard focus, and user\-specified
+key and pointer button bindings.  It is actually
+\f(CRtwm(1)\fP (Tab Window Manager) from the MIT X11 distribution
+slightly modified to accommodate the use of several virtual screens
+(workspaces). It is heavily inspired by the Hewlett\-Packard vuewm
+window manager. In addition, ctwm can use coloured, shaped icons
+and background root pixmaps in XPM format [from Arnaud Le Hors],
+in JPEG using libjpeg,
+and xwd files. ctwm can be compiled to
+use any combination of the above icon/pixmap formats.
+.sp
+This program is usually started by the user\(cqs session manager or
+startup script.  When used from \f(CRxdm(1)\fP or \f(CRxinit(1)\fP without
+a session manager, ctwm is frequently executed in the foreground
+as the last client.  When run this way, exiting ctwm causes the
+session to be terminated (i.e. logged out).
+.sp
+By default, application windows are surrounded by a \(lqframe\(rq with a
+titlebar at the top and a special border around the window.  The titlebar
+contains the window\(cqs name, a rectangle that is lit when the window is
+receiving keyboard input, and function boxes known as \(lqtitlebuttons\(rq
+at the left and right edges of the titlebar to which actions can be bound.
+.sp
+Pressing pointer Button1 (usually the left\-most button unless it has
+been changed with \f(CRxmodmap\fP) on a titlebutton will invoke the
+function associated with the button.  In the default interface,
+windows are iconified by clicking (pressing and then immediately
+releasing) the left titlebutton (which looks like a Dot).  Conversely,
+windows are deiconified by clicking in the associated icon or entry in
+the icon manager (see description of the variable
+\f(CRShowIconManager\fP and of the function \f(CRf.showiconmgr\fP).
+.sp
+Windows are resized by pressing the right titlebutton (which resembles a
+group of nested squares), dragging the pointer over edge that is to be
+moved, and releasing the pointer when the outline of the window is the desired
+size.  Similarly, windows are moved by pressing in the title or highlight
+region, dragging a window outline to the new location, and then releasing
+when the outline is in the desired position.  Just
+clicking in the title or highlight region raises the window without moving it.
+.sp
+When new windows are created, ctwm will honor any size and location
+information requested by the user (usually through \f(CR\-geometry\fP
+command line argument or resources for the individual applications).
+Otherwise, an outline of the window\(cqs default size, its titlebar, and lines
+dividing the
+window into a 3x3 grid that track the pointer are displayed.
+Clicking pointer Button1
+will position the window at the current position and give it the default
+size.  Pressing pointer Button2 (usually the middle pointer button)
+and dragging the outline
+will give the window its current position but allow the sides to be resized as
+described above.  Clicking pointer Button3 (usually the right pointer button)
+will give the window its current position but attempt to make it long enough
+to touch the bottom the screen.
+.SH "OPTIONS"
+.sp
+\f(CRctwm\fP accepts the following command line options:
+.sp
+\-\-help, \-h
+.RS 4
+Print usage text.
+.RE
+.sp
+\-\-display=\f(CRdpy\fP, \-d \f(CRdpy\fP
+.RS 4
+This option specifies the X server to use.
+.RE
+.sp
+\-\-replace
+.RS 4
+This option indicates that it is not an error if a window manager
+is already running.
+In that case, the existing window manager is asked to quit,
+and ctwm takes its place.
+Available only if ctwm is built with the \f(CRUSE_EWMH\fP flag.
+First appeared in 4.0.0.
+.RE
+.sp
+\-\-single
+.RS 4
+This option indicates that only the default screen (as specified by
+\f(CR\-\-display\fP or by the \f(CRDISPLAY\fP environment variable) should be
+managed.  By default, ctwm will attempt to manage
+all screens on the display.
+.RE
+.sp
+\-\-cfgchk
+.RS 4
+This option causes ctwm to only try to parse the config file, and
+indicate whether errors are found.
+.RE
+.sp
+\-\-dumpcfg
+.RS 4
+This option causes ctwm to print out the compiled\-in fallback config.
+First appeared in 4.0.0.
+.RE
+.sp
+\-\-file=\f(CRfilename\fP, \-f \f(CRfilename\fP
+.RS 4
+This option specifies the name of the startup file to use.
+ctwm will first try to load filename.num, where \f(CRnum\fP is the screen number.
+If it fails, it will try to load filename.
+By default, ctwm will look in the user\(cqs home directory for files
+named \f(CR.ctwmrc.num\fP, \f(CR.ctwmrc\fP, \f(CR.twmrc.num\fP, or \f(CR.twmrc\fP (where \f(CRnum\fP is a screen number).
+.RE
+.sp
+\-\-verbose, \-v
+.RS 4
+This option indicates that ctwm should print error messages whenever
+an unexpected X Error event is received.  This can be useful when debugging
+applications but can be distracting in regular use.
+.RE
+.sp
+\-\-quiet, \-q
+.RS 4
+Disables \f(CR\-\-verbose\fP (useful for overriding aliases, etc).
+.RE
+.sp
+\-\-nom4, \-n
+.RS 4
+This option indicates that ctwm should not filter the startup file
+through \f(CRm4\fP. Available only if ctwm is built with the \f(CRUSE_M4\fP flag.
+.RE
+.sp
+\-\-keep\-defs, \-k
+.RS 4
+This option indicates that ctwm should keep the definitions it
+prepends to your startup file when filtering through \f(CRm4\fP in /tmp.
+Available only if ctwm is built with the \f(CRUSE_M4\fP flag.
+.RE
+.sp
+\-\-keep=\f(CRm4file\fP, \-K \f(CRm4file\fP
+.RS 4
+This option indicates that ctwm should keep the result of filtering
+your startup file through \f(CRm4\fP in the named file.
+Available only if ctwm is built with the \f(CRUSE_M4\fP flag.
+.RE
+.sp
+\-\-mono
+.RS 4
+Run in monochrome mode.
+.RE
+.sp
+\-\-version
+.RS 4
+ctwm just prints its version number.
+.RE
+.sp
+\-\-info
+.RS 4
+ctwm prints its detailed version and compile time options.
+.RE
+.sp
+\-\-window[=\f(CRwin\-id\fP], \-w[\f(CRwin\-id\fP]
+.RS 4
+If \f(CR\-w\fP is specified without a win\-id value, ctwm does not take over
+the whole screen(s); instead it creates a new window that becomes its
+root window.  If the win\-id value is given, it is considered to be the
+id of an existing window, in which case, ctwm will try to use this
+window as root window.  You can run any number of instantiations of
+ctwm at the same time.  You can even have embedded ctwm instantiations.
+This is totally useless, but I like it.  The f.adoptwindow function can
+be used to capture an existing window belonging to another ctwm.  A
+possible use of such mode can be to test new configuration file without
+restarting ctwm.
+.RE
+.sp
+\-\-name=\f(CRname\fP, \-n \f(CRname\fP
+.RS 4
+Set the captivename when using \f(CR\-\-window\fP.
+.RE
+.sp
+\-\-nowelcome, \-W
+.RS 4
+This option tells ctwm not to display any welcome when starting.
+.RE
+.sp
+\-\-clientId=\f(CRclid\fP, \-\-restore=\f(CRresfname\fP
+.RS 4
+Something to do with session management
+.RE
+.sp
+\-\-xrm=\f(CRresource\fP
+.RS 4
+Ignored.
+.RE
+.sp
+ctwm uses \f(CRgetopt_long()\fP for parsing the command\-line options.  This
+means that args can be passed via \f(CR\-\-long=arg\fP and \f(CR\-\-long arg\fP, as well
+as \f(CR\-l arg\fP and \f(CR\-larg\fP, and short args can be bundled like \f(CR\-vnk\fP as
+well as \f(CR\-v \-n \-k\fP.
+.RS 4
+.sp
+Note, however, that the handling of optional args is slightly different;
+they \fBmust\fP be specified with = or no space.  e.g., \f(CR\-\-window=123\fP will
+set the win\-id to 123, but \f(CR\-\-window 123\fP will not; the 123 will be
+treated as a separate argument.  Similarly, it must be set as \f(CR\-w123\fP,
+not \f(CR\-w 123\fP.
+.RE
+.SH "CUSTOMIZATION"
+.sp
+Much of ctwm\(cqs appearance and behavior can be controlled by providing
+a startup file in one of the following locations (searched in order for
+each screen being managed when ctwm begins):
+.sp
+$HOME/.ctwmrc.\f(CRscreennumber\fP
+.RS 4
+The \f(CRscreennumber\fP is a small positive number (e.g. 0, 1, etc.)
+representing the screen number (e.g. the last number in the DISPLAY environment
+variable \f(CRhost:displaynum.screennum\fP) that would be used to contact that
+screen of the display.  This is intended for displays with multiple screens of
+differing visual types.
+.RE
+.sp
+$HOME/.ctwmrc
+.RS 4
+This is the usual name for an individual user\(cqs startup file.
+.RE
+.sp
+$HOME/.twmrc.\f(CRscreennumber\fP, $HOME/.twmrc
+.RS 4
+The users twm startup file.
+.RE
+.sp
+@ETCDIR@/system.ctwmrc
+.RS 4
+If none of the preceding files are found, ctwm will look in this
+file for a
+default configuration.  This is often tailored by the site administrator to
+provide convenient menus or familiar bindings for novice users.
+.RE
+.sp
+If no startup files are found, ctwm will use the built\-in defaults
+described above.  The only resource used by ctwm is
+\f(CRbitmapFilePath\fP for a colon\-separated list of directories to search
+when looking for bitmap files (for more information, see the \f(CRAthena
+Widgets\fP manual and \f(CRxrdb(1)\fP).
+.sp
+ctwm startup files are logically broken up into three types of
+specifications:  \f(CRVariables\fP, \f(CRBindings\fP, \f(CRMenus\fP.  The
+\f(CRVariables\fP section must come first and is used to describe the
+fonts, colors, cursors, border widths, icon and window placement, highlighting,
+autoraising, layout of titles, warping, use of the icon manager.
+The \f(CRBindings\fP section usually comes second and is used to specify
+the functions that should be
+invoked when keyboard and pointer buttons are pressed in
+windows, icons, titles, and frames.  The \f(CRMenus\fP section gives any
+user\-defined menus (containing functions to be invoked or
+commands to be executed).
+.sp
+Variable names and keywords are case\-insensitive.  Strings must be
+surrounded by double quote characters (e.g. \(lqblue\(rq) and are
+case\-sensitive.  A pound sign (&#35;) outside of a string causes the
+remainder of the line in which the character appears to be treated as
+a comment.
+.SH "M4 PREPROCESSING"
+.sp
+ctwm can use \f(CRm4(1)\fP to pre\-process its setup files.  The availability of
+the m4 preprocessing is dependent on the build option \f(CRUSE_M4\fP (on by
+default), and can be selectively disabled with the \f(CR\-\-nom4\fP command\-line
+argument.
+.sp
+When ctwm starts up, it opens a file for input as described above.
+But, it processes that file through \f(CRm4\fP before parsing it. So, you can
+use m4 macros to perform operations at runtime.  This makes it very
+easy to work when you use many different displays, with different characteristics.
+For example, If you want to set the lower right section of the screen to be your
+\f(CRIconRegion\fP, (see below for details on the \f(CRIconRegion\fP variable)
+you can use m4 directives and pre\-defined symbols to calculate the region
+you want.  For example:
+.sp
+.if n .RS 4
+.nf
+define(IRegion, translit(eval(WIDTH/3)*eval(HEIGHT/2)+eval(WIDTH\-WIDTH/3)\-0, *, x))
+IconRegion  "IRegion" SOUTH EAST 75 25
+.fi
+.if n .RE
+.sp
+will define the lower half, and right\-hand third of the screen.  The
+above makes use of symbols that are predefined for m4 by ctwm.  The
+symbols WIDTH and HEIGHT are among those calculated by ctwm and written
+into a temporary file for \f(CRm4\fP to use.
+.sp
+You may well find that if you research the \f(CRm4(1)\fP manual well,
+and understand the power of m4, this will be a \fIvery\fP
+useful and powerful tool.  But, if you use any of the symbols
+which are predefined by m4, you are in severe danger!  For example,
+the Sun \f(CRm4\fP predefines shift, so if you use that name in your \f(CR.ctwmrc\fP,
+you are out of luck.
+.sp
+The following symbols are predefined by ctwm:
+.SS "Hostnames"
+.sp
+SERVERHOST
+.RS 4
+This variable is set to the name of the machine that is running the X
+server.
+.RE
+.sp
+CLIENTHOST
+.RS 4
+The machine that is running the clients.  (ie, ctwm)
+.RE
+.sp
+HOSTNAME
+.RS 4
+As of 4.0.2, this is a duplicate of \f(CRCLIENTHOST\fP.  In prior
+versions, \f(CRgethostbyname()\fP was used to attempt to derive a canonical
+or fully\-qualified version of the hostname.
+.RE
+.SS "User Info"
+.sp
+USER
+.RS 4
+The name of the user running the program.  Value taken from
+environmental variables \f(CR$USER\fP and \f(CR$LOGNAME\fP, or from the passwd
+lookup for your uid if they don\(cqt exist.  Falls back to \(lqunknown\(rq if
+all methods fail.
+.RE
+.sp
+HOME
+.RS 4
+The user\(cqs home directory.  Gotten from the environment var \f(CR$HOME\fP.
+.RE
+.SS "ctwm info"
+.sp
+TWM_TYPE
+.RS 4
+Tells which \f(CRtwm\fP offshoot is running.  It will always be set to
+the string \(lqctwm\(rq in this program.  This is useful for protecting
+parts of your \f(CR.twmrc\fP file that twm proper won\(cqt understand
+(like \f(CRWorkSpaces\fP) so that it is still usable with other
+\f(CRtwm\fP programs.
+.RE
+.sp
+TWM_VERSION
+.RS 4
+Tells which ctwm version is running in the form of a floating
+point number.
+.RE
+.sp
+CTWM_VERSION_MAJOR, CTWM_VERSION_MINOR, CTWM_VERSION_PATCH, CTWM_VERSION_ADDL
+.RS 4
+Gives the ctwm version split out.  e.g., for a version like
+"3.8.2\-beta1", the \f(CR_MAJOR\fP will be "3", \f(CR_MINOR\fP "8", \f(CR_PATCH\fP "2",
+and \f(CR_ADDL\fP "\-beta1".  Final releases will generally have an empty
+\f(CRCTWM_VERSION_ADDL\fP; it\(cqs mostly meaningful in dev and betas.  For
+comparison, in this situation, TWM_VERSION will be "3.8.2".
+.sp
+The \f(CRCTWM_VERSION_*\fP variables first appeared in 4.0.0.
+.RE
+.SS "X server info"
+.sp
+VERSION
+.RS 4
+The X major protocol version.  As seen by ProtocolVersion(3).
+.RE
+.sp
+REVISION
+.RS 4
+The X minor protocol revision.  As seen by ProtocolRevision(3).
+.RE
+.sp
+VENDOR
+.RS 4
+The vendor of your X server.  For example: \f(CRMIT X Consortium\fP.
+.RE
+.sp
+RELEASE
+.RS 4
+The release number of your X server.  For MIT X11R5, this is \f(CR5\fP.
+.RE
+.SS "Display info"
+.sp
+WIDTH
+.RS 4
+The width of your display in pixels.
+.RE
+.sp
+HEIGHT
+.RS 4
+The height of your display in pixels.
+.RE
+.sp
+X_RESOLUTION
+.RS 4
+The X resolution of your display in pixels per meter.
+.RE
+.sp
+Y_RESOLUTION
+.RS 4
+The Y resolution of your display in pixels per meter.
+.RE
+.sp
+PLANES
+.RS 4
+The number of bit planes your display supports in the default root window.
+.RE
+.sp
+BITS_PER_RGB
+.RS 4
+The number of significant bits in an RGB color.  (log base 2 of the number
+of distinct colors that can be created.  This is often different from the
+number of colors that can be displayed at once.)
+.RE
+.sp
+CLASS
+.RS 4
+Your visual class.  Will return one of \f(CRStaticGray\fP, \f(CRGrayScale\fP,
+\f(CRStaticColor\fP, \f(CRPseudoColor\fP, \f(CRTrueColor\fP, \f(CRDirectColor\fP,
+or, if it cannot determine what you have, \f(CRNonStandard\fP.
+.RE
+.sp
+COLOR
+.RS 4
+This will be either \(lqYes\(rq or \(lqNo\(rq.  This is just a wrapper around the above
+definition.  Returns \(lqYes\(rq on \f(CR*Color\fP, and \(lqNo\(rq on \f(CRStaticGray\fP
+and \f(CRGrayScale\fP.
+.RE
+.SS "ctwm compile\-time options"
+.sp
+XPM
+.RS 4
+Is defined only if ctwm was compiled with XPM support.
+.RE
+.sp
+PIXMAP_DIRECTORY
+.RS 4
+The directory where the ctwm pictures are installed.
+.RE
+.sp
+JPEG
+.RS 4
+Is defined only if ctwm was compiled with JPEG support.
+.RE
+.sp
+SOUNDS
+.RS 4
+Is defined only if ctwm was compiled with SOUND support.
+.RE
+.sp
+EWMH
+.RS 4
+Is defined only if ctwm was compiled with EWMH support.  First appeared
+in 4.0.0.
+.RE
+.sp
+I18N
+.RS 4
+Is defined if ctwm was compiled with I18N support.  This is no longer
+optional since 3.8 and is always compiled in.  The definition will be
+removed in a future version.
+.RE
+.SS "ctwm run\-time options"
+.sp
+TWM_CAPTIVE
+.RS 4
+This will be either \(lqYes\(rq or \(lqNo\(rq. \(lqYes\(rq if the current ctwm is captive
+(flag \-w), \(lqNo\(rq in the other case.
+.RE
+.sp
+TWM_CAPTIVE_NAME
+.RS 4
+Defined only if TWM_CAPTIVE is also defined. Contains the name of the captive
+ctwm (flag \-\-name).
+.RE
+.SS "Obsolete options"
+.sp
+GNOME
+.RS 4
+Defined when ctwm was compiled with GNOME1 support.  Removed after
+3.8.2.
+.RE
+.SH "VARIABLES"
+.sp
+Many of the aspects of ctwm\(cqs user interface are controlled by variables
+that may be set in the user\(cqs startup file.  Some of the options are
+enabled or disabled simply by the presence of a particular keyword.  Other
+options require keywords, numbers, strings, or lists of all of these.
+.sp
+Lists are surrounded by braces and are usually separated by
+whitespace or a newline.  For example:
+.sp
+.if n .RS 4
+.nf
+AutoRaise { "emacs" "XTerm" "Xmh" }
+.fi
+.if n .RE
+.sp
+or
+.sp
+.if n .RS 4
+.nf
+AutoRaise
+{
+    "emacs"
+    "XTerm"
+    "Xmh"
+}
+.fi
+.if n .RE
+.sp
+When a variable containing a list of strings representing windows is
+searched (e.g. to determine whether or not to enable autoraise as shown
+above), a string must be an exact, case\-sensitive match to the window\(cqs
+name (given by various window properties, such as \f(CRWM_NAME\fP), resource
+name or class name (both given by the \f(CRWM_CLASS\fP window property).  The
+preceding example would enable autoraise on windows named \(lqemacs\(rq as
+well as any \f(CRxterm\fP (since they are of class \(lqXTerm\(rq) or xmh windows
+(which are of class \(lqXmh\(rq).
+.sp
+String arguments that are interpreted as filenames (see the \f(CRPixmaps\fP,
+\f(CRCursors\fP, and \f(CRIconDirectory\fP below) will
+prepend the user\(cqs directory
+(specified by the \f(CRHOME\fP environment variable) if the first character is a
+tilde (~).  If, instead, the first character is a colon (:), the name is
+assumed to refer to one of the internal bitmaps that are used to
+create the default titlebars symbols:  \f(CR:xlogo\fP
+or \f(CR:iconify\fP (both refer to the
+X used for the iconify button), \f(CR:resize\fP (the nested squares used by the
+resize button), and \f(CR:question\fP (the question mark used for non\-existent
+bitmap files).
+.sp
+The following variables may be specified at the top of a ctwm startup
+file.  Lists of window name prefix strings are indicated by \f(CRwin\-list\fP.
+Optional arguments are shown in square brackets:
+.sp
+AlwaysOnTop { \f(CRwin\-list\fP }
+.RS 4
+This variable specifies a list of windows (all windows if the list is defaulted)
+that ctwm will try its best to maintain on top of others. This doesn\(cqt
+work in all case.
+.RE
+.sp
+AlwaysShowWindowWhenMovingFromWorkspaceManager
+.RS 4
+When \f(CRReallyMoveInWorkspaceManager\fP is present and the user is moving
+a window from the WorkSpaceMap, ctwm display the actual window only
+if it crosses the current active workspace. If
+\f(CRAlwaysShowWindowWhenMovingFromWorkspaceManager\fP is present, the actual
+window is always visible during the move, regardless of whether it crosses
+the current workspace or not. The Shift key toggles this behaviour.
+.RE
+.sp
+AlwaysSqueezeToGravity [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that ctwm should obey window gravity
+when squeezing a window even when the window has a titlebar.
+Normally, ctwm will always squeeze a window that has a titlebar
+toward the north.
+The optional \f(CRwin\-list\fP may be used to control which windows
+this applies on.
+.RE
+.sp
+AnimationSpeed \f(CRspeed\fP
+.RS 4
+The \f(CRspeed\fP argument is a non\-negative integer. It determines the number of
+times a second animations (if any) are updated. If \f(CRspeed\fP is 0, animations
+are freezed. The default value is 0.
+.RE
+.sp
+AutoFocusToTransients
+.RS 4
+Transient windows get focus automatically when created.  Useful with
+programs that have keyboard shortcuts that pop up windows.
+.RE
+.sp
+AutoLower [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies a list of windows (all windows if the list is
+defaulted) to be automatically lowered whenever the pointer leaves a
+window.  This action can be interactively enabled or disabled on
+individual windows using the function \f(CRf.autolower\fP.
+.RE
+.sp
+AutoOccupy
+.RS 4
+This variable specifies that clients will automatically change their occupation
+when their name or icon name changes. The new occupation will be recalculated
+from the Occupy and OccupyAll fields in the \f(CR.ctwmrc\fP file.
+.RE
+.sp
+AutoPopup [{ \f(CRwin\-list\fP }]
+.RS 4
+This variables specifies a list of windows which will be deiconified whenever
+their name changes. Can be used for xconsole, for instance,which adds a "*" to
+its name whenever something gets displayed on the console, or for various mail
+readers who change their icons depending on the presence of unread mail.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+AutoPriority
+.RS 4
+This variable specifies that ctwm should automatically recompute the
+priority of a window (and its associated icon) when its name changes.
+See also \f(CROnTopPriority\fP.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+AutoRaise [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies a list of windows (all windows if the list is defaulted)
+to be automatically raised whenever the pointer has come to rest in a window for
+the amount of time specified by the \f(CRRaiseDelay\fP variable. This action can be
+interactively enabled or disabled on individual windows using the function
+\f(CRf.autoraise\fP.
+.RE
+.sp
+AutoRaiseIcons
+.RS 4
+Icons are raised when the cursor enters it. Useful with ShrinkIconTitles.
+.RE
+.sp
+AutoRelativeResize
+.RS 4
+This variable indicates that dragging out a window size (either when
+initially sizing the window with pointer Button2 or when resizing it)
+should not wait until the pointer has crossed the window edges.
+Instead, moving
+the pointer automatically causes the nearest edge or edges to move by the
+same amount.  This allows the resizing of windows that extend off
+the edge of the screen.
+If the pointer is
+in the center of the window, or if the resize is begun by pressing a
+titlebutton, ctwm will still wait for the pointer to cross a window
+edge (to prevent accidents).  This option is
+particularly useful for people who like the press\-drag\-release method of
+sweeping out window sizes.
+.RE
+.sp
+AutoSqueeze { \f(CRwin\-list\fP }
+.RS 4
+These windows will be auto\-squeezed (see f.squeeze). i.e. automatically
+unsqueezed when they get focus, and squeezed when they loose it. Useful for
+the workspace manager. Not authorized for icon managers.
+.RE
+.sp
+BackingStore
+.RS 4
+Enable usage of backing store on menus and workspace map windows.  See
+also \f(CRNoBackingStore\fP.  Added in 4.0.0; in previous versions this
+was the default.
+.RE
+.sp
+BeNiceToColormap
+.RS 4
+By defaults new colors are allocated for shadows when a 3D look is used,
+but when you specify \f(CRBeNiceToColormap\fP ctwm uses stipling instead of
+new colors, the effect is less beautiful, but acceptable. In this case
+ClearShadowContrast and DarkShadowContrast have no effects.
+.RE
+.sp
+BorderBottom \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of a forbidden zone at the
+bottom of the screen. All constrained window functions (f.movepack,
+f.move with DontMoveOff, etc...) will consider this zone as offscreen.
+Default is 0.
+.RE
+.sp
+BorderColor \f(CRstring\fP [{ \f(CRwincolorlist\fP }]
+.RS 4
+This variable specifies the default color of the border to be placed around
+all
+non\-iconified windows, and may only be given within a \f(CRColor\fP or
+\f(CRMonochrome\fP list.  The optional \f(CRwincolorlist\fP specifies a list
+of window and color name pairs for specifying particular border colors for
+different types of windows.  For example:
+.sp
+.if n .RS 4
+.nf
+BorderColor "gray50"
+{
+    "XTerm" "red"
+    "xmh"   "green"
+}
+.fi
+.if n .RE
+.sp
+The default is \(lqblack\(rq.
+.RE
+.sp
+BorderLeft \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of a forbidden zone at the
+left of the screen. All constrained window functions (f.movepack,
+f.move with DontMoveOff, etc...) will consider this zone as offscreen.
+Default is 0.
+.RE
+.sp
+BorderResizeCursors
+.RS 4
+This variable specifies that ctwm should use resizing cursors when
+the pointer is on the window border. To be used preferably when you have
+bound a button to f.resize in the frame context.
+.RE
+.sp
+BorderRight \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of a forbidden zone at the
+right of the screen. All constrained window functions (f.movepack,
+f.move with DontMoveOff, etc...) will consider this zone as offscreen.
+Default is 0.
+.RE
+.sp
+BorderShadowDepth \f(CRpixels\fP
+.RS 4
+This variable specifies the depth of the shadow ctwm uses for
+3D window borders, when UseThreeDBorders is selected.
+.RE
+.sp
+BorderTileBackground \f(CRstring\fP [{ \f(CRwincolorlist\fP }]
+.RS 4
+This variable specifies the default background color in the gray pattern
+used in unhighlighted borders (only if \f(CRNoHighlight\fP hasn\(cqt been set),
+and may only be given within a \f(CRColor\fP or \f(CRMonochrome\fP list.  The
+optional \f(CRwincolorlist\fP allows per\-window colors to be specified.
+The default  is \(lqwhite\(rq.
+.RE
+.sp
+BorderTileForeground \f(CRstring\fP [{ \f(CRwincolorlist\fP }]
+.RS 4
+This variable specifies the default foreground color in the gray pattern
+used in unhighlighted borders (only
+if \f(CRNoHighlight\fP hasn\(cqt been set), and may only be given within a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The optional \f(CRwincolorlist\fP allows
+per\-window colors to be specified.  The default is \(lqblack\(rq.
+.RE
+.sp
+BorderTop \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of a forbidden zone at the
+top of the screen. All constrained window functions (f.movepack,
+f.move with DontMoveOff, etc...) will consider this zone as offscreen.
+Default is 0.
+.RE
+.sp
+BorderWidth \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of the border surrounding
+all client window frames if \f(CRClientBorderWidth\fP has not been specified.
+This value is also used to set the border size of windows created by ctwm
+(such as the icon manager).  The default is 2.
+.RE
+.sp
+ButtonIndent \f(CRpixels\fP
+.RS 4
+This variable specifies the amount by which titlebuttons should be
+indented on all sides.  Positive values cause the buttons to be smaller than
+the window text and highlight area so that they stand out.  Setting this
+and the \f(CRTitleButtonBorderWidth\fP variables to 0 makes titlebuttons be as
+tall and wide as possible.  The default is 1 if \f(CRUseThreeDTitles\fP is
+not set, 0 if it is set.
+.RE
+.sp
+CenterFeedbackWindow
+.RS 4
+The moving and resizing information window is centered in the middle of the
+screen instead of the top left corner.
+.RE
+.sp
+ClearShadowContrast \f(CRcontrast\fP
+.RS 4
+Indicates to ctwm how to calculate the clear shadow color for 3D items.
+The value is a comprised between 0 and 100. The formula used is :
+.sp
+.if n .RS 4
+.nf
+    clear.{RGB} = (65535 \- color.{RGB}) * (contrast / 100).
+.fi
+.if n .RE
+.sp
+Has no effect if \f(CRBeNiceToColormap\fP is active.
+.RE
+.sp
+ClickToFocus
+.RS 4
+Focus windows by clicking on them, rather than merely mousing over
+them.
+.RE
+.sp
+ClientBorderWidth
+.RS 4
+This variable indicates that border width of a window\(cqs frame should be set to
+the initial border width of the window, rather than to the value of
+\f(CRBorderWidth\fP.
+If \f(CRUse3DBorders\fP is set this variable is automatically unset.
+.RE
+.sp
+Color { \f(CRcolors\-list\fP }
+.RS 4
+This variable specifies a list of color assignments to be made if the default
+display is capable of displaying more than simple black and white.  The
+\f(CRcolors\-list\fP is made up of the following color variables and their values:
+\f(CRDefaultBackground\fP,
+\f(CRDefaultForeground\fP,
+\f(CRMenuBackground\fP,
+\f(CRMenuForeground\fP,
+\f(CRMenuTitleBackground\fP,
+\f(CRMenuTitleForeground\fP, and
+\f(CRMenuShadowColor\fP.
+The following
+color variables may also be given a list of window and color name pairs to
+allow per\-window colors to be specified (see \f(CRBorderColor\fP for details):
+\f(CRBorderColor\fP,
+\f(CRIconManagerHighlight\fP,
+\f(CRBorderTileBackground\fP,
+\f(CRBorderTileForeground\fP,
+\f(CRTitleBackground\fP,
+\f(CRTitleForeground\fP,
+\f(CRIconBackground\fP,
+\f(CRIconForeground\fP,
+\f(CRIconBorderColor\fP,
+\f(CRIconManagerBackground\fP, and
+\f(CRIconManagerForeground\fP.
+For example:
+.sp
+.if n .RS 4
+.nf
+Color
+{
+    MenuBackground      "gray50"
+    MenuForeground      "blue"
+    BorderColor         "red"    { "XTerm" "yellow" }
+    TitleForeground     "yellow"
+    TitleBackground     "blue"
+}
+.fi
+.if n .RE
+.sp
+All of these color variables may also be specified for the \f(CRMonochrome\fP
+variable, allowing the same initialization file to be used on both color and
+monochrome displays.
+.RE
+.sp
+ConstrainedMoveTime \f(CRmilliseconds\fP
+.RS 4
+This variable specifies the length of time between button clicks needed to
+begin a constrained move operation.
+Double clicking within this amount of time when invoking \f(CRf.move\fP or
+other similar moving functions will cause the window only be moved in a
+horizontal or vertical direction.
+Setting this value to 0 will disable constrained moves.  The default is
+400 milliseconds.
+.sp
+Note that this also affects double clicking in \f(CRf.raiseorsqueeze\fP, and
+potentially other places that need to track double clicks.  It should
+probably be renamed.
+.RE
+.sp
+Cursors { \f(CRcursor\-list\fP }
+.RS 4
+This variable specifies the glyphs that ctwm should use for various
+pointer cursors.  Each cursor
+may be defined either from the \f(CRcursor\fP font or from two bitmap files.
+Shapes from the \f(CRcursor\fP font may be specified directly as:
+.sp
+.if n .RS 4
+.nf
+    cursorname "string"
+.fi
+.if n .RE
+.sp
+where \f(CRcursorname\fP is one of the cursor names listed below, and
+\f(CRstring\fP is the name of a glyph as found in the file
+<X11/cursorfont.h> (without the \(lqXC_\(rq prefix).
+If the cursor is to be defined
+from bitmap files, the following syntax is used instead:
+.sp
+.if n .RS 4
+.nf
+    cursorname "image" "mask"
+.fi
+.if n .RE
+.sp
+The \f(CRimage\fP and \f(CRmask\fP strings specify the names of files containing
+the glyph image and mask in \f(CRbitmap(1)\fP form.
+The bitmap files are located in the same manner as icon bitmap files.
+The following example shows the default cursor definitions:
+.sp
+.if n .RS 4
+.nf
+Cursors
+{
+    Frame       "top_left_arrow"
+    Title       "top_left_arrow"
+    Icon        "top_left_arrow"
+    IconMgr     "top_left_arrow"
+    Move        "fleur"
+    Resize      "fleur"
+    Menu        "sb_left_arrow"
+    Button      "hand2"
+    Wait        "watch"
+    Select      "dot"
+    Destroy     "pirate"
+}
+.fi
+.if n .RE
+.RE
+.sp
+DarkShadowContrast \f(CRcontrast\fP
+.RS 4
+Indicates to ctwm how to calculate the dark shadow color for 3D items.
+The value is a comprised between 0 and 100. The formula used is :
+.sp
+.if n .RS 4
+.nf
+    dark.{RGB}  = color.{RGB} * ((100 \- contrast) / 100),
+.fi
+.if n .RE
+.sp
+Has no effect if \f(CRBeNiceToColormap\fP is active.
+.RE
+.sp
+DecorateTransients
+.RS 4
+This variable indicates that transient windows (those containing a
+\f(CRWM_TRANSIENT_FOR\fP property) should have titlebars.  As of 4.0.0
+this is the default.
+.RE
+.sp
+DefaultBackground \f(CRstring\fP
+.RS 4
+This variable specifies the background color to be used for sizing and
+information windows.  The default is \(lqwhite\(rq.
+.RE
+.sp
+DefaultForeground \f(CRstring\fP
+.RS 4
+This variable specifies the foreground color to be used for sizing and
+information windows.  The default is \(lqblack\(rq.
+.RE
+.sp
+DontIconifyByUnmapping { \f(CRwin\-list\fP }
+.RS 4
+This variable specifies a list of windows that should not be iconified by
+simply unmapping the window (as would be the case if \f(CRIconifyByUnmapping\fP
+had been set).  This is frequently used to force some windows to be treated
+as icons while other windows are handled by the icon manager.
+.RE
+.sp
+DontMoveOff
+.RS 4
+This variable indicates that windows should not be allowed to be moved off the
+screen.  It can be overridden by the \f(CRf.forcemove\fP function.
+.RE
+.sp
+DontNameDecorations
+.RS 4
+Disable setting \f(CRWM_NAME\fP properties on the various decoration windows
+ctwm puts around the windows it manages.  These are handy to keep track
+of what\(cqs what when poking through the list of windows on the screen,
+but can confuse some tools that don\(cqt expect to find them there (xwit
+is known to be one of them).  First appeared in 4.0.2.
+.RE
+.sp
+DontPaintRootWindow
+.RS 4
+This variable tells ctwm not to paint the root window, whatever you told in
+the Workspaces specification. This is useful to have pixmaps in the Workspace
+Map but not on the root window.
+.RE
+.sp
+DontSave { \f(CRwin\-list\fP }
+.RS 4
+These windows won\(cqt have their characteristics saved for the session manager.
+.RE
+.sp
+DontSetInactive { \f(CRwin\-list\fP }
+.RS 4
+These windows won\(cqt be set to InactiveState when they become invisible
+due to a change workspace. This has been added because some ill\-behaved
+clients (Frame5) don\(cqt like this.
+.RE
+.sp
+DontShowWelcomeWindow
+.RS 4
+Indicates the same as the \f(CR\-W\fP option: the welcome window is not shown.
+.RE
+.sp
+DontSqueezeTitle [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that titlebars should not be squeezed to their
+minimum size as described under \f(CRSqueezeTitle\fP below.
+If the optional window list is supplied, only those windows will be
+prevented from being squeezed.
+.RE
+.sp
+DontToggleWorkSpaceManagerState
+.RS 4
+Turns off the feature toggling the workspace manager state to/from map/button
+state when you press ctrl and the workspace manager window is in focus.
+.RE
+.sp
+DontWarpCursorInWMap
+.RS 4
+Tells ctwm not to warp the cursor to the corresponding actual window
+when you click in a small window in the workspace map.
+.RE
+.sp
+EWMHIgnore { \f(CRmessage\-types\fP }
+.RS 4
+Sets EWMH message types that ctwm will ignore.  This is only valid
+if built with \f(CRUSE_EWMH\fP (currently on by default).  The following
+example shows all the valid options:
+.sp
+.if n .RS 4
+.nf
+EWMHIgnore
+{
+    # Window states
+    "STATE_MAXIMIZED_VERT"
+    "STATE_MAXIMIZED_HORZ"
+    "STATE_FULLSCREEN"
+    "STATE_SHADED"
+    "STATE_ABOVE"
+    "STATE_BELOW"
+}
+.fi
+.if n .RE
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+ForceFocus [{ \f(CRwin\-list\fP }]
+.RS 4
+Give focus to windows whether they asked for it or not.  This may
+occasionally be useful with windows that tell us not to give them
+focus, but still need it and fail to work right without us doing so.
+The optional window list allows specifying which windows will get such
+treatment.
+.sp
+First appeared in 4.0.0.  In prior versions, a variant of this
+functionality was unconditionally enabled.
+.RE
+.sp
+ForceIcons
+.RS 4
+This variable indicates that icon pixmaps specified in the \f(CRIcons\fP
+variable should override any client\-supplied pixmaps.
+.RE
+.sp
+FramePadding \f(CRpixels\fP
+.RS 4
+This variable specifies the distance between the titlebar decorations (the
+button and text) and the window frame.  The default is 2 pixels if \f(CRUseThreeDTitles\fP is
+not set, 0 if it is set.
+.RE
+.sp
+GrabServer
+.RS 4
+Specifies that ctwm should grab the X server (blocking all events other
+than ours) when popping up menus and moving opaque windows.  See also
+\f(CRNoGrabServer\fP.  Added in 4.0.0; in previous versions this was the
+default.
+.RE
+.sp
+IconBackground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the background color of icons, and may
+only be specified inside of a \f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqwhite\(rq.
+.RE
+.sp
+IconBorderColor \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the color of the border used for icon windows, and
+may only be specified inside of a \f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqblack\(rq.
+.RE
+.sp
+IconBorderWidth \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of the border surrounding
+icon windows.  The default is 2.
+.RE
+.sp
+IconDirectory \f(CRstring\fP
+.RS 4
+This variable specifies the directory that should be searched
+if a bitmap file cannot be found in any of the directories
+in the \f(CRbitmapFilePath\fP resource.
+.RE
+.sp
+IconFont \f(CRstring\fP
+.RS 4
+This variable specifies the font to be used to display icon names within
+icons.  The default is \(lqvariable\(rq.
+.RE
+.sp
+IconForeground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the foreground color to be used when displaying icons,
+and may only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqblack\(rq.
+.RE
+.sp
+IconifyByUnmapping [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that windows should be iconified by being unmapped
+without trying to map any icons.  This assumes that the user is will
+remap the window through the icon manager, the \f(CRf.warpto\fP function, or
+the \f(CRTwmWindows\fP menu.
+If the optional \f(CRwin\-list\fP is provided, only those windows will be
+iconified by simply unmapping.  Windows that have both this and the
+\f(CRIconManagerDontShow\fP options set may not be accessible if no binding
+to the \f(CRTwmWindows\fP menu is set in the user\(cqs startup file.
+.RE
+.sp
+IconifyStyle \f(CRstring\fP
+.RS 4
+Where string is either \f(CR"normal"\fP, \f(CR"mosaic"\fP, \f(CR"zoomin"\fP, \f(CR"zoomout"\fP
+or \f(CR"sweep"\fP. Tells ctwm to use some fancy graphical effects when iconifying
+windows.
+.RE
+.sp
+IconJustification \f(CRstring\fP
+.RS 4
+Where string is either \f(CR"left"\fP, \f(CR"center"\fP or \f(CR"right"\fP.
+Tells ctwm how to justify the icon image against the icon title (if any).
+.RE
+.sp
+IconManagerBackground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the background color to use for icon manager entries,
+and may only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqwhite\(rq.
+.RE
+.sp
+IconManagerDontShow [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that the icon manager should not display any
+windows.  If the optional \f(CRwin\-list\fP is given, only those windows will
+not be displayed.  This variable is used to prevent windows that are rarely
+iconified (such as \f(CRxclock\fP or \f(CRxload\fP) from taking up space in
+the icon manager.
+.RE
+.sp
+IconManagerFont \f(CRstring\fP
+.RS 4
+This variable specifies the font to be used when displaying icon manager
+entries.  The default is \(lqvariable\(rq.
+.RE
+.sp
+IconManagerForeground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the foreground color to be used when displaying
+icon manager entries, and may only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqblack\(rq.
+.RE
+.sp
+IconManagerGeometry \f(CRstring\fP [ \f(CRcolumns\fP ]
+.RS 4
+This variable specifies the geometry of the icon manager window.  The
+\f(CRstring\fP argument is standard geometry specification that indicates
+the initial full size of the icon manager.  The icon manager window is
+then broken into \f(CRcolumns\fP pieces and scaled according to the number
+of entries in the icon manager.  Extra entries are wrapped to form
+additional rows.  The default number of columns is 1.
+.RE
+.sp
+IconManagerHighlight \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the border color to be used when highlighting
+the icon manager entry that currently has the focus,
+and can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.  See the \f(CRBorderColor\fP
+variable for a complete description of the \f(CRwin\-list\fP.
+The default is \(lqblack\(rq.
+.RE
+.sp
+IconManagers { \f(CRiconmgr\-list\fP }
+.RS 4
+This variable specifies a list of icon managers to create.  Each item in the
+\f(CRiconmgr\-list\fP has the following format:
+.sp
+.if n .RS 4
+.nf
+    "winname" ["iconname"] "geometry" columns
+.fi
+.if n .RE
+.sp
+where \f(CRwinname\fP is the name of the windows that should be put into this
+icon manager, \f(CRiconname\fP is the name of that icon manager window\(cqs icon,
+\f(CRgeometry\fP is a standard geometry specification, and \f(CRcolumns\fP is
+the number of columns in this icon manager as described in
+\f(CRIconManagerGeometry\fP.  For example:
+.sp
+.if n .RS 4
+.nf
+IconManagers
+{
+    "XTerm"  "=300x5+800+5"  5
+    "myhost" "=400x5+100+5"  2
+}
+.fi
+.if n .RE
+.sp
+Clients whose name or class is \(lqXTerm\(rq will have an entry created
+in the \(lqXTerm\(rq icon manager.  Clients whose name was \(lqmyhost\(rq would
+be put into the \(lqmyhost\(rq icon manager.
+.RE
+.sp
+IconManagerShadowDepth \f(CRpixels\fP
+.RS 4
+This variable specifies the depth of the shadow ctwm uses for
+3D IconManager entries, when UseThreeDIconManagers is selected.
+.RE
+.sp
+IconManagerShow { \f(CRwin\-list\fP }
+.RS 4
+This variable specifies a list of windows that should appear in the icon
+manager.  When used in conjunction with the \f(CRIconManagerDontShow\fP
+variable, only the windows in this list will be shown in the icon manager.
+.RE
+.sp
+IconMenuDontShow { \f(CRwin\-list\fP }
+.RS 4
+Don\(cqt show the name of these windows in the TwmIcons menu.
+.RE
+.sp
+IconRegion \f(CRgeomstring\fP \f(CRvgrav hgrav gridwidth gridheight\fP [\f(CRiconjust\fP] [\f(CRiconregjust\fP] [\f(CRiconregalign\fP] [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies an area on the root window in which icons are placed
+if no specific icon location is provided by the client.  The \f(CRgeomstring\fP
+is a quoted string containing a standard geometry specification. If more than
+one \f(CRIconRegion\fP lines are given, icons will be put into the succeeding
+icon regions when the first is full. The \f(CRvgrav\fP argument should be either
+\f(CRNorth\fP or \f(CRSouth\fP  and is used to control whether icons are
+first filled in from the top or bottom of the icon region.  Similarly, the
+\f(CRhgrav\fP argument should be either \f(CREast\fP or \f(CRWest\fP and is used
+to control whether icons should be filled in from left or from the right. Icons
+are laid out within the region in a grid with cells \f(CRgridwidth\fP pixels
+wide and \f(CRgridheight\fP pixels  high. The optional win\-list argument tells
+ctwm that if such a window is iconified, and there is enough room in this
+icon region for its icon, then place it here. The optional \f(CRiconjust\fP,
+\f(CRiconregjust\fP and \f(CRiconregalign\fP can be used to give specific values
+of IconJustification, IconRegionJustification and IconRegionAlignement for
+this IconRegion.
+.RE
+.sp
+IconRegionAlignement \f(CRstring\fP
+.RS 4
+Where string is either \f(CR"top"\fP, \f(CR"center"\fP \f(CR"bottom"\fP or \f(CR"border"\fP.
+Tells ctwm how to align icons inside their place in the IconRegion.
+If \(lqborder\(rq is given, the justification will be \(lqtop\(rq if
+the icon region gravity is \(lqnorth\(rq and \(lqbottom\(rq if the icon region gravity is \(lqsouth\(rq.
+.RE
+.sp
+IconRegionJustification \f(CRstring\fP
+.RS 4
+Where string is either \f(CR"left"\fP, \f(CR"center"\fP \f(CR"right"\fP or \f(CR"border"\fP.
+Tells ctwm how to justify icons inside their place in the IconRegion.
+If \(lqborder\(rq is given, the justification will be \(lqleft\(rq if
+the icon region gravity is \(lqwest\(rq and \(lqright\(rq if the icon region gravity is \(lqeast\(rq.
+.RE
+.sp
+Icons { \f(CRwin\-list\fP }
+.RS 4
+This variable specifies a list of window names and the bitmap filenames that
+should be used as their icons.  For example:
+.sp
+.if n .RS 4
+.nf
+Icons
+{
+    "XTerm"  "xterm.icon"
+    "xfd"    "xfd_icon"
+}
+.fi
+.if n .RE
+.sp
+Windows that match \(lqXTerm\(rq and would not be iconified by unmapping, would try
+to use  the icon bitmap in the file \(lqxterm.icon\(rq.If \f(CRForceIcons\fP is
+specified, this bitmap will be used even if the client has requested its
+own icon pixmap.
+.RE
+.sp
+IconSize \f(CRstring\fP
+.RS 4
+(Only if built with \f(CRUSE_EWMH\fP)
+string is of the form
+"\f(CR<width>x<height>\fP"
+or
+"\f(CRsize\fP"
+for a square size.
+This indicates the preferred size of icons selected from the EWMH window
+property \f(CR_NET_WM_ICON\fP.
+If an icon with the exact size is not available, one with the nearest (area)
+size will be chosen.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+IgnoreCaseInMenuSelection
+.RS 4
+Used when moving the pointer inside a menu with the keyboard. When you
+type a letter, the pointer goes to the next entry beginning with this
+letter. If IgnoreCaseInMenuSelection is present, this selection ignores
+the case of this first letter.
+.RE
+.sp
+IgnoreLockModifier
+.RS 4
+If present, all bindings (buttons and keys) will ignore the LockMask. Useful if you
+often use caps lock, and don\(cqt want to define twice all your bindings.
+.RE
+.sp
+IgnoreModifier
+.RS 4
+All bindings (buttons and keys) will ignore the modifiers
+you specified. It is useful when you use caps locks or
+num locks. You don\(cqt need IgnoreLockModifier any more with this option.
+.sp
+.if n .RS 4
+.nf
+IgnoreModifier { lock m2 }
+.fi
+.if n .RE
+.RE
+.sp
+IgnoreTransient
+.RS 4
+List of windows for which to ignore transients.
+.sp
+.if n .RS 4
+.nf
+IgnoreTransient { "Wine" }
+.fi
+.if n .RE
+.RE
+.sp
+InterpolateMenuColors
+.RS 4
+This variable indicates that menu entry colors should be interpolated between
+entry specified colors.  In the example below:
+.sp
+.if n .RS 4
+.nf
+Menu "mymenu"
+{
+    "Title"     ("black":"red")     f.title
+    "entry1"                        f.nop
+    "entry2"                        f.nop
+    "entry3"    ("white":"green")   f.nop
+    "entry4"                        f.nop
+    "entry5"    ("red":"white")     f.nop
+}
+.fi
+.if n .RE
+.sp
+the foreground colors for \(lqentry1\(rq and \(lqentry2\(rq will be interpolated
+between black and white, and the background colors between red and green.
+Similarly, the foreground for \(lqentry4\(rq will be half\-way between white and
+red, and the background will be half\-way between green and white.
+.RE
+.sp
+MakeTitle { \f(CRwin\-list\fP }
+.RS 4
+This variable specifies a list of windows on which a titlebar should be placed
+and is used to request titles on specific windows when \f(CRNoTitle\fP has been
+set.
+.RE
+.sp
+MapWindowBackground color [{ win\-list }]
+.RS 4
+This variable specifies the background colors to use for small windows in the
+workspace map window and may only be specified inside of a Color or Monochrome
+list. The optional \f(CRwin\-list\fP is a list of window names and colors so
+that per\-window colors may be specified. If there is neither MapWindowBackground,
+nor MapWindowForeground the window title colors are used.
+.RE
+.sp
+MapWindowCurrentWorkSpace { border_color [background] [foreground] [bitmap] }
+.RS 4
+Specify the appearence of the map window corresponding to the current workspace.
+.RE
+.sp
+MapWindowDefaultWorkSpace { border_color [background] [foreground] [bitmap] }
+.RS 4
+Specify the appearence of the map window corresponding to the workspaces other
+than the current workspace when no root background information has been provided
+to ctwm in the WorkSpace command. Not used in others cases.
+.RE
+.sp
+MapWindowForeground color [{ win\-list }]
+.RS 4
+This variable specifies the foreground colors to use for small windows in the
+workspace map window and may only be specified inside of a Color or Monochrome
+list. The optional \f(CRwin\-list\fP is a list of window names and colors so
+that per\-window colors may be specified. If there is neither MapWindowBackground,
+nor MapWindowForeground the window title colors are used.
+.RE
+.sp
+MaxIconTitleWidth \f(CRwidth\fP
+.RS 4
+The integer argument tells ctwm the maximun width to use for an
+icon title. If an icon title is larger than \f(CRwidth\fP, it is truncated.
+.RE
+.sp
+MaxWindowSize \f(CRstring\fP
+.RS 4
+This variable specifies a geometry in which the width and height
+give the maximum size for a given window.  This is typically used to
+restrict windows to the size of the screen.  The default is \(lq30000x30000\(rq.
+.RE
+.sp
+MenuBackground \f(CRstring\fP
+.RS 4
+This variable specifies the background color used for menus,
+and can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqwhite\(rq.
+.RE
+.sp
+MenuFont \f(CRstring\fP
+.RS 4
+This variable specifies the font to use when displaying menus.  The default
+is \(lqvariable\(rq.
+.RE
+.sp
+MenuForeground \f(CRstring\fP
+.RS 4
+This variable specifies the foreground color used for menus,
+and can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqblack\(rq.
+.RE
+.sp
+MenuShadowColor \f(CRstring\fP
+.RS 4
+This variable specifies the color of the shadow behind pull\-down menus
+and can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqblack\(rq.
+.RE
+.sp
+MenuShadowDepth \f(CRpixels\fP
+.RS 4
+This variable specifies the depth of the shadow ctwm uses for
+3D menus, when UseThreeDMenus is selected.
+.RE
+.sp
+MenuTitleBackground \f(CRstring\fP
+.RS 4
+This variable specifies the background color for \f(CRf.title\fP entries in
+menus, and
+can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqwhite\(rq.
+.RE
+.sp
+MenuTitleForeground \f(CRstring\fP
+.RS 4
+This variable specifies the foreground color for \f(CRf.title\fP entries in
+menus and
+can only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqblack\(rq.
+.RE
+.sp
+Monochrome { \f(CRcolors\fP }
+.RS 4
+This variable specifies a list of color assignments that should be made if
+the screen has a depth of 1.  See the description of \f(CRColor\fP.
+.RE
+.sp
+MoveDelta \f(CRpixels\fP
+.RS 4
+This variable specifies the number of pixels the pointer
+must move before the \f(CRf.move\fP function starts working.  Also
+see the \f(CRf.deltastop\fP function.  The default is zero pixels.
+.RE
+.sp
+MovePackResistance \f(CRpixels\fP
+.RS 4
+This variable specifies the number of pixels of the movepack and movepush
+resistance. See \f(CRf.movepack\fP and \f(CRf.movepush\fP.
+.RE
+.sp
+MoveOffResistance \f(CRpixels\fP
+.RS 4
+This variable specifies the number of pixels of the moveoff resistance.
+If \f(CRpixels\fP is positive, \f(CRDontMoveOff\fP will only prevent
+you from going off the edge if you\(cqre within n pixels off the edge. If you
+go further, \f(CRDontMoveOff\fP gives up and lets you go as far as you wish.
+\f(CRf.forcemove\fP still allows you to totally ignore \f(CRDontMoveOff\fP.
+A negative value puts you back into \(lqnever moveoff\(rq mode (it\(cqs the default).
+.RE
+.sp
+MWMIgnore
+.RS 4
+Sets Motif window manager hints ctwm will ignore.  The following
+example shows all the valid options:
+.sp
+.if n .RS 4
+.nf
+MWMIgnore
+{
+    # en/disable window borders
+    "DECOR_BORDER"
+
+    # en/disable titlebars
+    "DECOR_TITLE"
+}
+.fi
+.if n .RE
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+NoBackingStore
+.RS 4
+This variable indicates that ctwm\(cqs menus should not request backing
+store to minimize repainting of menus.  This is typically used with
+servers that can repaint faster than they can handle backing store.
+See also \f(CRBackingStore\fP.  As of 4.0.0 this is the default.
+.RE
+.sp
+NoBorder { \f(CRwin\-list\fP }
+.RS 4
+These windows won\(cqt have borders. If you want no borders on all windows,
+use the BorderWidth keyword.
+.RE
+.sp
+NoCaseSensitive
+.RS 4
+This variable indicates that case should be ignored when sorting icon names
+in an icon manager.  This option is typically used with applications that
+capitalize the first letter of their icon name.
+.RE
+.sp
+NoDecorateTransients
+.RS 4
+Specify that transient windows (i.e., windows with a \f(CRWM_TRANSIENT_FOR\fP
+property set) should be ignored (not given decorations) by ctwm.  See
+also \f(CRDecorateTransients\fP.  Added in 4.0.0; in previous versions
+this was the default.
+.RE
+.sp
+NoDefaults
+.RS 4
+This variable indicates that ctwm should not supply the default
+titlebuttons and bindings.  This option should only be used if the startup
+file contains a completely new set of bindings and definitions.
+.RE
+.sp
+NoGrabServer
+.RS 4
+This variable indicates that ctwm should not grab the server
+when popping up menus and moving opaque windows.  As of 4.0.0 this
+is the default.
+.RE
+.sp
+NoHighlight [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that borders should not be highlighted to track the
+location of the pointer.  If the optional \f(CRwin\-list\fP is given, highlighting
+will only be disabled for those windows.
+When the border is highlighted, it will
+be drawn in the current \f(CRBorderColor\fP.  When the border is not
+highlighted, it will be stippled with an gray pattern using the
+current \f(CRBorderTileForeground\fP and \f(CRBorderTileBackground\fP colors.
+.RE
+.sp
+NoIconTitle [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that icons should not display the icon name
+of the client.  If the
+optional \f(CRwin\-list\fP is given, only those clients will not have
+icon titles.
+.RE
+.sp
+NoIconManagerFocus
+.RS 4
+This variable indicates that ctwm will not set the focus on the corresponding
+window when the pointer is in an IconManager.
+.RE
+.sp
+NoIconManagers
+.RS 4
+This variable indicates that no icon manager should be created.
+.RE
+.sp
+NoImagesInWorkSpaceManager
+.RS 4
+This variable turns off displaying of background images in the WorkSpaceMap.
+Instead only the colors defined in \f(CRWorkSpaces\fP will be used as background
+in the WorkSpaceMap.
+.RE
+.sp
+NoMenuShadows
+.RS 4
+This variable indicates that menus should not have drop shadows drawn behind
+them.  This is typically used with slower servers since it speeds up menu
+drawing at the expense of making the menu slightly harder to read.
+.RE
+.sp
+NoOpaqueMove [{ \f(CRwindow\-list\fP }]
+.RS 4
+The counterpart of \f(CROpaqueMove\fP. See \f(CROpaqueMove\fP.
+.RE
+.sp
+NoOpaqueResize [{ \f(CRwindow\-list\fP }]
+.RS 4
+The counterpart of \f(CROpaqueResize\fP. See \f(CROpaqueResize\fP.
+.RE
+.sp
+NoRaiseOnDeiconify
+.RS 4
+This variable indicates that windows that are deiconified should not be
+raised.
+.RE
+.sp
+NoRaiseOnMove
+.RS 4
+This variable indicates that windows should not be raised when moved.  This
+is typically used to allow windows to slide underneath each other.
+.RE
+.sp
+NoRaiseOnResize
+.RS 4
+This variable indicates that windows should not be raised when resized.  This
+is typically used to allow windows to be resized underneath each other.
+.RE
+.sp
+NoRaiseOnWarp
+.RS 4
+This variable indicates that windows should not be raised when the pointer
+is warped into them with the \f(CRf.warpto\fP function.  If this option is set,
+warping to an occluded window may result in the pointer ending up in the
+occluding window instead the desired window (which causes unexpected behavior
+with \f(CRf.warpring\fP).
+.RE
+.sp
+NoRestartPreviousState
+.RS 4
+Don\(cqt attempt to regenerate the state the screen was in before the
+previous window manager was shut down.  See \f(CRRestartPreviousState\fP for
+details.  Added in 4.0.0; in previous versions this was the default.
+.RE
+.sp
+NoSaveUnders
+.RS 4
+This variable indicates that menus should not request save\-unders to minimize
+window repainting following menu selection.  It is typically used with displays
+that can repaint faster than they can handle save\-unders.
+.RE
+.sp
+NoShowOccupyAll
+.RS 4
+This variable specifies that OccupyAll windows won\(cqt be displayed in the
+WorkSpaceMap window.
+.RE
+.sp
+NoSortIconManager
+.RS 4
+Specifies that entries in the icon manager should be appended in the
+order they show up.  See also \f(CRSortIconManager\fP.  Added in 4.0.0; in
+previous versions this was the default.
+.RE
+.sp
+NoStackMode [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that client window requests to change stacking order
+should be ignored.  If the optional \f(CRwin\-list\fP is given, only requests on
+those windows will be ignored.  This is typically used to prevent applications
+from relentlessly popping themselves to the front of the window stack.
+.RE
+.sp
+NoTitle [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that windows should not have titlebars.  If the
+optional \f(CRwin\-list\fP is given, only those windows will not have titlebars.
+\f(CRMakeTitle\fP may be used with this option to force titlebars to be put
+on specific windows.
+.RE
+.sp
+NoTitleFocus
+.RS 4
+This variable indicates that ctwm should not set keyboard input focus to
+each window as it is entered.  Normally, ctwm sets the focus
+so that focus and key events from the titlebar and
+icon managers are delivered to the application.  If the pointer is moved
+quickly and ctwm is slow to respond, input can be directed to the old
+window instead of the new.  This option is typically
+used to prevent this \(lqinput lag\(rq and to
+work around bugs in older applications that have problems with focus events.
+.RE
+.sp
+NoTitleHighlight [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that the highlight area of the titlebar, which is
+used to indicate the window that currently has the input focus, should not
+be displayed.  If the optional \f(CRwin\-list\fP is given, only those windows
+will not have highlight areas.  This and the \f(CRSqueezeTitle\fP options
+can be set to substantially reduce the amount of screen space required by
+titlebars.
+.RE
+.sp
+NoWarpToMenuTitle
+.RS 4
+This variable indicates that the cursor should not be warped to the title
+of a menu which does not have room to drop down below the current cursor
+position.
+.RE
+.sp
+Occupy { \f(CRoccupy\-list\fP }
+.RS 4
+This variable specifies which windows occupy which workspaces at startup.
+.sp
+\f(CRoccupy\-list\fP consists of entries of the form :
+.sp
+.if n .RS 4
+.nf
+        [Window]   win\-name  { wspc1 wspc2 ... }
+or      Workspace  wspc\-name { win1  win2 ...  }
+.fi
+.if n .RE
+.sp
+Example :
+.sp
+.if n .RS 4
+.nf
+Occupy
+{
+               "xload"   {"all"}
+    Window     "xterm"   {"here" "there" "elsewhere"}
+               "xv"      {"images"}
+    WorkSpace  "images"  {"xloadimage"}
+}
+.fi
+.if n .RE
+.sp
+If \f(CRall\fP is given for the workspace name (in either form), the named
+window[s] will be put in all workspaces as if they were listed in
+\f(CROccupyAll\fP.  If the workspace name begins with \f(CRws:\fP, the workspace
+name will be looked up without the prefix first.  That is, if the given
+name is \f(CRws:abc\fP, it will first look for a workspace called \f(CRabc\fP, and
+assign to that if found.  Else it will fall back to looking for the
+name \f(CRws:abc\fP.
+.sp
+Note : The Occupy declaration should come after the WorkSpaces declaration.
+.RE
+.sp
+OccupyAll { \f(CRwindow\-list\fP }
+.RS 4
+.sp
+This variable specifies a list of windows that will occupy all workspaces at startup.
+.sp
+\f(CRwindow\-list\fP is a list of window names.
+.sp
+Example :
+.sp
+.if n .RS 4
+.nf
+OccupyAll
+{
+    "xload"
+    "xbiff"
+    "xconsole"
+}
+.fi
+.if n .RE
+.sp
+Note : The OccupyAll declaration should come after the WorkSpaces declaration.
+.RE
+.sp
+OnTopPriority [Icons] \f(CRpriority\fP [ { \f(CRwin\-list\fP } ]
+.RS 4
+ctwm allows you to put windows in several overlapping priority planes
+going from \-8 to +8, which makes it possible to have windows that stay on
+top or that are kept in the background. If \f(CRwin\-list\fP is present, it
+specifies which windows should be put in the \f(CRpriority\fP plane.
+Else the \f(CRpriority\fP sets the default value to use (the default default
+is 0). The \f(CRIcons\fP parameter, if present, indicates that the preference
+described applies to icons rather than to windows.
+.sp
+Example:
+.sp
+.if n .RS 4
+.nf
+OnTopPriority Icons \-1  # place icons a little in the background
+OnTopPriority Icons 1   # place mail icons on top of normal windows
+{
+    "Exmh"
+    "xbiff"
+}
+
+OnTopPriority 8         # keep these always on top of other windows
+{
+    "Emacs Icon Manager" "WorkSpaceManager"
+    "TWM Icon Manager" "XDaliClock"
+}
+.fi
+.if n .RE
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+OpaqueMove [{ \f(CRwindow\-list\fP }]
+.RS 4
+This variable indicates that the \f(CRf.move\fP function should actually move
+the window instead of just an outline so that the user can immediately see
+what the window will look like in the new position.  This option is typically
+used on fast displays (particularly if \f(CRNoGrabServer\fP is set). The optional
+window list parameter indicates that only windows in this list should actually
+be moved in opaque mode. The \f(CRNoOpaqueMove\fP counterpart is also available.
+.sp
+As of 4.0.0 this is enabled by default.
+.RE
+.sp
+OpaqueMoveThreshold \f(CRthreshold\fP
+.RS 4
+The integer parameter is a percentage and indicates that only windows
+(elligible for opaque moving) with a surface smaller than this
+percentage of the surface of the screen should actually be moved in
+opaque mode.  The default is 200.  Since 4.0.0, values >= 200 are
+treated as infinity, causing windows to always \f(CROpaqueMove\fP if
+eligible.
+.RE
+.sp
+OpaqueResize [{ \f(CRwindow\-list\fP }]
+.RS 4
+The opaque version of resize. Extremely resource intensive, but
+beautiful with fast server/client/network. See \f(CROpaqueMove\fP. The
+\f(CRNoOpaqueResize\fP counterpart is also available.  As of 4.0.0 this is
+enabled by default.
+.RE
+.sp
+OpaqueResizeThreshold \f(CRthreshold\fP
+.RS 4
+The resize version of \f(CROpaqueMoveThreshold\fP.  The default is 1000.
+Since 3.8.1, values >= 1000 are treated as infinity, causing windows to
+always \f(CROpaqueResize\fP if eligible.
+.RE
+.sp
+OpenWindowTimeout \f(CRseconds\fP
+.RS 4
+seconds is an integer representing a number of second. When a window
+tries to open on an unattended display, it will be automatically
+mapped after this number of seconds.
+.RE
+.sp
+PackNewWindows
+.RS 4
+Use f.movepack algorithm instead of f.move when opening a new window.
+.RE
+.sp
+Pixmaps { \f(CRpixmaps\fP }
+.RS 4
+This variable specifies a list of pixmaps that define the appearance of various
+images.  Each entry is a keyword indicating the pixmap to set, followed by a
+string giving the name of the bitmap file.  The following pixmaps
+may be specified:
+.sp
+.if n .RS 4
+.nf
+Pixmaps
+{
+        TitleHighlight  "gray1"
+#       TitleHighlight  "supman%.xbm"
+}
+.fi
+.if n .RE
+.sp
+The default for \f(CRTitleHighlight\fP is to use an even stipple pattern.
+.RE
+.sp
+PixmapDirectory \f(CRpath\fP
+.RS 4
+This variable specifies the path where ctwm looks to find non\-X11 bitmap
+files.  Whenever you want to use a image file that is not an X11 bitmap,
+specify : \f(CRxpm:filename\fP for xpm files, \f(CRxwd:filename\fP for xwd files,
+\f(CRjpeg:file\fP for jpeg file,
+or \f(CR|command\fP for an on the fly generated xwd file. Use the % character
+to specify an animation. \f(CRpath\fP can be a colon separated list of directories.
+Example :
+.sp
+.if n .RS 4
+.nf
+PixmapDirectory  "/usr/lib/X11/twm"
+Icons
+{
+    "Axe"    "xpm:edit.xpm"
+    "xterm"  "xpm:ball%.xpm"
+}
+.fi
+.if n .RE
+.sp
+N.B This is only valid if your version of ctwm has been compiled with the
+right extension (XPM or JPEG).
+.RE
+.sp
+PrioritySwitching [Icons] { \f(CRwin\-list\fP }
+.RS 4
+Specifies that the windows in \f(CRwin\-list\fP can switch priority. This means
+that they can be in plane \f(CRpriority\fP or \f(CR\-priority\fP depending on the
+situation. For instance a window whose \f(CRpriority\fP is 2 will be put into
+plane 2 when raised and plane \-2 when lowered, which means that it will usually
+stay on top if you raise another window, but can still be lowered if its
+priority is temporarily too high for your liking. If \f(CRIcons\fP is specified,
+it means that the preference applies to icons rather than windows.  See
+also the \f(CRf.priorityswitching\fP function for dynamically adding/removing
+windows at runtime.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+PriorityNotSwitching [Icons] { \f(CRwin\-list\fP }
+.RS 4
+As above except that it declares that the default should be for windows to be
+able to switch priority except for the windows in \f(CRwin\-list\fP which can\(cqt.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+RaiseDelay \f(CRmilliseconds\fP
+.RS 4
+For windows that are to be automatically raised when the pointer enters
+(see the \f(CRAutoRaise\fP variable and the \f(CRf.autoraise\fP function)
+this variable specifies the length of time the pointer should rest in
+the window before it is raised.  The default is 0 milliseconds.
+.RE
+.sp
+RaiseOnClick
+.RS 4
+If present a window will be raised on top of others when clicked on, and the
+ButtonPress event will be correctly forwarded to the client that owns this window
+(if it asked to). See \f(CRRaiseOnClickButton\fP.
+.RE
+.sp
+RaiseOnClickButton \f(CRbutton_number\fP
+.RS 4
+Where \f(CRbutton_number\fP is a valid button number (currently 1 to 11). Specify
+the button to use for RaiseOnClick.
+.RE
+.sp
+RaiseWhenAutoUnSqueeze
+.RS 4
+Windows are raised when auto\-unsqueezed (See AutoSqueeze).
+.RE
+.sp
+RandomPlacement [ \f(CRstring1\fP [ \f(CRstring2\fP ]]
+.RS 4
+This variable indicates that windows with no specified geometry should
+be placed in a pseudo\-random location instead of having the user drag
+out an outline.  If no argument is given, it is interpreted as
+\f(CRRandomPlacement "on"\fP.
+.sp
+\f(CRstring1\fP may be \(lqon\(rq, \(lqoff\(rq, \(lqall\(rq or \(lqunmapped\(rq, and \f(CRstring2\fP
+is a displacement for the pseudo\-randomly placed window compared to the
+previous one.  The argument \(lqon\(rq or \(lqall\(rq are equivalent, and tell
+ctwm to do this for all such windows, \(lqoff\(rq, not to do this, and
+\(lqunmapped\(rq, only for unmapped windows, e.g. iconified or not visible in
+the current workspace.  If the second argument isn\(cqt given, the
+displacement +30+30 (30 pixels right and down) is used.
+.sp
+As of 4.0.0, \(lqon\(rq is the default if no \f(CRRandomPlacement\fP is
+specified in the config.  Previously \(lqoff\(rq was default.
+.RE
+.sp
+ReallyMoveInWorkspaceManager
+.RS 4
+This keyword tells ctwm to move the actual window when the user is
+moving the small windows in the WorkSpaceMap window. If not present the
+WorkSpaceMap can be used only to modify the occupation of a window.
+Pressing the \f(CRshift\fP key while dragging a window in the workspace manager
+temporarily toggles this option.
+.RE
+.sp
+ResizeFont \f(CRstring\fP
+.RS 4
+This variable specifies the font to be used for in the dimensions window when
+resizing windows.  The default is \(lqfixed\(rq.
+.RE
+.sp
+RestartPreviousState
+.RS 4
+This variable indicates that properties on client windows to attempt to
+regenerate the state that the screen was in before the previous window
+manager was shutdown.  This includes using the \f(CRWM_STATE\fP property to
+tell which windows should be iconified and which should be left
+visible, and the \f(CRWM_OCCUPATION\fP property to determine in which
+workspaces a window should be visible.  As of 4.0.0 this is the
+default.
+.RE
+.sp
+ReverseCurrentWorkspace
+.RS 4
+This variable tells ctwm to reverse the background and
+foreground colors in the small windows in the workspace map for the current
+workspace.
+.RE
+.sp
+RplaySoundHost \f(CRstring\fP
+.RS 4
+The host on which sounds should be played.  Only meaningful when ctwm
+is built with \f(CRUSE_SOUND\fP; will give a warning otherwise.  See the
+SOUNDS section.  Added in 4.0.0; prior versions used the \f(CRSoundHost\fP
+parameter instead.
+.RE
+.sp
+RplaySounds { \f(CRsounds\-list\fP }
+.RS 4
+Define what sounds to play on various events through rplayd.  It
+contains entries of the form
+.sp
+.if n .RS 4
+.nf
+    "EventName"   "/file/to/play.wav"
+.fi
+.if n .RE
+.sp
+Only meaningful when ctwm is built with \f(CRUSE_SOUND\fP; it will give a
+warning otherwise.  See the SOUNDS section.  Note that if this section is
+given in the ctwmrc, the \f(CR~/.ctwm\-sounds\fP file will not be parsed.  First
+appeared in 4.0.0.
+.RE
+.sp
+SaveColor { \f(CRcolors\-list\fP }
+.RS 4
+This variable indicates a list of color assignments to be stored as pixel
+values in the root window property _MIT_PRIORITY_COLORS.  Clients may elect
+to preserve these values when installing their own colormap.  Note that
+use of this mechanism is a way for an application to avoid the \(lqtechnicolor\(rq
+problem, whereby useful screen objects such as window borders and titlebars
+disappear when a program\(cqs custom colors are installed by the window
+manager.
+For example:
+.sp
+.if n .RS 4
+.nf
+SaveColor
+{
+    BorderColor
+    TitleBackground
+    TitleForeground
+    "red"
+    "green"
+    "blue"
+}
+.fi
+.if n .RE
+.sp
+This would place on the root window 3 pixel values for borders and titlebars,
+as well as the three color strings, all taken from the default colormap.
+.RE
+.sp
+ShrinkIconTitles
+.RS 4
+A la Motif shrinking of icon titles, and expansion when mouse is inside icon.
+The old incorrect spelling \f(CRSchrinkIconTitles\fP is also still accepted.
+.RE
+.sp
+ShortAllWindowsMenus
+.RS 4
+Don\(cqt show WorkSpaceManager and IconManagers in the TwmWindows and TwmAllWindows menus.
+.RE
+.sp
+ShowIconManager
+.RS 4
+This variable indicates that the icon manager window should be displayed when
+ctwm is started.  It can always be brought up using the
+\f(CRf.showiconmgr\fP function.
+.RE
+.sp
+ShowWorkSpaceManager
+.RS 4
+This variable specifies that the WorkSpaceManager should be visible.
+.RE
+.sp
+SloppyFocus
+.RS 4
+Use sloppy focus.
+.RE
+.sp
+SaveWorkspaceFocus
+.RS 4
+When changing to a workspace, restore the focus to the last window
+that had the focus when you left the workspace by warping the mouse
+into it. This essentially saves the focus window with the workspace
+and restores it automatically when you switch. In many cases, it
+avoids having to reach for the mouse after moving to a new workspace.
+.RE
+.sp
+SortIconManager
+.RS 4
+This variable indicates that entries in the icon manager should be
+sorted alphabetically rather than by simply appending new windows to
+the end.  As of 4.0.0 this is the default.
+.RE
+.sp
+SoundHost \f(CRstring\fP
+.RS 4
+Alias for \f(CRRplaySoundHost\fP, used in versions prior to 4.0.0.  Unless
+you need backward compatibility with them, use \f(CRRplaySoundHost\fP
+instead.  This alias will be removed in a future version.
+.RE
+.sp
+SqueezeTitle [{ \f(CRsqueeze\-list\fP }]
+.RS 4
+This variable indicates that ctwm should attempt to use the SHAPE
+extension to make titlebars occupy only as much screen space as they need,
+rather than extending all the way across the top of the window.
+The optional \f(CRsqueeze\-list\fP
+may be used to control the location of the squeezed titlebar along the
+top of the window.  It contains entries of the form:
+.sp
+.if n .RS 4
+.nf
+    "name"  justification num denom
+.fi
+.if n .RE
+.sp
+where \f(CRname\fP is a window name, \f(CRjustification\fP is either \f(CRleft\fP,
+\f(CRcenter\fP, or \f(CRright\fP, and \f(CRnum\fP and \f(CRdenom\fP
+are numbers specifying a ratio giving the relative position about which
+the titlebar is justified.  The ratio is measured from left to right if
+the numerator is positive, and right to left if negative.  A denominator
+of 0 indicates that the numerator should be interpreted as pixels.
+For compatibility, the pixel\-position 0/0 is the relative  middle  of
+the window (1/2) for \f(CRcenter\fP and the relative right side of the
+window (2/2) for \f(CRright\fP, but this use is not recommended.
+Use "right 2 2" for relative positioning, or "right \-1 0" for absolute;
+this makes a difference when  dragging  the  titlebar (see
+\f(CRf.movetitlebar\fP).
+For example:
+.sp
+.if n .RS 4
+.nf
+SqueezeTitle
+{
+    "XTerm"   left    0  0
+    "xterm1"  left    1  3
+    "xterm2"  left    2  3
+    "oclock"  center  1  2
+    "emacs"   right   2  2
+}
+.fi
+.if n .RE
+.sp
+The default positioning is left\-justified, absolute at 0 pixels.
+The \f(CRDontSqueezeTitle\fP list can be used to turn off squeezing on
+certain titles.
+.RE
+.sp
+StartIconified { \f(CRwin\-list\fP }
+.RS 4
+This variable indicates that client windows should initially be left as
+icons until explicitly deiconified by the user.  If the optional \f(CRwin\-list\fP
+is given, only those windows will be started iconic.  This is useful for
+programs that do not support an \f(CR\-iconic\fP command line option or
+resource.
+.RE
+.sp
+StartInButtonState
+.RS 4
+Start the WorkSpaceManage in button form.  See also \f(CRStartInMapState\fP.
+Added in 4.0.0.
+.RE
+.sp
+StartInMapState
+.RS 4
+This variable specifies that the WorkSpaceManager should be started
+in its map form when created.  See also \f(CRStartInButtonState\fP.  As of
+4.0.0 this is the default.
+.RE
+.sp
+StartSqueezed { \f(CRwin\-list\fP }
+.RS 4
+These windows will first show up squeezed (see f.squeeze).
+.RE
+.sp
+StayUpMenus
+.RS 4
+Tells ctwm to use stayup menus. These menus
+will stay on the screen when ButtonUp, if either the menu has not
+yet been entered by the pointer, or the current item is a f.title.
+.RE
+.sp
+StrictWinNameEncoding
+.RS 4
+Whether to be strict about what encodings we accept for window naming
+properties.  Added in 4.0.2.
+.sp
+This is used when translating properties relating to naming windows,
+like \f(CRWM_NAME\fP.  For example, according to the ICCCM, \f(CRWM_NAME\fP can
+only be a \f(CRSTRING\fP or \f(CRCOMPOUND_TEXT\fP type.  However, sloppy programs
+like Chrome may set it to a \f(CRUTF8_STRING\fP instead.  If this var is set,
+ctwm will reject that, as was standard behavior prior to 4.0.2.
+.RE
+.sp
+SunkFocusWindowTitle
+.RS 4
+This variable specifies that the title of the focus window (if exists)
+should be sunken instead of raised. Only valid if UseThreeDTitles is set.
+.RE
+.sp
+ThreeDBorderWidth  \f(CRpixels\fP
+.RS 4
+The width of the 3D border in pixels, if any.
+.RE
+.sp
+TitleBackground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the background color used in titlebars,
+and may only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.
+The default is \(lqwhite\(rq.
+.RE
+.sp
+TitleButtonBorderWidth \f(CRpixels\fP
+.RS 4
+This variable specifies the width in pixels of the border surrounding
+titlebuttons.  This is typically set to 0 to allow titlebuttons to take up as
+much space as possible and to not have a border.
+The default is 1 if \f(CRUseThreeDTitles\fP is not set, 0 if it is set.
+.RE
+.sp
+TitleButtonShadowDepth \f(CRpixels\fP
+.RS 4
+This variable specifies the depth of the shadow ctwm uses for
+3D title buttons, when UseThreeDTitles is selected.
+.RE
+.sp
+TitleFont \f(CRstring\fP
+.RS 4
+This variable specifies the font used for displaying window names in
+titlebars.  The default is \(lqvariable\(rq.
+.RE
+.sp
+TitleForeground \f(CRstring\fP [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies the foreground color used in titlebars, and
+may only be specified inside of a
+\f(CRColor\fP or \f(CRMonochrome\fP list.
+The optional \f(CRwin\-list\fP is a list of window names and colors so that
+per\-window colors may be specified.
+The default is \(lqblack\(rq.
+.RE
+.sp
+TitleJustification \f(CRstring\fP
+.RS 4
+This keyword needs a string value. The acceptable values are : \(lqleft\(rq,
+\(lqcenter\(rq and \(lqright\(rq. The window titles will be justified according to
+this in the title window.
+.RE
+.sp
+TitlePadding \f(CRpixels\fP
+.RS 4
+This variable specifies the distance between the various buttons, text, and
+highlight areas in the titlebar.  The default is 8 pixels if \f(CRUseThreeDTitles\fP
+is not set, 0 if it is set.
+.RE
+.sp
+TitleShadowDepth \f(CRpixels\fP
+.RS 4
+This variable specifies the depth of the shadow ctwm uses for
+3D titles, when UseThreeDTitles is selected.
+.RE
+.sp
+TransientHasOccupation
+.RS 4
+This variable specifies that transient\-for and non\-group leader windows
+can have their own occupation potentially different from their leader
+window. The default case is that these windows follow their leader, use
+this keyword if the default action doesn\(cqt please you.
+.RE
+.sp
+TransientOnTop \f(CRpercentage\fP
+.RS 4
+The parameter (required) is a percentage and tells ctwm to put transient
+(and non\-group leader) windows always on top of their leader if and only
+if their surface is smaller than this fraction of the surface of their
+leader. The surface of a window is its width times its weight.  The
+default is 30%.  Added in 3.0.
+.RE
+.sp
+UnknownIcon \f(CRstring\fP
+.RS 4
+This variable specifies the filename of a bitmap file to be
+used as the default icon.  This bitmap will be used as the icon of all
+clients which do not provide an icon bitmap and are not listed
+in the \f(CRIcons\fP list.
+.RE
+.sp
+UnmapByMovingFarAway { \f(CRwin\-list\fP }
+.RS 4
+These windows will be moved out of the screen instead of being unmapped
+when they become invisible due to a change workspace. This has been
+added because some ill\-behaved clients (Frame5) don\(cqt like to be unmapped.
+.RE
+.sp
+UsePPosition \f(CRstring\fP
+.RS 4
+This variable specifies whether or not ctwm should honor
+program\-requested locations (given by the \f(CRPPosition\fP flag in the
+\f(CRWM_NORMAL_HINTS\fP property) in the absence of a user\-specified position.
+The argument \f(CRstring\fP may have one of three values:  \f(CR"off"\fP
+(the default) indicating that ctwm should ignore the program\-supplied
+position, \f(CR"on"\fP indicating that the position should be used, and
+\f(CR"non\-zero"\fP indicating that the position should used if it is other
+than (0,0).  The latter option is for working around a bug in older toolkits.
+.RE
+.sp
+UseSunkTitlePixmap
+.RS 4
+This makes it so the shadows are inversed for title pixmaps when focus is lost.
+This is similar to having the SunkFocusWindowTitle, but it makes your xbm or
+3d XPM (if any) sink instead of just the whole bar.
+.RE
+.sp
+UseThreeDBorders
+.RS 4
+Tells ctwm to use 3D\-looking window borders. The width ot the 3D borders
+is \f(CRThreeDBorderWidth\fP. The color of the 3D border is \f(CRBorderTileBackground\fP,
+and if NoHighlight is not selected, the border of the Focus window is
+\f(CRBorderColor\fP.
+Setting this automatically unsets \f(CRClientBorderWidth\fP.
+.RE
+.sp
+UseThreeDIconManagers
+.RS 4
+Tells ctwm to use 3D\-looking IconManagers if any.
+.RE
+.sp
+UseThreeDMenus
+.RS 4
+Tells ctwm to use 3D\-looking menus.
+.RE
+.sp
+UseThreeDTitles
+.RS 4
+Tells ctwm to use 3D\-looking windows titles. In which case the default
+values of \f(CRTitleButtonBorderWidth\fP, \f(CRFramePadding\fP, \f(CRTitlePadding\fP
+and \f(CRButtonIndent\fP are set to 0.
+There are plenty of built\-in scalable pixmaps for buttons:
+\f(CR:xpm:menu\fP,
+\f(CR:xpm:dot\fP,
+\f(CR:xpm:cross\fP,
+\f(CR:xpm:bar\fP,
+\f(CR:xpm:vbar\fP,
+\f(CR:xpm:iconify\fP,
+\f(CR:xpm:resize\fP,
+\f(CR:xmp:sunkresize\fP, and
+\f(CR:xpm:box\fP.
+There are several built\-in scalable
+animations for buttons:
+\f(CR%xpm:resize\fP,
+\f(CR%xpm:menu\-up\fP,
+\f(CR%xpm:menu\-down\fP,
+\f(CR%xpm:resize\-out\-top\fP,
+\f(CR%xpm:resize\-in\-top\fP,
+\f(CR%xpm:resize\-out\-bot\fP,
+\f(CR%xpm:resize\-in\-bot\fP,
+\f(CR%xpm:maze\-out\fP,
+\f(CR%xpm:maze\-in\fP,
+\f(CR%xpm:zoom\-out\fP,
+\f(CR%xpm:zoom\-in\fP, and
+\f(CR%xpm:zoom\-inout\fP.
+Try them to see what they look like.
+.RE
+.sp
+UseThreeDWMap
+.RS 4
+Tells ctwm to use 3D for the small windows in the workspace map.
+.RE
+.sp
+VirtualScreens { \f(CRgeometries\-list\fP }
+.RS 4
+.sp
+This variable specifies a list of geometries for virtual screens. Virtual screens
+are designed to be used when you have several physical screens bound together
+with the Xinerama X extension.
+.sp
+\f(CRgeometries\-list\fP is a list of valid geometry strings, that correspond to
+your actual physical screens.
+.sp
+Example :
+.sp
+.if n .RS 4
+.nf
+VirtualScreens
+{
+    "1280x1024+0+0"
+    "1600x1200+1280+0"
+}
+.fi
+.if n .RE
+.RE
+.sp
+WarpCursor [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable indicates that the pointer should be warped into windows when
+they are deiconified.  If the optional \f(CRwin\-list\fP is given, the pointer
+will only be warped when those windows are deiconified.
+.RE
+.sp
+WarpOnDeIconify { \f(CRwin\-list\fP }
+.RS 4
+When ctwm receives a request to map a window, it normally just deiconifies
+it, but if the window is in \f(CRwin\-list\fP, it will additionally bring it
+into the current workspace, if necessary. For example
+.sp
+.if n .RS 4
+.nf
+WarpOnDeIconify { "Emacs" }
+.fi
+.if n .RE
+.sp
+will make sure emacs windows will always popup in the current workspace when
+necessary (typically when the minibuffer or the \fBHelp\fP frame is in another
+workspace).
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+WarpRingOnScreen
+.RS 4
+Tells ctwm that f.warpring warps pointer only to windows visible in
+the current workspace.
+.RE
+.sp
+WarpToDefaultMenuEntry
+.RS 4
+(Useful only with StayUpMenus) When using StayUpMenus, and a menu does
+stays up, the pointer is warped to the default entry of the menu.
+.RE
+.sp
+WarpUnmapped
+.RS 4
+This variable indicates that that the \f(CRf.warpto\fP function should deiconify
+any iconified windows it encounters.  This is typically used to make a key
+binding that will pop a particular window (such as \f(CRxmh\fP), no matter
+where it is.  The default is for \f(CRf.warpto\fP to ignore iconified windows.
+.RE
+.sp
+WindowBox [{ \f(CRwin\-list\fP }]
+.RS 4
+creates a new window called a box, where
+all the client windows that match the windows list are opened in,
+instead of the root window. This is useful to group small windows
+in the same box (xload for instance)
+.sp
+.if n .RS 4
+.nf
+WindowBox "xloadbox" "320x100+0\-0" {
+    "xload"
+}
+.fi
+.if n .RE
+.RE
+.sp
+WindowGeometries { \f(CRwin\-list\fP }
+.RS 4
+Used to give a default geometry to some clients :
+.sp
+.if n .RS 4
+.nf
+WindowGeometries {
+    "Mozilla*"       "1000x800+10+10"
+    "jpilot*"        "800x600\-0\-0"
+}
+.fi
+.if n .RE
+.RE
+.sp
+WindowRegion \f(CRgeomstring\fP \f(CRvgrav\fP \f(CRhgrav\fP { \f(CRwin\-list\fP }
+.RS 4
+Similar to IconRegion, but for windows.  Note that the \f(CRwin\-list\fP is
+not optional.
+.RE
+.sp
+WindowRing [{ \f(CRwin\-list\fP }]
+.RS 4
+This variable specifies a list of windows along which the \f(CRf.warpring\fP
+function cycles. If no argument is given, all the windows are in the ring.
+.RE
+.sp
+WindowRingExclude [{ \f(CRwin\-list\fP }]
+.RS 4
+All listed windows will be excluded from the WarpRing.
+.RE
+.sp
+WMgrButtonShadowDepth \f(CRdepth\fP
+.RS 4
+Control the depth of the shadow of the workspace manager buttons.
+.RE
+.sp
+WMgrButtonStyle \f(CRstring\fP
+.RS 4
+Sets the style of the workspace manager buttons (when in button rather
+than map state), as well as the buttons in the Occupy window.
+Available options are \f(CRnormal\fP (the default 3d look), \f(CRstyle1\fP,
+\f(CRstyle2\fP, and \f(CRstyle3\fP (which are slightly different 2d looks).
+.RE
+.sp
+WMgrHorizButtonIndent \f(CRnb_pixels\fP
+.RS 4
+Specifies the horizontal space, in pixel, between the buttons of the workspace
+manager (in button mode).
+.RE
+.sp
+WMgrVertButtonIndent \f(CRnb_pixels\fP
+.RS 4
+Specifies the vertical space, in pixel, between the buttons of the workspace
+manager (in button mode).
+.RE
+.sp
+WorkSpaceFont \f(CRstring\fP
+.RS 4
+This allows you to specify the font to use for the small windows in the
+workspace manager map. (Try \f(CR\-adobe\-times\-*\-r\-*\-\-10\-*\-*\-*\-*\-*\-*\-*\fP).
+.RE
+.sp
+WorkSpaceManagerGeometry \f(CRstring\fP [ \f(CRcolumns\fP ]
+.RS 4
+This variable specifies the geometry of the workspace manager window. The
+\f(CRstring\fP argument is standard geometry specification that indicates
+the initial full size of the workspace manager. The \f(CRcolumns\fP argument
+indicates the number of columns to use for the workspace manager window.
+.sp
+.if n .RS 4
+.nf
+WorkSpaceManagerGeometry        "360x60+60\-0" 8
+.fi
+.if n .RE
+.RE
+.sp
+WorkSpaces { \f(CRworkspace\-list\fP }
+.RS 4
+This variable specifies a list of workspaces that are created at startup,
+Where \f(CRworkspace\-list\fP is :
+.sp
+.if n .RS 4
+.nf
+name [{bg\-button [fg\-button] [bg\-root] [fg\-root] [pixmap\-root]}]
+.fi
+.if n .RE
+.sp
+With:
+.sp
+bg\-button
+.RS 4
+background color of the corresponding button in the workspace manager.
+.RE
+.sp
+fg\-button
+.RS 4
+foreground color of the corresponding button in the workspace manager.
+.RE
+.sp
+bg\-root
+.RS 4
+background color of the corresponding root screen.
+.RE
+.sp
+fg\-root
+.RS 4
+foreground color of the corresponding root screen.
+.RE
+.sp
+pixmap\-root
+.RS 4
+pixmap to display on the corresponding root screen, either the name of
+a bitmap, \f(CRxpm:xpmfile\fP, \f(CRxwd:xwdfile\fP, \f(CRjpeg:jpgfile\fP, or
+\f(CR|command_that generates_xwd\fP.
+.RE
+.sp
+Example:
+.sp
+.if n .RS 4
+.nf
+WorkSpaces
+{
+  "One"   {"#686B9F" "white" "DeepSkyBlue3" "white" "jpeg:shark.jpg"}
+  "Two"   {"#619AAE" "white" "firebrick"}
+  "Three" {"#727786" "white" "MidnightBlue" "white" "xpm:ball%.xpm"}
+  "Four"  {"#727786" "white" "white"        "white"
+                                      "|(giftoppm | pnmtoxwd) < 2010.gif"}
+
+  "Five"  {"#727786" "white" "DeepSkyBlue3" "white" "plaid"}
+  "Six"   {"#619AAE" "white" "DeepSkyBlue3" "white" "xpm:background1"}
+  "Seven" {"#8C5b7A" "white" "chartreuse4"}
+  "Eight" {"#686B9F" "white" "MidnightBlue"}
+}
+.fi
+.if n .RE
+.sp
+The WorkSpaces declaration should come before the Occupy or OccupyAll
+declarations. The maximum number of workspaces is 32.
+.sp
+Each workspace also has a label, which is displayed in the
+WorkSpaceManager window when it is in button state.  By moving the
+mouse cursor over a button and typing letters and/or backspace, you may
+edit the label.  The name is unaffected.  Functions that look up
+workspaces by name also look at the label.
+.RE
+.sp
+XMoveGrid \f(CRnumber\fP
+.RS 4
+This variable specifies the value to use to constrain window movement.
+When moving windows around, the x coordinate will always be a multiple of
+this variable. Default is 1. f.forcemove ignores this variable.
+.RE
+.sp
+XorValue \f(CRnumber\fP
+.RS 4
+This variable specifies the value to use when drawing window outlines for
+moving and resizing.  This should be set to a value that will result in a
+variety of distinguishable colors when exclusive\-or\(cqed with the contents of the
+user\(cqs typical screen.  Setting this variable to 1 often gives nice results
+if adjacent colors in the default colormap are distinct.  By default,
+ctwm will attempt to cause temporary lines to appear at the opposite
+end of the colormap from the graphics.
+.RE
+.sp
+YMoveGrid \f(CRnumber\fP
+.RS 4
+This variable specifies the value to use to constrain window movement.
+When moving windows around, the y coordinate will always be a multiple of
+this variable. Default is 1. f.forcemove ignores this variable.
+.RE
+.sp
+Zoom [ \f(CRcount\fP ]
+.RS 4
+This variable indicates that outlines suggesting movement of a window
+to and from its iconified state should be displayed whenever a window is
+iconified or deiconified.  The optional \f(CRcount\fP argument specifies the
+number of outlines to be drawn.  The default count is 8.
+.RE
+.sp
+The following variables must be set after the fonts have been
+assigned, so it is usually best to put them at the end of the variables
+or beginning of the bindings sections:
+.sp
+ChangeWorkspaceFunction \f(CRfunction\fP
+.RS 4
+This variable specifies the function to be executed when the user change
+the current workspace (zap).
+.RE
+.sp
+DefaultFunction \f(CRfunction\fP
+.RS 4
+This variable specifies the function to be executed when a key or button
+event is received for which no binding is provided.  This is typically
+bound to \f(CRf.nop\fP, \f(CRf.beep\fP, or a menu containing window operations.
+.RE
+.sp
+DeIconifyFunction \f(CRfunction\fP
+.RS 4
+This variable specifies the function to be executed when a window is
+deiconified.
+.RE
+.sp
+IconifyFunction \f(CRfunction\fP
+.RS 4
+This variable specifies the function to be executed when a window is
+iconified.
+.RE
+.sp
+WindowFunction \f(CRfunction\fP
+.RS 4
+This variable specifies the function to execute when a window is selected
+from the \f(CRTwmWindows\fP menu.  If this variable is not set, the window
+will be deiconified and raised.
+.RE
+.SH "BINDINGS"
+.sp
+After the desired variables have been set, functions may be attached to
+titlebuttons and key and pointer buttons.  Titlebuttons may be added
+from the left or right side and appear in the titlebar from left\-to\-right
+according to the
+order in which they are specified.  Key and pointer button
+bindings may be given in any order.
+.SS "Title buttons"
+.sp
+Titlebuttons specifications must include the name of the pixmap to use in
+the button box and the function to be invoked when a pointer button is
+pressed within them:
+.sp
+.if n .RS 4
+.nf
+LeftTitleButton "bitmapname" = function
+.fi
+.if n .RE
+.sp
+or
+.sp
+.if n .RS 4
+.nf
+LeftTitleButton "bitmapname" {
+    Buttoni = modlist : function
+    ...
+    Buttonj = function
+}
+.fi
+.if n .RE
+.sp
+or
+.sp
+.if n .RS 4
+.nf
+RightTitleButton "bitmapname" = function
+.fi
+.if n .RE
+.sp
+or
+.sp
+.if n .RS 4
+.nf
+RightTitleButton "bitmapname" {
+    Buttoni = modlist : function
+    ...
+    Buttonj = function
+}
+.fi
+.if n .RE
+.sp
+The \f(CRbitmapname\fP may refer to one of the  built\-in bitmaps
+(which are scaled to match \f(CRTitleFont\fP) by using the appropriate
+colon\-prefixed name described above.
+.sp
+The pointer button specifications come in two forms, with a modifier
+list or without.  When the specification comes without a modifier
+list, it\(cqs used for the case when no modifiers are used.  In other
+words, the following two lines are equivalent:
+.sp
+.if n .RS 4
+.nf
+    Buttoni = function
+.fi
+.if n .RE
+.sp
+.if n .RS 4
+.nf
+    Buttoni = : function
+.fi
+.if n .RE
+.SS "Key and pointer buttons"
+.sp
+Key and pointer button specifications must give the modifiers that must
+be pressed, over which parts of the screen the pointer must be, and what
+function is to be invoked.  Keys are given as strings containing the
+appropriate
+keysym name; buttons are given as the keywords \f(CRButton1\fP\-\f(CRButton11\fP:
+.sp
+.if n .RS 4
+.nf
+"FP1"   = modlist : context : function
+Button1 = modlist : context : function
+.fi
+.if n .RE
+.sp
+A user who wanted to be able to manipulate windows from the keyboard could
+use the following bindings:
+.sp
+.if n .RS 4
+.nf
+"F1"    =       : all : f.iconify
+"F2"    =       : all : f.raiselower
+"F3"    =       : all : f.warpring "next"
+"F4"    =       : all : f.warpto "xmh"
+"F5"    =       : all : f.warpto "emacs"
+"F6"    =       : all : f.colormap "next"
+"F7"    =       : all : f.colormap "default"
+"F20"   =       : all : f.warptoscreen "next"
+"Left"  = m     : all : f.backiconmgr
+"Right" = m | s : all : f.forwiconmgr
+"Up"    = m     : all : f.upiconmgr
+"Down"  = m | s : all : f.downiconmgr
+.fi
+.if n .RE
+.sp
+ctwm provides many more window manipulation primitives than can be
+conveniently stored in a titlebar, menu, or set of key bindings.  Although
+a small set of defaults are supplied (unless the \f(CRNoDefaults\fP is
+specified), most users will want to have their most common operations
+bound to key and button strokes.  To do this, ctwm associates names
+with each of the primitives and provides user\-defined functions for
+building higher level primitives and menus for interactively selecting
+among groups of functions.
+.SS "Modifiers and Contexts"
+.sp
+The \f(CRmodlist\fP allows specifying different bindings for a button or key
+when modifiers are applied.  The list of recognized modifier names
+(abbreviated) are
+\f(CRshift\fP (\f(CRs\fP),
+\f(CRcontrol\fP (\f(CRc\fP),
+\f(CRlock\fP (\f(CRl\fP),
+\f(CRalter1\fP (\f(CRa1\fP),
+\f(CRalter2\fP (\f(CRa2\fP),
+\f(CRalter3\fP (\f(CRa3\fP),
+\f(CRalter4\fP (\f(CRa4\fP),
+\f(CRalter5\fP (\f(CRa5\fP),
+\f(CRmeta\fP (\f(CRm\fP),
+\f(CRmod1\fP (\f(CRm1\fP),
+\f(CRmod2\fP (\f(CRm2\fP),
+\f(CRmod3\fP (\f(CRm3\fP),
+\f(CRmod4\fP (\f(CRm4\fP),
+and \f(CRmod5\fP (\f(CRm5\fP).
+Multiple modifiers may be applied to a single line by combining them with
+a vertical bar (\f(CR|\fP).  For example:
+.sp
+.if n .RS 4
+.nf
+# Open the "top" menu with a Button1 (usually left mouse button) click in
+# the root window
+Button1 =        : root : f.menu "top"
+
+# Open the "top2" menu with shift\-click
+Button1 =     s  : root : f.menu "top2"
+
+# And "top3" when control\-shift\-click
+Button1 = c | s  : root : f.menu "top3"
+.fi
+.if n .RE
+.sp
+The \f(CRlock\fP modifier refers to CapsLock.  \f(CRmeta\fP is generally your Alt
+key.  \f(CRmod1\fP is the same as \f(CRmeta\fP.  \f(CRmod2..5\fP can have various special
+meanings; try running \f(CRxmodmap \-pm\fP to see how your X server is mapping
+things (the \f(CRxkeycaps\fP program may also be useful).  The \f(CRalter1..5\fP
+modifiers refer to ctwm alternate keymaps; see the description of
+\f(CRf.altkeymap\fP below for details.
+.sp
+Note that if you\(cqre using the \f(CRm4\fP preprocessor, most implementations
+define a \f(CRshift\fP macro internally, so using that as a modifier will
+silently fail to work right.  To get around it, you\(cqll need to quote it
+so that \f(CRm4\fP passes it through as a literal string: \f(CR`shift\(aq\fP.
+.sp
+The \f(CRcontext\fP lets you specify which mappings apply based on where the
+pointer currently is on the screen.  The available options are
+\f(CRwindow\fP (\f(CRw\fP),
+\f(CRtitle\fP (\f(CRt\fP),
+\f(CRicon\fP (\f(CRi\fP),
+\f(CRroot\fP (\f(CRr\fP),
+\f(CRframe\fP (\f(CRf\fP),
+\f(CRworkspace\fP (no abbreviation),
+\f(CRiconmgr\fP (\f(CRm\fP), and
+\f(CRalter\fP (\f(CRa\fP).
+Like the modifiers above, they may be combined with a vertical bar, which
+allows you to bind an action in multiple contexts at once.
+Alternately, \f(CRall\fP can be given for the context to specify that the
+binding should happen everywhere.  It\(cqs equivalent to combining all the
+choices (except \f(CRalter\fP, which is special).
+.sp
+The \f(CRalter\fP context allows binding the function when in the alternate
+context; see the \f(CRf.altcontext\fP function below for details.
+.sp
+There is an additional possible magical value for \f(CRcontext\fP; if you
+provide a quoted string (e.g., \f(CR"MyXterm"\fP) for the context of a key (but
+not button) binding, then that binding will trigger the given function in
+window context to all windows matching that name.  e.g.,
+.sp
+.if n .RS 4
+.nf
+# Pressing "F1" anywhere on the screen will cause all windows with name
+# "xterm" to raise themselves.
+"F1" = : "xterm" : f.raise
+.fi
+.if n .RE
+.sp
+Beware that this can have odd side effects if multiple windows are
+matched, especially if the function can conflict one with the other
+(e.g., in the example above, if two "xterm" windows overlap each other).
+.SS "Functions"
+.sp
+The \f(CRfunction\fP in a binding is any of the \f(CRf.\fP keywords described below.
+For example, the default startup file contains the following bindings:
+.sp
+.if n .RS 4
+.nf
+Button1 =   : root          : f.menu "TwmWindows"
+Button1 = m : window | icon : f.function "move\-or\-lower"
+Button2 = m : window | icon : f.iconify
+Button3 = m : window | icon : f.function "move\-or\-raise"
+Button1 =   : title         : f.function "move\-or\-raise"
+Button2 =   : title         : f.raiselower
+Button1 =   : icon          : f.function "move\-or\-iconify"
+Button2 =   : icon          : f.iconify
+Button1 =   : iconmgr       : f.iconify
+Button2 =   : iconmgr       : f.iconify
+.fi
+.if n .RE
+.sp
+User\-defined functions contain the name by which they are referenced in
+calls to \f(CRf.function\fP and a list of other functions to execute.  For
+example:
+.sp
+.if n .RS 4
+.nf
+Function "move\-or\-lower"    { f.move f.deltastop f.lower }
+Function "move\-or\-raise"    { f.move f.deltastop f.raise }
+Function "move\-or\-iconify"  { f.move f.deltastop f.iconify }
+Function "restore\-colormap" { f.colormap "default" f.lower }
+.fi
+.if n .RE
+.sp
+The function name must be used in \f(CRf.function\fP exactly as it appears in
+the function specification.
+.sp
+In the descriptions below, if the function is said to operate on the selected
+window, but is invoked from a root menu, the cursor will be changed to
+the \f(CRSelect\fP cursor and the next window to receive a button press will
+be chosen:
+.sp
+! \f(CRstring\fP
+.RS 4
+This is an abbreviation for \f(CRf.exec\fP \f(CRstring\fP.
+.RE
+.sp
+f.addtoworkspace \f(CRstring\fP
+.RS 4
+This function adds the selected window to the workspace whose name is
+\f(CRstring\fP.
+.RE
+.sp
+f.adoptwindow
+.RS 4
+This function asks for the user to select a window with the mouse, and then
+adopt this window if it doesn\(cqt belong to the current ctwm. Useful only
+with the \-w flag.
+.RE
+.sp
+f.altcontext
+.RS 4
+Set the alternate context. The next key or button event ctwm receives will
+be interpreted using the alternate context. To define bindings in the alternate
+context, use the keyword \f(CRalter\fP in the context field of the binding command.
+For example:
+.sp
+.if n .RS 4
+.nf
+"Return" = m : all   : f.altcontext
+"n" =        : alter : f.nextworkspace
+"p" =        : alter : f.prevworkspace
+.fi
+.if n .RE
+.RE
+.sp
+f.altkeymap \f(CRnumber\fP
+.RS 4
+Set the alternate keymap \f(CRnumber\fP, where \f(CRnumber\fP is an integer
+between 1 and 5 inclusive. The next key or button event ctwm receives will
+be interpreted using this alternate keymap. To define bindings in an alternate
+keymap, use the keyword \f(CRa\fP followed by \f(CRnumber\fP in the modifier
+field of the binding command. For example:
+.sp
+.if n .RS 4
+.nf
+"Return" = c : all                  : f.altkeymap "1"
+"i" =     a1 : window|icon|iconmgr  : f.iconify
+"z" =     a1 : window               : f.zoom
+"d" =     a1 : window|icon          : f.delete
+"o" =     a1 : window|icon          : f.occupy
+"r" =     a1 : window|icon          : f.refresh
+.fi
+.if n .RE
+.sp
+When using an alternate keymaps, only the root, window, icon and iconmgr
+contexts are allowed.
+.RE
+.sp
+f.autolower
+.RS 4
+This function toggles whether or not the selected window is lowered
+whenever the pointer leaves it.  See the description of the variable
+\f(CRAutoLower\fP.
+.RE
+.sp
+f.autoraise
+.RS 4
+This function toggles whether or not the selected window is raised whenever
+entered by the pointer.  See the description of the variable \f(CRAutoRaise\fP.
+.RE
+.sp
+f.backiconmgr
+.RS 4
+This function warps the pointer to the previous column in the
+current icon manager, wrapping back to the previous row if necessary.
+.RE
+.sp
+f.backmapiconmgr
+.RS 4
+This function warps the  pointer in the same manner as \f(CRf.backiconmgr\fP
+but only stops at windows that are mapped.
+.RE
+.sp
+f.beep
+.RS 4
+This function sounds the keyboard bell.
+.RE
+.sp
+f.bottomzoom
+.RS 4
+This function stretches the bottom side of the window out to the bottom
+edge of the screen, or restores the original size if the window was
+already bottomzoom\(cqd.
+.RE
+.sp
+f.changepriority \f(CRrel\-value\fP
+.RS 4
+Change the priority of a window by \f(CRrel\-value\fP (enclosed within double
+quotes). For instance, to bury a window one level down, you would use
+f.changepriority "\-1".  See \f(CROnTopPriority\fP variable.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.changesize \f(CRstring\fP
+.RS 4
+This function allows you to change the size of the focused window. The
+format of the string must be either \f(CR"<border> <+|\-><sizechange>"\fP
+(where \f(CR<border>\fP must be one of \f(CRtop\fP, \f(CRbottom\fP, \f(CRleft\fP or
+\f(CRright\fP) or \f(CR"<x size>x<y size>"\fP (where the size is the requested
+new window size). The height of the window can never be set/changed to less
+than the title height + 1 (or 1 if the window has no title) and the width
+can never be set/changed to less than 1.
+.sp
+.if n .RS 4
+.nf
+"Right"  = c|s : all : f.changesize "right +10"
+"Left"   = c|s : all : f.changesize "right \-10"
+"Down"   = c|s : all : f.changesize "bottom +10"
+"Up"     = c|s : all : f.changesize "bottom \-10"
+
+"F1"     = c|s : all : f.changesize "640x480"
+"F2"     = c|s : all : f.changesize "800x600"
+"F3"     = c|s : all : f.changesize "1024x768"
+.fi
+.if n .RE
+.RE
+.sp
+f.circledown
+.RS 4
+This function lowers the top\-most window that occludes another window.
+.RE
+.sp
+f.circleup
+.RS 4
+This function raises the bottom\-most window that is occluded by another window.
+.RE
+.sp
+f.colormap \f(CRstring\fP
+.RS 4
+This function rotates the colormaps (obtained from the \f(CRWM_COLORMAP_WINDOWS\fP
+property on the window) that ctwm will display when the pointer
+is in this window.  The argument \f(CRstring\fP may have one of the following
+values: \f(CR"next"\fP, \f(CR"prev"\fP, and \f(CR"default"\fP.  It should be noted
+here that in general, the installed colormap is determined by keyboard focus.
+A pointer driven keyboard focus will install a private colormap upon entry
+of the window owning the colormap.  Using the click to type model, private
+colormaps will not be installed until the user presses a mouse button on
+the target window.
+.RE
+.sp
+f.deiconify
+.RS 4
+This function deiconifies the selected window.  If the window is not an icon,
+this function does nothing.
+.RE
+.sp
+f.delete
+.RS 4
+This function sends the \f(CRWM_DELETE_WINDOW\fP message to the selected window if
+the client application has requested it through the \f(CRWM_PROTOCOLS\fP window
+property.  The application is supposed to respond to the message by removing
+the indicated window.  If the window has not requested
+\f(CRWM_DELETE_WINDOW\fP messages, the keyboard bell will be rung indicating that
+the user should choose an alternative method.  Note this is very different
+from f.destroy.  The intent here is to delete a single window,  not
+necessarily the entire application.
+.RE
+.sp
+f.deleteordestroy
+.RS 4
+First tries to delete the window (send it \f(CRWM_DELETE_WINDOW\fP message),
+or kills it, if the client doesn\(cqt accept such message.
+.RE
+.sp
+f.deltastop
+.RS 4
+This function allows a user\-defined function to be aborted if the pointer has
+been moved more than \f(CRMoveDelta\fP pixels.  See the example definition
+given for \f(CRFunction "move\-or\-raise"\fP at the beginning of the section.
+.RE
+.sp
+f.destroy
+.RS 4
+This function instructs the X server to close the display connection of the
+client that created the selected window.  This should only be used as a last
+resort for shutting down runaway clients.  See also f.delete.
+.RE
+.sp
+f.downiconmgr
+.RS 4
+This function warps the pointer to the next row in the current icon manger,
+wrapping to the beginning of the next column if necessary.
+.RE
+.sp
+f.downworkspace
+.RS 4
+Goto the workspace immediately underneath the current workspace in the workspace
+manager. If the current workspace is the bottom one, goto the top one in the
+same column. The result depends on the layout of the workspace manager.
+.RE
+.sp
+f.exec \f(CRstring\fP
+.RS 4
+This function passes the argument \f(CRstring\fP to \f(CR/bin/sh\fP for execution.
+In multiscreen mode, if \f(CRstring\fP starts a new X client without
+giving a display argument, the client will appear on the screen from
+which this function was invoked. If the string \(lq$currentworkspace\(rq
+is present inside the string argument, it will be substituted with
+the current workspace name.
+.RE
+.sp
+f.fill \f(CRstring\fP
+.RS 4
+Where string is either : \(lqright\(rq, \(lqleft\(rq, \(lqtop\(rq, \(lqbottom\(rq or \(lqvertical\(rq.
+The current window is resized in the specified direction until it
+reaches an obstacle (either another window, or the screen border).
+f.fill \(lqvertical\(rq sets the window status to \(lqzoomed\(rq and toggles, ie
+calling it again will reset the previous window size.
+.RE
+.sp
+f.fittocontent
+.RS 4
+Can be used only with window boxes. The result is to have the box have the
+minimal size that contains all its children windows.
+.RE
+.sp
+f.focus
+.RS 4
+This function toggles the keyboard focus of the server to the
+selected window, changing the focus rule from pointer\-driven if necessary.
+If the selected window already was focused, this function executes an
+\f(CRf.unfocus\fP.
+.RE
+.sp
+f.forcemove
+.RS 4
+This function is like \f(CRf.move\fP except that it ignores the \f(CRDontMoveOff\fP
+variable.
+.RE
+.sp
+f.forwiconmgr
+.RS 4
+This function warps the pointer to the next column in the current icon
+manager, wrapping to the beginning of the next row if necessary.
+.RE
+.sp
+f.forwmapiconmgr
+.RS 4
+This function warps the  pointer in the same manner as \f(CRf.forwiconmgr\fP
+but only stops at windows that are mapped.
+.RE
+.sp
+f.fullscreenzoom
+.RS 4
+This function is similar to the \f(CRf.fullzoom\fP function, except that it
+makes the client window (the part inside the frame) the size of the
+screen, so the window decorations are off\-screen.  This gives the same
+visual effect as the window covering the whole screen with no
+decorations.  If the window is already fullscreenzoom\(cqd, it restores
+the original size.
+.RE
+.sp
+f.fullzoom
+.RS 4
+This function resizes the selected window to the full size of the
+screen, or restores the original size if the window was already
+fullzoom\(cqd.
+.RE
+.sp
+f.function \f(CRstring\fP
+.RS 4
+This function executes the user\-defined function whose name is specified
+by the argument \f(CRstring\fP.
+.RE
+.sp
+f.gotoworkspace \f(CRworkspace_name\fP
+.RS 4
+This function warps you to the workspace whose name is \f(CRworkspace_name\fP.
+.RE
+.sp
+f.hbzoom
+.RS 4
+This function is a synonym for \f(CRf.bottomzoom\fP.
+.RE
+.sp
+f.hideiconmgr
+.RS 4
+This function unmaps the current icon manager.
+.RE
+.sp
+f.hideworkspacemgr
+.RS 4
+Unmap the WorkSpace manager.
+.RE
+.sp
+f.horizoom
+.RS 4
+This function stretches the window so that it covers the whole width of
+the screen, or restores the original size if the window was already
+horizoom\(cqd.
+.RE
+.sp
+f.htzoom
+.RS 4
+This function is a synonym for \f(CRf.topzoom\fP.
+.RE
+.sp
+f.hypermove
+.RS 4
+Use this function to \(lqmove\(rq a window between 2 captives ctwm (or between a
+captive and the root ctwm). Of course 2 ctwms are completely different
+universes. You have to go in hyperspace to achieve this, hence the name.
+.RE
+.sp
+f.hzoom
+.RS 4
+This function is a synonym for \f(CRf.horizoom\fP.
+.RE
+.sp
+f.iconify
+.RS 4
+This function iconifies or deiconifies the selected window or icon,
+respectively.
+.RE
+.sp
+f.identify
+.RS 4
+This function displays a summary of the name and geometry of the
+selected window.  Clicking the pointer or pressing a key in the window
+will dismiss it.
+.RE
+.sp
+f.initsize
+.RS 4
+This function resets a window to its initial size given by the
+\f(CRWM_NORMAL_HINTS\fP hints.
+.RE
+.sp
+f.jumpdown \f(CRstep\fP
+.RS 4
+This function is designed to be bound to a key, it moves the current window
+(step * {X,Y}MoveGrid) pixels downward. stopping if the window encounters
+another window or the screen border (ala f.pack).
+.RE
+.sp
+f.jumpleft \f(CRstep\fP
+.RS 4
+Leftward equivalent of f.jumpdown.
+.RE
+.sp
+f.jumpright \f(CRstep\fP
+.RS 4
+Rightward equivalent of f.jumpdown.
+.RE
+.sp
+f.jumpup \f(CRstep\fP
+.RS 4
+Upward equivalent of f.jumpdown.
+.RE
+.sp
+f.lefticonmgr
+.RS 4
+This function similar to \f(CRf.backiconmgr\fP except that wrapping does not
+change rows.
+.RE
+.sp
+f.leftworkspace
+.RS 4
+Goto the workspace immediately on the left of the current workspace in the
+workspace manager. If the current workspace is the leftest one, goto the
+rightest one in the same row. The result depends on the layout of the workspace
+manager.
+.RE
+.sp
+f.leftzoom
+.RS 4
+This function stretches the left side of the window out to the left
+edge of the screen, or restores the original size if the window was
+already leftzoom\(cqd.
+.RE
+.sp
+f.lower
+.RS 4
+This function lowers the selected window.
+.RE
+.sp
+f.menu \f(CRstring\fP
+.RS 4
+This function invokes the menu specified by the argument \f(CRstring\fP.
+Cascaded menus may be built by nesting calls to \f(CRf.menu\fP. When a menu
+is popped up, you can use the arrow keys to move the cursor around it. \(lqDown\(rq
+or space goes down, \(lqUp\(rq goes up, \(lqLeft\(rq pops down the menu, and \(lqRight\(rq
+activates the current entry. The first letter of an entry name activates this
+entry (the first one if several entries match). If the first letter is ~ then
+Meta\-the\-second\-letter activates it, if this first letter is ^ then
+Control\-the\-second\-letter activates it, and if this first letter is space,
+then the second letter activates it.
+.RE
+.sp
+f.move
+.RS 4
+This function drags an outline of the selected window (or the window itself
+if the \f(CROpaqueMove\fP variable is set) until the invoking pointer button
+is released.  Double clicking within the number of milliseconds given by
+\f(CRConstrainedMoveTime\fP warps
+the pointer to the center of the window and
+constrains the move to be either horizontal or vertical depending on which
+grid line is crossed.
+To abort a move, press another button before releasing the
+first button.
+.RE
+.sp
+f.movepack
+.RS 4
+This function is like \f(CRf.move\fP except that it tries to avoid overlapping
+of windows. When the moving window begin to overlap with another window, the
+move is stopped. If you go too far over the other window (more that
+\f(CRMovePackResistance\fP pixels), the move is resumed and the moving window
+can overlap with the other window. Useful to pack windows closely.
+.RE
+.sp
+f.movepush
+.RS 4
+This function is like \f(CRf.move\fP except that it tries to avoid overlapping
+of windows. When the moving window begins to overlap with another window, the
+other window is pushed. If you go too far over the other window (more that
+\f(CRMovePackResistance\fP pixels), there is no push and the moving window
+can overlap with the other window. Only available if \f(CROpaqueMove\fP is
+active.
+.RE
+.sp
+f.moveresize \f(CRgeometry\fP
+.RS 4
+Takes one string argument which is a geometry with the
+standard X geometry syntax (e.g. 200x300+150\-0). Sets the current window
+to the specified geometry. The width and height are to be given in pixel,
+no base size or resize increment are used.
+.RE
+.sp
+f.movetitlebar
+.RS 4
+If applied to a squeezed titlebar (see \f(CRSqueezeTitle\fP) you can drag
+it along the top of the window (a feature which was first found in
+BeOS). The existing justification type is preserved, as is the
+positioning (relative or absolute). This means that a relatively
+positioned titlebar will move when the width of a window changes,
+whereas an absolutely positioned title will not.
+The default positioning is left\-justified, absolute at 0 pixels.
+.sp
+.if n .RS 4
+.nf
+Button1 = m1 : title : f.movetitlebar
+.fi
+.if n .RE
+.sp
+\f(CRf.movetitlebar\fP does nothing if the window has no title, the
+window is squeezed (see f.squeeze), or the title is not squeezed
+(see \f(CRSqueezeTitle\fP).
+.RE
+.sp
+f.movetonextworkspace, f.movetonextworkspaceandfollow
+.RS 4
+Move the window to the next workspace, and optionally switch view over
+to that workspace.
+.RE
+.sp
+f.movetoprevworkspace, f.movetoprevworkspaceandfollow
+.RS 4
+Move the window to the previous workspace, and optionally switch view
+over to that workspace.
+.RE
+.sp
+f.nexticonmgr
+.RS 4
+This function warps the pointer to the next icon manager containing any windows
+on the current or any succeeding screen.
+.RE
+.sp
+f.nextworkspace
+.RS 4
+Goto the next workspace in the list, using the order given in the \f(CR.ctwmrc\fP file.
+.RE
+.sp
+f.nop
+.RS 4
+This function does nothing and is typically used with the \f(CRDefaultFunction\fP
+or \f(CRWindowFunction\fP variables or to introduce blank lines in menus.
+.RE
+.sp
+f.occupy
+.RS 4
+This function pops up a window for the user to choose which workspaces a window
+belongs to.
+.RE
+.sp
+f.occupyall
+.RS 4
+This function makes the specified window occupy all the workspaces.
+.RE
+.sp
+f.pack \f(CRstring\fP
+.RS 4
+Where string is either : \(lqright\(rq, \(lqleft\(rq, \(lqtop\(rq or \(lqbottom\(rq
+The current window is moved in the specified direction until it reaches
+an obstacle (either another window, or the screen border). The pointer
+follows the window.
+.RE
+.sp
+f.pin
+.RS 4
+Valid only in a root menu. Make a menu permanent on the screen. This is a toggle
+function, if you select it while the menu is already permanent, it becomes
+non\-permanent.
+.RE
+.sp
+f.previconmgr
+.RS 4
+This function warps the pointer to the previous icon manager containing any
+windows on the current or preceding screens.
+.RE
+.sp
+f.prevworkspace
+.RS 4
+Goto the previous workspace in the list, using the order given in the \f(CR.ctwmrc\fP file.
+.RE
+.sp
+f.priorityswitching
+.RS 4
+Toggle the window\(cqs switching ability.  X\-ref \f(CRPrioritySwitching\fP and
+\f(CROnTopPriority\fP variables.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.quit
+.RS 4
+This function causes ctwm to restore the window\(cqs borders and exit.  If
+ctwm is the first client invoked from \f(CRxdm\fP, this will result in a
+server reset.
+.RE
+.sp
+f.raise
+.RS 4
+This function raises the selected window.
+.RE
+.sp
+f.raiseicons
+.RS 4
+This function raises all the icons in the current workspace.
+.RE
+.sp
+f.raiselower
+.RS 4
+This function raises the selected window to the top of the stacking order if
+it is occluded by any windows, otherwise the window will be lowered.
+.RE
+.sp
+f.raiseorsqueeze
+.RS 4
+Raise the window or squeeze it if it\(cqs a double click.  The time that
+defines a double click is given by the \f(CRConstrainedMoveTime\fP variable.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.refresh
+.RS 4
+This function causes all windows to be refreshed.
+.RE
+.sp
+f.removefromworkspace \f(CRstring\fP
+.RS 4
+This function removes the selected window from the workspace whose name
+is \f(CRstring\fP.
+.RE
+.sp
+f.rereadsounds
+.RS 4
+This function causes the \f(CR.ctwm\-sounds\fP file to be re\-read.  Note that
+this will \fBnot\fP re\-read sounds set in \f(CRRplaySounds\fP in the config file.
+As a result, this function will probably go away in the future when
+\f(CR.ctwm\-sounds\fP support is removed.  See the SOUNDS section.
+.RE
+.sp
+f.rescuewindows
+.RS 4
+If you somehow managed to move a window out of sight, calling this
+function will check all windows and icons on currently visible virtual
+screens, and those that are (nearly) out of the bounds of their virtual
+screen will be brought completely inside (if that fits).
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.resize
+.RS 4
+This function displays an outline of the selected window.  Crossing a border
+(or setting \f(CRAutoRelativeResize\fP) will cause the outline to begin to
+rubber band until the invoking button is released.  To abort a resize,
+press another button before releasing the first button.
+.RE
+.sp
+f.restart
+.RS 4
+This function kills and restarts ctwm.
+.RE
+.sp
+f.restoregeometry
+.RS 4
+Restore the current window geometry to what was saved in the last
+call to f.savegeometry.
+.RE
+.sp
+f.righticonmgr
+.RS 4
+This function is similar to \f(CRf.nexticonmgr\fP except that wrapping does
+not change rows.
+.RE
+.sp
+f.rightworkspace
+.RS 4
+Goto the workspace immediately on the right of the current workspace in the
+workspace manager. If the current workspace is the rightest one, goto the
+leftest one in the same row. The result depends on the layout of the workspace
+manager.
+.RE
+.sp
+f.rightzoom
+.RS 4
+This function stretches the right side of the window out to the right
+edge of the screen, or restores the original size if the window was
+already rightzoom\(cqd.
+.RE
+.sp
+f.ring
+.RS 4
+Selects a window and adds it to the WarpRing, or removes it if it
+was already in the ring. This command makes \f(CRf.warpring\fP much more
+useful, by making its configuration dynamic.
+.RE
+.sp
+f.savegeometry
+.RS 4
+The geometry of the current window is saved. The next call to
+f.restoregeometry will restore this window to this geometry.
+.RE
+.sp
+f.saveyourself
+.RS 4
+This function sends a \f(CRWM_SAVEYOURSELF\fP message to the selected window if it
+has requested the message in its \f(CRWM_PROTOCOLS\fP window property.  Clients that
+accept this message are supposed to checkpoint all state associated with the
+window and update the \f(CRWM_COMMAND\fP property as specified in the ICCCM.  If
+the selected window has not selected for this message, the keyboard bell
+will be rung.
+.RE
+.sp
+f.separator
+.RS 4
+Valid only in menus. The effect is to add a line separator between the
+previous and the following entry. The name selector part in the menu is not
+used (but must be present).
+.RE
+.sp
+f.setbuttonsstate
+.RS 4
+Set the WorkSpace manager in button state.
+.RE
+.sp
+f.setmapstate
+.RS 4
+Set the WorkSpace manager in map state.
+.RE
+.sp
+f.setpriority "\f(CRvalue\fP"
+.RS 4
+Set the window\(cqs priority to \f(CRvalue\fP (enclosed between double quotes).
+If \f(CRvalue\fP is directly followed by \f(CR<\fP or \f(CRb\fP, the window is
+placed below other windows of the given priority. Otherwise it is placed
+above.  See \f(CROnTopPriority\fP variable for details.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.showbackground
+.RS 4
+This function unmaps all windows in the current workspace. This is a toggle
+function, if all windows are unmapped, they are all remapped. Better bind this
+function in the root context.
+.RE
+.sp
+f.showiconmgr
+.RS 4
+This function maps the current icon manager.
+.RE
+.sp
+f.showworkspacemgr
+.RS 4
+Map the WorkSpace manager.
+.RE
+.sp
+f.slowdownanimation
+.RS 4
+Decrease \f(CRAnimationSpeed\fP by 1.
+.RE
+.sp
+f.sorticonmgr
+.RS 4
+This function sorts the entries in the current icon manager alphabetically.
+See the variable \f(CRSortIconManager\fP.
+.RE
+.sp
+f.speedupanimation
+.RS 4
+Increase \f(CRAnimationSpeed\fP by 1.
+.RE
+.sp
+f.squeeze
+.RS 4
+f.squeeze squeezes a window to a null vertical size. Works only for windows
+with either a title, or a 3D border (in order to have something left on the
+screen). If the window is already squeezed, it is unsqueezed.
+.RE
+.sp
+f.startanimation
+.RS 4
+Restart freezed animations (if any).
+.RE
+.sp
+f.stopanimation
+.RS 4
+Freeze animations (if any).
+.RE
+.sp
+f.switchpriority
+.RS 4
+Switch the window\(cqs priority, independently of its ability to switch
+automatically.  X\-ref \f(CROnTopPriority\fP and \f(CRPrioritySwitching\fP
+variables.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.tinylower, f.tinyraise
+.RS 4
+These two functions allow you to raise/lower a window "one step" at
+a time. For instance, \f(CRf.tinyraise\fP will bring the current window
+just above the lowest one that\(cqs hiding it. These two functions are not
+subject to priority\-switching.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.title
+.RS 4
+This function provides a centered, unselectable item in a menu definition.  It
+should not be used in any other context.
+.RE
+.sp
+f.toggleoccupation \f(CRstring\fP
+.RS 4
+This function adds the selected window to the workspace whose name
+is \f(CRstring\fP if it doesn\(cqt already belongs to it, and removes it
+from this workspace if not.
+.RE
+.sp
+f.togglesound
+.RS 4
+Toggle sound on/off.  See the SOUNDS section.
+.RE
+.sp
+f.togglestate
+.RS 4
+Toggle the state of the WorkSpace manager.
+.RE
+.sp
+f.toggleworkspacemgr
+.RS 4
+Toggle the presence of the WorkSpaceManager. If
+it is mapped, it will be unmapped and vice versa.
+.RE
+.sp
+f.topzoom
+.RS 4
+This function stretches the top side of the window out to the top
+edge of the screen, or restores the original size if the window was
+already topzoom\(cqd.
+.RE
+.sp
+f.trace \f(CRstring\fP
+.RS 4
+Used for handling dumping debug output.  If a filename is given in
+\f(CRstring\fP, begins writing output to that file; if \f(CRstring\fP is \f(CR"stderr"\fP
+writes to stderr.  If debug file is already open, calling f.trace again
+closes it.
+.sp
+This is probably only useful if you\(cqre doing development on ctwm.
+.RE
+.sp
+f.twmrc
+.RS 4
+Alias for \f(CRf.restart\fP.
+.RE
+.sp
+f.unfocus
+.RS 4
+This function resets the focus back to pointer\-driven.  This should be used
+when a focused window is no longer desired.
+.RE
+.sp
+f.unsqueeze
+.RS 4
+Is to \f(CRf.squeeze\fP what \f(CRf.deiconify\fP is to \f(CRf.iconify\fP.
+.sp
+First appeared in 4.0.0.
+.RE
+.sp
+f.upiconmgr
+.RS 4
+This function warps the pointer to the previous row in the current icon
+manager, wrapping to the last row in the same column if necessary.
+.RE
+.sp
+f.upworkspace
+.RS 4
+Goto the workspace immediately above the current workspace in the workspace
+manager. If the current workspace is the top one, goto the bottom one in the
+same column. The result depends on the layout of the workspace manager.
+.RE
+.sp
+f.vanish
+.RS 4
+The specified window vanishes from the current workspace if it occupies at least
+one other WorkSpace. Do nothing in the others cases.
+.RE
+.sp
+f.version
+.RS 4
+This function causes the ctwm version window to be displayed.  This
+window will be displayed until a pointer button is pressed or the
+pointer is moved from one window to another.
+.RE
+.sp
+f.vlzoom
+.RS 4
+This function is a synonym for \f(CRf.leftzoom\fP.
+.RE
+.sp
+f.vrzoom
+.RS 4
+This function is a synonym for \f(CRf.rightzoom\fP.
+.RE
+.sp
+f.warphere \f(CRwin_name\fP
+.RS 4
+This function adds the window which has a name or class that matches string
+to the current workspace and warps the pointer to it. If the window is iconified,
+it will be deiconified if the variable WarpUnmapped is set or else ignored.
+.RE
+.sp
+f.warpring \f(CRstring\fP
+.RS 4
+This function warps the pointer to the next or previous window (as indicated
+by the argument \f(CRstring\fP, which may be \f(CR"next"\fP or \f(CR"prev"\fP)
+specified in the \f(CRWindowRing\fP variable.
+.RE
+.sp
+f.warpto \f(CRstring\fP
+.RS 4
+This function warps the pointer to the window which has a name or class
+that matches \f(CRstring\fP.  If the window is iconified, it will be deiconified
+if the variable \f(CRWarpUnmapped\fP is set or else ignored.
+.RE
+.sp
+f.warptoiconmgr \f(CRstring\fP
+.RS 4
+This function warps the pointer to the icon manager entry
+associated with the window containing the pointer in the icon manager
+specified by the argument \f(CRstring\fP.  If \f(CRstring\fP is empty (i.e. ""),
+the current icon manager is chosen.
+.RE
+.sp
+f.warptoscreen \f(CRstring\fP
+.RS 4
+This function warps the pointer to the screen specified by the
+argument \f(CRstring\fP.  The argument may be a number (e.g. \f(CR"0"\fP or
+\f(CR"1"\fP), the word \f(CR"next"\fP (indicating the current screen plus 1,
+skipping over any unmanaged screens),
+the word \f(CR"back"\fP (indicating the current screen minus 1, skipping over
+any unmanaged screens), or the word
+\f(CR"prev"\fP (indicating the last screen visited).
+.RE
+.sp
+f.winrefresh
+.RS 4
+This function is similar to the \f(CRf.refresh\fP function except that only the
+selected window is refreshed.
+.RE
+.sp
+f.zoom
+.RS 4
+This function stretches the window so that it covers the whole height of
+the screen, or restores the original size if the window was already
+zoom\(cqd.  It\(cqs the vertical counterpart fo \f(CRf.horizoom\fP; perhaps
+\f(CRf.vertzoom\fP would be a better name...
+.RE
+.SH "MENUS"
+.sp
+Functions may be grouped and interactively selected using pop\-up
+(when bound to a pointer button) or pull\-down (when associated
+with a titlebutton) menus.  Each menu specification contains the name of the
+menu as it will be referred to by \f(CRf.menu\fP, optional default
+foreground and background colors, the list of item names and the functions
+they should invoke, and optional foreground and background colors for
+individual items:
+.sp
+.if n .RS 4
+.nf
+Menu "menuname" [ ("deffg":"defbg") ]
+{
+    string1  [ ("fg1":"bg1") ]  function1
+    string2  [ ("fg2":"bg2") ]  function2
+        .
+        .
+        .
+    stringN  [ ("fgN":"bgN") ]  functionN
+}
+.fi
+.if n .RE
+.sp
+The \f(CRmenuname\fP is case\-sensitive.
+The optional \f(CRdeffg\fP and \f(CRdefbg\fP arguments specify the foreground
+and background colors used on a color display
+to highlight menu entries.
+The \f(CRstring\fP portion
+of each menu entry will be the text which will appear in the menu.
+The optional \f(CRfgN\fP and \f(CRbgN\fP arguments specify the foreground
+and background colors of the menu entry when the pointer is not in
+the entry.  These colors will only be used on a color display.  The
+default is to use the colors specified by the
+\f(CRMenuForeground\fP and \f(CRMenuBackground\fP variables.
+The \f(CRfunction\fP portion of the menu entry is one of the functions,
+including any user\-defined functions, or additional menus.
+.sp
+If an entry name begins with a \(lq*\(rq (star), this star won\(cqt be displayed and
+the corresponding entry will be the default entry for this menu. When a menu
+has a default entry and is used as a submenu of another menu, this default entry
+action will be executed automatically when this submenu is selected without being
+displayed. It\(cqs hard to explain, but easy to understand.
+.SS "Special Menus"
+.sp
+There are several special menus.
+.sp
+\f(CRTwmWindows\fP contains the names of all of the client and ctwm\-supplied
+windows in the current workspace.  Selecting an entry will cause the
+\f(CRWindowFunction\fP to be executed on that window.  If \f(CRWindowFunction\fP
+hasn\(cqt been set, the window will be deiconified and raised.
+.sp
+\f(CRTwmVisible\fP lists those windows which are currently deiconified (first
+appeared in 3.7).
+\f(CRTwmIcons\fP lists only those which are currently iconified.
+.sp
+\f(CRTwmAllWindows\fP and \f(CRTwmAllIcons\fP act similarly to the non\-All variants
+described above, except that they show windows in all workspaces, rather
+than just the current one.
+.sp
+\f(CRTwmWorkspaces\fP contains the names of your workspaces, selecting an entry
+goto this workspace. In addition, these entries have submenus containing
+the names of all windows occupying this workspace, selecting such an
+entry executes \f(CRf.warpto\fP on this window.
+.sp
+\f(CRTwmKeys\fP lists all the keybindings in the root context that invoke
+\f(CRf.exec\fP.  First appeared in 3.7.
+.SH "ICONS"
+.sp
+ctwm supports several different ways of manipulating iconified windows.
+The common pixmap\-and\-text style may be laid out by hand or automatically
+arranged as described by the \f(CRIconRegion\fP variable.  In addition, a
+terse grid of icon names, called an icon manager, provides a more efficient
+use of screen space as well as the ability to navigate among windows from
+the keyboard.
+.sp
+An icon manager is a window that contains names of selected or all
+windows currently on the display.  In addition to the window name,
+a small button using the default iconify symbol will be displayed to the
+left of the name when the window is iconified.  By default, clicking on an
+entry in the icon manager performs \f(CRf.iconify\fP.
+To change the actions taken in the icon manager, use the
+the \f(CRiconmgr\fP context when specifying button and keyboard bindings.
+.sp
+Moving the pointer into the icon manager also directs keyboard focus to
+the indicated window (setting the focus explicitly or else sending synthetic
+events \f(CRNoTitleFocus\fP is set).
+Using the \f(CRf.upiconmgr\fP, \f(CRf.downiconmgr\fP
+\f(CRf.lefticonmgr\fP, and
+\f(CRf.righticonmgr\fP functions,
+the input focus can be changed between windows directly from the
+keyboard.
+.SH "X WINDOW PROPERTIES"
+.sp
+As a window manager, ctwm reads and sets a huge variety of properties on
+the windows it manages and the windows it creates.  Most of that is
+beyond the scope of user documentation.  However, a few points are worth
+mentioning.
+.SS "Window Naming"
+.sp
+Windows get their names via X properties.  There are two types of names;
+the window name (which is what shows up in the titlebar, the \f(CRf.identify\fP
+window, etc), and the icon name (which shows up on the icon and on the
+icon manager).
+.sp
+Prior to 4.0.2, ctwm only supported the standard ICCCM properties for
+setting the window and icon names.  These are \f(CRWM_NAME\fP for the window
+name, and \f(CRWM_ICON_NAME\fP for the icon name.  As of 4.0.2, ctwm also
+supports the EWMH versions of these, which are \f(CR_NET_WM_NAME\fP and
+\f(CR_NET_WM_ICON_NAME\fP.  If the EWMH variants exist, they\(cqre used in
+preference to the older ICCCM style.
+.sp
+As of 4.0.2, ctwm also supports an additional pair of properties;
+\f(CRCTWM_WM_NAME\fP and \f(CRCTWM_WM_ICON_NAME\fP, which override all the others.
+These are specifically intended for the user to manually set, not for
+programs to set themselves.  This allows the user to override programs
+that name themselves unhelpfully, or to otherwise label things to their
+liking.
+.sp
+You can set these via any method you\(cqd use to set window properties.
+From the command line, the \f(CRxprop(1)\fP tool is widely available, if a
+little clunky.  So, for instance, to set the icon name of a window
+(changing how it looks in the icon manager), but leave the window name
+alone as the program itself normally sets it (leaving the titlebar
+normal), you could run a command like:
+.sp
+.if n .RS 4
+.nf
+xprop \-f CTWM_WM_ICON_NAME 8u \-set CTWM_WM_ICON_NAME "I hate this window"
+.fi
+.if n .RE
+.sp
+and then click the window you want to set it on.  Unfortunately,
+\f(CRxprop(1)\fP does require you to specify the property name when defining
+the format, as well as when setting it, so it\(cqs a little ugly.  The \f(CR8u\fP
+means you\(cqre giving a UTF\-8 string.  Other possible formats are \f(CR8s\fP for
+a plain 7\-bit \f(CRSTRING\fP (i.e, plain ASCII), and \f(CR8t\fP for
+\(lqinternationalized\(rq ICCCM\-style \f(CRCOMPOUND_TEXT\fP.  Usually you\(cqd just
+use UTF\-8 though.  \f(CRxprop \-remove CTWM_WM_ICON_NAME\fP and click would let
+you undo it and go back to the normal naming.  See the \f(CRxprop(1)\fP manual
+for more.
+.SH "SOUNDS"
+.sp
+If built with the \f(CRUSE_SOUND\fP option, ctwm is able to play sounds
+for any X event.  This may be configured in two ways.
+.sp
+As of 4.0.0, the sounds may be configured in the ctwmrc with the
+\f(CRRplaySounds\fP config parameter.  See above for details.
+.sp
+If that is not found, or in older versions, ctwm will look for the file
+\f(CR.ctwm\-sounds\fP in the user\(cqs home directory to map every X event to a
+sound file to be played.  Each line in \f(CR.ctwm\-sounds\fP has the following
+syntax:
+.sp
+.if n .RS 4
+.nf
+{X event}: {sound file}
+.fi
+.if n .RE
+.sp
+If \f(CRRplaySounds\fP is given in the config file, and \f(CR.ctwm\-sounds\fP exists,
+a warning will be given, and the contents of \f(CR.ctwm\-sounds\fP will be
+ignored.  All support for \f(CR.ctwm\-sounds\fP will be removed in a future
+version, leaving only the ctwmrc configuration method available
+.sp
+However configured, the currently known X events that can be given are:
+.sp
+.if n .RS 4
+.nf
+KeyPress
+KeyRelease
+ButtonPress
+ButtonRelease
+MotionNotify
+EnterNotify
+LeaveNotify
+FocusIn
+FocusOut
+KeymapNotify
+Expose
+GraphicsExpose
+NoExpose
+VisibilityNotify
+CreateNotify
+DestroyNotify
+UnmapNotify
+MapNotify
+MapRequest
+ReparentNotify
+ConfigureNotify
+ConfigureRequest
+GravityNotify
+ResizeRequest
+CirculateNotify
+CirculateRequest
+PropertyNotify
+SelectionClear
+SelectionRequest
+SelectionNotify
+ColormapNotify
+ClientMessage
+MappingNotify
+.fi
+.if n .RE
+.sp
+Additionally, the following two are recognised, and represent the time
+when ctwm is started or shut down:
+.sp
+.if n .RS 4
+.nf
+Startup
+Shutdown
+.fi
+.if n .RE
+.SH "BUGS"
+.sp
+The resource manager should have been used instead of all of the window
+lists.
+.sp
+Double clicking very fast to get the constrained move function will sometimes
+cause the window to move, even though the pointer is not moved.
+.sp
+If \f(CRIconifyByUnmapping\fP is on and windows are listed in
+\f(CRIconManagerDontShow\fP but not in \f(CRDontIconifyByUnmapping\fP,
+they may be lost if they are iconified and no bindings to
+\f(CRf.menu "TwmWindows"\fP or \f(CRf.warpto\fP are setup.
+.SH "FILES"
+.sp
+See earlier Customization section.
+.SH "ENVIRONMENT VARIABLES"
+.sp
+DISPLAY
+.RS 4
+This variable is used to determine which X server to use.  It is also set
+during \f(CRf.exec\fP so that programs come up on the proper screen.
+.RE
+.sp
+HOME
+.RS 4
+This variable is used as the prefix for files that begin with a tilde and
+for locating the ctwm startup file.
+.RE
+.SH "SEE ALSO"
+.sp
+X(1), Xserver(1), xdm(1), xrdb(1)
+.SH "COPYRIGHT"
+.sp
+Portions copyright 1988 Evans & Sutherland Computer Corporation; portions
+copyright 1989 Hewlett\-Packard Company and the Massachusetts Institute of
+Technology,  See \f(CRX(1)\fP for a full statement of rights and permissions.
+.sp
+See COPYRIGHT file in distribution for more information.
+.SH "AUTHORS"
+.SS "TWM"
+.sp
+Tom LaStrange, Solbourne Computer; Jim Fulton, MIT X Consortium;
+Steve Pitschke, Stardent Computer; Keith Packard, MIT X Consortium;
+Dave Sternlicht, MIT X Consortium; Dave Payne, Apple Computer.
+.SS "CTWM"
+.sp
+Claude Lecommandeur, Swiss Polytechnical Institute of Lausanne
+(\c
+.MTO "lecom\(atsic.epfl.ch" "" ");"
+Richard Levitte (\c
+.MTO "richard\(atlevitte.org" "" ");"
+Matthew Fuller (\c
+.MTO "fullermd\(atover\-yonder.net" "" ");"
+and many other contributors.
+.SH "VERSION"
+.sp
+This manual is build for ctwm @ctwm_version_str@.

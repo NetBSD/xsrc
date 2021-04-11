@@ -1,0 +1,2 @@
+define(wmgeom, 300x100+10+10)
+WorkSpaceManagerGeometry "wmgeom" 2

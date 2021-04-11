@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+	<meta charset="utf-8"/>
+</head>
+<body>
+
+<h1 id="ctwm">CTWM</h1>
+
+<h2 id="intro">Intro</h2>
+
+<p>ctwm is an extension to twm, originally written by Claude Lecommandeur
+that support multiple virtual screens, and a lot of other goodies.</p>
+
+<p>You can use and manage up to 32 virtual screens called workspaces. You
+swap from one workspace to another by clicking on a button in an
+optionnal panel of buttons (the workspace manager) or by invoking a
+function.</p>
+
+<p>You can customize each workspace by choosing different colors, names and
+pixmaps for the buttons and background root windows.</p>
+
+<p>Major features include:</p>
+
+<ul>
+<li>Optional 3D window titles and border (ala Motif).</li>
+<li>Shaped, colored icons.</li>
+<li>Multiple icons for clients based on the icon name.</li>
+<li>Windows can belong to several workspaces.</li>
+<li>A map of your workspaces to move quickly windows between
+different workspaces.</li>
+<li>Animations: icons, root backgrounds and buttons can be animated.</li>
+<li>Pinnable and sticky menus.</li>
+<li>etc&#8230;</li>
+</ul>
+
+<p>The sources files were once the twm ones only workmgr.[ch] added (written
+from scratch by Claude Lecommandeur) and minor modifications to some twm
+files. Since then much more extensive changes and reorganization have
+been done, so the codebase is now significantly different from plain twm.</p>
+
+<p>If you find bugs in ctwm, or just want to tell us how much you like it,
+please send a report to the mailing list.</p>
+
+<p>There is a manual page, which always needs more work (any volunteers?).
+Many useful information bits are only in the CHANGES.md file, so please
+read it.</p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>ctwm is build using CMake, which does its best to root around in your
+system to find the pieces the build needs. Occasionally though you might
+have to give it some help, or change the defaults of what features are
+expected.</p>
+
+<p>In the common case, the included Makefile will do the necessary
+invocations, and you won&#8217;t need to worry about it; just run a normal
+<code>make ; make install</code> invocation. If you need to make alterations
+though, you may have to invoke cmake manually and set various params on
+the command line (cmake also has various GUI configurators, not covered
+here).</p>
+
+<p>The following parameters control configuration/installation locations:</p>
+
+<dl>
+<dt>CMAKE_INSTALL_PREFIX</dt>
+<dd>Where paths are based. This is a standard cmake var. Referred
+to as <code>$PREFIX</code> below.</dd>
+
+<dt>ETCDIR</dt>
+<dd>Where ctwm will look for a <code>system.ctwmrc</code> to fall back to if it
+doesn&#8217;t find a per-user config. Nothing is installed here by
+default.
+(default: <code>$PREFIX/etc</code>)</dd>
+
+<dt>BINDIR</dt>
+<dd>Where the ctwm binary is installed.
+(default: <code>$PREFIX/bin</code>)</dd>
+
+<dt>DATADIR</dt>
+<dd>Where run-time data like image pixmaps are installed.
+(default: <code>$PREFIX/share/ctwm</code>)</dd>
+
+<dt>MANDIR</dt>
+<dd>Base directory under which manpage dirs like <code>man1</code> and <code>man2</code>
+live.
+(default: <code>$PREFIX/share/man</code> or <code>$PREFIX/man</code>, whichever is
+found first)</dd>
+
+<dt>DOCDIR</dt>
+<dd>Where non-manpage docs are installed.
+(default: <code>$PREFIX/share/doc/ctwm</code>)</dd>
+
+<dt>EXAMPLEDIR</dt>
+<dd>Where various example files get installed. These include the
+system.ctwmrc that is compiled into ctwm as a fallback.
+(default: <code>$PREFIX/share/examples/ctwm</code>)</dd>
+</dl>
+
+<p>The following parameters control the features/external libs that are
+available. The defaults can be changed by passing parameters like
+<code>-DUSE_XYZ=OFF</code> to the cmake command line.</p>
+
+<dl>
+<dt>USE_M4</dt>
+<dd>Enables use of m4(1) for preprocessing config files at runtime.
+If your m4 is called something other than <code>m4</code> or <code>gm4</code>, you may
+need to also set M4_CMD to point at it.
+(<strong>ON</strong> by default)</dd>
+
+<dt>USE_XPM</dt>
+<dd>Enables the use of XPM images. Disable if libxpm isn&#8217;t present,
+which is just barely possible on very old systems.
+(<strong>ON</strong> by default)</dd>
+
+<dt>USE_JPEG</dt>
+<dd>Enables the use of jpeg images via libjpeg. Disable if libjpeg
+isn&#8217;t present.
+(<strong>ON</strong> by default)</dd>
+
+<dt>USE_EWMH</dt>
+<dd>Enables EWMH support.
+(<strong>ON</strong> by default)</dd>
+
+<dt>USE_RPLAY</dt>
+<dd>Build with sound support via librplay. <code>USE_SOUND</code> is a still
+valid but deprecated alias for this, and will give a warning.
+(<strong>OFF</strong> by default)</dd>
+</dl>
+
+<p>Additional vars you might need to set:</p>
+
+<dl>
+<dt>M4_CMD</dt>
+<dd>Name of m4 program, if it&#8217;s not <code>m4</code> or <code>gm4</code>, or full path to it
+if it&#8217;s not in your <code>$PATH</code>.</dd>
+</dl>
+
+<h2 id="building">Building</h2>
+
+<p>In the simple case, the defaults should work. Most modern or semi-modern
+systems should fall into this.</p>
+
+<pre><code>funny prompt&gt; make
+</code></pre>
+
+<p>If you need to add special config, you&#8217;ll have to pass extra bits to
+cmake via an invocation like</p>
+
+<pre><code>funny prompt&gt; make CMAKE_EXTRAS=&quot;-DUSE_XPM=OFF -DM4_CMD=superm4&quot;
+</code></pre>
+
+<p>Though in more complicated cases it may be simpler to just invoke cmake
+directly:</p>
+
+<pre><code>funny prompt&gt; ( cd build ; cmake -DUSE_XPM=OFF -DM4_CMD=superm4 .. )
+funny prompt&gt; make
+</code></pre>
+
+<h3 id="requiredlibs">Required Libs</h3>
+
+<p>ctwm requires various X11 libraries to be present. That list will
+generally include libX11, libXext, libXmu, libXt, libSM, and libICE.
+Depending on your configuration, you may require extra libs as discussed
+above (libXpm and libjpeg are included in the default config). If you&#8217;re
+on a system that separates header files etc. from the shared lib itself
+(many Linux dists do), you&#8217;ll probably need -devel or similarly named
+packages installed for each of them as well.</p>
+
+<h2 id="installation">Installation</h2>
+
+<pre><code>funny prompt&gt; make install
+</code></pre>
+
+<h3 id="packaging">Packaging</h3>
+
+<p>The CMake build system includes sufficient info for CPack to be used to
+build RPM (and presumably, though not tested, DEB) packages. As a quick
+example of usage:</p>
+
+<pre><code>funny prompt&gt; make
+funny prompt&gt; (cd build &amp;&amp; cpack -G RPM)
+</code></pre>
+
+<h2 id="devandsupport">Dev and Support</h2>
+
+<h3 id="mailinglist">Mailing list</h3>
+
+<p>There is a mailing list for discussions: <a href="&#x6d;&#x61;&#105;&#x6c;&#x74;&#111;&#x3a;&#x63;&#116;&#119;&#109;&#x40;&#x63;&#x74;&#x77;&#109;&#46;&#111;&#x72;&#x67;">&#x63;&#116;&#119;&#x6d;&#64;&#x63;&#116;&#x77;&#x6d;&#x2e;&#111;&#x72;&#x67;</a>. Subscribe by
+sending a mail with the subject &#8220;subscribe ctwm&#8221; to
+<a href="&#x6d;&#97;&#105;&#108;&#x74;&#x6f;&#x3a;&#x6d;&#x69;&#110;&#105;&#109;&#97;&#x6c;&#x69;&#115;&#x74;&#x40;&#x63;&#116;&#x77;&#109;&#46;&#x6f;&#x72;&#103;">&#109;&#105;&#x6e;&#105;&#109;&#x61;&#108;&#105;&#115;&#x74;&#x40;&#99;&#116;&#119;&#109;&#x2e;&#111;&#114;&#x67;</a>.</p>
+
+<h3 id="repository">Repository</h3>
+
+<p>ctwm development uses bazaar (see <a href="http://bazaar.canonical.com/">http://bazaar.canonical.com/</a>) for
+version control. The code is available on launchpad as <code>lp:ctwm</code>. See
+<a href="https://launchpad.net/ctwm">https://launchpad.net/ctwm</a> for more details.</p>
+
+<h2 id="furtherinformation">Further information</h2>
+
+<p>Additional information can be found from the project webpage, at
+<a href="https://www.ctwm.org/">https://www.ctwm.org/</a>.</p>
+
+</body>
+</html>
+

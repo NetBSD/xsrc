@@ -1,0 +1,268 @@
+= CTWM PRINCIPLES OF OPERATION
+Olaf 'Rhialto' Seibert <rhialto@falu.nl>
+
+This document briefly explains some of the internal workings of ctwm.
+
+== Screens ==
+
+Every X server may serve multiple screens, and ctwm can manage them all
+at once from a single instance. In practice, this does not happen often.
+Furthermore, in ctwm's code you see this only in a few places; it is
+hidden in quite a few more. Each screen can have its own configuration
+file: `$HOME/.ctwmrc.<screen number>`.
+
+At the start of the event handler, the screen for the current event is
+determined. That is stored in the global variable `Scr`. Everything that
+uses `Scr` is properly separated for the different screens.
+
+== Workspaces ==
+
+The idea of workspaces is that every window has a bitfield called
+`occupation` which indicates in which workspaces it should be visible.
+
+If a window's occupation changes, or if the user switches the current
+workspace, the visibility of windows needs to be adjusted.
+All windows actually "`exist`" at all times (they are not destroyed), but
+the ones that are not to be visible are unmapped. When switching
+workspaces or occupation, some windows will be unmapped and others will
+be remapped.
+
+Because windows are merely unmapped when invisible (and not destroyed),
+they remain in the _window stack_. In other words they retain their
+_stacking order_ which is the order in which they are front-to-back.
+There is only a single stacking order for all workspaces, even though it
+seems that every workspace has its own. Each workspace really just shows
+a subset of the global stacking order.
+
+Because of the unmapping, all windows can keep the same root window as
+their parent.
+
+=== The Occupation Window ===
+
+There is a single _Occupation Window_ for each Screen, which is used
+every time the `f.occupy` function is invoked.
+The Occupation Window is reparented and moved every time it is needed.
+If it is already mapped, and `f.occupy` is invoked again, the invocation
+fails. This makes it impossible for the user to manipulate the
+occupation of the occupation window in this way.
+
+=== The Workspace Manager Window ===
+
+Each _Virtual Screen_ has a separate _Workspace Manager Window_.
+By default it has _full occupation_, i.e. it is visible in all
+workspaces.
+You can change its occupation if you wish.
+
+This window is filled by asking the X server for the stacking order
+with `XQueryTree()`. Now that we have _OTP_ (see later), this should be
+used instead.
+
+== On Top Priority ==
+
+After version 3.8.2, _OTP_ (OnTopPriority) was added. This allows the
+user to select a priority for each window. Windows of lower priority can
+never get on top of a window of higher priority.
+
+To administrate this, the _OTP_  module aims to keep a private
+representation of a somewhat idealized single window stack.  This
+clashes with reality somewhat, as will become clear in other sections.
+
+To check if the internalized single window stack matches the X server's
+idea of the stack, there are regular consistency checks. If the _OTP_
+stack doesn't match, ctwm aborts.
+This should possibly be relaxed before a full release.
+
+== Window boxes ==
+
+Windows that are inside a box are not children of the root window.
+Therefore they are not in its stacking order either.  But they must fit
+somewhere in OTP's illusion of the global stacking order.
+The solution for that is that windows in a box are thought to be
+directly on top of their box.
+
+In the _OTP_ consistency checking, the windows in a box are special-cased.
+They are not checked to be in proper order in the stacking order because
+they are not in the stacking order at all.
+
+If they were not ignored in this way, they would cause false alarms
+about the OWL list being incorrect.
+
+== Virtual Screens ==
+
+At some point, X servers started to be able to present multiple monitors
+as a single screen. This is the so-called Xinerama extension (or
+nowadays XRandR).  However, people often still want to have some
+separation between their monitors. Thus, Virtual Screens were invented
+in ctwm.
+
+Ctwm's Virtual Screens (_vscreen_, or _vs_) work best if your monitors are
+the same size.  What they do is allow you to show one workspace on one
+screen, and another workspace on the other. You can switch workspaces
+independently (with some small limitations).
+
+To make each virtual screen independent of the others (for example, each
+one needs their own coordinate system starting at (0,0)), a separate
+virtual root window is created for each virtual screen. Each monitor
+then is associated with one of the virtual screens (and their root
+window). In your configuration you must give the geometry such that the
+_vscreens_ match the monitors.
+
+X has the important property that the windows form a strict tree: a
+window can have only a single parent, and it can't be added twice to the
+same parent either.
+
+Because of that, you can't view the same workspace on two virtual
+screens, for that would show its windows twice. Moreover, windows that
+occupy multiple workspaces can also be visible once only, in a single
+_vscreen_.  If multiple visibility is about to happen, a single
+_vscreen_ is chosen to show the window. If a window is hidden from one
+_vscreen_, it might be possible to then show it on another.
+
+If a window was first shown on one _vscreen_, and later on another, it
+needs to be reparented from one root window to another. This is done
+lazily.
+
+Ctwm administrates this with the `TwmWin.vs` and `TwmWin.parent_vs`.
+`parent_vs` indicates the current parent virtual root window. Because a
+window always has a parent, this can never be `NULL`.
+`TwmWin.vs` indicates the virtual screen where it is visible. This may be
+`NULL`, if the window has no occupation in (the workspace currently shown
+in) the virtual screen. If it is not `NULL`, it must equal `.parent_vs`.
+(So `.vs` could be replaced with a boolean in most places)
+
+Note that most of ctwm's code still assumes there is a single window
+stack for all windows, but with the virtual screens this is not true
+any more! Each virtual root window has its own window stack.
+
+What is true, for each separate _vscreen_, is that if you select from
+ctwm's global stack those windows that are actually parented in that
+vscreen, that selection corresponds to the _vscreen_'s window stack.
+
+In effect, the various _vscreen_'s window stacks are potentially
+interlaced like several packs of cards. Depending on "where you are",
+you must ignore the "wrong" windows in it.
+
+== Icon Managers ==
+
+=== Let's start with the one-workspace case. ===
+
+In the `.ctwmrc` you can specify multiple icon managers, and which
+windows will be placed in them. Let's call them the primary `IconMgr`
+and secondary ``IconMgr``s.  There is nothing stopping you from
+specifying them so, that one window might appear in multiple icon
+managers, but it will only go into the first one that matches.
+
+`ScreenInfo.iconmgr` (`Scr->iconmgr`) points to the primary icon manager.
+The secondary ones are linked to it via `IconMgr.next` and `.prev`.
+
+So each window occurs in a single icon manager: it has a little
+sub-window in it.
+The sub-window is represented by a `WList`.
+`twm_win->iconmanagerlist` points to the `WList` for the window.
+
+The various `WLists` that are in the same iconmanager are linked via
+`WList.next` and `.prev`.
+
+.Undiscovered:
+- `IconMgr.lasti`
+- how `IconMgr.first` `.last` `.active` (``WList``s) are related to the
+  pointers from the windows
+
+=== Expand to multiple workspaces. ===
+
+The Icon Managers are different windows in each workspace: it is not
+just a single window with multiple occupation. This is so that you
+can move it where you want in each of them.
+(Personally I would probably have used a single window and moved it
+around to remembered locations in each workspace)
+
+So both the `IconMgr` and the ``WList``s are replicated for each
+workspace.  These instances are linked via `IconMgr.nextv` and
+`WList.nextv`.
+
+The replicated instances are created after the first `IconMgr`, in
+`AllocateOtherIconManagers()`.
+
+If we believe `CreateIconManagers()`, then from the primary `IconMgr`
+for workspace #0 (`Scr->iconmgr`), you can follow `->nextv` to get to the
+replicas for workspace #1, #2, ..., and from each of those, follow
+`->next` to get to the secondary ``IconMgr``s for the same workspace.
+But the replication function is confusing.
+
+On the other hand, in `AddIconManager()`, a primary or secondary
+`IconMgr` is selected from workspace #0, and then `->nextv` is
+followed to find each of the replicas. 
+
+`WorkSpace.iconmgr` points to the primary _Icon Manager_ that belongs to
+that workspace.
+
+In `GotoWorkspace()`, there is a "`reorganisation`" of ``WList``s.
+I am not 100% sure what that means.
+Probably it is doing the job that more logically should be done in
+`ChangeOccupation()`, but lazily: put windows (``WList``s) in icon
+managers and take them out, depending on their occupation.
+
+== Icons ==
+
+Icons consist of several parts. Some of them can come from different sources
+or be shared among windows.
+
+* `struct Icon`, which refers to
+** `struct Image`, which contains
+*** X `Pixmap`(s) for image and optionally shape
+** X `Window` to place the `Pixmap`(s) in
+
+Each `TwmWindow` may have a `struct Icon` which describes the currently
+associated icon. Icons may change, if the title matches different images
+from the Icon list over time:
+
+--------------------
+Icons
+{
+     "XTerm"   "xpm:xterm"
+     "* - VIM" "xpm:vim"
+}
+--------------------
+
+``Image``s that are loaded from an xpm or other file are stored as
+`struct Image` and cached in a global cache named `Scr->ImageCache`.
+Therefore they can be shared. The source of an `Image` is recorded in 
+`Icon->match` and can have the values `match_none`, `match_list`,
+`match_icon_pixmap_hint`, `match_net_wm_icon`, `match_unknown_default`.
+
+match_list::
+If a window changes icons like this (Vim changes the terminal window's
+title when it starts up), it stores old icons on `TwmWin->iconslist` for
+later re-use. It must be certain that all these ``Image``s are indeed
+from the cache and not from other sources, otherwise there may be a
+memory leak or use-after-free.  The `iconslist` is freed when a window
+is freed, but the ``Image``s it points to are left alone.
+footnote:[A different implementation would allow ``Image``s from any
+source on the `iconslist` and check their source when freeing the list.]
+
+match_icon_pixmap_hint::
+Another source of `struct Image` is the Pixmap(s) that are given in the
+`WM_HINTS` property. These are not shared.
+
+match_net_wm_icon::
+The image is specified in the `_NET_WM_ICON` property. These `struct
+Images` are also not shared. Usually there are icons of different sizes.
+The user can specify the desired size (width * height). If an exact
+match is not found, the closest match is taken. This is based on
+the area (total number of pixels) of the icon. The differences are
+compared proportionally: the specified size times 2 is closer than 
+the size divided by 3.
+
+match_unknown_default::
+Finally there is a default `Image`, which is shared among all windows
+where needed.
+
+Usually ctwm creates the window to display the icon itself, but again
+there may be one given in the `WM_HINTS`. If so, this window must not be
+destroyed.
+
+
+// vim:ft=asciidoc:expandtab:
+// Gen:
+//  asciidoc -atoc -anumbered -o PRINCIPLES-OF-OPERATION.html PRINCIPLES-OF-OPERATION.txt 
+

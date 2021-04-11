@@ -1,0 +1,25 @@
+= CTWM Developer's Manual
+
+Eventually, this will be a full compendium of all the information that a
+Real CTWM Dev will already have in their head and never need to be
+reminded of.
+
+
+== Pages
+
+(Should be organized better.  Or at all.)
+
+* <<code_style.adoc#,Code Style>> covers coding style guidelines.
+
+* <<functions.adoc#,f.functions>> talks about how the various
+`f.whatever` functions are dispatched and how you'd go about writing one.
+
+* <<principles.adoc#,Principles Of Operation>> is a pre-existing dev
+document that covers a number of areas.  Probably over time it'll get
+piecewise integrated into bigger individual sections.
+
+* <<links.adoc#,Links>> collections links to various manuals and
+specifications and other reference material that are often of use.
+
+* <<doxygen.adoc#,Doxygen>> discusses use of Doxygen to document the
+source.

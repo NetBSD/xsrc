@@ -1,54 +1,11 @@
 %{
-/*****************************************************************************/
-/**       Copyright 1988 by Evans & Sutherland Computer Corporation,        **/
-/**                          Salt Lake City, Utah                           **/
-/**  Portions Copyright 1989 by the Massachusetts Institute of Technology   **/
-/**                        Cambridge, Massachusetts                         **/
-/**                                                                         **/
-/**                           All Rights Reserved                           **/
-/**                                                                         **/
-/**    Permission to use, copy, modify, and distribute this software and    **/
-/**    its documentation  for  any  purpose  and  without  fee is hereby    **/
-/**    granted, provided that the above copyright notice appear  in  all    **/
-/**    copies and that both  that  copyright  notice  and  this  permis-    **/
-/**    sion  notice appear in supporting  documentation,  and  that  the    **/
-/**    names of Evans & Sutherland and M.I.T. not be used in advertising    **/
-/**    in publicity pertaining to distribution of the  software  without    **/
-/**    specific, written prior permission.                                  **/
-/**                                                                         **/
-/**    EVANS & SUTHERLAND AND M.I.T. DISCLAIM ALL WARRANTIES WITH REGARD    **/
-/**    TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES  OF  MERCHANT-    **/
-/**    ABILITY  AND  FITNESS,  IN  NO  EVENT SHALL EVANS & SUTHERLAND OR    **/
-/**    M.I.T. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL  DAM-    **/
-/**    AGES OR  ANY DAMAGES WHATSOEVER  RESULTING FROM LOSS OF USE, DATA    **/
-/**    OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER    **/
-/**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
-/**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
-/*****************************************************************************/
-/* 
- *  [ ctwm ]
+/*
+ *       Copyright 1988 by Evans & Sutherland Computer Corporation,
+ *                          Salt Lake City, Utah
+ *  Portions Copyright 1989 by the Massachusetts Institute of Technology
+ *                        Cambridge, Massachusetts
  *
- *  Copyright 1992 Claude Lecommandeur.
- *            
- * Permission to use, copy, modify  and distribute this software  [ctwm] and
- * its documentation for any purpose is hereby granted without fee, provided
- * that the above  copyright notice appear  in all copies and that both that
- * copyright notice and this permission notice appear in supporting documen-
- * tation, and that the name of  Claude Lecommandeur not be used in adverti-
- * sing or  publicity  pertaining to  distribution of  the software  without
- * specific, written prior permission. Claude Lecommandeur make no represen-
- * tations  about the suitability  of this software  for any purpose.  It is
- * provided "as is" without express or implied warranty.
- *
- * Claude Lecommandeur DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL  IMPLIED WARRANTIES OF  MERCHANTABILITY AND FITNESS.  IN NO
- * EVENT SHALL  Claude Lecommandeur  BE LIABLE FOR ANY SPECIAL,  INDIRECT OR
- * CONSEQUENTIAL  DAMAGES OR ANY  DAMAGES WHATSOEVER  RESULTING FROM LOSS OF
- * USE, DATA  OR PROFITS,  WHETHER IN AN ACTION  OF CONTRACT,  NEGLIGENCE OR
- * OTHER  TORTIOUS ACTION,  ARISING OUT OF OR IN  CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- *
- * Author:  Claude Lecommandeur [ lecom@sic.epfl.ch ][ April 1992 ]
+ * Copyright 1992 Claude Lecommandeur.
  */
 
 /***********************************************************************
@@ -61,30 +18,44 @@
  *
  ***********************************************************************/
 
-/* #include <stdio.h> */		/* lex already includes stdio.h */
-#ifdef VMS
-#  include <ctype.h>
-#  ifdef __DECC
-#    include <unistd.h>
-#  else
-#    include <unixio.h>
-#  endif
-#endif
+#include "ctwm.h"
+#include "functions_defs.h"
 #include "parse.h"
-extern char *ProgramName;
+#include "parse_be.h"
 
-extern int ParseError;
-extern void twmrc_error_prefix(void);
+#include "gram.tab.h"
+
+/*
+ * flex uses a YY_INPUT macro internally rather than input.  It doesn't
+ * need unput since it maintains state internally.
+ */
 #ifdef FLEX_SCANNER
 #  undef YY_INPUT
 #  define YY_INPUT(buf,result,max_size) {buf[0]=twmInputFunc();result=(buf[0] != 0);}
 #endif
 
-extern int yylex(void);
+/*
+ * YY_FLEX_{MAJOR,MINOR}_VERSION was added in 2.5.1 (28Mar95); just in
+ * case we need to do version checks of stuff.
+ */
+
+/*
+ * flex listens to these to avoid declaring these functions, which we
+ * don't use, so suppress the warning.
+ */
+#define YY_NO_UNPUT
+#define YY_NO_INPUT
+
 %}
 
 string				\"([^"]|\\.)*\"
 number				[0-9]+
+
+ /* Requires flex 2.5.1 (28Mar95) */
+%option noyywrap
+ /* Requires flex 2.5.2 (25Apr95) */
+%option nounput
+
 %%
 "{"				{ return (LB); }
 "}"				{ return (RB); }
@@ -103,16 +74,15 @@ number				[0-9]+
 				      fprintf (stderr,
 				       "ignoring unknown keyword:  %s\n", 
 					       yytext);
-				      ParseError = 1;
+				      ParseError = true;
 				  } else 
 				    return token;
 				}
 
 "!"				{ yylval.num = F_EXEC; return FSKEYWORD; }
-"^"				{ yylval.num = F_CUT; return FSKEYWORD; }
 
 {string}			{ yylval.ptr = yytext; return STRING; }
-{number}			{ (void)sscanf(yytext, "%d", &yylval.num);
+{number}			{ sscanf(yytext, "%d", &yylval.num);
 				  return NUMBER; }
 \#[^\n]*\n			{;}
 [\n\t ]				{;}
@@ -121,14 +91,35 @@ number				[0-9]+
 				  fprintf (stderr, 
 					   "ignoring character \"%s\"\n",
 					   yytext);
-				  ParseError = 1;
+				  ParseError = true;
 				}
 %%
+
+/*
+ * In flex versions before 2.4.1 (30Nov93), yywrap was a macro, not a
+ * function.  There's no way we really support versions that old, but
+ * what the heck...
+ *
+ * This function should actually be unused due to the noyywrap %option
+ * specified above, but is left around in case of weird edge cases.
+ */
 #ifndef yywrap
 int yywrap(void) { return(1);}
 #endif
 
+/* AT&T lex uses the input/unput macros */
 #ifndef FLEX_SCANNER
+/*
+ * I believe Solaris at least recently recently (and maybe currently)
+ * ships with an AT&T lex, but also with flex beside it.  Plan
+ * 9 might ship only A&T lex?
+ *
+ * However, our current build toolchain doesn't look for any lex other
+ * than flex.  So #error out if we get here; adventurous users might take
+ * this out, and it might work; let us know!
+ */
+#error Not supported on non-flex; remove this line at your own risk
+#ifdef NON_FLEX_LEX
 #undef unput
 #undef input
 #undef output
@@ -137,5 +128,6 @@ int yywrap(void) { return(1);}
 #define input()		(*twmInputFunc)()
 #define output(c)	TwmOutput(c)
 #define feof()		(1)
-#endif
+#endif /* NON_FLEX_LEX */
+#endif /* !FLEX_SCANNER */
 
