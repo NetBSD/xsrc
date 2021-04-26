@@ -108,7 +108,7 @@ to enforce this rule.
 </para>
 
 <para>
-Note however that a concious decision is made to decouple the timeouts
+Note however that a conscious decision is made to decouple the timeouts
 associated with screen saver from the DPMS timeouts.  While it might be
 considered logical to require that the first non-zero DPMS timeout be
 greater than or equal to the screen saver timeout, this is intentionally
@@ -273,7 +273,7 @@ final level of power savings is invoked. Off mode's physical and electrical
 characteristics are implementation defined, but in DPMS compliant hardware,
 is implemented by shutting off both horizontal and vertical sync signals,
 resulting in the power-down of the monitor.  Recovery time is implementation
-dependant, but frequently is similar to the power-up time of the monitor. A
+dependent, but frequently is similar to the power-up time of the monitor. A
 value of zero indicates that this mode is disabled.
 </para>
 
