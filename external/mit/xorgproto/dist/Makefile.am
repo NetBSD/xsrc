@@ -496,6 +496,8 @@ EXTRA_DIST = \
     meson.build \
     meson_options.txt \
     man/Xprint.man \
-    man/Xprint.sgml
+    man/Xprint.sgml \
+    scripts/keysym-generator.py
+
 
 AM_DISTCHECK_CONFIGURE_FLAGS = --enable-legacy

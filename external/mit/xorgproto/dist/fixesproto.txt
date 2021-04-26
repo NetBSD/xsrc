@@ -190,7 +190,7 @@ SelectCursorInput
 	Servers supporting the X Input Extension Version 2.0 or higher only
 	notify the clients of cursor change events for the ClientPointer, not
 	of any other master pointer (see Section 4.4. in the XI2 protocol
-	specificiation).
+	specification).
 
 GetCursorImage
 
