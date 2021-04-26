@@ -1,3 +1,672 @@
+commit edd70bdfbbd16247e3d9564ca51d864f82626eb7
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Sun Jan 24 09:45:53 2021 -0500
+
+    libXt 1.2.1
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 32fb9ec3b60d0262d65829ad0fc1463464648c4b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Wed Feb 5 04:37:37 2020 -0500
+
+    _XtCalloc actually uses a Cardinal, not size_t
+
+commit 15a6234f9bee37d3c25bb21ce66db5846e082563
+Author: Walter Harms <wharms@bfs.de>
+Date:   Sun Dec 22 18:48:02 2019 +0100
+
+    add errorhandling to _XtVaToTypedArgList()
+    
+    to make it behave like _XtVaToTypedArgList() add some checks
+    and make sure that all args are propper initialized. also
+    replace Malloc with Calloc and get arg check for free
+    
+    Signed-off-by: Walter Harms <wharms@bfs.de>
+
+commit 6cc7763e4bb7298a6c81f81015d6e750d6b4ea5c
+Merge: b2c33d4 51cbf52
+Author: Walter Harms <wharms@bfs.de>
+Date:   Sun Dec 22 18:29:38 2019 +0100
+
+    Merge branch 'master' of ssh://gitlab.freedesktop.org/xorg/lib/libxt
+
+commit b2c33d42605147831c48a8946e90f356340e709e
+Author: Walter Harms <wharms@bfs.de>
+Date:   Sun Dec 22 17:51:53 2019 +0100
+
+    refactoring, reduce indent level
+    
+    Signed-off-by: Walter Harms <wharms@bfs.de>
+
+commit 51cbf52b7668ad46a428dabe8e79e6819e825b20
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Fri Nov 15 21:00:44 2019 -0500
+
+    add a null-pointer check, overlooked in fix for issue #12.
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 1bf4dfce4431b016a2970e195ea55188288264f6
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Nov 9 21:01:29 2019 -0500
+
+    issue #12: work within existing interface which attempts to obtain the
+    display-pointer from the screen-pointer but fails when the screen-pointer
+    itself is invalid.  Ensure that the screen-pointer is valid by checking
+    the default_screen value against the valid range, and forcing it to zero
+    if it is out of bounds.
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 8fe25ef4a99c38abe31113d5cfa0b85c7cd5c2de
+Author: Walter Harms <wharms@bfs.de>
+Date:   Sat Nov 9 22:14:36 2019 +0100
+
+    no need to check arguments for XtFree()
+    
+    Signed-off-by: Walter Harms <wharms@bfs.de>
+
+commit c7bdc7c0b75b6ec4df0bc180a20cf55ed0f43281
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Nov 9 06:19:14 2019 -0500
+
+    new build
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit ffc91271de153053c5c070fb11b4c701339ea06d
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Nov 9 06:02:09 2019 -0500
+
+    issue 12 - DISPLAY=:0.-1 XtScreenDatabase segfault
+    
+    Add a null-pointer check XtScreenDatabase(), exit if no display was opened.
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 5964fb7e3a3c43db34e8a85df3332da0117e3336
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Thu Aug 1 19:22:27 2019 -0400
+
+    improved the script used for typedef-options with indent, updated indentation
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 727195e741cb4de851870efc92232d66dcd5a8f0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 17:42:46 2019 -0400
+
+    bump minor version to reflect code-cleanup
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit d9ff063428adeb7139ee2eb1a96c8fb6263bac12
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:33:16 2019 -0400
+
+    remove the ARGUSED lines, which confuse GNU indent, ditto for LINTLIBRARY
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 04bb8d633f922e12f76b17de5b876320b0fe3b69
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:30:05 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 2ff3f1fa183be97e66afb863cb9fec391ee3cd5c
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:23:33 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit ceeffbae4c9a19fe304ae13c66bbfa2160a0c4c9
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:22:42 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit f9bcb0beff28a12ef66a5555889070c211b6724e
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:21:13 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit c32e6431de07c2c6314b710c0a9e446b7a62f831
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:19:32 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 91e5f17c9c7251a001d98613d8399045e6f47377
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:18:37 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 4f41be501408c1f37215665da7049dd363755f7b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:17:53 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 4d16315364a0d1fd80a5e71f1dc885fe6674072b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:15:26 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 6972afd215dc195e3213864d9b725a48bf766b6d
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:12:44 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 0aaf4560b718e9c9e5843b610974626b68688a93
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:11:22 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 204b9be31b67cc224bdfb47da3aacec1ceae6cad
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:06:24 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 5e633abc04b0b02be5bba8ffc3d7c4950f12cda0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:03:06 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 79208cbc8e352bb9e4d7f3392a373f8bb67d21f4
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 16:00:54 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 832c4eb0ba6cf18ed0dbec2d542b65f10ac549df
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:58:21 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 03b78385ae3628e0e0e66efb6c8f13d277a8da7d
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:55:55 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 7a37a8ddb5b5a208d718244f751fad6678a7bf8b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:53:11 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 019cfe87355df593355a37f53e768d8ccdf06eb0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:50:13 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 43f01d164ecdc5d5efe62a5fb82a4d22aa62b0e0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:48:32 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit b7d917281a2bdd51c8816aa89fc76de47d663526
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:47:30 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 710d25ec2432b170c508d08abfe3e2944078590b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:44:40 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit c37ea7484dcf7aad160d536a1212924483947490
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:42:47 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit d2ee89ce4d9e94b3319c72046853afda5ad3d3ed
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:38:30 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit ca56f7951a76d3b695ad96aa1fde8bf8120f2bc1
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:30:12 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 10c7594030e6be7c731c44b17102b33bef91b12b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:24:30 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 02b712159a2e7152669fd6d2a315e6f7690bb2d7
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:23:19 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 348a30bb5a850a626733a4d255d7ab633d22ebd4
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:20:42 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 99343f5a4660e121911dc907c2858c7a1ef1dd0c
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 15:19:16 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit c37faef75de9b4de70e6394e814c7c50b4fca6d9
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:51:39 2019 -0400
+
+    turn off indent in generated files
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 3af1ae2a76b789f89793d64b8d6eff7f9c24ca75
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:45:28 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 891419c3bcfc7d07f195957d1d74a03846b72eca
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:40:41 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit a5f21f4e0cf482077d213153efc5d041d15132cb
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:35:02 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 26444bb3a221263b367f1559948069fb807458f9
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:28:59 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 58fc6aefc494580991347b1f1c24cd21fe77fba0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:12:21 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 3a5b9155c5a7ecd6b81a9243197f89d5f11865dd
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 14:03:33 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit c63b90edf271bcdc71dea5f30588c47acf278c0f
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 13:54:21 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit f27bb4149d954dcd019ebed805aa526f0fff54a3
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 13:50:56 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 0a13b48b89b4e52739e89a7f3631d2b5a68e898b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 13:44:53 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 54c4eed190cc5a9a759c37f1d9002a7067d12ab5
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 13:42:30 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 8cd7b381725916ff1e9ca9d5f81b26fc790bbf2c
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 14 13:38:34 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit f291d614f9c892d3f6dace9a9fd176780b135358
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:44:48 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 426ebffd0294172409c3422439fbaacda3463c08
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:43:34 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 40d64a0d706bf41c070b3027c153ecb8229368bd
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:26:34 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 9876c91af02a8c442c43f8cfec1101549b0e9738
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:24:20 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 9f3baddea068e9c615595afaca13b1e7abb1f524
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:21:47 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 59499201effb2f07969c7940637016cb7d854967
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:09:45 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 8adff9851b1809f38110c31bcb35d6faf45c6fda
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:06:05 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 3da5c20b3c61f4a952f858455aa049fb201a476e
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 20:03:18 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 24816189ce8f21b77ede96bc1f83f41cf2ffa7fe
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:59:07 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 2b4b0b5104b9f39769f8cd500c57c0bf17994825
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:58:04 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 818711dd5ac1add5a67064cb6b0683c19055961e
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:56:05 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 650398b40bf500698cfe1f040df9e9d217e9c807
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:55:21 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 1737661309d55aa33e668142cf3301a8e94ff44d
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:47:08 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 9f81c761344b764b7f9950b7f7a2f57fb8465c12
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:46:02 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit f962bf49b6607db00443a93001c227e1a4d18275
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:44:32 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 6370bd1f33c7d8219176a0a59e7937cbd06b6794
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:42:07 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 5d616cb0f2e01ddc7705ffac79183537ba17a9c6
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 19:34:22 2019 -0400
+
+    indent'd like "x-indent.sh", but with a more complete set of typedefs - see
+    https://github.com/ThomasDickey/cindent-snapshots/blob/master/scripts/xxx-profile
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 8097b3fb5a7aa677eedeb58a125fc3569ea6fc48
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 16:05:12 2019 -0400
+
+    add curly-braces in a couple of places to allow running "indent"
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 8db6d1db575607767993ffb244f63d3ad5a5ac9f
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 13:46:57 2019 -0400
+
+    fix a couple of strict warnings by refactoring macros
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 0b08f9c45edf8b708b096b89c614094a92a6b7a6
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 13:26:07 2019 -0400
+
+    remove/amend a few casts which produced warnings
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit e4dfb3e179e54177244ab668d6d84486fbd26944
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 13:07:04 2019 -0400
+
+    fix a possibly-uninitialized quark, and remove unnecessary casts which produced warnings
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 6038bd4fd95050f77c18c7cbf9ec2ca9152590af
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 13:00:34 2019 -0400
+
+    constify table passed to _XtTableAddConverter to reduce strict compiler warnings
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 61df064c511bb93b49a67a2d2b3c4886d650eeda
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Jul 7 12:13:17 2019 -0400
+
+    use _X_UNUSED to quiet compiler warnings
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 1229be61dabfcbba555ec34fd43da21e94ed7f06
+Merge: 0a19e0f 93ffd50
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 18 20:03:33 2019 -0400
+
+    Merge remote-tracking branch 'upstream/master'
+
 commit 93ffd50ccf04d02fc94565d8ee831c7b63d6d71a
 Author: Thomas E. Dickey <dickey@invisible-island.net>
 Date:   Tue Jun 18 19:23:24 2019 -0400
@@ -12,6 +681,13 @@ Date:   Tue Jun 18 07:08:47 2019 -0400
 
     force a version-bump
 
+commit 0a19e0fcfa99cd293815d3fbe427c1e916c4f06d
+Merge: b21a7e5 3e20022
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 18 05:08:42 2019 -0400
+
+    Merge remote-tracking branch 'upstream/master'
+
 commit 3e2002294b130f1f46ab026075b9d7e83c94bd60
 Author: Thomas E. Dickey <dickey@invisible-island.net>
 Date:   Tue Jun 18 05:07:00 2019 -0400
@@ -19,6 +695,28 @@ Date:   Tue Jun 18 05:07:00 2019 -0400
     fix a typo
     
     Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit b21a7e5825994e5abccb852c383b944a8fe465c0
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 18 04:54:37 2019 -0400
+
+    fix a typo
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 0f754feedf83acde23e0bf6c0ccbd206b8e910ee
+Merge: e0f591b 59d9be5
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Mon Jun 17 21:27:23 2019 -0400
+
+    Merge remote-tracking branch 'upstream/master'
+
+commit e0f591bccd4bdee4d2288cf902404e87c0dae135
+Merge: 17b7730 b0ed26a
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Mon Jun 17 04:32:54 2019 -0400
+
+    Merge branch 'master' of https://gitlab.freedesktop.org/dickey/libxt
 
 commit 59d9be57268c14e6995dff47a9f3f9d173b2b8a0
 Author: Thomas E. Dickey <dickey@invisible-island.net>
@@ -29,6 +727,14 @@ Date:   Mon Jun 17 03:53:23 2019 -0400
     Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
 
 commit ae293e379419e7e8451422fdd7a899a819db362b
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Jun 15 10:45:54 2019 -0400
+
+    update to 1.1.5.3 to reflect documentation updates/review
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit b0ed26a92490d28dd1dd34d221c77ebc8b8c0a89
 Author: Thomas E. Dickey <dickey@invisible-island.net>
 Date:   Sat Jun 15 10:45:54 2019 -0400
 
