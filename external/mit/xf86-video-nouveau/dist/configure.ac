@@ -23,8 +23,8 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-nouveau],
-        [1.0.16],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/nouveau],
+        [1.0.17],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/issues/],
         [xf86-video-nouveau])
 
 AC_DEFINE_UNQUOTED([NV_DRIVER_DATE],

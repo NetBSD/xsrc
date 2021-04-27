@@ -1082,7 +1082,8 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 			pNv->wfb_enabled = xf86ReturnOptValBool(
 				pNv->Options, OPTION_WFB, FALSE);
 
-		pNv->tiled_scanout = TRUE;
+		if (pNv->Architecture >= NV_ARCH_10)
+			pNv->tiled_scanout = TRUE;
 	}
 
 	pNv->ce_enabled =
@@ -1371,6 +1372,9 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
 			pNv->ShadowFB = TRUE;
 			pNv->wfb_enabled = FALSE;
 			pNv->tiled_scanout = FALSE;
+			pScrn->capabilities &= ~(RR_Capability_SourceOutput |
+						 RR_Capability_SourceOffload |
+						 RR_Capability_SinkOutput);
 			pScrn->displayWidth = nv_pitch_align(pNv,
 							     pScrn->virtualX,
 							     pScrn->depth);
@@ -1485,7 +1489,7 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
 
 	xf86SetBlackWhitePixels(pScreen);
 
-	if (nouveau_present_init(pScreen))
+	if (pNv->AccelMethod == EXA && nouveau_present_init(pScreen))
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 			   "Hardware support for Present enabled\n");
 	else
