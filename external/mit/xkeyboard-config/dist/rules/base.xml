@@ -1330,20 +1330,6 @@
        <vendor>Google</vendor>
      </configItem>
     </model>
-    <model>
-      <configItem>
-       <name>teck227</name>
-       <description>Truly Ergonomic Computer Keyboard Model 227 (Wide Alt keys)</description>
-       <vendor>Megawin Technology</vendor>
-     </configItem>
-    </model>
-    <model>
-      <configItem>
-       <name>teck229</name>
-       <description>Truly Ergonomic Computer Keyboard Model 229 (Standard sized Alt keys, additional Super and Menu key)</description>
-       <vendor>Megawin Technology</vendor>
-     </configItem>
-    </model>
   </modelList>
   <layoutList>
     <layout>
@@ -1400,6 +1386,12 @@
           <configItem>
             <name>colemak</name>
             <description>English (Colemak)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>colemak_dh</name>
+            <description>English (Colemak-DH)</description>
           </configItem>
         </variant>
         <variant>
@@ -1748,12 +1740,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>German (Austria, Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>mac</name>
             <description>German (Austria, Macintosh)</description>
           </configItem>
@@ -1854,12 +1840,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>oss_sundeadkeys</name>
-            <description>Belgian (Sun dead keys, alt.)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>iso-alternate</name>
             <description>Belgian (ISO, alt.)</description>
           </configItem>
@@ -1868,12 +1848,6 @@
           <configItem>
             <name>nodeadkeys</name>
             <description>Belgian (no dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>sundeadkeys</name>
-            <description>Belgian (Sun dead keys)</description>
           </configItem>
         </variant>
         <variant>
@@ -2295,7 +2269,7 @@
         <variant>
           <configItem>
             <name>iipa</name>
-            <description>Indic (phonetic, IPA)</description>
+            <description>Indic IPA</description>
             <languageList>
               <iso639Id>inc</iso639Id>
             </languageList>
@@ -2436,14 +2410,14 @@
       <configItem>
         <name>dz</name>
         <shortDescription>kab</shortDescription>
-        <description>Kabylian (azerty layout, no dead keys)</description>
+        <description>Berber (Algeria, Latin)</description>
       </configItem>
       <variantList>
         <variant>
           <configItem>
             <name>azerty-deadkeys</name>
             <shortDescription>kab</shortDescription>
-            <description>Kabylian (azerty layout, with dead keys)</description>
+            <description>Kabyle (azerty layout, dead keys)</description>
             <languageList>
               <iso639Id>kab</iso639Id>
             </languageList>
@@ -2453,7 +2427,7 @@
           <configItem>
             <name>qwerty-gb-deadkeys</name>
             <shortDescription>kab</shortDescription>
-            <description>Kabylian (qwerty-gb layout, with dead keys)</description>
+            <description>Kabyle (qwerty-gb layout, dead keys)</description>
             <languageList>
               <iso639Id>kab</iso639Id>
             </languageList>
@@ -2463,7 +2437,7 @@
           <configItem>
             <name>qwerty-us-deadkeys</name>
             <shortDescription>kab</shortDescription>
-            <description>Kabylian (qwerty-us layout, with dead keys)</description>
+            <description>Kabyle (qwerty-us layout, dead keys)</description>
             <languageList>
               <iso639Id>kab</iso639Id>
             </languageList>
@@ -2473,7 +2447,7 @@
           <configItem>
             <name>ber</name>
             <shortDescription>kab</shortDescription>
-            <description>Kabylian (Algeria, Tifinagh)</description>
+            <description>Berber (Algeria, Tifinagh)</description>
             <languageList>
               <iso639Id>kab</iso639Id>
             </languageList>
@@ -3055,12 +3029,6 @@
       <variantList>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>Dutch (Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>mac</name>
             <description>Dutch (Macintosh)</description>
           </configItem>
@@ -3320,12 +3288,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>French (Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>oss</name>
             <description>French (alt.)</description>
           </configItem>
@@ -3344,12 +3306,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>oss_sundeadkeys</name>
-            <description>French (alt., Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>latin9</name>
             <description>French (legacy, alt.)</description>
           </configItem>
@@ -3358,12 +3314,6 @@
           <configItem>
             <name>latin9_nodeadkeys</name>
             <description>French (legacy, alt., no dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>latin9_sundeadkeys</name>
-            <description>French (legacy, alt., Sun dead keys)</description>
           </configItem>
         </variant>
         <variant>
@@ -3534,11 +3484,9 @@
     <layout>
       <configItem>
         <name>gn</name>
-        <!-- Keyboard indicator for French layouts -->
-        <shortDescription>fr</shortDescription>
-        <description>French (Guinea)</description>
+        <description>N'Ko (azerty)</description>
         <languageList>
-          <iso639Id>fra</iso639Id>
+          <iso639Id>nqo</iso639Id>
         </languageList>
       </configItem>
       <variantList/>
@@ -3663,12 +3611,6 @@
           <configItem>
             <name>dvorak</name>
             <description>German (Dvorak)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>sundeadkeys</name>
-            <description>German (Sun dead keys)</description>
           </configItem>
         </variant>
         <variant>
@@ -3916,18 +3858,6 @@
         </languageList>
       </configItem>
       <variantList>
-        <variant>
-          <configItem>
-            <name>Sundeadkeys</name>
-            <description>Icelandic (Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>nodeadkeys</name>
-            <description>Icelandic (no dead keys)</description>
-          </configItem>
-        </variant>
         <variant>
           <configItem>
             <name>mac_legacy</name>
@@ -4263,12 +4193,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>Spanish (Latin American, Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>dvorak</name>
             <description>Spanish (Latin American, Dvorak)</description>
           </configItem>
@@ -4335,6 +4259,12 @@
             <languageList>
               <iso639Id>sgs</iso639Id>
             </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>ratise</name>
+            <description>Lithuanian (Ratise)</description>
           </configItem>
         </variant>
       </variantList>
@@ -4683,12 +4613,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>Portuguese (Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>mac</name>
             <description>Portuguese (Macintosh)</description>
           </configItem>
@@ -4697,12 +4621,6 @@
           <configItem>
             <name>mac_nodeadkeys</name>
             <description>Portuguese (Macintosh, no dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>mac_sundeadkeys</name>
-            <description>Portuguese (Macintosh, Sun dead keys)</description>
           </configItem>
         </variant>
         <variant>
@@ -4741,20 +4659,8 @@
       <variantList>
         <variant>
           <configItem>
-            <name>cedilla</name>
-            <description>Romanian (cedilla)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>std</name>
             <description>Romanian (standard)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>std_cedilla</name>
-            <description>Romanian (standard cedilla)</description>
           </configItem>
         </variant>
         <variant>
@@ -5104,12 +5010,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>sundeadkeys</name>
-            <description>Spanish (Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>dvorak</name>
             <description>Spanish (Dvorak)</description>
           </configItem>
@@ -5259,14 +5159,6 @@
         </variant>
         <variant>
           <configItem>
-            <name>de_sundeadkeys</name>
-            <!-- Keyboard indicator for German layouts -->
-            <shortDescription>de</shortDescription>
-            <description>German (Switzerland, Sun dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
             <name>fr</name>
             <!-- Keyboard indicator for French layouts -->
             <shortDescription>fr</shortDescription>
@@ -5282,17 +5174,6 @@
             <!-- Keyboard indicator for French layouts -->
             <shortDescription>fr</shortDescription>
             <description>French (Switzerland, no dead keys)</description>
-            <languageList>
-              <iso639Id>fra</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>fr_sundeadkeys</name>
-            <!-- Keyboard indicator for French layouts -->
-            <shortDescription>fr</shortDescription>
-            <description>French (Switzerland, Sun dead keys)</description>
             <languageList>
               <iso639Id>fra</iso639Id>
             </languageList>
@@ -5487,12 +5368,6 @@
           <configItem>
             <name>alt</name>
             <description>Turkish (Alt-Q)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>sundeadkeys</name>
-            <description>Turkish (Sun dead keys)</description>
           </configItem>
         </variant>
         <variant>
@@ -5723,6 +5598,12 @@
           <configItem>
             <name>colemak</name>
             <description>English (UK, Colemak)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>colemak_dh</name>
+            <description>English (UK, Colemak-DH)</description>
           </configItem>
         </variant>
         <variant>
@@ -7102,7 +6983,7 @@
       <option>
         <configItem>
           <name>caps:ctrl_modifier</name>
-          <description>Caps Lock is also a Ctrl</description>
+          <description>Make Caps Lock an additional Ctrl</description>
         </configItem>
       </option>
       <option>
@@ -7460,6 +7341,12 @@
         <configItem>
           <name>lv5:ralt_switch</name>
           <description>Right Alt chooses 5th level</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>lv5:menu_switch</name>
+          <description>Menu chooses 5th level</description>
         </configItem>
       </option>
       <option>

@@ -106,8 +106,8 @@ xkb_symbols "f" {
     key <TLDE>  { [      plus,   asterisk,       notsign,     plusminus ] };
 
     key <BKSL>  { [         x,          X,         grave,    dead_grave ] };
-    key <AB01>  { [         j,          J, guillemotleft,    VoidSymbol ] };
-    key <AB02>  { [odiaeresis, Odiaeresis,guillemotright,    VoidSymbol ] };
+    key <AB01>  { [         j,          J, guillemotleft,    less ] };
+    key <AB02>  { [odiaeresis, Odiaeresis, guillemotright,   greater ] };
     key <AB03>  { [         v,          V, leftdoublequotemark, VoidSymbol ] };
     key <AB04>  { [         c,          C,          cent,     copyright ] };
     key <AB05>  { [  ccedilla,   Ccedilla,rightdoublequotemark, VoidSymbol ] };
@@ -151,17 +151,6 @@ xkb_symbols "alt" {
     include "level3(ralt_switch)"
 };
 
-
-partial alphanumeric_keys
-xkb_symbols "Sundeadkeys" {
-    include "tr(basic)"
-};
-
-partial alphanumeric_keys
-xkb_symbols "sundeadkeys" {
-    include "tr(Sundeadkeys)"
-    name[Group1]="Turkish (Sun dead keys)";
-};
 
 // Kurdish Q layout
 // Erdal Ronahi <erdal.ronahi@gmail.com>, 2006

@@ -109,7 +109,6 @@ xkb_symbols "evdev" {
     key <MUHE>   {      [ Muhenkan              ]       };
     key <KATA>   {      [ Katakana              ]       };
     key <HIRA>   {      [ Hiragana              ]       };
-    key <RO>     {      [ Romaji                ]       };
 
     key <HNGL>   {      [ Hangul                ]       };
     key <HJCV>   {      [ Hangul_Hanja          ]       };
@@ -198,10 +197,10 @@ xkb_symbols "evdev" {
     key <I232>   {      [ XF86MonBrightnessDown ]       };
     key <I233>   {      [ XF86MonBrightnessUp   ]       };
     key <I234>   {      [ XF86AudioMedia        ]       };
-    key <I235>   {      [ XF86Display           ]       };
-    key <I236>   {      [ XF86KbdLightOnOff     ]       }; // KEY_KBDILLUMTOGGLE
-    key <I237>   {      [ XF86KbdBrightnessDown ]       }; // KEY_KBDILLUMDOWN
-    key <I238>   {      [ XF86KbdBrightnessUp   ]       }; // KEY_KBDILLUMUP
+//  key <I235>   {      [ ]                             }; // see <OUTP>
+//  key <I236>   {      [ ]                             }; // see <KITG>
+//  key <I237>   {      [ ]                             }; // see <KIDN>
+//  key <I238>   {      [ ]                             }; // see <KIUP>
     key <I239>   {      [ XF86Send              ]       };
     key <I240>   {      [ XF86Reply             ]       };
     key <I241>   {      [ XF86MailForward       ]       };
