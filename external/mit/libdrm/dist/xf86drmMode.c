@@ -33,11 +33,6 @@
  *
  */
 
-/*
- * TODO the types we are after are defined in different headers on different
- * platforms find which headers to include to get uint32_t
- */
-
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -150,6 +145,16 @@ drm_public void drmModeFreeEncoder(drmModeEncoderPtr ptr)
 /*
  * ModeSetting functions.
  */
+
+drm_public int drmIsKMS(int fd)
+{
+	struct drm_mode_card_res res = {0};
+
+	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res) != 0)
+		return 0;
+
+	return res.count_crtcs > 0 && res.count_connectors > 0 && res.count_encoders > 0;
+}
 
 drm_public drmModeResPtr drmModeGetResources(int fd)
 {
@@ -284,8 +289,10 @@ drm_public int drmModeAddFB2WithModifiers(int fd, uint32_t width,
 	memcpy(f.handles, bo_handles, 4 * sizeof(bo_handles[0]));
 	memcpy(f.pitches, pitches, 4 * sizeof(pitches[0]));
 	memcpy(f.offsets, offsets, 4 * sizeof(offsets[0]));
-	if (modifier)
+	if (modifier) {
+		f.flags |= DRM_MODE_FB_MODIFIERS;
 		memcpy(f.modifier, modifier, 4 * sizeof(modifier[0]));
+	}
 
 	if ((ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_ADDFB2, &f)))
 		return ret;
