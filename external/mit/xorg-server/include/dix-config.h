@@ -125,9 +125,6 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
 
-/* Define to 1 if you have the libdispatch (GCD) available */
-/* #undef HAVE_LIBDISPATCH */
-
 /* Define to 1 if you have the <linux/agpgart.h> header file. */
 /* #undef HAVE_LINUX_AGPGART_H */
 
@@ -358,7 +355,7 @@
 #define XINERAMA 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((10) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((11) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
