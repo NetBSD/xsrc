@@ -200,7 +200,7 @@
 /* #undef PROCFS_ROOT */		/* CF_ARG_ENABLE(exec-xterm) */
 #define SCROLLBAR_RIGHT 1		/* CF_ARG_ENABLE(rightbar) */
 #define SIG_ATOMIC_T volatile sig_atomic_t		/* CF_SIG_ATOMIC_T */
-#define STDC_NORETURN 1			/* CF_C11_NORETURN */
+#define STDC_NORETURN _Noreturn			/* CF_C11_NORETURN */
 /* #undef SVR4 */			/* CF_SVR4, imake */
 /* #undef SYSV */			/* CF_SYSV, imake */
 #define TIME_WITH_SYS_TIME 1	/* AC_HEADER_TIME */
