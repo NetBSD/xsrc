@@ -98,6 +98,7 @@
 #define HAVE_SETPGID 1		/* AC_CHECK_FUNCS(setpgid) */
 #define HAVE_STDINT_H 1		/* AC_PROG_CC_STDC */
 #define HAVE_STDLIB_H 1		/* AC_CHECK_HEADERS(stdlib.h) */
+#define HAVE_STDNORETURN_H 1		/* CF_C11_NORETURN */
 #define HAVE_STRFTIME 1		/* AC_CHECK_FUNCS(strftime) */
 /* #undef HAVE_SYS_TIME_H */		/* AC_HEADER_TIME */
 #define HAVE_SYS_TTYDEFAULTS_H 1	/* AC_CHECK_HEADERS(sys/ttydefaults.h) */
@@ -190,7 +191,7 @@
 /* #undef OPT_TOOLBAR */		/* CF_ARG_ENABLE(toolbar) */
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
-/* #undef OPT_WIDE_ATTRS */		/* CF_ARG_DISABLE(wide-attrs) */
+#define OPT_WIDE_ATTRS 1		/* CF_ARG_DISABLE(wide-attrs) */
 #define OPT_WIDE_CHARS 1		/* CF_ARG_DISABLE(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
@@ -199,6 +200,7 @@
 /* #undef PROCFS_ROOT */		/* CF_ARG_ENABLE(exec-xterm) */
 #define SCROLLBAR_RIGHT 1		/* CF_ARG_ENABLE(rightbar) */
 #define SIG_ATOMIC_T volatile sig_atomic_t		/* CF_SIG_ATOMIC_T */
+#define STDC_NORETURN 1			/* CF_C11_NORETURN */
 /* #undef SVR4 */			/* CF_SVR4, imake */
 /* #undef SYSV */			/* CF_SYSV, imake */
 #define TIME_WITH_SYS_TIME 1	/* AC_HEADER_TIME */
@@ -239,7 +241,7 @@
  */
 #ifndef __cplusplus
 #define GCC_PRINTF	1
-#define GCC_PRINTFLIKE(fmt,var)	__attribute__((format(printf,fmt,var)))
+#define GCC_PRINTFLIKE(fmt,var)	__attribute__((__format__(__printf__,fmt,var)))
 #define GCC_NORETURN	__attribute__((__noreturn__))
 #define GCC_UNUSED	__attribute__((__unused__))
 #endif
