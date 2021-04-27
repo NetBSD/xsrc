@@ -1,3 +1,112 @@
+commit c39897466573aabd6a3b4e63e8e5fb42ac5971f8
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jan 23 12:24:42 2021 -0500
+
+    Bump version to 1.0.17
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 7212a2782f3e638acf49de4716656b2ae27c2156
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Aug 15 23:18:22 2020 -0400
+
+    present: fix handling of drmWaitVBlank failures
+    
+    When drmWaitVBlank fails, make sure to remove the event from the queue.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 5031100549fb053527a1f11d771e930dec065ced
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Aug 15 23:20:53 2020 -0400
+
+    drmmode: make event handler leave a note that there are stuck events
+    
+    We don't really expect to have too many events in the queue. If there
+    are, then the algorithm we use isn't appropriate. Add a warning when the
+    queue gets very long, as it's an indication of something having gone
+    wrong.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit f833cd0827a73b716cc3af5905015fcb2c7d958d
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jul 18 18:44:58 2020 -0400
+
+    present: don't enable if there's no acceleration
+    
+    All the present logic relies on EXA being used to wrap everything.
+    Unclear if present could even be used without the other things EXA
+    enables, but better be safe.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 971624406a8ecd85bad8c2e2d1fd26f5d14bae92
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jul 18 18:40:35 2020 -0400
+
+    drmmode: fix screen resize without acceleration
+    
+    This got broken with commit 86024cee back in 2014!
+    drmmode_pixmap/nouveau_pixmap expect there to be EXA wrapping around the
+    pixmap now, which is not there without accel.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 5444cabcf0ab5cea614270f1ad1df1e1fccb3c2b
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Oct 26 18:36:27 2019 -0400
+
+    make error when failing to allocate surface more descriptive
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit ef89b3c5ca9b2569ca61a9452d13a93edc832810
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Oct 12 20:13:25 2019 -0400
+
+    dri2,present: move in pixmap before getting addresses
+    
+    First of all, we were not forcing the pixmap to be moved in before
+    attempting to present it. Secondly, in certain configurations, we avoid
+    ever backing pixmaps with vram (in GPUs with 32MB of VRAM or less).
+    
+    This fixes the observed cases where we ended up assuming that a bo was
+    backing a pixmap without doing the explicit move-in.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 856572319fadeeadf58d782ab6f3f2d230822d67
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Oct 12 16:00:15 2019 -0400
+
+    nv4/exa: tiling is unsupported pre-nv10, reduce alignment requirements
+    
+    Commit 8c8f15c9d3 added increased pitch alignment requirements to handle
+    nv10-nv40 tiling (which must have a small number * PoT pitch). While
+    NV4/NV5 do have tiling, this was never supported in nouveau.
+    
+    This change enables 1920x1200 resolutions since the maximum surface
+    pitch has to be strictly less than 8192. The current logic will align
+    1920*4 up to 8192 unnecessarily.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Cc: Marcin Kościelnicki <koriakin@0x04.net>
+    Cc: Francisco Jerez <currojerez@riseup.net>
+
+commit a5f04582cecb1a649bb46b8af9f2889247788d00
+Author: Carlo Caione <carlo@endlessm.com>
+Date:   Fri Sep 1 12:47:23 2017 +0200
+
+    Don't advertise any PRIME offloading capabilities without acceleration
+    
+    Acceleration is required even for display offloading. Trying to enable
+    display offloading without acceleration resulted in a crash.
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=101220
+    
+    Signed-off-by: Carlo Caione <carlo@endlessm.com>
+
 commit ec2b45d1bf4c31c5420b48c213bf9ee1656adf9d
 Author: Ilia Mirkin <imirkin@alum.mit.edu>
 Date:   Mon Jan 28 23:25:58 2019 -0500

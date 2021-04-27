@@ -115,7 +115,7 @@ nouveau_allocate_surface(ScrnInfoPtr scrn, int width, int height, int bpp,
 
 	ret = nouveau_bo_new(pNv->dev, flags, 0, *pitch * height, &cfg, bo);
 	if (ret) {
-		ErrorF("%d\n", ret);
+		ErrorF("failure to allocate surface %dx%d@%d (pitch %d): %d\n", width, height, bpp, *pitch, ret);
 		return FALSE;
 	}
 
