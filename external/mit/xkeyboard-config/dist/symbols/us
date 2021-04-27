@@ -84,7 +84,6 @@ xkb_symbols "ibm238l" {
 partial alphanumeric_keys
 xkb_symbols "intl" {
 
-    include "us(basic)"
     name[Group1]= "English (US, intl., with dead keys)";
 
     key <TLDE> { [dead_grave, dead_tilde,         grave,       asciitilde ] };
@@ -122,7 +121,6 @@ xkb_symbols "intl" {
     key <AC06> { [	   h,          H,             h,                H ] };
     key <AC07> { [	   j,          J,             j,                J ] };
     key <AC08> { [	   k,          K,            oe,               OE ] };
-
     key <AC09> { [	   l,          L,        oslash,         Ooblique ] };
     key <AC10> { [ semicolon,      colon,     paragraph,           degree ] };
     key <AC11> { [dead_acute, dead_diaeresis, apostrophe,        quotedbl ] };
@@ -198,8 +196,6 @@ xkb_symbols "alt-intl" {
 
   include "level3(ralt_switch)"
 };
-
-// based on a keyboard map from an 'xkb/symbols/dk' file
 
 partial alphanumeric_keys
 xkb_symbols "dvorak" {
@@ -673,8 +669,8 @@ key.type[group1]="FOUR_LEVEL_ALPHABETIC";
 partial alphanumeric_keys
 xkb_symbols "mac" {
 
-    include "us(basic)"
     name[Group1]= "English (Macintosh)";
+
     key.type[group1]="FOUR_LEVEL";
 
     // Slightly improvised from http://homepage.mac.com/thgewecke/kblayout.jpg
@@ -715,7 +711,6 @@ xkb_symbols "mac" {
     key <AC06> { [	   h,          H, dead_abovedot,    dead_belowdot ] };
     key <AC07> { [	   j,          J,         U2206,          onehalf ] };
     key <AC08> { [	   k,          K,dead_abovering,            UF8FF ] };
-
     key <AC09> { [	   l,          L,       notsign,            THORN ] };
     key <AC10> { [ semicolon,      colon,         U2026,            thorn ] };
     key <AC11> { [apostrophe,   quotedbl,            ae,               AE ] };
@@ -741,7 +736,6 @@ xkb_symbols "mac" {
 partial alphanumeric_keys
 xkb_symbols "colemak" {
 
-    include "us"
     name[Group1]= "English (Colemak)";
 
     key <TLDE> { [        grave,   asciitilde,      dead_tilde,       asciitilde ] };
@@ -801,6 +795,72 @@ xkb_symbols "colemak" {
 
     include "level3(ralt_switch)"
 };
+
+
+// Colemak-DH (ANSI) symbols for xkb on X.Org Server 7.x
+// 2014-10-25 by SteveP, https://colemakmods.github.io/mod-dh/
+
+xkb_symbols "colemak_dh" {
+
+    name[Group1]= "English (Colemak-DH)";
+
+    key <TLDE> { [        grave,   asciitilde,      dead_tilde,       asciitilde ] };
+    key <AE01> { [            1,       exclam,      exclamdown,      onesuperior ] };
+    key <AE02> { [            2,           at,       masculine,      twosuperior ] };
+    key <AE03> { [            3,   numbersign,     ordfeminine,    threesuperior ] };
+    key <AE04> { [            4,       dollar,            cent,         sterling ] };
+    key <AE05> { [            5,      percent,        EuroSign,              yen ] };
+    key <AE06> { [            6,  asciicircum,         hstroke,          Hstroke ] };
+    key <AE07> { [            7,    ampersand,             eth,              ETH ] };
+    key <AE08> { [            8,     asterisk,           thorn,            THORN ] };
+    key <AE09> { [            9,    parenleft,  leftsinglequotemark,  leftdoublequotemark ] };
+    key <AE10> { [            0,   parenright, rightsinglequotemark,  rightdoublequotemark ] };
+    key <AE11> { [        minus,   underscore,          endash,           emdash ] };
+    key <AE12> { [        equal,         plus,        multiply,         division ] };
+
+    key <AD01> { [            q,            Q,      adiaeresis,       Adiaeresis ] };
+    key <AD02> { [            w,            W,           aring,            Aring ] };
+    key <AD03> { [            f,            F,          atilde,           Atilde ] };
+    key <AD04> { [            p,            P,          oslash,         Ooblique ] };
+    key <AD05> { [            b,            B,      dead_breve,       asciitilde ] };
+    key <AD06> { [            j,            J,         dstroke,          Dstroke ] };
+    key <AD07> { [            l,            L,         lstroke,          Lstroke ] };
+    key <AD08> { [            u,            U,          uacute,           Uacute ] };
+    key <AD09> { [            y,            Y,      udiaeresis,       Udiaeresis ] };
+    key <AD10> { [    semicolon,        colon,      odiaeresis,       Odiaeresis ] };
+    key <AD11> { [  bracketleft,    braceleft,   guillemotleft,        0x1002039 ] };
+    key <AD12> { [ bracketright,   braceright,  guillemotright,        0x100203a ] };
+    key <BKSL> { [    backslash,          bar,      asciitilde,       asciitilde ] };
+
+    key <AC01> { [            a,            A,          aacute,           Aacute ] };
+    key <AC02> { [            r,            R,      dead_grave,       asciitilde ] };
+    key <AC03> { [            s,            S,          ssharp,        0x1001e9e ] };
+    key <AC04> { [            t,            T,      dead_acute, dead_doubleacute ] };
+    key <AC05> { [            g,            G,     dead_ogonek,       asciitilde ] };
+    key <AC06> { [            m,            M,     dead_macron,       asciitilde ] };
+    key <AC07> { [            n,            N,          ntilde,           Ntilde ] };
+    key <AC08> { [            e,            E,          eacute,           Eacute ] };
+    key <AC09> { [            i,            I,          iacute,           Iacute ] };
+    key <AC10> { [            o,            O,          oacute,           Oacute ] };
+    key <AC11> { [   apostrophe,     quotedbl,          otilde,           Otilde ] };
+
+    key <LSGT> { [            z,            Z,              ae,               AE ] };
+    key <AB01> { [            x,            X, dead_circumflex,       asciitilde ] };
+    key <AB02> { [            c,            C,        ccedilla,         Ccedilla ] };
+    key <AB03> { [            d,            D,  dead_diaeresis,       asciitilde ] };
+    key <AB04> { [            v,            V,              oe,               OE ] };
+    key <AB05> { [            z,            Z,              ae,               AE ] }; //Z appears here too because <LSGT> key is not present on ANSI keyboards
+    key <AB06> { [            k,            K,  dead_abovering,       asciitilde ] };
+    key <AB07> { [            h,            H,      dead_caron,       asciitilde ] };
+    key <AB08> { [        comma,         less,    dead_cedilla,       asciitilde ] };
+    key <AB09> { [       period,      greater,   dead_abovedot,       asciitilde ] };
+    key <AB10> { [        slash,     question,    questiondown,       asciitilde ] };
+
+    key <SPCE> { [        space,        space,           space,     nobreakspace ] };
+
+    include "level3(ralt_switch)"
+};
+
 
 // I do NOT like dead-keys - the International keyboard as defined by Microsoft
 // does not fit my needs. Why use two keystrokes for all simple characters (eg '
@@ -1395,7 +1455,6 @@ xkb_symbols "carpalx" {
 partial alphanumeric_keys
 xkb_symbols "carpalx-intl" {
 
-    include "us(carpalx)"
     name[Group1]= "English (Carpalx, intl., with dead keys)";
 
     key <TLDE> { [dead_grave, dead_tilde,         grave,       asciitilde ] };
@@ -1465,16 +1524,10 @@ xkb_symbols "carpalx-altgr-intl" {
    include "us(carpalx-intl)"
    name[Group1]= "English (Carpalx, intl., with AltGr dead keys)";
 
-// five dead keys moved into level3:
-
    key <TLDE> { [    grave, asciitilde,  dead_grave,   dead_tilde      ] };
    key <AC11> { [apostrophe,quotedbl,    dead_acute,   dead_diaeresis  ] };
 
-// diversions from the MS Intl keyboard:
-
    key <AE01> { [        1, exclam,      onesuperior,  exclamdown      ] };
-
-// onequarter etc (not in iso8859-15) moved to get three unshifted deadkeys:
 
    key <AE06> { [        6, asciicircum, dead_circumflex, onequarter    ] };
    key <AE07> { [        7, ampersand,   dead_horn,       onehalf       ] };
@@ -1603,7 +1656,6 @@ xkb_symbols "symbolic" {
  key <LSGT> { [ U230A,     U230B, U2308, U2309      ] }; // ⌊ ⌋ ⌈ ⌉
 
  include "level3(ralt_switch)"
-
 };
 
 // EXTRAS:
@@ -1679,8 +1731,8 @@ xkb_symbols "scn" {
 // deadkeys.  This variation does not deviate from the lame MS-style
 // US-intl layout; but it uses AltGr for combining, like altgr-intl.
 //
-// This might break your font layout layout systems (because they
-// suck), caveat emptor.  Also, most of today's software will count
+// This might break your font layout systems (because they suck),
+// caveat emptor.  Also, most of today's software will count
 // individual combining marks for selection, deletion, character
 // counting &c., and won't be smart enough to do canonical equivalence
 // when searching, &c.
@@ -1702,41 +1754,26 @@ xkb_symbols "intl-unicode" {
 
  name[Group1]= "English (US, intl., AltGr Unicode combining)";
 
- // grave, tilde
- key <TLDE> { [grave, asciitilde, U0300, U0303 ] };
- // double acute
- key <AE02> { [ 2, at, twosuperior, U030B ] };
- // macron
- key <AE03> { [ 3, numbersign, threesuperior, U0304 ] };
- // circumflex
- key <AE06> { [ 6, asciicircum, onequarter, U0302 ] };
- // horn
- key <AE07> { [ 7, ampersand, onehalf, U031B ] };
- // ogonek
- key <AE08> { [ 8, asterisk, threequarters, U0328 ] };
- // breve
- key <AE09> { [	 9, parenleft, leftsinglequotemark, U0306 ] };
- // abovering
- key <AE10> { [	 0, parenright, rightsinglequotemark, U030A ] };
+ key <TLDE> { [ grave, asciitilde, U0300, U0303 ] }; // grave, tilde
+ key <AE02> { [ 2, at, twosuperior, U030B ] }; // double acute
+ key <AE03> { [ 3, numbersign, threesuperior, U0304 ] }; // macron
+ key <AE06> { [ 6, asciicircum, onequarter, U0302 ] }; // circumflex
+ key <AE07> { [ 7, ampersand, onehalf, U031B ] }; // horn
+ key <AE08> { [ 8, asterisk, threequarters, U0328 ] }; // ogonek
+ key <AE09> { [ 9, parenleft, leftsinglequotemark, U0306 ] }; // breve
+ key <AE10> { [ 0, parenright, rightsinglequotemark, U030A ] }; // abovering
 
- // belowdot
- key <AE11> { [ minus, underscore, yen, U0323 ] };
- // acute, diaeresis
- key <AC11> { [apostrophe, quotedbl, U0301, U0308 ] };
- // abovedot, caron
- key <AB09> { [ period, greater, U0307, U030C ] };
- // hook
- key <AB10> { [ slash, question, questiondown, U0309 ] };
+ key <AE11> { [ minus, underscore, yen, U0323 ] }; // belowdot
+ key <AC11> { [ apostrophe, quotedbl, U0301, U0308 ] }; // acute, diaeresis
+ key <AB09> { [ period, greater, U0307, U030C ] }; // abovedot, caron
+ key <AB10> { [ slash, question, questiondown, U0309 ] }; // hook
 
  // alt-intl compatibility
- // cedilla, caron
- key <AB08> { [ comma, less,	 U0327, U030C ] };
- // ogonek, diaeresis
- key <AC10> { [ semicolon, colon,	 U0328, U0308 ] };
- // doubleacute, horn
- key <AE12> { [ equal, plus,	 U030B, U031B ] };
+ key <AB08> { [ comma, less, U0327, U030C ] }; // cedilla, caron
+ key <AC10> { [ semicolon, colon, U0328, U0308 ] }; // ogonek, diaeresis
+ key <AE12> { [ equal, plus, U030B, U031B ] }; // doubleacute, horn
 
- // we don't do combining latin letters and combining enclosures
+ // We don't do combining latin letters and combining enclosures,
  // because support for those is very rare.
 };
 
@@ -1758,7 +1795,6 @@ xkb_symbols "alt-intl-unicode" {
 
  // belowdot, abovedot (caron at coma/less key, per above)
  key <AB09> { [ period, greater, U0323, U0307 ] };
-
 };
 
 partial alphanumeric_keys
@@ -1969,7 +2005,7 @@ xkb_symbols "drix" {
 	// Second row
 	key <AD01> {[ q,           Q,              oslash,               Ooblique              ]}; // q Q ø Ø
 	key <AD02> {[ w,           W,              w,                    uparrow               ]}; // w W w ↑
-	key <AD03> {[ e,           E,              EuroSign,             EuroS                 ]}; // e E € €
+	key <AD03> {[ e,           E,              EuroSign,             EuroSign              ]}; // e E € €
 	key <AD04> {[ r,           R,              registered,           0x10020bd             ]}; // r R ® ₽
 	key <AD05> {[ t,           T,              trademark,            Greek_tau             ]}; // t T ™ τ
 	key <AD06> {[ y,           Y,              yen,                  yen                   ]}; // y Y ¥ ¥
@@ -2040,5 +2076,333 @@ xkb_symbols "de_se_fi"  {
     key <AD10> {[ p,            P,          aring,      Aring      ]};
     key <AD12> {[ bracketright, braceright, asciitilde             ]};
 
+    include "level3(ralt_switch)"
+};
+
+// Hyena keybindings
+// Copyleft (c) 2015 by Richard Gomes - http://github.com/frgomes/carpalx
+// Relieving the poor suffering pinkies of heavy Emacs users
+//
+// Reduce travel by:
+//    1. Compact design which works well on compact keyboards such as GH60 and alike;
+//    2. Arrow keys are mapped on clusters ESDF and IJKL.
+//
+// Relief pinkes by:
+//    1. Swap Alt_L and Ctrl_L, which moves load to the thumb;
+//    2. Menu on the right hand is a modifier which behaves as Caps on the left hand;
+//
+// Notes:
+//    1. Alt_R and Ctrl_R are **not** swapped in order to avoid conflict with uses of AltGr (Alt_R)
+//       as a modifier Mod3, which would confuse users of international character sets. This way,
+//       Hyena aims to add features and benefit Emacs uses, but without compromise existing
+//       muscle memory of non-English speaker or poliglots.
+//    2. Hyper_L and Hyper_R are reserved for future expansion.
+//
+// This is "hyena" layout shown over "us" layout:
+//
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Esc  ~ |! F13  |@ F14  |# F15  |$ F16  |% F17  |^ F18  |& F19  |* F20  |( F21  |) F22  |- F24  |= F24  |
+// |Esc  ` |1 F1   |2 F2   |3 F3   |4 F4   |5 F5   |6 F6   |7 F7   |8 F8   |9 F9   |0 F10  |  F11  |  F12  |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Tab    |Q      |W      |E      |R      |T      |Y      |U      |I      |O      |P      |{      |}      ||      |
+// |       |   Ins |  Home |  Up   |  End  |  PgUp |   Ins |   Home|  Up   |    End|   PgUp|[      |]      |\      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Mod4   |A      |S      |D      |F      |G      |H      |J      |K      |L      |:      |"      |
+// |       |   Del |  Left |  Down |  Right|  PgDn |   Del |  Left |  Down |  Right|;  PgDn|' Menu |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+//         |Z      |X      |C      |V      |B      |N      |M      |<      |>      |?      |
+//         |       |       |       |       |       |       |       |,      |.      |/      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Alt    |       |Ctrl   |HyperL |Space                  |HyperR |Mod3   |       |Ctrl   |Mod4   |
+// |       |       |       |       |              Backspace|       |       |       |       |       |
+// +-------+       +-------+---------------------------------------+-------+       +-------+-------+
+
+partial alphanumeric_keys
+xkb_symbols "lv5-hyena" {
+
+    include "level5(modifier_mapping)"
+    include "level5(caps_switch)"
+    include "level5(menu_switch)"
+    include "ctrl(swap_lalt_lctl)"
+
+    key.type[Group1] = "EIGHT_LEVEL";
+
+    key <AC11> { symbols[Group1]=[ NoSymbol,   NoSymbol,   NoSymbol,   NoSymbol,   Menu,                                     Menu ],
+                 actions[Group1]=[ NoAction(), NoAction(), NoAction(), NoAction(), Redirect(key=<MENU>,clearmods=LevelFive), Redirect(key=<MENU>,clearmods=LevelFive) ] };
+
+    key <TLDE> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Escape,    Escape    ] };
+    key <AE01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F1,        F13       ] };
+    key <AE02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F2,        F14       ] };
+    key <AE03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F3,        F15       ] };
+    key <AE04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F4,        F16       ] };
+    key <AE05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F5,        F17       ] };
+    key <AE06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F6,        F18       ] };
+    key <AE07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F7,        F19       ] };
+    key <AE08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F8,        F20       ] };
+    key <AE09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F9,        F21       ] };
+    key <AE10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F10,       F22       ] };
+    key <AE11> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F11,       F23       ] };
+    key <AE12> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F12,       F24       ] };
+
+    key <AD01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Insert,    Insert    ] };
+    key <AD02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Home,      Home      ] };
+    key <AD03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Up,        Up        ] };
+    key <AD04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, End,       End       ] };
+    key <AD05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Prior,     Prior     ] };
+
+    key <AC01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Delete,    Delete    ] };
+    key <AC02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Left,      Left      ] };
+    key <AC03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Down,      Down      ] };
+    key <AC04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Right,     Right     ] };
+    key <AC05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Next,      Next      ] };
+
+    key <AD06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Insert,    Insert    ] };
+    key <AD07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Home,      Home      ] };
+    key <AD08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Up,        Up        ] };
+    key <AD09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, End,       End       ] };
+    key <AD10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Prior,     Prior     ] };
+
+    key <AC06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Delete,    Delete    ] };
+    key <AC07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Left,      Left      ] };
+    key <AC08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Down,      Down      ] };
+    key <AC09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Right,     Right     ] };
+    key <AC10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Next,      Next      ] };
+
+    key <SPCE> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, BackSpace, BackSpace ] };
+};
+partial alphanumeric_keys
+xkb_symbols "hyena" {
+    include "us(basic)"
+    name[Group1]= "English (US, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "hyena-alt-intl" {
+    include "us(alt-intl)"
+    name[Group1]= "English (US, alt. intl., with dead keys, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "hyena-intl-unicode" {
+    include "us(intl-unicode)"
+    name[Group1]= "English (US, intl., AltGr Unicode combining, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "hyena-carpalx" {
+    include "us(carpalx-full)"
+    name[Group1]= "English (Carpalx, full optimization, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "hyena-carpalx-intl" {
+    include "us(carpalx-full-intl)"
+    name[Group1]= "English (Carpalx, full optimization, intl., with dead keys, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "hyena-carpalx-altgr-intl" {
+    include "us(carpalx-full-altgr-intl)"
+    name[Group1]= "English (Carpalx, full optimization, intl., with AltGr dead keys, Hyena Layer5)";
+    include "us(lv5-hyena)"
+    include "level3(ralt_switch)"
+};
+
+// MiniGuru emulation
+// Copyleft (c) 2014 by Richard Gomes - http://github.com/frgomes/carpalx
+// Inspired by http://www.guru-board.com/english/layout_en
+//
+// This is "miniguru" layout shown over "us" layout:
+//
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Esc  ~ |! F13  |@ F14  |# F15  |$ F16  |% F17  |^ F18  |& F19  |* F20  |( F21  |) F22  |- F24  |= F24  |
+// |Esc  ` |1 F1   |2 F2   |3 F3   |4 F4   |5 F5   |6 F6   |7 F7   |8 F8   |9 F9   |0 F10  |  F11  |  F12  |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Tab    |Q      |W      |E      |R      |T      |Y      |U      |I      |O      |P      |{      |}      ||      |
+// |       |       |  PrScr|  ScrLk|  Pause|       |       |   Home|  Up   |    End|   PgUp|[      |]      |\      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Mod4   |A      |S      |D      |F      |G      |H      |J      |K      |L      |:      |"      |
+// |       |       |       |       |       |       |       |  Left |  Down |  Right|;  PgDn|' Menu |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+//         |Z      |X      |C      |V      |B      |N      |M      |<      |>      |?      |
+//         |       |       |       |       |       |       |    Del|,   Ins|.      |/      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Alt    |       |Ctrl   |Space                                  |Mod3   |       |Ctrl   |Mod4   |
+// |       |       |       |                              Backspace|       |       |       |       |
+// +-------+       +-------+---------------------------------------+-------+       +-------+-------+
+
+partial alphanumeric_keys
+xkb_symbols "lv5-miniguru" {
+
+    include "level5(modifier_mapping)"
+    include "level5(caps_switch)"
+    include "level5(menu_switch)"
+    include "ctrl(swap_lalt_lctl)"
+
+    key.type[Group1] = "EIGHT_LEVEL";
+
+    key <AC11> { symbols[Group1]=[ NoSymbol,   NoSymbol,   NoSymbol,   NoSymbol,   Menu,                                     Menu ],
+                 actions[Group1]=[ NoAction(), NoAction(), NoAction(), NoAction(), Redirect(key=<MENU>,clearmods=LevelFive), Redirect(key=<MENU>,clearmods=LevelFive) ] };
+
+    key <TLDE> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Escape,      Escape      ] }; // `~
+    key <AE01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F1,          F13         ] }; // 1!
+    key <AE02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F2,          F14         ] }; // 2@
+    key <AE03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F3,          F15         ] }; // 3#
+    key <AE04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F4,          F16         ] }; // 4$
+    key <AE05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F5,          F17         ] }; // 5%
+    key <AE06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F6,          F18         ] }; // 6^
+    key <AE07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F7,          F19         ] }; // 7&
+    key <AE08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F8,          F20         ] }; // 8*
+    key <AE09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F9,          F21         ] }; // 9(
+    key <AE10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F10,         F22         ] }; // 0)
+    key <AE11> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F11,         F23         ] }; // -_
+    key <AE12> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F12,         F24         ] }; // =+
+    key <AD02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Print,       Print       ] }; // pP
+    key <AD03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Scroll_Lock, Scroll_Lock ] }; // [{
+    key <AD04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Pause,       Pause       ] }; // ]}
+    key <AD07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Home,        Home        ] }; // tT
+    key <AD08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Up,          Up          ] }; // iI
+    key <AD09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, End,         End         ] }; // gG
+    key <AD10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Prior,       Prior       ] }; // yY
+    key <AC07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Left,        Left        ] }; // jJ
+    key <AC08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Down,        Down        ] }; // kK
+    key <AC09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Right,       Right       ] }; // lL
+    key <AC10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Next,        Next        ] }; // hH
+    key <AB07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Delete,      Delete      ] }; // fF
+    key <AB08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Insert,      Insert      ] }; // ;:
+    key <SPCE> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, BackSpace,   BackSpace   ] }; // Space
+};
+partial alphanumeric_keys
+xkb_symbols "miniguru" {
+    include "us(basic)"
+    name[Group1]= "English (US, MiniGuru Layer5)";
+    include "us(lv5-miniguru)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "miniguru-alt-intl" {
+    include "us(alt-intl)"
+    name[Group1]= "English (US, alt. intl., with dead keys, MiniGuru Layer5)";
+    include "us(lv5-miniguru)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "miniguru-intl-unicode" {
+    include "us(intl-unicode)"
+    name[Group1]= "English (US, intl., AltGr Unicode combining, MiniGuru Layer5)";
+    include "us(lv5-miniguru)"
+    include "level3(ralt_switch)"
+};
+
+// Tex Yoda emulation
+// Copyleft (c) 2014 by Richard Gomes - http://github.com/frgomes/carpalx
+// Inspired by https://d2qmzng4l690lq.cloudfront.net/resizer/1500x1000/r/MD-2822_20140706105404_346413e18d672383.jpg
+//
+// This is "yoda" layout shown over "us" layout:
+//
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |~ Esc  |! F13  |@ F14  |# F15  |$ F16  |% F17  |^ F18  |& F19  |* F20  |( F21  |) F22  |- F24  |= F24  |
+// |` Esc  |1 F1   |2 F2   |3 F3   |4 F4   |5 F5   |6 F6   |7 F7   |8 F8   |9 F9   |0 F10  |  F11  |  F12  |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Tab    |Q      |W      |E      |R      |T      |Y      |U      |I      |O      |P      |{      |}      ||      |
+// |   Caps|  ScrUp|  Up   |  ScrDn|  BkSpc|  Home |  PgUp |  ~    |  Up   |       |  PrScr|[ ScrLk|] Pause|\      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Mod4   |A      |S      |D      |F      |G      |H      |J      |K      |L      |:      |"      |
+// |       |  Left |  Down |  Right|  Del  |  End  |  PgDn |  Left |  Down |  Right|; Ins  |' Menu |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+//         |Z  >Rew|X >Paus|C  >Fwd|V >Brt-|B >Brt+|N >Slep|M      |<      |>      |?      |
+//         |  >Prev|  >Play|  >Next|  >Vol-|  >Vol+|  >Mute|       |,      |.      |/      |
+// +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+// |Alt    |       |Ctrl   |Space                                  |Mod3   |       |Ctrl   |Mod4   |
+// |       |       |       |                              Backspace|       |       |       |       |
+// +-------+       +-------+---------------------------------------+-------+       +-------+-------+
+
+partial alphanumeric_keys modifier_keys
+xkb_symbols "lv5-yoda" {
+
+    include "level5(modifier_mapping)"
+    include "level5(caps_switch)"
+    include "level5(menu_switch)"
+    include "ctrl(swap_lalt_lctl)"
+
+    key.type[Group1] = "EIGHT_LEVEL";
+
+    key <AC11> { symbols[Group1]=[ NoSymbol,   NoSymbol,   NoSymbol,   NoSymbol,   Menu,                                     Menu ],
+                 actions[Group1]=[ NoAction(), NoAction(), NoAction(), NoAction(), Redirect(key=<MENU>,clearmods=LevelFive), Redirect(key=<MENU>,clearmods=LevelFive) ] };
+
+    key <TLDE> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Escape,               Escape                ] }; // `~
+    key <AE01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F1,                   F13                   ] }; // 1!
+    key <AE02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F2,                   F14                   ] }; // 2@
+    key <AE03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F3,                   F15                   ] }; // 3#
+    key <AE04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F4,                   F16                   ] }; // 4$
+    key <AE05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F5,                   F17                   ] }; // 5%
+    key <AE06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F6,                   F18                   ] }; // 6^
+    key <AE07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F7,                   F19                   ] }; // 7&
+    key <AE08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F8,                   F20                   ] }; // 8*
+    key <AE09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F9,                   F21                   ] }; // 9(
+    key <AE10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F10,                  F22                   ] }; // 0)
+    key <AE11> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F11,                  F23                   ] }; // -_
+    key <AE12> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, F12,                  F24                   ] }; // =+
+    key <BKSP> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Delete,               Delete                ] }; // BackSpace
+    key <TAB>  { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Caps_Lock,            Caps_Lock             ] }; // Tab
+    key <AD01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86ScrollUp,         XF86ScrollUp          ] }; // qQ
+    key <AD02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Up,                   Up                    ] }; // wW
+    key <AD03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86ScrollDown,       XF86ScrollDown        ] }; // eE
+    key <AD04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, BackSpace,            BackSpace             ] }; // rR
+    key <AD05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Home,                 Home                  ] }; // tT
+    key <AD06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Prior,                Prior                 ] }; // yY
+    key <AD07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, asciitilde,           asciitilde            ] }; // uU
+    key <AD08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Up,                   Up                    ] }; // iI
+    key <AD09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // oO
+    key <AD10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Print,                Print                 ] }; // pP
+    key <AD11> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Scroll_Lock,          Scroll_Lock           ] }; // [{
+    key <AD12> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Pause,                Pause                 ] }; // ]}
+    key <BKSL> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // \|
+    key <AC01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Left,                 Left                  ] }; // aA
+    key <AC02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Down,                 Down                  ] }; // sS
+    key <AC03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Right,                Right                 ] }; // dD
+    key <AC04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Delete,               Delete                ] }; // fF
+    key <AC05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, End,                  End                   ] }; // gG
+    key <AC06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Next,                 Next                  ] }; // hH
+    key <AC07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Left,                 Left                  ] }; // jJ
+    key <AC08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Down,                 Down                  ] }; // kK
+    key <AC09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Right,                Right                 ] }; // lL
+    key <AC10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Insert,               Insert                ] }; // ;:
+    key <AC11> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, Menu,                 Menu                  ] }; // '"
+    key <AB01> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioPrev,        XF86AudioRewind       ] }; // zZ
+    key <AB02> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioPlay,        XF86AudioPause        ] }; // xX
+    key <AB03> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioNext,        XF86AudioForward      ] }; // cC
+    key <AB04> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioLowerVolume, XF86MonBrightnessDown ] }; // vV
+    key <AB05> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioRaiseVolume, XF86MonBrightnessUp   ] }; // bB
+    key <AB06> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, XF86AudioMute,        XF86Sleep             ] }; // nN
+    key <AB07> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // mM
+    key <AB08> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // ,<
+    key <AB09> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // .>
+    key <AB10> { [ NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,             NoSymbol              ] }; // /?
+};
+partial alphanumeric_keys
+xkb_symbols "yoda" {
+    include "us(basic)"
+    name[Group1]= "English (US, TEX Yoda Layer5)";
+    include "us(lv5-yoda)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "yoda-alt-intl" {
+    include "us(alt-intl)"
+    name[Group1]= "English (US, alt. intl., with dead keys, TEX Yoda Layer5)";
+    include "us(lv5-yoda)"
+    include "level3(ralt_switch)"
+};
+partial alphanumeric_keys
+xkb_symbols "yoda-intl-unicode" {
+    include "us(intl-unicode)"
+    name[Group1]= "English (US, intl., AltGr Unicode combining, TEX Yoda Layer5)";
+    include "us(lv5-yoda)"
     include "level3(ralt_switch)"
 };
