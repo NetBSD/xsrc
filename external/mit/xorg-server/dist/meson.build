@@ -3,7 +3,7 @@ project('xserver', 'c',
             'buildtype=debugoptimized',
             'c_std=gnu99',
         ],
-        version: '1.20.10',
+        version: '1.20.11',
         meson_version: '>= 0.42.0',
 )
 add_project_arguments('-DHAVE_DIX_CONFIG_H', language: 'c')
@@ -348,7 +348,7 @@ if not libdrm_dep.found() and libdrm_required
     error('DRI requested, but LIBDRM not found')
 endif
 
-build_modesetting = libdrm_dep.found()
+build_modesetting = libdrm_dep.found() and dri2proto_dep.found()
 
 build_vbe = false
 if get_option('vbe') == 'auto'
