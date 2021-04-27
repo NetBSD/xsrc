@@ -1,6 +1,6 @@
--- $XTermId: INSTALL,v 1.185 2020/09/19 16:53:27 tom Exp $
+-- $XTermId: INSTALL,v 1.187 2021/03/24 00:39:41 tom Exp $
 -------------------------------------------------------------------------------
--- Copyright 1997-2019,2020 by Thomas E. Dickey
+-- Copyright 1997-2020,2021 by Thomas E. Dickey
 --
 --                         All Rights Reserved
 --
@@ -380,6 +380,11 @@ The options (in alphabetic order):
 
 	This is normally enabled.
 
+  --disable-xcursor       disable cursorTheme resource
+
+	Do not compile-in code that sets the XCURSOR_THEME environment variable
+	to enable/disable cursor themes.
+
   --disable-ziconbeep     disable -ziconbeep option
 
 	Do not compile-in code that modifies the icon's title and sounds a
@@ -527,13 +532,18 @@ The options (in alphabetic order):
 	(The "paste64" feature, which fits xterm's protocol better, is
 	configured by default).
 
+  --enable-regis-graphics enable support for ReGIS graphics
+
+  	Compile-in code to support experimental ReGIS graphics
+
   --enable-sco-fkeys      enable support for SCO-style function keys
 
   	Compile-in code to support SCO-style function keys.
 
-  --enable-regis-graphics enable support for ReGIS graphics
+  --enable-stdnoreturn    enable C11 _Noreturn feature for diagnostics
 
-  	Compile-in code to support experimental ReGIS graphics
+	Use the C11 _Noreturn keyword if the compiler supports it, rather
+	than the gcc-specific __attribute__((noreturn)).
 
   --enable-toolbar        enable pulldown menus on toolbar
 
