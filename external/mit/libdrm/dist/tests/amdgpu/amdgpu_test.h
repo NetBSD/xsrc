@@ -55,6 +55,11 @@ int suite_basic_tests_init();
 int suite_basic_tests_clean();
 
 /**
+ * Decide if the suite is enabled by default or not.
+ */
+CU_BOOL suite_basic_tests_enable(void);
+
+/**
  * Tests in basic test suite
  */
 extern CU_TestInfo basic_tests[];
@@ -243,6 +248,32 @@ void amdgpu_memcpy_draw_test(amdgpu_device_handle device_handle, uint32_t ring,
 void amdgpu_memcpy_draw_hang_slow_test(amdgpu_device_handle device_handle, uint32_t ring);
 
 /**
+ * Initialize security test suite
+ */
+int suite_security_tests_init();
+
+/**
+ * Deinitialize security test suite
+ */
+int suite_security_tests_clean();
+
+/**
+ * Decide if the suite is enabled by default or not.
+ */
+CU_BOOL suite_security_tests_enable(void);
+
+/**
+ * Tests in security test suite
+ */
+extern CU_TestInfo security_tests[];
+
+extern void
+amdgpu_command_submission_write_linear_helper_with_secure(amdgpu_device_handle
+							  device,
+							  unsigned ip_type,
+							  bool secure);
+
+/**
  * Helper functions
  */
 static inline amdgpu_bo_handle gpu_mem_alloc(
@@ -417,5 +448,27 @@ static inline CU_ErrorCode amdgpu_set_test_active(const char *suite_name,
 
 	return r;
 }
+
+static inline bool asic_is_arcturus(uint32_t asic_id)
+{
+	switch(asic_id) {
+	/* Arcturus asic DID */
+	case 0x738C:
+	case 0x7388:
+	case 0x738E:
+		return true;
+	default:
+		return false;
+	}
+}
+
+void amdgpu_test_exec_cs_helper_raw(amdgpu_device_handle device_handle,
+				    amdgpu_context_handle context_handle,
+				    unsigned ip_type, int instance, int pm4_dw,
+				    uint32_t *pm4_src, int res_cnt,
+				    amdgpu_bo_handle *resources,
+				    struct amdgpu_cs_ib_info *ib_info,
+				    struct amdgpu_cs_request *ibs_request,
+				    bool secure);
 
 #endif  /* #ifdef _AMDGPU_TEST_H_ */

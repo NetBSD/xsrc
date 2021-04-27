@@ -21,7 +21,7 @@
 project(
   'libdrm',
   ['c'],
-  version : '2.4.102',
+  version : '2.4.105',
   license : 'MIT',
   meson_version : '>= 0.43',
   default_options : ['buildtype=debugoptimized', 'c_std=gnu99'],
@@ -261,18 +261,8 @@ else
 endif
 
 with_man_pages = get_option('man-pages')
-prog_xslt = find_program('xsltproc', required : with_man_pages == 'true')
-prog_sed = find_program('sed', required : with_man_pages == 'true')
-manpage_style = 'http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl'
-if prog_xslt.found()
-  if run_command(prog_xslt, '--nonet', manpage_style).returncode() != 0
-    if with_man_pages == 'true'
-      error('Manpage style sheet cannot be found')
-    endif
-    with_man_pages = 'false'
-  endif
-endif
-with_man_pages = with_man_pages != 'false' and prog_xslt.found() and prog_sed.found()
+prog_rst2man = find_program('rst2man', 'rst2man.py', required: with_man_pages == 'true')
+with_man_pages = with_man_pages != 'false' and prog_rst2man.found()
 
 config.set10('HAVE_VISIBILITY',
   cc.compiles('''int foo_hidden(void) __attribute__((visibility(("hidden"))));''',
@@ -304,7 +294,7 @@ add_project_arguments('-include', '@0@'.format(config_file), language : 'c')
 inc_root = include_directories('.')
 inc_drm = include_directories('include/drm')
 
-libdrm = shared_library(
+libdrm = library(
   'drm',
   [files(
      'xf86drm.c', 'xf86drmHash.c', 'xf86drmRandom.c', 'xf86drmSL.c',
