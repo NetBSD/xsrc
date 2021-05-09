@@ -150,7 +150,7 @@ in this Software without prior written authorization from The Open Group.
 #if __has_attribute(noreturn) \
     || (defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 205)) \
     || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-# define _X_NORETURN __attribute((noreturn))
+# define _X_NORETURN __attribute__((__noreturn__))
 #else
 # define _X_NORETURN
 #endif /* GNUC  */
