@@ -699,6 +699,27 @@ GetResourcePixmapPath(Display *display)
 	pixmap_path = default_path;
 }
 
+static const char *
+GetFileName(XawParams *params, Screen *screen)
+{
+  static SubstitutionRec sub[] = {
+    {'H',   NULL},
+    {'N',   NULL},
+    {'T',   "pixmaps"},
+    {'P',   PROJECT_ROOT},
+  };
+  if (params->name[0] != '/' && params->name[0] != '.')
+    {
+      if (!sub[0].substitution)
+	sub[0].substitution = getenv("HOME");
+      sub[1].substitution = (char *)params->name;
+      if (pixmap_path == NULL)
+	GetResourcePixmapPath(DisplayOfScreen(screen));
+      return XtFindFile(pixmap_path, sub, XtNumber(sub), NULL);
+    }
+   return params->name;
+}
+
 static Bool
 BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
 	     Pixmap *pixmap_return, Pixmap *mask_return,
@@ -712,13 +733,7 @@ BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
   int hotX, hotY;
   XawArgVal *argval;
   Bool retval = False;
-  static SubstitutionRec sub[] = {
-    {'H',   NULL},
-    {'N',   NULL},
-    {'T',   "bitmaps"},
-    {'P',   PROJECT_ROOT},
-  };
-  char *filename;
+  const char *filename;
 
   fg = BlackPixelOfScreen(screen);
   bg = WhitePixelOfScreen(screen);
@@ -742,19 +757,9 @@ BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
 	return (False);
     }
 
-  if (params->name[0] != '/' && params->name[0] != '.')
-    {
-      if (!sub[0].substitution)
-	sub[0].substitution = getenv("HOME");
-      sub[1].substitution = params->name;
-      if (pixmap_path == NULL)
-	GetResourcePixmapPath(DisplayOfScreen(screen));
-      filename = XtFindFile(pixmap_path, sub, XtNumber(sub), NULL);
-      if (!filename)
-	return (FALSE);
-    }
-  else
-    filename = params->name;
+  filename = GetFileName(params, screen);
+  if (!filename)
+    return (FALSE);
 
   if (XReadBitmapFileData(filename, &width, &height, &data,
 			  &hotX, &hotY) == BitmapSuccess)
@@ -774,7 +779,7 @@ BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
     }
 
   if (filename != params->name)
-    XtFree(filename);
+    XtFree((char *)filename);
 
   return (retval);
 }
@@ -827,7 +832,7 @@ GradientLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
 
   value = NULL;
   if ((argval = XawFindArgVal(params, "start")) != NULL)
-    value = argval->value;
+    value = (char *)argval->value;
   if (value && !XAllocNamedColor(DisplayOfScreen(screen), colormap, value,
 			    &start, &color))
     return (False);
@@ -838,7 +843,7 @@ GradientLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
     }
   value = NULL;
   if ((argval = XawFindArgVal(params, "end")) != NULL)
-    value = argval->value;
+    value = (char *)argval->value;
   if (value && !XAllocNamedColor(DisplayOfScreen(screen), colormap, value,
 			    &end, &color))
     return (False);
@@ -932,31 +937,16 @@ XPixmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth _X
   XpmAttributes xpm_attributes;
   XawArgVal *argval;
   unsigned int closeness = 4000;
-  static SubstitutionRec sub[] = {
-    {'H',   NULL},
-    {'N',   NULL},
-    {'T',   "pixmaps"},
-    {'P',   PROJECT_ROOT},
-  };
+  Bool retval = False;
   const char *filename;
 
   if ((argval = XawFindArgVal(params, "closeness")) != NULL
       && argval->value)
     closeness = (unsigned)atoi(argval->value);
 
-  if (params->name[0] != '/' && params->name[0] != '.')
-    {
-      if (!sub[0].substitution)
-	sub[0].substitution = getenv("HOME");
-      sub[1].substitution = params->name;
-      if (pixmap_path == NULL)
-	GetResourcePixmapPath(DisplayOfScreen(screen));
-      filename = XtFindFile(pixmap_path, sub, XtNumber(sub), NULL);
-      if (!filename)
-	return (False);
-    }
-  else
-    filename = params->name;
+  filename = GetFileName(params, screen);
+  if (!filename)
+    return (FALSE);
 
   xpm_attributes.colormap = colormap;
   xpm_attributes.closeness = closeness;
@@ -968,10 +958,12 @@ XPixmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth _X
       *width_return = (Dimension)xpm_attributes.width;
       *height_return = (Dimension)xpm_attributes.height;
 
-      return (True);
+      retval = True;
     }
 
-  return (False);
+  if (filename != params->name)
+    XtFree((char *)filename);
+  return (retval);
 }
 
 void
