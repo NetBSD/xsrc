@@ -89,7 +89,7 @@ static Bool GetBlockBoundaries(TextWidget, XawTextPosition*, XawTextPosition*);
 static int FormRegion(TextWidget, XawTextPosition, XawTextPosition,
 		      XawTextPosition*, int);
 static void GetSelection(Widget, Time, String*, Cardinal);
-static char *IfHexConvertHexElseReturnParam(char*, int*);
+static char *IfHexConvertHexElseReturnParam(const char*, int*);
 static void InsertNewCRs(TextWidget, XawTextPosition, XawTextPosition,
 			 XawTextPosition*, int);
 static int InsertNewLineAndBackupInternal(TextWidget);
@@ -421,7 +421,7 @@ _SelectionReceived(Widget w, XtPointer client_data, Atom *selection _X_UNUSED,
 	    fprintf(stderr, "Xaw Text Widget: An attempt was made to insert "
 		    "an illegal selection.\n");
 
-	    textprop.value = (const unsigned char *)" >> ILLEGAL SELECTION << ";
+	    textprop.value = (unsigned char *)" >> ILLEGAL SELECTION << ";
 	    textprop.nitems = strlen((char *) textprop.value);
 	    if (XwcTextPropertyToTextList(d, &textprop, &wlist, &count)
 		!=  Success
@@ -3215,9 +3215,9 @@ InsertChar(Widget w, XEvent *event, String *p _X_UNUSED, Cardinal *n _X_UNUSED)
  *
  * NOTE:    In neither case will there be strings to free. */
 static char *
-IfHexConvertHexElseReturnParam(char *param, int *len_return)
+IfHexConvertHexElseReturnParam(const char *param, int *len_return)
 {
-    char *p;		/* steps through param char by char */
+    const char *p;	/* steps through param char by char */
     char c;		/* holds the character pointed to by p */
     int ind;		/* steps through hexval buffer char by char */
     static char hexval[XawTextActionMaxHexChars];
@@ -3225,8 +3225,7 @@ IfHexConvertHexElseReturnParam(char *param, int *len_return)
 
     /* reject if it doesn't begin with 0x and at least one more character. */
     if ((param[0] != '0') || (param[1] != 'x') || (param[2] == '\0')) {
-	*len_return = (int)strlen(param);
-	return(param);
+	goto out;
     }
 
     /* Skip the 0x; go character by character shifting and adding. */
@@ -3253,8 +3252,7 @@ IfHexConvertHexElseReturnParam(char *param, int *len_return)
 	    if (++ind < XawTextActionMaxHexChars)
 		hexval[ind] = '\0';
 	    else {
-		*len_return = (int)strlen(param);
-		return(param);
+		goto out;
 	    }
 	}
     }
@@ -3266,9 +3264,9 @@ IfHexConvertHexElseReturnParam(char *param, int *len_return)
     }
 
     /* Else, there were non-hex chars or odd digit count, so... */
-
+out:
     *len_return = (int)strlen(param);
-    return (param);			   /* ...return the verbatim string. */
+    return ((char *)param);			   /* ...return the verbatim string. */
 }
 
 /* InsertString() - action
@@ -3370,7 +3368,7 @@ DisplayCaret(Widget w, XEvent *event, String *params, Cardinal *num_params)
 
     if (*num_params > 0) {	/* default arg is "True" */
 	XrmValue from, to;
-	from.size = (unsigned)strlen(from.addr = params[0]);
+	from.size = (unsigned)strlen(from.addr = (char *)params[0]);
 	XtConvert(w, XtRString, &from, XtRBoolean, &to);
 
 	if (to.addr != NULL)
