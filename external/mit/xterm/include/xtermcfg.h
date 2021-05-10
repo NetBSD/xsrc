@@ -98,7 +98,16 @@
 #define HAVE_SETPGID 1		/* AC_CHECK_FUNCS(setpgid) */
 #define HAVE_STDINT_H 1		/* AC_PROG_CC_STDC */
 #define HAVE_STDLIB_H 1		/* AC_CHECK_HEADERS(stdlib.h) */
+#if 0
+/*
+ * clang treats _Noreturn and __attribute__((__noreturn__)) differently,
+ * so we end up labeling xt_error() with _Noreturn and using it in
+ * XtSetErrorHandler which is marked with the attribute noreturn, and clang
+ * complains. IMHO this is a bug in clang. We tell everyone that we don't
+ * have the header, so we use the attribute consistently and everyone is happy.
+ */
 #define HAVE_STDNORETURN_H 1		/* CF_C11_NORETURN */
+#endif
 #define HAVE_STRFTIME 1		/* AC_CHECK_FUNCS(strftime) */
 /* #undef HAVE_SYS_TIME_H */		/* AC_HEADER_TIME */
 #define HAVE_SYS_TTYDEFAULTS_H 1	/* AC_CHECK_HEADERS(sys/ttydefaults.h) */

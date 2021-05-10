@@ -6563,7 +6563,7 @@ xioerror(Display *dpy)
     return 0;			/* appease the compiler */
 }
 
-void _X_NORETURN
+void
 xt_error(String message)
 {
     xtermWarning("Xt error: %s\n", message);
