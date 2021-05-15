@@ -3247,7 +3247,7 @@ xtermAllocColor(XtermWidget xw, XColor *def, const char *spec)
 
     if (have == 0 || have > MAX_U_STRING) {
 	if (resource.reportColors) {
-	    printf("color  (ignored, length %lu)\n", have);
+	    printf("color  (ignored, length %lu)\n", (unsigned long)have);
 	}
     } else if (XParseColor(screen->display, cmap, spec, def)) {
 	XColor save_def = *def;
