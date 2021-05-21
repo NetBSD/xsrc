@@ -246,10 +246,10 @@ NVProbeDDC (ScrnInfoPtr pScrn, int bus)
     if (!MonInfo) {
 	/* ask wsdisplay */
 	struct wsdisplayio_edid_info ei;
-	char *buffer;
+	Uchar *buffer;
 	xf86MonPtr tmp;
 
-	buffer = malloc(1024);
+	buffer = malloc(1024);	/* XXX: missing null check */
 	ei.edid_data = buffer;
 	ei.buffer_size = 1024;
 	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
