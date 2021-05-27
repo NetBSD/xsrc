@@ -82,7 +82,7 @@ static CARD32 PnozzDrawROP[] = {
 void PnozzInitEngine(PnozzPtr);
 void pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour);
 
-CARD32 MaxClip, junk;
+extern CARD32 MaxClip, junk;
 
 static void
 PnozzWaitMarker(ScreenPtr pScreen, int Marker)
