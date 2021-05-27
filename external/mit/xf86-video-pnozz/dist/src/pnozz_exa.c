@@ -1,6 +1,6 @@
 /*
  * SBus Weitek P9100 EXA support
- *
+ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
