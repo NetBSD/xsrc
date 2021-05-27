@@ -20,61 +20,50 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.6 2016/08/16 01:27:47 mrg Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.7 2021/05/27 04:48:10 jdc Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
  * acceleration in 8, 16 and 24 bit colour
  */
 
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <dev/sun/fbio.h>
-#include <dev/wscons/wsconsio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include <sys/ioctl.h>
+
+#include "pnozz.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
-
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
-#include "xf86Resources.h"
-#endif
-#include "xf86sbusBus.h"
-
 #include "mipointer.h"
 #include "micmap.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 #include "fb.h"
 #include "xf86cmap.h"
-#include "pnozz.h"
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
-#define xf86LoaderReqSymLists(...) do {} while (0)
-#define LoaderRefSymLists(...) do {} while (0)
-#endif
+#include "compat-api.h"
 
 static const OptionInfoRec * PnozzAvailableOptions(int chipid, int busid);
 static void	PnozzIdentify(int flags);
 static Bool	PnozzProbe(DriverPtr drv, int flags);
 static Bool	PnozzPreInit(ScrnInfoPtr pScrn, int flags);
-static Bool	PnozzScreenInit(int Index, ScreenPtr pScreen, int argc,
-			      char **argv);
-static Bool	PnozzEnterVT(int scrnIndex, int flags);
-static void	PnozzLeaveVT(int scrnIndex, int flags);
-static Bool	PnozzCloseScreen(int scrnIndex, ScreenPtr pScreen);
+static Bool	PnozzScreenInit(SCREEN_INIT_ARGS_DECL);
+static Bool	PnozzEnterVT(VT_FUNC_ARGS_DECL);
+static void	PnozzLeaveVT(VT_FUNC_ARGS_DECL);
+static Bool	PnozzCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static Bool	PnozzSaveScreen(ScreenPtr pScreen, int mode);
 
 /* Required if the driver supports mode switching */
-static Bool	PnozzSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+static Bool	PnozzSwitchMode(SWITCH_MODE_ARGS_DECL);
 /* Required if the driver supports moving the viewport */
-static void	PnozzAdjustFrame(int scrnIndex, int x, int y, int flags);
+static void	PnozzAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 
 /* Optional functions */
-static void	PnozzFreeScreen(int scrnIndex, int flags);
-static ModeStatus PnozzValidMode(int scrnIndex, DisplayModePtr mode,
+static void	PnozzFreeScreen(FREE_SCREEN_ARGS_DECL);
+static ModeStatus PnozzValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 			       Bool verbose, int flags);
 
 void PnozzSync(ScrnInfoPtr);
@@ -88,7 +77,7 @@ static void PnozzLoadPalette(ScrnInfoPtr, int, int *, LOCO *, VisualPtr);
 #define VERSION 4000
 #define PNOZZ_NAME "p9100"
 #define PNOZZ_DRIVER_NAME "pnozz"
-#define PNOZZ_MAJOR_VERSION 1
+#define PNOZZ_MAJOR_VERSION 2
 #define PNOZZ_MINOR_VERSION 0
 #define PNOZZ_PATCHLEVEL 0
 
@@ -113,13 +102,15 @@ DriverRec PNOZZ = {
 typedef enum {
     OPTION_SW_CURSOR,
     OPTION_HW_CURSOR,
-    OPTION_NOACCEL
+    OPTION_NOACCEL,
+    OPTION_ACCELMETHOD
 } PnozzOpts;
 
 static const OptionInfoRec PnozzOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_ACCELMETHOD,	"AccelMethod",	OPTV_STRING,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -135,15 +126,6 @@ static const char *fbSymbols[] = {
     "fbPictureInit",
     NULL
 };
-
-static const char *xaaSymbols[] =
-{
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    NULL
-};
-#ifdef XFree86LOADER
 
 static MODULESETUPPROTO(PnozzSetup);
 
@@ -172,7 +154,6 @@ PnozzSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	setupDone = TRUE;
 	xf86AddDriver(&PNOZZ, module, 0);
 	
-	LoaderRefSymLists(xaaSymbols, ramdacSymbols, fbSymbols, NULL);
 	/*
 	 * Modules that this driver always requires can be loaded here
 	 * by calling LoadSubModule().
@@ -188,8 +169,6 @@ PnozzSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	return NULL;
     }
 }
-
-#endif /* XFree86LOADER */
 
 static volatile unsigned int scratch32;
 
@@ -312,7 +291,7 @@ PnozzFreeRec(ScrnInfoPtr pScrn)
 
     pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
-    xfree(pScrn->driverPrivate);
+    free(pScrn->driverPrivate);
     pScrn->driverPrivate = NULL;
 
     return;
@@ -382,7 +361,7 @@ PnozzProbe(DriverPtr drv, int flags)
 		   devSections, numDevSections,
 		   drv, &usedChips);
 				 	
-    xfree(devSections);
+    free(devSections);
     if (numUsed <= 0)
 	return FALSE;
 
@@ -417,9 +396,9 @@ PnozzProbe(DriverPtr drv, int flags)
 		xf86AddEntityToScreen(pScrn, pEnt->index);
 		foundScreen = TRUE;
 	    }
-	    xfree(pEnt);
+	    free(pEnt);
     	}
-    xfree(usedChips);
+    free(usedChips);
     return foundScreen;
 }
 
@@ -529,7 +508,7 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    if (!(pPnozz->Options = xalloc(sizeof(PnozzOptions))))
+    if (!(pPnozz->Options = malloc(sizeof(PnozzOptions))))
 	return FALSE;
 
     memcpy(pPnozz->Options, PnozzOptions, sizeof(PnozzOptions));
@@ -566,6 +545,14 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 	pPnozz->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
+
+    pPnozz->useXAA = FALSE;
+
+    char *optstr;
+    optstr = (char *)xf86GetOptValString(pPnozz->Options, OPTION_ACCELMETHOD);
+    if (optstr == NULL) optstr = "exa";
+    if (xf86NameCmp(optstr, "xaa") == 0)
+	pPnozz->useXAA = TRUE;
         
     if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	PnozzFreeRec(pScrn);
@@ -576,13 +563,6 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 	PnozzFreeRec(pScrn);
 	return FALSE;
     }
-    xf86LoaderReqSymLists(ramdacSymbols, NULL);
-
-    if (xf86LoadSubModule(pScrn, "xaa") == NULL) {
-	PnozzFreeRec(pScrn);
-	return FALSE;
-    }
-    xf86LoaderReqSymLists(xaaSymbols, NULL);
 
     /*********************
     set up clock and mode stuff
@@ -612,9 +592,9 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 /* This gets called at the start of each server generation */
 
 static Bool
-PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+PnozzScreenInit(SCREEN_INIT_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn;
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     PnozzPtr pPnozz;
     VisualPtr visual;
     int ret,len=0,i;
@@ -632,15 +612,26 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * figure out how much video RAM we really have - 2MB is just by far the 
      * most common size
      */
+    pPnozz->vidmem = 0x200000;	/* map 2MB */
     pPnozz->fb =
-	xf86MapSbusMem (pPnozz->psdp, 0, 0x200000);	/* map 2MB */
+	xf86MapSbusMem (pPnozz->psdp, 0, pPnozz->vidmem);
     fb=(unsigned int *)pPnozz->fb;
     
     pPnozz->fbc =
-	xf86MapSbusMem (pPnozz->psdp, 0x200000,0x8000);	/* map registers */
+	xf86MapSbusMem (pPnozz->psdp, pPnozz->vidmem,0x8000);	/* map registers */
 
-    if (! pPnozz->fbc)
+    if (! pPnozz->fbc) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		"xf86MapSbusMem failed fbc:%p fb:%p\n",
+		pPnozz->fbc, pPnozz->fb);
+
+	if (pPnozz->fb) {
+            xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fb, pPnozz->vidmem);
+            pPnozz->fb = NULL;
+	}
+
 	return FALSE;
+    }
 
     /*
      * The next step is to setup the screen's visuals, and initialise the
@@ -705,7 +696,7 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		       pScrn->displayWidth, pScrn->bitsPerPixel);
 
     /* should be set by PnozzSetDepth() */
-    pPnozz->maxheight = (0x200000 / pPnozz->scanlinesize) & 0xffff;
+    pPnozz->maxheight = (pPnozz->vidmem / pPnozz->scanlinesize) & 0xffff;
 #if DEBUG
     xf86Msg(X_ERROR, "max scanlines: %d\n", pPnozz->maxheight);
 #endif
@@ -733,16 +724,38 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86SetBlackWhitePixels(pScreen);
 
     if (!pPnozz->NoAccel) {
-    	BoxRec bx;
-	pPnozz->pXAA = XAACreateInfoRec();
-	PnozzAccelInit(pScrn);
-	bx.x1 = bx.y1 = 0;
-	bx.x2 = pPnozz->width;
-	bx.y2 = pPnozz->maxheight;
-	xf86InitFBManager(pScreen, &bx);
-	if(!XAAInit(pScreen, pPnozz->pXAA))
-	    return FALSE;
-	xf86Msg(X_INFO, "%s: Using acceleration\n", pPnozz->psdp->device);
+#ifdef HAVE_XAA_H
+	if (pPnozz->useXAA) {
+            BoxRec bx;
+            pPnozz->pXAA = XAACreateInfoRec();
+            PnozzAccelInit(pScrn);
+            bx.x1 = bx.y1 = 0;
+            bx.x2 = pPnozz->width;
+            bx.y2 = pPnozz->maxheight;
+            xf86InitFBManager(pScreen, &bx);
+            if(!XAAInit(pScreen, pPnozz->pXAA))
+                return FALSE;
+            xf86Msg(X_INFO, "%s: Using XAA acceleration\n", pPnozz->psdp->device);
+	} else
+#endif /* HAVE_XAA_H */
+	{
+            /* EXA */
+            XF86ModReqInfo req;
+            int errmaj, errmin;
+
+            memset(&req, 0, sizeof(XF86ModReqInfo));
+            req.majorversion = EXA_VERSION_MAJOR;
+            req.minorversion = EXA_VERSION_MINOR;
+            if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &req,
+		&errmaj, &errmin)) {
+		LoaderErrorMsg(NULL, "exa", errmaj, errmin);
+		return FALSE;
+            }
+            if (!PnozzEXAInit(pScreen))
+		return FALSE;
+
+            xf86Msg(X_INFO, "%s: Using EXA acceleration\n", pPnozz->psdp->device);
+	}
     }
 
     /* Initialise cursor functions */
@@ -792,7 +805,7 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 /* Usually mandatory */
 static Bool
-PnozzSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
+PnozzSwitchMode(SWITCH_MODE_ARGS_DECL)
 {
     xf86Msg(X_ERROR, "SwitchMode: %d %d %d %d\n", mode->CrtcHTotal, 
         mode->CrtcHSyncStart, mode->CrtcHSyncEnd, mode->CrtcHDisplay);
@@ -806,7 +819,7 @@ PnozzSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  */
 /* Usually mandatory */
 static void 
-PnozzAdjustFrame(int scrnIndex, int x, int y, int flags)
+PnozzAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 {
     /* we don't support virtual desktops for now */
     return;
@@ -819,9 +832,9 @@ PnozzAdjustFrame(int scrnIndex, int x, int y, int flags)
 
 /* Mandatory */
 static Bool
-PnozzEnterVT(int scrnIndex, int flags)
+PnozzEnterVT(VT_FUNC_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
     xf86SbusHideOsHwCursor (pPnozz->psdp);
@@ -835,7 +848,7 @@ PnozzEnterVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static void
-PnozzLeaveVT(int scrnIndex, int flags)
+PnozzLeaveVT(VT_FUNC_ARGS_DECL)
 {
     return;
 }
@@ -848,9 +861,9 @@ PnozzLeaveVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static Bool
-PnozzCloseScreen(int scrnIndex, ScreenPtr pScreen)
+PnozzCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     int state = 1;
 
@@ -861,15 +874,14 @@ PnozzCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
     PnozzRestore(pPnozz);	/* restore colour depth */
     
-    xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fb,0x200000);
+    xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fb,pPnozz->vidmem);
     xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fbc,0x8000);
 
     /* make sure video is turned on */
     ioctl(pPnozz->psdp->fd, FBIOSVIDEO, &state);
     
     pScreen->CloseScreen = pPnozz->CloseScreen;
-    return (*pScreen->CloseScreen)(scrnIndex, pScreen);
-    return FALSE;
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 
@@ -877,9 +889,10 @@ PnozzCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 /* Optional */
 static void
-PnozzFreeScreen(int scrnIndex, int flags)
+PnozzFreeScreen(FREE_SCREEN_ARGS_DECL)
 {
-    PnozzFreeRec(xf86Screens[scrnIndex]);
+    SCRN_INFO_PTR(arg);
+    PnozzFreeRec(pScrn);
 }
 
 
@@ -887,7 +900,7 @@ PnozzFreeScreen(int scrnIndex, int flags)
 
 /* Optional */
 static ModeStatus
-PnozzValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
+PnozzValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
 	return(MODE_BAD);
@@ -1067,7 +1080,8 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
     int s0, s1, s2, s3, ps, crtcline;
     unsigned char pf, mc3, es;
 
-#if DEBUG
+#ifdef DEBUG
+    xf86Msg(X_ERROR, "SetDepth: %d\n", depth);
     DumpDAC(pPnozz);
     DumpCRTC(pPnozz);
 #endif

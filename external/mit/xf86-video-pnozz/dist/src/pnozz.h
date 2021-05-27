@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz.h,v 1.1 2009/08/26 22:28:26 macallan Exp $ */
+/* $NetBSD: pnozz.h,v 1.2 2021/05/27 04:48:10 jdc Exp $ */
 
 #ifndef PNOZZ_H
 #define PNOZZ_H
@@ -29,10 +29,14 @@
 #include "xf86_OSproc.h"
 #include "xf86RamDac.h"
 #include <X11/Xmd.h>
+#include <dev/sun/fbio.h>
 #include "gcstruct.h"
 #include "pnozz_regs.h"
 #include "xf86sbusBus.h"
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "exa.h"
 
 typedef struct {
 	unsigned int fg, bg;			/* FG/BG colors for stipple */
@@ -53,19 +57,29 @@ typedef struct {
 	int		width;
 	int		height, scanlinesize, maxheight;
 	int		depthshift;
+	int		vidmem;
 
 	sbusDevicePtr	psdp;
+	struct fbcursor Cursor;
 	Bool		HWCursor;
 	Bool		NoAccel;
+	Bool		useXAA;
 	CloseScreenProcPtr CloseScreen;
 	
 	xf86CursorInfoPtr CursorInfoRec;
-	struct fbcursor Cursor;
+	unsigned int	CursorXY;
+	int		CursorBg, CursorFg;
+	Bool		CursorEnabled;
+	unsigned int	cursmask[32];	/* cursor mask bits */
+	unsigned int	cursbits[32];	/* what to show where mask enabled */
 	unsigned char pal[9];
 	
 	OptionInfoPtr	Options;
-	XAAInfoRecPtr	pXAA;
+	ExaDriverPtr	pExa;
+	int		srcoff;
+#ifdef HAVE_XAA_H
 	unsigned char	*buffers[2];
+#endif
 	/*
 	 * XXX this is enough for everything a SPARCbook could do on it's
 	 * internal display but not necessarily for an external one
@@ -114,7 +128,9 @@ unsigned char pnozz_read_dac_ctl_reg(PnozzPtr, int);
 void pnozz_write_dac_cmap_reg(PnozzPtr, int, unsigned int);
 
 int PnozzAccelInit(ScrnInfoPtr);
+Bool PnozzDGAInit(ScreenPtr);
+int PnozzEXAInit(ScreenPtr);
 void PnozzHideCursor(ScrnInfoPtr);
 void PnozzShowCursor(ScrnInfoPtr);
 
-#endif /* CG6_H */
+#endif /* PNOZZ_H */

@@ -20,15 +20,15 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.2 2011/05/25 14:15:26 christos Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.3 2021/05/27 04:48:10 jdc Exp $ */
 
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <dev/sun/fbio.h>
-#include <dev/wscons/wsconsio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "pnozz.h"
+#include "pnozz_regs.h"
+#include "dgaproc.h"
 
 static CARD32 PnozzCopyROP[] = {
 	/*GXclear*/		0,
@@ -68,6 +68,31 @@ static CARD32 PnozzDrawROP[] = {
 	/*GXset*/		ROP_PAT
 };
 
+/* DGA stuff */
+
+static Bool Pnozz_OpenFramebuffer(ScrnInfoPtr pScrn, char **,
+    unsigned char **mem, int *, int *, int *);
+static Bool Pnozz_SetMode(ScrnInfoPtr, DGAModePtr);
+static void Pnozz_SetViewport(ScrnInfoPtr, int, int, int);
+static int Pnozz_GetViewport(ScrnInfoPtr);
+static void Pnozz_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
+static void Pnozz_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+
+static void PnozzSync(ScrnInfoPtr);
+
+static DGAFunctionRec Pnozz_DGAFuncs = {
+        Pnozz_OpenFramebuffer,
+        NULL,
+        Pnozz_SetMode,
+        Pnozz_SetViewport,
+        Pnozz_GetViewport,
+        PnozzSync,
+        Pnozz_FillRect,
+        Pnozz_BlitRect,
+        NULL
+};
+
+
 CARD32 MaxClip, junk;
 
 void
@@ -84,7 +109,7 @@ PnozzSync(ScrnInfoPtr pScrn)
  * registers we need to juggle bytes ourselves.
  */
 
-static void
+void
 pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour)
 {
     CARD32 c2;
@@ -117,7 +142,7 @@ static void unClip(PnozzPtr pPnozz)
     pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
 }
 
-static void
+void
 PnozzInitEngine(PnozzPtr pPnozz)
 {
     unClip(pPnozz);
@@ -222,6 +247,8 @@ PnozzSubsequentSolidFillRect
         (h & 0x1fff)));
     junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
 }
+
+#ifdef HAVE_XAA_H
 
 static void 
 PnozzSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
@@ -441,7 +468,6 @@ PnozzImageWriteRect(ScrnInfoPtr pScrn, int x, int y, int wi, int he, int skip)
 /*
  * TODO:
  * - CPU to VRAM colour blits
- * - DGA support
  */
 
 int
@@ -534,4 +560,115 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     pXAAInfo->SubsequentImageWriteRect = PnozzImageWriteRect;
     
     return 0;
+}
+
+#endif /* HAVE_XAA_H */
+
+Bool
+PnozzDGAInit(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    DGAModePtr mode;
+    int result;
+    
+    mode = xnfcalloc(sizeof(DGAModeRec), 1);
+    if (mode == NULL) {
+        xf86Msg(X_WARNING, "%s: DGA setup failed, cannot allocate memory\n",
+            pPnozz->psdp->device);
+        return FALSE;
+    }
+    
+    mode->mode = pScrn->modes;
+    mode->flags = DGA_PIXMAP_AVAILABLE | DGA_CONCURRENT_ACCESS;
+    if(!pPnozz->NoAccel) {
+        mode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+    }
+    
+    mode->imageWidth = mode->pixmapWidth = mode->viewportWidth =
+	pScrn->virtualX;
+    mode->imageHeight = mode->pixmapHeight = mode->viewportHeight =
+	pScrn->virtualY;
+
+    mode->bytesPerScanline = mode->imageWidth;
+
+    mode->byteOrder = pScrn->imageByteOrder;
+    mode->depth = 8;
+    mode->bitsPerPixel = 8;
+    mode->red_mask = pScrn->mask.red;
+    mode->green_mask = pScrn->mask.green;
+    mode->blue_mask = pScrn->mask.blue;
+    
+    mode->visualClass = PseudoColor;
+    mode->address = pPnozz->fb;
+
+    result = DGAInit(pScreen, &Pnozz_DGAFuncs, mode, 1);
+
+    if (result) {
+	xf86Msg(X_INFO, "%s: DGA initialized\n",
+            pPnozz->psdp->device);
+	return TRUE;
+    } else {
+	xf86Msg(X_WARNING, "%s: DGA setup failed\n",
+            pPnozz->psdp->device);
+	return FALSE;
+    }
+}
+
+static Bool 
+Pnozz_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
+				unsigned char **mem,
+				int *size, int *offset,
+				int *extra)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+
+    *name = pPnozz->psdp->device;
+
+    *mem = (unsigned char*)0;
+    *size = pPnozz->vidmem;
+    *offset = 0;
+    *extra = 0;
+
+    return TRUE;
+}
+
+static Bool
+Pnozz_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
+{
+    /*
+     * Nothing to do, we currently only support one mode
+     * and we are always in it.
+     */
+    return TRUE;
+}
+
+static void
+Pnozz_SetViewport(ScrnInfoPtr pScrn, int x, int y, int flags)
+{
+     /* We don't support viewports, so... */
+}
+
+static int
+Pnozz_GetViewport(ScrnInfoPtr pScrn)
+{
+    /* No viewports, none pending... */
+    return 0;
+}
+
+static void
+Pnozz_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h, unsigned long color)
+{
+
+    PnozzSetupForSolidFill(pScrn, color, GXset, 8);
+    PnozzSubsequentSolidFillRect(pScrn, x, y, w, h);
+}
+
+static void
+Pnozz_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy,
+			 int w, int h, int dstx, int dsty)
+{
+
+    PnozzSetupForScreenToScreenCopy(pScrn, 0, 0, GXcopy, 8, 0);
+    PnozzSubsequentScreenToScreenCopy(pScrn, srcx, srcy, dstx, dsty, w, h);
 }

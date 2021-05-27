@@ -20,13 +20,16 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_cursor.c,v 1.2 2011/05/25 23:36:39 macallan Exp $ */
+/* $NetBSD: pnozz_cursor.c,v 1.3 2021/05/27 04:48:10 jdc Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <dev/sun/fbio.h>
 #include <dev/wscons/wsconsio.h>
 
 #include "pnozz.h"
