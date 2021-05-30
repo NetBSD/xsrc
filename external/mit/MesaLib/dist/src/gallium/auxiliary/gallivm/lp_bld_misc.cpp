@@ -72,7 +72,7 @@
 
 #include <llvm/Support/TargetSelect.h>
 
-#if HAVE_LLVM >= 0x0305
+#if HAVE_LLVM >= 0x0305 && HAVE_LLVM < 0xa00
 #include <llvm/IR/CallSite.h>
 #endif
 #include <llvm/IR/IRBuilder.h>

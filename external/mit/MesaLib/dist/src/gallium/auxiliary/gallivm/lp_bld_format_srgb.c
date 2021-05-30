@@ -66,7 +66,7 @@
  * @author Roland Scheidegger <sroland@vmware.com>
  */
 
-
+#include <math.h>
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"

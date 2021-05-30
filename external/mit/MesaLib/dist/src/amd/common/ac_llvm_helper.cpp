@@ -34,6 +34,7 @@
 #include "ac_llvm_build.h"
 
 #include <llvm-c/Core.h>
+#include <llvm/ADT/SmallString.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
@@ -129,9 +130,15 @@ struct ac_compiler_passes *ac_create_llvm_passes(LLVMTargetMachineRef tm)
 
 	llvm::TargetMachine *TM = reinterpret_cast<llvm::TargetMachine*>(tm);
 
+#if HAVE_LLVM < 0x900
 	if (TM->addPassesToEmitFile(p->passmgr, p->ostream,
 				    nullptr,
 				    llvm::TargetMachine::CGFT_ObjectFile)) {
+#else
+	if (TM->addPassesToEmitFile(p->passmgr, p->ostream,
+				    nullptr,
+				    llvm::CGFT_ObjectFile)) {
+#endif
 		fprintf(stderr, "amd: TargetMachine can't emit a file of this type!\n");
 		delete p;
 		return NULL;
@@ -214,6 +221,9 @@ LLVMValueRef ac_build_atomic_rmw(struct ac_llvm_context *ctx, LLVMAtomicRMWBinOp
 	unsigned SSID = llvm::unwrap(ctx->context)->getOrInsertSyncScopeID(sync_scope);
 	return llvm::wrap(llvm::unwrap(ctx->builder)->CreateAtomicRMW(
 		binop, llvm::unwrap(ptr), llvm::unwrap(val),
+#if LLVM_VERSION_MAJOR >= 13
+		llvm::MaybeAlign(0),
+#endif
 		llvm::AtomicOrdering::SequentiallyConsistent, SSID));
 }
 
@@ -223,6 +233,9 @@ LLVMValueRef ac_build_atomic_cmp_xchg(struct ac_llvm_context *ctx, LLVMValueRef 
 	unsigned SSID = llvm::unwrap(ctx->context)->getOrInsertSyncScopeID(sync_scope);
 	return llvm::wrap(llvm::unwrap(ctx->builder)->CreateAtomicCmpXchg(
 			  llvm::unwrap(ptr), llvm::unwrap(cmp), llvm::unwrap(val),
+#if LLVM_VERSION_MAJOR >= 13
+			  llvm::MaybeAlign(0),
+#endif
 			  llvm::AtomicOrdering::SequentiallyConsistent,
 			  llvm::AtomicOrdering::SequentiallyConsistent, SSID));
 }

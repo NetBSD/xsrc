@@ -167,7 +167,9 @@ create_pass_manager(struct gallivm_state *gallivm)
        */
       LLVMAddReassociatePass(gallivm->passmgr);
       LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
+#if HAVE_LLVM < 0xd00
       LLVMAddConstantPropagationPass(gallivm->passmgr);
+#endif
       LLVMAddInstructionCombiningPass(gallivm->passmgr);
       LLVMAddGVNPass(gallivm->passmgr);
    }
