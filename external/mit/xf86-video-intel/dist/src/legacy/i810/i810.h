@@ -322,6 +322,6 @@ extern void I810InitMC(ScreenPtr pScreen);
 extern const OptionInfoRec *I810AvailableOptions(int chipid, int busid);
 
 extern const int I810CopyROP[16];
-const int I810PatternROP[16];
+extern const int I810PatternROP[16];
 
 #endif /* _I810_H_ */

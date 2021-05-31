@@ -525,7 +525,7 @@ xf86WriteMmio32Le(__volatile__ void *base, const unsigned long offset,
 #define PORT_SIZE short
 #endif
 
-_X_EXPORT unsigned int IOPortBase;      /* Memory mapped I/O port area */
+extern unsigned int IOPortBase;      /* Memory mapped I/O port area */
 
 static __inline__ void
 outb(unsigned PORT_SIZE port, unsigned char val)

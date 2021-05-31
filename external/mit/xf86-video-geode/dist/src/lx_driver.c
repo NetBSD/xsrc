@@ -76,7 +76,7 @@
 
 extern OptionInfoRec LX_GeodeOptions[];
 
-unsigned char *XpressROMPtr;
+extern unsigned char *XpressROMPtr;
 
 static Bool
 LXSaveScreen(ScreenPtr pScrn, int mode)

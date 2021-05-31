@@ -129,7 +129,7 @@ unsigned long port;
 }
 #else
 #ifdef __arm32__
-unsigned int IOPortBase;  /* Memory mapped I/O port area */
+extern unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void
 outb(port, val)
