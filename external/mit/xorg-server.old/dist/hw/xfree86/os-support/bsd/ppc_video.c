@@ -145,7 +145,7 @@ xf86EnableInterrupts()
 }
 
 /* XXX why the hell is this necessary?! */
-#ifdef __arm__
+#if defined(__arm__) || defined(__mips__)
 unsigned int IOPortBase = (int)MAP_FAILED;
 #endif
 
