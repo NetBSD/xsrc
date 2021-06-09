@@ -1,7 +1,6 @@
 /*
  * SBus Weitek P9100 EXA support
- */
-/*-
+ *
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -79,10 +78,8 @@ static CARD32 PnozzDrawROP[] = {
 #define waitReady(pPnozz) while((pnozz_read_4(pPnozz, ENGINE_STATUS) & \
 				(ENGINE_BUSY | BLITTER_BUSY)) !=0 )
 
-void PnozzInitEngine(PnozzPtr);
+/* From pnozz_accel.c */
 void pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour);
-
-extern CARD32 MaxClip, junk;
 
 static void
 PnozzWaitMarker(ScreenPtr pScreen, int Marker)
@@ -110,8 +107,10 @@ PnozzPrepareCopy
     waitReady(pPnozz);
     pnozz_write_4(pPnozz, RASTER_OP, (PnozzCopyROP[alu] & 0xff));
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
-    pPnozz->srcoff = exaGetPixmapOffset(pSrcPixmap) / pPnozz->width;
+    pPnozz->srcoff = exaGetPixmapOffset(pSrcPixmap);
 
+    if (exaGetPixmapPitch(pSrcPixmap) != exaGetPixmapPitch(pDstPixmap))
+	return FALSE;
     return TRUE;
 }
 
@@ -130,24 +129,25 @@ PnozzCopy
     ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     CARD32 src, dst, srcw, dstw;
-    int doff = exaGetPixmapOffset(pDstPixmap) / pPnozz->width;
+    int soff = pPnozz->srcoff / exaGetPixmapPitch(pDstPixmap);
+    int doff = exaGetPixmapOffset(pDstPixmap) / exaGetPixmapPitch(pDstPixmap);
     
     src = (((xSrc << pPnozz->depthshift) & 0x1fff) << 16) |
-	((ySrc + pPnozz->srcoff) & 0x1fff);
+	((ySrc + soff) & 0x1fff);
     dst = (((xDst << pPnozz->depthshift) & 0x1fff) << 16) |
 	((yDst + doff) & 0x1fff);
-    srcw = ((((xSrc + w) << pPnozz->depthshift) - 1) << 16) | 
-        ((ySrc + pPnozz->srcoff + h - 1) & 0x1fff);
+    srcw = ((((xSrc + w) << pPnozz->depthshift) - 1) << 16) |
+	((ySrc + soff + h) & 0x1fff);
     dstw = ((((xDst + w) << pPnozz->depthshift) - 1) << 16) |
-        ((yDst + doff + h - 1) & 0x1fff);
+	((yDst + doff + h) & 0x1fff);
 
     waitReady(pPnozz);
-
     pnozz_write_4(pPnozz, ABS_XY0, src);
     pnozz_write_4(pPnozz, ABS_XY1, srcw);
     pnozz_write_4(pPnozz, ABS_XY2, dst);
     pnozz_write_4(pPnozz, ABS_XY3, dstw);
-    junk = pnozz_read_4(pPnozz, COMMAND_BLIT);
+    pnozz_read_4(pPnozz, COMMAND_BLIT);
+
     exaMarkSync(pDstPixmap->drawable.pScreen);
 }
 
@@ -172,7 +172,8 @@ PnozzPrepareSolid(
     
     waitReady(pPnozz);
     pnozz_write_colour(pPnozz, FOREGROUND_COLOR, fg);
-    pnozz_write_4(pPnozz, RASTER_OP, PnozzDrawROP[alu] & 0xff);
+    pnozz_write_colour(pPnozz, BACKGROUND_COLOR, fg);
+    pnozz_write_4(pPnozz, RASTER_OP, ROP_PAT);
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
     pnozz_write_4(pPnozz, COORD_INDEX, 0);
 
@@ -189,15 +190,18 @@ PnozzSolid(
 {
     ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
-    int w = x2 - x - 1;
-    int h = y2 - y - 1;
+    int doff = exaGetPixmapOffset(pPixmap);
 
     waitReady(pPnozz);
-    pnozz_write_4(pPnozz, RECT_RTW_XY, ((x & 0x1fff) << 16) | 
-        (y & 0x1fff));
-    pnozz_write_4(pPnozz, RECT_RTP_XY, (((w & 0x1fff) << 16) | 
-        (h & 0x1fff)));
-    junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
+    pnozz_write_4(pPnozz, ABS_XY0, (((x + doff) & 0x1fff) << 16) |
+	(y & 0x1fff));
+    pnozz_write_4(pPnozz, ABS_XY1, (((x + doff) & 0x1fff) << 16) |
+	(y2 & 0x1fff));
+    pnozz_write_4(pPnozz, ABS_XY2, (((x2 + doff) & 0x1fff) << 16) |
+	(y2 & 0x1fff));
+    pnozz_write_4(pPnozz, ABS_XY3, (((x2 + doff) & 0x1fff) << 16) |
+	(y & 0x1fff));
+    pnozz_read_4(pPnozz, COMMAND_QUAD);
     exaMarkSync(pPixmap->drawable.pScreen);
 }
 
@@ -208,8 +212,6 @@ PnozzEXAInit(ScreenPtr pScreen)
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     ExaDriverPtr pExa;
     
-    PnozzInitEngine(pPnozz);
-
     pExa = exaDriverAlloc();
     if (!pExa)
 	return FALSE;
@@ -223,7 +225,8 @@ PnozzEXAInit(ScreenPtr pScreen)
 
     /* round to multiple of pixmap pitch */
     pExa->memorySize = (pPnozz->vidmem / pPnozz->width) * pPnozz->width;
-    pExa->offScreenBase = pPnozz->width * pPnozz->height;
+    pExa->offScreenBase = pPnozz->width * pPnozz->height *
+	(pScrn->bitsPerPixel / 8);
 
     /*
      * our blitter can't deal with variable pitches
@@ -231,10 +234,10 @@ PnozzEXAInit(ScreenPtr pScreen)
     pExa->pixmapOffsetAlign = pPnozz->width;
     pExa->pixmapPitchAlign = pPnozz->width;
 
-    pExa->flags = EXA_MIXED_PIXMAPS;
+    pExa->flags = EXA_MIXED_PIXMAPS | EXA_OFFSCREEN_PIXMAPS | EXA_SUPPORTS_OFFSCREEN_OVERLAPS;
 
-    pExa->maxX = 4096;
-    pExa->maxY = 4096;
+    pExa->maxX = 1600;
+    pExa->maxY = 1200;
 
     pExa->WaitMarker = PnozzWaitMarker;
 
@@ -246,5 +249,18 @@ PnozzEXAInit(ScreenPtr pScreen)
     pExa->Copy = PnozzCopy;
     pExa->DoneCopy = PnozzDoneCopy;
 
+    /* Drawing engine defaults */
+    pnozz_write_4(pPnozz, DRAW_MODE, 0);
+    pnozz_write_4(pPnozz, PLANE_MASK, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN0, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN1, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN2, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN3, 0xffffffff);	
+    pnozz_write_4(pPnozz, WINDOW_OFFSET, 0);
+    pnozz_write_4(pPnozz, WINDOW_MIN, 0);
+    pnozz_write_4(pPnozz, WINDOW_MAX, CLIP_MAX);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MIN, 0);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MAX, CLIP_MAX);
+    
     return exaDriverInit(pScreen, pExa);;
 }

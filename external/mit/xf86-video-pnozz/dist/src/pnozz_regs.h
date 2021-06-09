@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_regs.h,v 1.1 2009/08/26 22:28:26 macallan Exp $ */
+/* $NetBSD: pnozz_regs.h,v 1.2 2021/06/09 07:25:57 jdc Exp $ */
 
 #ifndef PNOZZ_REGS_H
 #define PNOZZ_REGS_H
@@ -168,6 +168,10 @@
 #define PIXEL_8_REG			0x221c	/* PIXEL_8 overflow data */
 #define WINDOW_MIN			0x2220
 #define WINDOW_MAX			0x2224
+	#define CLIP_MAX			0x1fff1fff
+
+#define COLOR_2			0x2230
+#define COLOR_3			0x2234
 
 #define PATTERN0			0x2280
 #define PATTERN1			0x2284
