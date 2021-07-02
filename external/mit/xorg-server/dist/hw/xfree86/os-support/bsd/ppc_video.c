@@ -60,7 +60,7 @@ volatile unsigned char *ioBase = MAP_FAILED;
 
 /* XXX why the hell is this necessary?! */
 #if defined(__arm__) || defined(__mips__)
-unsigned int IOPortBase = (int)MAP_FAILED;
+unsigned PORT_SIZE IOPortBase = (unsigned PORT_SIZE)MAP_FAILED;
 #endif
 
 Bool
@@ -95,7 +95,7 @@ xf86DisableIO()
         munmap(__UNVOLATILE(ioBase), 0x10000);
         ioBase = MAP_FAILED;
 #ifdef __arm__
-        IOPortBase = (unsigned int)MAP_FAILED;
+        IOPortBase = (unsigned PORT_SIZE)MAP_FAILED;
 #endif
     }
 #endif
