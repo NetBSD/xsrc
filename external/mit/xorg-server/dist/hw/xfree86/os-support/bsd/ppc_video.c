@@ -36,6 +36,7 @@
 #include "xf86_OSlib.h"
 #include "xf86OSpriv.h"
 
+#include "compiler.h"
 #include "bus/Pci.h"
 
 /***************************************************************************/
