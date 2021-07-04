@@ -61,7 +61,7 @@ volatile unsigned char *ioBase = MAP_FAILED;
 
 /* XXX why the hell is this necessary?! */
 #if defined(__arm__) || defined(__mips__)
-unsigned PORT_SIZE IOPortBase = (unsigned PORT_SIZE)MAP_FAILED;
+unsigned PORT_SIZE IOPortBase = (unsigned PORT_SIZE)(intptr_t)MAP_FAILED;
 #endif
 
 Bool
