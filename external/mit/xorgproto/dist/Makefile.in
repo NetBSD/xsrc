@@ -320,7 +320,8 @@ am__recursive_targets = \
   $(RECURSIVE_CLEAN_TARGETS) \
   $(am__extra_recursive_targets)
 AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
-	cscope distdir distdir-am dist dist-all distcheck
+	cscope check recheck distdir distdir-am dist dist-all \
+	distcheck
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -341,6 +342,178 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
+am__tty_colors_dummy = \
+  mgn= red= grn= lgn= blu= brg= std=; \
+  am__color_tests=no
+am__tty_colors = { \
+  $(am__tty_colors_dummy); \
+  if test "X$(AM_COLOR_TESTS)" = Xno; then \
+    am__color_tests=no; \
+  elif test "X$(AM_COLOR_TESTS)" = Xalways; then \
+    am__color_tests=yes; \
+  elif test "X$$TERM" != Xdumb && { test -t 1; } 2>/dev/null; then \
+    am__color_tests=yes; \
+  fi; \
+  if test $$am__color_tests = yes; then \
+    red='[0;31m'; \
+    grn='[0;32m'; \
+    lgn='[1;32m'; \
+    blu='[1;34m'; \
+    mgn='[0;35m'; \
+    brg='[1m'; \
+    std='[m'; \
+  fi; \
+}
+am__recheck_rx = ^[ 	]*:recheck:[ 	]*
+am__global_test_result_rx = ^[ 	]*:global-test-result:[ 	]*
+am__copy_in_global_log_rx = ^[ 	]*:copy-in-global-log:[ 	]*
+# A command that, given a newline-separated list of test names on the
+# standard input, print the name of the tests that are to be re-run
+# upon "make recheck".
+am__list_recheck_tests = $(AWK) '{ \
+  recheck = 1; \
+  while ((rc = (getline line < ($$0 ".trs"))) != 0) \
+    { \
+      if (rc < 0) \
+        { \
+          if ((getline line2 < ($$0 ".log")) < 0) \
+	    recheck = 0; \
+          break; \
+        } \
+      else if (line ~ /$(am__recheck_rx)[nN][Oo]/) \
+        { \
+          recheck = 0; \
+          break; \
+        } \
+      else if (line ~ /$(am__recheck_rx)[yY][eE][sS]/) \
+        { \
+          break; \
+        } \
+    }; \
+  if (recheck) \
+    print $$0; \
+  close ($$0 ".trs"); \
+  close ($$0 ".log"); \
+}'
+# A command that, given a newline-separated list of test names on the
+# standard input, create the global log from their .trs and .log files.
+am__create_global_log = $(AWK) ' \
+function fatal(msg) \
+{ \
+  print "fatal: making $@: " msg | "cat >&2"; \
+  exit 1; \
+} \
+function rst_section(header) \
+{ \
+  print header; \
+  len = length(header); \
+  for (i = 1; i <= len; i = i + 1) \
+    printf "="; \
+  printf "\n\n"; \
+} \
+{ \
+  copy_in_global_log = 1; \
+  global_test_result = "RUN"; \
+  while ((rc = (getline line < ($$0 ".trs"))) != 0) \
+    { \
+      if (rc < 0) \
+         fatal("failed to read from " $$0 ".trs"); \
+      if (line ~ /$(am__global_test_result_rx)/) \
+        { \
+          sub("$(am__global_test_result_rx)", "", line); \
+          sub("[ 	]*$$", "", line); \
+          global_test_result = line; \
+        } \
+      else if (line ~ /$(am__copy_in_global_log_rx)[nN][oO]/) \
+        copy_in_global_log = 0; \
+    }; \
+  if (copy_in_global_log) \
+    { \
+      rst_section(global_test_result ": " $$0); \
+      while ((rc = (getline line < ($$0 ".log"))) != 0) \
+      { \
+        if (rc < 0) \
+          fatal("failed to read from " $$0 ".log"); \
+        print line; \
+      }; \
+      printf "\n"; \
+    }; \
+  close ($$0 ".trs"); \
+  close ($$0 ".log"); \
+}'
+# Restructured Text title.
+am__rst_title = { sed 's/.*/   &   /;h;s/./=/g;p;x;s/ *$$//;p;g' && echo; }
+# Solaris 10 'make', and several other traditional 'make' implementations,
+# pass "-e" to $(SHELL), and POSIX 2008 even requires this.  Work around it
+# by disabling -e (using the XSI extension "set +e") if it's set.
+am__sh_e_setup = case $$- in *e*) set +e;; esac
+# Default flags passed to test drivers.
+am__common_driver_flags = \
+  --color-tests "$$am__color_tests" \
+  --enable-hard-errors "$$am__enable_hard_errors" \
+  --expect-failure "$$am__expect_failure"
+# To be inserted before the command running the test.  Creates the
+# directory for the log if needed.  Stores in $dir the directory
+# containing $f, in $tst the test, in $log the log.  Executes the
+# developer- defined test setup AM_TESTS_ENVIRONMENT (if any), and
+# passes TESTS_ENVIRONMENT.  Set up options for the wrapper that
+# will run the test scripts (or their associated LOG_COMPILER, if
+# thy have one).
+am__check_pre = \
+$(am__sh_e_setup);					\
+$(am__vpath_adj_setup) $(am__vpath_adj)			\
+$(am__tty_colors);					\
+srcdir=$(srcdir); export srcdir;			\
+case "$@" in						\
+  */*) am__odir=`echo "./$@" | sed 's|/[^/]*$$||'`;;	\
+    *) am__odir=.;; 					\
+esac;							\
+test "x$$am__odir" = x"." || test -d "$$am__odir" 	\
+  || $(MKDIR_P) "$$am__odir" || exit $$?;		\
+if test -f "./$$f"; then dir=./;			\
+elif test -f "$$f"; then dir=;				\
+else dir="$(srcdir)/"; fi;				\
+tst=$$dir$$f; log='$@'; 				\
+if test -n '$(DISABLE_HARD_ERRORS)'; then		\
+  am__enable_hard_errors=no; 				\
+else							\
+  am__enable_hard_errors=yes; 				\
+fi; 							\
+case " $(XFAIL_TESTS) " in				\
+  *[\ \	]$$f[\ \	]* | *[\ \	]$$dir$$f[\ \	]*) \
+    am__expect_failure=yes;;				\
+  *)							\
+    am__expect_failure=no;;				\
+esac; 							\
+$(AM_TESTS_ENVIRONMENT) $(TESTS_ENVIRONMENT)
+# A shell command to get the names of the tests scripts with any registered
+# extension removed (i.e., equivalently, the names of the test logs, with
+# the '.log' extension removed).  The result is saved in the shell variable
+# '$bases'.  This honors runtime overriding of TESTS and TEST_LOGS.  Sadly,
+# we cannot use something simpler, involving e.g., "$(TEST_LOGS:.log=)",
+# since that might cause problem with VPATH rewrites for suffix-less tests.
+# See also 'test-harness-vpath-rewrite.sh' and 'test-trs-basic.sh'.
+am__set_TESTS_bases = \
+  bases='$(TEST_LOGS)'; \
+  bases=`for i in $$bases; do echo $$i; done | sed 's/\.log$$//'`; \
+  bases=`echo $$bases`
+RECHECK_LOGS = $(TEST_LOGS)
+TEST_SUITE_LOG = test-suite.log
+am__test_logs1 = $(TESTS:=.log)
+am__test_logs2 = $(am__test_logs1:@EXEEXT@.log=.log)
+TEST_LOGS = $(am__test_logs2:.py.log=.log)
+PY_LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
+PY_LOG_COMPILE = $(PY_LOG_COMPILER) $(AM_PY_LOG_FLAGS) $(PY_LOG_FLAGS)
+am__set_b = \
+  case '$@' in \
+    */*) \
+      case '$*' in \
+        */*) b='$*';; \
+          *) b=`echo '$@' | sed 's/\.log$$//'`; \
+       esac;; \
+    *) \
+      b='$*';; \
+  esac
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/applewmproto.pc.in \
 	$(srcdir)/bigreqsproto.pc.in $(srcdir)/compositeproto.pc.in \
@@ -363,7 +536,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/applewmproto.pc.in \
 	$(srcdir)/xineramaproto.pc.in $(srcdir)/xproto.pc.in \
 	$(srcdir)/xproxymngproto.pc.in \
 	$(top_srcdir)/include/X11/Xpoll.h.in AUTHORS INSTALL compile \
-	config.guess config.sub install-sh missing
+	config.guess config.sub install-sh missing test-driver
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -477,6 +650,11 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
+PYTHON = @PYTHON@
+PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
+PYTHON_PLATFORM = @PYTHON_PLATFORM@
+PYTHON_PREFIX = @PYTHON_PREFIX@
+PYTHON_VERSION = @PYTHON_VERSION@
 SED = sed
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -529,9 +707,14 @@ mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
+pkgpyexecdir = @pkgpyexecdir@
+pkgpythondir = @pkgpythondir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+pyexecdir = @pyexecdir@
+pythondir = @pythondir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -540,6 +723,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+XORGRELSTRING = @PACKAGE_STRING@
+XORGMANNAME = X Version 11
+SUFFIXES = .$(MISC_MAN_SUFFIX) .man
 applewmdir = $(includedir)/X11/extensions
 applewm_HEADERS = \
         include/X11/extensions/applewmconst.h \
@@ -554,13 +740,6 @@ bigreqs_HEADERS = \
 
 bigreqsprotopkgconfigdir = $(datadir)/pkgconfig
 bigreqsprotopkgconfig_DATA = bigreqsproto.pc
-@LEGACY_TRUE@XCalibrateincludedir = $(includedir)/X11/extensions
-@LEGACY_TRUE@XCalibrateinclude_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/xcalibrateproto.h \
-@LEGACY_TRUE@	include/X11/extensions/xcalibratewire.h
-
-@LEGACY_TRUE@calibrateprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@calibrateprotopkgconfig_DATA = xcalibrateproto.pc
 compositedir = $(includedir)/X11/extensions
 composite_HEADERS = \
 	include/X11/extensions/composite.h \
@@ -597,13 +776,6 @@ dri3_HEADERS = \
 
 dri3protopkgconfigdir = $(datadir)/pkgconfig
 dri3protopkgconfig_DATA = dri3proto.pc
-@LEGACY_TRUE@eviedir = $(includedir)/X11/extensions
-@LEGACY_TRUE@evie_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/evieproto.h \
-@LEGACY_TRUE@	include/X11/extensions/Xeviestr.h
-
-@LEGACY_TRUE@evieprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@evieprotopkgconfig_DATA = evieproto.pc
 fixesdir = $(includedir)/X11/extensions
 fixes_HEADERS = \
 	include/X11/extensions/xfixesproto.h \
@@ -611,14 +783,6 @@ fixes_HEADERS = \
 
 fixesprotopkgconfigdir = $(datadir)/pkgconfig
 fixesprotopkgconfig_DATA = fixesproto.pc
-@LEGACY_TRUE@fontcachedir = $(includedir)/X11/extensions
-@LEGACY_TRUE@fontcache_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/fontcache.h \
-@LEGACY_TRUE@	include/X11/extensions/fontcacheP.h \
-@LEGACY_TRUE@	include/X11/extensions/fontcachstr.h
-
-@LEGACY_TRUE@fontcacheprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@fontcacheprotopkgconfig_DATA = fontcacheproto.pc
 fontsdir = $(includedir)/X11/fonts
 fonts_HEADERS = \
 	include/X11/fonts/font.h \
@@ -659,19 +823,6 @@ kb_HEADERS = include/X11/extensions/XKB.h \
 	include/X11/extensions/XKBstr.h $(am__append_1)
 kbprotopkgconfigdir = $(datadir)/pkgconfig
 kbprotopkgconfig_DATA = kbproto.pc
-@LEGACY_TRUE@lg3ddir = $(includedir)/X11/extensions
-@LEGACY_TRUE@lg3d_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/lgewire.h
-
-@LEGACY_TRUE@lg3dprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@lg3dprotopkgconfig_DATA = lg3dproto.pc
-@LEGACY_TRUE@xproxymngdir = $(includedir)/X11/PM
-@LEGACY_TRUE@xproxymng_HEADERS = \
-@LEGACY_TRUE@	include/X11/PM/PM.h \
-@LEGACY_TRUE@	include/X11/PM/PMproto.h
-
-@LEGACY_TRUE@pmprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@pmprotopkgconfig_DATA = xproxymngproto.pc
 presentdir = $(includedir)/X11/extensions
 present_HEADERS = \
 	include/X11/extensions/presentproto.h \
@@ -679,19 +830,6 @@ present_HEADERS = \
 
 presentprotopkgconfigdir = $(datadir)/pkgconfig
 presentprotopkgconfig_DATA = presentproto.pc
-@LEGACY_TRUE@printdir = $(includedir)/X11/extensions
-@LEGACY_TRUE@print_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/Print.h \
-@LEGACY_TRUE@	include/X11/extensions/Printstr.h
-
-@LEGACY_TRUE@printprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@printprotopkgconfig_DATA = printproto.pc
-@LEGACY_TRUE@miscmandir = $(MISC_MAN_DIR)
-@LEGACY_TRUE@miscman_DATA = man/Xprint.$(MISC_MAN_SUFFIX)
-@LEGACY_TRUE@CLEANFILES = $(miscman_DATA)
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
-SUFFIXES = .$(MISC_MAN_SUFFIX) .man
 randrdir = $(includedir)/X11/extensions
 randr_HEADERS = \
 	include/X11/extensions/randr.h \
@@ -727,18 +865,6 @@ scrnsaver_HEADERS = \
 
 scrnsaverprotopkgconfigdir = $(datadir)/pkgconfig
 scrnsaverprotopkgconfig_DATA = scrnsaverproto.pc
-@LEGACY_TRUE@trapdir = $(includedir)/X11/extensions
-@LEGACY_TRUE@trap_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/xtrapbits.h \
-@LEGACY_TRUE@	include/X11/extensions/xtrapddmi.h \
-@LEGACY_TRUE@	include/X11/extensions/xtrapdi.h \
-@LEGACY_TRUE@	include/X11/extensions/xtrapemacros.h \
-@LEGACY_TRUE@	include/X11/extensions/xtraplib.h \
-@LEGACY_TRUE@	include/X11/extensions/xtraplibp.h \
-@LEGACY_TRUE@	include/X11/extensions/xtrapproto.h
-
-@LEGACY_TRUE@trapprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@trapprotopkgconfig_DATA = trapproto.pc
 videodir = $(includedir)/X11/extensions
 video_HEADERS = include/X11/extensions/Xv.h \
 	include/X11/extensions/XvMC.h \
@@ -746,13 +872,6 @@ video_HEADERS = include/X11/extensions/Xv.h \
 	include/X11/extensions/Xvproto.h $(am__append_2)
 videoprotopkgconfigdir = $(datadir)/pkgconfig
 videoprotopkgconfig_DATA = videoproto.pc
-@LEGACY_TRUE@windowswmdir = $(includedir)/X11/extensions
-@LEGACY_TRUE@windowswm_HEADERS = \
-@LEGACY_TRUE@        include/X11/extensions/windowswm.h \
-@LEGACY_TRUE@	include/X11/extensions/windowswmstr.h
-
-@LEGACY_TRUE@windowswmprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@windowswmprotopkgconfig_DATA = windowswmproto.pc
 xprotodir = $(includedir)/X11
 xproto_HEADERS = \
 	include/X11/ap_keysym.h \
@@ -862,20 +981,6 @@ xf86dri_HEADERS = \
 
 xf86driprotopkgconfigdir = $(datadir)/pkgconfig
 xf86driprotopkgconfig_DATA = xf86driproto.pc
-@LEGACY_TRUE@xf86miscdir = $(includedir)/X11/extensions
-@LEGACY_TRUE@xf86misc_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/xf86misc.h \
-@LEGACY_TRUE@	include/X11/extensions/xf86mscstr.h
-
-@LEGACY_TRUE@xf86miscprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@xf86miscprotopkgconfig_DATA = xf86miscproto.pc
-@LEGACY_TRUE@xf86rushdir = $(includedir)/X11/extensions
-@LEGACY_TRUE@xf86rush_HEADERS = \
-@LEGACY_TRUE@	include/X11/extensions/xf86rush.h \
-@LEGACY_TRUE@	include/X11/extensions/xf86rushstr.h
-
-@LEGACY_TRUE@xf86rushprotopkgconfigdir = $(datadir)/pkgconfig
-@LEGACY_TRUE@xf86rushprotopkgconfig_DATA = xf86rushproto.pc
 xf86vidmodedir = $(includedir)/X11/extensions
 xf86vidmode_HEADERS = \
 	include/X11/extensions/xf86vm.h \
@@ -890,6 +995,84 @@ xinerama_HEADERS = \
 
 xineramaprotopkgconfigdir = $(datadir)/pkgconfig
 xineramaprotopkgconfig_DATA = xineramaproto.pc
+@LEGACY_TRUE@XCalibrateincludedir = $(includedir)/X11/extensions
+@LEGACY_TRUE@XCalibrateinclude_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/xcalibrateproto.h \
+@LEGACY_TRUE@	include/X11/extensions/xcalibratewire.h
+
+@LEGACY_TRUE@calibrateprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@calibrateprotopkgconfig_DATA = xcalibrateproto.pc
+@LEGACY_TRUE@eviedir = $(includedir)/X11/extensions
+@LEGACY_TRUE@evie_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/evieproto.h \
+@LEGACY_TRUE@	include/X11/extensions/Xeviestr.h
+
+@LEGACY_TRUE@evieprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@evieprotopkgconfig_DATA = evieproto.pc
+@LEGACY_TRUE@fontcachedir = $(includedir)/X11/extensions
+@LEGACY_TRUE@fontcache_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/fontcache.h \
+@LEGACY_TRUE@	include/X11/extensions/fontcacheP.h \
+@LEGACY_TRUE@	include/X11/extensions/fontcachstr.h
+
+@LEGACY_TRUE@fontcacheprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@fontcacheprotopkgconfig_DATA = fontcacheproto.pc
+@LEGACY_TRUE@lg3ddir = $(includedir)/X11/extensions
+@LEGACY_TRUE@lg3d_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/lgewire.h
+
+@LEGACY_TRUE@lg3dprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@lg3dprotopkgconfig_DATA = lg3dproto.pc
+@LEGACY_TRUE@xproxymngdir = $(includedir)/X11/PM
+@LEGACY_TRUE@xproxymng_HEADERS = \
+@LEGACY_TRUE@	include/X11/PM/PM.h \
+@LEGACY_TRUE@	include/X11/PM/PMproto.h
+
+@LEGACY_TRUE@pmprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@pmprotopkgconfig_DATA = xproxymngproto.pc
+@LEGACY_TRUE@printdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@print_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/Print.h \
+@LEGACY_TRUE@	include/X11/extensions/Printstr.h
+
+@LEGACY_TRUE@printprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@printprotopkgconfig_DATA = printproto.pc
+@LEGACY_TRUE@miscmandir = $(MISC_MAN_DIR)
+@LEGACY_TRUE@miscman_DATA = man/Xprint.$(MISC_MAN_SUFFIX)
+@LEGACY_TRUE@CLEANFILES = $(miscman_DATA)
+@LEGACY_TRUE@trapdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@trap_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/xtrapbits.h \
+@LEGACY_TRUE@	include/X11/extensions/xtrapddmi.h \
+@LEGACY_TRUE@	include/X11/extensions/xtrapdi.h \
+@LEGACY_TRUE@	include/X11/extensions/xtrapemacros.h \
+@LEGACY_TRUE@	include/X11/extensions/xtraplib.h \
+@LEGACY_TRUE@	include/X11/extensions/xtraplibp.h \
+@LEGACY_TRUE@	include/X11/extensions/xtrapproto.h
+
+@LEGACY_TRUE@trapprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@trapprotopkgconfig_DATA = trapproto.pc
+@LEGACY_TRUE@windowswmdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@windowswm_HEADERS = \
+@LEGACY_TRUE@        include/X11/extensions/windowswm.h \
+@LEGACY_TRUE@	include/X11/extensions/windowswmstr.h
+
+@LEGACY_TRUE@windowswmprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@windowswmprotopkgconfig_DATA = windowswmproto.pc
+@LEGACY_TRUE@xf86miscdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@xf86misc_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/xf86misc.h \
+@LEGACY_TRUE@	include/X11/extensions/xf86mscstr.h
+
+@LEGACY_TRUE@xf86miscprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@xf86miscprotopkgconfig_DATA = xf86miscproto.pc
+@LEGACY_TRUE@xf86rushdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@xf86rush_HEADERS = \
+@LEGACY_TRUE@	include/X11/extensions/xf86rush.h \
+@LEGACY_TRUE@	include/X11/extensions/xf86rushstr.h
+
+@LEGACY_TRUE@xf86rushprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@xf86rushprotopkgconfig_DATA = xf86rushproto.pc
 SUBDIRS = specs
 dist_doc_DATA = \
 	compositeproto.txt \
@@ -958,10 +1141,16 @@ EXTRA_DIST = \
     scripts/keysym-generator.py
 
 AM_DISTCHECK_CONFIGURE_FLAGS = --enable-legacy
+@HAVE_PYTHON_TRUE@AM_TESTS_ENVIRONMENT = \
+@HAVE_PYTHON_TRUE@       INCLUDESDIR=$(top_srcdir)/include
+
+@HAVE_PYTHON_TRUE@TESTS = scripts/keysym-generator.py
+@HAVE_PYTHON_TRUE@TEST_EXTENSIONS = .py
+@HAVE_PYTHON_TRUE@PY_LOG_COMPILER = $(PYTHON)
 all: all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .$(MISC_MAN_SUFFIX) .man
+.SUFFIXES: .$(MISC_MAN_SUFFIX) .man .log .py .py$(EXEEXT) .trs
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -2860,6 +3049,162 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 	-rm -f cscope.out cscope.in.out cscope.po.out cscope.files
 
+# Recover from deleted '.trs' file; this should ensure that
+# "rm -f foo.log; make foo.trs" re-run 'foo.test', and re-create
+# both 'foo.log' and 'foo.trs'.  Break the recipe in two subshells
+# to avoid problems with "make -n".
+.log.trs:
+	rm -f $< $@
+	$(MAKE) $(AM_MAKEFLAGS) $<
+
+# Leading 'am--fnord' is there to ensure the list of targets does not
+# expand to empty, as could happen e.g. with make check TESTS=''.
+am--fnord $(TEST_LOGS) $(TEST_LOGS:.log=.trs): $(am__force_recheck)
+am--force-recheck:
+	@:
+
+$(TEST_SUITE_LOG): $(TEST_LOGS)
+	@$(am__set_TESTS_bases); \
+	am__f_ok () { test -f "$$1" && test -r "$$1"; }; \
+	redo_bases=`for i in $$bases; do \
+	              am__f_ok $$i.trs && am__f_ok $$i.log || echo $$i; \
+	            done`; \
+	if test -n "$$redo_bases"; then \
+	  redo_logs=`for i in $$redo_bases; do echo $$i.log; done`; \
+	  redo_results=`for i in $$redo_bases; do echo $$i.trs; done`; \
+	  if $(am__make_dryrun); then :; else \
+	    rm -f $$redo_logs && rm -f $$redo_results || exit 1; \
+	  fi; \
+	fi; \
+	if test -n "$$am__remaking_logs"; then \
+	  echo "fatal: making $(TEST_SUITE_LOG): possible infinite" \
+	       "recursion detected" >&2; \
+	elif test -n "$$redo_logs"; then \
+	  am__remaking_logs=yes $(MAKE) $(AM_MAKEFLAGS) $$redo_logs; \
+	fi; \
+	if $(am__make_dryrun); then :; else \
+	  st=0;  \
+	  errmsg="fatal: making $(TEST_SUITE_LOG): failed to create"; \
+	  for i in $$redo_bases; do \
+	    test -f $$i.trs && test -r $$i.trs \
+	      || { echo "$$errmsg $$i.trs" >&2; st=1; }; \
+	    test -f $$i.log && test -r $$i.log \
+	      || { echo "$$errmsg $$i.log" >&2; st=1; }; \
+	  done; \
+	  test $$st -eq 0 || exit 1; \
+	fi
+	@$(am__sh_e_setup); $(am__tty_colors); $(am__set_TESTS_bases); \
+	ws='[ 	]'; \
+	results=`for b in $$bases; do echo $$b.trs; done`; \
+	test -n "$$results" || results=/dev/null; \
+	all=`  grep "^$$ws*:test-result:"           $$results | wc -l`; \
+	pass=` grep "^$$ws*:test-result:$$ws*PASS"  $$results | wc -l`; \
+	fail=` grep "^$$ws*:test-result:$$ws*FAIL"  $$results | wc -l`; \
+	skip=` grep "^$$ws*:test-result:$$ws*SKIP"  $$results | wc -l`; \
+	xfail=`grep "^$$ws*:test-result:$$ws*XFAIL" $$results | wc -l`; \
+	xpass=`grep "^$$ws*:test-result:$$ws*XPASS" $$results | wc -l`; \
+	error=`grep "^$$ws*:test-result:$$ws*ERROR" $$results | wc -l`; \
+	if test `expr $$fail + $$xpass + $$error` -eq 0; then \
+	  success=true; \
+	else \
+	  success=false; \
+	fi; \
+	br='==================='; br=$$br$$br$$br$$br; \
+	result_count () \
+	{ \
+	    if test x"$$1" = x"--maybe-color"; then \
+	      maybe_colorize=yes; \
+	    elif test x"$$1" = x"--no-color"; then \
+	      maybe_colorize=no; \
+	    else \
+	      echo "$@: invalid 'result_count' usage" >&2; exit 4; \
+	    fi; \
+	    shift; \
+	    desc=$$1 count=$$2; \
+	    if test $$maybe_colorize = yes && test $$count -gt 0; then \
+	      color_start=$$3 color_end=$$std; \
+	    else \
+	      color_start= color_end=; \
+	    fi; \
+	    echo "$${color_start}# $$desc $$count$${color_end}"; \
+	}; \
+	create_testsuite_report () \
+	{ \
+	  result_count $$1 "TOTAL:" $$all   "$$brg"; \
+	  result_count $$1 "PASS: " $$pass  "$$grn"; \
+	  result_count $$1 "SKIP: " $$skip  "$$blu"; \
+	  result_count $$1 "XFAIL:" $$xfail "$$lgn"; \
+	  result_count $$1 "FAIL: " $$fail  "$$red"; \
+	  result_count $$1 "XPASS:" $$xpass "$$red"; \
+	  result_count $$1 "ERROR:" $$error "$$mgn"; \
+	}; \
+	{								\
+	  echo "$(PACKAGE_STRING): $(subdir)/$(TEST_SUITE_LOG)" |	\
+	    $(am__rst_title);						\
+	  create_testsuite_report --no-color;				\
+	  echo;								\
+	  echo ".. contents:: :depth: 2";				\
+	  echo;								\
+	  for b in $$bases; do echo $$b; done				\
+	    | $(am__create_global_log);					\
+	} >$(TEST_SUITE_LOG).tmp || exit 1;				\
+	mv $(TEST_SUITE_LOG).tmp $(TEST_SUITE_LOG);			\
+	if $$success; then						\
+	  col="$$grn";							\
+	 else								\
+	  col="$$red";							\
+	  test x"$$VERBOSE" = x || cat $(TEST_SUITE_LOG);		\
+	fi;								\
+	echo "$${col}$$br$${std}"; 					\
+	echo "$${col}Testsuite summary for $(PACKAGE_STRING)$${std}";	\
+	echo "$${col}$$br$${std}"; 					\
+	create_testsuite_report --maybe-color;				\
+	echo "$$col$$br$$std";						\
+	if $$success; then :; else					\
+	  echo "$${col}See $(subdir)/$(TEST_SUITE_LOG)$${std}";		\
+	  if test -n "$(PACKAGE_BUGREPORT)"; then			\
+	    echo "$${col}Please report to $(PACKAGE_BUGREPORT)$${std}";	\
+	  fi;								\
+	  echo "$$col$$br$$std";					\
+	fi;								\
+	$$success || exit 1
+
+check-TESTS: 
+	@list='$(RECHECK_LOGS)';           test -z "$$list" || rm -f $$list
+	@list='$(RECHECK_LOGS:.log=.trs)'; test -z "$$list" || rm -f $$list
+	@test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
+	@set +e; $(am__set_TESTS_bases); \
+	log_list=`for i in $$bases; do echo $$i.log; done`; \
+	trs_list=`for i in $$bases; do echo $$i.trs; done`; \
+	log_list=`echo $$log_list`; trs_list=`echo $$trs_list`; \
+	$(MAKE) $(AM_MAKEFLAGS) $(TEST_SUITE_LOG) TEST_LOGS="$$log_list"; \
+	exit $$?;
+recheck: all 
+	@test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
+	@set +e; $(am__set_TESTS_bases); \
+	bases=`for i in $$bases; do echo $$i; done \
+	         | $(am__list_recheck_tests)` || exit 1; \
+	log_list=`for i in $$bases; do echo $$i.log; done`; \
+	log_list=`echo $$log_list`; \
+	$(MAKE) $(AM_MAKEFLAGS) $(TEST_SUITE_LOG) \
+	        am__force_recheck=am--force-recheck \
+	        TEST_LOGS="$$log_list"; \
+	exit $$?
+.py.log:
+	@p='$<'; \
+	$(am__set_b); \
+	$(am__check_pre) $(PY_LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_PY_LOG_DRIVER_FLAGS) $(PY_LOG_DRIVER_FLAGS) -- $(PY_LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+@am__EXEEXT_TRUE@.py$(EXEEXT).log:
+@am__EXEEXT_TRUE@	@p='$<'; \
+@am__EXEEXT_TRUE@	$(am__set_b); \
+@am__EXEEXT_TRUE@	$(am__check_pre) $(PY_LOG_DRIVER) --test-name "$$f" \
+@am__EXEEXT_TRUE@	--log-file $$b.log --trs-file $$b.trs \
+@am__EXEEXT_TRUE@	$(am__common_driver_flags) $(AM_PY_LOG_DRIVER_FLAGS) $(PY_LOG_DRIVER_FLAGS) -- $(PY_LOG_COMPILE) \
+@am__EXEEXT_TRUE@	"$$tst" $(AM_TESTS_FD_REDIRECT)
+
 distdir: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
@@ -3057,6 +3402,7 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-recursive
 all-am: Makefile $(DATA) $(HEADERS)
 installdirs: installdirs-recursive
@@ -3084,6 +3430,9 @@ install-strip:
 	    "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'" install; \
 	fi
 mostlyclean-generic:
+	-test -z "$(TEST_LOGS)" || rm -f $(TEST_LOGS)
+	-test -z "$(TEST_LOGS:.log=.trs)" || rm -f $(TEST_LOGS:.log=.trs)
+	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
@@ -3247,18 +3596,18 @@ uninstall-am: uninstall-XCalibrateincludeHEADERS \
 	uninstall-xineramaHEADERS uninstall-xineramaprotopkgconfigDATA \
 	uninstall-xprotoHEADERS uninstall-xproxymngHEADERS
 
-.MAKE: $(am__recursive_targets) install-am install-strip
+.MAKE: $(am__recursive_targets) check-am install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-am clean clean-cscope clean-generic \
-	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
-	dist-zstd distcheck distclean distclean-generic distclean-tags \
-	distcleancheck distdir distuninstallcheck dvi dvi-am html \
-	html-am info info-am install install-XCalibrateincludeHEADERS \
-	install-am install-applewmHEADERS \
-	install-applewmprotopkgconfigDATA install-bigreqsHEADERS \
-	install-bigreqsprotopkgconfigDATA \
+	am--refresh check check-TESTS check-am clean clean-cscope \
+	clean-generic cscope cscopelist-am ctags ctags-am dist \
+	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
+	dist-xz dist-zip dist-zstd distcheck distclean \
+	distclean-generic distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-XCalibrateincludeHEADERS install-am \
+	install-applewmHEADERS install-applewmprotopkgconfigDATA \
+	install-bigreqsHEADERS install-bigreqsprotopkgconfigDATA \
 	install-calibrateprotopkgconfigDATA install-compatHEADERS \
 	install-compositeHEADERS install-compositeprotopkgconfigDATA \
 	install-damageHEADERS install-damageprotopkgconfigDATA \
@@ -3303,7 +3652,7 @@ uninstall-am: uninstall-XCalibrateincludeHEADERS \
 	install-xproxymngHEADERS installcheck installcheck-am \
 	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags tags-am uninstall \
+	pdf-am ps ps-am recheck tags tags-am uninstall \
 	uninstall-XCalibrateincludeHEADERS uninstall-am \
 	uninstall-applewmHEADERS uninstall-applewmprotopkgconfigDATA \
 	uninstall-bigreqsHEADERS uninstall-bigreqsprotopkgconfigDATA \
