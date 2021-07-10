@@ -22,7 +22,8 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
-AC_INIT([xorgproto], [2021.3],
+# keep version in sync with meson.build
+AC_INIT([xorgproto], [2021.4],
         [https://gitlab.freedesktop.org/xorg/proto/xorgproto/issues])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
@@ -36,6 +37,9 @@ XORG_WITH_XMLTO(0.0.22)
 XORG_WITH_FOP
 XORG_WITH_XSLTPROC
 XORG_CHECK_SGML_DOCTOOLS(1.8)
+
+AM_PATH_PYTHON([3.6], , [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 
 AC_CANONICAL_HOST
 

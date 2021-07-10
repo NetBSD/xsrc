@@ -18,9 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-project('xorgproto', 'c', license : 'MIT', version : '2021.3')
+# keep version in sync with configure.ac
+project('xorgproto', 'c', license : 'MIT', version : '2021.4')
 cc = meson.get_compiler('c')
-sed = find_program('sed')
 
 pcs = [
         'applewmproto',
@@ -66,6 +66,22 @@ foreach pc : pcs
         configuration : pc_data,
     )
 endforeach
+
+
+docs = files('compositeproto.txt',
+             'damageproto.txt',
+             'dri2proto.txt',
+             'dri3proto.txt',
+             'fixesproto.txt',
+             'PM_spec',
+             'presentproto.txt',
+             'randrproto.txt',
+             'renderproto.txt',
+             'resproto.txt',
+             'xv-protocol-v2.txt')
+install_data(docs,
+             install_dir: get_option('datadir') / 'doc' / 'xorgproto')
+
 
 if get_option('legacy') == true
     legacy_pcs = [
