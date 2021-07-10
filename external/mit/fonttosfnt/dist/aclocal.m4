@@ -403,7 +403,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.2])
+m4_define([vers_have], [1.19.3])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -423,7 +423,7 @@ m4_undefine([maj_needed])
 # such as man pages and config files
 AC_DEFUN([XORG_PROG_RAWCPP],[
 AC_REQUIRE([AC_PROG_CPP])
-AC_PATH_PROGS(RAWCPP, [cpp], [${CPP}],
+AC_PATH_TOOL(RAWCPP, [cpp], [${CPP}],
    [$PATH:/bin:/usr/bin:/usr/lib:/usr/libexec:/usr/ccs/lib:/usr/ccs/lbin:/lib])
 
 # Check for flag to avoid builtin definitions - assumes unix is predefined,
