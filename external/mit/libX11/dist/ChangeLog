@@ -1,3 +1,48 @@
+commit f906fe8e9769e4313294b68e61c402610ade69da
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jun 5 09:12:13 2021 -0700
+
+    libX11 1.7.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 51b73ac0acda65005c8a9f17ca4ea7281b00ca84
+Author: Tobias Stoeckmann <tobias@stoeckmann.org>
+Date:   Sun May 23 15:05:17 2021 +0200
+
+    Protect against overly long strings
+    
+    Checking against upper limit of USHRT_MAX must happen before truncating
+    size_t to int. On 64 bit systems with strings larger than 2 GB this
+    could otherwise lead to negative ints or ints smaller than USHRT_MAX.
+    
+    In XParseColor this could lead to out of boundary access with strings
+    starting with a # (color sequence). A modulo 12 operation is performed
+    to validate the string length, but with an overflown length, the for
+    loop would eventually read behind terminating '\0' character.
+    
+    Signed-off-by: Tobias Stoeckmann <tobias@stoeckmann.org>
+
+commit ab2f59530b16bdfbf023b8e025c7c8aba3b6fd0c
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sun May 30 16:33:48 2021 +0200
+
+    Check for NULL strings before getting their lengths
+    
+    Problem reported by Karsten Trulsen
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit a8216e8653a246db664e1443ecf707b27de65067
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sat May 22 17:35:47 2021 +0200
+
+    include <limits.h> always, not if HAVE_CONFIG_H is set.
+    
+    via Matthew Green from the NetBSD project
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
 commit 6953a586df4819143c4d55e011b3a5e5377981b8
 Author: Matthieu Herrb <matthieu.herrb@laas.fr>
 Date:   Tue May 18 15:27:58 2021 +0200
