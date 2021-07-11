@@ -32,16 +32,16 @@
 #define BCP_DUMP(q)
 #endif
 
-extern "C" {
 #include "r600_pipe.h"
 #include "r600_shader.h"
-}
+#include "eg_sq.h" // CM_V_SQ_MOVA_DST_CF_IDX0/1
 
 #include <stack>
 
 #include "sb_bc.h"
 #include "sb_shader.h"
 #include "sb_pass.h"
+#include "util/macros.h"
 
 namespace r600_sb {
 
@@ -57,23 +57,25 @@ int bc_parser::decode() {
 
 	if (pshader) {
 		switch (bc->type) {
-		case TGSI_PROCESSOR_FRAGMENT: t = TARGET_PS; break;
-		case TGSI_PROCESSOR_VERTEX:
-			t = pshader->vs_as_es ? TARGET_ES : TARGET_VS;
+		case PIPE_SHADER_FRAGMENT: t = TARGET_PS; break;
+		case PIPE_SHADER_VERTEX:
+			t = pshader->vs_as_ls ? TARGET_LS : (pshader->vs_as_es ? TARGET_ES : TARGET_VS);
 			break;
-		case TGSI_PROCESSOR_GEOMETRY: t = TARGET_GS; break;
-		case TGSI_PROCESSOR_COMPUTE: t = TARGET_COMPUTE; break;
+		case PIPE_SHADER_GEOMETRY: t = TARGET_GS; break;
+		case PIPE_SHADER_COMPUTE: t = TARGET_COMPUTE; break;
+		case PIPE_SHADER_TESS_CTRL: t = TARGET_HS; break;
+		case PIPE_SHADER_TESS_EVAL: t = pshader->tes_as_es ? TARGET_ES : TARGET_VS; break;
 		default: assert(!"unknown shader target"); return -1; break;
 		}
 	} else {
-		if (bc->type == TGSI_PROCESSOR_COMPUTE)
+		if (bc->type == PIPE_SHADER_COMPUTE)
 			t = TARGET_COMPUTE;
 		else
 			t = TARGET_FETCH;
 	}
 
 	sh = new shader(ctx, t, bc->debug_id);
-	sh->safe_math = sb_context::safe_math || (t == TARGET_COMPUTE);
+	sh->safe_math = sb_context::safe_math || (t == TARGET_COMPUTE || bc->precise);
 
 	int r = decode_shader();
 
@@ -97,7 +99,7 @@ int bc_parser::decode_shader() {
 		if ((r = decode_cf(i, eop)))
 			return r;
 
-	} while (!eop || (i >> 1) <= max_cf);
+	} while (!eop || (i >> 1) < max_cf);
 
 	return 0;
 }
@@ -123,7 +125,7 @@ int bc_parser::parse_decls() {
 		return 0;
 	}
 
-	if (pshader->indirect_files & ~(1 << TGSI_FILE_CONSTANT)) {
+	if (pshader->indirect_files & ~((1 << TGSI_FILE_CONSTANT) | (1 << TGSI_FILE_SAMPLER))) {
 
 		assert(pshader->num_arrays);
 
@@ -137,9 +139,22 @@ int bc_parser::parse_decls() {
 		}
 	}
 
-	if (sh->target == TARGET_VS || sh->target == TARGET_ES)
+	// GS inputs can add indirect addressing
+	if (sh->target == TARGET_GS) {
+		if (pshader->num_arrays) {
+			for (unsigned i = 0; i < pshader->num_arrays; ++i) {
+				r600_shader_array &a = pshader->arrays[i];
+				sh->add_gpr_array(a.gpr_start, a.gpr_count, a.comp_mask);
+			}
+		}
+	}
+
+	if (sh->target == TARGET_VS || sh->target == TARGET_ES || sh->target == TARGET_HS || sh->target == TARGET_LS)
 		sh->add_input(0, 1, 0x0F);
 	else if (sh->target == TARGET_GS) {
+		sh->add_input(0, 1, 0x0F);
+		sh->add_input(1, 1, 0x0F);
+	} else if (sh->target == TARGET_COMPUTE) {
 		sh->add_input(0, 1, 0x0F);
 		sh->add_input(1, 1, 0x0F);
 	}
@@ -147,25 +162,28 @@ int bc_parser::parse_decls() {
 	bool ps_interp = ctx.hw_class >= HW_CLASS_EVERGREEN
 			&& sh->target == TARGET_PS;
 
-	unsigned linear = 0, persp = 0, centroid = 1;
+	bool ij_interpolators[6];
+	memset(ij_interpolators, 0, sizeof(ij_interpolators));
 
 	for (unsigned i = 0; i < pshader->ninput; ++i) {
 		r600_shader_io & in = pshader->input[i];
 		bool preloaded = sh->target == TARGET_PS && !(ps_interp && in.spi_sid);
 		sh->add_input(in.gpr, preloaded, /*in.write_mask*/ 0x0F);
 		if (ps_interp && in.spi_sid) {
-			if (in.interpolate == TGSI_INTERPOLATE_LINEAR ||
-					in.interpolate == TGSI_INTERPOLATE_COLOR)
-				linear = 1;
-			else if (in.interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
-				persp = 1;
-			if (in.centroid)
-				centroid = 2;
+			int k = eg_get_interpolator_index(in.interpolate, in.interpolate_location);
+			if (k >= 0)
+				ij_interpolators[k] |= true;
 		}
 	}
 
 	if (ps_interp) {
-		unsigned mask = (1 << (2 * (linear + persp) * centroid)) - 1;
+		/* add the egcm ij interpolators to live inputs */
+		unsigned num_ij = 0;
+		for (unsigned i = 0; i < ARRAY_SIZE(ij_interpolators); i++) {
+			num_ij += ij_interpolators[i];
+		}
+
+		unsigned mask = (1 << (2 * num_ij)) - 1;
 		unsigned gpr = 0;
 
 		while (mask) {
@@ -204,7 +222,7 @@ int bc_parser::decode_cf(unsigned &i, bool &eop) {
 			return r;
 	} else if (flags & CF_FETCH) {
 		if ((r = decode_fetch_clause(cf)))
-			return r;;
+			return r;
 	} else if (flags & CF_EXP) {
 		if (cf->bc.rw_rel)
 			gpr_reladdr = true;
@@ -317,6 +335,29 @@ int bc_parser::prepare_alu_clause(cf_node* cf) {
 	return 0;
 }
 
+void bc_parser::save_set_cf_index(value *val, unsigned idx)
+{
+	assert(idx <= 1);
+	assert(val);
+	cf_index_value[idx] = val;
+}
+value *bc_parser::get_cf_index_value(unsigned idx)
+{
+	assert(idx <= 1);
+	assert(cf_index_value[idx]);
+	return cf_index_value[idx];
+}
+void bc_parser::save_mova(alu_node *mova)
+{
+	assert(mova);
+	this->mova = mova;
+}
+alu_node *bc_parser::get_mova()
+{
+	assert(mova);
+	return mova;
+}
+
 int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 
 	alu_node *n;
@@ -327,6 +368,7 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 	for (node_iterator I = g->begin(), E = g->end();
 			I != E; ++I) {
 		n = static_cast<alu_node*>(*I);
+		bool ubo_indexing[2] = {};
 
 		if (!sh->assign_slot(n, slots[cgroup])) {
 			assert(!"alu slot assignment failed");
@@ -342,7 +384,40 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 
 		unsigned flags = n->bc.op_ptr->flags;
 
-		if (flags & AF_PRED) {
+		if (flags & AF_LDS) {
+			bool need_rw = false, need_oqa = false, need_oqb = false;
+			int ndst = 0, ncount = 0;
+
+			/* all non-read operations have side effects */
+			if (n->bc.op != LDS_OP2_LDS_READ2_RET &&
+			    n->bc.op != LDS_OP1_LDS_READ_REL_RET &&
+			    n->bc.op != LDS_OP1_LDS_READ_RET) {
+				n->flags |= NF_DONT_KILL;
+				ndst++;
+				need_rw = true;
+			}
+
+			if (n->bc.op >= LDS_OP2_LDS_ADD_RET && n->bc.op <= LDS_OP1_LDS_USHORT_READ_RET) {
+				need_oqa = true;
+				ndst++;
+			}
+
+			if (n->bc.op == LDS_OP2_LDS_READ2_RET || n->bc.op == LDS_OP1_LDS_READ_REL_RET) {
+				need_oqb = true;
+				ndst++;
+			}
+
+			n->dst.resize(ndst);
+			if (need_oqa)
+				n->dst[ncount++] = sh->get_special_value(SV_LDS_OQA);
+			if (need_oqb)
+				n->dst[ncount++] = sh->get_special_value(SV_LDS_OQB);
+			if (need_rw)
+				n->dst[ncount++] = sh->get_special_value(SV_LDS_RW);
+
+			n->flags |= NF_DONT_MOVE | NF_DONT_HOIST;
+
+		} else if (flags & AF_PRED) {
 			n->dst.resize(3);
 			if (n->bc.update_pred)
 				n->dst[1] = sh->get_special_value(SV_ALU_PRED);
@@ -364,13 +439,18 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 			n->dst.resize(1);
 		}
 
-		if (flags & AF_MOVA) {
+		if (n->bc.op == ALU_OP0_SET_CF_IDX0 || n->bc.op == ALU_OP0_SET_CF_IDX1) {
+			// Move CF_IDX value into tex instruction operands, scheduler will later re-emit setting of CF_IDX
+			// DCE will kill this op
+			save_set_cf_index(get_mova()->src[0], n->bc.op == ALU_OP0_SET_CF_IDX1);
+		} else if (flags & AF_MOVA) {
 
 			n->dst[0] = sh->get_special_value(SV_AR_INDEX);
+			save_mova(n);
 
 			n->flags |= NF_DONT_HOIST;
 
-		} else if (n->bc.op_ptr->src_count == 3 || n->bc.write_mask) {
+		} else if ((n->bc.op_ptr->src_count == 3 || n->bc.write_mask) && !(flags & AF_LDS)) {
 			assert(!n->bc.dst_rel || n->bc.index_mode == INDEX_AR_X);
 
 			value *v = sh->get_gpr_value(false, n->bc.dst_gpr, n->bc.dst_chan,
@@ -421,7 +501,12 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 
 				bc_kcache &kc = cf->bc.kc[kc_set];
 				kc_addr = (kc.addr << 4) + (sel & 0x1F);
-				n->src[s] = sh->get_kcache_value(kc.bank, kc_addr, src.chan);
+				n->src[s] = sh->get_kcache_value(kc.bank, kc_addr, src.chan, (alu_kcache_index_mode)kc.index_mode);
+
+				if (kc.index_mode != KC_INDEX_NONE) {
+					assert(kc.index_mode != KC_LOCK_LOOP);
+					ubo_indexing[kc.index_mode - KC_INDEX_0] = true;
+				}
 			} else if (src.sel < MAX_GPR) {
 				value *v = sh->get_gpr_value(true, src.sel, src.chan, src.rel);
 
@@ -435,6 +520,21 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 				// param index as equal instructions and leave only one of them
 				n->src[s] = sh->get_special_ro_value(sel_chan(src.sel,
 				                                              n->bc.slot));
+			} else if (ctx.is_lds_oq(src.sel)) {
+				switch (src.sel) {
+				case ALU_SRC_LDS_OQ_A:
+				case ALU_SRC_LDS_OQ_B:
+					assert(!"Unsupported LDS queue access in SB");
+					break;
+				case ALU_SRC_LDS_OQ_A_POP:
+					n->src[s] = sh->get_special_value(SV_LDS_OQA);
+					break;
+				case ALU_SRC_LDS_OQ_B_POP:
+					n->src[s] = sh->get_special_value(SV_LDS_OQB);
+					break;
+				}
+				n->flags |= NF_DONT_HOIST | NF_DONT_MOVE;
+
 			} else {
 				switch (src.sel) {
 				case ALU_SRC_0:
@@ -458,6 +558,19 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 				}
 			}
 		}
+
+		// add UBO index values if any as dependencies
+		if (ubo_indexing[0]) {
+			n->src.push_back(get_cf_index_value(0));
+		}
+		if (ubo_indexing[1]) {
+			n->src.push_back(get_cf_index_value(1));
+		}
+
+		if ((flags & AF_MOVA) && (n->bc.dst_gpr == CM_V_SQ_MOVA_DST_CF_IDX0 || n->bc.dst_gpr == CM_V_SQ_MOVA_DST_CF_IDX1) &&
+		    ctx.is_cayman())
+			// Move CF_IDX value into tex instruction operands, scheduler will later re-emit setting of CF_IDX
+			save_set_cf_index(n->src[0], n->bc.dst_gpr == CM_V_SQ_MOVA_DST_CF_IDX1);
 	}
 
 	// pack multislot instructions into alu_packed_node
@@ -504,7 +617,10 @@ int bc_parser::decode_fetch_clause(cf_node* cf) {
 	int r;
 	unsigned i = cf->bc.addr << 1, cnt = cf->bc.count + 1;
 
-	cf->subtype = NST_TEX_CLAUSE;
+	if (cf->bc.op_ptr->flags & FF_GDS)
+		cf->subtype = NST_GDS_CLAUSE;
+	else
+		cf->subtype = NST_TEX_CLAUSE;
 
 	while (cnt--) {
 		fetch_node *n = sh->create_fetch();
@@ -530,10 +646,14 @@ int bc_parser::prepare_fetch_clause(cf_node *cf) {
 		unsigned flags = n->bc.op_ptr->flags;
 
 		unsigned vtx = flags & FF_VTX;
-		unsigned num_src = vtx ? ctx.vtx_src_num : 4;
+		unsigned gds = flags & FF_GDS;
+		unsigned num_src = gds ? 2 : vtx ? ctx.vtx_src_num : 4;
 
 		n->dst.resize(4);
 
+		if (gds) {
+			n->flags |= NF_DONT_HOIST | NF_DONT_MOVE | NF_DONT_KILL;
+		}
 		if (flags & (FF_SETGRAD | FF_USEGRAD | FF_GETGRAD)) {
 			sh->uses_gradients = true;
 		}
@@ -597,6 +717,18 @@ int bc_parser::prepare_fetch_clause(cf_node *cf) {
 					                              n->bc.src_sel[s], false);
 			}
 
+			// Scheduler will emit the appropriate instructions to set CF_IDX0/1
+			if (n->bc.sampler_index_mode != V_SQ_CF_INDEX_NONE) {
+				n->src.push_back(get_cf_index_value(n->bc.sampler_index_mode == V_SQ_CF_INDEX_1));
+			}
+			if (n->bc.resource_index_mode != V_SQ_CF_INDEX_NONE) {
+				n->src.push_back(get_cf_index_value(n->bc.resource_index_mode == V_SQ_CF_INDEX_1));
+			}
+		}
+
+		if (n->bc.op == FETCH_OP_READ_SCRATCH) {
+			n->src.push_back(sh->get_special_value(SV_SCRATCH));
+			n->dst.push_back(sh->get_special_value(SV_SCRATCH));
 		}
 	}
 
@@ -700,12 +832,23 @@ int bc_parser::prepare_ir() {
 
 			do {
 
-				c->src.resize(4);
-
-				for(int s = 0; s < 4; ++s) {
-					if (c->bc.comp_mask & (1 << s))
-						c->src[s] =
+				if (ctx.hw_class == HW_CLASS_R600 && c->bc.op == CF_OP_MEM_SCRATCH &&
+				    (c->bc.type == 2 || c->bc.type == 3)) {
+					c->dst.resize(4);
+					for(int s = 0; s < 4; ++s) {
+						if (c->bc.comp_mask & (1 << s))
+							c->dst[s] =
 								sh->get_gpr_value(true, c->bc.rw_gpr, s, false);
+					}
+				} else {
+					c->src.resize(4);
+
+				
+					for(int s = 0; s < 4; ++s) {
+						if (c->bc.comp_mask & (1 << s))
+							c->src[s] =
+								sh->get_gpr_value(true, c->bc.rw_gpr, s, false);
+					}
 				}
 
 				if (((flags & CF_RAT) || (!(flags & CF_STRM))) && (c->bc.type & 1)) { // indexed write
@@ -717,6 +860,20 @@ int bc_parser::prepare_ir() {
 
 					// FIXME probably we can relax it a bit
 					c->flags |= NF_DONT_HOIST | NF_DONT_MOVE;
+				}
+
+				if (flags & CF_EMIT) {
+					// Instruction implicitly depends on prior [EMIT_][CUT]_VERTEX
+					c->src.push_back(sh->get_special_value(SV_GEOMETRY_EMIT));
+					c->dst.push_back(sh->get_special_value(SV_GEOMETRY_EMIT));
+					if (sh->target == TARGET_ES) {
+						// For ES shaders this is an export
+						c->flags |= NF_DONT_KILL;
+					}
+				}
+				else if (c->bc.op == CF_OP_MEM_SCRATCH) {
+					c->src.push_back(sh->get_special_value(SV_SCRATCH));
+					c->dst.push_back(sh->get_special_value(SV_SCRATCH));
 				}
 
 				if (!burst_count--)
@@ -735,6 +892,26 @@ int bc_parser::prepare_ir() {
 
 			c->bc.end_of_program = eop;
 
+		} else if (flags & CF_EMIT) {
+			/* quick peephole */
+			cf_node *prev = static_cast<cf_node *>(c->prev);
+			if (c->bc.op == CF_OP_CUT_VERTEX &&
+				prev && prev->is_valid() &&
+				prev->bc.op == CF_OP_EMIT_VERTEX &&
+				c->bc.count == prev->bc.count) {
+				prev->bc.set_op(CF_OP_EMIT_CUT_VERTEX);
+				prev->bc.end_of_program = c->bc.end_of_program;
+				c->remove();
+			}
+			else {
+				c->flags |= NF_DONT_KILL | NF_DONT_HOIST | NF_DONT_MOVE;
+
+				c->src.push_back(sh->get_special_value(SV_GEOMETRY_EMIT));
+				c->dst.push_back(sh->get_special_value(SV_GEOMETRY_EMIT));
+			}
+		} else if (c->bc.op == CF_OP_WAIT_ACK) {
+			c->src.push_back(sh->get_special_value(SV_SCRATCH));
+			c->dst.push_back(sh->get_special_value(SV_SCRATCH));
 		}
 	}
 
@@ -743,6 +920,7 @@ int bc_parser::prepare_ir() {
 }
 
 int bc_parser::prepare_loop(cf_node* c) {
+	assert(c->bc.addr-1 < cf_map.size());
 
 	cf_node *end = cf_map[c->bc.addr - 1];
 	assert(end->bc.op == CF_OP_LOOP_END);
@@ -755,12 +933,18 @@ int bc_parser::prepare_loop(cf_node* c) {
 	c->insert_before(reg);
 	rep->move(c, end->next);
 
+	reg->src_loop = true;
+
 	loop_stack.push(reg);
 	return 0;
 }
 
 int bc_parser::prepare_if(cf_node* c) {
+	assert(c->bc.addr-1 < cf_map.size());
 	cf_node *c_else = NULL, *end = cf_map[c->bc.addr];
+
+	if (!end)
+		return 0; // not quite sure how this happens, malformed input?
 
 	BCP_DUMP(
 		sblog << "parsing JUMP @" << c->bc.id;
@@ -787,7 +971,7 @@ int bc_parser::prepare_if(cf_node* c) {
 	if (c_else->parent != c->parent)
 		c_else = NULL;
 
-	if (end->parent != c->parent)
+	if (end && end->parent != c->parent)
 		end = NULL;
 
 	region_node *reg = sh->create_region();

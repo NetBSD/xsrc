@@ -133,12 +133,16 @@ nouveau_renderbuffer_map(struct gl_context *ctx,
 			 GLuint x, GLuint y, GLuint w, GLuint h,
 			 GLbitfield mode,
 			 GLubyte **out_map,
-			 GLint *out_stride)
+			 GLint *out_stride,
+			 bool flip_y)
 {
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
 	GLubyte *map;
 	int stride;
 	int flags = 0;
+
+	/* driver does not support GL_FRAMEBUFFER_FLIP_Y_MESA */
+	assert((rb->Name == 0) == flip_y);
 
 	if (mode & GL_MAP_READ_BIT)
 		flags |= NOUVEAU_BO_RD;
@@ -242,7 +246,7 @@ static void
 nouveau_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 				 GLenum attachment, struct gl_renderbuffer *rb)
 {
-	_mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
+	_mesa_FramebufferRenderbuffer_sw(ctx, fb, attachment, rb);
 
 	context_dirty(ctx, FRAMEBUFFER);
 }

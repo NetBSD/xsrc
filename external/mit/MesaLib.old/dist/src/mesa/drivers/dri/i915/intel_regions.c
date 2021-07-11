@@ -57,7 +57,7 @@
  */
 #define DEBUG_BACKTRACE_SIZE 0
 
-#if DEBUG_BACKTRACE_SIZE == 0
+#if DEBUG_BACKTRACE_SIZE == 0 || !defined(HAVE_EXECINFO_H)
 /* Use the standard debug output */
 #define _DBG(...) DBG(__VA_ARGS__)
 #else
@@ -124,7 +124,7 @@ intel_region_alloc_internal(struct intel_screen *screen,
    region->bo = buffer;
    region->tiling = tiling;
 
-   _DBG("%s <-- %p\n", __FUNCTION__, region);
+   _DBG("%s <-- %p\n", __func__, region);
    return region;
 }
 
@@ -182,7 +182,7 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
    int ret;
    uint32_t bit_6_swizzle, tiling;
 
-   buffer = intel_bo_gem_create_from_name(screen->bufmgr, name, handle);
+   buffer = drm_intel_bo_gem_create_from_name(screen->bufmgr, name, handle);
    if (buffer == NULL)
       return NULL;
    ret = drm_intel_bo_get_tiling(buffer, &tiling, &bit_6_swizzle);
@@ -241,7 +241,7 @@ intel_region_alloc_for_fd(struct intel_screen *screen,
 void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {
-   _DBG("%s: %p(%d) -> %p(%d)\n", __FUNCTION__,
+   _DBG("%s: %p(%d) -> %p(%d)\n", __func__,
 	*dst, *dst ? (*dst)->refcount : 0, src, src ? src->refcount : 0);
 
    if (src != *dst) {
@@ -260,13 +260,13 @@ intel_region_release(struct intel_region **region_handle)
    struct intel_region *region = *region_handle;
 
    if (region == NULL) {
-      _DBG("%s NULL\n", __FUNCTION__);
+      _DBG("%s NULL\n", __func__);
       return;
    }
 
-   _DBG("%s %p %d\n", __FUNCTION__, region, region->refcount - 1);
+   _DBG("%s %p %d\n", __func__, region, region->refcount - 1);
 
-   ASSERT(region->refcount > 0);
+   assert(region->refcount > 0);
    region->refcount--;
 
    if (region->refcount == 0) {
@@ -284,14 +284,10 @@ intel_region_release(struct intel_region **region_handle)
  */
 void
 intel_region_get_tile_masks(struct intel_region *region,
-                            uint32_t *mask_x, uint32_t *mask_y,
-                            bool map_stencil_as_y_tiled)
+                            uint32_t *mask_x, uint32_t *mask_y)
 {
    int cpp = region->cpp;
    uint32_t tiling = region->tiling;
-
-   if (map_stencil_as_y_tiled)
-      tiling = I915_TILING_Y;
 
    switch (tiling) {
    default:
@@ -317,24 +313,11 @@ intel_region_get_tile_masks(struct intel_region *region,
  */
 uint32_t
 intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
-                                uint32_t y, bool map_stencil_as_y_tiled)
+                                uint32_t y)
 {
    int cpp = region->cpp;
    uint32_t pitch = region->pitch;
    uint32_t tiling = region->tiling;
-
-   if (map_stencil_as_y_tiled) {
-      tiling = I915_TILING_Y;
-
-      /* When mapping a W-tiled stencil buffer as Y-tiled, each 64-high W-tile
-       * gets transformed into a 32-high Y-tile.  Accordingly, the pitch of
-       * the resulting region is twice the pitch of the original region, since
-       * each row in the Y-tiled view corresponds to two rows in the actual
-       * W-tiled surface.  So we need to correct the pitch before computing
-       * the offsets.
-       */
-      pitch *= 2;
-   }
 
    switch (tiling) {
    default:

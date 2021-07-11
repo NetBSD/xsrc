@@ -51,7 +51,8 @@ struct nv30_context {
       unsigned rt_enable;
       unsigned scissor_off;
       unsigned num_vtxelts;
-      boolean  prim_restart;
+      int index_bias;
+      bool prim_restart;
       struct nv30_fragprog *fragprog;
    } state;
 
@@ -109,29 +110,28 @@ struct nv30_context {
 
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
    unsigned num_vtxbufs;
-   struct pipe_index_buffer idxbuf;
    uint32_t vbo_fifo;
    uint32_t vbo_user;
    unsigned vbo_min_index;
    unsigned vbo_max_index;
-   boolean  vbo_push_hint;
+   bool vbo_push_hint;
 
    struct nouveau_heap  *blit_vp;
    struct pipe_resource *blit_fp;
 
    struct pipe_query *render_cond_query;
    unsigned render_cond_mode;
-   boolean render_cond_cond;
+   bool render_cond_cond;
 };
 
-static INLINE struct nv30_context *
+static inline struct nv30_context *
 nv30_context(struct pipe_context *pipe)
 {
    return (struct nv30_context *)pipe;
 }
 
 struct pipe_context *
-nv30_context_create(struct pipe_screen *pscreen, void *priv);
+nv30_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags);
 
 void
 nv30_vbo_init(struct pipe_context *pipe);
@@ -203,8 +203,8 @@ nv30_draw_init(struct pipe_context *pipe);
 void
 nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info);
 
-boolean
-nv30_state_validate(struct nv30_context *nv30, boolean hwtnl);
+bool
+nv30_state_validate(struct nv30_context *nv30, uint32_t mask, bool hwtnl);
 
 void
 nv30_state_release(struct nv30_context *nv30);
@@ -213,7 +213,7 @@ nv30_state_release(struct nv30_context *nv30);
 #define NV30_PRIM_GL_CASE(n) \
    case PIPE_PRIM_##n: return NV30_3D_VERTEX_BEGIN_END_##n
 
-static INLINE unsigned
+static inline unsigned
 nv30_prim_gl(unsigned prim)
 {
    switch (prim) {

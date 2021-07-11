@@ -25,7 +25,6 @@
 
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "util/u_mm.h"
 
 #include "r300_context.h"
 #include "r300_cb.h"
@@ -694,7 +693,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             OUT_CS_RELOC(r300->query_current);
         case 2:
             /* pipe 1 only */
-            /* As mentioned above, accomodate RV380 and older. */
+            /* As mentioned above, accommodate RV380 and older. */
             OUT_CS_REG(R300_SU_REG_DEST,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 1) * 4);
@@ -966,7 +965,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
         }
 
         for (i = 0; i < vertex_array_count; i++) {
-            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer);
+            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer.resource);
             OUT_CS_RELOC(buf);
         }
     } else {
@@ -1018,7 +1017,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
         }
 
         for (i = 0; i < vertex_array_count; i++) {
-            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer);
+            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer.resource);
             OUT_CS_RELOC(buf);
         }
     }
@@ -1047,9 +1046,9 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(r300->draw_vbo_offset);
     OUT_CS(0);
 
-    assert(r300->vbo_cs);
+    assert(r300->vbo);
     OUT_CS(0xc0001000); /* PKT3_NOP */
-    OUT_CS(r300->rws->cs_get_reloc(r300->cs, r300->vbo_cs) * 4);
+    OUT_CS(r300->rws->cs_lookup_buffer(r300->cs, r300->vbo) * 4);
     END_CS;
 }
 
@@ -1136,6 +1135,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
             R300_PVS_NUM_CNTLRS(pvs_num_controllers) |
             R300_PVS_NUM_FPUS(r300screen->caps.num_vert_fpus) |
             R300_PVS_VF_MAX_VTX_NUM(12) |
+            (r300->clip_halfz ? R300_DX_CLIP_SPACE_DEF : 0) |
             (r300screen->caps.is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
 
     /* Emit flow control instructions.  Even if there are no fc instructions,
@@ -1319,8 +1319,8 @@ validate:
                 continue;
             tex = r300_resource(fb->cbufs[i]->texture);
             assert(tex && tex->buf && "cbuf is marked, but NULL!");
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf,
-                                    RADEON_USAGE_READWRITE,
+            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+                                    RADEON_USAGE_READWRITE | RADEON_USAGE_SYNCHRONIZED,
                                     r300_surface(fb->cbufs[i])->domain,
                                     tex->b.b.nr_samples > 1 ?
                                     RADEON_PRIO_COLOR_BUFFER_MSAA :
@@ -1330,8 +1330,8 @@ validate:
         if (fb->zsbuf) {
             tex = r300_resource(fb->zsbuf->texture);
             assert(tex && tex->buf && "zsbuf is marked, but NULL!");
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf,
-                                    RADEON_USAGE_READWRITE,
+            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+                                    RADEON_USAGE_READWRITE | RADEON_USAGE_SYNCHRONIZED,
                                     r300_surface(fb->zsbuf)->domain,
                                     tex->b.b.nr_samples > 1 ?
                                     RADEON_PRIO_DEPTH_BUFFER_MSAA :
@@ -1341,8 +1341,8 @@ validate:
     /* The AA resolve buffer. */
     if (r300->aa_state.dirty) {
         if (aa->dest) {
-            r300->rws->cs_add_reloc(r300->cs, aa->dest->cs_buf,
-                                    RADEON_USAGE_WRITE,
+            r300->rws->cs_add_buffer(r300->cs, aa->dest->buf,
+                                    RADEON_USAGE_WRITE | RADEON_USAGE_SYNCHRONIZED,
                                     aa->dest->domain,
                                     RADEON_PRIO_COLOR_BUFFER);
         }
@@ -1355,20 +1355,23 @@ validate:
             }
 
             tex = r300_resource(texstate->sampler_views[i]->base.texture);
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, RADEON_USAGE_READ,
-                                    tex->domain, RADEON_PRIO_SHADER_TEXTURE_RO);
+            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+                                     RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
+                                    tex->domain, RADEON_PRIO_SAMPLER_TEXTURE);
         }
     }
     /* ...occlusion query buffer... */
     if (r300->query_current)
-        r300->rws->cs_add_reloc(r300->cs, r300->query_current->cs_buf,
-                                RADEON_USAGE_WRITE, RADEON_DOMAIN_GTT,
-                                RADEON_PRIO_MIN);
+        r300->rws->cs_add_buffer(r300->cs, r300->query_current->buf,
+                                 RADEON_USAGE_WRITE | RADEON_USAGE_SYNCHRONIZED,
+                                 RADEON_DOMAIN_GTT,
+                                RADEON_PRIO_QUERY);
     /* ...vertex buffer for SWTCL path... */
-    if (r300->vbo_cs)
-        r300->rws->cs_add_reloc(r300->cs, r300->vbo_cs,
-                                RADEON_USAGE_READ, RADEON_DOMAIN_GTT,
-                                RADEON_PRIO_MIN);
+    if (r300->vbo)
+        r300->rws->cs_add_buffer(r300->cs, r300->vbo,
+                                 RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
+                                 RADEON_DOMAIN_GTT,
+                                RADEON_PRIO_VERTEX_BUFFER);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
         struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
@@ -1377,22 +1380,22 @@ validate:
         struct pipe_resource *buf;
 
         for (; vbuf != last; vbuf++) {
-            buf = vbuf->buffer;
+            buf = vbuf->buffer.resource;
             if (!buf)
                 continue;
 
-            r300->rws->cs_add_reloc(r300->cs, r300_resource(buf)->cs_buf,
-                                    RADEON_USAGE_READ,
+            r300->rws->cs_add_buffer(r300->cs, r300_resource(buf)->buf,
+                                    RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                     r300_resource(buf)->domain,
-                                    RADEON_PRIO_SHADER_BUFFER_RO);
+                                    RADEON_PRIO_SAMPLER_BUFFER);
         }
     }
     /* ...and index buffer for HWTCL path. */
     if (index_buffer)
-        r300->rws->cs_add_reloc(r300->cs, r300_resource(index_buffer)->cs_buf,
-                                RADEON_USAGE_READ,
+        r300->rws->cs_add_buffer(r300->cs, r300_resource(index_buffer)->buf,
+                                RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                 r300_resource(index_buffer)->domain,
-                                RADEON_PRIO_MIN);
+                                RADEON_PRIO_INDEX_BUFFER);
 
     /* Now do the validation (flush is called inside cs_validate on failure). */
     if (!r300->rws->cs_validate(r300->cs)) {
@@ -1433,8 +1436,7 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
     dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
     if (r300->screen->caps.is_r500)
         dwords += 2; /* emit_index_bias */
-    if (r300->screen->info.drm_minor >= 6)
-        dwords += 3; /* MSPOS */
+    dwords += 3; /* MSPOS */
 
     return dwords;
 }

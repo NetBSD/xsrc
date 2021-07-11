@@ -39,17 +39,7 @@
 
 struct wideline_stage {
    struct draw_stage stage;
-
-   float half_line_width;
 };
-
-
-
-static INLINE struct wideline_stage *wideline_stage( struct draw_stage *stage )
-{
-   return (struct wideline_stage *)stage;
-}
-
 
 
 /**
@@ -58,7 +48,6 @@ static INLINE struct wideline_stage *wideline_stage( struct draw_stage *stage )
 static void wideline_line( struct draw_stage *stage,
                            struct prim_header *header )
 {
-   /*const struct wideline_stage *wide = wideline_stage(stage);*/
    const unsigned pos = draw_current_shader_position_output(stage->draw);
    const float half_width = 0.5f * stage->draw->rasterizer->line_width;
 
@@ -202,7 +191,7 @@ static void wideline_destroy( struct draw_stage *stage )
 struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
 {
    struct wideline_stage *wide = CALLOC_STRUCT(wideline_stage);
-   if (wide == NULL)
+   if (!wide)
       goto fail;
 
    wide->stage.draw = draw;

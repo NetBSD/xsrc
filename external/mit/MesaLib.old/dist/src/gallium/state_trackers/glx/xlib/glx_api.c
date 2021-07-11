@@ -33,8 +33,23 @@
 #define GLX_GLXEXT_PROTOTYPES
 #include "GL/glx.h"
 
-#include "xm_api.h"
+#include <stdio.h>
+#include <string.h>
+#include <X11/Xmd.h>
+#include <GL/glxproto.h>
 
+#include "xm_api.h"
+#include "main/imports.h"
+#include "main/errors.h"
+#include "util/u_math.h"
+
+/* An "Atrribs/Attribs" typo was fixed in glxproto.h in Nov 2014.
+ * This is in case we don't have the updated header.
+ */
+#if !defined(X_GLXCreateContextAttribsARB) && \
+     defined(X_GLXCreateContextAtrribsARB)
+#define X_GLXCreateContextAttribsARB X_GLXCreateContextAtrribsARB
+#endif 
 
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
@@ -56,6 +71,8 @@
    "GLX_ARB_create_context " \
    "GLX_ARB_create_context_profile " \
    "GLX_ARB_get_proc_address " \
+   "GLX_EXT_create_context_es_profile " \
+   "GLX_EXT_create_context_es2_profile " \
    "GLX_EXT_texture_from_pixmap " \
    "GLX_EXT_visual_info " \
    "GLX_EXT_visual_rating " \
@@ -167,7 +184,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
                  GLint depth_size, GLint stencil_size,
                  GLint accumRedSize, GLint accumGreenSize,
                  GLint accumBlueSize, GLint accumAlphaSize,
-                 GLint level, GLint numAuxBuffers )
+                 GLint level, GLint numAuxBuffers, GLuint num_samples )
 {
    GLboolean ximageFlag = GL_TRUE;
    XMesaVisual xmvis;
@@ -176,7 +193,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    if (dbFlag) {
       /* Check if the MESA_BACK_BUFFER env var is set */
-      char *backbuffer = _mesa_getenv("MESA_BACK_BUFFER");
+      char *backbuffer = getenv("MESA_BACK_BUFFER");
       if (backbuffer) {
          if (backbuffer[0]=='p' || backbuffer[0]=='P') {
             ximageFlag = GL_FALSE;
@@ -200,13 +217,13 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    /* Comparing IDs uses less memory but sometimes fails. */
    /* XXX revisit this after 3.0 is finished. */
-   if (_mesa_getenv("MESA_GLX_VISUAL_HACK"))
+   if (getenv("MESA_GLX_VISUAL_HACK"))
       comparePointers = GL_TRUE;
    else
       comparePointers = GL_FALSE;
 
    /* Force the visual to have an alpha channel */
-   if (rgbFlag && _mesa_getenv("MESA_GLX_FORCE_ALPHA"))
+   if (rgbFlag && getenv("MESA_GLX_FORCE_ALPHA"))
       alphaFlag = GL_TRUE;
 
    /* First check if a matching visual is already in the list */
@@ -215,6 +232,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       if (v->display == dpy
           && v->mesa_visual.level == level
           && v->mesa_visual.numAuxBuffers == numAuxBuffers
+          && v->mesa_visual.samples == num_samples
           && v->ximage_flag == ximageFlag
           && v->mesa_visual.rgbMode == rgbFlag
           && v->mesa_visual.doubleBufferMode == dbFlag
@@ -240,7 +258,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
                               stereoFlag, ximageFlag,
                               depth_size, stencil_size,
                               accumRedSize, accumBlueSize,
-                              accumBlueSize, accumAlphaSize, 0, level,
+                              accumBlueSize, accumAlphaSize, num_samples, level,
                               GLX_NONE_EXT );
    if (xmvis) {
       /* Save a copy of the pointer now so we can find this visual again
@@ -248,9 +266,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
        */
       xmvis->vishandle = vinfo;
       /* Allocate more space for additional visual */
-      VisualTable = (XMesaVisual *) _mesa_realloc( VisualTable, 
-                                   sizeof(XMesaVisual) * NumVisuals, 
-                                   sizeof(XMesaVisual) * (NumVisuals + 1));
+      VisualTable = realloc(VisualTable, sizeof(XMesaVisual) * (NumVisuals + 1));
       /* add xmvis to the list */
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
@@ -273,7 +289,7 @@ static GLint
 default_depth_bits(void)
 {
    int zBits;
-   const char *zEnv = _mesa_getenv("MESA_GLX_DEPTH_BITS");
+   const char *zEnv = getenv("MESA_GLX_DEPTH_BITS");
    if (zEnv)
       zBits = atoi(zEnv);
    else
@@ -285,7 +301,7 @@ static GLint
 default_alpha_bits(void)
 {
    int aBits;
-   const char *aEnv = _mesa_getenv("MESA_GLX_ALPHA_BITS");
+   const char *aEnv = getenv("MESA_GLX_ALPHA_BITS");
    if (aEnv)
       aBits = atoi(aEnv);
    else
@@ -332,7 +348,8 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                               accBits, /* b */
                               accBits, /* a */
                               0,         /* level */
-                              0          /* numAux */
+                              0,         /* numAux */
+                              0          /* numSamples */
          );
    }
    else {
@@ -403,9 +420,9 @@ get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
     * 10 bits per color channel.  Mesa's limited to a max of 8 bits/channel.
     */
    if (vis && depth > 24 && (xclass==TrueColor || xclass==DirectColor)) {
-      if (_mesa_bitcount((GLuint) vis->red_mask  ) <= 8 &&
-          _mesa_bitcount((GLuint) vis->green_mask) <= 8 &&
-          _mesa_bitcount((GLuint) vis->blue_mask ) <= 8) {
+      if (util_bitcount((GLuint) vis->red_mask  ) <= 8 &&
+          util_bitcount((GLuint) vis->green_mask) <= 8 &&
+          util_bitcount((GLuint) vis->blue_mask ) <= 8) {
          return vis;
       }
       else {
@@ -433,11 +450,11 @@ get_env_visual(Display *dpy, int scr, const char *varname)
    int depth, xclass = -1;
    XVisualInfo *vis;
 
-   if (!_mesa_getenv( varname )) {
+   if (!getenv( varname )) {
       return NULL;
    }
 
-   strncpy( value, _mesa_getenv(varname), 100 );
+   strncpy( value, getenv(varname), 100 );
    value[99] = 0;
 
    sscanf( value, "%s %d", type, &depth );
@@ -603,6 +620,7 @@ close_display_callback(Display *dpy, XExtCodes *codes)
 {
    xmesa_destroy_buffers_on_display(dpy);
    destroy_visuals_on_display(dpy);
+   xmesa_close_display(dpy);
    return 0;
 }
 
@@ -640,9 +658,55 @@ register_with_display(Display *dpy)
       ext = dpy->ext_procs;  /* new extension is at head of list */
       assert(c->extension == ext->codes.extension);
       (void) c;
-      ext->name = _mesa_strdup(extName);
+      ext->name = strdup(extName);
       ext->close_display = close_display_callback;
    }
+}
+
+
+/**
+ * Fake an error.
+ */
+static int
+generate_error(Display *dpy,
+               unsigned char error_code,
+               XID resourceid,
+               unsigned char minor_code,
+               Bool core)
+{
+   XErrorHandler handler;
+   int major_opcode;
+   int first_event;
+   int first_error;
+   XEvent event;
+
+   handler = XSetErrorHandler(NULL);
+   XSetErrorHandler(handler);
+   if (!handler) {
+      return 0;
+   }
+
+   if (!XQueryExtension(dpy, GLX_EXTENSION_NAME, &major_opcode, &first_event, &first_error)) {
+      major_opcode = 0;
+      first_event = 0;
+      first_error = 0;
+   }
+
+   if (!core) {
+      error_code += first_error;
+   }
+
+   memset(&event, 0, sizeof event);
+
+   event.xerror.type = X_Error;
+   event.xerror.display = dpy;
+   event.xerror.resourceid = resourceid;
+   event.xerror.serial = NextRequest(dpy) - 1;
+   event.xerror.error_code = error_code;
+   event.xerror.request_code = major_opcode;
+   event.xerror.minor_code = minor_code;
+
+   return handler(dpy, &event.xerror);
 }
 
 
@@ -680,8 +744,12 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    XMesaVisual xmvis = NULL;
    int desiredVisualID = -1;
    int numAux = 0;
+   GLint num_samples = 0;
 
-   xmesa_init( dpy );
+   if (xmesa_init( dpy ) != 0) {
+      _mesa_warning(NULL, "Failed to initialize display");
+      return NULL;
+   }
 
    parselist = list;
 
@@ -846,12 +914,13 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
           * GLX_ARB_multisample
           */
          case GLX_SAMPLE_BUFFERS_ARB:
+            /* ignore */
+            parselist++;
+            parselist++;
+            break;
          case GLX_SAMPLES_ARB:
             parselist++;
-            if (*parselist++ != 0) {
-               /* ms not supported */
-               return NULL;
-            }
+            num_samples = *parselist++;
             break;
 
          /*
@@ -897,7 +966,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             parselist += 2; /* ignore the parameter */
             break;
 
-#ifdef GLX_EXT_texture_from_pixmap
          case GLX_BIND_TO_TEXTURE_RGB_EXT:
             parselist++; /*skip*/
             break;
@@ -919,7 +987,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          case GLX_Y_INVERTED_EXT:
             parselist++; /*skip*/
             break;
-#endif
 
 	 case None:
             /* end of list */
@@ -935,6 +1002,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 
    (void) caveat;
 
+   if (num_samples < 0) {
+      _mesa_warning(NULL, "GLX_SAMPLES_ARB: number of samples must not be negative");
+      return NULL;
+   }
 
    /*
     * Since we're only simulating the GLX extension this function will never
@@ -1010,7 +1081,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       xmvis = save_glx_visual( dpy, vis, rgb_flag, alpha_flag, double_flag,
                                stereo_flag, depth_size, stencil_size,
                                accumRedSize, accumGreenSize,
-                               accumBlueSize, accumAlphaSize, level, numAux );
+                               accumBlueSize, accumAlphaSize, level, numAux,
+                               num_samples );
    }
 
    return xmvis;
@@ -1028,7 +1100,7 @@ glXChooseVisual( Display *dpy, int screen, int *list )
    xmvis = choose_visual(dpy, screen, list, GL_FALSE);
    if (xmvis) {
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -1314,7 +1386,7 @@ glXDestroyGLXPixmap( Display *dpy, GLXPixmap pixmap )
    if (b) {
       XMesaDestroyBuffer(b);
    }
-   else if (_mesa_getenv("MESA_DEBUG")) {
+   else if (getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "Mesa: glXDestroyGLXPixmap: invalid pixmap\n");
    }
 }
@@ -1392,7 +1464,7 @@ glXSwapBuffers( Display *dpy, GLXDrawable drawable )
    if (buffer) {
       XMesaSwapBuffers(buffer);
    }
-   else if (_mesa_getenv("MESA_DEBUG")) {
+   else if (getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "glXSwapBuffers: invalid drawable 0x%x\n",
                     (int) drawable);
    }
@@ -1410,7 +1482,7 @@ glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
    if (buffer) {
       XMesaCopySubBuffer(buffer, x, y, width, height);
    }
-   else if (_mesa_getenv("MESA_DEBUG")) {
+   else if (getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "Mesa: glXCopySubBufferMESA: invalid drawable\n");
    }
 }
@@ -1434,7 +1506,7 @@ glXQueryVersion( Display *dpy, int *maj, int *min )
 static int
 get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
 {
-   ASSERT(xmvis);
+   assert(xmvis);
    switch(attrib) {
       case GLX_USE_GL:
          if (fbconfig)
@@ -1545,10 +1617,10 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
        * GLX_ARB_multisample
        */
       case GLX_SAMPLE_BUFFERS_ARB:
-         *value = 0;
+         *value = xmvis->mesa_visual.sampleBuffers;
          return 0;
       case GLX_SAMPLES_ARB:
-         *value = 0;
+         *value = xmvis->mesa_visual.samples;
          return 0;
 
       /*
@@ -1585,7 +1657,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
       case GLX_MAX_PBUFFER_WIDTH:
          if (!fbconfig)
             return GLX_BAD_ATTRIBUTE;
-         /* XXX or MAX_WIDTH? */
+         /* XXX should be same as ctx->Const.MaxRenderbufferSize */
          *value = DisplayWidth(xmvis->display, xmvis->visinfo->screen);
          break;
       case GLX_MAX_PBUFFER_HEIGHT:
@@ -1605,7 +1677,6 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          *value = xmvis->visinfo->visualid;
          break;
 
-#ifdef GLX_EXT_texture_from_pixmap
       case GLX_BIND_TO_TEXTURE_RGB_EXT:
          *value = True; /*XXX*/
          break;
@@ -1624,7 +1695,6 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
       case GLX_Y_INVERTED_EXT:
          *value = True; /*XXX*/
          break;
-#endif
 
       default:
 	 return GLX_BAD_ATTRIBUTE;
@@ -1779,8 +1849,7 @@ glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visTemplate.screen = screen;
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
-      XMesaVisual *results;
-      results = (XMesaVisual *) malloc(*nelements * sizeof(XMesaVisual));
+      XMesaVisual *results = malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;
@@ -1814,7 +1883,7 @@ glXChooseFBConfig(Display *dpy, int screen,
 
    xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
    if (xmvis) {
-      GLXFBConfig *config = (GLXFBConfig *) malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -1839,7 +1908,7 @@ glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -2081,8 +2150,10 @@ glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
 {
    GLuint width, height;
    XMesaBuffer xmbuf = XMesaFindBuffer(dpy, draw);
-   if (!xmbuf)
+   if (!xmbuf) {
+      generate_error(dpy, GLXBadDrawable, draw, X_GLXGetDrawableAttributes, False);
       return;
+   }
 
    /* make sure buffer's dimensions are up to date */
    xmesa_get_window_size(dpy, xmbuf, &width, &height);
@@ -2103,7 +2174,6 @@ glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
       case GLX_FBCONFIG_ID:
          *value = xmbuf->xm_visual->visinfo->visualid;
          return;
-#ifdef GLX_EXT_texture_from_pixmap
       case GLX_TEXTURE_FORMAT_EXT:
          *value = xmbuf->TextureFormat;
          break;
@@ -2113,10 +2183,10 @@ glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
       case GLX_MIPMAP_TEXTURE_EXT:
          *value = xmbuf->TextureMipmap;
          break;
-#endif
 
       default:
-         return; /* raise BadValue error */
+         generate_error(dpy, BadValue, 0, X_GLXCreateContextAttribsARB, true);
+         return;
    }
 }
 
@@ -2580,39 +2650,6 @@ glXAssociateDMPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuffer,
 #endif
 
 
-/*** GLX_SGIX_swap_group ***/
-
-PUBLIC void
-glXJoinSwapGroupSGIX(Display *dpy, GLXDrawable drawable, GLXDrawable member)
-{
-   (void) dpy;
-   (void) drawable;
-   (void) member;
-}
-
-
-
-/*** GLX_SGIX_swap_barrier ***/
-
-PUBLIC void
-glXBindSwapBarrierSGIX(Display *dpy, GLXDrawable drawable, int barrier)
-{
-   (void) dpy;
-   (void) drawable;
-   (void) barrier;
-}
-
-PUBLIC Bool
-glXQueryMaxSwapBarriersSGIX(Display *dpy, int screen, int *max)
-{
-   (void) dpy;
-   (void) screen;
-   (void) max;
-   return False;
-}
-
-
-
 /*** GLX_SUN_get_transparent_index ***/
 
 PUBLIC Status
@@ -2668,6 +2705,7 @@ glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer)
 
 /*** GLX_ARB_create_context ***/
 
+
 GLXContext
 glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
                            GLXContext shareCtx, Bool direct,
@@ -2682,6 +2720,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
    Bool done = False;
    const int contextFlagsAll = (GLX_CONTEXT_DEBUG_BIT_ARB |
                                 GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
+   GLXContext ctx;
 
    /* parse attrib_list */
    for (i = 0; !done && attrib_list && attrib_list[i]; i++) {
@@ -2707,36 +2746,76 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
          break;
       default:
          /* bad attribute */
-         /* XXX generate BadValue X Error */
+         generate_error(dpy, BadValue, 0, X_GLXCreateContextAttribsARB, True);
          return NULL;
       }
    }
 
    /* check contextFlags */
    if (contextFlags & ~contextFlagsAll) {
-      return NULL; /* generate BadValue X Error */
+      generate_error(dpy, BadValue, 0, X_GLXCreateContextAttribsARB, True);
+      return NULL;
    }
 
    /* check profileMask */
    if (profileMask != GLX_CONTEXT_CORE_PROFILE_BIT_ARB &&
-       profileMask != GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) {
-      return NULL; /* generate BadValue X Error */
+       profileMask != GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB &&
+       profileMask != GLX_CONTEXT_ES_PROFILE_BIT_EXT) {
+      generate_error(dpy, GLXBadProfileARB, 0, X_GLXCreateContextAttribsARB, False);
+      return NULL;
    }
 
-   /* check version (generate BadMatch if bad) */
-   if (majorVersion < 0 || minorVersion < 0)
+   /* check renderType */
+   if (renderType != GLX_RGBA_TYPE &&
+       renderType != GLX_COLOR_INDEX_TYPE) {
+      generate_error(dpy, BadValue, 0, X_GLXCreateContextAttribsARB, True);
       return NULL;
+   }
+
+   /* check version */
+   if (majorVersion <= 0 ||
+       minorVersion < 0 ||
+       (profileMask != GLX_CONTEXT_ES_PROFILE_BIT_EXT &&
+        ((majorVersion == 1 && minorVersion > 5) ||
+         (majorVersion == 2 && minorVersion > 1) ||
+         (majorVersion == 3 && minorVersion > 3) ||
+         (majorVersion == 4 && minorVersion > 5) ||
+         majorVersion > 4))) {
+      generate_error(dpy, BadMatch, 0, X_GLXCreateContextAttribsARB, True);
+      return NULL;
+   }
+   if (profileMask == GLX_CONTEXT_ES_PROFILE_BIT_EXT &&
+       ((majorVersion == 1 && minorVersion > 1) ||
+        (majorVersion == 2 && minorVersion > 0) ||
+        (majorVersion == 3 && minorVersion > 1) ||
+        majorVersion > 3)) {
+      /* GLX_EXT_create_context_es2_profile says nothing to justifying a
+       * different error code for invalid ES versions, but this is what NVIDIA
+       * does and piglit expects.
+       */
+      generate_error(dpy, GLXBadProfileARB, 0, X_GLXCreateContextAttribsARB, False);
+      return NULL;
+   }
 
    if ((contextFlags & GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) &&
-       majorVersion < 3)
-      return NULL; /* generate GLXBadProfileARB */
+       majorVersion < 3) {
+      generate_error(dpy, BadMatch, 0, X_GLXCreateContextAttribsARB, True);
+      return NULL;
+   }
 
-   if (renderType == GLX_COLOR_INDEX_TYPE && majorVersion >= 3)
-      return NULL; /* generate BadMatch */
+   if (renderType == GLX_COLOR_INDEX_TYPE && majorVersion >= 3) {
+      generate_error(dpy, BadMatch, 0, X_GLXCreateContextAttribsARB, True);
+      return NULL;
+   }
 
-   return create_context(dpy, xmvis,
-                         shareCtx ? shareCtx->xmesaContext : NULL,
-                         direct,
-                         majorVersion, minorVersion,
-                         profileMask, contextFlags);
+   ctx = create_context(dpy, xmvis,
+                        shareCtx ? shareCtx->xmesaContext : NULL,
+                        direct,
+                        majorVersion, minorVersion,
+                        profileMask, contextFlags);
+   if (!ctx) {
+      generate_error(dpy, GLXBadFBConfig, 0, X_GLXCreateContextAttribsARB, False);
+   }
+
+   return ctx;
 }

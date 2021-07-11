@@ -28,12 +28,13 @@
 #include "util/u_surface.h"
 
 #include "nv_m2mf.xml.h"
+#include "nv_object.xml.h"
 #include "nv30/nv30_screen.h"
 #include "nv30/nv30_context.h"
 #include "nv30/nv30_resource.h"
 #include "nv30/nv30_transfer.h"
 
-static INLINE unsigned
+static inline unsigned
 layer_offset(struct pipe_resource *pt, unsigned level, unsigned layer)
 {
    struct nv30_miptree *mt = nv30_miptree(pt);
@@ -54,7 +55,7 @@ nv30_miptree_get_handle(struct pipe_screen *pscreen,
    unsigned stride;
 
    if (!mt || !mt->base.bo)
-      return FALSE;
+      return false;
 
    stride = mt->level[0].pitch;
 
@@ -78,13 +79,13 @@ struct nv30_transfer {
    unsigned nblocksy;
 };
 
-static INLINE struct nv30_transfer *
+static inline struct nv30_transfer *
 nv30_transfer(struct pipe_transfer *ptx)
 {
    return (struct nv30_transfer *)ptx;
 }
 
-static INLINE void
+static inline void
 define_rect(struct pipe_resource *pt, unsigned level, unsigned z,
             unsigned x, unsigned y, unsigned w, unsigned h,
             struct nv30_rect *rect)
@@ -115,8 +116,22 @@ define_rect(struct pipe_resource *pt, unsigned level, unsigned z,
 
    rect->x0     = util_format_get_nblocksx(pt->format, x) << mt->ms_x;
    rect->y0     = util_format_get_nblocksy(pt->format, y) << mt->ms_y;
-   rect->x1     = rect->x0 + (w << mt->ms_x);
-   rect->y1     = rect->y0 + (h << mt->ms_y);
+   rect->x1     = rect->x0 + (util_format_get_nblocksx(pt->format, w) << mt->ms_x);
+   rect->y1     = rect->y0 + (util_format_get_nblocksy(pt->format, h) << mt->ms_y);
+
+   /* XXX There's some indication that swizzled formats > 4 bytes are treated
+    * differently. However that only applies to RGBA16_FLOAT, RGBA32_FLOAT,
+    * and the DXT* formats. The former aren't properly supported yet, and the
+    * latter avoid swizzled layouts.
+
+   if (mt->swizzled && rect->cpp > 4) {
+      unsigned scale = rect->cpp / 4;
+      rect->w *= scale;
+      rect->x0 *= scale;
+      rect->x1 *= scale;
+      rect->cpp = 4;
+   }
+   */
 }
 
 void
@@ -144,21 +159,54 @@ nv30_resource_copy_region(struct pipe_context *pipe,
    nv30_transfer_rect(nv30, NEAREST, &src, &dst);
 }
 
-void
-nv30_resource_resolve(struct pipe_context *pipe,
-                      const struct pipe_resolve_info *info)
+static void
+nv30_resource_resolve(struct nv30_context *nv30,
+                      const struct pipe_blit_info *info)
 {
-#if 0
-   struct nv30_context *nv30 = nv30_context(pipe);
+   struct nv30_miptree *src_mt = nv30_miptree(info->src.resource);
    struct nv30_rect src, dst;
+   unsigned x, x0, x1, y, y1, w, h;
 
-   define_rect(info->src.res, 0, 0, info->src.x0, info->src.y0,
-               info->src.x1 - info->src.x0, info->src.y1 - info->src.y0, &src);
-   define_rect(info->dst.res, info->dst.level, 0, info->dst.x0, info->dst.y0,
-               info->dst.x1 - info->dst.x0, info->dst.y1 - info->dst.y0, &dst);
+   define_rect(info->src.resource, 0, info->src.box.z, info->src.box.x,
+      info->src.box.y, info->src.box.width, info->src.box.height, &src);
+   define_rect(info->dst.resource, 0, info->dst.box.z, info->dst.box.x,
+      info->dst.box.y, info->dst.box.width, info->dst.box.height, &dst);
 
-   nv30_transfer_rect(nv30, BILINEAR, &src, &dst);
-#endif
+   x0 = src.x0;
+   x1 = src.x1;
+   y1 = src.y1;
+
+   /* On nv3x we must use sifm which is restricted to 1024x1024 tiles */
+   for (y = src.y0; y < y1; y += h) {
+      h = y1 - y;
+      if (h > 1024)
+         h = 1024;
+
+      src.y0 = 0;
+      src.y1 = h;
+      src.h = h;
+
+      dst.y1 = dst.y0 + (h >> src_mt->ms_y);
+      dst.h = h >> src_mt->ms_y;
+
+      for (x = x0; x < x1; x += w) {
+         w = x1 - x;
+         if (w > 1024)
+            w = 1024;
+
+         src.offset = y * src.pitch + x * src.cpp;
+         src.x0 = 0;
+         src.x1 = w;
+         src.w = w;
+
+         dst.offset = (y >> src_mt->ms_y) * dst.pitch +
+                      (x >> src_mt->ms_x) * dst.cpp;
+         dst.x1 = dst.x0 + (w >> src_mt->ms_x);
+         dst.w = w >> src_mt->ms_x;
+
+         nv30_transfer_rect(nv30, BILINEAR, &src, &dst);
+      }
+   }
 }
 
 void
@@ -172,7 +220,7 @@ nv30_blit(struct pipe_context *pipe,
        info.dst.resource->nr_samples <= 1 &&
        !util_format_is_depth_or_stencil(info.src.resource->format) &&
        !util_format_is_pure_integer(info.src.resource->format)) {
-      debug_printf("nv30: color resolve unimplemented\n");
+      nv30_resource_resolve(nv30, blit_info);
       return;
    }
 
@@ -231,6 +279,7 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nouveau_device *dev = nv30->screen->base.device;
+   struct nv30_miptree *mt = nv30_miptree(pt);
    struct nv30_transfer *tx;
    unsigned access = 0;
    int ret;
@@ -242,8 +291,8 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
    tx->base.level = level;
    tx->base.usage = usage;
    tx->base.box = *box;
-   tx->base.stride = util_format_get_nblocksx(pt->format, box->width) *
-                     util_format_get_blocksize(pt->format);
+   tx->base.stride = align(util_format_get_nblocksx(pt->format, box->width) *
+                           util_format_get_blocksize(pt->format), 64);
    tx->base.layer_stride = util_format_get_nblocksy(pt->format, box->height) *
                            tx->base.stride;
 
@@ -251,10 +300,11 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
    tx->nblocksy = util_format_get_nblocksy(pt->format, box->height);
 
    define_rect(pt, level, box->z, box->x, box->y,
-                   tx->nblocksx, tx->nblocksy, &tx->img);
+               box->width, box->height, &tx->img);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-                        tx->base.layer_stride, NULL, &tx->tmp.bo);
+                        tx->base.layer_stride * tx->base.box.depth, NULL,
+                        &tx->tmp.bo);
    if (ret) {
       pipe_resource_reference(&tx->base.resource, NULL);
       FREE(tx);
@@ -274,8 +324,25 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
    tx->tmp.y1     = tx->tmp.h;
    tx->tmp.z      = 0;
 
-   if (usage & PIPE_TRANSFER_READ)
-      nv30_transfer_rect(nv30, NEAREST, &tx->img, &tx->tmp);
+   if (usage & PIPE_TRANSFER_READ) {
+      bool is_3d = mt->base.base.target == PIPE_TEXTURE_3D;
+      unsigned offset = tx->img.offset;
+      unsigned z = tx->img.z;
+      unsigned i;
+      for (i = 0; i < box->depth; ++i) {
+         nv30_transfer_rect(nv30, NEAREST, &tx->img, &tx->tmp);
+         if (is_3d && mt->swizzled)
+            tx->img.z++;
+         else if (is_3d)
+            tx->img.offset += mt->level[level].zslice_size;
+         else
+            tx->img.offset += mt->layer_size;
+         tx->tmp.offset += tx->base.layer_stride;
+      }
+      tx->img.z = z;
+      tx->img.offset = offset;
+      tx->tmp.offset = 0;
+   }
 
    if (tx->tmp.bo->map) {
       *ptransfer = &tx->base;
@@ -304,11 +371,28 @@ nv30_miptree_transfer_unmap(struct pipe_context *pipe,
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_transfer *tx = nv30_transfer(ptx);
+   struct nv30_miptree *mt = nv30_miptree(tx->base.resource);
+   unsigned i;
 
-   if (ptx->usage & PIPE_TRANSFER_WRITE)
-      nv30_transfer_rect(nv30, NEAREST, &tx->tmp, &tx->img);
+   if (ptx->usage & PIPE_TRANSFER_WRITE) {
+      bool is_3d = mt->base.base.target == PIPE_TEXTURE_3D;
+      for (i = 0; i < tx->base.box.depth; ++i) {
+         nv30_transfer_rect(nv30, NEAREST, &tx->tmp, &tx->img);
+         if (is_3d && mt->swizzled)
+            tx->img.z++;
+         else if (is_3d)
+            tx->img.offset += mt->level[tx->base.level].zslice_size;
+         else
+            tx->img.offset += mt->layer_size;
+         tx->tmp.offset += tx->base.layer_stride;
+      }
 
-   nouveau_bo_ref(NULL, &tx->tmp.bo);
+      /* Allow the copies above to finish executing before freeing the source */
+      nouveau_fence_work(nv30->screen->base.fence.current,
+                         nouveau_fence_unref_bo, tx->tmp.bo);
+   } else {
+      nouveau_bo_ref(NULL, &tx->tmp.bo);
+   }
    pipe_resource_reference(&ptx->resource, NULL);
    FREE(tx);
 }
@@ -319,7 +403,6 @@ const struct u_resource_vtbl nv30_miptree_vtbl = {
    nv30_miptree_transfer_map,
    u_default_transfer_flush_region,
    nv30_miptree_transfer_unmap,
-   u_default_transfer_inline_write
 };
 
 struct pipe_resource *
@@ -362,23 +445,37 @@ nv30_miptree_create(struct pipe_screen *pscreen,
    blocksz = util_format_get_blocksize(pt->format);
 
    if ((pt->target == PIPE_TEXTURE_RECT) ||
-       !util_is_power_of_two(pt->width0) ||
-       !util_is_power_of_two(pt->height0) ||
-       !util_is_power_of_two(pt->depth0) ||
-       util_format_is_compressed(pt->format) ||
-       util_format_is_float(pt->format) || mt->ms_mode) {
+       (pt->bind & PIPE_BIND_SCANOUT) ||
+       !util_is_power_of_two_or_zero(pt->width0) ||
+       !util_is_power_of_two_or_zero(pt->height0) ||
+       !util_is_power_of_two_or_zero(pt->depth0) ||
+       mt->ms_mode) {
       mt->uniform_pitch = util_format_get_nblocksx(pt->format, w) * blocksz;
       mt->uniform_pitch = align(mt->uniform_pitch, 64);
+      if (pt->bind & PIPE_BIND_SCANOUT) {
+         struct nv30_screen *screen = nv30_screen(pscreen);
+         int pitch_align = MAX2(
+               screen->eng3d->oclass >= NV40_3D_CLASS ? 1024 : 256,
+               /* round_down_pow2(mt->uniform_pitch / 4) */
+               1 << (util_last_bit(mt->uniform_pitch / 4) - 1));
+         mt->uniform_pitch = align(mt->uniform_pitch, pitch_align);
+      }
    }
 
-   if (!mt->uniform_pitch)
-      mt->swizzled = TRUE;
+   if (util_format_is_compressed(pt->format)) {
+      // Compressed (DXT) formats are packed tightly. We don't mark them as
+      // swizzled, since their layout is largely linear. However we do end up
+      // omitting the LINEAR flag when texturing them, as the levels are not
+      // uniformly sized (for POT sizes).
+   } else if (!mt->uniform_pitch) {
+      mt->swizzled = true;
+   }
 
    size = 0;
    for (l = 0; l <= pt->last_level; l++) {
       struct nv30_miptree_level *lvl = &mt->level[l];
       unsigned nbx = util_format_get_nblocksx(pt->format, w);
-      unsigned nby = util_format_get_nblocksx(pt->format, h);
+      unsigned nby = util_format_get_nblocksy(pt->format, h);
 
       lvl->offset = size;
       lvl->pitch  = mt->uniform_pitch;

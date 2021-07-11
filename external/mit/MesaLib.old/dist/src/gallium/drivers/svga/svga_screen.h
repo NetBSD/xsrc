@@ -1,4 +1,4 @@
-/**********************************************************
+ /**********************************************************
  * Copyright 2008-2009 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -48,10 +48,13 @@ struct svga_screen
    SVGA3dHardwareVersion hw_version;
 
    /** Device caps */
+   boolean haveProvokingVertex;
    boolean haveLineStipple, haveLineSmooth;
    float maxLineWidth, maxLineWidthAA;
    float maxPointSize;
    unsigned max_color_buffers;
+   unsigned max_const_buffers;
+   unsigned ms_samples;
 
    struct {
       boolean force_level_surface_view;
@@ -59,16 +62,18 @@ struct svga_screen
       boolean no_surface_view;
       boolean force_sampler_view;
       boolean no_sampler_view;
+      boolean no_cache_index_buffers;
    } debug;
 
    unsigned texture_timestamp;
-   pipe_mutex tex_mutex; 
+   mtx_t tex_mutex;
 
-   pipe_mutex swc_mutex; /* Used for buffer uploads */
+   mtx_t swc_mutex; /* Used for buffer uploads */
 
    /* which formats to translate depth formats into */
    struct {
      enum SVGA3dSurfaceFormat z16;
+
      /* note gallium order */
      enum SVGA3dSurfaceFormat x8z24;
      enum SVGA3dSurfaceFormat s8z24;
@@ -76,13 +81,18 @@ struct svga_screen
 
    struct svga_host_surface_cache cache;
 
-   /** Memory used by all resources (buffers and surfaces) */
-   uint64_t total_resource_bytes;
+   /** HUD counters */
+   struct {
+      /** Memory used by all resources (buffers and surfaces) */
+      uint64_t total_resource_bytes;
+      uint64_t num_resources;
+      uint64_t num_failed_allocations;
+   } hud;
 };
 
 #ifndef DEBUG
 /** cast wrapper */
-static INLINE struct svga_screen *
+static inline struct svga_screen *
 svga_screen(struct pipe_screen *pscreen)
 {
    return (struct svga_screen *) pscreen;

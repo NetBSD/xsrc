@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -35,6 +33,11 @@
 static inline bool fd_depth_enabled(struct fd_context *ctx)
 {
 	return ctx->zsa && ctx->zsa->depth.enabled;
+}
+
+static inline bool fd_depth_write_enabled(struct fd_context *ctx)
+{
+	return ctx->zsa && ctx->zsa->depth.writemask;
 }
 
 static inline bool fd_stencil_enabled(struct fd_context *ctx)

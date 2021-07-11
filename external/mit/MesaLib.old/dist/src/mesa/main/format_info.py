@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright 2014 Intel Corporation
 #
@@ -21,6 +20,8 @@
 # ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import division, print_function
 
 import format_parser as parser
 import sys
@@ -58,7 +59,7 @@ def get_gl_base_format(fmat):
    elif fmat.has_channel('i') and fmat.num_channels() == 1:
       return 'GL_INTENSITY'
    else:
-      assert False
+      sys.exit("error, could not determine base format for {0}, check swizzle".format(fmat.name));
 
 def get_gl_data_type(fmat):
    if fmat.is_compressed():
@@ -98,14 +99,6 @@ def get_gl_data_type(fmat):
    else:
       assert False
 
-def get_mesa_layout(fmat):
-   if fmat.layout == 'array':
-      return 'MESA_FORMAT_LAYOUT_ARRAY'
-   elif fmat.layout == 'packed':
-      return 'MESA_FORMAT_LAYOUT_PACKED'
-   else:
-      return 'MESA_FORMAT_LAYOUT_OTHER'
-
 def get_channel_bits(fmat, chan_name):
    if fmat.is_compressed():
       # These values are pretty-much bogus, but OpenGL requires that we
@@ -119,7 +112,7 @@ def get_channel_bits(fmat, chan_name):
             return 1 if fmat.has_channel('a') else 0
          else:
             return 0
-      elif fmat.layout == 'rgtc':
+      elif fmat.layout in ('rgtc', 'latc'):
          return 8 if fmat.has_channel(chan_name) else 0
       elif fmat.layout in ('etc1', 'etc2'):
          if fmat.name.endswith('_ALPHA1') and chan_name == 'a':
@@ -130,6 +123,11 @@ def get_channel_bits(fmat, chan_name):
       elif fmat.layout == 'bptc':
          bits = 16 if fmat.name.endswith('_FLOAT') else 8
          return bits if fmat.has_channel(chan_name) else 0
+      elif fmat.layout == 'astc':
+         bits = 16 if 'RGBA' in fmat.name else 8
+         return bits if fmat.has_channel(chan_name) else 0
+      elif fmat.layout == 'atc':
+         return 8 if fmat.has_channel(chan_name) else 0
       else:
          assert False
    else:
@@ -141,7 +139,7 @@ def get_channel_bits(fmat, chan_name):
 
 formats = parser.parse(sys.argv[1])
 
-print '''
+print('''
 /*
  * Mesa 3-D graphics library
  *
@@ -171,27 +169,49 @@ print '''
   * manually or commit it into version control.
   */
 
-static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
+static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 {
-'''
+''')
+
+def format_channel_bits(fmat, tuple_list):
+   return ['.%s = %s' % (field, str(get_channel_bits(fmat, name))) for (field, name) in tuple_list]
+
 
 for fmat in formats:
-   print '   {'
-   print '      {0},'.format(fmat.name)
-   print '      "{0}",'.format(fmat.name)
-   print '      {0},'.format(get_mesa_layout(fmat))
-   print '      {0},'.format(get_gl_base_format(fmat))
-   print '      {0},'.format(get_gl_data_type(fmat))
+   print('   {')
+   print('      .Name = {0},'.format(fmat.name))
+   print('      .StrName = "{0}",'.format(fmat.name))
+   print('      .Layout = {0},'.format('MESA_FORMAT_LAYOUT_' + fmat.layout.upper()))
+   print('      .BaseFormat = {0},'.format(get_gl_base_format(fmat)))
+   print('      .DataType = {0},'.format(get_gl_data_type(fmat)))
 
-   bits = [ get_channel_bits(fmat, name) for name in ['r', 'g', 'b', 'a']]
-   print '      {0},'.format(', '.join(map(str, bits)))
-   bits = [ get_channel_bits(fmat, name) for name in ['l', 'i', 'z', 's']]
-   print '      {0},'.format(', '.join(map(str, bits)))
+   bits = [('RedBits', 'r'), ('GreenBits', 'g'), ('BlueBits', 'b'), ('AlphaBits', 'a')]
+   print('      {0},'.format(', '.join(format_channel_bits(fmat, bits))))
+   bits = [('LuminanceBits', 'l'), ('IntensityBits', 'i'), ('DepthBits', 'z'), ('StencilBits', 's')]
+   print('      {0},'.format(', '.join(format_channel_bits(fmat, bits))))
 
-   print '      {0}, {1}, {2},'.format(fmat.block_width, fmat.block_height,
-                                       int(fmat.block_size() / 8))
+   print('      .IsSRGBFormat = {0:d},'.format(fmat.colorspace == 'srgb'))
 
-   print '      {{ {0} }},'.format(', '.join(map(str, fmat.swizzle)))
-   print '   },'
+   print('      .BlockWidth = {0}, .BlockHeight = {1}, .BlockDepth = {2},'.format(fmat.block_width, fmat.block_height, fmat.block_depth))
+   print('      .BytesPerBlock = {0},'.format(int(fmat.block_size() / 8)))
 
-print '};'
+   print('      .Swizzle = {{ {0} }},'.format(', '.join(map(str, fmat.swizzle))))
+   if fmat.is_array():
+      chan = fmat.array_element()
+      norm = chan.norm or chan.type == parser.FLOAT
+      print('      .ArrayFormat = MESA_ARRAY_FORMAT({0}),'.format(', '.join([
+         str(chan.size // 8),
+         str(int(chan.sign)),
+         str(int(chan.type == parser.FLOAT)),
+         str(int(norm)),
+         str(len(fmat.channels)),
+         str(fmat.swizzle[0]),
+         str(fmat.swizzle[1]),
+         str(fmat.swizzle[2]),
+         str(fmat.swizzle[3]),
+      ])))
+   else:
+      print('      .ArrayFormat = 0,')
+   print('   },')
+
+print('};')

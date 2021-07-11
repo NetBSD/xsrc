@@ -40,12 +40,15 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/feedback.h"
+#include "main/varray.h"
 
 #include "vbo/vbo.h"
 
 #include "st_context.h"
 #include "st_draw.h"
 #include "st_cb_feedback.h"
+#include "st_program.h"
+#include "st_util.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -69,7 +72,7 @@ struct feedback_stage
  * GL Feedback functions
  **********************************************************************/
 
-static INLINE struct feedback_stage *
+static inline struct feedback_stage *
 feedback_stage( struct draw_stage *stage )
 {
    return (struct feedback_stage *)stage;
@@ -98,13 +101,13 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
     * color and texcoord attribs to use here.
     */
 
-   slot = st->vertex_result_to_slot[VARYING_SLOT_COL0];
+   slot = st->vp->result_to_output[VARYING_SLOT_COL0];
    if (slot != ~0U)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-   slot = st->vertex_result_to_slot[VARYING_SLOT_TEX0];
+   slot = st->vp->result_to_output[VARYING_SLOT_TEX0];
    if (slot != ~0U)
       texcoord = v->data[slot];
    else
@@ -274,27 +277,33 @@ static void
 st_RenderMode(struct gl_context *ctx, GLenum newMode )
 {
    struct st_context *st = st_context(ctx);
-   struct draw_context *draw = st->draw;
+   struct draw_context *draw = st_get_draw_context(st);
+
+   if (!st->draw)
+      return;
 
    if (newMode == GL_RENDER) {
       /* restore normal VBO draw function */
-      vbo_set_draw_func(ctx, st_draw_vbo);
+      st_init_draw_functions(&ctx->Driver);
    }
    else if (newMode == GL_SELECT) {
       if (!st->selection_stage)
          st->selection_stage = draw_glselect_stage(ctx, draw);
       draw_set_rasterize_stage(draw, st->selection_stage);
       /* Plug in new vbo draw function */
-      vbo_set_draw_func(ctx, st_feedback_draw_vbo);
+      ctx->Driver.Draw = st_feedback_draw_vbo;
    }
    else {
+      struct gl_program *vp = st->ctx->VertexProgram._Current;
+
       if (!st->feedback_stage)
          st->feedback_stage = draw_glfeedback_stage(ctx, draw);
       draw_set_rasterize_stage(draw, st->feedback_stage);
       /* Plug in new vbo draw function */
-      vbo_set_draw_func(ctx, st_feedback_draw_vbo);
+      ctx->Driver.Draw = st_feedback_draw_vbo;
       /* need to generate/use a vertex program that emits pos/color/tex */
-      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+      if (vp)
+         st->dirty |= ST_NEW_VERTEX_PROGRAM(st, st_vertex_program(vp));
    }
 }
 

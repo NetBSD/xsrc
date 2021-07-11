@@ -162,20 +162,20 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 			 FLOAT_TO_UBYTE(ctx->Color.AlphaRef);
 
 	/* Color mask. */
-	if (ctx->Color.ColorMask[0][RCOMP])
+	if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 0))
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_RED_WRITE;
-	if (ctx->Color.ColorMask[0][GCOMP])
+	if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 1))
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_GREEN_WRITE;
-	if (ctx->Color.ColorMask[0][BCOMP])
+	if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 2))
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_BLUE_WRITE;
-	if (ctx->Color.ColorMask[0][ACOMP])
+	if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 3))
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_ALPHA_WRITE;
 
 	/* Stencil test. */
 	if (ctx->Stencil.WriteMask[0])
 		nv04->ctrl[0] |= NV04_MULTITEX_TRIANGLE_CONTROL0_STENCIL_WRITE;
 
-	if (ctx->Stencil._Enabled)
+	if (_mesa_stencil_is_enabled(ctx))
 		nv04->ctrl[1] |= NV04_MULTITEX_TRIANGLE_CONTROL1_STENCIL_ENABLE;
 
 	nv04->ctrl[1] |= get_comparison_op(ctx->Stencil.Function[0]) << 4 |

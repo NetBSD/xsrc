@@ -33,6 +33,13 @@
 #include "stw_icd.h"
 #include "stw_context.h"
 #include "stw_device.h"
+#include "stw_ext_context.h"
+
+#include "util/u_debug.h"
+
+
+wglCreateContext_t wglCreateContext_func = 0;
+wglDeleteContext_t wglDeleteContext_func = 0;
 
 
 /**
@@ -50,18 +57,15 @@
 HGLRC WINAPI
 wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
 {
-   typedef HGLRC (WINAPI *wglCreateContext_t)(HDC hdc);
-   typedef BOOL (WINAPI *wglDeleteContext_t)(HGLRC hglrc);
    HGLRC context;
-   static HMODULE opengl_lib = 0;
-   static wglCreateContext_t wglCreateContext_func = 0;
-   static wglDeleteContext_t wglDeleteContext_func = 0;
 
    int majorVersion = 1, minorVersion = 0, layerPlane = 0;
    int contextFlags = 0x0;
    int profileMask = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
    int i;
    BOOL done = FALSE;
+   const int contextFlagsAll = (WGL_CONTEXT_DEBUG_BIT_ARB |
+                                WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
 
    /* parse attrib_list */
    if (attribList) {
@@ -94,34 +98,36 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       }
    }
 
+   /* check contextFlags */
+   if (contextFlags & ~contextFlagsAll) {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return NULL;
+   }
+
+   /* check profileMask */
+   if (profileMask != WGL_CONTEXT_CORE_PROFILE_BIT_ARB &&
+       profileMask != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB &&
+       profileMask != WGL_CONTEXT_ES_PROFILE_BIT_EXT) {
+      SetLastError(ERROR_INVALID_PROFILE_ARB);
+      return NULL;
+   }
+
    /* check version (generate ERROR_INVALID_VERSION_ARB if bad) */
-   switch (majorVersion) {
-   case 1:
-      if (minorVersion < 0 || minorVersion > 5) {
-         SetLastError(ERROR_INVALID_VERSION_ARB);
-         return 0;
-      }
-      break;
-   case 2:
-      if (minorVersion < 0 || minorVersion > 1) {
-         SetLastError(ERROR_INVALID_VERSION_ARB);
-         return 0;
-      }
-      break;
-   case 3:
-      if (minorVersion < 0 || minorVersion > 3) {
-         SetLastError(ERROR_INVALID_VERSION_ARB);
-         return 0;
-      }
-      break;
-   case 4:
-      if (minorVersion < 0 || minorVersion > 2) {
-         SetLastError(ERROR_INVALID_VERSION_ARB);
-         return 0;
-      }
-      break;
-   default:
-      return 0;
+   if (majorVersion <= 0 ||
+       minorVersion < 0 ||
+       (profileMask != WGL_CONTEXT_ES_PROFILE_BIT_EXT &&
+        ((majorVersion == 1 && minorVersion > 5) ||
+         (majorVersion == 2 && minorVersion > 1) ||
+         (majorVersion == 3 && minorVersion > 3) ||
+         (majorVersion == 4 && minorVersion > 5) ||
+         majorVersion > 4)) ||
+       (profileMask == WGL_CONTEXT_ES_PROFILE_BIT_EXT &&
+        ((majorVersion == 1 && minorVersion > 1) ||
+         (majorVersion == 2 && minorVersion > 0) ||
+         (majorVersion == 3 && minorVersion > 1) ||
+         majorVersion > 3))) {
+      SetLastError(ERROR_INVALID_VERSION_ARB);
+      return NULL;
    }
 
    if ((contextFlags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) &&
@@ -130,19 +136,12 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       return 0;
    }
 
-   /* check profileMask */
-   if (profileMask != WGL_CONTEXT_CORE_PROFILE_BIT_ARB &&
-       profileMask != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) {
-      SetLastError(ERROR_INVALID_PROFILE_ARB);
-      return 0;
-   }
-
    /* Get pointer to OPENGL32.DLL's wglCreate/DeleteContext() functions */
-   if (opengl_lib == 0) {
-      /* Open the OPENGL32.DLL library */
-      opengl_lib = LoadLibraryA("OPENGL32.DLL");
+   if (!wglCreateContext_func || !wglDeleteContext_func) {
+      /* Get the OPENGL32.DLL library */
+      HMODULE opengl_lib = GetModuleHandleA("opengl32.dll");
       if (!opengl_lib) {
-         _debug_printf("wgl: LoadLibrary(OPENGL32.DLL) failed\n");
+         _debug_printf("wgl: GetModuleHandleA(\"opengl32.dll\") failed\n");
          return 0;
       }
 
@@ -195,4 +194,19 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
    }
 
    return context;
+}
+
+
+/** Defined by WGL_ARB_make_current_read */
+BOOL APIENTRY
+wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
+{
+   DHGLRC dhglrc = 0;
+
+   if (stw_dev && stw_dev->callbacks.wglCbGetDhglrc) {
+      /* Convert HGLRC to DHGLRC */
+      dhglrc = stw_dev->callbacks.wglCbGetDhglrc(hglrc);
+   }
+
+   return stw_make_current(hDrawDC, hReadDC, dhglrc);
 }

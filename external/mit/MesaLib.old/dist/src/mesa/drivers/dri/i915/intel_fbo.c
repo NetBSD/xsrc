@@ -64,26 +64,13 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
       return NULL;
 }
 
-/**
- * Create a new framebuffer object.
- */
-static struct gl_framebuffer *
-intel_new_framebuffer(struct gl_context * ctx, GLuint name)
-{
-   /* Only drawable state in intel_framebuffer at this time, just use Mesa's
-    * class
-    */
-   return _mesa_new_framebuffer(ctx, name);
-}
-
-
 /** Called by gl_renderbuffer::Delete() */
 static void
 intel_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   ASSERT(irb);
+   assert(irb);
 
    intel_miptree_release(&irb->mt);
 
@@ -99,13 +86,17 @@ intel_map_renderbuffer(struct gl_context *ctx,
 		       GLuint x, GLuint y, GLuint w, GLuint h,
 		       GLbitfield mode,
 		       GLubyte **out_map,
-		       GLint *out_stride)
+		       GLint *out_stride,
+		       bool flip_y)
 {
    struct intel_context *intel = intel_context(ctx);
    struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    void *map;
    int stride;
+
+   /* driver does not support GL_FRAMEBUFFER_FLIP_Y_MESA */
+   assert((rb->Name == 0) == flip_y);
 
    if (srb->Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer), not an irb */
@@ -135,7 +126,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    }
 
    DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+       __func__, rb->Name, _mesa_get_format_name(rb->Format),
        x, y, w, h, map, stride);
 
    *out_map = map;
@@ -153,7 +144,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   DBG("%s: rb %d (%s)\n", __FUNCTION__,
+   DBG("%s: rb %d (%s)\n", __func__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
    if (srb->Buffer) {
@@ -180,6 +171,15 @@ intel_renderbuffer_format(struct gl_context * ctx, GLenum internalFormat)
       return intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
                                                    internalFormat,
                                                    GL_NONE, GL_NONE);
+
+   case GL_DEPTH_COMPONENT16:
+      return MESA_FORMAT_Z_UNORM16;
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_COMPONENT24:
+   case GL_DEPTH_COMPONENT32:
+      return MESA_FORMAT_Z24_UNORM_X8_UINT;
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
@@ -206,8 +206,8 @@ intel_alloc_private_renderbuffer_storage(struct gl_context * ctx, struct gl_rend
 
    intel_miptree_release(&irb->mt);
 
-   DBG("%s: %s: %s (%dx%d)\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(internalFormat),
+   DBG("%s: %s: %s (%dx%d)\n", __func__,
+       _mesa_enum_to_string(internalFormat),
        _mesa_get_format_name(rb->Format), width, height);
 
    if (width == 0 || height == 0)
@@ -278,8 +278,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Width = image->region->width;
    rb->Height = image->region->height;
    rb->Format = image->format;
-   rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
-					   image->internal_format);
+   rb->_BaseFormat = _mesa_get_format_base_format(image->format);
    rb->NeedsFinishRenderTexture = true;
 }
 
@@ -292,10 +291,10 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
  * intel_process_dri2_buffer().
  */
 static GLboolean
-intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
+intel_alloc_window_storage(UNUSED struct gl_context *ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
-   ASSERT(rb->Name == 0);
+   assert(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
    rb->InternalFormat = internalFormat;
@@ -305,8 +304,10 @@ intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
 
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
-intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
-                        GLenum internalFormat, GLuint width, GLuint height)
+intel_nop_alloc_storage(UNUSED struct gl_context *ctx,
+                        UNUSED struct gl_renderbuffer *rb,
+                        UNUSED GLenum internalFormat,
+                        UNUSED GLuint width, UNUSED GLuint height)
 {
    _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
    return false;
@@ -398,7 +399,8 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
  */
 static void
 intel_bind_framebuffer(struct gl_context * ctx, GLenum target,
-                       struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
+                       UNUSED struct gl_framebuffer *fb,
+                       UNUSED struct gl_framebuffer *fbread)
 {
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
       intel_draw_buffer(ctx);
@@ -419,13 +421,12 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
 {
    DBG("Intel FramebufferRenderbuffer %u %u\n", fb->Name, rb ? rb->Name : 0);
 
-   _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
+   _mesa_FramebufferRenderbuffer_sw(ctx, fb, attachment, rb);
    intel_draw_buffer(ctx);
 }
 
 static bool
-intel_renderbuffer_update_wrapper(struct intel_context *intel,
-                                  struct intel_renderbuffer *irb,
+intel_renderbuffer_update_wrapper(struct intel_renderbuffer *irb,
 				  struct gl_texture_image *image,
                                   uint32_t layer)
 {
@@ -473,7 +474,6 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct gl_renderbuffer *rb = att->Renderbuffer;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct gl_texture_image *image = rb->TexImage;
@@ -500,7 +500,7 @@ intel_render_texture(struct gl_context * ctx,
 
    intel_miptree_check_level_layer(mt, att->TextureLevel, layer);
 
-   if (!intel_renderbuffer_update_wrapper(intel, irb, image, layer)) {
+   if (!intel_renderbuffer_update_wrapper(irb, image, layer)) {
        _swrast_render_texture(ctx, fb, att);
        return;
    }
@@ -536,10 +536,11 @@ intel_finish_render_texture(struct gl_context * ctx, struct gl_renderbuffer *rb)
 #define fbo_incomplete(fb, ...) do {                                          \
       static GLuint msg_id = 0;                                               \
       if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {    \
-         _mesa_gl_debug(ctx, &msg_id,                                         \
-                        MESA_DEBUG_TYPE_OTHER,                                \
-                        MESA_DEBUG_SEVERITY_MEDIUM,                           \
-                        __VA_ARGS__);                                         \
+         _mesa_gl_debugf(ctx, &msg_id,                                        \
+                         MESA_DEBUG_SOURCE_API,                               \
+                         MESA_DEBUG_TYPE_OTHER,                               \
+                         MESA_DEBUG_SEVERITY_MEDIUM,                          \
+                         __VA_ARGS__);                                        \
       }                                                                       \
       DBG(__VA_ARGS__);                                                       \
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;                               \
@@ -559,7 +560,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
    int i;
 
-   DBG("%s() on fb %p (%s)\n", __FUNCTION__,
+   DBG("%s() on fb %p (%s)\n", __func__,
        fb, (fb == ctx->DrawBuffer ? "drawbuffer" :
 	    (fb == ctx->ReadBuffer ? "readbuffer" : "other buffer")));
 
@@ -589,7 +590,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
    }
 
-   for (i = 0; i < Elements(fb->Attachment); i++) {
+   for (i = 0; i < ARRAY_SIZE(fb->Attachment); i++) {
       struct gl_renderbuffer *rb;
       struct intel_renderbuffer *irb;
 
@@ -639,18 +640,23 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
  */
 static GLbitfield
 intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
+                                    const struct gl_framebuffer *readFb,
+                                    const struct gl_framebuffer *drawFb,
                                     GLint srcX0, GLint srcY0,
                                     GLint srcX1, GLint srcY1,
                                     GLint dstX0, GLint dstY0,
                                     GLint dstX1, GLint dstY1,
-                                    GLbitfield mask, GLenum filter)
+                                    GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   /* Sync up the state of window system buffers.  We need to do this before
+    * we go looking for the buffers.
+    */
+   intel_prepare_render(intel);
+
    if (mask & GL_COLOR_BUFFER_BIT) {
       GLint i;
-      const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-      const struct gl_framebuffer *readFb = ctx->ReadBuffer;
       struct gl_renderbuffer *src_rb = readFb->_ColorReadBuffer;
       struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
 
@@ -686,8 +692,8 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
        * results are undefined if any destination pixels have a dependency on
        * source pixels.
        */
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         struct gl_renderbuffer *dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+      for (i = 0; i < drawFb->_NumColorDrawBuffers; i++) {
+         struct gl_renderbuffer *dst_rb = drawFb->_ColorDrawBuffers[i];
          struct intel_renderbuffer *dst_irb = intel_renderbuffer(dst_rb);
 
          if (!dst_irb) {
@@ -713,7 +719,7 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
                                  dst_irb->mt,
                                  dst_irb->mt_level, dst_irb->mt_layer,
                                  dstX0, dstY0, dst_rb->Name == 0,
-                                 dstX1 - dstX0, dstY1 - dstY0, GL_COPY)) {
+                                 dstX1 - dstX0, dstY1 - dstY0, COLOR_LOGICOP_COPY)) {
             perf_debug("glBlitFramebuffer(): unknown blit failure.  "
                        "Falling back to software rendering.\n");
             return mask;
@@ -728,20 +734,22 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
 
 static void
 intel_blit_framebuffer(struct gl_context *ctx,
+                       struct gl_framebuffer *readFb,
+                       struct gl_framebuffer *drawFb,
                        GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                        GLbitfield mask, GLenum filter)
 {
    /* Try using the BLT engine. */
-   mask = intel_blit_framebuffer_with_blitter(ctx,
+   mask = intel_blit_framebuffer_with_blitter(ctx, readFb, drawFb,
                                               srcX0, srcY0, srcX1, srcY1,
                                               dstX0, dstY0, dstX1, dstY1,
-                                              mask, filter);
+                                              mask);
    if (mask == 0x0)
       return;
 
 
-   _mesa_meta_and_swrast_BlitFramebuffer(ctx,
+   _mesa_meta_and_swrast_BlitFramebuffer(ctx, readFb, drawFb,
                                          srcX0, srcY0, srcX1, srcY1,
                                          dstX0, dstY0, dstX1, dstY1,
                                          mask, filter);
@@ -754,7 +762,6 @@ intel_blit_framebuffer(struct gl_context *ctx,
 void
 intel_fbo_init(struct intel_context *intel)
 {
-   intel->ctx.Driver.NewFramebuffer = intel_new_framebuffer;
    intel->ctx.Driver.NewRenderbuffer = intel_new_renderbuffer;
    intel->ctx.Driver.MapRenderbuffer = intel_map_renderbuffer;
    intel->ctx.Driver.UnmapRenderbuffer = intel_unmap_renderbuffer;

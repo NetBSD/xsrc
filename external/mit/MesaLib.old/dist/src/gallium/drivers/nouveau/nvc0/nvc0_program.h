@@ -21,16 +21,13 @@ struct nvc0_program {
    struct pipe_shader_state pipe;
 
    ubyte type;
-   boolean translated;
-   boolean need_tls;
+   bool translated;
+   bool need_tls;
    uint8_t num_gprs;
 
    uint32_t *code;
-   uint32_t *immd_data;
    unsigned code_base;
    unsigned code_size;
-   unsigned immd_base;
-   unsigned immd_size; /* size of immediate array data */
    unsigned parm_size; /* size of non-bindable uniforms (c0[]) */
 
    uint32_t hdr[20];
@@ -39,14 +36,21 @@ struct nvc0_program {
    struct {
       uint32_t clip_mode; /* clip/cull selection */
       uint8_t clip_enable; /* mask of defined clip planes */
+      uint8_t cull_enable; /* mask of defined cull distances */
       uint8_t num_ucps; /* also set to max if ClipDistance is used */
       uint8_t edgeflag; /* attribute index of edgeflag input */
-      boolean need_vertex_id;
+      bool need_vertex_id;
+      bool need_draw_parameters;
    } vp;
    struct {
       uint8_t early_z;
-      uint8_t in_pos[PIPE_MAX_SHADER_INPUTS];
-      uint8_t sample_interp;
+      uint8_t colors;
+      uint8_t color_interp[2];
+      bool sample_mask_in;
+      bool force_persample_interp;
+      bool flatshade;
+      bool reads_framebuffer;
+      bool post_depth_coverage;
    } fp;
    struct {
       uint32_t tess_mode; /* ~0 if defined by the other stage */
@@ -61,6 +65,7 @@ struct nvc0_program {
    uint8_t num_barriers;
 
    void *relocs;
+   void *fixups;
 
    struct nvc0_transform_feedback_state *tfb;
 

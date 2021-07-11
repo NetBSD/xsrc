@@ -25,7 +25,7 @@
 #include "pipe/p_config.h"
 #include "util/u_cpu_detect.h"
 
-#if defined(PIPE_ARCH_X86) || (defined(PIPE_ARCH_X86_64) && !defined(__MINGW32__))
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
@@ -510,7 +510,7 @@ void x86_mov8_imm( struct x86_function *p, struct x86_reg dst, uint8_t imm )
 /**
  * Immediate group 1 instructions.
  */
-static INLINE void 
+static inline void 
 x86_group1_imm( struct x86_function *p, 
                 unsigned op, struct x86_reg dst, int imm )
 {
@@ -2196,14 +2196,14 @@ void x86_release_func( struct x86_function *p )
 }
 
 
-static INLINE x86_func
+static inline x86_func
 voidptr_to_x86_func(void *v)
 {
    union {
       void *v;
       x86_func f;
    } u;
-   assert(sizeof(u.v) == sizeof(u.f));
+   STATIC_ASSERT(sizeof(u.v) == sizeof(u.f));
    u.v = v;
    return u.f;
 }

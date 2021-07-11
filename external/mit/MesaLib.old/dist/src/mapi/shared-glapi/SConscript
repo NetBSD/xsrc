@@ -26,20 +26,36 @@ def mapi_objects(env, printer, mode):
     header_name = '%s-tmp.h' % (printer)
 
     # generate ABI header
-    header = env.CodeGenerate(
-        target = header_name,
-        script = '../mapi_abi.py',
-        source = '../glapi/gen/gl_and_es_API.xml',
-        command = python_cmd + ' $SCRIPT ' + \
-                '--printer %s --mode lib $SOURCE > $TARGET' % (printer),
-    )
+    GLAPI = '../glapi/'
+    if printer != 'glapi':
+        if printer == 'es1api':
+            abi_tag = 'glesv1'
+        else:
+            abi_tag = 'glesv2'
+
+        header = env.CodeGenerate(
+            target = header_name,
+            script = '../new/gen_gldispatch_mapi.py',
+            source = GLAPI + 'registry/gl.xml'
+            command = python_cmd + ' $SCRIPT ' + \
+                    '%s $SOURCE > $TARGET' % (abi_tag),
+        )
+    else:
+        header = env.CodeGenerate(
+            target = header_name,
+            script = '../mapi_abi.py',
+            source = [GLAPI + 'gen/gl_and_es_API.xml'] + env.Glob(GLAPI + 'gen/*.xml'),
+            command = python_cmd + ' $SCRIPT ' + \
+                    '--printer %s $SOURCE > $TARGET' % (printer),
+        )
 
     cpppath = [
         header[0].dir,
         '#/include',
+        '#/src',
         '#/src/mapi',
     ]
-    
+
     cppdefines = mapi_defines[mode] + [
         'MAPI_ABI_HEADER=\\"%s\\"' % (header_name),
     ]
@@ -111,11 +127,4 @@ if env['platform'] == 'windows':
 else:
     shared_glapi = env.FindIxes(shared_glapi, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
-# build glapi bridge as a convenience libarary for libgl-xlib/libgl-gdi
-bridge_glapi_objects = mapi_objects(env, 'glapi', 'bridge')
-bridge_glapi = env.ConvenienceLibrary(
-    target = 'glapi_bridge',
-    source = bridge_glapi_objects,
-)
-
-Export(['shared_glapi', 'bridge_glapi'])
+Export(['shared_glapi'])

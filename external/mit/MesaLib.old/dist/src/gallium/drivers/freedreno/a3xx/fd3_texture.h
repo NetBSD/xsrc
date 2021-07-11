@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -35,15 +33,16 @@
 #include "freedreno_resource.h"
 
 #include "fd3_context.h"
-#include "fd3_util.h"
+#include "fd3_format.h"
 
 struct fd3_sampler_stateobj {
 	struct pipe_sampler_state base;
 	uint32_t texsamp0, texsamp1;
 	bool saturate_s, saturate_t, saturate_r;
+	bool needs_border;
 };
 
-static INLINE struct fd3_sampler_stateobj *
+static inline struct fd3_sampler_stateobj *
 fd3_sampler_stateobj(struct pipe_sampler_state *samp)
 {
 	return (struct fd3_sampler_stateobj *)samp;
@@ -51,11 +50,10 @@ fd3_sampler_stateobj(struct pipe_sampler_state *samp)
 
 struct fd3_pipe_sampler_view {
 	struct pipe_sampler_view base;
-	struct fd_resource *tex_resource;
 	uint32_t texconst0, texconst1, texconst2, texconst3;
 };
 
-static INLINE struct fd3_pipe_sampler_view *
+static inline struct fd3_pipe_sampler_view *
 fd3_pipe_sampler_view(struct pipe_sampler_view *pview)
 {
 	return (struct fd3_pipe_sampler_view *)pview;

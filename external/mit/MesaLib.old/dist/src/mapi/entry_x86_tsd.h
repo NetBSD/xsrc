@@ -25,7 +25,11 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "u_macros.h"
+#ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
+#define HIDDEN __attribute__((visibility("hidden")))
+#else
+#define HIDDEN
+#endif
 
 #define X86_ENTRY_SIZE 32
 
@@ -39,16 +43,6 @@ __asm__(".text\n"
    ".balign 32\n"                   \
    func ":"
 
-#ifdef __PIC__
-#define STUB_ASM_CODE(slot)         \
-   "movl " ENTRY_CURRENT_TABLE "@PLT, %eax\n\t" \
-   "testl %eax, %eax\n\t"           \
-   "je 1f\n\t"                      \
-   "jmp *(4 * " slot ")(%eax)\n"    \
-   "1:\n\t"                         \
-   "call " ENTRY_CURRENT_TABLE_GET "@PLT\n\t" \
-   "jmp *(4 * " slot ")(%eax)"
-#else
 #define STUB_ASM_CODE(slot)         \
    "movl " ENTRY_CURRENT_TABLE ", %eax\n\t" \
    "testl %eax, %eax\n\t"           \
@@ -57,7 +51,6 @@ __asm__(".text\n"
    "1:\n\t"                         \
    "call " ENTRY_CURRENT_TABLE_GET "\n\t" \
    "jmp *(4 * " slot ")(%eax)"
-#endif
 
 #define MAPI_TMP_STUB_ASM_GCC
 #include "mapi_tmp.h"
@@ -70,8 +63,8 @@ __asm__(".balign 32\n"
 #include <string.h>
 #include "u_execmem.h"
 
-extern const char x86_entry_start[] __attribute__((__visibility__("hidden")));
-extern const char x86_entry_end[] __attribute__((__visibility__("hidden")));
+extern const char x86_entry_start[] HIDDEN;
+extern const char x86_entry_end[] HIDDEN;
 
 void
 entry_patch_public(void)

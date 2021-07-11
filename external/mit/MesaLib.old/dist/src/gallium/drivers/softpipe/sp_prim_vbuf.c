@@ -60,7 +60,7 @@ struct softpipe_vbuf_render
    struct softpipe_context *softpipe;
    struct setup_context *setup;
 
-   uint prim;
+   enum pipe_prim_type prim;
    uint vertex_size;
    uint nr_vertices;
    uint vertex_buffer_size;
@@ -133,7 +133,7 @@ sp_vbuf_unmap_vertices(struct vbuf_render *vbr,
 
 
 static void
-sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
+sp_vbuf_set_primitive(struct vbuf_render *vbr, enum pipe_prim_type prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct setup_context *setup_ctx = cvbr->setup;
@@ -145,7 +145,7 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 }
 
 
-static INLINE cptrf4 get_vert( const void *vertex_buffer,
+static inline cptrf4 get_vert( const void *vertex_buffer,
                                int index,
                                int stride )
 {
@@ -161,7 +161,7 @@ sp_vbuf_draw_elements(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
+   const unsigned stride = softpipe->vertex_info.size * sizeof(float);
    const void *vertex_buffer = cvbr->vertex_buffer;
    struct setup_context *setup = cvbr->setup;
    const boolean flatshade_first = softpipe->rasterizer->flatshade_first;
@@ -358,7 +358,7 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
    struct setup_context *setup = cvbr->setup;
-   const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
+   const unsigned stride = softpipe->vertex_info.size * sizeof(float);
    const void *vertex_buffer =
       (void *) get_vert(cvbr->vertex_buffer, start, stride);
    const boolean flatshade_first = softpipe->rasterizer->flatshade_first;
@@ -597,13 +597,13 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
  * increase too should call this from outside streamout code.
  */
 static void
-sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint prim_generated)
+sp_vbuf_so_info(struct vbuf_render *vbr, uint stream, uint primitives, uint prim_generated)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
 
-   softpipe->so_stats.num_primitives_written += primitives;
-   softpipe->so_stats.primitives_storage_needed += prim_generated;
+   softpipe->so_stats[stream].num_primitives_written += primitives;
+   softpipe->so_stats[stream].primitives_storage_needed += prim_generated;
 }
 
 static void

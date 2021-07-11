@@ -24,11 +24,11 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/samplerobj.h"
+#include "main/teximage.h"
 #include "main/texobj.h"
 
 #include "brw_context.h"
 #include "intel_mipmap_tree.h"
-#include "intel_blit.h"
 #include "intel_tex.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
@@ -42,13 +42,15 @@
  * allow sampling beyond level 0.
  */
 static void
-intel_update_max_level(struct intel_texture_object *intelObj,
+intel_update_max_level(struct gl_texture_object *tObj,
 		       struct gl_sampler_object *sampler)
 {
-   struct gl_texture_object *tObj = &intelObj->base;
+   struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
-   if (sampler->MinFilter == GL_NEAREST ||
-       sampler->MinFilter == GL_LINEAR) {
+   if (!tObj->_MipmapComplete ||
+       (tObj->_RenderToTexture &&
+        (sampler->MinFilter == GL_NEAREST ||
+         sampler->MinFilter == GL_LINEAR))) {
       intelObj->_MaxLevel = tObj->BaseLevel;
    } else {
       intelObj->_MaxLevel = tObj->_MaxLevel;
@@ -61,13 +63,11 @@ intel_update_max_level(struct intel_texture_object *intelObj,
  * BaseLevel/MaxLevel/filtering, and copy in any texture images that are
  * stored in other miptrees.
  */
-GLuint
-intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
+void
+intel_finalize_mipmap_tree(struct brw_context *brw,
+                           struct gl_texture_object *tObj)
 {
-   struct gl_context *ctx = &brw->ctx;
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
-   struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    GLuint face, i;
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
@@ -75,14 +75,7 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
 
    /* TBOs require no validation -- they always just point to their BO. */
    if (tObj->Target == GL_TEXTURE_BUFFER)
-      return true;
-
-   /* We know that this is true by now, and if it wasn't, we might have
-    * mismatched level sizes and the copies would fail.
-    */
-   assert(intelObj->base._BaseComplete);
-
-   intel_update_max_level(intelObj, sampler);
+      return;
 
    /* What levels does this validated texture image require? */
    int validate_first_level = tObj->BaseLevel;
@@ -95,13 +88,20 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
    if (!intelObj->needs_validate &&
        validate_first_level >= intelObj->validated_first_level &&
        validate_last_level <= intelObj->validated_last_level) {
-      return true;
+      return;
    }
 
-   /* Immutable textures should not get this far -- they should have been
-    * created in a validated state, and nothing can invalidate them.
+   /* On recent generations, immutable textures should not get this far
+    * -- they should have been created in a validated state, and nothing
+    * can invalidate them.
+    *
+    * Unfortunately, this is not true on pre-Sandybridge hardware -- when
+    * rendering into an immutable-format depth texture we may have to rebase
+    * the rendered levels to meet alignment requirements.
+    *
+    * FINISHME: Avoid doing this.
     */
-   assert(!tObj->Immutable);
+   assert(!tObj->Immutable || brw->screen->devinfo.gen < 6);
 
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
@@ -119,9 +119,32 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
-      intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
-					     &width, &height, &depth);
-
+      const unsigned level = firstImage->base.Base.Level;
+      intel_get_image_dims(&firstImage->base.Base, &width, &height, &depth);
+      /* Figure out image dimensions at start level. */
+      switch(intelObj->base.Target) {
+      case GL_TEXTURE_2D_MULTISAMPLE:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      case GL_TEXTURE_RECTANGLE:
+      case GL_TEXTURE_EXTERNAL_OES:
+          assert(level == 0);
+          break;
+      case GL_TEXTURE_3D:
+          depth = depth << level;
+          /* Fall through */
+      case GL_TEXTURE_2D:
+      case GL_TEXTURE_2D_ARRAY:
+      case GL_TEXTURE_CUBE_MAP:
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+          height = height << level;
+          /* Fall through */
+      case GL_TEXTURE_1D:
+      case GL_TEXTURE_1D_ARRAY:
+          width = width << level;
+          break;
+      default:
+          unreachable("Unexpected target");
+      }
       perf_debug("Creating new %s %dx%dx%d %d-level miptree to handle "
                  "finalized texture miptree.\n",
                  _mesa_get_format_name(firstImage->base.Base.TexFormat),
@@ -135,12 +158,10 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
                                           width,
                                           height,
                                           depth,
-					  true,
-                                          0 /* num_samples */,
-                                          INTEL_MIPTREE_TILING_ANY,
-                                          false);
+                                          1 /* num_samples */,
+                                          MIPTREE_CREATE_BUSY);
       if (!intelObj->mt)
-         return false;
+         return;
    }
 
    /* Pull in any images not in the object's tree:
@@ -154,10 +175,8 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
  	 if (intelImage == NULL)
 		 break;
 
-         if (intelObj->mt != intelImage->mt) {
-            intel_miptree_copy_teximage(brw, intelImage, intelObj->mt,
-                                        false /* invalidate */);
-         }
+         if (intelObj->mt != intelImage->mt)
+            intel_miptree_copy_teximage(brw, intelImage, intelObj->mt);
 
          /* After we're done, we'd better agree that our layout is
           * appropriate, or we'll end up hitting this function again on the
@@ -169,8 +188,34 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
 
    intelObj->validated_first_level = validate_first_level;
    intelObj->validated_last_level = validate_last_level;
-   intelObj->_Format = intelObj->mt->format;
+   intelObj->_Format = firstImage->base.Base.TexFormat,
    intelObj->needs_validate = false;
+}
 
-   return true;
+/**
+ * Finalizes all textures, completing any rendering that needs to be done
+ * to prepare them.
+ */
+void
+brw_validate_textures(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   const int max_enabled_unit = ctx->Texture._MaxEnabledTexImageUnit;
+
+   for (int unit = 0; unit <= max_enabled_unit; unit++) {
+      struct gl_texture_object *tex_obj = ctx->Texture.Unit[unit]._Current;
+
+      if (!tex_obj)
+         continue;
+
+      struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
+
+      /* We know that this is true by now, and if it wasn't, we might have
+       * mismatched level sizes and the copies would fail.
+       */
+      assert(tex_obj->_BaseComplete);
+
+      intel_update_max_level(tex_obj, sampler);
+      intel_finalize_mipmap_tree(brw, tex_obj);
+   }
 }

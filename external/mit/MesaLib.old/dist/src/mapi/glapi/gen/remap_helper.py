@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 # Copyright (C) 2009 Chia-I Wu <olv@0xlab.org>
 # All Rights Reserved.
@@ -24,9 +23,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-import gl_XML
+from __future__ import print_function
+
+import argparse
+
 import license
-import sys, getopt, string
+import gl_XML
+
 
 def get_function_spec(func):
     sig = ""
@@ -54,6 +57,7 @@ def get_function_spec(func):
 
     return spec
 
+
 class PrintGlRemap(gl_XML.gl_print_base):
     def __init__(self):
         gl_XML.gl_print_base.__init__(self)
@@ -64,23 +68,23 @@ class PrintGlRemap(gl_XML.gl_print_base):
 
 
     def printRealHeader(self):
-        print '#include "main/dispatch.h"'
-        print '#include "main/remap.h"'
-        print ''
+        print('#include "main/dispatch.h"')
+        print('#include "main/remap.h"')
+        print('')
         return
 
 
     def printBody(self, api):
         pool_indices = {}
 
-        print '/* this is internal to remap.c */'
-        print '#ifndef need_MESA_remap_table'
-        print '#error Only remap.c should include this file!'
-        print '#endif /* need_MESA_remap_table */'
-        print ''
+        print('/* this is internal to remap.c */')
+        print('#ifndef need_MESA_remap_table')
+        print('#error Only remap.c should include this file!')
+        print('#endif /* need_MESA_remap_table */')
+        print('')
 
-        print ''
-        print 'static const char _mesa_function_pool[] ='
+        print('')
+        print('static const char _mesa_function_pool[] =')
 
         # output string pool
         index = 0;
@@ -98,95 +102,49 @@ class PrintGlRemap(gl_XML.gl_print_base):
             else:
                 comments = "dynamic"
 
-            print '   /* _mesa_function_pool[%d]: %s (%s) */' \
-                            % (index, f.name, comments)
+            print('   /* _mesa_function_pool[%d]: %s (%s) */' \
+                            % (index, f.name, comments))
             for line in spec:
-                print '   "%s\\0"' % line
+                print('   "%s\\0"' % line)
                 index += len(line) + 1
-        print '   ;'
-        print ''
+        print('   ;')
+        print('')
 
-        print '/* these functions need to be remapped */'
-        print 'static const struct gl_function_pool_remap MESA_remap_table_functions[] = {'
+        print('/* these functions need to be remapped */')
+        print('static const struct gl_function_pool_remap MESA_remap_table_functions[] = {')
         # output all functions that need to be remapped
         # iterate by offsets so that they are sorted by remap indices
         for f in api.functionIterateByOffset():
             if not f.assign_offset:
                 continue
-            print '   { %5d, %s_remap_index },' \
-                            % (pool_indices[f], f.name)
-        print '   {    -1, -1 }'
-        print '};'
-        print ''
-
-        # collect functions by versions/extensions
-        extension_functions = {}
-        abi_extensions = []
-        for f in api.functionIterateAll():
-            for n in f.entry_points:
-                category, num = api.get_category_for_name(n)
-                # consider only GL_VERSION_X_Y or extensions
-                c = gl_XML.real_category_name(category)
-                if c.startswith("GL_"):
-                    if not extension_functions.has_key(c):
-                        extension_functions[c] = []
-                    extension_functions[c].append(f)
-                    # remember the ext names of the ABI
-                    if (f.is_abi() and n == f.name and
-                            c not in abi_extensions):
-                        abi_extensions.append(c)
-        # ignore the ABI itself
-        for ext in abi_extensions:
-            extension_functions.pop(ext)
-
-        extensions = extension_functions.keys()
-        extensions.sort()
-
-        # output ABI functions that have alternative names (with ext suffix)
-        print '/* these functions are in the ABI, but have alternative names */'
-        print 'static const struct gl_function_remap MESA_alt_functions[] = {'
-        for ext in extensions:
-            funcs = []
-            for f in extension_functions[ext]:
-                # test if the function is in the ABI and has alt names
-                if f.is_abi() and len(f.entry_points) > 1:
-                    funcs.append(f)
-            if not funcs:
-                continue
-            print '   /* from %s */' % ext
-            for f in funcs:
-                print '   { %5d, _gloffset_%s },' \
-                                % (pool_indices[f], f.name)
-        print '   {    -1, -1 }'
-        print '};'
-        print ''
+            print('   { %5d, %s_remap_index },' \
+                            % (pool_indices[f], f.name))
+        print('   {    -1, -1 }')
+        print('};')
+        print('')
         return
 
 
-def show_usage():
-    print "Usage: %s [-f input_file_name] [-c ver]" % sys.argv[0]
-    print "    -c ver    Version can be 'es1' or 'es2'."
-    sys.exit(1)
+def _parser():
+    """Parse input options and return a namsepace."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--filename',
+                        default="gl_API.xml",
+                        metavar="input_file_name",
+                        dest='file_name',
+                        help="An xml description file.")
+    return parser.parse_args()
 
-if __name__ == '__main__':
-    file_name = "gl_API.xml"
 
-    try:
-        (args, trail) = getopt.getopt(sys.argv[1:], "f:c:")
-    except Exception,e:
-        show_usage()
+def main():
+    """Main function."""
+    args = _parser()
 
-    es = None
-    for (arg,val) in args:
-        if arg == "-f":
-            file_name = val
-        elif arg == "-c":
-            es = val
-
-    api = gl_XML.parse_GL_API( file_name )
-
-    if es is not None:
-        api.filter_functions_by_api(es)
+    api = gl_XML.parse_GL_API(args.file_name)
 
     printer = PrintGlRemap()
-    printer.Print( api )
+    printer.Print(api)
+
+
+if __name__ == '__main__':
+    main()

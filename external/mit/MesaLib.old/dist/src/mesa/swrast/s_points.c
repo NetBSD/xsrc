@@ -22,9 +22,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+#include "main/framebuffer.h"
 #include "main/glheader.h"
-#include "main/colormac.h"
 #include "main/macros.h"
 #include "s_context.h"
 #include "s_feedback.h"
@@ -140,8 +139,8 @@ sprite_point(struct gl_context *ctx, const SWvertex *vert)
          if (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) {
             /* a texcoord attribute */
             const GLuint u = attr - VARYING_SLOT_TEX0;
-            ASSERT(u < Elements(ctx->Point.CoordReplace));
-            if (ctx->Point.CoordReplace[u]) {
+            assert(u < MAX_TEXTURE_COORD_UNITS);
+            if (ctx->Point.CoordReplace & (1u << u)) {
                tCoords[numTcoords++] = attr;
 
                if (ctx->Point.SpriteRMode == GL_ZERO)
@@ -209,9 +208,9 @@ sprite_point(struct gl_context *ctx, const SWvertex *vert)
       else {
          /* even size */
          /* 0.501 factor allows conformance to pass */
-         xmin = (GLint) (x + 0.501) - iRadius;
+         xmin = (GLint) (x + 0.501F) - iRadius;
          xmax = xmin + iSize - 1;
-         ymin = (GLint) (y + 0.501) - iRadius;
+         ymin = (GLint) (y + 0.501F) - iRadius;
          ymax = ymin + iSize - 1;
       }
 
@@ -258,7 +257,7 @@ smooth_point(struct gl_context *ctx, const SWvertex *vert)
    size = get_size(ctx, vert, GL_TRUE);
 
    /* alpha attenuation / fade factor */
-   if (ctx->Multisample._Enabled) {
+   if (_mesa_is_multisample_enabled(ctx)) {
       if (vert->pointSize >= ctx->Point.Threshold) {
          alphaAtten = 1.0F;
       }
@@ -424,9 +423,9 @@ large_point(struct gl_context *ctx, const SWvertex *vert)
       else {
          /* even size */
          /* 0.501 factor allows conformance to pass */
-         xmin = (GLint) (x + 0.501) - iRadius;
+         xmin = (GLint) (x + 0.501F) - iRadius;
          xmax = xmin + iSize - 1;
-         ymin = (GLint) (y + 0.501) - iRadius;
+         ymin = (GLint) (y + 0.501F) - iRadius;
          ymax = ymin + iSize - 1;
       }
 
@@ -504,7 +503,7 @@ pixel_point(struct gl_context *ctx, const SWvertex *vert)
    span->array->z[count] = (GLint) (vert->attrib[VARYING_SLOT_POS][2] + 0.5F);
 
    span->end = count + 1;
-   ASSERT(span->end <= SWRAST_MAX_WIDTH);
+   assert(span->end <= SWRAST_MAX_WIDTH);
 }
 
 
@@ -553,7 +552,7 @@ _swrast_choose_point(struct gl_context *ctx)
       else if (ctx->Point.SmoothFlag) {
          swrast->Point = smooth_point;
       }
-      else if (size > 1.0 ||
+      else if (size > 1.0F ||
                ctx->Point._Attenuated ||
                ctx->VertexProgram.PointSizeEnabled) {
          swrast->Point = large_point;

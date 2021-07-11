@@ -24,15 +24,16 @@
  */
 
 
+#include "c99_math.h"
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
 #include "enums.h"
 #include "light.h"
 #include "macros.h"
-#include "simple_list.h"
 #include "mtypes.h"
 #include "math/m_matrix.h"
+#include "util/bitscan.h"
 
 
 void GLAPIENTRY
@@ -41,15 +42,15 @@ _mesa_ShadeModel( GLenum mode )
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glShadeModel %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glShadeModel %s\n", _mesa_enum_to_string(mode));
+
+   if (ctx->Light.ShadeModel == mode)
+      return;
 
    if (mode != GL_FLAT && mode != GL_SMOOTH) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glShadeModel");
       return;
    }
-
-   if (ctx->Light.ShadeModel == mode)
-      return;
 
    FLUSH_VERTICES(ctx, _NEW_LIGHT);
    ctx->Light.ShadeModel = mode;
@@ -72,6 +73,9 @@ _mesa_ProvokingVertex(GLenum mode)
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glProvokingVertexEXT 0x%x\n", mode);
 
+   if (ctx->Light.ProvokingVertex == mode)
+      return;
+
    switch (mode) {
    case GL_FIRST_VERTEX_CONVENTION_EXT:
    case GL_LAST_VERTEX_CONVENTION_EXT:
@@ -80,9 +84,6 @@ _mesa_ProvokingVertex(GLenum mode)
       _mesa_error(ctx, GL_INVALID_ENUM, "glProvokingVertexEXT(0x%x)", mode);
       return;
    }
-
-   if (ctx->Light.ProvokingVertex == mode)
-      return;
 
    FLUSH_VERTICES(ctx, _NEW_LIGHT);
    ctx->Light.ProvokingVertex = mode;
@@ -101,7 +102,7 @@ _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *pa
 {
    struct gl_light *light;
 
-   ASSERT(lnum < MAX_LIGHTS);
+   assert(lnum < MAX_LIGHTS);
    light = &ctx->Light.Light[lnum];
 
    switch (pname) {
@@ -142,20 +143,20 @@ _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *pa
       COPY_3V(light->SpotDirection, params);
       break;
    case GL_SPOT_EXPONENT:
-      ASSERT(params[0] >= 0.0);
-      ASSERT(params[0] <= ctx->Const.MaxSpotExponent);
+      assert(params[0] >= 0.0F);
+      assert(params[0] <= ctx->Const.MaxSpotExponent);
       if (light->SpotExponent == params[0])
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->SpotExponent = params[0];
       break;
    case GL_SPOT_CUTOFF:
-      ASSERT(params[0] == 180.0 || (params[0] >= 0.0 && params[0] <= 90.0));
+      assert(params[0] == 180.0F || (params[0] >= 0.0F && params[0] <= 90.0F));
       if (light->SpotCutoff == params[0])
          return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->SpotCutoff = params[0];
-      light->_CosCutoff = (GLfloat) (cos(light->SpotCutoff * DEG2RAD));
+      light->_CosCutoff = (cosf(light->SpotCutoff * M_PI / 180.0));
       if (light->_CosCutoff < 0)
          light->_CosCutoff = 0;
       if (light->SpotCutoff != 180.0F)
@@ -164,29 +165,28 @@ _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *pa
          light->_Flags &= ~LIGHT_SPOT;
       break;
    case GL_CONSTANT_ATTENUATION:
-      ASSERT(params[0] >= 0.0);
+      assert(params[0] >= 0.0F);
       if (light->ConstantAttenuation == params[0])
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->ConstantAttenuation = params[0];
       break;
    case GL_LINEAR_ATTENUATION:
-      ASSERT(params[0] >= 0.0);
+      assert(params[0] >= 0.0F);
       if (light->LinearAttenuation == params[0])
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->LinearAttenuation = params[0];
       break;
    case GL_QUADRATIC_ATTENUATION:
-      ASSERT(params[0] >= 0.0);
+      assert(params[0] >= 0.0F);
       if (light->QuadraticAttenuation == params[0])
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->QuadraticAttenuation = params[0];
       break;
    default:
-      _mesa_problem(ctx, "Unexpected pname in _mesa_light()");
-      return;
+      unreachable("Unexpected pname in _mesa_light()");
    }
 
    if (ctx->Driver.Lightfv)
@@ -237,31 +237,21 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       params = temp;
       break;
    case GL_SPOT_EXPONENT:
-      if (params[0] < 0.0 || params[0] > ctx->Const.MaxSpotExponent) {
+      if (params[0] < 0.0F || params[0] > ctx->Const.MaxSpotExponent) {
 	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
       break;
    case GL_SPOT_CUTOFF:
-      if ((params[0] < 0.0 || params[0] > 90.0) && params[0] != 180.0) {
+      if ((params[0] < 0.0F || params[0] > 90.0F) && params[0] != 180.0F) {
 	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
       break;
    case GL_CONSTANT_ATTENUATION:
-      if (params[0] < 0.0) {
-	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
-	 return;
-      }
-      break;
    case GL_LINEAR_ATTENUATION:
-      if (params[0] < 0.0) {
-	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
-	 return;
-      }
-      break;
    case GL_QUADRATIC_ATTENUATION:
-      if (params[0] < 0.0) {
+      if (params[0] < 0.0F) {
 	 _mesa_error(ctx, GL_INVALID_VALUE, "glLight");
 	 return;
       }
@@ -462,14 +452,14 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
       case GL_LIGHT_MODEL_LOCAL_VIEWER:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
-         newbool = (params[0]!=0.0);
+         newbool = (params[0] != 0.0F);
 	 if (ctx->Light.Model.LocalViewer == newbool)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	 ctx->Light.Model.LocalViewer = newbool;
          break;
       case GL_LIGHT_MODEL_TWO_SIDE:
-         newbool = (params[0]!=0.0);
+         newbool = (params[0] != 0.0F);
 	 if (ctx->Light.Model.TwoSide == newbool)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
@@ -621,7 +611,6 @@ _mesa_material_bitmask( struct gl_context *ctx, GLenum face, GLenum pname,
 void
 _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 {
-   struct gl_light *light, *list = &ctx->Light.EnabledList;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
    if (MESA_VERBOSE & VERBOSE_MATERIAL) 
@@ -632,14 +621,20 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 
    /* update material ambience */
    if (bitmask & MAT_BIT_FRONT_AMBIENT) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
          SCALE_3V( light->_MatAmbient[0], light->Ambient, 
 		   mat[MAT_ATTRIB_FRONT_AMBIENT]);
       }
    }
 
    if (bitmask & MAT_BIT_BACK_AMBIENT) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
          SCALE_3V( light->_MatAmbient[1], light->Ambient, 
 		   mat[MAT_ATTRIB_BACK_AMBIENT]);
       }
@@ -660,14 +655,20 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 
    /* update material diffuse values */
    if (bitmask & MAT_BIT_FRONT_DIFFUSE) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
 	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, 
 		   mat[MAT_ATTRIB_FRONT_DIFFUSE] );
       }
    }
 
    if (bitmask & MAT_BIT_BACK_DIFFUSE) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
 	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, 
 		   mat[MAT_ATTRIB_BACK_DIFFUSE] );
       }
@@ -675,14 +676,20 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 
    /* update material specular values */
    if (bitmask & MAT_BIT_FRONT_SPECULAR) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
 	 SCALE_3V( light->_MatSpecular[0], light->Specular, 
 		   mat[MAT_ATTRIB_FRONT_SPECULAR]);
       }
    }
 
    if (bitmask & MAT_BIT_BACK_SPECULAR) {
-      foreach (light, list) {
+      GLbitfield mask = ctx->Light._EnabledLights;
+      while (mask) {
+         const int i = u_bit_scan(&mask);
+         struct gl_light *light = &ctx->Light.Light[i];
 	 SCALE_3V( light->_MatSpecular[1], light->Specular,
 		   mat[MAT_ATTRIB_BACK_SPECULAR]);
       }
@@ -698,13 +705,14 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 void
 _mesa_update_color_material( struct gl_context *ctx, const GLfloat color[4] )
 {
-   const GLbitfield bitmask = ctx->Light._ColorMaterialBitmask;
+   GLbitfield bitmask = ctx->Light._ColorMaterialBitmask;
    struct gl_material *mat = &ctx->Light.Material;
-   int i;
 
-   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
-      if (bitmask & (1<<i))
-	 COPY_4FV( mat->Attrib[i], color );
+   while (bitmask) {
+      const int i = u_bit_scan(&bitmask);
+
+      COPY_4FV( mat->Attrib[i], color );
+   }
 
    _mesa_update_material( ctx, bitmask );
 }
@@ -722,8 +730,8 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glColorMaterial %s %s\n",
-                  _mesa_lookup_enum_by_nr(face),
-                  _mesa_lookup_enum_by_nr(mode));
+                  _mesa_enum_to_string(face),
+                  _mesa_enum_to_string(mode));
 
    bitmask = _mesa_material_bitmask(ctx, face, mode, legal, "glColorMaterial");
    if (bitmask == 0)
@@ -808,7 +816,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    GLuint f;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
-   ASSERT(ctx->API == API_OPENGL_COMPAT);
+   assert(ctx->API == API_OPENGL_COMPAT);
 
    FLUSH_VERTICES(ctx, 0); /* update materials */
    FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
@@ -873,13 +881,15 @@ void
 _mesa_update_lighting( struct gl_context *ctx )
 {
    GLbitfield flags = 0;
-   struct gl_light *light;
    ctx->Light._NeedEyeCoords = GL_FALSE;
 
    if (!ctx->Light.Enabled)
       return;
 
-   foreach(light, &ctx->Light.EnabledList) {
+   GLbitfield mask = ctx->Light._EnabledLights;
+   while (mask) {
+      const int i = u_bit_scan(&mask);
+      struct gl_light *light = &ctx->Light.Light[i];
       flags |= light->_Flags;
    }
 
@@ -935,7 +945,6 @@ _mesa_update_lighting( struct gl_context *ctx )
 static void
 compute_light_positions( struct gl_context *ctx )
 {
-   struct gl_light *light;
    static const GLfloat eye_z[3] = { 0, 0, 1 };
 
    if (!ctx->Light.Enabled)
@@ -948,7 +957,10 @@ compute_light_positions( struct gl_context *ctx )
       TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelviewMatrixStack.Top->m );
    }
 
-   foreach (light, &ctx->Light.EnabledList) {
+   GLbitfield mask = ctx->Light._EnabledLights;
+   while (mask) {
+      const int i = u_bit_scan(&mask);
+      struct gl_light *light = &ctx->Light.Light[i];
 
       if (ctx->_NeedEyeCoords) {
          /* _Position is in eye coordinate space */
@@ -974,7 +986,7 @@ compute_light_positions( struct gl_context *ctx )
       }
       else {
          /* positional light w/ homogeneous coordinate, divide by W */
-         GLfloat wInv = (GLfloat)1.0 / light->_Position[3];
+         GLfloat wInv = 1.0F / light->_Position[3];
          light->_Position[0] *= wInv;
          light->_Position[1] *= wInv;
          light->_Position[2] *= wInv;
@@ -1020,14 +1032,16 @@ static void
 update_modelview_scale( struct gl_context *ctx )
 {
    ctx->_ModelViewInvScale = 1.0F;
+   ctx->_ModelViewInvScaleEyespace = 1.0F;
    if (!_math_matrix_is_length_preserving(ctx->ModelviewMatrixStack.Top)) {
       const GLfloat *m = ctx->ModelviewMatrixStack.Top->inv;
       GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
-      if (f < 1e-12) f = 1.0;
+      if (f < 1e-12f) f = 1.0f;
       if (ctx->_NeedEyeCoords)
-	 ctx->_ModelViewInvScale = (GLfloat) INV_SQRTF(f);
+	 ctx->_ModelViewInvScale = 1.0f / sqrtf(f);
       else
-	 ctx->_ModelViewInvScale = (GLfloat) sqrtf(f);
+	 ctx->_ModelViewInvScale = sqrtf(f);
+      ctx->_ModelViewInvScaleEyespace = 1.0f / sqrtf(f);
    }
 }
 
@@ -1109,8 +1123,6 @@ _mesa_allow_light_in_model( struct gl_context *ctx, GLboolean flag )
 static void
 init_light( struct gl_light *l, GLuint n )
 {
-   make_empty_list( l );
-
    ASSIGN_4V( l->Ambient, 0.0, 0.0, 0.0, 1.0 );
    if (n==0) {
       ASSIGN_4V( l->Diffuse, 1.0, 1.0, 1.0, 1.0 );
@@ -1180,10 +1192,10 @@ _mesa_init_lighting( struct gl_context *ctx )
    GLuint i;
 
    /* Lighting group */
+   ctx->Light._EnabledLights = 0;
    for (i = 0; i < MAX_LIGHTS; i++) {
       init_light( &ctx->Light.Light[i], i );
    }
-   make_empty_list( &ctx->Light.EnabledList );
 
    init_lightmodel( &ctx->Light.Model );
    init_material( &ctx->Light.Material );
@@ -1206,13 +1218,5 @@ _mesa_init_lighting( struct gl_context *ctx )
    ctx->_NeedEyeCoords = GL_FALSE;
    ctx->_ForceEyeCoords = GL_FALSE;
    ctx->_ModelViewInvScale = 1.0;
-}
-
-
-/**
- * Deallocate malloc'd lighting state attached to given context.
- */
-void
-_mesa_free_lighting_data( struct gl_context *ctx )
-{
+   ctx->_ModelViewInvScaleEyespace = 1.0;
 }

@@ -86,22 +86,25 @@ static const char *qpu_sig[] = {
 
 static const char *qpu_pack_mul[] = {
         [QPU_PACK_MUL_NOP] = "",
-        [QPU_PACK_MUL_8888] = "8888",
-        [QPU_PACK_MUL_8A] = "8a",
-        [QPU_PACK_MUL_8B] = "8b",
-        [QPU_PACK_MUL_8C] = "8c",
-        [QPU_PACK_MUL_8D] = "8d",
+        [QPU_PACK_MUL_8888] = ".8888",
+        [QPU_PACK_MUL_8A] = ".8a",
+        [QPU_PACK_MUL_8B] = ".8b",
+        [QPU_PACK_MUL_8C] = ".8c",
+        [QPU_PACK_MUL_8D] = ".8d",
 };
 
-static const char *qpu_unpack_r4[] = {
-        [QPU_UNPACK_R4_NOP] = "",
-        [QPU_UNPACK_R4_F16A_TO_F32] = "f16a",
-        [QPU_UNPACK_R4_F16B_TO_F32] = "f16b",
-        [QPU_UNPACK_R4_8D_REP] = "8d_rep",
-        [QPU_UNPACK_R4_8A] = "8a",
-        [QPU_UNPACK_R4_8B] = "8b",
-        [QPU_UNPACK_R4_8C] = "8c",
-        [QPU_UNPACK_R4_8D] = "8d",
+/* The QPU unpack for A and R4 files can be described the same, it's just that
+ * the R4 variants are convert-to-float only, with no int support.
+ */
+static const char *qpu_unpack[] = {
+        [QPU_UNPACK_NOP] = "",
+        [QPU_UNPACK_16A] = "16a",
+        [QPU_UNPACK_16B] = "16b",
+        [QPU_UNPACK_8D_REP] = "8d_rep",
+        [QPU_UNPACK_8A] = "8a",
+        [QPU_UNPACK_8B] = "8b",
+        [QPU_UNPACK_8C] = "8c",
+        [QPU_UNPACK_8D] = "8d",
 };
 
 static const char *special_read_a[] = {
@@ -210,7 +213,7 @@ static const char *qpu_pack_a[] = {
         [QPU_PACK_A_8D_SAT] = ".8d.sat",
 };
 
-static const char *qpu_condflags[] = {
+static const char *qpu_cond[] = {
         [QPU_COND_NEVER] = ".never",
         [QPU_COND_ALWAYS] = "",
         [QPU_COND_ZS] = ".zs",
@@ -221,8 +224,24 @@ static const char *qpu_condflags[] = {
         [QPU_COND_CC] = ".cc",
 };
 
+static const char *qpu_cond_branch[] = {
+        [QPU_COND_BRANCH_ALL_ZS] = ".all_zs",
+        [QPU_COND_BRANCH_ALL_ZC] = ".all_zc",
+        [QPU_COND_BRANCH_ANY_ZS] = ".any_zs",
+        [QPU_COND_BRANCH_ANY_ZC] = ".any_zc",
+        [QPU_COND_BRANCH_ALL_NS] = ".all_ns",
+        [QPU_COND_BRANCH_ALL_NC] = ".all_nc",
+        [QPU_COND_BRANCH_ANY_NS] = ".any_ns",
+        [QPU_COND_BRANCH_ANY_NC] = ".any_nc",
+        [QPU_COND_BRANCH_ALL_CS] = ".all_cs",
+        [QPU_COND_BRANCH_ALL_CC] = ".all_cc",
+        [QPU_COND_BRANCH_ANY_CS] = ".any_cs",
+        [QPU_COND_BRANCH_ANY_CC] = ".any_cc",
+        [QPU_COND_BRANCH_ALWAYS] = "",
+};
+
 #define DESC(array, index)                                        \
-        ((index > ARRAY_SIZE(array) || !(array)[index]) ?         \
+        ((index >= ARRAY_SIZE(array) || !(array)[index]) ?         \
          "???" : (array)[index])
 
 static const char *
@@ -240,6 +259,37 @@ get_special_write_desc(int reg, bool is_a)
         }
 
         return special_write[reg];
+}
+
+void
+vc4_qpu_disasm_pack_mul(FILE *out, uint32_t pack)
+{
+        fprintf(out, "%s", DESC(qpu_pack_mul, pack));
+}
+
+void
+vc4_qpu_disasm_pack_a(FILE *out, uint32_t pack)
+{
+        fprintf(out, "%s", DESC(qpu_pack_a, pack));
+}
+
+void
+vc4_qpu_disasm_unpack(FILE *out, uint32_t unpack)
+{
+        if (unpack != QPU_UNPACK_NOP)
+                fprintf(out, ".%s", DESC(qpu_unpack, unpack));
+}
+
+void
+vc4_qpu_disasm_cond(FILE *out, uint32_t cond)
+{
+        fprintf(out, "%s", DESC(qpu_cond, cond));
+}
+
+void
+vc4_qpu_disasm_cond_branch(FILE *out, uint32_t cond)
+{
+        fprintf(out, "%s", DESC(qpu_cond_branch, cond));
 }
 
 static void
@@ -260,14 +310,14 @@ print_alu_dst(uint64_t inst, bool is_mul)
                 fprintf(stderr, "%s%d?", file, waddr);
 
         if (is_mul && (inst & QPU_PM)) {
-                fprintf(stderr, ".%s", DESC(qpu_pack_mul, pack));
+                vc4_qpu_disasm_pack_mul(stderr, pack);
         } else if (is_a && !(inst & QPU_PM)) {
-                fprintf(stderr, "%s", DESC(qpu_pack_a, pack));
+                vc4_qpu_disasm_pack_a(stderr, pack);
         }
 }
 
 static void
-print_alu_src(uint64_t inst, uint32_t mux)
+print_alu_src(uint64_t inst, uint32_t mux, bool is_mul)
 {
         bool is_a = mux != QPU_MUX_B;
         const char *file = is_a ? "a" : "b";
@@ -275,12 +325,14 @@ print_alu_src(uint64_t inst, uint32_t mux)
                           QPU_GET_FIELD(inst, QPU_RADDR_A) :
                           QPU_GET_FIELD(inst, QPU_RADDR_B));
         uint32_t unpack = QPU_GET_FIELD(inst, QPU_UNPACK);
+        bool has_si = QPU_GET_FIELD(inst, QPU_SIG) == QPU_SIG_SMALL_IMM;
+        uint32_t si = QPU_GET_FIELD(inst, QPU_SMALL_IMM);
 
-        if (mux <= QPU_MUX_R5)
+        if (mux <= QPU_MUX_R5) {
                 fprintf(stderr, "r%d", mux);
-        else if (!is_a &&
-                 QPU_GET_FIELD(inst, QPU_SIG) == QPU_SIG_SMALL_IMM) {
-                uint32_t si = QPU_GET_FIELD(inst, QPU_SMALL_IMM);
+                if (has_si && is_mul && si >= QPU_SMALL_IMM_MUL_ROT + 1)
+                        fprintf(stderr, "+%d", si - QPU_SMALL_IMM_MUL_ROT);
+        } else if (!is_a && has_si) {
                 if (si <= 15)
                         fprintf(stderr, "%d", si);
                 else if (si <= 31)
@@ -288,9 +340,9 @@ print_alu_src(uint64_t inst, uint32_t mux)
                 else if (si <= 39)
                         fprintf(stderr, "%.1f", (float)(1 << (si - 32)));
                 else if (si <= 47)
-                        fprintf(stderr, "%f", 1.0f / (256 / (si - 39)));
+                        fprintf(stderr, "%f", 1.0f / (1 << (48 - si)));
                 else
-                        fprintf(stderr, "???");
+                        fprintf(stderr, "<bad imm %d>", si);
         } else if (raddr <= 31)
                 fprintf(stderr, "r%s%d", file, raddr);
         else {
@@ -300,9 +352,9 @@ print_alu_src(uint64_t inst, uint32_t mux)
                         fprintf(stderr, "%s", DESC(special_read_b, raddr - 32));
         }
 
-        if (mux == QPU_MUX_R4 && (inst & QPU_PM) &&
-            unpack != QPU_UNPACK_R4_NOP) {
-                fprintf(stderr, ".%s", DESC(qpu_unpack_r4, unpack));
+        if (((mux == QPU_MUX_A && !(inst & QPU_PM)) ||
+             (mux == QPU_MUX_R4 && (inst & QPU_PM)))) {
+                vc4_qpu_disasm_unpack(stderr, unpack);
         }
 }
 
@@ -315,20 +367,27 @@ print_add_op(uint64_t inst)
                        QPU_GET_FIELD(inst, QPU_ADD_A) ==
                        QPU_GET_FIELD(inst, QPU_ADD_B));
 
-        fprintf(stderr, "%s%s%s ",
-                is_mov ? "mov" : DESC(qpu_add_opcodes, op_add),
-                ((inst & QPU_SF) && op_add != QPU_A_NOP) ? ".sf" : "",
-                op_add != QPU_A_NOP ? DESC(qpu_condflags, cond) : "");
+        if (is_mov)
+                fprintf(stderr, "mov");
+        else
+                fprintf(stderr, "%s", DESC(qpu_add_opcodes, op_add));
 
+        if ((inst & QPU_SF) && op_add != QPU_A_NOP)
+                fprintf(stderr, ".sf");
+
+        if (op_add != QPU_A_NOP)
+                vc4_qpu_disasm_cond(stderr, cond);
+
+        fprintf(stderr, " ");
         print_alu_dst(inst, false);
         fprintf(stderr, ", ");
 
-        print_alu_src(inst, QPU_GET_FIELD(inst, QPU_ADD_A));
+        print_alu_src(inst, QPU_GET_FIELD(inst, QPU_ADD_A), false);
 
         if (!is_mov) {
                 fprintf(stderr, ", ");
 
-                print_alu_src(inst, QPU_GET_FIELD(inst, QPU_ADD_B));
+                print_alu_src(inst, QPU_GET_FIELD(inst, QPU_ADD_B), false);
         }
 }
 
@@ -342,19 +401,26 @@ print_mul_op(uint64_t inst)
                        QPU_GET_FIELD(inst, QPU_MUL_A) ==
                        QPU_GET_FIELD(inst, QPU_MUL_B));
 
-        fprintf(stderr, "%s%s%s ",
-                is_mov ? "mov" : DESC(qpu_mul_opcodes, op_mul),
-                ((inst & QPU_SF) && op_add == QPU_A_NOP) ? ".sf" : "",
-                op_mul != QPU_M_NOP ? DESC(qpu_condflags, cond) : "");
+        if (is_mov)
+                fprintf(stderr, "mov");
+        else
+                fprintf(stderr, "%s", DESC(qpu_mul_opcodes, op_mul));
 
+        if ((inst & QPU_SF) && op_add == QPU_A_NOP)
+                fprintf(stderr, ".sf");
+
+        if (op_mul != QPU_M_NOP)
+                vc4_qpu_disasm_cond(stderr, cond);
+
+        fprintf(stderr, " ");
         print_alu_dst(inst, true);
         fprintf(stderr, ", ");
 
-        print_alu_src(inst, QPU_GET_FIELD(inst, QPU_MUL_A));
+        print_alu_src(inst, QPU_GET_FIELD(inst, QPU_MUL_A), true);
 
         if (!is_mov) {
                 fprintf(stderr, ", ");
-                print_alu_src(inst, QPU_GET_FIELD(inst, QPU_MUL_B));
+                print_alu_src(inst, QPU_GET_FIELD(inst, QPU_MUL_B), true);
         }
 }
 
@@ -368,12 +434,17 @@ print_load_imm(uint64_t inst)
         uint32_t cond_mul = QPU_GET_FIELD(inst, QPU_COND_MUL);
 
         fprintf(stderr, "load_imm ");
+
         print_alu_dst(inst, false);
-        fprintf(stderr, "%s, ", (waddr_add != QPU_W_NOP ?
-                                 DESC(qpu_condflags, cond_add) : ""));
+        if (waddr_add != QPU_W_NOP)
+                vc4_qpu_disasm_cond(stderr, cond_add);
+        fprintf(stderr, ", ");
+
         print_alu_dst(inst, true);
-        fprintf(stderr, "%s, ", (waddr_mul != QPU_W_NOP ?
-                                 DESC(qpu_condflags, cond_mul) : ""));
+        if (waddr_mul != QPU_W_NOP)
+                vc4_qpu_disasm_cond(stderr, cond_mul);
+        fprintf(stderr, ", ");
+
         fprintf(stderr, "0x%08x (%f)", imm, uif(imm));
 }
 
@@ -386,8 +457,14 @@ vc4_qpu_disasm(const uint64_t *instructions, int num_instructions)
 
                 switch (sig) {
                 case QPU_SIG_BRANCH:
-                        fprintf(stderr, "branch\n");
+                        fprintf(stderr, "branch");
+                        vc4_qpu_disasm_cond_branch(stderr,
+                                                   QPU_GET_FIELD(inst,
+                                                                 QPU_BRANCH_COND));
+
+                        fprintf(stderr, " %d", (uint32_t)inst);
                         break;
+
                 case QPU_SIG_LOAD_IMM:
                         print_load_imm(inst);
                         break;
@@ -397,10 +474,10 @@ vc4_qpu_disasm(const uint64_t *instructions, int num_instructions)
                         print_add_op(inst);
                         fprintf(stderr, " ; ");
                         print_mul_op(inst);
-
-                        if (num_instructions != 1)
-                                fprintf(stderr, "\n");
                         break;
                 }
+
+                if (num_instructions != 1)
+                        fprintf(stderr, "\n");
         }
 }

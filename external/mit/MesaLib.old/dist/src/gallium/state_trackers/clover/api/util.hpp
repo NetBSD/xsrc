@@ -38,6 +38,13 @@
 #define CLOVER_ICD_API PUBLIC
 #endif
 
+#define CLOVER_NOT_SUPPORTED_UNTIL(version)                    \
+   do {                                                        \
+      std::cerr << "CL user error: " << __func__               \
+                << "() requires OpenCL version " << (version)  \
+                << " or greater." << std::endl;                \
+   } while (0)
+
 namespace clover {
    ///
    /// Return an error code in \a p if non-zero.
@@ -60,6 +67,17 @@ namespace clover {
          v().retain();
          *p = desc(v());
       }
+   }
+
+   ///
+   /// Return an API object from an intrusive reference to a Clover object,
+   /// incrementing the reference count of the object.
+   ///
+   template<typename T>
+   typename T::descriptor_type *
+   ret_object(const intrusive_ref<T> &v) {
+      v().retain();
+      return desc(v());
    }
 }
 

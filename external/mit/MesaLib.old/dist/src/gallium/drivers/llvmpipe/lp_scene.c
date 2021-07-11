@@ -29,7 +29,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_simple_list.h"
+#include "util/simple_list.h"
 #include "util/u_format.h"
 #include "lp_scene.h"
 #include "lp_fence.h"
@@ -62,7 +62,7 @@ lp_scene_create( struct pipe_context *pipe )
    scene->data.head =
       CALLOC_STRUCT(data_block);
 
-   pipe_mutex_init(scene->mutex);
+   (void) mtx_init(&scene->mutex, mtx_plain);
 
 #ifdef DEBUG
    /* Do some scene limit sanity checks here */
@@ -90,7 +90,7 @@ void
 lp_scene_destroy(struct lp_scene *scene)
 {
    lp_fence_reference(&scene->fence, NULL);
-   pipe_mutex_destroy(scene->mutex);
+   mtx_destroy(&scene->mutex);
    assert(scene->data.head->next == NULL);
    FREE(scene->data.head);
    FREE(scene);
@@ -174,6 +174,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
                                                      cbuf->u.tex.level,
                                                      cbuf->u.tex.first_layer,
                                                      LP_TEX_USAGE_READ_WRITE);
+         scene->cbufs[i].format_bytes = util_format_get_blocksize(cbuf->format);
       }
       else {
          struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
@@ -182,6 +183,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
          scene->cbufs[i].layer_stride = 0;
          scene->cbufs[i].map = lpr->data;
          scene->cbufs[i].map += cbuf->u.buf.first_element * pixstride;
+         scene->cbufs[i].format_bytes = util_format_get_blocksize(cbuf->format);
       }
    }
 
@@ -194,6 +196,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
                                                zsbuf->u.tex.level,
                                                zsbuf->u.tex.first_layer,
                                                LP_TEX_USAGE_READ_WRITE);
+      scene->zsbuf.format_bytes = util_format_get_blocksize(zsbuf->format);
    }
 }
 
@@ -334,7 +337,7 @@ lp_scene_new_data_block( struct lp_scene *scene )
    }
    else {
       struct data_block *block = MALLOC_STRUCT(data_block);
-      if (block == NULL)
+      if (!block)
          return NULL;
       
       scene->scene_size += sizeof *block;
@@ -481,7 +484,7 @@ lp_scene_bin_iter_next( struct lp_scene *scene , int *x, int *y)
 {
    struct cmd_bin *bin = NULL;
 
-   pipe_mutex_lock(scene->mutex);
+   mtx_lock(&scene->mutex);
 
    if (scene->curr_x < 0) {
       /* first bin */
@@ -499,20 +502,19 @@ lp_scene_bin_iter_next( struct lp_scene *scene , int *x, int *y)
 
 end:
    /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/
-   pipe_mutex_unlock(scene->mutex);
+   mtx_unlock(&scene->mutex);
    return bin;
 }
 
 
-void lp_scene_begin_binning( struct lp_scene *scene,
-                             struct pipe_framebuffer_state *fb, boolean discard )
+void lp_scene_begin_binning(struct lp_scene *scene,
+                            struct pipe_framebuffer_state *fb)
 {
    int i;
    unsigned max_layer = ~0;
 
    assert(lp_scene_is_empty(scene));
 
-   scene->discard = discard;
    util_copy_framebuffer_state(&scene->fb, fb);
 
    scene->tiles_x = align(fb->width, TILE_SIZE) / TILE_SIZE;

@@ -27,8 +27,11 @@
 
 #include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
+#include "tgsi_info.h"
 #include "tgsi_parse.h"
 #include "tgsi_util.h"
+#include "tgsi_exec.h"
+#include "util/bitscan.h"
 
 union pointer_hack
 {
@@ -37,8 +40,7 @@ union pointer_hack
 };
 
 void *
-tgsi_align_128bit(
-   void *unaligned )
+tgsi_align_128bit(void *unaligned)
 {
    union pointer_hack ph;
 
@@ -49,21 +51,20 @@ tgsi_align_128bit(
 }
 
 unsigned
-tgsi_util_get_src_register_swizzle(
-   const struct tgsi_src_register *reg,
-   unsigned component )
+tgsi_util_get_src_register_swizzle(const struct tgsi_src_register *reg,
+                                   unsigned component)
 {
-   switch( component ) {
-   case 0:
+   switch (component) {
+   case TGSI_CHAN_X:
       return reg->SwizzleX;
-   case 1:
+   case TGSI_CHAN_Y:
       return reg->SwizzleY;
-   case 2:
+   case TGSI_CHAN_Z:
       return reg->SwizzleZ;
-   case 3:
+   case TGSI_CHAN_W:
       return reg->SwizzleW;
    default:
-      assert( 0 );
+      assert(0);
    }
    return 0;
 }
@@ -71,21 +72,19 @@ tgsi_util_get_src_register_swizzle(
 
 unsigned
 tgsi_util_get_full_src_register_swizzle(
-   const struct tgsi_full_src_register  *reg,
-   unsigned component )
+   const struct tgsi_full_src_register *reg,
+   unsigned component)
 {
-   return tgsi_util_get_src_register_swizzle(
-      &reg->Register,
-      component );
+   return tgsi_util_get_src_register_swizzle(&reg->Register, component);
 }
 
+
 void
-tgsi_util_set_src_register_swizzle(
-   struct tgsi_src_register *reg,
-   unsigned swizzle,
-   unsigned component )
+tgsi_util_set_src_register_swizzle(struct tgsi_src_register *reg,
+                                   unsigned swizzle,
+                                   unsigned component)
 {
-   switch( component ) {
+   switch (component) {
    case 0:
       reg->SwizzleX = swizzle;
       break;
@@ -99,21 +98,22 @@ tgsi_util_set_src_register_swizzle(
       reg->SwizzleW = swizzle;
       break;
    default:
-      assert( 0 );
+      assert(0);
    }
 }
 
+
 unsigned
 tgsi_util_get_full_src_register_sign_mode(
-   const struct  tgsi_full_src_register *reg,
-   unsigned component )
+   const struct tgsi_full_src_register *reg,
+   UNUSED unsigned component)
 {
    unsigned sign_mode;
 
-   if( reg->Register.Absolute ) {
+   if (reg->Register.Absolute) {
       /* Consider only the post-abs negation. */
 
-      if( reg->Register.Negate ) {
+      if (reg->Register.Negate) {
          sign_mode = TGSI_UTIL_SIGN_SET;
       }
       else {
@@ -121,7 +121,7 @@ tgsi_util_get_full_src_register_sign_mode(
       }
    }
    else {
-      if( reg->Register.Negate ) {
+      if (reg->Register.Negate) {
          sign_mode = TGSI_UTIL_SIGN_TOGGLE;
       }
       else {
@@ -132,13 +132,12 @@ tgsi_util_get_full_src_register_sign_mode(
    return sign_mode;
 }
 
+
 void
-tgsi_util_set_full_src_register_sign_mode(
-   struct tgsi_full_src_register *reg,
-   unsigned sign_mode )
+tgsi_util_set_full_src_register_sign_mode(struct tgsi_full_src_register *reg,
+                                          unsigned sign_mode)
 {
-   switch (sign_mode)
-   {
+   switch (sign_mode) {
    case TGSI_UTIL_SIGN_CLEAR:
       reg->Register.Negate = 0;
       reg->Register.Absolute = 1;
@@ -160,9 +159,10 @@ tgsi_util_set_full_src_register_sign_mode(
       break;
 
    default:
-      assert( 0 );
+      assert(0);
    }
 }
+
 
 /**
  * Determine which channels of the specificed src register are effectively
@@ -179,86 +179,80 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    unsigned chan;
 
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_ARL:
-   case TGSI_OPCODE_ARR:
+   case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
+   case TGSI_OPCODE_EMIT:
+   case TGSI_OPCODE_ENDPRIM:
    case TGSI_OPCODE_RCP:
-   case TGSI_OPCODE_MUL:
-   case TGSI_OPCODE_DIV:
-   case TGSI_OPCODE_ADD:
-   case TGSI_OPCODE_MIN:
-   case TGSI_OPCODE_MAX:
-   case TGSI_OPCODE_SLT:
-   case TGSI_OPCODE_SGE:
-   case TGSI_OPCODE_MAD:
-   case TGSI_OPCODE_SUB:
-   case TGSI_OPCODE_LRP:
-   case TGSI_OPCODE_CND:
-   case TGSI_OPCODE_FRC:
-   case TGSI_OPCODE_CEIL:
-   case TGSI_OPCODE_CLAMP:
-   case TGSI_OPCODE_FLR:
-   case TGSI_OPCODE_ROUND:
-   case TGSI_OPCODE_POW:
-   case TGSI_OPCODE_ABS:
-   case TGSI_OPCODE_COS:
-   case TGSI_OPCODE_SIN:
-   case TGSI_OPCODE_DDX:
-   case TGSI_OPCODE_DDY:
-   case TGSI_OPCODE_SEQ:
-   case TGSI_OPCODE_SGT:
-   case TGSI_OPCODE_SLE:
-   case TGSI_OPCODE_SNE:
-   case TGSI_OPCODE_SSG:
-   case TGSI_OPCODE_CMP:
-   case TGSI_OPCODE_TRUNC:
-   case TGSI_OPCODE_NOT:
-   case TGSI_OPCODE_AND:
-   case TGSI_OPCODE_OR:
-   case TGSI_OPCODE_XOR:
-   case TGSI_OPCODE_SAD:
-   case TGSI_OPCODE_FSEQ:
-   case TGSI_OPCODE_FSGE:
-   case TGSI_OPCODE_FSLT:
-   case TGSI_OPCODE_FSNE:
-   case TGSI_OPCODE_F2I:
-   case TGSI_OPCODE_IDIV:
-   case TGSI_OPCODE_IMAX:
-   case TGSI_OPCODE_IMIN:
-   case TGSI_OPCODE_INEG:
-   case TGSI_OPCODE_ISGE:
-   case TGSI_OPCODE_ISHR:
-   case TGSI_OPCODE_ISLT:
-   case TGSI_OPCODE_F2U:
-   case TGSI_OPCODE_U2F:
-   case TGSI_OPCODE_UADD:
-   case TGSI_OPCODE_UDIV:
-   case TGSI_OPCODE_UMAD:
-   case TGSI_OPCODE_UMAX:
-   case TGSI_OPCODE_UMIN:
-   case TGSI_OPCODE_UMOD:
-   case TGSI_OPCODE_UMUL:
-   case TGSI_OPCODE_USEQ:
-   case TGSI_OPCODE_USGE:
-   case TGSI_OPCODE_USHR:
-   case TGSI_OPCODE_USLT:
-   case TGSI_OPCODE_USNE:
-   case TGSI_OPCODE_IMUL_HI:
-   case TGSI_OPCODE_UMUL_HI:
-   case TGSI_OPCODE_DDX_FINE:
-   case TGSI_OPCODE_DDY_FINE:
-      /* Channel-wise operations */
-      read_mask = write_mask;
-      break;
-
+   case TGSI_OPCODE_RSQ:
+   case TGSI_OPCODE_SQRT:
    case TGSI_OPCODE_EX2:
    case TGSI_OPCODE_LG2:
-   case TGSI_OPCODE_RCC:
+   case TGSI_OPCODE_SIN:
+   case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_POW: /* reads src0.x and src1.x */
+   case TGSI_OPCODE_UP2H:
+   case TGSI_OPCODE_UP2US:
+   case TGSI_OPCODE_UP4B:
+   case TGSI_OPCODE_UP4UB:
+   case TGSI_OPCODE_MEMBAR:
+   case TGSI_OPCODE_BALLOT:
       read_mask = TGSI_WRITEMASK_X;
       break;
 
-   case TGSI_OPCODE_SCS:
-      read_mask = write_mask & TGSI_WRITEMASK_XY ? TGSI_WRITEMASK_X : 0;
+   case TGSI_OPCODE_DP2:
+   case TGSI_OPCODE_PK2H:
+   case TGSI_OPCODE_PK2US:
+   case TGSI_OPCODE_DFRACEXP:
+   case TGSI_OPCODE_F2D:
+   case TGSI_OPCODE_I2D:
+   case TGSI_OPCODE_U2D:
+   case TGSI_OPCODE_F2U64:
+   case TGSI_OPCODE_F2I64:
+   case TGSI_OPCODE_U2I64:
+   case TGSI_OPCODE_I2I64:
+   case TGSI_OPCODE_TXQS: /* bindless handle possible */
+   case TGSI_OPCODE_RESQ: /* bindless handle possible */
+      read_mask = TGSI_WRITEMASK_XY;
+      break;
+
+   case TGSI_OPCODE_TXQ:
+      if (src_idx == 0)
+         read_mask = TGSI_WRITEMASK_X;
+      else
+         read_mask = TGSI_WRITEMASK_XY;  /* bindless handle possible */
+      break;
+
+   case TGSI_OPCODE_DP3:
+      read_mask = TGSI_WRITEMASK_XYZ;
+      break;
+
+   case TGSI_OPCODE_DSEQ:
+   case TGSI_OPCODE_DSNE:
+   case TGSI_OPCODE_DSLT:
+   case TGSI_OPCODE_DSGE:
+   case TGSI_OPCODE_DP4:
+   case TGSI_OPCODE_PK4B:
+   case TGSI_OPCODE_PK4UB:
+   case TGSI_OPCODE_D2F:
+   case TGSI_OPCODE_D2I:
+   case TGSI_OPCODE_D2U:
+   case TGSI_OPCODE_I2F:
+   case TGSI_OPCODE_U2F:
+   case TGSI_OPCODE_U64SEQ:
+   case TGSI_OPCODE_U64SNE:
+   case TGSI_OPCODE_U64SLT:
+   case TGSI_OPCODE_U64SGE:
+   case TGSI_OPCODE_U642F:
+   case TGSI_OPCODE_I64SLT:
+   case TGSI_OPCODE_I64SGE:
+   case TGSI_OPCODE_I642F:
+      read_mask = TGSI_WRITEMASK_XYZW;
+      break;
+
+   case TGSI_OPCODE_LIT:
+      read_mask = write_mask & TGSI_WRITEMASK_YZ ?
+                     TGSI_WRITEMASK_XY | TGSI_WRITEMASK_W : 0;
       break;
 
    case TGSI_OPCODE_EXP:
@@ -266,78 +260,159 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       read_mask = write_mask & TGSI_WRITEMASK_XYZ ? TGSI_WRITEMASK_X : 0;
       break;
 
-   case TGSI_OPCODE_DP2A:
-      read_mask = src_idx == 2 ? TGSI_WRITEMASK_X : TGSI_WRITEMASK_XY;
+   case TGSI_OPCODE_DST:
+      if (src_idx == 0)
+         read_mask = TGSI_WRITEMASK_YZ;
+      else
+         read_mask = TGSI_WRITEMASK_YW;
       break;
 
-   case TGSI_OPCODE_DP2:
-      read_mask = TGSI_WRITEMASK_XY;
+   case TGSI_OPCODE_DLDEXP:
+      if (src_idx == 0) {
+         read_mask = write_mask;
+      } else {
+         read_mask =
+            (write_mask & TGSI_WRITEMASK_XY ? TGSI_WRITEMASK_X : 0) |
+            (write_mask & TGSI_WRITEMASK_ZW ? TGSI_WRITEMASK_Z : 0);
+      }
       break;
 
-   case TGSI_OPCODE_DP3:
-      read_mask = TGSI_WRITEMASK_XYZ;
+   case TGSI_OPCODE_READ_INVOC:
+      if (src_idx == 0)
+         read_mask = write_mask;
+      else
+         read_mask = TGSI_WRITEMASK_X;
       break;
 
-   case TGSI_OPCODE_DP4:
-      read_mask = TGSI_WRITEMASK_XYZW;
-      break;
-
-   case TGSI_OPCODE_DPH:
-      read_mask = src_idx == 0 ? TGSI_WRITEMASK_XYZ : TGSI_WRITEMASK_XYZW;
+   case TGSI_OPCODE_FBFETCH:
+      read_mask = 0; /* not a real register read */
       break;
 
    case TGSI_OPCODE_TEX:
-   case TGSI_OPCODE_TXD:
+   case TGSI_OPCODE_TEX_LZ:
+   case TGSI_OPCODE_TXF_LZ:
+   case TGSI_OPCODE_TXF:
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
-      if (src_idx == 0) {
-         /* Note that the SHADOW variants use the Z component too */
-         switch (inst->Texture.Texture) {
-         case TGSI_TEXTURE_1D:
-            read_mask = TGSI_WRITEMASK_X;
-            break;
-         case TGSI_TEXTURE_SHADOW1D:
-            read_mask = TGSI_WRITEMASK_XZ;
-            break;
-         case TGSI_TEXTURE_1D_ARRAY:
-         case TGSI_TEXTURE_2D:
-         case TGSI_TEXTURE_RECT:
-            read_mask = TGSI_WRITEMASK_XY;
-            break;
-         case TGSI_TEXTURE_SHADOW1D_ARRAY:
-         case TGSI_TEXTURE_SHADOW2D:
-         case TGSI_TEXTURE_SHADOWRECT:
-         case TGSI_TEXTURE_2D_ARRAY:
-         case TGSI_TEXTURE_3D:
-         case TGSI_TEXTURE_CUBE:
-         case TGSI_TEXTURE_2D_MSAA:
-            read_mask = TGSI_WRITEMASK_XYZ;
-            break;
-         case TGSI_TEXTURE_SHADOW2D_ARRAY:
-         case TGSI_TEXTURE_CUBE_ARRAY:
-         case TGSI_TEXTURE_SHADOWCUBE:
-         case TGSI_TEXTURE_2D_ARRAY_MSAA:
-         case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-            read_mask = TGSI_WRITEMASK_XYZW;
-            break;
-         default:
-            assert(0);
-            read_mask = 0;
-         }
+   case TGSI_OPCODE_TXD:
+   case TGSI_OPCODE_TEX2:
+   case TGSI_OPCODE_TXB2:
+   case TGSI_OPCODE_TXL2:
+   case TGSI_OPCODE_LODQ:
+   case TGSI_OPCODE_TG4: {
+      unsigned dim_layer =
+         tgsi_util_get_texture_coord_dim(inst->Texture.Texture);
+      unsigned dim_layer_shadow, dim;
 
-         if (inst->Instruction.Opcode != TGSI_OPCODE_TEX) {
-            read_mask |= TGSI_WRITEMASK_W;
-         }
+      /* Add shadow. */
+      if (tgsi_is_shadow_target(inst->Texture.Texture)) {
+         dim_layer_shadow = dim_layer + 1;
+         if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D)
+            dim_layer_shadow = 3;
       } else {
-         /* A safe approximation */
+         dim_layer_shadow = dim_layer;
+      }
+
+      /* Remove layer. */
+      if (tgsi_is_array_sampler(inst->Texture.Texture))
+         dim = dim_layer - 1;
+      else
+         dim = dim_layer;
+
+      read_mask = TGSI_WRITEMASK_XY; /* bindless handle in the last operand */
+
+      switch (src_idx) {
+      case 0:
+         if (inst->Instruction.Opcode == TGSI_OPCODE_LODQ)
+            read_mask = u_bit_consecutive(0, dim);
+         else
+            read_mask = u_bit_consecutive(0, dim_layer_shadow) & 0xf;
+
+         if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D)
+            read_mask &= ~TGSI_WRITEMASK_Y;
+
+         if (inst->Instruction.Opcode == TGSI_OPCODE_TXF ||
+             inst->Instruction.Opcode == TGSI_OPCODE_TXB ||
+             inst->Instruction.Opcode == TGSI_OPCODE_TXL ||
+             inst->Instruction.Opcode == TGSI_OPCODE_TXP)
+            read_mask |= TGSI_WRITEMASK_W;
+         break;
+
+      case 1:
+         if (inst->Instruction.Opcode == TGSI_OPCODE_TXD)
+            read_mask = u_bit_consecutive(0, dim);
+         else if (inst->Instruction.Opcode == TGSI_OPCODE_TEX2 ||
+                  inst->Instruction.Opcode == TGSI_OPCODE_TXB2 ||
+                  inst->Instruction.Opcode == TGSI_OPCODE_TXL2 ||
+                  inst->Instruction.Opcode == TGSI_OPCODE_TG4)
+            read_mask = TGSI_WRITEMASK_X;
+         break;
+
+      case 2:
+         if (inst->Instruction.Opcode == TGSI_OPCODE_TXD)
+            read_mask = u_bit_consecutive(0, dim);
+         break;
+      }
+      break;
+   }
+
+   case TGSI_OPCODE_LOAD:
+      if (src_idx == 0) {
+         read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
+      } else {
+         unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
+         read_mask = u_bit_consecutive(0, dim);
+      }
+      break;
+
+   case TGSI_OPCODE_STORE:
+      if (src_idx == 0) {
+         unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
+         read_mask = u_bit_consecutive(0, dim);
+      } else {
          read_mask = TGSI_WRITEMASK_XYZW;
       }
       break;
 
+   case TGSI_OPCODE_ATOMUADD:
+   case TGSI_OPCODE_ATOMXCHG:
+   case TGSI_OPCODE_ATOMCAS:
+   case TGSI_OPCODE_ATOMAND:
+   case TGSI_OPCODE_ATOMOR:
+   case TGSI_OPCODE_ATOMXOR:
+   case TGSI_OPCODE_ATOMUMIN:
+   case TGSI_OPCODE_ATOMUMAX:
+   case TGSI_OPCODE_ATOMIMIN:
+   case TGSI_OPCODE_ATOMIMAX:
+   case TGSI_OPCODE_ATOMFADD:
+      if (src_idx == 0) {
+         read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
+      } else if (src_idx == 1) {
+         unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
+         read_mask = u_bit_consecutive(0, dim);
+      } else {
+         read_mask = TGSI_WRITEMASK_XYZW;
+      }
+      break;
+
+   case TGSI_OPCODE_INTERP_CENTROID:
+   case TGSI_OPCODE_INTERP_SAMPLE:
+   case TGSI_OPCODE_INTERP_OFFSET:
+      if (src_idx == 0)
+         read_mask = write_mask;
+      else if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_OFFSET)
+         read_mask = TGSI_WRITEMASK_XY; /* offset */
+      else
+         read_mask = TGSI_WRITEMASK_X; /* sample */
+      break;
+
    default:
-      /* Assume all channels are read */
-      read_mask = TGSI_WRITEMASK_XYZW;
+      if (tgsi_get_opcode_info(inst->Instruction.Opcode)->output_mode ==
+          TGSI_OUTPUT_COMPONENTWISE)
+         read_mask = write_mask;
+      else
+         read_mask = TGSI_WRITEMASK_XYZW; /* assume all channels are read */
       break;
    }
 
@@ -375,10 +450,8 @@ tgsi_util_get_src_from_ind(const struct tgsi_ind_register *reg)
  * sample index.
  */
 int
-tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
+tgsi_util_get_texture_coord_dim(enum tgsi_texture_type tgsi_tex)
 {
-   int dim;
-
    /*
     * Depending on the texture target, (src0.xyzw, src1.x) is interpreted
     * differently:
@@ -407,8 +480,7 @@ tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
    case TGSI_TEXTURE_BUFFER:
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
-      dim = 1;
-      break;
+      return 1;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_1D_ARRAY:
@@ -416,50 +488,68 @@ tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
    case TGSI_TEXTURE_2D_MSAA:
-      dim = 2;
-      break;
+      return 2;
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
    case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_SHADOWCUBE:
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
    case TGSI_TEXTURE_2D_ARRAY_MSAA:
-      dim = 3;
-      break;
+      return 3;
    case TGSI_TEXTURE_CUBE_ARRAY:
    case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-      dim = 4;
-      break;
+      return 4;
    default:
       assert(!"unknown texture target");
-      dim = 0;
-      break;
+      return 0;
    }
+}
 
-   if (shadow_or_sample) {
-      switch (tgsi_tex) {
-      case TGSI_TEXTURE_SHADOW1D:
-         /* there is a gap */
-         *shadow_or_sample = 2;
-         break;
-      case TGSI_TEXTURE_SHADOW2D:
-      case TGSI_TEXTURE_SHADOWRECT:
-      case TGSI_TEXTURE_SHADOWCUBE:
-      case TGSI_TEXTURE_SHADOW1D_ARRAY:
-      case TGSI_TEXTURE_SHADOW2D_ARRAY:
-      case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-         *shadow_or_sample = dim;
-         break;
-      case TGSI_TEXTURE_2D_MSAA:
-      case TGSI_TEXTURE_2D_ARRAY_MSAA:
-         *shadow_or_sample = 3;
-         break;
-      default:
-         /* no shadow nor sample */
-         *shadow_or_sample = -1;
-         break;
-      }
+
+/**
+ * Given a TGSI_TEXTURE_x target, return register component where the
+ * shadow reference/distance coordinate is found.  Typically, components
+ * 0 and 1 are the (s,t) texcoords and component 2 or 3 hold the shadow
+ * reference value.  But if we return 4, it means the reference value is
+ * found in the 0th component of the second coordinate argument to the
+ * TEX2 instruction.
+ */
+int
+tgsi_util_get_shadow_ref_src_index(enum tgsi_texture_type tgsi_tex)
+{
+   switch (tgsi_tex) {
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      return 2;
+   case TGSI_TEXTURE_SHADOWCUBE:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_2D_MSAA:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
+      return 3;
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+      return 4;
+   default:
+      /* no shadow nor sample */
+      return -1;
    }
+}
 
-   return dim;
+
+boolean
+tgsi_is_shadow_target(enum tgsi_texture_type target)
+{
+   switch (target) {
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE:
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+      return TRUE;
+   default:
+      return FALSE;
+   }
 }

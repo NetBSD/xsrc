@@ -32,9 +32,16 @@
 #define EGLDRIVER_INCLUDED
 
 
+#include "c99_compat.h"
+
 #include "egltypedefs.h"
 #include "eglapi.h"
 #include <stddef.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Define an inline driver typecast function.
@@ -43,7 +50,7 @@
  * semicolon when used.
  */
 #define _EGL_DRIVER_TYPECAST(drvtype, egltype, code)           \
-   static INLINE struct drvtype *drvtype(const egltype *obj)   \
+   static inline struct drvtype *drvtype(const egltype *obj)   \
    { return (struct drvtype *) code; }
 
 
@@ -63,45 +70,21 @@
    _EGL_DRIVER_TYPECAST(drvname ## _config, _EGLConfig, obj)
 
 
-typedef _EGLDriver *(*_EGLMain_t)(const char *args);
-
-
 /**
  * Base class for device drivers.
  */
 struct _egl_driver
 {
-   const char *Name;  /**< name of this driver */
-
-   /**
-    * Release the driver resource.
-    *
-    * It is called before dlclose().
-    */
-   void (*Unload)(_EGLDriver *drv);
-
    _EGLAPI API;  /**< EGL API dispatch table */
 };
 
 
-extern _EGLDriver *
-_eglBuiltInDriverGALLIUM(const char *args);
+extern void
+_eglInitDriver(_EGLDriver *driver);
 
 
 extern _EGLDriver *
-_eglBuiltInDriverDRI2(const char *args);
-
-
-extern _EGLDriver *
-_eglBuiltInDriverGLX(const char *args);
-
-
-PUBLIC _EGLDriver *
-_eglMain(const char *args);
-
-
-extern _EGLDriver *
-_eglMatchDriver(_EGLDisplay *dpy, EGLBoolean test_only);
+_eglMatchDriver(_EGLDisplay *disp);
 
 
 extern __eglMustCastToProperFunctionPointerType
@@ -113,13 +96,18 @@ _eglUnloadDrivers(void);
 
 
 /* defined in eglfallbacks.c */
-PUBLIC void
+extern void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
-PUBLIC void
+extern void
 _eglSearchPathForEach(EGLBoolean (*callback)(const char *, size_t, void *),
                       void *callback_data);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* EGLDRIVER_INCLUDED */

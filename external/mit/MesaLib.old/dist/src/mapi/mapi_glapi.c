@@ -27,6 +27,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "glapi/glapi.h"
 #include "u_current.h"
 #include "table.h" /* for MAPI_TABLE_NUM_SLOTS */
@@ -64,7 +65,7 @@ _glapi_set_context(void *context)
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-   u_current_set_table((const struct mapi_table *) dispatch);
+   u_current_set_table((const struct _glapi_table *) dispatch);
 }
 
 /**
@@ -174,7 +175,7 @@ _glapi_get_stub(const char *name, int generate)
    const struct mapi_stub *stub;
 
 #ifdef USE_MGL_NAMESPACE
-   if (name)
+   if (name && name[0] == 'm')
       name++;
 #endif
 
@@ -220,6 +221,28 @@ _glapi_get_proc_name(unsigned int offset)
 {
    const struct mapi_stub *stub = stub_find_by_slot(offset);
    return stub ? stub_get_name(stub) : NULL;
+}
+
+/** Return pointer to new dispatch table filled with no-op functions */
+struct _glapi_table *
+_glapi_new_nop_table(unsigned num_entries)
+{
+   struct _glapi_table *table;
+
+   if (num_entries > MAPI_TABLE_NUM_SLOTS)
+      num_entries = MAPI_TABLE_NUM_SLOTS;
+
+   table = malloc(num_entries * sizeof(mapi_func));
+   if (table) {
+      memcpy(table, table_noop_array, num_entries * sizeof(mapi_func));
+   }
+   return table;
+}
+
+void
+_glapi_set_nop_handler(_glapi_nop_handler_proc func)
+{
+   table_set_noop_handler(func);
 }
 
 /**

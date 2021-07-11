@@ -31,14 +31,18 @@
  * \author Brian Paul
  */
 
+#include "c99_math.h"
+#include "main/errors.h"
 #include "main/glheader.h"
-#include "main/colormac.h"
 #include "main/format_pack.h"
 #include "main/format_unpack.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/samplerobj.h"
+#include "main/state.h"
+#include "main/stencil.h"
+#include "main/teximage.h"
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"
@@ -141,7 +145,7 @@ _swrast_span_default_attribs(struct gl_context *ctx, SWspan *span)
          const GLuint attr = VARYING_SLOT_TEX0 + i;
          const GLfloat *tc = ctx->Current.RasterTexCoords[i];
          if (_swrast_use_fragment_program(ctx) ||
-             ctx->ATIFragmentShader._Enabled) {
+             _mesa_ati_fragment_shader_enabled(ctx)) {
             COPY_4V(span->attrStart[attr], tc);
          }
          else if (tc[3] > 0.0F) {
@@ -204,7 +208,7 @@ interpolate_active_attribs(struct gl_context *ctx, SWspan *span,
             v3 += dv3dx;
             w += dwdx;
          }
-         ASSERT((span->arrayAttribs & BITFIELD64_BIT(attr)) == 0);
+         assert((span->arrayAttribs & BITFIELD64_BIT(attr)) == 0);
          span->arrayAttribs |= BITFIELD64_BIT(attr);
       }
    ATTRIB_LOOP_END
@@ -222,7 +226,7 @@ interpolate_int_colors(struct gl_context *ctx, SWspan *span)
    const GLuint n = span->end;
    GLuint i;
 
-   ASSERT(!(span->arrayMask & SPAN_RGBA));
+   assert(!(span->arrayMask & SPAN_RGBA));
 #endif
 
    switch (span->array->ChanType) {
@@ -335,7 +339,7 @@ interpolate_float_colors(SWspan *span)
    }
    else {
       /* interpolate red/green/blue/alpha to get float colors */
-      ASSERT(span->interpMask & SPAN_RGBA);
+      assert(span->interpMask & SPAN_RGBA);
       if (span->interpMask & SPAN_FLAT) {
          GLfloat r = FixedToFloat(span->red);
          GLfloat g = FixedToFloat(span->green);
@@ -382,7 +386,7 @@ _swrast_span_interpolate_z( const struct gl_context *ctx, SWspan *span )
    const GLuint n = span->end;
    GLuint i;
 
-   ASSERT(!(span->arrayMask & SPAN_Z));
+   assert(!(span->arrayMask & SPAN_Z));
 
    if (ctx->DrawBuffer->Visual.depthBits <= 16) {
       GLfixed zval = span->z;
@@ -442,10 +446,10 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    GLfloat dsdy2 = (s + dsdy) / (q + dqdy) - s * invQ;
    GLfloat dtdy2 = (t + dtdy) / (q + dqdy) - t * invQ;
    GLfloat maxU, maxV, rho, lambda;
-   dsdx2 = FABSF(dsdx2);
-   dsdy2 = FABSF(dsdy2);
-   dtdx2 = FABSF(dtdx2);
-   dtdy2 = FABSF(dtdy2);
+   dsdx2 = fabsf(dsdx2);
+   dsdy2 = fabsf(dsdy2);
+   dtdx2 = fabsf(dtdx2);
+   dtdy2 = fabsf(dtdy2);
    maxU = MAX2(dsdx2, dsdy2) * texW;
    maxV = MAX2(dtdx2, dtdy2) * texH;
    rho = MAX2(maxU, maxV);
@@ -495,7 +499,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
          GLfloat q = span->attrStart[attr][3] + span->leftClip * dqdx;
 
          if (obj) {
-            const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
+            const struct gl_texture_image *img = _mesa_base_tex_image(obj);
             const struct swrast_texture_image *swImg =
                swrast_texture_image_const(img);
             const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, u);
@@ -505,7 +509,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
             /* LOD is calculated directly in the ansiotropic filter, we can
              * skip the normal lambda function as the result is ignored.
              */
-            if (samp->MaxAnisotropy > 1.0 &&
+            if (samp->MaxAnisotropy > 1.0F &&
                 samp->MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
                needLambda = GL_FALSE;
             }
@@ -522,7 +526,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
          if (needLambda) {
             GLuint i;
             if (_swrast_use_fragment_program(ctx)
-                || ctx->ATIFragmentShader._Enabled) {
+                || _mesa_ati_fragment_shader_enabled(ctx)) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[VARYING_SLOT_POS][3];
                GLfloat w = span->attrStart[VARYING_SLOT_POS][3] + span->leftClip * dwdx;
@@ -563,7 +567,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
          else {
             GLuint i;
             if (_swrast_use_fragment_program(ctx) ||
-                ctx->ATIFragmentShader._Enabled) {
+                _mesa_ati_fragment_shader_enabled(ctx)) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[VARYING_SLOT_POS][3];
                GLfloat w = span->attrStart[VARYING_SLOT_POS][3] + span->leftClip * dwdx;
@@ -657,7 +661,7 @@ stipple_polygon_span(struct gl_context *ctx, SWspan *span)
 {
    GLubyte *mask = span->array->mask;
 
-   ASSERT(ctx->Polygon.StippleFlag);
+   assert(ctx->Polygon.StippleFlag);
 
    if (span->arrayMask & SPAN_XY) {
       /* arrays of x/y pixel coords */
@@ -747,7 +751,7 @@ clip_span( struct gl_context *ctx, SWspan *span )
 
       /* Clip to right */
       if (x + n > xmax) {
-         ASSERT(x < xmax);
+         assert(x < xmax);
          n = span->end = xmax - x;
       }
 
@@ -756,8 +760,8 @@ clip_span( struct gl_context *ctx, SWspan *span )
          const GLint leftClip = xmin - x;
          GLuint i;
 
-         ASSERT(leftClip > 0);
-         ASSERT(x + n > xmin);
+         assert(leftClip > 0);
+         assert(x + n > xmin);
 
          /* Clip 'leftClip' pixels from the left side.
           * The span->leftClip field will be applied when we interpolate
@@ -765,7 +769,7 @@ clip_span( struct gl_context *ctx, SWspan *span )
           * For arrays of values, shift them left.
           */
          for (i = 0; i < VARYING_SLOT_MAX; i++) {
-            if (span->interpMask & (1 << i)) {
+            if (span->interpMask & (1u << i)) {
                GLuint j;
                for (j = 0; j < 4; j++) {
                   span->attrStart[i][j] += leftClip * span->attrStepX[i][j];
@@ -786,7 +790,7 @@ clip_span( struct gl_context *ctx, SWspan *span )
          memmove(ARRAY, ARRAY + (SHIFT), (LEN) * sizeof(ARRAY[0]))
 
          for (i = 0; i < VARYING_SLOT_MAX; i++) {
-            if (span->arrayAttribs & (1 << i)) {
+            if (span->arrayAttribs & BITFIELD64_BIT(i)) {
                /* shift array elements left by 'leftClip' */
                SHIFT_ARRAY(span->array->attribs[i], leftClip, n - leftClip);
             }
@@ -812,10 +816,10 @@ clip_span( struct gl_context *ctx, SWspan *span )
          span->writeAll = GL_FALSE;
       }
 
-      ASSERT(span->x >= xmin);
-      ASSERT(span->x + span->end <= xmax);
-      ASSERT(span->y >= ymin);
-      ASSERT(span->y < ymax);
+      assert(span->x >= xmin);
+      assert(span->x + span->end <= xmax);
+      assert(span->y >= ymin);
+      assert(span->y < ymax);
 
       return GL_TRUE;  /* some pixels visible */
    }
@@ -836,9 +840,9 @@ add_specular(struct gl_context *ctx, SWspan *span)
    GLfloat (*col1)[4] = span->array->attribs[VARYING_SLOT_COL1];
    GLuint i;
 
-   ASSERT(!_swrast_use_fragment_program(ctx));
-   ASSERT(span->arrayMask & SPAN_RGBA);
-   ASSERT(swrast->_ActiveAttribMask & VARYING_BIT_COL1);
+   assert(!_swrast_use_fragment_program(ctx));
+   assert(span->arrayMask & SPAN_RGBA);
+   assert(swrast->_ActiveAttribMask & VARYING_BIT_COL1);
    (void) swrast; /* silence warning */
 
    if (span->array->ChanType == GL_FLOAT) {
@@ -858,8 +862,8 @@ add_specular(struct gl_context *ctx, SWspan *span)
       interpolate_active_attribs(ctx, span, VARYING_BIT_COL1);
    }
 
-   ASSERT(span->arrayAttribs & VARYING_BIT_COL0);
-   ASSERT(span->arrayAttribs & VARYING_BIT_COL1);
+   assert(span->arrayAttribs & VARYING_BIT_COL0);
+   assert(span->arrayAttribs & VARYING_BIT_COL1);
 
    for (i = 0; i < span->end; i++) {
       if (mask[i]) {
@@ -885,16 +889,16 @@ apply_aa_coverage(SWspan *span)
       GLubyte (*rgba)[4] = span->array->rgba8;
       for (i = 0; i < span->end; i++) {
          const GLfloat a = rgba[i][ACOMP] * coverage[i];
-         rgba[i][ACOMP] = (GLubyte) CLAMP(a, 0.0, 255.0);
-         ASSERT(coverage[i] >= 0.0);
-         ASSERT(coverage[i] <= 1.0);
+         rgba[i][ACOMP] = (GLubyte) CLAMP(a, 0.0F, 255.0F);
+         assert(coverage[i] >= 0.0F);
+         assert(coverage[i] <= 1.0F);
       }
    }
    else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
       GLushort (*rgba)[4] = span->array->rgba16;
       for (i = 0; i < span->end; i++) {
          const GLfloat a = rgba[i][ACOMP] * coverage[i];
-         rgba[i][ACOMP] = (GLushort) CLAMP(a, 0.0, 65535.0);
+         rgba[i][ACOMP] = (GLushort) CLAMP(a, 0.0F, 65535.0F);
       }
    }
    else {
@@ -915,7 +919,7 @@ clamp_colors(SWspan *span)
 {
    GLfloat (*rgba)[4] = span->array->attribs[VARYING_SLOT_COL0];
    GLuint i;
-   ASSERT(span->array->ChanType == GL_FLOAT);
+   assert(span->array->ChanType == GL_FLOAT);
    for (i = 0; i < span->end; i++) {
       rgba[i][RCOMP] = CLAMP(rgba[i][RCOMP], 0.0F, 1.0F);
       rgba[i][GCOMP] = CLAMP(rgba[i][GCOMP], 0.0F, 1.0F);
@@ -932,19 +936,19 @@ clamp_colors(SWspan *span)
  * \param output  which fragment program color output is being processed
  */
 static inline void
-convert_color_type(SWspan *span, GLenum newType, GLuint output)
+convert_color_type(SWspan *span, GLenum srcType, GLenum newType, GLuint output)
 {
    GLvoid *src, *dst;
 
-   if (output > 0 || span->array->ChanType == GL_FLOAT) {
+   if (output > 0 || srcType == GL_FLOAT) {
       src = span->array->attribs[VARYING_SLOT_COL0 + output];
       span->array->ChanType = GL_FLOAT;
    }
-   else if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+   else if (srcType == GL_UNSIGNED_BYTE) {
       src = span->array->rgba8;
    }
    else {
-      ASSERT(span->array->ChanType == GL_UNSIGNED_SHORT);
+      assert(srcType == GL_UNSIGNED_SHORT);
       src = span->array->rgba16;
    }
 
@@ -975,10 +979,10 @@ static inline void
 shade_texture_span(struct gl_context *ctx, SWspan *span)
 {
    if (_swrast_use_fragment_program(ctx) ||
-       ctx->ATIFragmentShader._Enabled) {
+       _mesa_ati_fragment_shader_enabled(ctx)) {
       /* programmable shading */
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
-         convert_color_type(span, GL_FLOAT, 0);
+         convert_color_type(span, span->array->ChanType, GL_FLOAT, 0);
       }
       else {
          span->array->rgba = (void *) span->array->attribs[VARYING_SLOT_COL0];
@@ -1007,7 +1011,7 @@ shade_texture_span(struct gl_context *ctx, SWspan *span)
          _swrast_exec_fragment_program(ctx, span);
       }
       else {
-         ASSERT(ctx->ATIFragmentShader._Enabled);
+         assert(_mesa_ati_fragment_shader_enabled(ctx));
          _swrast_exec_fragment_shader(ctx, span);
       }
    }
@@ -1130,23 +1134,22 @@ void
 _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLuint *colorMask = (GLuint *) ctx->Color.ColorMask;
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield64 origArrayAttribs = span->arrayAttribs;
    const GLenum origChanType = span->array->ChanType;
    void * const origRgba = span->array->rgba;
    const GLboolean shader = (_swrast_use_fragment_program(ctx)
-                             || ctx->ATIFragmentShader._Enabled);
+                             || _mesa_ati_fragment_shader_enabled(ctx));
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledCoordUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /*
-   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
+   printf("%s()  interp 0x%x  array 0x%x\n", __func__,
           span->interpMask, span->arrayMask);
    */
 
-   ASSERT(span->primitive == GL_POINT ||
+   assert(span->primitive == GL_POINT ||
           span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON ||
           span->primitive == GL_BITMAP);
@@ -1166,7 +1169,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
       return;
    }
 
-   ASSERT(span->end <= SWRAST_MAX_WIDTH);
+   assert(span->end <= SWRAST_MAX_WIDTH);
 
    /* Depth bounds test */
    if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {
@@ -1212,14 +1215,14 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
+   if (_mesa_stencil_is_enabled(ctx) || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Transform.DepthClamp)
+      if (ctx->Transform.DepthClampNear && ctx->Transform.DepthClampFar)
 	 _swrast_depth_clamp_span(ctx, span);
 
-      if (ctx->Stencil._Enabled) {
+      if (_mesa_stencil_is_enabled(ctx)) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             /* all fragments failed test */
@@ -1228,8 +1231,8 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
       }
       else if (fb->Visual.depthBits > 0) {
          /* Just regular depth testing */
-         ASSERT(ctx->Depth.Test);
-         ASSERT(span->arrayMask & SPAN_Z);
+         assert(ctx->Depth.Test);
+         assert(span->arrayMask & SPAN_Z);
          if (!_swrast_depth_test_span(ctx, span)) {
             /* all fragments failed test */
             goto end;
@@ -1248,7 +1251,8 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.
     */
-   if (fb->_NumColorDrawBuffers == 1 && colorMask[0] == 0x0) {
+   if (fb->_NumColorDrawBuffers == 1 &&
+       !GET_COLORMASK(ctx->Color.ColorMask, 0)) {
       /* no colors to write */
       goto end;
    }
@@ -1271,7 +1275,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    }
 #endif
 
-   ASSERT(span->arrayMask & SPAN_RGBA);
+   assert(span->arrayMask & SPAN_RGBA);
 
    if (span->primitive == GL_BITMAP || !swrast->SpecularVertexAdd) {
       /* Add primary and specular (diffuse + specular) colors */
@@ -1309,10 +1313,12 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
     */
    {
       const GLuint numBuffers = fb->_NumColorDrawBuffers;
-      const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+      const struct gl_program *fp = ctx->FragmentProgram._Current;
       const GLboolean multiFragOutputs = 
          _swrast_use_fragment_program(ctx)
-         && fp->Base.OutputsWritten >= (1 << FRAG_RESULT_DATA0);
+         && fp->info.outputs_written >= (1 << FRAG_RESULT_DATA0);
+      /* Save srcColorType because convert_color_type() can change it */
+      const GLenum srcColorType = span->array->ChanType;
       GLuint buf;
 
       for (buf = 0; buf < numBuffers; buf++) {
@@ -1324,17 +1330,18 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
             /* re-use one of the attribute array buffers for rgbaSave */
             GLchan (*rgbaSave)[4] = (GLchan (*)[4]) span->array->attribs[0];
             struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
-            GLenum colorType = srb->ColorType;
+            const GLenum dstColorType = srb->ColorType;
 
-            assert(colorType == GL_UNSIGNED_BYTE ||
-                   colorType == GL_FLOAT);
+            assert(dstColorType == GL_UNSIGNED_BYTE ||
+                   dstColorType == GL_FLOAT);
 
             /* set span->array->rgba to colors for renderbuffer's datatype */
-            if (span->array->ChanType != colorType) {
-               convert_color_type(span, colorType, 0);
+            if (srcColorType != dstColorType) {
+               convert_color_type(span, srcColorType, dstColorType,
+                                  multiFragOutputs ? buf : 0);
             }
             else {
-               if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+               if (srcColorType == GL_UNSIGNED_BYTE) {
                   span->array->rgba = span->array->rgba8;
                }
                else {
@@ -1349,7 +1356,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
                       4 * span->end * sizeof(GLchan));
             }
 
-            ASSERT(rb->_BaseFormat == GL_RGBA ||
+            assert(rb->_BaseFormat == GL_RGBA ||
                    rb->_BaseFormat == GL_RGB ||
                    rb->_BaseFormat == GL_RED ||
                    rb->_BaseFormat == GL_RG ||
@@ -1362,7 +1369,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
                _swrast_blend_span(ctx, rb, span);
             }
 
-            if (colorMask[buf] != 0xffffffff) {
+            if (GET_COLORMASK(ctx->Color.ColorMask, buf) != 0xf) {
                _swrast_mask_rgba_span(ctx, rb, span, buf);
             }
 
@@ -1453,8 +1460,8 @@ _swrast_read_rgba_span( struct gl_context *ctx, struct gl_renderbuffer *rb,
          length = (GLint) n;
       }
 
-      ASSERT(rb);
-      ASSERT(rb->_BaseFormat == GL_RGBA ||
+      assert(rb);
+      assert(rb->_BaseFormat == GL_RGBA ||
 	     rb->_BaseFormat == GL_RGB ||
 	     rb->_BaseFormat == GL_RG ||
 	     rb->_BaseFormat == GL_RED ||
@@ -1464,6 +1471,7 @@ _swrast_read_rgba_span( struct gl_context *ctx, struct gl_renderbuffer *rb,
 	     rb->_BaseFormat == GL_ALPHA);
 
       assert(srb->Map);
+      (void) srb; /* silence unused var warning */
 
       src = _swrast_pixel_address(rb, x + skip, y);
 

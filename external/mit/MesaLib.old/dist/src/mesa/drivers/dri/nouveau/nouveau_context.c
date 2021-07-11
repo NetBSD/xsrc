@@ -25,6 +25,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_bufferobj.h"
@@ -50,10 +51,7 @@
 GLboolean
 nouveau_context_create(gl_api api,
 		       const struct gl_config *visual, __DRIcontext *dri_ctx,
-		       unsigned major_version,
-		       unsigned minor_version,
-		       uint32_t flags,
-		       bool notify_reset,
+		       const struct __DriverContextConfig *ctx_config,
 		       unsigned *error,
 		       void *share_ctx)
 {
@@ -62,12 +60,12 @@ nouveau_context_create(gl_api api,
 	struct nouveau_context *nctx;
 	struct gl_context *ctx;
 
-	if (flags & ~__DRI_CTX_FLAG_DEBUG) {
+	if (ctx_config->flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_NO_ERROR)) {
 		*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
 		return false;
 	}
 
-	if (notify_reset) {
+	if (ctx_config->attribute_mask) {
 		*error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 		return false;
 	}
@@ -78,14 +76,15 @@ nouveau_context_create(gl_api api,
 		return GL_FALSE;
 	}
 
-	driContextSetFlags(ctx, flags);
+	driContextSetFlags(ctx, ctx_config->flags);
 
 	nctx = to_nouveau_context(ctx);
 	nctx->dri_context = dri_ctx;
 	dri_ctx->driverPrivate = ctx;
 
 	_mesa_compute_version(ctx);
-	if (ctx->Version < major_version * 10 + minor_version) {
+	if (ctx->Version < (ctx_config->major_version * 10 +
+			    ctx_config->minor_version)) {
 	   nouveau_context_destroy(dri_ctx);
 	   *error = __DRI_CTX_ERROR_BAD_VERSION;
 	   return GL_FALSE;
@@ -120,14 +119,15 @@ nouveau_context_init(struct gl_context *ctx, gl_api api,
 
 	/* Initialize the function pointers. */
 	_mesa_init_driver_functions(&functions);
+	_tnl_init_driver_draw_function(&functions);
 	nouveau_driver_functions_init(&functions);
 	nouveau_bufferobj_functions_init(&functions);
 	nouveau_texture_functions_init(&functions);
 	nouveau_fbo_functions_init(&functions);
 
 	/* Initialize the mesa context. */
-	_mesa_initialize_context(ctx, api, visual,
-                                 share_ctx, &functions);
+	if (!_mesa_initialize_context(ctx, api, visual, share_ctx, &functions))
+		return GL_FALSE;
 
 	nouveau_state_init(ctx);
 	nouveau_scratch_init(ctx);
@@ -187,7 +187,7 @@ nouveau_context_init(struct gl_context *ctx, gl_api api,
 	ctx->Extensions.EXT_blend_minmax = true;
 	ctx->Extensions.EXT_texture_filter_anisotropic = true;
 	ctx->Extensions.NV_texture_env_combine4 = true;
-	ctx->Const.MaxColorAttachments = 1;
+	ctx->Const.MaxDrawBuffers = ctx->Const.MaxColorAttachments = 1;
 
 	/* This effectively disables 3D textures */
 	ctx->Const.Max3DTextureLevels = 1;
@@ -203,8 +203,7 @@ nouveau_context_deinit(struct gl_context *ctx)
 	if (TNL_CONTEXT(ctx))
 		_tnl_DestroyContext(ctx);
 
-	if (vbo_context(ctx))
-		_vbo_DestroyContext(ctx);
+	_vbo_DestroyContext(ctx);
 
 	if (SWRAST_CONTEXT(ctx))
 		_swrast_DestroyContext(ctx);
@@ -218,7 +217,7 @@ nouveau_context_deinit(struct gl_context *ctx)
 	nouveau_object_del(&nctx->hw.chan);
 
 	nouveau_scratch_destroy(ctx);
-	_mesa_free_context_data(ctx);
+	_mesa_free_context_data(ctx, true);
 }
 
 void
@@ -258,9 +257,9 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	else if (fb->Visual.haveStencilBuffer)
 		attachments[i++] = __DRI_BUFFER_STENCIL;
 
-	buffers = (*screen->dri2.loader->getBuffers)(draw, &draw->w, &draw->h,
-						     attachments, i, &count,
-						     draw->loaderPrivate);
+	buffers = screen->dri2.loader->getBuffers(draw, &draw->w, &draw->h,
+						  attachments, i, &count,
+						  draw->loaderPrivate);
 	if (buffers == NULL)
 		return;
 

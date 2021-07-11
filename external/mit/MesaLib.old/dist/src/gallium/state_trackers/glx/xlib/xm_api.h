@@ -53,11 +53,11 @@ and create a window, you must do the following to use the X/Mesa interface:
 
 
 
-#ifndef XMESA_H
-#define XMESA_H
+#ifndef XM_API_H
+#define XM_API_H
 
 
-#include "main/core.h" /* for gl_config */
+#include "main/mtypes.h" /* for gl_config */
 #include "state_tracker/st_api.h"
 #include "os/os_thread.h"
 
@@ -76,7 +76,7 @@ typedef struct xmesa_visual *XMesaVisual;
 
 
 struct xmesa_display {
-   pipe_mutex mutex;
+   mtx_t mutex;
 
    Display *display;
    struct pipe_screen *screen;
@@ -359,7 +359,7 @@ struct xmesa_buffer {
 extern const char *
 xmesa_get_name(void);
 
-extern void
+extern int
 xmesa_init(Display *dpy);
 
 extern XMesaBuffer
@@ -378,13 +378,16 @@ xmesa_check_buffer_size(XMesaBuffer b);
 extern void
 xmesa_destroy_buffers_on_display(Display *dpy);
 
-static INLINE GLuint
+extern void
+xmesa_close_display(Display *dpy);
+
+static inline GLuint
 xmesa_buffer_width(XMesaBuffer b)
 {
    return b->width;
 }
 
-static INLINE GLuint
+static inline GLuint
 xmesa_buffer_height(XMesaBuffer b)
 {
    return b->height;

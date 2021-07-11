@@ -38,11 +38,10 @@ extern void st_init_limits(struct pipe_screen *screen,
                            struct gl_extensions *extensions);
 
 extern void st_init_extensions(struct pipe_screen *screen,
-                               gl_api api,
                                struct gl_constants *consts,
                                struct gl_extensions *extensions,
                                struct st_config_options *options,
-                               boolean has_lib_dxtc);
+                               gl_api api);
 
 
 #endif /* ST_EXTENSIONS_H */

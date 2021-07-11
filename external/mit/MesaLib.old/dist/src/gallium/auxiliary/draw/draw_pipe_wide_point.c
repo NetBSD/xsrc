@@ -76,14 +76,14 @@ struct widepoint_stage {
    uint texcoord_gen_slot[PIPE_MAX_SHADER_OUTPUTS];
 
    /* TGSI_SEMANTIC to which sprite_coord_enable applies */
-   unsigned sprite_coord_semantic;
+   enum tgsi_semantic sprite_coord_semantic;
 
    int psize_slot;
 };
 
 
 
-static INLINE struct widepoint_stage *
+static inline struct widepoint_stage *
 widepoint_stage( struct draw_stage *stage )
 {
    return (struct widepoint_stage *)stage;
@@ -242,7 +242,7 @@ widepoint_first_point(struct draw_stage *stage,
        */
       for (i = 0; i < fs->info.num_inputs; i++) {
          int slot;
-         const unsigned sn = fs->info.input_semantic_name[i];
+         const enum tgsi_semantic sn = fs->info.input_semantic_name[i];
          const unsigned si = fs->info.input_semantic_index[i];
 
          if (sn == wide->sprite_coord_semantic) {
@@ -266,14 +266,7 @@ widepoint_first_point(struct draw_stage *stage,
    wide->psize_slot = -1;
    if (rast->point_size_per_vertex) {
       /* find PSIZ vertex output */
-      const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
-      uint i;
-      for (i = 0; i < vs->info.num_outputs; i++) {
-         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
-            wide->psize_slot = i;
-            break;
-         }
-      }
+      wide->psize_slot = draw_find_shader_output(draw, TGSI_SEMANTIC_PSIZE, 0);
    }
    
    stage->point( stage, header );
@@ -315,7 +308,7 @@ static void widepoint_destroy( struct draw_stage *stage )
 struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
 {
    struct widepoint_stage *wide = CALLOC_STRUCT(widepoint_stage);
-   if (wide == NULL)
+   if (!wide)
       goto fail;
 
    wide->stage.draw = draw;

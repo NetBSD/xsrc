@@ -1,3 +1,4 @@
+
 #include <stdbool.h>
 
 #include "api_loopback.h"
@@ -55,7 +56,7 @@ _mesa_ClipPlanef(GLenum plane, const GLfloat *equation)
    unsigned int i;
    GLdouble converted_equation[4];
 
-   for (i = 0; i < Elements(converted_equation); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_equation); i++) {
       converted_equation[i] = (GLdouble) (equation[i]);
    }
 
@@ -68,7 +69,7 @@ _mesa_ClipPlanex(GLenum plane, const GLfixed *equation)
    unsigned int i;
    GLdouble converted_equation[4];
 
-   for (i = 0; i < Elements(converted_equation); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_equation); i++) {
       converted_equation[i] = (GLdouble) (equation[i] / 65536.0);
    }
 
@@ -117,7 +118,7 @@ _mesa_DrawTexxvOES(const GLfixed *coords)
     unsigned int i;
     GLfloat converted_coords[5];
 
-    for (i = 0; i < Elements(converted_coords); i++) {
+    for (i = 0; i < ARRAY_SIZE(converted_coords); i++) {
         converted_coords[i] = (GLfloat) (coords[i] / 65536.0f);
     }
 
@@ -206,7 +207,7 @@ _mesa_GetClipPlanef(GLenum plane, GLfloat *equation)
    GLdouble converted_equation[4];
 
    _mesa_GetClipPlane(plane, converted_equation);
-   for (i = 0; i < Elements(converted_equation); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_equation); i++) {
       equation[i] = (GLfloat) (converted_equation[i]);
    }
 }
@@ -218,7 +219,7 @@ _mesa_GetClipPlanex(GLenum plane, GLfixed *equation)
    GLdouble converted_equation[4];
 
    _mesa_GetClipPlane(plane, converted_equation);
-   for (i = 0; i < Elements(converted_equation); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_equation); i++) {
       equation[i] = (GLfixed) (converted_equation[i] * 65536);
    }
 }
@@ -326,7 +327,24 @@ _mesa_GetTexEnvxv(GLenum target, GLenum pname, GLfixed *params)
       }
       break;
    case GL_TEXTURE_ENV:
-      if (pname != GL_TEXTURE_ENV_COLOR && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA) {
+      if (pname != GL_TEXTURE_ENV_COLOR &&
+          pname != GL_RGB_SCALE &&
+          pname != GL_ALPHA_SCALE &&
+          pname != GL_TEXTURE_ENV_MODE &&
+          pname != GL_COMBINE_RGB &&
+          pname != GL_COMBINE_ALPHA &&
+          pname != GL_SRC0_RGB &&
+          pname != GL_SRC1_RGB &&
+          pname != GL_SRC2_RGB &&
+          pname != GL_SRC0_ALPHA &&
+          pname != GL_SRC1_ALPHA &&
+          pname != GL_SRC2_ALPHA &&
+          pname != GL_OPERAND0_RGB &&
+          pname != GL_OPERAND1_RGB &&
+          pname != GL_OPERAND2_RGB &&
+          pname != GL_OPERAND0_ALPHA &&
+          pname != GL_OPERAND1_ALPHA &&
+          pname != GL_OPERAND2_ALPHA) {
          _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                      "glGetTexEnvxv(target=0x%x)", target);
          return;
@@ -549,7 +567,7 @@ _mesa_LoadMatrixx(const GLfixed *m)
    unsigned int i;
    GLfloat converted_m[16];
 
-   for (i = 0; i < Elements(converted_m); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_m); i++) {
       converted_m[i] = (GLfloat) (m[i] / 65536.0f);
    }
 
@@ -617,7 +635,7 @@ _mesa_MultMatrixx(const GLfixed *m)
    unsigned int i;
    GLfloat converted_m[16];
 
-   for (i = 0; i < Elements(converted_m); i++) {
+   for (i = 0; i < ARRAY_SIZE(converted_m); i++) {
       converted_m[i] = (GLfloat) (m[i] / 65536.0f);
    }
 
@@ -825,7 +843,7 @@ _mesa_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
       unsigned int i;
       GLfloat converted_params[4];
 
-      for (i = 0; i < Elements(converted_params); i++) {
+      for (i = 0; i < ARRAY_SIZE(converted_params); i++) {
          converted_params[i] = (GLfloat) (params[i] / 65536.0f);
       }
 

@@ -97,14 +97,11 @@ intel_vertical_texture_alignment_unit(struct intel_context *intel,
     * | FXT1  compressed format                |  4  |  4  |  4  |  4  |  4  |
     * | Depth Buffer                           |  2  |  2  |  2  |  4  |  4  |
     * | Separate Stencil Buffer                | N/A | N/A | N/A |  4  |  8  |
-    * | Multisampled (4x or 8x) render target  | N/A | N/A | N/A |  4  |  4  |
     * | All Others                             |  2  |  2  |  2  |  2  |  2  |
     * +----------------------------------------------------------------------+
     *
     * On SNB+, non-special cases can be overridden by setting the SURFACE_STATE
     * "Surface Vertical Alignment" field to VALIGN_2 or VALIGN_4.
-    *
-    * We currently don't support multisampling.
     */
    if (_mesa_is_format_compressed(format))
       return 4;
@@ -136,7 +133,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
        mt->total_width = ALIGN(mt->physical_width0, mt->align_w);
    }
 
-   /* May need to adjust width to accomodate the placement of
+   /* May need to adjust width to accommodate the placement of
     * the 2nd mipmap.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.

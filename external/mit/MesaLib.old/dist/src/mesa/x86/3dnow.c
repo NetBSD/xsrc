@@ -46,23 +46,21 @@ DECLARE_XFORM_GROUP( 3dnow, 2 )
 DECLARE_XFORM_GROUP( 3dnow, 3 )
 DECLARE_XFORM_GROUP( 3dnow, 4 )
 
-DECLARE_NORM_GROUP( 3dnow )
 
-
-extern void _ASMAPI
+extern void
 _mesa_v16_3dnow_general_xform( GLfloat *first_vert,
 			       const GLfloat *m,
 			       const GLfloat *src,
 			       GLuint src_stride,
 			       GLuint count );
 
-extern void _ASMAPI
+extern void
 _mesa_3dnow_project_vertices( GLfloat *first,
 			      GLfloat *last,
 			      const GLfloat *m,
 			      GLuint stride );
 
-extern void _ASMAPI
+extern void
 _mesa_3dnow_project_clipped_vertices( GLfloat *first,
 				      GLfloat *last,
 				      const GLfloat *m,
@@ -77,11 +75,6 @@ void _mesa_init_3dnow_transform_asm( void )
    ASSIGN_XFORM_GROUP( 3dnow, 2 );
    ASSIGN_XFORM_GROUP( 3dnow, 3 );
    ASSIGN_XFORM_GROUP( 3dnow, 4 );
-
-   /* There's a bug somewhere in the 3dnow_normal.S file that causes
-    * bad shading.  Disable for now.
-   ASSIGN_NORM_GROUP( 3dnow );
-   */
 
 #ifdef DEBUG_MATH
    _math_test_all_transform_functions( "3DNow!" );

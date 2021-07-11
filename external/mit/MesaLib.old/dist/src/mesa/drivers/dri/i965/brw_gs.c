@@ -1,255 +1,218 @@
 /*
- Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics to
- develop this 3D driver.
+ * Copyright © 2013 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
- Permission is hereby granted, free of charge, to any person obtaining
- a copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
+/**
+ * \file brw_vec4_gs.c
+ *
+ * State atom for client-programmable geometry shaders, and support code.
+ */
 
- The above copyright notice and this permission notice (including the
- next paragraph) shall be included in all copies or substantial
- portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
- LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
- **********************************************************************/
- /*
-  * Authors:
-  *   Keith Whitwell <keithw@vmware.com>
-  */
-
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
-#include "main/transformfeedback.h"
-
-#include "intel_batchbuffer.h"
-
-#include "brw_defines.h"
-#include "brw_context.h"
-#include "brw_eu.h"
-#include "brw_util.h"
-#include "brw_state.h"
 #include "brw_gs.h"
+#include "brw_context.h"
+#include "brw_state.h"
+#include "brw_ff_gs.h"
+#include "compiler/brw_nir.h"
+#include "brw_program.h"
+#include "compiler/glsl/ir_uniform.h"
 
-#include "util/ralloc.h"
-
-static void compile_ff_gs_prog(struct brw_context *brw,
-                               struct brw_ff_gs_prog_key *key)
+static void
+assign_gs_binding_table_offsets(const struct gen_device_info *devinfo,
+                                const struct gl_program *prog,
+                                struct brw_gs_prog_data *prog_data)
 {
-   struct brw_ff_gs_compile c;
-   const GLuint *program;
-   void *mem_ctx;
-   GLuint program_size;
-
-   memset(&c, 0, sizeof(c));
-
-   c.key = *key;
-   c.vue_map = brw->vs.prog_data->base.vue_map;
-   c.nr_regs = (c.vue_map.num_slots + 1)/2;
-
-   mem_ctx = ralloc_context(NULL);
-
-   /* Begin the compilation:
+   /* In gen6 we reserve the first BRW_MAX_SOL_BINDINGS entries for transform
+    * feedback surfaces.
     */
-   brw_init_compile(brw, &c.func, mem_ctx);
+   uint32_t reserved = devinfo->gen == 6 ? BRW_MAX_SOL_BINDINGS : 0;
 
-   c.func.single_program_flow = 1;
-
-   /* For some reason the thread is spawned with only 4 channels
-    * unmasked.
-    */
-   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
-
-   if (brw->gen >= 6) {
-      unsigned num_verts;
-      bool check_edge_flag;
-      /* On Sandybridge, we use the GS for implementing transform feedback
-       * (called "Stream Out" in the PRM).
-       */
-      switch (key->primitive) {
-      case _3DPRIM_POINTLIST:
-         num_verts = 1;
-         check_edge_flag = false;
-	 break;
-      case _3DPRIM_LINELIST:
-      case _3DPRIM_LINESTRIP:
-      case _3DPRIM_LINELOOP:
-         num_verts = 2;
-         check_edge_flag = false;
-	 break;
-      case _3DPRIM_TRILIST:
-      case _3DPRIM_TRIFAN:
-      case _3DPRIM_TRISTRIP:
-      case _3DPRIM_RECTLIST:
-	 num_verts = 3;
-         check_edge_flag = false;
-         break;
-      case _3DPRIM_QUADLIST:
-      case _3DPRIM_QUADSTRIP:
-      case _3DPRIM_POLYGON:
-         num_verts = 3;
-         check_edge_flag = true;
-         break;
-      default:
-	 unreachable("Unexpected primitive type in Gen6 SOL program.");
-      }
-      gen6_sol_program(&c, key, num_verts, check_edge_flag);
-   } else {
-      /* On Gen4-5, we use the GS to decompose certain types of primitives.
-       * Note that primitives which don't require a GS program have already
-       * been weeded out by now.
-       */
-      switch (key->primitive) {
-      case _3DPRIM_QUADLIST:
-	 brw_ff_gs_quads( &c, key );
-	 break;
-      case _3DPRIM_QUADSTRIP:
-	 brw_ff_gs_quad_strip( &c, key );
-	 break;
-      case _3DPRIM_LINELOOP:
-	 brw_ff_gs_lines( &c );
-	 break;
-      default:
-	 ralloc_free(mem_ctx);
-	 return;
-      }
-   }
-
-   brw_compact_instructions(&c.func, 0, 0, NULL);
-
-   /* get the program
-    */
-   program = brw_get_program(&c.func, &program_size);
-
-   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
-      fprintf(stderr, "gs:\n");
-      brw_disassemble(brw, c.func.store, 0, program_size, stderr);
-      fprintf(stderr, "\n");
-    }
-
-   brw_upload_cache(&brw->cache, BRW_FF_GS_PROG,
-		    &c.key, sizeof(c.key),
-		    program, program_size,
-		    &c.prog_data, sizeof(c.prog_data),
-		    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data);
-   ralloc_free(mem_ctx);
+   brw_assign_common_binding_table_offsets(devinfo, prog,
+                                           &prog_data->base.base, reserved);
 }
 
-static void populate_key(struct brw_context *brw,
-                         struct brw_ff_gs_prog_key *key)
+static bool
+brw_codegen_gs_prog(struct brw_context *brw,
+                    struct brw_program *gp,
+                    struct brw_gs_prog_key *key)
 {
-   static const unsigned swizzle_for_offset[4] = {
-      BRW_SWIZZLE4(0, 1, 2, 3),
-      BRW_SWIZZLE4(1, 2, 3, 3),
-      BRW_SWIZZLE4(2, 3, 3, 3),
-      BRW_SWIZZLE4(3, 3, 3, 3)
-   };
+   struct brw_compiler *compiler = brw->screen->compiler;
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   struct brw_stage_state *stage_state = &brw->gs.base;
+   struct brw_gs_prog_data prog_data;
+   bool start_busy = false;
+   double start_time = 0;
 
+   memset(&prog_data, 0, sizeof(prog_data));
+
+   void *mem_ctx = ralloc_context(NULL);
+
+   nir_shader *nir = nir_shader_clone(mem_ctx, gp->program.nir);
+
+   assign_gs_binding_table_offsets(devinfo, &gp->program, &prog_data);
+
+   brw_nir_setup_glsl_uniforms(mem_ctx, nir, &gp->program,
+                               &prog_data.base.base,
+                               compiler->scalar_stage[MESA_SHADER_GEOMETRY]);
+   brw_nir_analyze_ubo_ranges(compiler, nir, NULL,
+                              prog_data.base.base.ubo_ranges);
+
+   uint64_t outputs_written = nir->info.outputs_written;
+
+   brw_compute_vue_map(devinfo,
+                       &prog_data.base.vue_map, outputs_written,
+                       gp->program.info.separate_shader);
+
+   int st_index = -1;
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+      st_index = brw_get_shader_time_index(brw, &gp->program, ST_GS, true);
+
+   if (unlikely(brw->perf_debug)) {
+      start_busy = brw->batch.last_bo && brw_bo_busy(brw->batch.last_bo);
+      start_time = get_time();
+   }
+
+   char *error_str;
+   const unsigned *program =
+      brw_compile_gs(brw->screen->compiler, brw, mem_ctx, key,
+                     &prog_data, nir, &gp->program, st_index, &error_str);
+   if (program == NULL) {
+      ralloc_strcat(&gp->program.sh.data->InfoLog, error_str);
+      _mesa_problem(NULL, "Failed to compile geometry shader: %s\n", error_str);
+
+      ralloc_free(mem_ctx);
+      return false;
+   }
+
+   if (unlikely(brw->perf_debug)) {
+      if (gp->compiled_once) {
+         brw_debug_recompile(brw, MESA_SHADER_GEOMETRY, gp->program.Id,
+                             key->program_string_id, key);
+      }
+      if (start_busy && !brw_bo_busy(brw->batch.last_bo)) {
+         perf_debug("GS compile took %.03f ms and stalled the GPU\n",
+                    (get_time() - start_time) * 1000);
+      }
+      gp->compiled_once = true;
+   }
+
+   /* Scratch space is used for register spilling */
+   brw_alloc_stage_scratch(brw, stage_state,
+                           prog_data.base.base.total_scratch);
+
+   /* The param and pull_param arrays will be freed by the shader cache. */
+   ralloc_steal(NULL, prog_data.base.base.param);
+   ralloc_steal(NULL, prog_data.base.base.pull_param);
+   brw_upload_cache(&brw->cache, BRW_CACHE_GS_PROG,
+                    key, sizeof(*key),
+                    program, prog_data.base.base.program_size,
+                    &prog_data, sizeof(prog_data),
+                    &stage_state->prog_offset, &brw->gs.base.prog_data);
+   ralloc_free(mem_ctx);
+
+   return true;
+}
+
+static bool
+brw_gs_state_dirty(const struct brw_context *brw)
+{
+   return brw_state_dirty(brw,
+                          _NEW_TEXTURE,
+                          BRW_NEW_GEOMETRY_PROGRAM |
+                          BRW_NEW_TRANSFORM_FEEDBACK);
+}
+
+void
+brw_gs_populate_key(struct brw_context *brw,
+                    struct brw_gs_prog_key *key)
+{
    struct gl_context *ctx = &brw->ctx;
+   struct brw_program *gp =
+      (struct brw_program *) brw->programs[MESA_SHADER_GEOMETRY];
 
    memset(key, 0, sizeof(*key));
 
-   /* CACHE_NEW_VS_PROG (part of VUE map) */
-   key->attrs = brw->vs.prog_data->base.vue_map.slots_valid;
+   key->program_string_id = gp->id;
 
-   /* BRW_NEW_PRIMITIVE */
-   key->primitive = brw->primitive;
-
-   /* _NEW_LIGHT */
-   key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   if (key->primitive == _3DPRIM_QUADLIST && ctx->Light.ShadeModel != GL_FLAT) {
-      /* Provide consistent primitive order with brw_set_prim's
-       * optimization of single quads to trifans.
-       */
-      key->pv_first = true;
-   }
-
-   if (brw->gen >= 7) {
-      /* On Gen7 and later, we don't use GS (yet). */
-      key->need_gs_prog = false;
-   } else if (brw->gen == 6) {
-      /* On Gen6, GS is used for transform feedback. */
-      /* BRW_NEW_TRANSFORM_FEEDBACK */
-      if (_mesa_is_xfb_active_and_unpaused(ctx)) {
-         const struct gl_shader_program *shaderprog =
-            ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-         const struct gl_transform_feedback_info *linked_xfb_info =
-            &shaderprog->LinkedTransformFeedback;
-         int i;
-
-         /* Make sure that the VUE slots won't overflow the unsigned chars in
-          * key->transform_feedback_bindings[].
-          */
-         STATIC_ASSERT(BRW_VARYING_SLOT_COUNT <= 256);
-
-         /* Make sure that we don't need more binding table entries than we've
-          * set aside for use in transform feedback.  (We shouldn't, since we
-          * set aside enough binding table entries to have one per component).
-          */
-         assert(linked_xfb_info->NumOutputs <= BRW_MAX_SOL_BINDINGS);
-
-         key->need_gs_prog = true;
-         key->num_transform_feedback_bindings = linked_xfb_info->NumOutputs;
-         for (i = 0; i < key->num_transform_feedback_bindings; ++i) {
-            key->transform_feedback_bindings[i] =
-               linked_xfb_info->Outputs[i].OutputRegister;
-            key->transform_feedback_swizzles[i] =
-               swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
-         }
-      }
-   } else {
-      /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
-       * into simpler primitives.
-       */
-      key->need_gs_prog = (brw->primitive == _3DPRIM_QUADLIST ||
-                           brw->primitive == _3DPRIM_QUADSTRIP ||
-                           brw->primitive == _3DPRIM_LINELOOP);
-   }
+   /* _NEW_TEXTURE */
+   brw_populate_sampler_prog_key_data(ctx, &gp->program, &key->tex);
 }
 
-/* Calculate interpolants for triangle and line rasterization.
- */
-static void
-brw_upload_ff_gs_prog(struct brw_context *brw)
+void
+brw_upload_gs_prog(struct brw_context *brw)
 {
-   struct brw_ff_gs_prog_key key;
-   /* Populate the key:
-    */
-   populate_key(brw, &key);
+   struct brw_stage_state *stage_state = &brw->gs.base;
+   struct brw_gs_prog_key key;
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   struct brw_program *gp =
+      (struct brw_program *) brw->programs[MESA_SHADER_GEOMETRY];
 
-   if (brw->ff_gs.prog_active != key.need_gs_prog) {
-      brw->state.dirty.cache |= CACHE_NEW_FF_GS_PROG;
-      brw->ff_gs.prog_active = key.need_gs_prog;
-   }
+   if (!brw_gs_state_dirty(brw))
+      return;
 
-   if (brw->ff_gs.prog_active) {
-      if (!brw_search_cache(&brw->cache, BRW_FF_GS_PROG,
-			    &key, sizeof(key),
-			    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data)) {
-	 compile_ff_gs_prog( brw, &key );
-      }
-   }
+   brw_gs_populate_key(brw, &key);
+
+   if (brw_search_cache(&brw->cache, BRW_CACHE_GS_PROG, &key, sizeof(key),
+                        &stage_state->prog_offset, &brw->gs.base.prog_data,
+                        true))
+      return;
+
+   if (brw_disk_cache_upload_program(brw, MESA_SHADER_GEOMETRY))
+      return;
+
+   gp = (struct brw_program *) brw->programs[MESA_SHADER_GEOMETRY];
+   gp->id = key.program_string_id;
+
+   MAYBE_UNUSED bool success = brw_codegen_gs_prog(brw, gp, &key);
+   assert(success);
 }
 
+void
+brw_gs_populate_default_key(const struct gen_device_info *devinfo,
+                            struct brw_gs_prog_key *key,
+                            struct gl_program *prog)
+{
+   memset(key, 0, sizeof(*key));
 
-const struct brw_tracked_state brw_ff_gs_prog = {
-   .dirty = {
-      .mesa  = (_NEW_LIGHT),
-      .brw   = (BRW_NEW_PRIMITIVE |
-                BRW_NEW_TRANSFORM_FEEDBACK),
-      .cache = CACHE_NEW_VS_PROG
-   },
-   .emit = brw_upload_ff_gs_prog
-};
+   brw_setup_tex_for_precompile(devinfo, &key->tex, prog);
+   key->program_string_id = brw_program(prog)->id;
+}
+
+bool
+brw_gs_precompile(struct gl_context *ctx, struct gl_program *prog)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_gs_prog_key key;
+   uint32_t old_prog_offset = brw->gs.base.prog_offset;
+   struct brw_stage_prog_data *old_prog_data = brw->gs.base.prog_data;
+   bool success;
+
+   struct brw_program *bgp = brw_program(prog);
+
+   brw_gs_populate_default_key(&brw->screen->devinfo, &key, prog);
+
+   success = brw_codegen_gs_prog(brw, bgp, &key);
+
+   brw->gs.base.prog_offset = old_prog_offset;
+   brw->gs.base.prog_data = old_prog_data;
+
+   return success;
+}

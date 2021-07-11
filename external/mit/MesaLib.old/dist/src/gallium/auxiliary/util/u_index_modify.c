@@ -27,7 +27,8 @@
 /* Ubyte indices. */
 
 void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
-					struct pipe_index_buffer *ib,
+					const struct pipe_draw_info *info,
+                                        unsigned add_transfer_flags,
 					int index_bias,
 					unsigned start,
 					unsigned count,
@@ -38,12 +39,12 @@ void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    if (ib->user_buffer) {
-       in_map = ib->user_buffer;
+    if (info->has_user_indices) {
+       in_map = info->index.user;
     } else {
-       in_map = pipe_buffer_map(context, ib->buffer,
+       in_map = pipe_buffer_map(context, info->index.resource,
                                 PIPE_TRANSFER_READ |
-                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                add_transfer_flags,
                                 &src_transfer);
     }
     in_map += start;
@@ -58,37 +59,11 @@ void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
        pipe_buffer_unmap(context, src_transfer);
 }
 
-void util_shorten_ubyte_elts(struct pipe_context *context,
-			     struct pipe_index_buffer *ib,
-			     struct pipe_resource **out_buf,
-			     int index_bias,
-			     unsigned start,
-			     unsigned count)
-{
-    struct pipe_resource* new_elts;
-    unsigned short *out_map;
-    struct pipe_transfer *dst_transfer;
-
-    new_elts = pipe_buffer_create(context->screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_DEFAULT,
-                                  2 * count);
-
-    out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE,
-                              &dst_transfer);
-    util_shorten_ubyte_elts_to_userptr(context, ib, index_bias,
-                                       start, count, out_map);
-    pipe_buffer_unmap(context, dst_transfer);
-
-    pipe_resource_reference(out_buf, NULL);
-    *out_buf = new_elts;
-}
-
-
 /* Ushort indices. */
 
 void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
-					 struct pipe_index_buffer *ib,
+					 const struct pipe_draw_info *info,
+                                         unsigned add_transfer_flags,
 					 int index_bias,
 					 unsigned start, unsigned count,
 					 void *out)
@@ -98,12 +73,12 @@ void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    if (ib->user_buffer) {
-       in_map = ib->user_buffer;
+    if (info->has_user_indices) {
+       in_map = info->index.user;
     } else {
-       in_map = pipe_buffer_map(context, ib->buffer,
+       in_map = pipe_buffer_map(context, info->index.resource,
                                 PIPE_TRANSFER_READ |
-                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                add_transfer_flags,
                                 &in_transfer);
     }
     in_map += start;
@@ -118,36 +93,11 @@ void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
        pipe_buffer_unmap(context, in_transfer);
 }
 
-void util_rebuild_ushort_elts(struct pipe_context *context,
-			      struct pipe_index_buffer *ib,
-			      struct pipe_resource **out_buf,
-			      int index_bias,
-			      unsigned start, unsigned count)
-{
-    struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource *new_elts;
-    unsigned short *out_map;
-
-    new_elts = pipe_buffer_create(context->screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_DEFAULT,
-                                  2 * count);
-
-    out_map = pipe_buffer_map(context, new_elts,
-                              PIPE_TRANSFER_WRITE, &out_transfer);
-    util_rebuild_ushort_elts_to_userptr(context, ib, index_bias,
-                                        start, count, out_map);
-    pipe_buffer_unmap(context, out_transfer);
-
-    pipe_resource_reference(out_buf, NULL);
-    *out_buf = new_elts;
-}
-
-
 /* Uint indices. */
 
 void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
-				       struct pipe_index_buffer *ib,
+				       const struct pipe_draw_info *info,
+                                       unsigned add_transfer_flags,
 				       int index_bias,
 				       unsigned start, unsigned count,
 				       void *out)
@@ -157,12 +107,12 @@ void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
     unsigned int *out_map = out;
     unsigned i;
 
-    if (ib->user_buffer) {
-       in_map = ib->user_buffer;
+    if (info->has_user_indices) {
+       in_map = info->index.user;
     } else {
-       in_map = pipe_buffer_map(context, ib->buffer,
+       in_map = pipe_buffer_map(context, info->index.resource,
                                 PIPE_TRANSFER_READ |
-                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                add_transfer_flags,
                                 &in_transfer);
     }
     in_map += start;
@@ -175,29 +125,4 @@ void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
 
     if (in_transfer)
        pipe_buffer_unmap(context, in_transfer);
-}
-
-void util_rebuild_uint_elts(struct pipe_context *context,
-			    struct pipe_index_buffer *ib,
-			    struct pipe_resource **out_buf,
-			    int index_bias,
-			    unsigned start, unsigned count)
-{
-    struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource *new_elts;
-    unsigned int *out_map;
-
-    new_elts = pipe_buffer_create(context->screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_DEFAULT,
-                                  2 * count);
-
-    out_map = pipe_buffer_map(context, new_elts,
-                              PIPE_TRANSFER_WRITE, &out_transfer);
-    util_rebuild_uint_elts_to_userptr(context, ib, index_bias,
-                                      start, count, out_map);
-    pipe_buffer_unmap(context, out_transfer);
-
-    pipe_resource_reference(out_buf, NULL);
-    *out_buf = new_elts;
 }

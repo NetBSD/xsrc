@@ -50,10 +50,13 @@ LOCAL_CFLAGS := \
 LOCAL_C_INCLUDES := \
 	$(MESA_TOP)/src/mapi
 
+LOCAL_EXPORT_C_INCLUDES := \
+	$(MESA_TOP)/src/mapi
+
 LOCAL_MODULE := libglapi
 
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-intermediates := $(call local-intermediates-dir)
+intermediates := $(call local-generated-sources-dir)
 abi_header := $(intermediates)/$(abi_header)
 LOCAL_GENERATED_SOURCES := $(abi_header)
 
@@ -75,4 +78,4 @@ $(mapi_abi_headers): PRIVATE_APIXML := $(LOCAL_PATH)/glapi/gen/gl_and_es_API.xml
 $(mapi_abi_headers): $(mapi_abi_deps)
 	@mkdir -p $(dir $@)
 	@echo "target $(PRIVATE_PRINTER): $(PRIVATE_MODULE) <= $(PRIVATE_APIXML)"
-	$(hide) $(PRIVATE_SCRIPT) --printer $(PRIVATE_PRINTER) --mode lib $(PRIVATE_APIXML) > $@
+	$(hide) $(PRIVATE_SCRIPT) --printer $(PRIVATE_PRINTER) $(PRIVATE_APIXML) > $@

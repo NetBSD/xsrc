@@ -40,7 +40,7 @@ upload_sampler_state_pointers(struct brw_context *brw)
 	     PS_SAMPLER_STATE_CHANGE |
 	     (4 - 2));
    OUT_BATCH(brw->vs.base.sampler_offset); /* VS */
-   OUT_BATCH(0); /* GS */
+   OUT_BATCH(brw->gs.base.sampler_offset); /* GS */
    OUT_BATCH(brw->wm.base.sampler_offset);
    ADVANCE_BATCH();
 }
@@ -48,9 +48,10 @@ upload_sampler_state_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_sampler_state = {
    .dirty = {
       .mesa = 0,
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_STATE_BASE_ADDRESS),
-      .cache = CACHE_NEW_SAMPLER
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_BLORP |
+             BRW_NEW_SAMPLER_STATE_TABLE |
+             BRW_NEW_STATE_BASE_ADDRESS,
    },
    .emit = upload_sampler_state_pointers,
 };

@@ -41,12 +41,6 @@
 typedef void (*tss_dtor_t)(void*);
 typedef int (*thrd_start_t)(void*);
 
-struct xtime {
-    time_t sec;
-    long nsec;
-};
-typedef struct xtime xtime;
-
 
 /*-------------------- enumeration constants --------------------*/
 enum {

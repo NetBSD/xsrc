@@ -311,7 +311,7 @@ lp_build_const_elem(struct gallivm_state *gallivm,
    else {
       double dscale = lp_const_scale(type);
 
-      elem = LLVMConstInt(elem_type, round(val*dscale), 0);
+      elem = LLVMConstInt(elem_type, (long long) round(val*dscale), 0);
    }
 
    return elem;
@@ -373,7 +373,7 @@ lp_build_const_aos(struct gallivm_state *gallivm,
 
    lp_build_elem_type(gallivm, type);
 
-   if(swizzle == NULL)
+   if (!swizzle)
       swizzle = default_swizzle;
 
    elems[swizzle[0]] = lp_build_const_elem(gallivm, type, r);

@@ -32,19 +32,29 @@
 
 struct pipe_loader_ops {
    struct pipe_screen *(*create_screen)(struct pipe_loader_device *dev,
-                                        const char *library_paths);
+                                        const struct pipe_screen_config *config);
 
-   const struct drm_conf_ret *(*configuration)(struct pipe_loader_device *dev,
-                                               enum drm_conf conf);
+   const char *(*get_driconf_xml)(struct pipe_loader_device *dev);
 
    void (*release)(struct pipe_loader_device **dev);
 };
 
 /**
- * Open the pipe driver module that handles a specified device.
+ * Open the pipe driver module that contains the specified driver.
  */
 struct util_dl_library *
-pipe_loader_find_module(struct pipe_loader_device *dev,
+pipe_loader_find_module(const char *driver_name,
                         const char *library_paths);
+
+/**
+ * Free the base device structure.
+ *
+ * Implementations of pipe_loader_ops::release must call this.
+ *
+ * (*dev)->driver_name must be freed by the caller if it was allocated on the
+ * heap.
+ */
+void
+pipe_loader_base_release(struct pipe_loader_device **dev);
 
 #endif /* PIPE_LOADER_PRIV_H */

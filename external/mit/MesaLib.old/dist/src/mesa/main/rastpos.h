@@ -32,13 +32,17 @@
 #define RASTPOS_H
 
 
-#include "compiler.h"
+#include "glheader.h"
+
 
 struct _glapi_table;
 struct gl_context;
 
 extern void 
 _mesa_init_rastpos(struct gl_context *ctx);
+
+void
+_mesa_RasterPos(struct gl_context *ctx, const GLfloat vObj[4]);
 
 void GLAPIENTRY
 _mesa_RasterPos2d(GLdouble x, GLdouble y);

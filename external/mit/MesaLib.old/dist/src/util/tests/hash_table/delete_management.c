@@ -24,11 +24,15 @@
  *    Eric Anholt <eric@anholt.net>
  */
 
+#undef NDEBUG
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "hash_table.h"
+
+#define SIZE 10000
 
 static uint32_t
 key_value(const void *key)
@@ -47,28 +51,29 @@ main(int argc, char **argv)
 {
    struct hash_table *ht;
    struct hash_entry *entry;
-   int size = 10000;
-   uint32_t keys[size];
+   uint32_t keys[SIZE];
    uint32_t i;
 
-   ht = _mesa_hash_table_create(NULL, uint32_t_key_equals);
+   (void) argc;
+   (void) argv;
 
-   for (i = 0; i < size; i++) {
+   ht = _mesa_hash_table_create(NULL, key_value, uint32_t_key_equals);
+
+   for (i = 0; i < SIZE; i++) {
       keys[i] = i;
 
-      _mesa_hash_table_insert(ht, i, keys + i, NULL);
+      _mesa_hash_table_insert(ht, keys + i, NULL);
 
       if (i >= 100) {
          uint32_t delete_value = i - 100;
-         entry = _mesa_hash_table_search(ht, delete_value,
-                                              &delete_value);
+         entry = _mesa_hash_table_search(ht, &delete_value);
          _mesa_hash_table_remove(ht, entry);
       }
    }
 
    /* Make sure that all our entries were present at the end. */
-   for (i = size - 100; i < size; i++) {
-      entry = _mesa_hash_table_search(ht, i, keys + i);
+   for (i = SIZE - 100; i < SIZE; i++) {
+      entry = _mesa_hash_table_search(ht, keys + i);
       assert(entry);
       assert(key_value(entry->key) == i);
    }
@@ -77,8 +82,8 @@ main(int argc, char **argv)
    for (entry = _mesa_hash_table_next_entry(ht, NULL);
         entry != NULL;
         entry = _mesa_hash_table_next_entry(ht, entry)) {
-      assert(key_value(entry->key) >= size - 100 &&
-             key_value(entry->key) < size);
+      assert(key_value(entry->key) >= SIZE - 100 &&
+             key_value(entry->key) < SIZE);
    }
    assert(ht->entries == 100);
 

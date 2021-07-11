@@ -37,6 +37,7 @@
 #include "draw/draw_vs.h"
 #include "draw/draw_llvm.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_debug.h"
 
 
 struct llvm_middle_end {
@@ -60,7 +61,7 @@ struct llvm_middle_end {
 
 
 /** cast wrapper */
-static INLINE struct llvm_middle_end *
+static inline struct llvm_middle_end *
 llvm_middle_end(struct draw_pt_middle_end *middle)
 {
    return (struct llvm_middle_end *) middle;
@@ -71,6 +72,7 @@ static void
 llvm_middle_end_prepare_gs(struct llvm_middle_end *fpme)
 {
    struct draw_context *draw = fpme->draw;
+   struct draw_llvm *llvm = fpme->llvm;
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    struct draw_gs_llvm_variant_key *key;
    struct draw_gs_llvm_variant *variant = NULL;
@@ -79,7 +81,7 @@ llvm_middle_end_prepare_gs(struct llvm_middle_end *fpme)
    char store[DRAW_GS_LLVM_MAX_VARIANT_KEY_SIZE];
    unsigned i;
 
-   key = draw_gs_llvm_make_variant_key(fpme->llvm, store);
+   key = draw_gs_llvm_make_variant_key(llvm, store);
 
    /* Search shader's list of variants for the key */
    li = first_elem(&shader->variants);
@@ -93,38 +95,42 @@ llvm_middle_end_prepare_gs(struct llvm_middle_end *fpme)
 
    if (variant) {
       /* found the variant, move to head of global list (for LRU) */
-      move_to_head(&fpme->llvm->gs_variants_list,
-                   &variant->list_item_global);
+      move_to_head(&llvm->gs_variants_list, &variant->list_item_global);
    }
    else {
       /* Need to create new variant */
 
       /* First check if we've created too many variants.  If so, free
-       * 25% of the LRU to avoid using too much memory.
+       * 3.125% of the LRU to avoid using too much memory.
        */
-      if (fpme->llvm->nr_gs_variants >= DRAW_MAX_SHADER_VARIANTS) {
+      if (llvm->nr_gs_variants >= DRAW_MAX_SHADER_VARIANTS) {
+         if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+            debug_printf("Evicting GS: %u gs variants,\t%u total variants\n",
+                      shader->variants_cached, llvm->nr_gs_variants);
+         }
+
          /*
           * XXX: should we flush here ?
           */
-         for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
+         for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 32; i++) {
             struct draw_gs_llvm_variant_list_item *item;
-            if (is_empty_list(&fpme->llvm->gs_variants_list)) {
+            if (is_empty_list(&llvm->gs_variants_list)) {
                break;
             }
-            item = last_elem(&fpme->llvm->gs_variants_list);
+            item = last_elem(&llvm->gs_variants_list);
             assert(item);
             assert(item->base);
             draw_gs_llvm_destroy_variant(item->base);
          }
       }
 
-      variant = draw_gs_llvm_create_variant(fpme->llvm, gs->info.num_outputs, key);
+      variant = draw_gs_llvm_create_variant(llvm, gs->info.num_outputs, key);
 
       if (variant) {
          insert_at_head(&shader->variants, &variant->list_item_local);
-         insert_at_head(&fpme->llvm->gs_variants_list,
+         insert_at_head(&llvm->gs_variants_list,
                         &variant->list_item_global);
-         fpme->llvm->nr_gs_variants++;
+         llvm->nr_gs_variants++;
          shader->variants_cached++;
       }
    }
@@ -145,6 +151,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 {
    struct llvm_middle_end *fpme = llvm_middle_end(middle);
    struct draw_context *draw = fpme->draw;
+   struct draw_llvm *llvm = fpme->llvm;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    const unsigned out_prim = gs ? gs->output_primitive :
@@ -162,15 +169,14 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
                             draw->clip_user,
                             point_clip ? draw->guard_band_points_xy :
                                          draw->guard_band_xy,
-                            draw->identity_viewport,
+                            draw->bypass_viewport,
                             draw->rasterizer->clip_halfz,
                             (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
    draw_pt_so_emit_prepare( fpme->so_emit, gs == NULL );
 
    if (!(opt & PT_PIPELINE)) {
-      draw_pt_emit_prepare( fpme->emit,
-			    out_prim,
+      draw_pt_emit_prepare( fpme->emit, out_prim,
                             max_vertices );
 
       *max_vertices = MAX2( *max_vertices, 4096 );
@@ -179,18 +185,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       /* limit max fetches by limiting max_vertices */
       *max_vertices = 4096;
    }
-
-   /* Get the number of float[4] attributes per vertex.
-    * Note: this must be done after draw_pt_emit_prepare() since that
-    * can effect the vertex size.
-    */
-   nr = MAX2(vs->info.num_inputs, draw_total_vs_outputs(draw));
-
-   /* Always leave room for the vertex header whether we need it or
-    * not.  It's hard to get rid of it in particular because of the
-    * viewport code in draw_pt_post_vs.c.
-    */
-   fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 
    /* Get the number of float[4] attributes per vertex.
     * Note: this must be done after draw_pt_emit_prepare() since that
@@ -216,7 +210,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       char store[DRAW_LLVM_MAX_VARIANT_KEY_SIZE];
       unsigned i;
 
-      key = draw_llvm_make_variant_key(fpme->llvm, store);
+      key = draw_llvm_make_variant_key(llvm, store);
 
       /* Search shader's list of variants for the key */
       li = first_elem(&shader->variants);
@@ -230,38 +224,42 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
       if (variant) {
          /* found the variant, move to head of global list (for LRU) */
-         move_to_head(&fpme->llvm->vs_variants_list,
-                      &variant->list_item_global);
+         move_to_head(&llvm->vs_variants_list, &variant->list_item_global);
       }
       else {
          /* Need to create new variant */
 
          /* First check if we've created too many variants.  If so, free
-          * 25% of the LRU to avoid using too much memory.
+          * 3.125% of the LRU to avoid using too much memory.
           */
-         if (fpme->llvm->nr_variants >= DRAW_MAX_SHADER_VARIANTS) {
+         if (llvm->nr_variants >= DRAW_MAX_SHADER_VARIANTS) {
+            if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+               debug_printf("Evicting VS: %u vs variants,\t%u total variants\n",
+                         shader->variants_cached, llvm->nr_variants);
+            }
+
             /*
              * XXX: should we flush here ?
              */
-            for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
+            for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 32; i++) {
                struct draw_llvm_variant_list_item *item;
-               if (is_empty_list(&fpme->llvm->vs_variants_list)) {
+               if (is_empty_list(&llvm->vs_variants_list)) {
                   break;
                }
-               item = last_elem(&fpme->llvm->vs_variants_list);
+               item = last_elem(&llvm->vs_variants_list);
                assert(item);
                assert(item->base);
                draw_llvm_destroy_variant(item->base);
             }
          }
 
-         variant = draw_llvm_create_variant(fpme->llvm, nr, key);
+         variant = draw_llvm_create_variant(llvm, nr, key);
 
          if (variant) {
             insert_at_head(&shader->variants, &variant->list_item_local);
-            insert_at_head(&fpme->llvm->vs_variants_list,
+            insert_at_head(&llvm->vs_variants_list,
                            &variant->list_item_global);
-            fpme->llvm->nr_variants++;
+            llvm->nr_variants++;
             shader->variants_cached++;
          }
       }
@@ -284,30 +282,38 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 static void
 llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
 {
+   static const float fake_const_buf[4];
    struct llvm_middle_end *fpme = llvm_middle_end(middle);
    struct draw_context *draw = fpme->draw;
+   struct draw_llvm *llvm = fpme->llvm;
    unsigned i;
 
-   for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
+   for (i = 0; i < ARRAY_SIZE(llvm->jit_context.vs_constants); ++i) {
       int num_consts =
          draw->pt.user.vs_constants_size[i] / (sizeof(float) * 4);
-      fpme->llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
-      fpme->llvm->jit_context.num_vs_constants[i] = num_consts;
+      llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
+      llvm->jit_context.num_vs_constants[i] = num_consts;
+      if (num_consts == 0) {
+         llvm->jit_context.vs_constants[i] = fake_const_buf;
+      }
    }
-   for (i = 0; i < Elements(fpme->llvm->gs_jit_context.constants); ++i) {
+   for (i = 0; i < ARRAY_SIZE(llvm->gs_jit_context.constants); ++i) {
       int num_consts =
          draw->pt.user.gs_constants_size[i] / (sizeof(float) * 4);
-      fpme->llvm->gs_jit_context.constants[i] = draw->pt.user.gs_constants[i];
-      fpme->llvm->gs_jit_context.num_constants[i] = num_consts;
+      llvm->gs_jit_context.constants[i] = draw->pt.user.gs_constants[i];
+      llvm->gs_jit_context.num_constants[i] = num_consts;
+      if (num_consts == 0) {
+         llvm->gs_jit_context.constants[i] = fake_const_buf;
+      }
    }
 
-   fpme->llvm->jit_context.planes =
+   llvm->jit_context.planes =
       (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
-   fpme->llvm->gs_jit_context.planes =
+   llvm->gs_jit_context.planes =
       (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
 
-   fpme->llvm->jit_context.viewport = (float *) draw->viewports[0].scale;
-   fpme->llvm->gs_jit_context.viewport = (float *) draw->viewports[0].scale;
+   llvm->jit_context.viewports = draw->viewports;
+   llvm->gs_jit_context.viewports = draw->viewports;
 }
 
 
@@ -349,17 +355,20 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
    struct llvm_middle_end *fpme = llvm_middle_end(middle);
    struct draw_context *draw = fpme->draw;
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
-   struct draw_prim_info gs_prim_info;
+   struct draw_prim_info gs_prim_info[TGSI_MAX_VERTEX_STREAMS];
    struct draw_vertex_info llvm_vert_info;
-   struct draw_vertex_info gs_vert_info;
+   struct draw_vertex_info gs_vert_info[TGSI_MAX_VERTEX_STREAMS];
    struct draw_vertex_info *vert_info;
    struct draw_prim_info ia_prim_info;
    struct draw_vertex_info ia_vert_info;
    const struct draw_prim_info *prim_info = in_prim_info;
    boolean free_prim_info = FALSE;
    unsigned opt = fpme->opt;
-   unsigned clipped = 0;
+   boolean clipped = 0;
+   unsigned start_or_maxelt, vid_base;
+   const unsigned *elts;
 
+   assert(fetch_info->count > 0);
    llvm_vert_info.count = fetch_info->count;
    llvm_vert_info.vertex_size = fpme->vertex_size;
    llvm_vert_info.stride = fpme->vertex_size;
@@ -378,27 +387,27 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
       draw->statistics.vs_invocations += fetch_info->count;
    }
 
-   if (fetch_info->linear)
-      clipped = fpme->current_variant->jit_func( &fpme->llvm->jit_context,
-                                       llvm_vert_info.verts,
-                                       draw->pt.user.vbuffer,
-                                       fetch_info->start,
-                                       fetch_info->count,
-                                       fpme->vertex_size,
-                                       draw->pt.vertex_buffer,
-                                       draw->instance_id,
-                                       draw->start_index);
-   else
-      clipped = fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
-                                            llvm_vert_info.verts,
-                                            draw->pt.user.vbuffer,
-                                            fetch_info->elts,
-                                            draw->pt.user.eltMax,
-                                            fetch_info->count,
-                                            fpme->vertex_size,
-                                            draw->pt.vertex_buffer,
-                                            draw->instance_id,
-                                            draw->pt.user.eltBias);
+   if (fetch_info->linear) {
+      start_or_maxelt = fetch_info->start;
+      vid_base = draw->start_index;
+      elts = NULL;
+   }
+   else {
+      start_or_maxelt = draw->pt.user.eltMax;
+      vid_base = draw->pt.user.eltBias;
+      elts = fetch_info->elts;
+   }
+   clipped = fpme->current_variant->jit_func(&fpme->llvm->jit_context,
+                                             llvm_vert_info.verts,
+                                             draw->pt.user.vbuffer,
+                                             fetch_info->count,
+                                             start_or_maxelt,
+                                             fpme->vertex_size,
+                                             draw->pt.vertex_buffer,
+                                             draw->instance_id,
+                                             vid_base,
+                                             draw->start_instance,
+                                             elts);
 
    /* Finished with fetch and vs:
     */
@@ -413,12 +422,21 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
                                vert_info,
                                prim_info,
                                &vshader->info,
-                               &gs_vert_info,
-                               &gs_prim_info);
+                               gs_vert_info,
+                               gs_prim_info);
 
       FREE(vert_info->verts);
-      vert_info = &gs_vert_info;
-      prim_info = &gs_prim_info;
+      vert_info = &gs_vert_info[0];
+      prim_info = &gs_prim_info[0];
+      /*
+       * pt emit can only handle ushort number of vertices (see
+       * render->allocate_vertices).
+       * vsplit guarantees there's never more than 4096, however GS can
+       * easily blow this up (by a factor of 256 (or even 1024) max).
+       */
+      if (vert_info->count > 65535) {
+         opt |= PT_PIPELINE;
+      }
    } else {
       if (draw_prim_assembler_is_required(draw, prim_info, vert_info)) {
          draw_prim_assembler_run(draw, prim_info, vert_info,
@@ -443,7 +461,7 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
    }
 
    /* stream output needs to be done before clipping */
-   draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
+   draw_pt_so_emit( fpme->so_emit, 1, vert_info, prim_info );
 
    draw_stats_clipper_primitives(draw, prim_info);
 
@@ -452,9 +470,11 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
     * will try to access non-existent position output.
     */
    if (draw_current_shader_position_output(draw) != -1) {
-      if ((opt & PT_SHADE) && gshader) {
+      if ((opt & PT_SHADE) && (gshader ||
+                               draw->vs.vertex_shader->info.writes_viewport_index)) {
          clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info, prim_info );
       }
+      /* "clipped" also includes non-one edgeflag */
       if (clipped) {
          opt |= PT_PIPELINE;
       }
@@ -472,6 +492,16 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
    if (free_prim_info) {
       FREE(prim_info->primitive_lengths);
    }
+}
+
+
+static inline unsigned
+prim_type(unsigned prim, unsigned flags)
+{
+   if (flags & DRAW_LINE_LOOP_AS_STRIP)
+      return PIPE_PRIM_LINE_STRIP;
+   else
+      return prim;
 }
 
 
@@ -496,7 +526,7 @@ llvm_middle_end_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
@@ -524,7 +554,7 @@ llvm_middle_end_linear_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = count;
    prim_info.elts = NULL;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
@@ -554,7 +584,7 @@ llvm_middle_end_linear_run_elts(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;

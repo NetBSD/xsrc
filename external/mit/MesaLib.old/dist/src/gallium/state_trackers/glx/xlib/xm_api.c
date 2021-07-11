@@ -53,6 +53,7 @@
 #undef __WIN32__
 #endif
 
+#include <stdio.h>
 #include "xm_api.h"
 #include "xm_st.h"
 
@@ -60,11 +61,16 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
 
 #include "util/u_atomic.h"
 #include "util/u_inlines.h"
+#include "util/u_math.h"
 
 #include "hud/hud_context.h"
+
+#include "main/errors.h"
+#include "main/imports.h"
 
 #include "xm_public.h"
 #include <GL/glx.h>
@@ -109,14 +115,6 @@ void xmesa_set_driver( const struct xm_driver *templ )
 }
 
 
-/*
- * XXX replace this with a linked list, or better yet, try to attach the
- * gallium/mesa extra bits to the X Display object with XAddExtension().
- */
-#define MAX_DISPLAYS 10
-static struct xmesa_display Displays[MAX_DISPLAYS];
-static int NumDisplays = 0;
-
 static int
 xmesa_get_param(struct st_manager *smapi,
                 enum st_manager_param param)
@@ -129,60 +127,147 @@ xmesa_get_param(struct st_manager *smapi,
    }
 }
 
+/* linked list of XMesaDisplay hooks per display */
+typedef struct _XMesaExtDisplayInfo {
+   struct _XMesaExtDisplayInfo *next;
+   Display *display;
+   struct xmesa_display mesaDisplay;
+} XMesaExtDisplayInfo;
+
+typedef struct _XMesaExtInfo {
+   XMesaExtDisplayInfo *head;
+   int ndisplays;
+} XMesaExtInfo;
+
+static XMesaExtInfo MesaExtInfo;
+
+/* hook to delete XMesaDisplay on XDestroyDisplay */
+extern void
+xmesa_close_display(Display *display)
+{
+   XMesaExtDisplayInfo *info, *prev;
+
+   /* These assertions are not valid since screen creation can fail and result
+    * in an empty list
+   assert(MesaExtInfo.ndisplays > 0);
+   assert(MesaExtInfo.head);
+   */
+
+   _XLockMutex(_Xglobal_lock);
+   /* first find display */
+   prev = NULL;
+   for (info = MesaExtInfo.head; info; info = info->next) {
+      if (info->display == display) {
+         prev = info;
+         break;
+      }
+   }
+
+   if (info == NULL) {
+      /* no display found */
+      _XUnlockMutex(_Xglobal_lock);
+      return;
+   }
+
+   /* remove display entry from list */
+   if (prev != MesaExtInfo.head) {
+      prev->next = info->next;
+   } else {
+      MesaExtInfo.head = info->next;
+   }
+   MesaExtInfo.ndisplays--;
+
+   _XUnlockMutex(_Xglobal_lock);
+
+   /* don't forget to clean up mesaDisplay */
+   XMesaDisplay xmdpy = &info->mesaDisplay;
+
+   /**
+    * XXX: Don't destroy the screens here, since there may still
+    * be some dangling screen pointers that are used after this point
+    * if (xmdpy->screen) {
+    *    xmdpy->screen->destroy(xmdpy->screen);
+    * }
+    */
+
+   if (xmdpy->smapi->destroy)
+      xmdpy->smapi->destroy(xmdpy->smapi);
+   free(xmdpy->smapi);
+
+   XFree((char *) info);
+}
+
 static XMesaDisplay
 xmesa_init_display( Display *display )
 {
-   pipe_static_mutex(init_mutex);
+   static mtx_t init_mutex = _MTX_INITIALIZER_NP;
    XMesaDisplay xmdpy;
-   int i;
+   XMesaExtDisplayInfo *info;
 
-   pipe_mutex_lock(init_mutex);
+   if (display == NULL) {
+      return NULL;
+   }
 
-   /* Look for XMesaDisplay which corresponds to 'display' */
-   for (i = 0; i < NumDisplays; i++) {
-      if (Displays[i].display == display) {
+   mtx_lock(&init_mutex);
+
+   /* Look for XMesaDisplay which corresponds to this display */
+   info = MesaExtInfo.head;
+   while(info) {
+      if (info->display == display) {
          /* Found it */
-         pipe_mutex_unlock(init_mutex);
-         return &Displays[i];
+         mtx_unlock(&init_mutex);
+         return  &info->mesaDisplay;
       }
+      info = info->next;
    }
 
-   /* Create new XMesaDisplay */
+   /* Not found.  Create new XMesaDisplay */
+   /* first allocate X-related resources and hook destroy callback */
 
-   assert(NumDisplays < MAX_DISPLAYS);
-   xmdpy = &Displays[NumDisplays];
-   NumDisplays++;
-
-   if (!xmdpy->display && display) {
-      xmdpy->display = display;
-      xmdpy->screen = driver.create_pipe_screen(display);
-      xmdpy->smapi = CALLOC_STRUCT(st_manager);
-      if (xmdpy->smapi) {
-         xmdpy->smapi->screen = xmdpy->screen;
-         xmdpy->smapi->get_param = xmesa_get_param;
-      }
-
-      if (xmdpy->screen && xmdpy->smapi) {
-         pipe_mutex_init(xmdpy->mutex);
-      }
-      else {
-         if (xmdpy->screen) {
-            xmdpy->screen->destroy(xmdpy->screen);
-            xmdpy->screen = NULL;
-         }
-         free(xmdpy->smapi);
-         xmdpy->smapi = NULL;
-
-         xmdpy->display = NULL;
-      }
+   /* allocate mesa display info */
+   info = (XMesaExtDisplayInfo *) Xmalloc(sizeof(XMesaExtDisplayInfo));
+   if (info == NULL) {
+      mtx_unlock(&init_mutex);
+      return NULL;
    }
-   if (!xmdpy->display || xmdpy->display != display)
-      xmdpy = NULL;
+   info->display = display;
 
-   pipe_mutex_unlock(init_mutex);
+   xmdpy = &info->mesaDisplay; /* to be filled out below */
+   xmdpy->display = display;
+   xmdpy->pipe = NULL;
+
+   xmdpy->smapi = CALLOC_STRUCT(st_manager);
+   if (!xmdpy->smapi) {
+      Xfree(info);
+      mtx_unlock(&init_mutex);
+      return NULL;
+   }
+
+   xmdpy->screen = driver.create_pipe_screen(display);
+   if (!xmdpy->screen) {
+      free(xmdpy->smapi);
+      Xfree(info);
+      mtx_unlock(&init_mutex);
+      return NULL;
+   }
+
+   /* At this point, both smapi and screen are known to be valid */
+   xmdpy->smapi->screen = xmdpy->screen;
+   xmdpy->smapi->get_param = xmesa_get_param;
+   (void) mtx_init(&xmdpy->mutex, mtx_plain);
+
+   /* chain to the list of displays */
+   _XLockMutex(_Xglobal_lock);
+   info->next = MesaExtInfo.head;
+   MesaExtInfo.head = info;
+   MesaExtInfo.ndisplays++;
+   _XUnlockMutex(_Xglobal_lock);
+
+   mtx_unlock(&init_mutex);
 
    return xmdpy;
 }
+
 
 /**********************************************************************/
 /*****                     X Utility Functions                    *****/
@@ -242,7 +327,7 @@ bits_per_pixel( XMesaVisual xmv )
  * Do this by calling XGetWindowAttributes() for the window and
  * checking if we catch an X error.
  * Input:  dpy - the display
- *         win - the window to check for existance
+ *         win - the window to check for existence
  * Return:  GL_TRUE - window exists
  *          GL_FALSE - window doesn't exist
  */
@@ -295,9 +380,9 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
    XMesaDisplay xmdpy = xmesa_init_display(dpy);
    Status stat;
 
-   pipe_mutex_lock(xmdpy->mutex);
+   mtx_lock(&xmdpy->mutex);
    stat = get_drawable_size(dpy, b->ws.drawable, width, height);
-   pipe_mutex_unlock(xmdpy->mutex);
+   mtx_unlock(&xmdpy->mutex);
 
    if (!stat) {
       /* probably querying a window that's recently been destroyed */
@@ -376,11 +461,11 @@ choose_pixel_format(XMesaVisual v)
  * stencil sizes.
  */
 static enum pipe_format
-choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
+choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil,
+                            int sample_count)
 {
    const enum pipe_texture_target target = PIPE_TEXTURE_2D;
    const unsigned tex_usage = PIPE_BIND_DEPTH_STENCIL;
-   const unsigned sample_count = 0;
    enum pipe_format formats[8], fmt;
    int count, i;
 
@@ -405,7 +490,7 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
    for (i = 0; i < count; i++) {
       if (xmdpy->screen->is_format_supported(xmdpy->screen, formats[i],
                                              target, sample_count,
-                                             tex_usage)) {
+                                             sample_count, tex_usage)) {
          fmt = formats[i];
          break;
       }
@@ -441,7 +526,7 @@ create_xmesa_buffer(Drawable d, BufferType type,
    XMesaDisplay xmdpy = xmesa_init_display(vis->display);
    XMesaBuffer b;
 
-   ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
+   assert(type == WINDOW || type == PIXMAP || type == PBUFFER);
 
    if (!xmdpy)
       return NULL;
@@ -518,6 +603,11 @@ xmesa_free_buffer(XMesaBuffer buffer)
           */
          b->ws.drawable = 0;
 
+         /* Notify the st manager that the associated framebuffer interface
+          * object is no longer valid.
+          */
+         stapi->destroy_drawable(stapi, buffer->stfb);
+
          /* XXX we should move the buffer to a delete-pending list and destroy
           * the buffer until it is no longer current.
           */
@@ -556,7 +646,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
                              GLboolean rgb_flag, Drawable window,
                              Colormap cmap)
 {
-   ASSERT(!b || b->xm_visual == v);
+   assert(!b || b->xm_visual == v);
 
    /* Save true bits/pixel */
    v->BitsPerPixel = bits_per_pixel(v);
@@ -592,7 +682,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
     * which can help Brian figure out what's going on when a user
     * reports bugs.
     */
-   if (_mesa_getenv("MESA_INFO")) {
+   if (getenv("MESA_INFO")) {
       printf("X/Mesa visual = %p\n", (void *) v);
       printf("X/Mesa level = %d\n", v->mesa_visual.level);
       printf("X/Mesa depth = %d\n", v->visinfo->depth);
@@ -686,7 +776,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
       return NULL;
 
    /* For debugging only */
-   if (_mesa_getenv("MESA_XSYNC")) {
+   if (getenv("MESA_XSYNC")) {
       /* This makes debugging X easier.
        * In your debugger, set a breakpoint on _XError to stop when an
        * X protocol error is generated.
@@ -705,7 +795,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
     * the struct but we may need some of the information contained in it
     * at a later time.
     */
-   v->visinfo = (XVisualInfo *) malloc(sizeof(*visinfo));
+   v->visinfo = malloc(sizeof(*visinfo));
    if (!v->visinfo) {
       free(v);
       return NULL;
@@ -736,9 +826,9 @@ XMesaVisual XMesaCreateVisual( Display *display,
    {
       const int xclass = v->visualType;
       if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
-         red_bits   = _mesa_bitcount(GET_REDMASK(v));
-         green_bits = _mesa_bitcount(GET_GREENMASK(v));
-         blue_bits  = _mesa_bitcount(GET_BLUEMASK(v));
+         red_bits   = util_bitcount(GET_REDMASK(v));
+         green_bits = util_bitcount(GET_GREENMASK(v));
+         blue_bits  = util_bitcount(GET_BLUEMASK(v));
       }
       else {
          /* this is an approximation */
@@ -784,8 +874,8 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
       vis->numAuxBuffers = 0;
       vis->level = 0;
-      vis->sampleBuffers = 0;
-      vis->samples = 0;
+      vis->sampleBuffers = num_samples > 1;
+      vis->samples = num_samples;
    }
 
    v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
@@ -798,6 +888,15 @@ XMesaVisual XMesaCreateVisual( Display *display,
    }
 
    v->stvis.color_format = choose_pixel_format(v);
+
+   /* Check format support at requested num_samples (for multisample) */
+   if (!xmdpy->screen->is_format_supported(xmdpy->screen,
+                                           v->stvis.color_format,
+                                           PIPE_TEXTURE_2D, num_samples,
+                                           num_samples,
+                                           PIPE_BIND_RENDER_TARGET))
+      v->stvis.color_format = PIPE_FORMAT_NONE;
+
    if (v->stvis.color_format == PIPE_FORMAT_NONE) {
       free(v->visinfo);
       free(v);
@@ -805,7 +904,8 @@ XMesaVisual XMesaCreateVisual( Display *display,
    }
 
    v->stvis.depth_stencil_format =
-      choose_depth_stencil_format(xmdpy, depth_size, stencil_size);
+      choose_depth_stencil_format(xmdpy, depth_size, stencil_size,
+                                  num_samples);
 
    v->stvis.accum_format = (accum_red_size +
          accum_green_size + accum_blue_size + accum_alpha_size) ?
@@ -841,10 +941,10 @@ xmesa_get_name(void)
 /**
  * Do per-display initializations.
  */
-void
+int
 xmesa_init( Display *display )
 {
-   xmesa_init_display(display);
+   return xmesa_init_display(display) ? 0 : 1;
 }
 
 
@@ -866,12 +966,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
    XMesaContext c;
 
    if (!xmdpy)
-      return NULL;
+      goto no_xmesa_context;
 
    /* Note: the XMesaContext contains a Mesa struct gl_context struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
    if (!c)
-      return NULL;
+      goto no_xmesa_context;
 
    c->xm_visual = v;
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
@@ -888,52 +988,66 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
    if (contextFlags & GLX_CONTEXT_ROBUST_ACCESS_BIT_ARB)
       attribs.flags |= ST_CONTEXT_FLAG_ROBUST_ACCESS;
 
-   /* There are no profiles before OpenGL 3.2.  The
-    * GLX_ARB_create_context_profile spec says:
-    *
-    *     "If the requested OpenGL version is less than 3.2,
-    *     GLX_CONTEXT_PROFILE_MASK_ARB is ignored and the functionality of the
-    *     context is determined solely by the requested version."
-    *
-    * The spec also says:
-    *
-    *     "The default value for GLX_CONTEXT_PROFILE_MASK_ARB is
-    *     GLX_CONTEXT_CORE_PROFILE_BIT_ARB."
-    *
-    * The spec also says:
-    *
-    *     "If version 3.1 is requested, the context returned may implement
-    *     any of the following versions:
-    *
-    *       * Version 3.1. The GL_ARB_compatibility extension may or may not
-    *         be implemented, as determined by the implementation.
-    *       * The core profile of version 3.2 or greater."
-    *
-    * and because Mesa doesn't support GL_ARB_compatibility, the only chance to
-    * honour a 3.1 context is through core profile.
-    */
-   attribs.profile = ST_PROFILE_DEFAULT;
-   if (((major > 3 || (major == 3 && minor >= 2))
-        && ((profileMask & GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0)) ||
-       (major == 3 && minor == 1))
-      attribs.profile = ST_PROFILE_OPENGL_CORE;
+   switch (profileMask) {
+   case GLX_CONTEXT_CORE_PROFILE_BIT_ARB:
+      /* There are no profiles before OpenGL 3.2.  The
+       * GLX_ARB_create_context_profile spec says:
+       *
+       *     "If the requested OpenGL version is less than 3.2,
+       *     GLX_CONTEXT_PROFILE_MASK_ARB is ignored and the functionality
+       *     of the context is determined solely by the requested version."
+       */
+      if (major > 3 || (major == 3 && minor >= 2)) {
+         attribs.profile = ST_PROFILE_OPENGL_CORE;
+         break;
+      }
+      /* fall-through */
+   case GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB:
+      /*
+       * The spec also says:
+       *
+       *     "If version 3.1 is requested, the context returned may implement
+       *     any of the following versions:
+       *
+       *       * Version 3.1. The GL_ARB_compatibility extension may or may not
+       *         be implemented, as determined by the implementation.
+       *       * The core profile of version 3.2 or greater."
+       *
+       * and because Mesa doesn't support GL_ARB_compatibility, the only chance to
+       * honour a 3.1 context is through core profile.
+       */
+      if (major == 3 && minor == 1) {
+         attribs.profile = ST_PROFILE_OPENGL_CORE;
+      } else {
+         attribs.profile = ST_PROFILE_DEFAULT;
+      }
+      break;
+   case GLX_CONTEXT_ES_PROFILE_BIT_EXT:
+      if (major >= 2) {
+         attribs.profile = ST_PROFILE_OPENGL_ES2;
+      } else {
+         attribs.profile = ST_PROFILE_OPENGL_ES1;
+      }
+      break;
+   default:
+      assert(0);
+      goto no_st;
+   }
 
    c->st = stapi->create_context(stapi, xmdpy->smapi, &attribs,
          &ctx_err, (share_list) ? share_list->st : NULL);
    if (c->st == NULL)
-      goto fail;
+      goto no_st;
 
    c->st->st_manager_private = (void *) c;
 
-   c->hud = hud_create(c->st->pipe, c->st->cso_context);
+   c->hud = hud_create(c->st->cso_context, NULL);
 
    return c;
 
-fail:
-   if (c->st)
-      c->st->destroy(c->st);
-
+no_st:
    free(c);
+no_xmesa_context:
    return NULL;
 }
 
@@ -943,7 +1057,7 @@ PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
    if (c->hud) {
-      hud_destroy(c->hud);
+      hud_destroy(c->hud, NULL);
    }
 
    c->st->destroy(c->st);
@@ -1067,8 +1181,8 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;
       }
-      else if (   _mesa_bitcount(b->width)  == 1
-               && _mesa_bitcount(b->height) == 1) {
+      else if (   util_bitcount(b->width)  == 1
+               && util_bitcount(b->height) == 1) {
          /* power of two size */
          if (b->height == 1) {
             target = GLX_TEXTURE_1D_EXT;
@@ -1249,7 +1363,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
    if (xmctx && xmctx->hud) {
       struct pipe_resource *back =
          xmesa_get_framebuffer_resource(b->stfb, ST_ATTACHMENT_BACK_LEFT);
-      hud_draw(xmctx->hud, back);
+      hud_run(xmctx->hud, NULL, back);
    }
 
    if (xmctx && xmctx->xm_buffer == b) {
@@ -1285,7 +1399,7 @@ void XMesaFlush( XMesaContext c )
 
       c->st->flush(c->st, ST_FLUSH_FRONT, &fence);
       if (fence) {
-         xmdpy->screen->fence_finish(xmdpy->screen, fence,
+         xmdpy->screen->fence_finish(xmdpy->screen, NULL, fence,
                                      PIPE_TIMEOUT_INFINITE);
          xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
       }

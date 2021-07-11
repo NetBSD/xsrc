@@ -72,6 +72,7 @@ struct save_state
 
    /* Always saved/restored with meta. */
    gl_api API;
+   uint8_t ExtensionsVersion;
 
    /** MESA_META_CLEAR (and others?) */
    struct gl_query_object *CurrentOcclusionObject;
@@ -89,7 +90,7 @@ struct save_state
    GLboolean DitherFlag;
 
    /** MESA_META_COLOR_MASK */
-   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];
+   GLbitfield ColorMask;
 
    /** MESA_META_DEPTH_TEST */
    struct gl_depthbuffer_attrib Depth;
@@ -120,11 +121,11 @@ struct save_state
 
    /** MESA_META_SHADER */
    GLboolean VertexProgramEnabled;
-   struct gl_vertex_program *VertexProgram;
+   struct gl_program *VertexProgram;
    GLboolean FragmentProgramEnabled;
-   struct gl_fragment_program *FragmentProgram;
+   struct gl_program *FragmentProgram;
    GLboolean ATIFragmentShaderEnabled;
-   struct gl_shader_program *Shader[MESA_SHADER_STAGES];
+   struct gl_program *Program[MESA_SHADER_STAGES];
    struct gl_shader_program *ActiveShader;
    struct gl_pipeline_object   *Pipeline;
 
@@ -136,13 +137,15 @@ struct save_state
    GLfloat ModelviewMatrix[16];
    GLfloat ProjectionMatrix[16];
    GLfloat TextureMatrix[16];
+   /** GL_ARB_clip_control */
+   GLenum ClipOrigin;     /**< GL_LOWER_LEFT or GL_UPPER_LEFT */
+   GLenum ClipDepthMode;  /**< GL_NEGATIVE_ONE_TO_ONE or GL_ZERO_TO_ONE */
 
    /** MESA_META_CLIP */
    GLbitfield ClipPlanesEnabled;
 
    /** MESA_META_TEXTURE */
    GLuint ActiveUnit;
-   GLuint ClientActiveUnit;
    /** for unit[0] only */
    struct gl_texture_object *CurrentTexture[NUM_TEXTURE_TARGETS];
    /** mask of TEXTURE_2D_BIT, etc */
@@ -152,11 +155,10 @@ struct save_state
 
    /** MESA_META_VERTEX */
    struct gl_vertex_array_object *VAO;
-   struct gl_buffer_object *ArrayBufferObj;
 
    /** MESA_META_VIEWPORT */
    GLfloat ViewportX, ViewportY, ViewportW, ViewportH;
-   GLclampd DepthNear, DepthFar;
+   GLclampf DepthNear, DepthFar;
 
    /** MESA_META_CLAMP_FRAGMENT_COLOR */
    GLenum ClampFragmentColor;
@@ -184,10 +186,11 @@ struct save_state
    GLboolean RasterDiscard;
    GLboolean TransformFeedbackNeedsResume;
 
-   GLuint DrawBufferName, ReadBufferName, RenderbufferName;
+   struct gl_framebuffer *DrawBuffer;
+   struct gl_framebuffer *ReadBuffer;
 
    /** MESA_META_DRAW_BUFFERS */
-   GLenum ColorDrawBuffers[MAX_DRAW_BUFFERS];
+   GLenum16 ColorDrawBuffers[MAX_DRAW_BUFFERS];
 };
 
 /**
@@ -197,7 +200,7 @@ struct save_state
  */
 struct temp_texture
 {
-   GLuint TexObj;
+   struct gl_texture_object *tex_obj;
    GLenum Target;         /**< GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE */
    GLsizei MinSize;       /**< Min texture size to allocate */
    GLsizei MaxSize;       /**< Max possible texture size */
@@ -215,7 +218,7 @@ struct blit_shader {
    const char *type;
    const char *func;
    const char *texcoords;
-   GLuint shader_prog;
+   struct gl_shader_program *shader_prog;
 };
 
 /**
@@ -235,26 +238,58 @@ struct blit_shader_table {
 /**
  * Indices in the blit_state->msaa_shaders[] array
  *
- * Note that setup_glsl_msaa_blit_shader() assumes that the _INT enums are one
- * more than the non-_INT version and _UINT is one beyond that.
+ * Note that setup_glsl_msaa_blit_shader() assumes that the _INT enums are five
+ * more than the corresponding non-_INT versions and _UINT are five beyond that.
  */
 enum blit_msaa_shader {
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_INT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_RESOLVE,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY,
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
-   BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_INT,
+   BLIT_1X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_COPY,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_COPY_INT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_COPY_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_DEPTH_RESOLVE,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_DEPTH_COPY,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_SCALED_RESOLVE,
+   BLIT_2X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_SCALED_RESOLVE,
+   BLIT_4X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_SCALED_RESOLVE,
+   BLIT_8X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_SCALED_RESOLVE,
+   BLIT_16X_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_SCALED_RESOLVE,
    BLIT_MSAA_SHADER_COUNT,
 };
 
@@ -264,9 +299,10 @@ enum blit_msaa_shader {
 struct blit_state
 {
    GLuint VAO;
-   GLuint VBO;
-   struct blit_shader_table shaders;
-   GLuint msaa_shaders[BLIT_MSAA_SHADER_COUNT];
+   struct gl_buffer_object *buf_obj;
+   struct blit_shader_table shaders_with_depth;
+   struct blit_shader_table shaders_without_depth;
+   struct gl_shader_program *msaa_shaders[BLIT_MSAA_SHADER_COUNT];
    struct temp_texture depthTex;
    bool no_ctsi_fallback;
 };
@@ -274,8 +310,11 @@ struct blit_state
 struct fb_tex_blit_state
 {
    GLint baseLevelSave, maxLevelSave;
-   GLuint sampler, samplerSave, stencilSamplingSave;
-   GLuint tempTex;
+   struct gl_sampler_object *samp_obj;
+   struct gl_sampler_object *samp_obj_save;
+   struct gl_texture_object *tex_obj;
+   struct gl_texture_object *temp_tex_obj;
+   GLuint stencilSamplingSave;
 };
 
 
@@ -285,14 +324,9 @@ struct fb_tex_blit_state
 struct clear_state
 {
    GLuint VAO;
-   GLuint VBO;
-   GLuint ShaderProg;
-   GLint ColorLocation;
-   GLint LayerLocation;
-
-   GLuint IntegerShaderProg;
-   GLint IntegerColorLocation;
-   GLint IntegerLayerLocation;
+   struct gl_buffer_object *buf_obj;
+   struct gl_shader_program *ShaderProg;
+   struct gl_shader_program *IntegerShaderProg;
 };
 
 
@@ -302,7 +336,7 @@ struct clear_state
 struct copypix_state
 {
    GLuint VAO;
-   GLuint VBO;
+   struct gl_buffer_object *buf_obj;
 };
 
 
@@ -312,7 +346,7 @@ struct copypix_state
 struct drawpix_state
 {
    GLuint VAO;
-   GLuint VBO;
+   struct gl_buffer_object *buf_obj;
 
    GLuint StencilFP;  /**< Fragment program for drawing stencil images */
    GLuint DepthFP;  /**< Fragment program for drawing depth images */
@@ -325,7 +359,7 @@ struct drawpix_state
 struct bitmap_state
 {
    GLuint VAO;
-   GLuint VBO;
+   struct gl_buffer_object *buf_obj;
    struct temp_texture Tex;  /**< separate texture from other meta ops */
 };
 
@@ -335,9 +369,9 @@ struct bitmap_state
 struct gen_mipmap_state
 {
    GLuint VAO;
-   GLuint VBO;
-   GLuint FBO;
-   GLuint Sampler;
+   struct gl_buffer_object *buf_obj;
+   struct gl_framebuffer *fb;
+   struct gl_sampler_object *samp_obj;
 
    struct blit_shader_table shaders;
 };
@@ -348,7 +382,8 @@ struct gen_mipmap_state
  */
 struct decompress_fbo_state
 {
-   GLuint FBO, RBO;
+   struct gl_renderbuffer *rb;
+   struct gl_framebuffer *fb;
    GLint Width, Height;
 };
 
@@ -359,7 +394,8 @@ struct decompress_state
 {
    GLuint VAO;
    struct decompress_fbo_state byteFBO, floatFBO;
-   GLuint VBO, Sampler;
+   struct gl_buffer_object *buf_obj;
+   struct gl_sampler_object *samp_obj;
 
    struct blit_shader_table shaders;
 };
@@ -370,7 +406,7 @@ struct decompress_state
 struct drawtex_state
 {
    GLuint VAO;
-   GLuint VBO;
+   struct gl_buffer_object *buf_obj;
 };
 
 #define MAX_META_OPS_DEPTH      8
@@ -413,50 +449,46 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state);
 extern void
 _mesa_meta_end(struct gl_context *ctx);
 
-extern GLboolean
-_mesa_meta_in_progress(struct gl_context *ctx);
+static inline bool
+_mesa_meta_in_progress(struct gl_context *ctx)
+{
+   return ctx->Meta->SaveStackDepth != 0;
+}
 
 extern void
-_mesa_meta_fb_tex_blit_begin(const struct gl_context *ctx,
+_mesa_meta_fb_tex_blit_begin(struct gl_context *ctx,
                              struct fb_tex_blit_state *blit);
 
 extern void
 _mesa_meta_fb_tex_blit_end(struct gl_context *ctx, GLenum target,
                            struct fb_tex_blit_state *blit);
 
-extern GLboolean
-_mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
-                                struct gl_renderbuffer *rb,
-                                GLuint *tex,
-                                struct gl_texture_object **texObj,
-                                GLenum *target);
+extern struct gl_texture_object *
+_mesa_meta_texture_object_from_renderbuffer(struct gl_context *ctx,
+                                            struct gl_renderbuffer *rb);
 
-GLuint
+struct gl_sampler_object *
 _mesa_meta_setup_sampler(struct gl_context *ctx,
-                         const struct gl_texture_object *texObj,
+                         struct gl_texture_object *texObj,
                          GLenum target, GLenum filter, GLuint srcLevel);
 
 extern GLbitfield
 _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
+                           const struct gl_framebuffer *readFb,
+                           const struct gl_framebuffer *drawFb,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
 
 extern void
 _mesa_meta_and_swrast_BlitFramebuffer(struct gl_context *ctx,
+                                      struct gl_framebuffer *readFb,
+                                      struct gl_framebuffer *drawFb,
                                       GLint srcX0, GLint srcY0,
                                       GLint srcX1, GLint srcY1,
                                       GLint dstX0, GLint dstY0,
                                       GLint dstX1, GLint dstY1,
                                       GLbitfield mask, GLenum filter);
-
-bool
-_mesa_meta_CopyImageSubData_uncompressed(struct gl_context *ctx,
-                                         struct gl_texture_image *src_tex_image,
-                                         int src_x, int src_y, int src_z,
-                                         struct gl_texture_image *dst_tex_image,
-                                         int dst_x, int dst_y, int dst_z,
-                                         int src_width, int src_height);
 
 extern void
 _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers);
@@ -502,9 +534,11 @@ _mesa_meta_ClearTexSubImage(struct gl_context *ctx,
                             const GLvoid *clearValue);
 
 extern void
-_mesa_meta_GetTexImage(struct gl_context *ctx,
-                       GLenum format, GLenum type, GLvoid *pixels,
-                       struct gl_texture_image *texImage);
+_mesa_meta_GetTexSubImage(struct gl_context *ctx,
+                          GLint xoffset, GLint yoffset, GLint zoffset,
+                          GLsizei width, GLsizei height, GLsizei depth,
+                          GLenum format, GLenum type, GLvoid *pixels,
+                          struct gl_texture_image *texImage);
 
 extern void
 _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
@@ -514,20 +548,20 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 void
 _mesa_meta_drawbuffers_from_bitfield(GLbitfield bits);
 
-GLuint
-_mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
-                                     const GLcharARB *source);
-
-
-GLuint
-_mesa_meta_link_program_with_debug(struct gl_context *ctx, GLuint program);
+void
+_mesa_meta_link_program_with_debug(struct gl_context *ctx,
+                                   struct gl_shader_program *sh_prog);
 
 void
 _mesa_meta_compile_and_link_program(struct gl_context *ctx,
                                     const char *vs_source,
                                     const char *fs_source,
                                     const char *name,
-                                    GLuint *program);
+                                    struct gl_shader_program **sh_prog_ptr);
+
+extern void
+_mesa_meta_use_program(struct gl_context *ctx,
+                       struct gl_shader_program *sh_prog);
 
 GLboolean
 _mesa_meta_alloc_texture(struct temp_texture *tex,
@@ -536,9 +570,13 @@ _mesa_meta_alloc_texture(struct temp_texture *tex,
 void
 _mesa_meta_setup_texture_coords(GLenum faceTarget,
                                 GLint slice,
+                                GLint xoffset,
+                                GLint yoffset,
                                 GLint width,
                                 GLint height,
-                                GLint depth,
+                                GLint total_width,
+                                GLint total_height,
+                                GLint total_depth,
                                 GLfloat coords0[4],
                                 GLfloat coords1[4],
                                 GLfloat coords2[4],
@@ -551,13 +589,15 @@ struct temp_texture *
 _mesa_meta_get_temp_depth_texture(struct gl_context *ctx);
 
 void
-_mesa_meta_setup_vertex_objects(GLuint *VAO, GLuint *VBO,
+_mesa_meta_setup_vertex_objects(struct gl_context *ctx,
+                                GLuint *VAO, struct gl_buffer_object **buf_obj,
                                 bool use_generic_attributes,
                                 unsigned vertex_size, unsigned texcoord_size,
                                 unsigned color_size);
 
 void
-_mesa_meta_setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO,
+_mesa_meta_setup_ff_tnl_for_blit(struct gl_context *ctx,
+                                 GLuint *VAO, struct gl_buffer_object **buf_obj,
                                  unsigned texcoord_size);
 
 void
@@ -579,19 +619,25 @@ _mesa_meta_setup_copypix_texture(struct gl_context *ctx,
 void
 _mesa_meta_setup_blit_shader(struct gl_context *ctx,
                              GLenum target,
+                             bool do_depth,
                              struct blit_shader_table *table);
 
 void
-_mesa_meta_glsl_blit_cleanup(struct blit_state *blit);
+_mesa_meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit);
 
 void
-_mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table);
+_mesa_meta_blit_shader_table_cleanup(struct gl_context *ctx,
+                                     struct blit_shader_table *table);
 
 void
-_mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
+_mesa_meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
+                                        struct gen_mipmap_state *mipmap);
 
 void
-_mesa_meta_bind_fbo_image(GLenum target, GLenum attachment,
-                          struct gl_texture_image *texImage, GLuint layer);
+_mesa_meta_framebuffer_texture_image(struct gl_context *ctx,
+                                     struct gl_framebuffer *fb,
+                                     GLenum attachment,
+                                     struct gl_texture_image *texImage,
+                                     GLuint layer);
 
 #endif /* META_H */

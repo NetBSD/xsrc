@@ -50,7 +50,7 @@ struct lp_build_emit_data {
     * args[0] = s0.x;
     * args[1] = s1.x;
     */
-   LLVMValueRef args[12];
+   LLVMValueRef args[20];
 
    /**
     * Number of arguments in the args array.
@@ -71,10 +71,20 @@ struct lp_build_emit_data {
     */
    unsigned chan;
 
+   /**
+    * This is used to specify the src channel to read from for doubles.
+    */
+   unsigned src_chan;
+
    /** The lp_build_tgsi_action::emit 'executes' the opcode and writes the
     * results to this array.
     */
    LLVMValueRef output[4];
+
+   /**
+    * Secondary output for instruction that have a second destination register.
+    */
+   LLVMValueRef output1[4];
 
    /**
     * The current instruction that is being 'executed'.

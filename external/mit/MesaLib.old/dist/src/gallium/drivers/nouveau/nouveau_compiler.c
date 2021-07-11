@@ -109,13 +109,11 @@ nouveau_codegen(int chipset, int type, struct tgsi_token tokens[],
 
    info.type = type;
    info.target = chipset;
-   info.bin.sourceRep = NV50_PROGRAM_IR_TGSI;
+   info.bin.sourceRep = PIPE_SHADER_IR_TGSI;
    info.bin.source = tokens;
 
-   info.io.ucpCBSlot = 15;
+   info.io.auxCBSlot = 15;
    info.io.ucpBase = NV50_CB_AUX_UCP_OFFSET;
-
-   info.io.resInfoCBSlot = 15;
    info.io.suInfoBase = NV50_CB_AUX_TEX_MS_OFFSET;
    info.io.msInfoCBSlot = 15;
    info.io.msInfoBase = NV50_CB_AUX_MS_OFFSET;
@@ -124,6 +122,7 @@ nouveau_codegen(int chipset, int type, struct tgsi_token tokens[],
 
    info.optLevel = debug_get_num_option("NV50_PROG_OPTIMIZE", 3);
    info.dbgFlags = debug_get_num_option("NV50_PROG_DEBUG", 0);
+   info.omitLineNum = debug_get_num_option("NV50_PROG_DEBUG_OMIT_LINENUM", 0);
 
    ret = nv50_ir_generate_code(&info);
    if (ret) {
@@ -139,12 +138,12 @@ nouveau_codegen(int chipset, int type, struct tgsi_token tokens[],
 int
 main(int argc, char *argv[])
 {
-   struct tgsi_token tokens[1024];
+   struct tgsi_token tokens[4096];
    int i, chipset = 0, type = -1;
    const char *filename = NULL;
    FILE *f;
    char text[65536] = {0};
-   unsigned size, *code;
+   unsigned size = 0, *code = NULL;
 
    for (i = 1; i < argc; i++) {
       if (!strcmp(argv[i], "-a"))
@@ -168,7 +167,7 @@ main(int argc, char *argv[])
    else
       f = fopen(filename, "r");
 
-   if (f == NULL) {
+   if (!f) {
       _debug_printf("Error opening file '%s': %s\n", filename, strerror(errno));
       return 1;
    }
@@ -190,13 +189,19 @@ main(int argc, char *argv[])
       type = PIPE_SHADER_GEOMETRY;
    else if (!strncmp(text, "COMP", 4))
       type = PIPE_SHADER_COMPUTE;
+   else if (!strncmp(text, "TESS_CTRL", 9))
+      type = PIPE_SHADER_TESS_CTRL;
+   else if (!strncmp(text, "TESS_EVAL", 9))
+      type = PIPE_SHADER_TESS_EVAL;
    else {
       _debug_printf("Unrecognized TGSI header\n");
       return 1;
    }
 
-   if (!tgsi_text_translate(text, tokens, Elements(tokens)))
+   if (!tgsi_text_translate(text, tokens, ARRAY_SIZE(tokens))) {
+      _debug_printf("Failed to parse TGSI shader\n");
       return 1;
+   }
 
    if (chipset >= 0x50) {
       i = nouveau_codegen(chipset, type, tokens, &size, &code);

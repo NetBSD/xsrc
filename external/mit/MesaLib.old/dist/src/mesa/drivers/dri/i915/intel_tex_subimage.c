@@ -71,8 +71,8 @@ intel_blit_texsubimage(struct gl_context * ctx,
       return false;
 
    DBG("BLT subimage %s target %s level %d offset %d,%d %dx%d\n",
-       __FUNCTION__,
-       _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
+       __func__,
+       _mesa_enum_to_string(texImage->TexObject->Target),
        texImage->Level, xoffset, yoffset, width, height);
 
    pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1,
@@ -102,7 +102,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-   intel_miptree_unmap_raw(intel, temp_mt);
+   intel_miptree_unmap_raw(temp_mt);
 
    bool ret;
 
@@ -111,7 +111,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
                             0, 0, false,
                             intelImage->mt, texImage->Level, texImage->Face,
                             xoffset, yoffset, false,
-                            width, height, GL_COPY);
+                            width, height, COLOR_LOGICOP_COPY);
    assert(ret);
 
    intel_miptree_release(&temp_mt);

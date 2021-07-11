@@ -127,6 +127,12 @@ offset_tri
 
 offset_units
     Specifies the polygon offset bias
+offset_units_unscaled
+    Specifies the unit of the polygon offset bias. If false, use the
+    GL/D3D1X behaviour. If true, offset_units is a floating point offset
+    which isn't scaled (D3D9). Note that GL/D3D1X behaviour has different
+    formula whether the depth buffer is unorm or float, which is not
+    the case for D3D9.
 offset_scale
     Specifies the polygon offset scale
 offset_clamp
@@ -334,3 +340,26 @@ clip_plane_enable
     If any clip distance output is written, those half-spaces for which no
     clip distance is written count as disabled; i.e. user clip planes and
     shader clip distances cannot be mixed, and clip distances take precedence.
+
+conservative_raster_mode
+    The conservative rasterization mode.  For PIPE_CONSERVATIVE_RASTER_OFF,
+    conservative rasterization is disabled.  For IPE_CONSERVATIVE_RASTER_POST_SNAP
+    or PIPE_CONSERVATIVE_RASTER_PRE_SNAP, conservative rasterization is nabled.
+    When conservative rasterization is enabled, the polygon smooth, line mooth,
+    point smooth and line stipple settings are ignored.
+    With the post-snap mode, unlike the pre-snap mode, fragments are never
+    generated for degenerate primitives.  Degenerate primitives, when rasterized,
+    are considered back-facing and the vertex attributes and depth are that of
+    the provoking vertex.
+    If the post-snap mode is used with an unsupported primitive, the pre-snap
+    mode is used, if supported.  Behavior is similar for the pre-snap mode.
+    If the pre-snap mode is used, fragments are generated with respect to the primitive
+    before vertex snapping.
+
+conservative_raster_dilate
+    The amount of dilation during conservative rasterization.
+
+subpixel_precision_x
+    A bias added to the horizontal subpixel precision during conservative rasterization.
+subpixel_precision_y
+    A bias added to the vertical subpixel precision during conservative rasterization.

@@ -60,23 +60,21 @@ static struct vertex vertices[] =
 
 static void set_viewport( float x, float y,
                           float width, float height,
-                          float near, float far)
+                          float zNear, float zFar)
 {
-   float z = far;
+   float z = zFar;
    float half_width = (float)width / 2.0f;
    float half_height = (float)height / 2.0f;
-   float half_depth = ((float)far - (float)near) / 2.0f;
+   float half_depth = ((float)zFar - (float)zNear) / 2.0f;
    struct pipe_viewport_state vp;
 
    vp.scale[0] = half_width;
    vp.scale[1] = half_height;
    vp.scale[2] = half_depth;
-   vp.scale[3] = 1.0f;
 
    vp.translate[0] = half_width + x;
    vp.translate[1] = half_height + y;
    vp.translate[2] = half_depth + z;
-   vp.translate[3] = 0.0f;
 
    ctx->set_viewport_states( ctx, 0, 1, &vp );
 }
@@ -101,7 +99,7 @@ static void set_vertices( void )
 
    vbuf.stride = sizeof( struct vertex );
    vbuf.buffer_offset = 0;
-   vbuf.buffer = pipe_buffer_create_with_data(ctx,
+   vbuf.buffer.resource = pipe_buffer_create_with_data(ctx,
                                               PIPE_BIND_VERTEX_BUFFER,
                                               PIPE_USAGE_DEFAULT,
                                               sizeof(vertices),
@@ -211,13 +209,13 @@ static void init_tex( void )
    tex2d[1][1][3] = 255;
 #endif
 
+   memset(&templat, 0, sizeof(templat));
    templat.target = PIPE_TEXTURE_2D;
    templat.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    templat.width0 = SIZE;
    templat.height0 = SIZE;
    templat.depth0 = 1;
    templat.last_level = 0;
-   templat.nr_samples = 1;
    templat.bind = PIPE_BIND_SAMPLER_VIEW;
 
    
@@ -228,14 +226,14 @@ static void init_tex( void )
 
    u_box_2d(0,0,SIZE,SIZE, &box);
 
-   ctx->transfer_inline_write(ctx,
-                              samptex,
-                              0,
-                              PIPE_TRANSFER_WRITE,
-                              &box,
-                              tex2d,
-                              sizeof tex2d[0],
-                              sizeof tex2d);
+   ctx->texture_subdata(ctx,
+                        samptex,
+                        0,
+                        PIPE_TRANSFER_WRITE,
+                        &box,
+                        tex2d,
+                        sizeof tex2d[0],
+                        sizeof tex2d);
 
    /* Possibly read back & compare against original data:
     */
@@ -315,10 +313,11 @@ static void init( void )
       exit(1);
    }
 
-   ctx = screen->context_create(screen, NULL);
+   ctx = screen->context_create(screen, NULL, 0);
    if (ctx == NULL)
       exit(3);
 
+   memset(&templat, 0, sizeof(templat));
    templat.target = PIPE_TEXTURE_2D;
    templat.format = formats[i];
    templat.width0 = WIDTH;
@@ -326,7 +325,6 @@ static void init( void )
    templat.depth0 = 1;
    templat.array_size = 1;
    templat.last_level = 0;
-   templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
                    PIPE_BIND_DISPLAY_TARGET);
    
@@ -375,7 +373,8 @@ static void init( void )
       rasterizer.cull_face = PIPE_FACE_NONE;
       rasterizer.half_pixel_center = 1;
       rasterizer.bottom_edge_rule = 1;
-      rasterizer.depth_clip = 1;
+      rasterizer.depth_clip_near = 1;
+      rasterizer.depth_clip_far = 1;
       handle = ctx->create_rasterizer_state(ctx, &rasterizer);
       ctx->bind_rasterizer_state(ctx, handle);
    }

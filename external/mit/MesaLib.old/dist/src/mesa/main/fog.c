@@ -24,7 +24,6 @@
 
 
 #include "glheader.h"
-#include "colormac.h"
 #include "context.h"
 #include "fog.h"
 #include "macros.h"
@@ -63,6 +62,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
       case GL_FOG_END:
       case GL_FOG_INDEX:
       case GL_FOG_COORDINATE_SOURCE_EXT:
+      case GL_FOG_DISTANCE_MODE_NV:
 	 p[0] = (GLfloat) *params;
 	 break;
       case GL_FOG_COLOR:
@@ -79,19 +79,6 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
 }
 
 
-/**
- * Update the gl_fog_attrib::_Scale field.
- */
-static void
-update_fog_scale(struct gl_context *ctx)
-{
-   if (ctx->Fog.End == ctx->Fog.Start)
-      ctx->Fog._Scale = 1.0f;
-   else
-      ctx->Fog._Scale = 1.0f / (ctx->Fog.End - ctx->Fog.Start);
-}
-
-
 void GLAPIENTRY
 _mesa_Fogfv( GLenum pname, const GLfloat *params )
 {
@@ -103,8 +90,13 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          m = (GLenum) (GLint) *params;
 	 switch (m) {
 	 case GL_LINEAR:
+	    ctx->Fog._PackedMode = FOG_LINEAR;
+	    break;
 	 case GL_EXP:
+	    ctx->Fog._PackedMode = FOG_EXP;
+	    break;
 	 case GL_EXP2:
+	    ctx->Fog._PackedMode = FOG_EXP2;
 	    break;
 	 default:
 	    _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
@@ -114,9 +106,11 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.Mode = m;
+	 ctx->Fog._PackedEnabledMode = ctx->Fog.Enabled ?
+				       ctx->Fog._PackedMode : FOG_NONE;
 	 break;
       case GL_FOG_DENSITY:
-	 if (*params<0.0) {
+	 if (*params<0.0F) {
 	    _mesa_error( ctx, GL_INVALID_VALUE, "glFog" );
             return;
 	 }
@@ -130,14 +124,12 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.Start = *params;
-         update_fog_scale(ctx);
          break;
       case GL_FOG_END:
          if (ctx->Fog.End == *params)
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.End = *params;
-         update_fog_scale(ctx);
          break;
       case GL_FOG_INDEX:
          if (ctx->API != API_OPENGL_COMPAT)
@@ -191,7 +183,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
    }
 
    if (ctx->Driver.Fogfv) {
-      (*ctx->Driver.Fogfv)( ctx, pname, params );
+      ctx->Driver.Fogfv( ctx, pname, params );
    }
 
    return;
@@ -211,6 +203,8 @@ void _mesa_init_fog( struct gl_context * ctx )
    /* Fog group */
    ctx->Fog.Enabled = GL_FALSE;
    ctx->Fog.Mode = GL_EXP;
+   ctx->Fog._PackedMode = FOG_EXP;
+   ctx->Fog._PackedEnabledMode = FOG_NONE;
    ASSIGN_4V( ctx->Fog.Color, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( ctx->Fog.ColorUnclamped, 0.0, 0.0, 0.0, 0.0 );
    ctx->Fog.Index = 0.0;
@@ -219,6 +213,5 @@ void _mesa_init_fog( struct gl_context * ctx )
    ctx->Fog.End = 1.0;
    ctx->Fog.ColorSumEnabled = GL_FALSE;
    ctx->Fog.FogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
-   ctx->Fog._Scale = 1.0f;
    ctx->Fog.FogDistanceMode = GL_EYE_PLANE_ABSOLUTE_NV;
 }

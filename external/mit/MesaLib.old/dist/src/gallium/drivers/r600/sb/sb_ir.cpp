@@ -255,7 +255,7 @@ void container_node::expand() {
 void node::remove() {parent->remove_node(this);
 }
 
-value_hash node::hash_src() {
+value_hash node::hash_src() const {
 
 	value_hash h = 12345;
 
@@ -269,7 +269,7 @@ value_hash node::hash_src() {
 }
 
 
-value_hash node::hash() {
+value_hash node::hash() const {
 
 	if (parent && parent->subtype == NST_LOOP_PHI_CONTAINER)
 		return 47451;
@@ -461,6 +461,8 @@ void container_node::collect_stats(node_stats& s) {
 				++s.alu_kill_count;
 			else if (a->is_copy_mov())
 				++s.alu_copy_mov_count;
+                       if (a->uses_ar())
+                          s.uses_ar = true;
 		} else if (n->is_fetch_inst())
 			++s.fetch_count;
 		else if (n->is_cf_inst())

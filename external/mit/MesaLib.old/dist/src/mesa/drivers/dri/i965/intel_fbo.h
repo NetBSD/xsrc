@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,13 +16,12 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
@@ -41,7 +39,6 @@ extern "C" {
 #endif
 
 struct intel_mipmap_tree;
-struct intel_texture_image;
 
 /**
  * Intel renderbuffer, derived from gl_renderbuffer.
@@ -70,6 +67,16 @@ struct intel_renderbuffer
     */
    struct intel_mipmap_tree *singlesample_mt;
 
+   /* Gen < 6 doesn't have layer specifier for render targets or depth. Driver
+    * needs to manually offset surfaces to correct level/layer. There are,
+    * however, alignment restrictions to respect as well and in come cases
+    * the only option is to use temporary single slice surface which driver
+    * copies after rendering to the full miptree.
+    *
+    * See intel_renderbuffer_move_to_temp().
+    */
+   struct intel_mipmap_tree *align_wa_mt;
+
    /**
     * \name Miptree view
     * \{
@@ -82,11 +89,6 @@ struct intel_renderbuffer
     *
     * For renderbuffers not created with glFramebufferTexture*(), mt_level and
     * mt_layer are 0.
-    *
-    * Note: for a 2D multisample array texture on Gen7+ using
-    * INTEL_MSAA_LAYOUT_UMS or INTEL_MSAA_LAYOUT_CMS, mt_layer is the physical
-    * layer holding sample 0.  So, for example, if mt->num_samples == 4, then
-    * logical layer n corresponds to mt_layer == 4*n.
     */
    unsigned int mt_level;
    unsigned int mt_layer;
@@ -114,6 +116,11 @@ struct intel_renderbuffer
     * for the duration of a mapping.
     */
    bool singlesample_mt_is_tmp;
+
+   /**
+    * Set to true when application specifically asked for a sRGB visual.
+    */
+   bool need_srgb;
 };
 
 
@@ -133,14 +140,20 @@ static inline struct intel_renderbuffer *
 intel_renderbuffer(struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   if (irb && irb->Base.Base.ClassID == INTEL_RB_CLASS) {
-      /*_mesa_warning(NULL, "Returning non-intel Rb\n");*/
+   if (irb && irb->Base.Base.ClassID == INTEL_RB_CLASS)
       return irb;
-   }
    else
       return NULL;
 }
 
+static inline struct intel_mipmap_tree *
+intel_renderbuffer_get_mt(struct intel_renderbuffer *irb)
+{
+   if (!irb)
+      return NULL;
+
+   return (irb->align_wa_mt) ? irb->align_wa_mt : irb->mt;
+}
 
 /**
  * \brief Return the framebuffer attachment specified by attIndex.
@@ -172,10 +185,12 @@ intel_rb_format(const struct intel_renderbuffer *rb)
 }
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(mesa_format format, unsigned num_samples);
+intel_create_winsys_renderbuffer(struct intel_screen *screen,
+                                 mesa_format format, unsigned num_samples);
 
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(mesa_format format, unsigned num_samples);
+intel_create_private_renderbuffer(struct intel_screen *screen,
+                                  mesa_format format, unsigned num_samples);
 
 struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
@@ -193,6 +208,12 @@ intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
                                     uint32_t *tile_x,
                                     uint32_t *tile_y)
 {
+   if (irb->align_wa_mt) {
+      *tile_x = 0;
+      *tile_y = 0;
+      return 0;
+   }
+
    return intel_miptree_get_tile_offsets(irb->mt, irb->mt_level, irb->mt_layer,
                                          tile_x, tile_y);
 }
@@ -200,33 +221,6 @@ intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
 bool
 intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb);
 
-void
-intel_renderbuffer_att_set_needs_depth_resolve(struct gl_renderbuffer_attachment *att);
-
-
-/**
- * \brief Perform a HiZ resolve on the renderbuffer.
- *
- * It is safe to call this function on a renderbuffer without HiZ. In that
- * case, the function is a no-op.
- *
- * \return false if no resolve was needed
- */
-bool
-intel_renderbuffer_resolve_hiz(struct brw_context *brw,
-			       struct intel_renderbuffer *irb);
-
-/**
- * \brief Perform a depth resolve on the renderbuffer.
- *
- * It is safe to call this function on a renderbuffer without HiZ. In that
- * case, the function is a no-op.
- *
- * \return false if no resolve was needed
- */
-bool
-intel_renderbuffer_resolve_depth(struct brw_context *brw,
-				 struct intel_renderbuffer *irb);
 
 void intel_renderbuffer_move_to_temp(struct brw_context *brw,
                                      struct intel_renderbuffer *irb,
@@ -240,9 +234,16 @@ void
 intel_renderbuffer_upsample(struct brw_context *brw,
                             struct intel_renderbuffer *irb);
 
-void brw_render_cache_set_clear(struct brw_context *brw);
-void brw_render_cache_set_add_bo(struct brw_context *brw, drm_intel_bo *bo);
-void brw_render_cache_set_check_flush(struct brw_context *brw, drm_intel_bo *bo);
+void brw_cache_sets_clear(struct brw_context *brw);
+void brw_cache_flush_for_read(struct brw_context *brw, struct brw_bo *bo);
+void brw_cache_flush_for_render(struct brw_context *brw, struct brw_bo *bo,
+                                enum isl_format format,
+                                enum isl_aux_usage aux_usage);
+void brw_cache_flush_for_depth(struct brw_context *brw, struct brw_bo *bo);
+void brw_render_cache_add_bo(struct brw_context *brw, struct brw_bo *bo,
+                             enum isl_format format,
+                             enum isl_aux_usage aux_usage);
+void brw_depth_cache_add_bo(struct brw_context *brw, struct brw_bo *bo);
 
 unsigned
 intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples);

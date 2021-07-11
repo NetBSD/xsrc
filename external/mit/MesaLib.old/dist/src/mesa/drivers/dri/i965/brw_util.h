@@ -33,11 +33,42 @@
 #ifndef BRW_UTIL_H
 #define BRW_UTIL_H
 
-#include "main/mtypes.h"
-#include "main/imports.h"
+#include "brw_context.h"
+#include "main/framebuffer.h"
 
 extern GLuint brw_translate_blend_factor( GLenum factor );
 extern GLuint brw_translate_blend_equation( GLenum mode );
-extern GLenum brw_fix_xRGB_alpha(GLenum function);
+
+static inline float
+brw_get_line_width(struct brw_context *brw)
+{
+   /* From the OpenGL 4.4 spec:
+    *
+    * "The actual width of non-antialiased lines is determined by rounding
+    * the supplied width to the nearest integer, then clamping it to the
+    * implementation-dependent maximum non-antialiased line width."
+    */
+   float line_width =
+      CLAMP(!_mesa_is_multisample_enabled(&brw->ctx) && !brw->ctx.Line.SmoothFlag
+            ? roundf(brw->ctx.Line.Width) : brw->ctx.Line.Width,
+            0.125f, brw->ctx.Const.MaxLineWidth);
+
+   if (!_mesa_is_multisample_enabled(&brw->ctx) && brw->ctx.Line.SmoothFlag && line_width < 1.5f) {
+      /* For 1 pixel line thickness or less, the general
+       * anti-aliasing algorithm gives up, and a garbage line is
+       * generated.  Setting a Line Width of 0.0 specifies the
+       * rasterization of the "thinnest" (one-pixel-wide),
+       * non-antialiased lines.
+       *
+       * Lines rendered with zero Line Width are rasterized using
+       * Grid Intersection Quantization rules as specified by
+       * bspec section 6.3.12.1 Zero-Width (Cosmetic) Line
+       * Rasterization.
+       */
+      line_width = 0.0f;
+   }
+
+   return line_width;
+}
 
 #endif

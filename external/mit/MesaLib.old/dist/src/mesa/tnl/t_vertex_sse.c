@@ -25,10 +25,10 @@
  *    Keith Whitwell <keithw@vmware.com>
  */
 
+#include <stdio.h>
+
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/colormac.h"
-#include "main/simple_list.h"
 #include "main/enums.h"
 #include "swrast/s_chan.h"
 #include "t_context.h"
@@ -591,7 +591,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    break;
 	 case GL_UNSIGNED_SHORT:
 	 default:
-	    printf("unknown CHAN_TYPE %s\n", _mesa_lookup_enum_by_nr(CHAN_TYPE));
+	    printf("unknown CHAN_TYPE %s\n", _mesa_enum_to_string(CHAN_TYPE));
 	    return GL_FALSE;
 	 }
 	 break;

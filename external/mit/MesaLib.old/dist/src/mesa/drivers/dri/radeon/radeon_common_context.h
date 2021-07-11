@@ -2,7 +2,6 @@
 #ifndef COMMON_CONTEXT_H
 #define COMMON_CONTEXT_H
 
-#include "main/mm.h"
 #include "math/m_vector.h"
 #include "tnl/t_context.h"
 #include "main/colormac.h"
@@ -171,7 +170,7 @@ struct _radeon_texture_image {
 };
 
 
-static INLINE radeon_texture_image *get_radeon_texture_image(struct gl_texture_image *image)
+static inline radeon_texture_image *get_radeon_texture_image(struct gl_texture_image *image)
 {
 	return (radeon_texture_image*)image;
 }
@@ -213,7 +212,7 @@ struct radeon_tex_obj {
 	GLboolean border_fallback;
 };
 
-static INLINE radeonTexObj* radeon_tex_obj(struct gl_texture_object *texObj)
+static inline radeonTexObj* radeon_tex_obj(struct gl_texture_object *texObj)
 {
 	return (radeonTexObj*)texObj;
 }
@@ -316,7 +315,7 @@ struct radeon_prim {
 	GLuint prim;
 };
 
-static INLINE GLuint radeonPackColor(GLuint cpp,
+static inline GLuint radeonPackColor(GLuint cpp,
                                      GLubyte r, GLubyte g,
                                      GLubyte b, GLubyte a)
 {
@@ -340,17 +339,6 @@ struct radeon_store {
 	char cmd_buf[MAX_CMD_BUF_SZ];
 	int cmd_used;
 	int elts_start;
-};
-
-struct radeon_dri_mirror {
-	__DRIcontext *context;	/* DRI context */
-	__DRIscreen *screen;	/* DRI screen */
-
-	drm_context_t hwContext;
-	drm_hw_lock_t *hwLock;
-	int hwLockCount;
-	int fd;
-	int drmMinor;
 };
 
 typedef void (*radeon_tri_func) (radeonContextPtr,
@@ -385,6 +373,7 @@ struct radeon_cmdbuf {
 
 struct radeon_context {
    struct gl_context glCtx;             /**< base class, must be first */
+   __DRIcontext *driContext;               /* DRI context */
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
 
    /* Texture object bookkeeping
@@ -406,10 +395,6 @@ struct radeon_context {
 
    /* Drawable information */
    unsigned int lastStamp;
-   drm_radeon_sarea_t *sarea;	/* Private SAREA data */
-
-   /* Mirrors of some DRI state */
-   struct radeon_dri_mirror dri;
 
    /* Busy waiting */
    GLuint do_usleeps;
@@ -434,29 +419,12 @@ struct radeon_context {
   GLboolean front_cliprects;
 
    /**
-    * Set if rendering has occured to the drawable's front buffer.
+    * Set if rendering has occurred to the drawable's front buffer.
     *
     * This is used in the DRI2 case to detect that glFlush should also copy
     * the contents of the fake front buffer to the real front buffer.
     */
    GLboolean front_buffer_dirty;
-
-   /**
-    * Track whether front-buffer rendering is currently enabled
-    *
-    * A separate flag is used to track this in order to support MRT more
-    * easily.
-    */
-   GLboolean is_front_buffer_rendering;
-
-   /**
-    * Track whether front-buffer is the current read target.
-    *
-    * This is closely associated with is_front_buffer_rendering, but may
-    * be set separately.  The DRI2 fake front buffer must be referenced
-    * either way.
-    */
-   GLboolean is_front_buffer_reading;
 
    struct {
 	struct radeon_query_object *current;
@@ -464,11 +432,7 @@ struct radeon_context {
    } query;
 
    struct {
-	   void (*get_lock)(radeonContextPtr radeon);
-	   void (*update_viewport_offset)(struct gl_context *ctx);
-	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
 	   void (*swtcl_flush)(struct gl_context *ctx, uint32_t offset);
-	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
 	   void (*fallback)(struct gl_context *ctx, GLuint bit, GLboolean mode);
 	   void (*free_context)(struct gl_context *ctx);
@@ -507,15 +471,15 @@ static inline radeonContextPtr RADEON_CONTEXT(struct gl_context *ctx)
 
 static inline __DRIdrawable* radeon_get_drawable(radeonContextPtr radeon)
 {
-	return radeon->dri.context->driDrawablePriv;
+	return radeon->driContext->driDrawablePriv;
 }
 
 static inline __DRIdrawable* radeon_get_readable(radeonContextPtr radeon)
 {
-	return radeon->dri.context->driReadablePriv;
+	return radeon->driContext->driReadablePriv;
 }
 
-extern const char * const radeonVendorString;
+extern const char *const radeonVendorString;
 
 const char *radeonGetRendererString(radeonScreenPtr radeonScreen);
 

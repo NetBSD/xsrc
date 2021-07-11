@@ -112,11 +112,11 @@ static bool check_urb_layout(struct brw_context *brw)
 /* Most minimal update, forces re-emit of URB fence packet after GS
  * unit turned on/off.
  */
-static void recalculate_urb_fence( struct brw_context *brw )
+void
+brw_calculate_urb_fence(struct brw_context *brw, unsigned csize,
+                        unsigned vsize, unsigned sfsize)
 {
-   GLuint csize = brw->curbe.total_size;
-   GLuint vsize = brw->vs.prog_data->base.urb_entry_size;
-   GLuint sfsize = brw->sf.prog_data->urb_entry_size;
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    if (csize < limits[CS].min_entry_size)
       csize = limits[CS].min_entry_size;
@@ -139,15 +139,15 @@ static void recalculate_urb_fence( struct brw_context *brw )
       brw->urb.sfsize = sfsize;
       brw->urb.vsize = vsize;
 
-      brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;	
-      brw->urb.nr_gs_entries = limits[GS].preferred_nr_entries;	
+      brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
+      brw->urb.nr_gs_entries = limits[GS].preferred_nr_entries;
       brw->urb.nr_clip_entries = limits[CLP].preferred_nr_entries;
-      brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;	
-      brw->urb.nr_cs_entries = limits[CS].preferred_nr_entries;	
+      brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
+      brw->urb.nr_cs_entries = limits[CS].preferred_nr_entries;
 
       brw->urb.constrained = 0;
 
-      if (brw->gen == 5) {
+      if (devinfo->gen == 5) {
          brw->urb.nr_vs_entries = 128;
          brw->urb.nr_sf_entries = 48;
          if (check_urb_layout(brw)) {
@@ -157,7 +157,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
             brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
             brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
          }
-      } else if (brw->is_g4x) {
+      } else if (devinfo->is_g4x) {
 	 brw->urb.nr_vs_entries = 64;
 	 if (check_urb_layout(brw)) {
 	    goto done;
@@ -168,18 +168,18 @@ static void recalculate_urb_fence( struct brw_context *brw )
       }
 
       if (!check_urb_layout(brw)) {
-	 brw->urb.nr_vs_entries = limits[VS].min_nr_entries;	
-	 brw->urb.nr_gs_entries = limits[GS].min_nr_entries;	
+	 brw->urb.nr_vs_entries = limits[VS].min_nr_entries;
+	 brw->urb.nr_gs_entries = limits[GS].min_nr_entries;
 	 brw->urb.nr_clip_entries = limits[CLP].min_nr_entries;
-	 brw->urb.nr_sf_entries = limits[SF].min_nr_entries;	
-	 brw->urb.nr_cs_entries = limits[CS].min_nr_entries;	
+	 brw->urb.nr_sf_entries = limits[SF].min_nr_entries;
+	 brw->urb.nr_cs_entries = limits[CS].min_nr_entries;
 
 	 /* Mark us as operating with constrained nr_entries, so that next
 	  * time we recalculate we'll resize the fences in the hope of
 	  * escaping constrained mode and getting back to normal performance.
 	  */
 	 brw->urb.constrained = 1;
-	
+
 	 if (!check_urb_layout(brw)) {
 	    /* This is impossible, given the maximal sizes of urb
 	     * entries and the values for minimum nr of entries
@@ -188,7 +188,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	    fprintf(stderr, "couldn't calculate URB layout!\n");
 	    exit(1);
 	 }
-	
+
 	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_PERF)))
 	    fprintf(stderr, "URB CONSTRAINED\n");
       }
@@ -204,17 +204,25 @@ done:
                  brw->urb.cs_start,
                  brw->urb.size);
 
-      brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
+      brw->ctx.NewDriverState |= BRW_NEW_URB_FENCE;
    }
+}
+
+static void recalculate_urb_fence( struct brw_context *brw )
+{
+   brw_calculate_urb_fence(brw, brw->curbe.total_size,
+                           brw_vue_prog_data(brw->vs.base.prog_data)->urb_entry_size,
+                           brw->sf.prog_data->urb_entry_size);
 }
 
 
 const struct brw_tracked_state brw_recalculate_urb_fence = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CURBE_OFFSETS,
-      .cache = (CACHE_NEW_VS_PROG |
-		CACHE_NEW_SF_PROG)
+      .brw = BRW_NEW_BLORP |
+             BRW_NEW_PUSH_CONSTANT_ALLOCATION |
+             BRW_NEW_SF_PROG_DATA |
+             BRW_NEW_VS_PROG_DATA,
    },
    .emit = recalculate_urb_fence
 };
@@ -249,12 +257,12 @@ void brw_upload_urb_fence(struct brw_context *brw)
    uf.bits1.cs_fence  = brw->urb.size;
 
    /* erratum: URB_FENCE must not cross a 64byte cacheline */
-   if ((brw->batch.used & 15) > 12) {
-      int pad = 16 - (brw->batch.used & 15);
+   if ((USED_BATCH(brw->batch) & 15) > 12) {
+      int pad = 16 - (USED_BATCH(brw->batch) & 15);
       do
-	 brw->batch.map[brw->batch.used++] = MI_NOOP;
+         *brw->batch.map_next++ = MI_NOOP;
       while (--pad);
    }
 
-   BRW_BATCH_STRUCT(brw, &uf);
+   intel_batchbuffer_data(brw, &uf, sizeof(uf));
 }

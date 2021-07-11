@@ -158,16 +158,16 @@ get_max_vertices(struct gl_context *ctx, const struct _mesa_index_buffer *ib,
 		unsigned max_out;
 
 		if (ib) {
-			switch (ib->type) {
-			case GL_UNSIGNED_INT:
+			switch (ib->index_size) {
+			case 4:
 				max_out = MAX_OUT_I32;
 				break;
 
-			case GL_UNSIGNED_SHORT:
+			case 2:
 				max_out = MAX_OUT_I16;
 				break;
 
-			case GL_UNSIGNED_BYTE:
+			case 1:
 				max_out = MAX_OUT_I16;
 				break;
 
@@ -188,7 +188,7 @@ static void
 TAG(emit_material)(struct gl_context *ctx, struct nouveau_array *a,
 		   const void *v)
 {
-	int attr = a->attr - VERT_ATTRIB_GENERIC0;
+	int attr = a->attr - VERT_ATTRIB_MAT(0);
 	int state = ((int []) {
 			NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT,
 			NOUVEAU_STATE_MATERIAL_BACK_AMBIENT,

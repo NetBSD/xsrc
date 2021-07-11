@@ -52,7 +52,7 @@ sp_alloc_tile(struct softpipe_tile_cache *tc);
    (((x) + (y) * 5 + (l) * 10) % NUM_ENTRIES)
 
 
-static INLINE int addr_to_clear_pos(union tile_address addr)
+static inline int addr_to_clear_pos(union tile_address addr)
 {
    int pos;
    pos = addr.bits.layer * (MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE);
@@ -63,7 +63,7 @@ static INLINE int addr_to_clear_pos(union tile_address addr)
 /**
  * Is the tile at (x,y) in cleared state?
  */
-static INLINE uint
+static inline uint
 is_clear_flag_set(const uint *bitvec, union tile_address addr, unsigned max)
 {
    int pos, bit;
@@ -77,7 +77,7 @@ is_clear_flag_set(const uint *bitvec, union tile_address addr, unsigned max)
 /**
  * Mark the tile at (x,y) as not cleared.
  */
-static INLINE void
+static inline void
 clear_clear_flag(uint *bitvec, union tile_address addr, unsigned max)
 {
    int pos;
@@ -92,21 +92,22 @@ sp_create_tile_cache( struct pipe_context *pipe )
 {
    struct softpipe_tile_cache *tc;
    uint pos;
-   int maxLevels, maxTexSize;
+   MAYBE_UNUSED int maxTexSize;
+   int maxLevels;
 
    /* sanity checking: max sure MAX_WIDTH/HEIGHT >= largest texture image */
    maxLevels = pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
    maxTexSize = 1 << (maxLevels - 1);
    assert(MAX_WIDTH >= maxTexSize);
 
-   assert(sizeof(union tile_address) == 4);
+   STATIC_ASSERT(sizeof(union tile_address) == 4);
 
-   assert((TILE_SIZE << TILE_ADDR_BITS) >= MAX_WIDTH);
+   STATIC_ASSERT((TILE_SIZE << TILE_ADDR_BITS) >= MAX_WIDTH);
 
    tc = CALLOC_STRUCT( softpipe_tile_cache );
    if (tc) {
       tc->pipe = pipe;
-      for (pos = 0; pos < Elements(tc->tile_addrs); pos++) {
+      for (pos = 0; pos < ARRAY_SIZE(tc->tile_addrs); pos++) {
          tc->tile_addrs[pos].bits.invalid = 1;
       }
       tc->last_tile_addr.bits.invalid = 1;
@@ -141,7 +142,7 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
    if (tc) {
       uint pos;
 
-      for (pos = 0; pos < Elements(tc->entries); pos++) {
+      for (pos = 0; pos < ARRAY_SIZE(tc->entries); pos++) {
          /*assert(tc->entries[pos].x < 0);*/
          FREE( tc->entries[pos] );
       }
@@ -186,8 +187,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
       FREE(tc->transfer_map);
       tc->num_maps = 0;
 
-      if (tc->clear_flags)
-         FREE(tc->clear_flags);
+      FREE(tc->clear_flags);
       tc->clear_flags_size = 0;
    }
 
@@ -373,17 +373,18 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc, int layer)
                if (util_format_is_pure_uint(tc->surface->format)) {
                   pipe_put_tile_ui_format(pt, tc->transfer_map[layer],
                                           x, y, TILE_SIZE, TILE_SIZE,
-                                          pt->resource->format,
+                                          tc->surface->format,
                                           (unsigned *) tc->tile->data.colorui128);
                } else if (util_format_is_pure_sint(tc->surface->format)) {
                   pipe_put_tile_i_format(pt, tc->transfer_map[layer],
                                          x, y, TILE_SIZE, TILE_SIZE,
-                                         pt->resource->format,
+                                         tc->surface->format,
                                          (int *) tc->tile->data.colori128);
                } else {
-                  pipe_put_tile_rgba(pt, tc->transfer_map[layer],
-                                     x, y, TILE_SIZE, TILE_SIZE,
-                                     (float *) tc->tile->data.color);
+                  pipe_put_tile_rgba_format(pt, tc->transfer_map[layer],
+                                            x, y, TILE_SIZE, TILE_SIZE,
+                                            tc->surface->format,
+                                            (float *) tc->tile->data.color);
                }
             }
             numCleared++;
@@ -448,7 +449,7 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
    int i;
    if (tc->num_maps) {
       /* caching a drawing transfer */
-      for (pos = 0; pos < Elements(tc->entries); pos++) {
+      for (pos = 0; pos < ARRAY_SIZE(tc->entries); pos++) {
          struct softpipe_cached_tile *tile = tc->entries[pos];
          if (!tile)
          {
@@ -485,7 +486,7 @@ sp_alloc_tile(struct softpipe_tile_cache *tc)
       if (!tc->tile)
       {
          unsigned pos;
-         for (pos = 0; pos < Elements(tc->entries); ++pos) {
+         for (pos = 0; pos < ARRAY_SIZE(tc->entries); ++pos) {
             if (!tc->entries[pos])
                continue;
 
@@ -645,7 +646,7 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc,
    /* set flags to indicate all the tiles are cleared */
    memset(tc->clear_flags, 255, tc->clear_flags_size);
 
-   for (pos = 0; pos < Elements(tc->tile_addrs); pos++) {
+   for (pos = 0; pos < ARRAY_SIZE(tc->tile_addrs); pos++) {
       tc->tile_addrs[pos].bits.invalid = 1;
    }
    tc->last_tile_addr.bits.invalid = 1;

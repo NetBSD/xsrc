@@ -25,9 +25,9 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/colormac.h"
 #include "main/condrender.h"
 #include "main/macros.h"
+#include "main/blit.h"
 #include "main/pixeltransfer.h"
 #include "main/imports.h"
 
@@ -52,20 +52,9 @@ regions_overlap(GLint srcx, GLint srcy,
                 GLint width, GLint height,
                 GLfloat zoomX, GLfloat zoomY)
 {
-   if (zoomX == 1.0 && zoomY == 1.0) {
-      /* no zoom */
-      if (srcx >= dstx + width || (srcx + width <= dstx)) {
-         return GL_FALSE;
-      }
-      else if (srcy < dsty) { /* this is OK */
-         return GL_FALSE;
-      }
-      else if (srcy > dsty + height) {
-         return GL_FALSE;
-      }
-      else {
-         return GL_TRUE;
-      }
+   if (zoomX == 1.0F && zoomY == 1.0F) {
+      return _mesa_regions_overlap(srcx, srcy, srcx + width, srcy + height,
+                                   dstx, dsty, dstx + width, dsty + height);
    }
    else {
       /* add one pixel of slop when zooming, just to be safe */
@@ -158,7 +147,7 @@ copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   ASSERT(width < SWRAST_MAX_WIDTH);
+   assert(width < SWRAST_MAX_WIDTH);
 
    for (row = 0; row < height; row++, sy += stepy, dy += stepy) {
       GLvoid *rgba = span.array->attribs[VARYING_SLOT_COL0];
@@ -212,8 +201,8 @@ scale_and_bias_z(struct gl_context *ctx, GLuint width,
    GLuint i;
 
    if (depthMax <= 0xffffff &&
-       ctx->Pixel.DepthScale == 1.0 &&
-       ctx->Pixel.DepthBias == 0.0) {
+       ctx->Pixel.DepthScale == 1.0F &&
+       ctx->Pixel.DepthBias == 0.0F) {
       /* no scale or bias and no clamping and no worry of overflow */
       const GLfloat depthMaxF = ctx->DrawBuffer->_DepthMaxF;
       for (i = 0; i < width; i++) {
@@ -442,11 +431,11 @@ end:
  */
 GLboolean
 swrast_fast_copy_pixels(struct gl_context *ctx,
-			GLint srcX, GLint srcY, GLsizei width, GLsizei height,
-			GLint dstX, GLint dstY, GLenum type)
+                        struct gl_framebuffer *srcFb,
+                        struct gl_framebuffer *dstFb,
+                        GLint srcX, GLint srcY, GLsizei width, GLsizei height,
+                        GLint dstX, GLint dstY, GLenum type)
 {
-   struct gl_framebuffer *srcFb = ctx->ReadBuffer;
-   struct gl_framebuffer *dstFb = ctx->DrawBuffer;
    struct gl_renderbuffer *srcRb, *dstRb;
    GLint row;
    GLuint pixelBytes, widthInBytes;
@@ -468,7 +457,7 @@ swrast_fast_copy_pixels(struct gl_context *ctx,
       dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
    }
    else {
-      ASSERT(type == GL_DEPTH_STENCIL_EXT);
+      assert(type == GL_DEPTH_STENCIL_EXT);
       /* XXX correct? */
       srcRb = srcFb->Attachment[BUFFER_DEPTH].Renderbuffer;
       dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
@@ -514,7 +503,7 @@ swrast_fast_copy_pixels(struct gl_context *ctx,
       ctx->Driver.MapRenderbuffer(ctx, srcRb, 0, 0,
                                   srcRb->Width, srcRb->Height,
                                   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
-                                  &map, &rowStride);
+                                  &map, &rowStride, srcFb->FlipY);
       if (!map) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
          return GL_TRUE; /* don't retry with slow path */
@@ -541,14 +530,16 @@ swrast_fast_copy_pixels(struct gl_context *ctx,
       /* different src/dst buffers */
       ctx->Driver.MapRenderbuffer(ctx, srcRb, srcX, srcY,
                                   width, height,
-                                  GL_MAP_READ_BIT, &srcMap, &srcRowStride);
+                                  GL_MAP_READ_BIT, &srcMap, &srcRowStride,
+                                  srcFb->FlipY);
       if (!srcMap) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
          return GL_TRUE; /* don't retry with slow path */
       }
       ctx->Driver.MapRenderbuffer(ctx, dstRb, dstX, dstY,
                                   width, height,
-                                  GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
+                                  GL_MAP_WRITE_BIT, &dstMap, &dstRowStride,
+                                  dstFb->FlipY);
       if (!dstMap) {
          ctx->Driver.UnmapRenderbuffer(ctx, srcRb);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
@@ -609,7 +600,8 @@ map_readbuffer(struct gl_context *ctx, GLenum type)
    ctx->Driver.MapRenderbuffer(ctx, rb,
                                0, 0, rb->Width, rb->Height,
                                GL_MAP_READ_BIT,
-                               &srb->Map, &srb->RowStride);
+                               &srb->Map, &srb->RowStride,
+                               fb->FlipY);
 
    return rb;
 }
@@ -620,9 +612,9 @@ map_readbuffer(struct gl_context *ctx, GLenum type)
  * By time we get here, all parameters will have been error-checked.
  */
 void
-_swrast_CopyPixels( struct gl_context *ctx,
-		    GLint srcx, GLint srcy, GLsizei width, GLsizei height,
-		    GLint destx, GLint desty, GLenum type )
+_swrast_CopyPixels(struct gl_context *ctx,
+                   GLint srcx, GLint srcy, GLsizei width, GLsizei height,
+                   GLint destx, GLint desty, GLenum type)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *rb;
@@ -634,11 +626,12 @@ _swrast_CopyPixels( struct gl_context *ctx,
       _swrast_validate_derived( ctx );
 
    if (!(SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
-	 ctx->Pixel.ZoomX != 1.0F ||
-	 ctx->Pixel.ZoomY != 1.0F ||
-	 ctx->_ImageTransferState) &&
-       swrast_fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty,
-			       type)) {
+       ctx->Pixel.ZoomX != 1.0F ||
+       ctx->Pixel.ZoomY != 1.0F ||
+       ctx->_ImageTransferState) &&
+      swrast_fast_copy_pixels(ctx, ctx->ReadBuffer, ctx->DrawBuffer,
+                              srcx, srcy, width, height, destx, desty,
+                              type)) {
       /* all done */
       return;
    }

@@ -30,12 +30,9 @@
   */
 
 
-#include <assert.h>
-
-#include "main/mtypes.h"
-#include "program/prog_parameter.h"
 #include "brw_util.h"
 #include "brw_defines.h"
+#include "compiler/brw_eu_defines.h"
 
 GLuint brw_translate_blend_equation( GLenum mode )
 {
@@ -101,4 +98,28 @@ GLuint brw_translate_blend_factor( GLenum factor )
    default:
       unreachable("not reached");
    }
+}
+
+static const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
+   [GL_POINTS] =_3DPRIM_POINTLIST,
+   [GL_LINES] = _3DPRIM_LINELIST,
+   [GL_LINE_LOOP] = _3DPRIM_LINELOOP,
+   [GL_LINE_STRIP] = _3DPRIM_LINESTRIP,
+   [GL_TRIANGLES] = _3DPRIM_TRILIST,
+   [GL_TRIANGLE_STRIP] = _3DPRIM_TRISTRIP,
+   [GL_TRIANGLE_FAN] = _3DPRIM_TRIFAN,
+   [GL_QUADS] = _3DPRIM_QUADLIST,
+   [GL_QUAD_STRIP] = _3DPRIM_QUADSTRIP,
+   [GL_POLYGON] = _3DPRIM_POLYGON,
+   [GL_LINES_ADJACENCY] = _3DPRIM_LINELIST_ADJ,
+   [GL_LINE_STRIP_ADJACENCY] = _3DPRIM_LINESTRIP_ADJ,
+   [GL_TRIANGLES_ADJACENCY] = _3DPRIM_TRILIST_ADJ,
+   [GL_TRIANGLE_STRIP_ADJACENCY] = _3DPRIM_TRISTRIP_ADJ,
+};
+
+uint32_t
+get_hw_prim_for_gl_prim(int mode)
+{
+   assert(mode < ARRAY_SIZE(prim_to_hw_prim));
+   return prim_to_hw_prim[mode];
 }

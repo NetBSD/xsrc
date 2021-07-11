@@ -3,7 +3,7 @@
 #define __NV50_RESOURCE_H__
 
 #include "util/u_transfer.h"
-#include "util/u_double_list.h"
+#include "util/list.h"
 
 #include "nouveau_winsys.h"
 #include "nouveau_buffer.h"
@@ -34,7 +34,8 @@ nv50_screen_init_resource_functions(struct pipe_screen *pscreen);
 #endif /* __NVC0_RESOURCE_H__ */
 
 uint32_t
-nv50_tex_choose_tile_dims_helper(unsigned nx, unsigned ny, unsigned nz);
+nv50_tex_choose_tile_dims_helper(unsigned nx, unsigned ny, unsigned nz,
+                                 bool is_3d);
 
 struct nv50_miptree_level {
    uint32_t offset;
@@ -49,13 +50,13 @@ struct nv50_miptree {
    struct nv50_miptree_level level[NV50_MAX_TEXTURE_LEVELS];
    uint32_t total_size;
    uint32_t layer_stride;
-   boolean layout_3d; /* TRUE if layer count varies with mip level */
+   bool layout_3d; /* true if layer count varies with mip level */
    uint8_t ms_x;      /* log2 of number of samples in x/y dimension */
    uint8_t ms_y;
    uint8_t ms_mode;
 };
 
-static INLINE struct nv50_miptree *
+static inline struct nv50_miptree *
 nv50_miptree(struct pipe_resource *pt)
 {
    return (struct nv50_miptree *)pt;
@@ -65,11 +66,12 @@ nv50_miptree(struct pipe_resource *pt)
 #define NV50_TEXVIEW_SCALED_COORDS     (1 << 0)
 #define NV50_TEXVIEW_FILTER_MSAA8      (1 << 1)
 #define NV50_TEXVIEW_ACCESS_RESOLVE    (1 << 2)
+#define NV50_TEXVIEW_IMAGE_GM107       (1 << 3)
 
 
 /* Internal functions:
  */
-boolean
+bool
 nv50_miptree_init_layout_linear(struct nv50_miptree *mt, unsigned pitch_align);
 
 struct pipe_resource *
@@ -97,13 +99,13 @@ struct nv50_surface {
    uint16_t depth;
 };
 
-static INLINE struct nv50_surface *
+static inline struct nv50_surface *
 nv50_surface(struct pipe_surface *ps)
 {
    return (struct nv50_surface *)ps;
 }
 
-static INLINE enum pipe_format
+static inline enum pipe_format
 nv50_zs_to_s_format(enum pipe_format format)
 {
    switch (format) {
@@ -149,5 +151,15 @@ nv50_surface_from_buffer(struct pipe_context *pipe,
 
 void
 nv50_surface_destroy(struct pipe_context *, struct pipe_surface *);
+
+void
+nv50_invalidate_resource(struct pipe_context *, struct pipe_resource *);
+
+void
+nv50_clear_texture(struct pipe_context *pipe,
+                   struct pipe_resource *res,
+                   unsigned level,
+                   const struct pipe_box *box,
+                   const void *data);
 
 #endif /* __NV50_RESOURCE_H__ */

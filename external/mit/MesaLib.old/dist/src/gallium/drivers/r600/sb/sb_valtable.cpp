@@ -55,6 +55,11 @@ sb_ostream& operator << (sb_ostream &o, value &v) {
 			case SV_ALU_PRED: o << "PR"; break;
 			case SV_EXEC_MASK: o << "EM"; break;
 			case SV_VALID_MASK: o << "VM"; break;
+			case SV_GEOMETRY_EMIT: o << "GEOMETRY_EMIT"; break;
+			case SV_LDS_RW: o << "LDS_RW"; break;
+			case SV_LDS_OQA: o << "LDS_OQA"; break;
+			case SV_LDS_OQB: o << "LDS_OQB"; break;
+			case SV_SCRATCH: o << "SCRATCH"; break;
 			default: o << "???specialreg"; break;
 		}
 		break;
@@ -211,25 +216,39 @@ void value_table::get_values(vvec& v) {
 	}
 }
 
-void value::add_use(node* n, use_kind kind, int arg) {
+void value::add_use(node* n) {
 	if (0) {
 	sblog << "add_use ";
 	dump::dump_val(this);
 	sblog << "   =>  ";
 	dump::dump_op(n);
-	sblog << "     kind " << kind << "    arg " << arg << "\n";
 	}
-	uses = new use_info(n, kind, arg, uses);
+	uses.push_back(n);
+}
+
+struct use_node_comp {
+	explicit use_node_comp(const node *n) : n(n) {}
+	bool operator() (const node *o) {
+		return o->hash() == n->hash();
+	}
+
+	private:
+		const node *n;
+};
+
+void value::remove_use(const node *n) {
+	uselist::iterator it =
+		std::find_if(uses.begin(), uses.end(), use_node_comp(n));
+
+	if (it != uses.end())
+	{
+		// We only ever had a pointer, so don't delete it here
+		uses.erase(it);
+	}
 }
 
 unsigned value::use_count() {
-	use_info *u = uses;
-	unsigned c = 0;
-	while (u) {
-		++c;
-		u = u->next;
-	}
-	return c;
+	return uses.size();
 }
 
 bool value::is_global() {
@@ -273,13 +292,44 @@ bool value::is_prealloc() {
 }
 
 void value::delete_uses() {
-	use_info *u, *c = uses;
-	while (c) {
-		u = c->next;
-		delete c;
-		c = u;
+	// We only ever had pointers, so don't delete them here
+	uses.erase(uses.begin(), uses.end());
+}
+
+bool value::no_reladdr_conflict_with(value *src)
+{
+	/*  if the register is not relative, it can't create an relative access conflict */
+	if (!src->is_rel())
+		return true;
+
+	/* If the destination is AR then we accept the copy propagation, because the
+	 * scheduler actually re-creates the address loading operation and will
+	 * signal interference if there is an address register load and it will fail
+	 * because of this.
+	 */
+	if (gvalue()->is_AR())
+		return true;
+
+	/* For all nodes that use this value test whether the operation uses another
+	 * relative access with a different address value. If found, signal conflict.
+	 */
+	for (uselist::const_iterator N = uses.begin(); N != uses.end(); ++N) {
+		for (vvec::const_iterator V = (*N)->src.begin(); V != (*N)->src.end(); ++V) {
+			if (*V) {
+				value *v = (*V)->gvalue();
+				if (v != src && v->is_rel() && v->rel != src->rel)
+					return false;
+			}
+		}
+		for (vvec::const_iterator V = (*N)->dst.begin(); V != (*N)->dst.end(); ++V) {
+			if (*V) {
+				value *v = (*V)->gvalue();
+				if (v && v != src && v->is_rel() && (v->rel != src->rel))
+					return false;
+			}
+		}
 	}
-	uses = NULL;
+	return true;
 }
 
 void ra_constraint::update_values() {
@@ -467,7 +517,7 @@ bool r600_sb::sb_value_set::add_vec(vvec& vv) {
 bool r600_sb::sb_value_set::contains(value* v) {
 	unsigned b = v->uid - 1;
 	if (b < bs.size())
-		return bs.get(v->uid - 1);
+		return bs.get(b);
 	else
 		return false;
 }

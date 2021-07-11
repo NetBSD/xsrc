@@ -37,7 +37,7 @@
 #include "util/u_debug.h"
 #include "os/os_thread.h"
 #include "util/u_memory.h"
-#include "util/u_double_list.h"
+#include "util/list.h"
 #include "util/u_mm.h"
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
@@ -53,7 +53,7 @@ struct mm_pb_manager
 {
    struct pb_manager base;
    
-   pipe_mutex mutex;
+   mtx_t mutex;
    
    pb_size size;
    struct mem_block *heap;
@@ -65,7 +65,7 @@ struct mm_pb_manager
 };
 
 
-static INLINE struct mm_pb_manager *
+static inline struct mm_pb_manager *
 mm_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -83,7 +83,7 @@ struct mm_buffer
 };
 
 
-static INLINE struct mm_buffer *
+static inline struct mm_buffer *
 mm_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -99,16 +99,16 @@ mm_buffer_destroy(struct pb_buffer *buf)
    
    assert(!pipe_is_referenced(&mm_buf->base.reference));
    
-   pipe_mutex_lock(mm->mutex);
+   mtx_lock(&mm->mutex);
    u_mmFreeMem(mm_buf->block);
    FREE(mm_buf);
-   pipe_mutex_unlock(mm->mutex);
+   mtx_unlock(&mm->mutex);
 }
 
 
 static void *
 mm_buffer_map(struct pb_buffer *buf,
-              unsigned flags,
+              enum pb_usage_flags flags,
               void *flush_ctx)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
@@ -130,7 +130,7 @@ mm_buffer_unmap(struct pb_buffer *buf)
 static enum pipe_error 
 mm_buffer_validate(struct pb_buffer *buf, 
                    struct pb_validate *vl,
-                   unsigned flags)
+                   enum pb_usage_flags flags)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
@@ -184,11 +184,11 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    if(!pb_check_alignment(desc->alignment, (pb_size)1 << mm->align2))
       return NULL;
    
-   pipe_mutex_lock(mm->mutex);
+   mtx_lock(&mm->mutex);
 
    mm_buf = CALLOC_STRUCT(mm_buffer);
    if (!mm_buf) {
-      pipe_mutex_unlock(mm->mutex);
+      mtx_unlock(&mm->mutex);
       return NULL;
    }
 
@@ -208,7 +208,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       mmDumpMemInfo(mm->heap);
 #endif
       FREE(mm_buf);
-      pipe_mutex_unlock(mm->mutex);
+      mtx_unlock(&mm->mutex);
       return NULL;
    }
    
@@ -216,7 +216,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    assert(0 <= (pb_size)mm_buf->block->ofs && (pb_size)mm_buf->block->ofs < mm->size);
    assert(size <= (pb_size)mm_buf->block->size && (pb_size)mm_buf->block->ofs + (pb_size)mm_buf->block->size <= mm->size);
    
-   pipe_mutex_unlock(mm->mutex);
+   mtx_unlock(&mm->mutex);
    return SUPER(mm_buf);
 }
 
@@ -233,14 +233,14 @@ mm_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct mm_pb_manager *mm = mm_pb_manager(mgr);
    
-   pipe_mutex_lock(mm->mutex);
+   mtx_lock(&mm->mutex);
 
    u_mmDestroy(mm->heap);
    
    pb_unmap(mm->buffer);
    pb_reference(&mm->buffer, NULL);
    
-   pipe_mutex_unlock(mm->mutex);
+   mtx_unlock(&mm->mutex);
    
    FREE(mgr);
 }
@@ -252,7 +252,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
 {
    struct mm_pb_manager *mm;
 
-   if(!buffer)
+   if (!buffer)
       return NULL;
    
    mm = CALLOC_STRUCT(mm_pb_manager);
@@ -266,7 +266,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    mm->size = size;
    mm->align2 = align2; /* 64-byte alignment */
 
-   pipe_mutex_init(mm->mutex);
+   (void) mtx_init(&mm->mutex, mtx_plain);
 
    mm->buffer = buffer; 
 
@@ -283,8 +283,8 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    return SUPER(mm);
    
 failure:
-if(mm->heap)
-   u_mmDestroy(mm->heap);
+   if(mm->heap)
+      u_mmDestroy(mm->heap);
    if(mm->map)
       pb_unmap(mm->buffer);
    FREE(mm);
@@ -300,7 +300,7 @@ mm_bufmgr_create(struct pb_manager *provider,
    struct pb_manager *mgr;
    struct pb_desc desc;
 
-   if(!provider)
+   if (!provider)
       return NULL;
    
    memset(&desc, 0, sizeof(desc));

@@ -38,6 +38,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 
 
 struct pipe_rasterizer_state;
@@ -96,7 +97,7 @@ struct vbuf_render {
     * the discretion of the driver, for the benefit of the passthrough
     * path.
     */
-   void (*set_primitive)( struct vbuf_render *, unsigned prim );
+   void (*set_primitive)( struct vbuf_render *, enum pipe_prim_type prim );
 
    /**
     * Draw indexed primitives.  Note that indices are ushort.  The driver
@@ -124,6 +125,7 @@ struct vbuf_render {
     * Called after writing data to the stream out buffers
     */
    void (*set_stream_output_info)( struct vbuf_render *vbufr,
+                                   unsigned stream,
                                    unsigned primitive_count,
                                    unsigned primitive_generated );
 

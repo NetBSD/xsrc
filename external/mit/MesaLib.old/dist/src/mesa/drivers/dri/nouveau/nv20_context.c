@@ -55,13 +55,13 @@ nv20_clear(struct gl_context *ctx, GLbitfield buffers)
 		struct nouveau_surface *s = &to_nouveau_renderbuffer(
 			fb->_ColorDrawBuffers[0])->surface;
 
-		if (ctx->Color.ColorMask[0][RCOMP])
+		if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 0))
 			clear |= NV20_3D_CLEAR_BUFFERS_COLOR_R;
-		if (ctx->Color.ColorMask[0][GCOMP])
+		if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 1))
 			clear |= NV20_3D_CLEAR_BUFFERS_COLOR_G;
-		if (ctx->Color.ColorMask[0][BCOMP])
+		if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 2))
 			clear |= NV20_3D_CLEAR_BUFFERS_COLOR_B;
-		if (ctx->Color.ColorMask[0][ACOMP])
+		if (GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 3))
 			clear |= NV20_3D_CLEAR_BUFFERS_COLOR_A;
 
 		BEGIN_NV04(push, NV20_3D(CLEAR_VALUE), 1);
@@ -459,12 +459,11 @@ nv20_context_create(struct nouveau_screen *screen, gl_api api,
 	ctx->Extensions.ARB_texture_env_crossbar = true;
 	ctx->Extensions.ARB_texture_env_combine = true;
 	ctx->Extensions.ARB_texture_env_dot3 = true;
+	ctx->Extensions.EXT_texture_env_dot3 = true;
 	ctx->Extensions.NV_fog_distance = true;
 	ctx->Extensions.NV_texture_rectangle = true;
-	if (ctx->Mesa_DXTn) {
-		ctx->Extensions.EXT_texture_compression_s3tc = true;
-		ctx->Extensions.ANGLE_texture_compression_dxt = true;
-	}
+	ctx->Extensions.EXT_texture_compression_s3tc = true;
+	ctx->Extensions.ANGLE_texture_compression_dxt = true;
 
 	/* GL constants. */
 	ctx->Const.MaxTextureCoordUnits = NV20_TEXTURE_UNITS;

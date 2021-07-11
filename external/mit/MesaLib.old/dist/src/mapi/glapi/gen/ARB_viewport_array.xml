@@ -12,63 +12,71 @@
     <enum name="VIEWPORT_BOUNDS_RANGE" value="0x825D"/>
     <enum name="LAYER_PROVOKING_VERTEX" value="0x825E"/>
     <enum name="VIEWPORT_INDEX_PROVOKING_VERTEX" value="0x825F"/>
-    <enum name="SCISSOR_BOX" value="0x0C10"/>
-    <enum name="VIEWPORT" value="0x0BA2"/>
-    <enum name="DEPTH_RANGE" value="0x0B70"/>
-    <enum name="SCISSOR_TEST" value="0x0C11"/>
+    <enum name="SCISSOR_BOX" count="4" value="0x0C10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VIEWPORT" count="4" value="0x0BA2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_RANGE" count="2" value="0x0B70">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SCISSOR_TEST" count="1" value="0x0C11">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FIRST_VERTEX_CONVENTION" value="0x8E4D"/>
     <enum name="LAST_VERTEX_CONVENTION" value="0x8E4E"/>
     <enum name="PROVOKING_VERTEX" value="0x8E4F"/>
     <enum name="UNDEFINED_VERTEX" value="0x8260"/>
 
-    <function name="ViewportArrayv" offset="assign">
+    <function name="ViewportArrayv" no_error="true">
         <param name="first" type="GLuint"/>
         <param name="count" type="GLsizei"/>
-        <param name="v" type="const GLfloat *"/>
+        <param name="v" type="const GLfloat *" count="count" count_scale="4"/>
     </function>
-    <function name="ViewportIndexedf" offset="assign">
+    <function name="ViewportIndexedf" no_error="true">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
         <param name="h" type="GLfloat"/>
     </function>
-    <function name="ViewportIndexedfv" offset="assign">
+    <function name="ViewportIndexedfv" no_error="true">
         <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *"/>
+        <param name="v" type="const GLfloat *" count="4"/>
     </function>
-    <function name="ScissorArrayv" offset="assign">
+    <function name="ScissorArrayv" no_error="true">
         <param name="first" type="GLuint"/>
         <param name="count" type="GLsizei"/>
-        <param name="v" type="const int *"/>
+        <param name="v" type="const int *" count="count" count_scale="4"/>
     </function>
-    <function name="ScissorIndexed" offset="assign">
+    <function name="ScissorIndexed" no_error="true">
         <param name="index" type="GLuint"/>
         <param name="left" type="GLint"/>
         <param name="bottom" type="GLint"/>
         <param name="width" type="GLsizei"/>
         <param name="height" type="GLsizei"/>
     </function>
-    <function name="ScissorIndexedv" offset="assign">
+    <function name="ScissorIndexedv" no_error="true">
         <param name="index" type="GLuint"/>
-        <param name="v" type="const GLint *"/>
+        <param name="v" type="const GLint *" count="4"/>
     </function>
-    <function name="DepthRangeArrayv" offset="assign">
+    <function name="DepthRangeArrayv" no_error="true">
         <param name="first" type="GLuint"/>
         <param name="count" type="GLsizei"/>
-        <param name="v" type="const GLclampd *"/>
+        <param name="v" type="const GLclampd *" count="count" count_scale="2"/>
     </function>
-    <function name="DepthRangeIndexed" offset="assign">
+    <function name="DepthRangeIndexed" no_error="true">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLclampd"/>
         <param name="f" type="GLclampd"/>
     </function>
-    <function name="GetFloati_v" offset="assign">
+    <function name="GetFloati_v">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="data" type="GLfloat *"/>
     </function>
-    <function name="GetDoublei_v" offset="assign">
+    <function name="GetDoublei_v">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="data" type="GLdouble *"/>

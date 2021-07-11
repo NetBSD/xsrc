@@ -20,12 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "pipe/p_defines.h"
+
+#include "compiler/nir/nir.h"
+
 #include "nv50/nv50_program.h"
 #include "nv50/nv50_context.h"
 
 #include "codegen/nv50_ir_driver.h"
 
-static INLINE unsigned
+static inline unsigned
 bitcount4(const uint32_t val)
 {
    static const uint8_t cnt[16]
@@ -65,7 +69,7 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
          continue;
       case TGSI_SEMANTIC_VERTEXID:
          prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_VERTEX_ID;
-         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_UNK12;
+         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_VERTEX_ID_DRAW_ARRAYS_ADD_START;
          continue;
       default:
          break;
@@ -104,7 +108,7 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
          prog->vp.bfc[info->out[i].si] = i;
          break;
       case TGSI_SEMANTIC_LAYER:
-         prog->gp.has_layer = TRUE;
+         prog->gp.has_layer = true;
          prog->gp.layerid = n;
          break;
       case TGSI_SEMANTIC_VIEWPORT_INDEX:
@@ -148,7 +152,6 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
    for (m = 0, i = 0; i < info->numInputs; ++i) {
       switch (info->in[i].sn) {
       case TGSI_SEMANTIC_POSITION:
-      case TGSI_SEMANTIC_FACE:
          continue;
       default:
          m += info->in[i].flat ? 0 : 1;
@@ -166,9 +169,6 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
          for (c = 0; c < 4; ++c)
             if (info->in[i].mask & (1 << c))
                info->in[i].slot[c] = nintp++;
-      } else
-      if (info->in[i].sn == TGSI_SEMANTIC_FACE) {
-         info->in[i].slot[0] = 255;
       } else {
          unsigned j = info->in[i].flat ? m++ : n++;
 
@@ -258,6 +258,8 @@ nv50_program_assign_varying_slots(struct nv50_ir_prog_info *info)
       return nv50_vertprog_assign_slots(info);
    case PIPE_SHADER_FRAGMENT:
       return nv50_fragprog_assign_slots(info);
+   case PIPE_SHADER_COMPUTE:
+      return 0;
    default:
       return -1;
    }
@@ -309,6 +311,9 @@ nv50_program_create_strmout_state(const struct nv50_ir_prog_info *info,
       const unsigned r = pso->output[i].register_index;
       b = pso->output[i].output_buffer;
 
+      if (r >= info->numOutputs)
+         continue;
+
       for (c = 0; c < pso->output[i].num_components; ++c)
          so->map[base[b] + p + c] = info->out[r].slot[s + c];
    }
@@ -316,28 +321,42 @@ nv50_program_create_strmout_state(const struct nv50_ir_prog_info *info,
    return so;
 }
 
-boolean
-nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
+bool
+nv50_program_translate(struct nv50_program *prog, uint16_t chipset,
+                       struct pipe_debug_callback *debug)
 {
    struct nv50_ir_prog_info *info;
-   int ret;
+   int i, ret;
    const uint8_t map_undef = (prog->type == PIPE_SHADER_VERTEX) ? 0x40 : 0x80;
 
    info = CALLOC_STRUCT(nv50_ir_prog_info);
    if (!info)
-      return FALSE;
+      return false;
 
    info->type = prog->type;
    info->target = chipset;
-   info->bin.sourceRep = NV50_PROGRAM_IR_TGSI;
-   info->bin.source = (void *)prog->pipe.tokens;
 
-   info->io.ucpCBSlot = 15;
+   info->bin.sourceRep = prog->pipe.type;
+   switch (prog->pipe.type) {
+   case PIPE_SHADER_IR_TGSI:
+      info->bin.source = (void *)prog->pipe.tokens;
+      break;
+   case PIPE_SHADER_IR_NIR:
+      info->bin.source = (void *)nir_shader_clone(NULL, prog->pipe.ir.nir);
+      break;
+   default:
+      assert(!"unsupported IR!");
+      free(info);
+      return false;
+   }
+
+   info->bin.smemSize = prog->cp.smem_size;
+   info->io.auxCBSlot = 15;
    info->io.ucpBase = NV50_CB_AUX_UCP_OFFSET;
    info->io.genUserClip = prog->vp.clpd_nr;
-   info->io.sampleInterp = prog->fp.sample_interp;
+   if (prog->fp.alphatest)
+      info->io.alphaRefBase = NV50_CB_AUX_ALPHATEST_OFFSET;
 
-   info->io.resInfoCBSlot = 15;
    info->io.suInfoBase = NV50_CB_AUX_TEX_MS_OFFSET;
    info->io.sampleInfoBase = NV50_CB_AUX_SAMPLE_OFFSET;
    info->io.msInfoCBSlot = 15;
@@ -354,11 +373,15 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
    prog->gp.has_layer = 0;
    prog->gp.has_viewport = 0;
 
+   if (prog->type == PIPE_SHADER_COMPUTE)
+      info->prop.cp.inputOffset = 0x10;
+
    info->driverPriv = prog;
 
 #ifdef DEBUG
    info->optLevel = debug_get_num_option("NV50_PROG_OPTIMIZE", 3);
    info->dbgFlags = debug_get_num_option("NV50_PROG_DEBUG", 0);
+   info->omitLineNum = debug_get_num_option("NV50_PROG_DEBUG_OMIT_LINENUM", 0);
 #else
    info->optLevel = 3;
 #endif
@@ -368,13 +391,23 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
-   FREE(info->bin.syms);
 
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;
    prog->fixups = info->bin.relocData;
+   prog->interps = info->bin.fixupData;
    prog->max_gpr = MAX2(4, (info->bin.maxGPR >> 1) + 1);
    prog->tls_space = info->bin.tlsSpace;
+   prog->cp.smem_size = info->bin.smemSize;
+   prog->mul_zero_wins = info->io.mul_zero_wins;
+   prog->vp.need_vertex_id = info->io.vertexId < PIPE_MAX_SHADER_INPUTS;
+
+   prog->vp.clip_enable = (1 << info->io.clipDistances) - 1;
+   prog->vp.cull_enable =
+      ((1 << info->io.cullDistances) - 1) << info->io.clipDistances;
+   prog->vp.clip_mode = 0;
+   for (i = 0; i < info->io.cullDistances; ++i)
+      prog->vp.clip_mode |= 1 << ((info->io.clipDistances + i) * 4);
 
    if (prog->type == PIPE_SHADER_FRAGMENT) {
       if (info->prop.fp.writesDepth) {
@@ -398,32 +431,49 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
          prog->gp.prim_type = NV50_3D_GP_OUTPUT_PRIMITIVE_TYPE_POINTS;
          break;
       }
-      prog->gp.vert_count = info->prop.gp.maxVertices;
+      prog->gp.vert_count = CLAMP(info->prop.gp.maxVertices, 1, 1024);
+   }
+
+   if (prog->type == PIPE_SHADER_COMPUTE) {
+      prog->cp.syms = info->bin.syms;
+      prog->cp.num_syms = info->bin.numSyms;
+   } else {
+      FREE(info->bin.syms);
    }
 
    if (prog->pipe.stream_output.num_outputs)
       prog->so = nv50_program_create_strmout_state(info,
                                                    &prog->pipe.stream_output);
 
+   pipe_debug_message(debug, SHADER_INFO,
+                      "type: %d, local: %d, shared: %d, gpr: %d, inst: %d, bytes: %d",
+                      prog->type, info->bin.tlsSpace, info->bin.smemSize,
+                      prog->max_gpr, info->bin.instructions,
+                      info->bin.codeSize);
+
 out:
+   if (info->bin.sourceRep == PIPE_SHADER_IR_NIR)
+      ralloc_free((void *)info->bin.source);
    FREE(info);
    return !ret;
 }
 
-boolean
+bool
 nv50_program_upload_code(struct nv50_context *nv50, struct nv50_program *prog)
 {
    struct nouveau_heap *heap;
    int ret;
    uint32_t size = align(prog->code_size, 0x40);
+   uint8_t prog_type;
 
    switch (prog->type) {
    case PIPE_SHADER_VERTEX:   heap = nv50->screen->vp_code_heap; break;
-   case PIPE_SHADER_GEOMETRY: heap = nv50->screen->fp_code_heap; break;
-   case PIPE_SHADER_FRAGMENT: heap = nv50->screen->gp_code_heap; break;
+   case PIPE_SHADER_GEOMETRY: heap = nv50->screen->gp_code_heap; break;
+   case PIPE_SHADER_FRAGMENT: heap = nv50->screen->fp_code_heap; break;
+   case PIPE_SHADER_COMPUTE:  heap = nv50->screen->fp_code_heap; break;
    default:
       assert(!"invalid program type");
-      return FALSE;
+      return false;
    }
 
    ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
@@ -440,30 +490,42 @@ nv50_program_upload_code(struct nv50_context *nv50, struct nv50_program *prog)
       ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
       if (ret) {
          NOUVEAU_ERR("shader too large (0x%x) to fit in code space ?\n", size);
-         return FALSE;
+         return false;
       }
    }
-   prog->code_base = prog->mem->start;
+
+   if (prog->type == PIPE_SHADER_COMPUTE) {
+      /* CP code must be uploaded in FP code segment. */
+      prog_type = 1;
+   } else {
+      prog->code_base = prog->mem->start;
+      prog_type = prog->type;
+   }
 
    ret = nv50_tls_realloc(nv50->screen, prog->tls_space);
    if (ret < 0) {
       nouveau_heap_free(&prog->mem);
-      return FALSE;
+      return false;
    }
    if (ret > 0)
-      nv50->state.new_tls_space = TRUE;
+      nv50->state.new_tls_space = true;
 
    if (prog->fixups)
       nv50_ir_relocate_code(prog->fixups, prog->code, prog->code_base, 0, 0);
+   if (prog->interps)
+      nv50_ir_apply_fixups(prog->interps, prog->code,
+                           prog->fp.force_persample_interp,
+                           false /* flatshade */,
+                           prog->fp.alphatest - 1);
 
    nv50_sifc_linear_u8(&nv50->base, nv50->screen->code,
-                       (prog->type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
+                       (prog_type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
                        NOUVEAU_BO_VRAM, prog->code_size, prog->code);
 
    BEGIN_NV04(nv50->base.pushbuf, NV50_3D(CODE_CB_FLUSH), 1);
    PUSH_DATA (nv50->base.pushbuf, 0);
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -478,8 +540,11 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
    FREE(p->code);
 
    FREE(p->fixups);
-
+   FREE(p->interps);
    FREE(p->so);
+
+   if (type == PIPE_SHADER_COMPUTE)
+      FREE(p->cp.syms);
 
    memset(p, 0, sizeof(*p));
 

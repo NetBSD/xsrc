@@ -57,6 +57,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 
 typedef unsigned char	GLubyte;	/* 1-byte unsigned */
 typedef struct tagSFG_Font SFG_Font;
@@ -198,6 +199,7 @@ static const GLubyte Fixed8x13_Character_123[] = {  8,  0,  0,  0, 14, 16, 16,  
 static const GLubyte Fixed8x13_Character_124[] = {  8,  0,  0,  0, 16, 16, 16, 16, 16, 16, 16, 16, 16,  0,  0};
 static const GLubyte Fixed8x13_Character_125[] = {  8,  0,  0,  0,112,  8,  8, 16, 12, 16,  8,  8,112,  0,  0};
 static const GLubyte Fixed8x13_Character_126[] = {  8,  0,  0,  0,  0,  0,  0,  0,  0,  0, 72, 84, 36,  0,  0};
+#if 0 /* currently unused */
 static const GLubyte Fixed8x13_Character_127[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
 static const GLubyte Fixed8x13_Character_128[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
 static const GLubyte Fixed8x13_Character_129[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
@@ -231,6 +233,7 @@ static const GLubyte Fixed8x13_Character_156[] = {  9,  0,  0,  0,  0,  0,  0,17
 static const GLubyte Fixed8x13_Character_157[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
 static const GLubyte Fixed8x13_Character_158[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
 static const GLubyte Fixed8x13_Character_159[] = {  9,  0,  0,  0,  0,  0,  0,170,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,130,  0,  0,  0,170,  0,  0,  0,  0,  0};
+#endif
 static const GLubyte Fixed8x13_Character_160[] = {  8,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
 static const GLubyte Fixed8x13_Character_161[] = {  8,  0,  0,  0, 16, 16, 16, 16, 16, 16, 16,  0, 16,  0,  0};
 static const GLubyte Fixed8x13_Character_162[] = {  8,  0,  0,  0,  0, 16, 56, 84, 80, 80, 84, 56, 16,  0,  0};
@@ -373,24 +376,29 @@ static boolean
 util_font_create_fixed_8x13(struct pipe_context *pipe,
                             struct util_font *out_font)
 {
+   static const enum pipe_format formats[] = {
+      PIPE_FORMAT_I8_UNORM,
+      PIPE_FORMAT_L8_UNORM,
+      PIPE_FORMAT_R8_UNORM
+   };
    struct pipe_screen *screen = pipe->screen;
    struct pipe_resource tex_templ, *tex;
    struct pipe_transfer *transfer = NULL;
    char *map;
-   enum pipe_format tex_format;
+   enum pipe_format tex_format = PIPE_FORMAT_NONE;
    int i;
 
-   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM,
-                                   PIPE_TEXTURE_RECT, 0,
+   for (i = 0; i < ARRAY_SIZE(formats); i++) {
+      if (screen->is_format_supported(screen, formats[i],
+                                   PIPE_TEXTURE_RECT, 0, 0,
                                    PIPE_BIND_SAMPLER_VIEW)) {
-      tex_format = PIPE_FORMAT_I8_UNORM;
+         tex_format = formats[i];
+         break;
+      }
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM,
-                                   PIPE_TEXTURE_RECT, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      tex_format = PIPE_FORMAT_L8_UNORM;
-   }
-   else {
+
+   if (tex_format == PIPE_FORMAT_NONE) {
+      debug_printf("Unable to find texture format for font.\n");
       return FALSE;
    }
 

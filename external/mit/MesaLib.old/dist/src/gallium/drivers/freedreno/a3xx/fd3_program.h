@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -31,22 +29,17 @@
 
 #include "pipe/p_context.h"
 #include "freedreno_context.h"
-#include "ir3_shader.h"
 
-struct fd3_shader_stateobj {
-	struct ir3_shader *shader;
-};
+#include "ir3/ir3_shader.h"
 
 struct fd3_emit;
 
-void fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit);
+void fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
+					  int nr, struct pipe_surface **bufs);
 
 void fd3_prog_init(struct pipe_context *pctx);
 
-static inline struct ir3_shader_variant *
-fd3_shader_variant(struct fd3_shader_stateobj *so, struct ir3_shader_key key)
-{
-	return ir3_shader_variant(so->shader, key);
-}
+bool fd3_needs_manual_clipping(const struct ir3_shader *,
+							   const struct pipe_rasterizer_state *);
 
 #endif /* FD3_PROGRAM_H_ */

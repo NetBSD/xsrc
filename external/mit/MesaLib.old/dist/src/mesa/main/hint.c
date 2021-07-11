@@ -40,8 +40,8 @@ _mesa_Hint( GLenum target, GLenum mode )
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glHint %s %s\n",
-                  _mesa_lookup_enum_by_nr(target),
-                  _mesa_lookup_enum_by_nr(mode));
+                  _mesa_enum_to_string(target),
+                  _mesa_enum_to_string(mode));
 
    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
@@ -123,11 +123,6 @@ _mesa_Hint( GLenum target, GLenum mode )
       default:
          goto invalid_target;
    }
-
-   if (ctx->Driver.Hint) {
-      (*ctx->Driver.Hint)( ctx, target, mode );
-   }
-
    return;
 
 invalid_target:
@@ -135,6 +130,17 @@ invalid_target:
    return;
 }
 
+/* GL_ARB_parallel_shader_compile */
+void GLAPIENTRY
+_mesa_MaxShaderCompilerThreadsKHR(GLuint count)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   ctx->Hint.MaxShaderCompilerThreads = count;
+
+   if (ctx->Driver.SetMaxShaderCompilerThreads)
+      ctx->Driver.SetMaxShaderCompilerThreads(ctx, count);
+}
 
 /**********************************************************************/
 /*****                      Initialization                        *****/
@@ -151,4 +157,5 @@ void _mesa_init_hint( struct gl_context * ctx )
    ctx->Hint.TextureCompression = GL_DONT_CARE;
    ctx->Hint.GenerateMipmap = GL_DONT_CARE;
    ctx->Hint.FragmentShaderDerivative = GL_DONT_CARE;
+   ctx->Hint.MaxShaderCompilerThreads = 0xffffffff;
 }

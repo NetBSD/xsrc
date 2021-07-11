@@ -1,4 +1,3 @@
-#!/usr/bin/python2
 # coding=utf-8
 # -*- Mode: Python; py-indent-offset: 4 -*-
 #
@@ -29,34 +28,35 @@
 # Generate a C header file containing hash tables of glGet parameter
 # names for each GL API. The generated file is to be included by glGet.c
 
-import os, sys, imp, getopt
+from __future__ import print_function
+
+import os, sys, getopt
 from collections import defaultdict
 import get_hash_params
 
-cur_dir = os.path.dirname(sys.argv[0])
-param_desc_file = "%s/get_hash_params.py" % cur_dir
+param_desc_file = os.path.join(os.path.dirname(__file__), "get_hash_params.py")
 
-GLAPI = "%s/../../mapi/glapi/gen" % cur_dir
-sys.path.append(GLAPI)
+GLAPI = os.path.join(os.path.dirname(__file__), "..", "..", "mapi", "glapi", "gen")
+sys.path.insert(0, GLAPI)
 import gl_XML
 
 prime_factor = 89
 prime_step = 281
 hash_table_size = 1024
 
-gl_apis=set(["GL", "GL_CORE", "GLES", "GLES2", "GLES3"])
+gl_apis=set(["GL", "GL_CORE", "GLES", "GLES2", "GLES3", "GLES31", "GLES32"])
 
 def print_header():
-   print "typedef const unsigned short table_t[%d];\n" % (hash_table_size)
-   print "static const int prime_factor = %d, prime_step = %d;\n" % \
-          (prime_factor, prime_step)
+   print("typedef const unsigned short table_t[%d];\n" % (hash_table_size))
+   print("static const int prime_factor = %d, prime_step = %d;\n" % \
+          (prime_factor, prime_step))
 
 def print_params(params):
-   print "static const struct value_desc values[] = {"
+   print("static const struct value_desc values[] = {")
    for p in params:
-      print "    { %s, %s }," % (p[0], p[1])
+      print("    { %s, %s }," % (p[0], p[1]))
 
-   print "};\n"
+   print("};\n")
 
 def api_name(api):
    return "API_OPEN%s" % api
@@ -68,6 +68,8 @@ api_enum = [
    'GLES2',
    'GL_CORE',
    'GLES3', # Not in gl_api enum in mtypes.h
+   'GLES31', # Not in gl_api enum in mtypes.h
+   'GLES32', # Not in gl_api enum in mtypes.h
 ]
 
 def api_index(api):
@@ -77,7 +79,7 @@ def table_name(api):
    return "table_" + api_name(api)
 
 def print_table(api, table):
-   print "static table_t %s = {" % (table_name(api))
+   print("static table_t %s = {" % (table_name(api)))
 
    # convert sparse (index, value) table into a dense table
    dense_table = [0] * hash_table_size
@@ -88,9 +90,9 @@ def print_table(api, table):
    for i in range(0, hash_table_size, row_size):
       row = dense_table[i : i + row_size]
       idx_val = ["%4d" % v for v in row]
-      print " " * 4 + ", ".join(idx_val) + ","
+      print(" " * 4 + ", ".join(idx_val) + ",")
 
-   print "};\n"
+   print("};\n")
 
 def print_tables(tables):
    for table in tables:
@@ -103,19 +105,19 @@ def print_tables(tables):
          i = api_index(api)
          dense_tables[i] = "&%s" % (tname)
 
-   print "static table_t *table_set[] = {"
+   print("static table_t *table_set[] = {")
    for expr in dense_tables:
-      print "   %s," % expr
-   print "};\n"
+      print("   %s," % expr)
+   print("};\n")
 
-   print "#define table(api) (*table_set[api])"
+   print("#define table(api) (*table_set[api])")
 
 # Merge tables with matching parameter lists (i.e. GL and GL_CORE)
 def merge_tables(tables):
    merged_tables = []
    for api, indices in sorted(tables.items()):
-      matching_table = filter(lambda mt:mt["indices"] == indices,
-                              merged_tables)
+      matching_table = list(filter(lambda mt:mt["indices"] == indices,
+                              merged_tables))
       if matching_table:
          matching_table[0]["apis"].append(api)
       else:
@@ -167,10 +169,18 @@ def generate_hash_tables(enum_list, enabled_apis, param_descriptors):
 
          for api in valid_apis:
             add_to_hash_table(tables[api], hash_val, len(params))
-            # Also add GLES2 items to the GLES3 hash table
+            # Also add GLES2 items to the GLES3+ hash tables
             if api == "GLES2":
                add_to_hash_table(tables["GLES3"], hash_val, len(params))
-
+               add_to_hash_table(tables["GLES31"], hash_val, len(params))
+               add_to_hash_table(tables["GLES32"], hash_val, len(params))
+            # Also add GLES3 items to the GLES31+ hash tables
+            if api == "GLES3":
+               add_to_hash_table(tables["GLES31"], hash_val, len(params))
+               add_to_hash_table(tables["GLES32"], hash_val, len(params))
+            # Also add GLES31 items to the GLES32+ hash tables
+            if api == "GLES31":
+               add_to_hash_table(tables["GLES32"], hash_val, len(params))
          params.append(["GL_" + enum_name, param[1]])
 
    sorted_tables={}
@@ -190,7 +200,7 @@ def show_usage():
 if __name__ == '__main__':
    try:
       (opts, args) = getopt.getopt(sys.argv[1:], "f:")
-   except Exception,e:
+   except Exception:
       show_usage()
 
    if len(args) != 0:
@@ -206,7 +216,8 @@ if __name__ == '__main__':
       die("missing descriptor file (-f)\n")
 
    # generate the code for all APIs
-   enabled_apis = set(["GLES", "GLES2", "GLES3", "GL", "GL_CORE"])
+   enabled_apis = set(["GLES", "GLES2", "GLES3", "GLES31", "GLES32",
+                       "GL", "GL_CORE"])
 
    try:
       api_desc = gl_XML.parse_GL_API(api_desc_file)

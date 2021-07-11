@@ -40,7 +40,7 @@
 
 #include "util/u_math.h"
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(__GNUC__)
 #define XA_EXPORT __attribute__ ((visibility("default")))
 #else
 #define XA_EXPORT
@@ -74,8 +74,6 @@ struct xa_surface {
 struct xa_tracker {
     enum xa_formats *supported_formats;
     unsigned int format_map[XA_LAST_SURFACE_TYPE][2];
-    int d_depth_bits_last;
-    int ds_depth_bits_last;
     struct pipe_loader_device *dev;
     struct pipe_screen *screen;
     struct xa_context *default_ctx;
@@ -115,7 +113,8 @@ struct xa_context {
 
     int simple_copy;
 
-    int has_solid_color;
+    int has_solid_src;
+    int has_solid_mask;
     float solid_color[4];
 
     unsigned int num_bound_samplers;
@@ -123,7 +122,7 @@ struct xa_context {
     const struct xa_composite *comp;
 };
 
-static INLINE void
+static inline void
 xa_scissor_reset(struct xa_context *ctx)
 {
     ctx->scissor.maxx = 0;
@@ -133,7 +132,7 @@ xa_scissor_reset(struct xa_context *ctx)
     ctx->scissor_valid = FALSE;
 }
 
-static INLINE void
+static inline void
 xa_scissor_update(struct xa_context *ctx, unsigned minx, unsigned miny,
 		unsigned maxx, unsigned maxy)
 {
@@ -147,35 +146,27 @@ xa_scissor_update(struct xa_context *ctx, unsigned minx, unsigned miny,
 enum xa_vs_traits {
     VS_COMPOSITE = 1 << 0,
     VS_MASK = 1 << 1,
-    VS_SOLID_FILL = 1 << 2,
-    VS_LINGRAD_FILL = 1 << 3,
-    VS_RADGRAD_FILL = 1 << 4,
-    VS_YUV = 1 << 5,
-
-    VS_FILL = (VS_SOLID_FILL | VS_LINGRAD_FILL | VS_RADGRAD_FILL)
+    VS_SRC_SRC = 1 << 2,
+    VS_MASK_SRC = 1 << 3,
+    VS_YUV = 1 << 4,
 };
 
 enum xa_fs_traits {
     FS_COMPOSITE = 1 << 0,
     FS_MASK = 1 << 1,
-    FS_SOLID_FILL = 1 << 2,
-    FS_LINGRAD_FILL = 1 << 3,
-    FS_RADGRAD_FILL = 1 << 4,
-    FS_CA_FULL = 1 << 5,	/* src.rgba * mask.rgba */
-    FS_CA_SRCALPHA = 1 << 6,	/* src.aaaa * mask.rgba */
-    FS_YUV = 1 << 7,
-    FS_SRC_REPEAT_NONE = 1 << 8,
-    FS_MASK_REPEAT_NONE = 1 << 9,
-    FS_SRC_SWIZZLE_RGB = 1 << 10,
-    FS_MASK_SWIZZLE_RGB = 1 << 11,
-    FS_SRC_SET_ALPHA = 1 << 12,
-    FS_MASK_SET_ALPHA = 1 << 13,
-    FS_SRC_LUMINANCE = 1 << 14,
-    FS_MASK_LUMINANCE = 1 << 15,
-    FS_DST_LUMINANCE = 1 << 16,
-
-    FS_FILL = (FS_SOLID_FILL | FS_LINGRAD_FILL | FS_RADGRAD_FILL),
-    FS_COMPONENT_ALPHA = (FS_CA_FULL | FS_CA_SRCALPHA)
+    FS_SRC_SRC = 1 << 2,
+    FS_MASK_SRC = 1 << 3,
+    FS_YUV = 1 << 4,
+    FS_SRC_REPEAT_NONE = 1 << 5,
+    FS_MASK_REPEAT_NONE = 1 << 6,
+    FS_SRC_SWIZZLE_RGB = 1 << 7,
+    FS_MASK_SWIZZLE_RGB = 1 << 8,
+    FS_SRC_SET_ALPHA = 1 << 9,
+    FS_MASK_SET_ALPHA = 1 << 10,
+    FS_SRC_LUMINANCE = 1 << 11,
+    FS_MASK_LUMINANCE = 1 << 12,
+    FS_DST_LUMINANCE = 1 << 13,
+    FS_CA = 1 << 14,
 };
 
 struct xa_shader {
@@ -189,13 +180,13 @@ struct xa_shaders;
  * Inline utilities
  */
 
-static INLINE int
+static inline int
 xa_min(int a, int b)
 {
     return ((a <= b) ? a : b);
 }
 
-static INLINE void
+static inline void
 xa_pixel_to_float4(uint32_t pixel, float *color)
 {
     uint32_t	    r, g, b, a;
@@ -210,7 +201,7 @@ xa_pixel_to_float4(uint32_t pixel, float *color)
     color[3] = ((float)a) / 255.;
 }
 
-static INLINE void
+static inline void
 xa_pixel_to_float4_a8(uint32_t pixel, float *color)
 {
     uint32_t a;
@@ -284,7 +275,7 @@ void renderer_draw_flush(struct xa_context *r);
 
 void renderer_begin_solid(struct xa_context *r);
 void renderer_solid(struct xa_context *r,
-		    int x0, int y0, int x1, int y1, float *color);
+		    int x0, int y0, int x1, int y1);
 void
 renderer_begin_textures(struct xa_context *r);
 

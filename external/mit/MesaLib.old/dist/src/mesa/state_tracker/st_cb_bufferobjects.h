@@ -28,11 +28,11 @@
 #ifndef ST_CB_BUFFEROBJECTS_H
 #define ST_CB_BUFFEROBJECTS_H
 
-#include "main/compiler.h"
 #include "main/mtypes.h"
 
 struct dd_function_table;
 struct pipe_resource;
+struct pipe_screen;
 struct st_context;
 
 /**
@@ -48,21 +48,20 @@ struct st_buffer_object
 
 
 /** cast wrapper */
-static INLINE struct st_buffer_object *
+static inline struct st_buffer_object *
 st_buffer_object(struct gl_buffer_object *obj)
 {
    return (struct st_buffer_object *) obj;
 }
 
 
-extern void
-st_bufferobj_validate_usage(struct st_context *st,
-			    struct st_buffer_object *obj,
-			    unsigned usage);
+enum pipe_transfer_usage
+st_access_flags_to_transfer_flags(GLbitfield access, bool wholeBuffer);
 
 
 extern void
-st_init_bufferobject_functions(struct dd_function_table *functions);
+st_init_bufferobject_functions(struct pipe_screen *screen,
+                               struct dd_function_table *functions);
 
 
 #endif

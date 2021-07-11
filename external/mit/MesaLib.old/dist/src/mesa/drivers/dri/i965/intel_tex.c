@@ -5,6 +5,8 @@
 #include "main/mipmap.h"
 #include "drivers/common/meta.h"
 #include "brw_context.h"
+#include "brw_defines.h"
+#include "intel_buffer_objects.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
 #include "intel_fbo.h"
@@ -14,7 +16,7 @@
 static struct gl_texture_image *
 intelNewTextureImage(struct gl_context * ctx)
 {
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    (void) ctx;
    return (struct gl_texture_image *) CALLOC_STRUCT(intel_texture_image);
 }
@@ -34,7 +36,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 
    (void) ctx;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
 
    if (obj == NULL)
       return NULL;
@@ -69,7 +71,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 
    /* Quantize sample count */
    if (image->NumSamples) {
-      image->NumSamples = intel_quantize_num_samples(brw->intelScreen, image->NumSamples);
+      image->NumSamples = intel_quantize_num_samples(brw->screen, image->NumSamples);
       if (!image->NumSamples)
          return false;
    }
@@ -87,12 +89,14 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
        intel_miptree_match_image(intel_texobj->mt, image)) {
       intel_miptree_reference(&intel_image->mt, intel_texobj->mt);
       DBG("%s: alloc obj %p level %d %dx%dx%d using object's miptree %p\n",
-          __FUNCTION__, texobj, image->Level,
+          __func__, texobj, image->Level,
           image->Width, image->Height, image->Depth, intel_texobj->mt);
    } else {
       intel_image->mt = intel_miptree_create_for_teximage(brw, intel_texobj,
                                                           intel_image,
-                                                          false);
+                                                          MIPTREE_CREATE_DEFAULT);
+      if (!intel_image->mt)
+         return false;
 
       /* Even if the object currently has a mipmap tree associated
        * with it, this one is a more likely candidate to represent the
@@ -102,7 +106,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
       intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
 
       DBG("%s: alloc obj %p level %d %dx%dx%d using new miptree %p\n",
-          __FUNCTION__, texobj, image->Level,
+          __func__, texobj, image->Level,
           image->Width, image->Height, image->Depth, intel_image->mt);
    }
 
@@ -114,7 +118,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 /**
  * ctx->Driver.AllocTextureStorage() handler.
  *
- * Compare this to _mesa_alloc_texture_storage, which would call into
+ * Compare this to _mesa_AllocTextureStorage_sw, which would call into
  * intel_alloc_texture_image_buffer() above.
  */
 static GLboolean
@@ -126,7 +130,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
    struct gl_texture_image *first_image = texobj->Image[0][0];
-   int num_samples = intel_quantize_num_samples(brw->intelScreen,
+   int num_samples = intel_quantize_num_samples(brw->screen,
                                                 first_image->NumSamples);
    const int numFaces = _mesa_num_tex_faces(texobj->Target);
    int face;
@@ -139,14 +143,14 @@ intel_alloc_texture_storage(struct gl_context *ctx,
        !intel_miptree_match_image(intel_texobj->mt, first_image) ||
        intel_texobj->mt->last_level != levels - 1) {
       intel_miptree_release(&intel_texobj->mt);
+
+      intel_get_image_dims(first_image, &width, &height, &depth);
       intel_texobj->mt = intel_miptree_create(brw, texobj->Target,
                                               first_image->TexFormat,
                                               0, levels - 1,
                                               width, height, depth,
-                                              false, /* expect_accelerated */
-                                              num_samples,
-                                              INTEL_MIPTREE_TILING_ANY,
-                                              false);
+                                              MAX2(num_samples, 1),
+                                              MIPTREE_CREATE_DEFAULT);
 
       if (intel_texobj->mt == NULL) {
          return false;
@@ -172,7 +176,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
    intel_texobj->needs_validate = false;
    intel_texobj->validated_first_level = 0;
    intel_texobj->validated_last_level = levels - 1;
-   intel_texobj->_Format = intel_texobj->mt->format;
+   intel_texobj->_Format = first_image->TexFormat;
 
    return true;
 }
@@ -184,7 +188,7 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 {
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
 
    intel_miptree_release(&intelImage->mt);
 
@@ -205,11 +209,12 @@ intel_map_texture_image(struct gl_context *ctx,
 			GLuint x, GLuint y, GLuint w, GLuint h,
 			GLbitfield mode,
 			GLubyte **map,
-			GLint *stride)
+			GLint *out_stride)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(tex_image);
    struct intel_mipmap_tree *mt = intel_image->mt;
+   ptrdiff_t stride;
 
    /* Our texture data is always stored in a miptree. */
    assert(mt);
@@ -228,7 +233,9 @@ intel_map_texture_image(struct gl_context *ctx,
                      tex_image->Level + tex_image->TexObject->MinLevel,
                      slice + tex_image->TexObject->MinLayer,
                      x, y, w, h, mode,
-                     (void **)map, stride);
+                     (void **)map, &stride);
+
+   *out_stride = stride;
 }
 
 static void
@@ -295,6 +302,25 @@ intel_texture_view(struct gl_context *ctx,
    return GL_TRUE;
 }
 
+static void
+intel_texture_barrier(struct gl_context *ctx)
+{
+   struct brw_context *brw = brw_context(ctx);
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+
+   if (devinfo->gen >= 6) {
+      brw_emit_pipe_control_flush(brw,
+                                  PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                                  PIPE_CONTROL_RENDER_TARGET_FLUSH |
+                                  PIPE_CONTROL_CS_STALL);
+
+      brw_emit_pipe_control_flush(brw,
+                                  PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE);
+   } else {
+      brw_emit_mi_flush(brw);
+   }
+}
+
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
@@ -308,4 +334,5 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->MapTextureImage = intel_map_texture_image;
    functions->UnmapTextureImage = intel_unmap_texture_image;
    functions->TextureView = intel_texture_view;
+   functions->TextureBarrier = intel_texture_barrier;
 }

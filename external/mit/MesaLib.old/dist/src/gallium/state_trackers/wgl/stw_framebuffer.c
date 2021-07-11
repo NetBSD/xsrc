@@ -30,6 +30,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "hud/hud_context.h"
+#include "util/os_time.h"
 #include "state_tracker/st_api.h"
 
 #include "stw_icd.h"
@@ -44,40 +45,49 @@
 /**
  * Search the framebuffer with the matching HWND while holding the
  * stw_dev::fb_mutex global lock.
+ * If a stw_framebuffer is found, lock it and return the pointer.
+ * Else, return NULL.
  */
-static INLINE struct stw_framebuffer *
-stw_framebuffer_from_hwnd_locked(
-   HWND hwnd )
+static struct stw_framebuffer *
+stw_framebuffer_from_hwnd_locked(HWND hwnd)
 {
    struct stw_framebuffer *fb;
 
    for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
       if (fb->hWnd == hwnd) {
-         pipe_mutex_lock(fb->mutex);
-         break;
+         stw_framebuffer_lock(fb);
+         assert(fb->mutex.RecursionCount == 1);
+         return fb;
       }
 
-   return fb;
+   return NULL;
 }
 
 
 /**
- * Destroy this framebuffer. Both stw_dev::fb_mutex and stw_framebuffer::mutex
- * must be held, by this order.  If there are still references to the
- * framebuffer, nothing will happen.
+ * Decrement the reference count on the given stw_framebuffer object.
+ * If the reference count hits zero, destroy the object.
+ *
+ * Note: Both stw_dev::fb_mutex and stw_framebuffer::mutex must already be
+ * locked.  After this function completes, the fb's mutex will be unlocked.
  */
-static void
-stw_framebuffer_destroy_locked(struct stw_framebuffer *fb)
+void
+stw_framebuffer_release_locked(struct stw_framebuffer *fb)
 {
    struct stw_framebuffer **link;
+
+   assert(fb);
+   assert(stw_own_mutex(&fb->mutex));
+   assert(stw_own_mutex(&stw_dev->fb_mutex));
 
    /* check the reference count */
    fb->refcnt--;
    if (fb->refcnt) {
-      pipe_mutex_unlock( fb->mutex );
+      stw_framebuffer_unlock(fb);
       return;
    }
 
+   /* remove this stw_framebuffer from the device's linked list */
    link = &stw_dev->fb_head;
    while (*link != fb)
       link = &(*link)->next;
@@ -91,22 +101,18 @@ stw_framebuffer_destroy_locked(struct stw_framebuffer *fb)
 
    stw_st_destroy_framebuffer_locked(fb->stfb);
 
-   pipe_mutex_unlock( fb->mutex );
+   stw_framebuffer_unlock(fb);
 
-   pipe_mutex_destroy( fb->mutex );
+   DeleteCriticalSection(&fb->mutex);
 
    FREE( fb );
 }
 
 
-void
-stw_framebuffer_release(struct stw_framebuffer *fb)
-{
-   assert(fb);
-   pipe_mutex_unlock( fb->mutex );
-}
-
-
+/**
+ * Query the size of the given framebuffer's on-screen window and update
+ * the stw_framebuffer's width/height.
+ */
 static void
 stw_framebuffer_get_size(struct stw_framebuffer *fb)
 {
@@ -118,7 +124,6 @@ stw_framebuffer_get_size(struct stw_framebuffer *fb)
    /*
     * Sanity checking.
     */
-
    assert(fb->hWnd);
    assert(fb->width && fb->height);
    assert(fb->client_rect.right  == fb->client_rect.left + fb->width);
@@ -127,7 +132,6 @@ stw_framebuffer_get_size(struct stw_framebuffer *fb)
    /*
     * Get the client area size.
     */
-
    if (!GetClientRect(fb->hWnd, &client_rect)) {
       return;
    }
@@ -145,7 +149,6 @@ stw_framebuffer_get_size(struct stw_framebuffer *fb)
        * preserve the current window size, until the window is restored or
        * maximized again.
        */
-
       return;
    }
 
@@ -201,38 +204,50 @@ stw_call_window_proc(int nCode, WPARAM wParam, LPARAM lParam)
    if (nCode < 0 || !stw_dev)
        return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 
-   if (pParams->message == WM_WINDOWPOSCHANGED) {
-      /* We handle WM_WINDOWPOSCHANGED instead of WM_SIZE because according to
-       * http://blogs.msdn.com/oldnewthing/archive/2008/01/15/7113860.aspx
-       * WM_SIZE is generated from WM_WINDOWPOSCHANGED by DefWindowProc so it
-       * can be masked out by the application.
-       */
-      LPWINDOWPOS lpWindowPos = (LPWINDOWPOS)pParams->lParam;
-      if ((lpWindowPos->flags & SWP_SHOWWINDOW) ||
-          !(lpWindowPos->flags & SWP_NOMOVE) ||
-          !(lpWindowPos->flags & SWP_NOSIZE)) {
-         fb = stw_framebuffer_from_hwnd( pParams->hwnd );
-         if (fb) {
-            /* Size in WINDOWPOS includes the window frame, so get the size
-             * of the client area via GetClientRect.
-             */
-            stw_framebuffer_get_size(fb);
-            stw_framebuffer_release(fb);
+   /* We check that the stw_dev object is initialized before we try to do
+    * anything with it.  Otherwise, in multi-threaded programs there's a
+    * chance of executing this code before the stw_dev object is fully
+    * initialized.
+    */
+   if (stw_dev && stw_dev->initialized) {
+      if (pParams->message == WM_WINDOWPOSCHANGED) {
+         /* We handle WM_WINDOWPOSCHANGED instead of WM_SIZE because according
+          * to http://blogs.msdn.com/oldnewthing/archive/2008/01/15/7113860.aspx
+          * WM_SIZE is generated from WM_WINDOWPOSCHANGED by DefWindowProc so it
+          * can be masked out by the application.
+          */
+         LPWINDOWPOS lpWindowPos = (LPWINDOWPOS)pParams->lParam;
+         if ((lpWindowPos->flags & SWP_SHOWWINDOW) ||
+             !(lpWindowPos->flags & SWP_NOMOVE) ||
+             !(lpWindowPos->flags & SWP_NOSIZE)) {
+            fb = stw_framebuffer_from_hwnd( pParams->hwnd );
+            if (fb) {
+               /* Size in WINDOWPOS includes the window frame, so get the size
+                * of the client area via GetClientRect.
+                */
+               stw_framebuffer_get_size(fb);
+               stw_framebuffer_unlock(fb);
+            }
          }
       }
-   }
-   else if (pParams->message == WM_DESTROY) {
-      pipe_mutex_lock( stw_dev->fb_mutex );
-      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
-      if (fb)
-         stw_framebuffer_destroy_locked(fb);
-      pipe_mutex_unlock( stw_dev->fb_mutex );
+      else if (pParams->message == WM_DESTROY) {
+         stw_lock_framebuffers(stw_dev);
+         fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
+         if (fb)
+            stw_framebuffer_release_locked(fb);
+         stw_unlock_framebuffers(stw_dev);
+      }
    }
 
    return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 }
 
 
+/**
+ * Create a new stw_framebuffer object which corresponds to the given
+ * HDC/window.  If successful, we return the new stw_framebuffer object
+ * with its mutex locked.
+ */
 struct stw_framebuffer *
 stw_framebuffer_create(HDC hdc, int iPixelFormat)
 {
@@ -283,47 +298,20 @@ stw_framebuffer_create(HDC hdc, int iPixelFormat)
 
    stw_framebuffer_get_size(fb);
 
-   pipe_mutex_init( fb->mutex );
+   InitializeCriticalSection(&fb->mutex);
 
    /* This is the only case where we lock the stw_framebuffer::mutex before
     * stw_dev::fb_mutex, since no other thread can know about this framebuffer
     * and we must prevent any other thread from destroying it before we return.
     */
-   pipe_mutex_lock( fb->mutex );
+   stw_framebuffer_lock(fb);
 
-   pipe_mutex_lock( stw_dev->fb_mutex );
+   stw_lock_framebuffers(stw_dev);
    fb->next = stw_dev->fb_head;
    stw_dev->fb_head = fb;
-   pipe_mutex_unlock( stw_dev->fb_mutex );
+   stw_unlock_framebuffers(stw_dev);
 
    return fb;
-}
-
-
-/**
- * Have ptr reference fb.  The referenced framebuffer should be locked.
- */
-void
-stw_framebuffer_reference(struct stw_framebuffer **ptr,
-                          struct stw_framebuffer *fb)
-{
-   struct stw_framebuffer *old_fb = *ptr;
-
-   if (old_fb == fb)
-      return;
-
-   if (fb)
-      fb->refcnt++;
-   if (old_fb) {
-      pipe_mutex_lock(stw_dev->fb_mutex);
-
-      pipe_mutex_lock(old_fb->mutex);
-      stw_framebuffer_destroy_locked(old_fb);
-
-      pipe_mutex_unlock(stw_dev->fb_mutex);
-   }
-
-   *ptr = fb;
 }
 
 
@@ -347,6 +335,9 @@ stw_framebuffer_update(struct stw_framebuffer *fb)
 }
 
 
+/**
+ * Try to free all stw_framebuffer objects associated with the device.
+ */
 void
 stw_framebuffer_cleanup(void)
 {
@@ -356,29 +347,29 @@ stw_framebuffer_cleanup(void)
    if (!stw_dev)
       return;
 
-   pipe_mutex_lock( stw_dev->fb_mutex );
+   stw_lock_framebuffers(stw_dev);
 
    fb = stw_dev->fb_head;
    while (fb) {
       next = fb->next;
 
-      pipe_mutex_lock(fb->mutex);
-      stw_framebuffer_destroy_locked(fb);
+      stw_framebuffer_lock(fb);
+      stw_framebuffer_release_locked(fb);
 
       fb = next;
    }
    stw_dev->fb_head = NULL;
 
-   pipe_mutex_unlock( stw_dev->fb_mutex );
+   stw_unlock_framebuffers(stw_dev);
 }
 
 
 /**
  * Given an hdc, return the corresponding stw_framebuffer.
+ * The returned stw_framebuffer will have its mutex locked.
  */
-static INLINE struct stw_framebuffer *
-stw_framebuffer_from_hdc_locked(
-   HDC hdc )
+static struct stw_framebuffer *
+stw_framebuffer_from_hdc_locked(HDC hdc)
 {
    HWND hwnd;
 
@@ -392,7 +383,8 @@ stw_framebuffer_from_hdc_locked(
 
 
 /**
- * Given an hdc, return the corresponding stw_framebuffer.
+ * Given an HDC, return the corresponding stw_framebuffer.
+ * The returned stw_framebuffer will have its mutex locked.
  */
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(HDC hdc)
@@ -402,25 +394,26 @@ stw_framebuffer_from_hdc(HDC hdc)
    if (!stw_dev)
       return NULL;
 
-   pipe_mutex_lock( stw_dev->fb_mutex );
+   stw_lock_framebuffers(stw_dev);
    fb = stw_framebuffer_from_hdc_locked(hdc);
-   pipe_mutex_unlock( stw_dev->fb_mutex );
+   stw_unlock_framebuffers(stw_dev);
 
    return fb;
 }
 
 
 /**
- * Given an hdc, return the corresponding stw_framebuffer.
+ * Given an HWND, return the corresponding stw_framebuffer.
+ * The returned stw_framebuffer will have its mutex locked.
  */
 struct stw_framebuffer *
 stw_framebuffer_from_hwnd(HWND hwnd)
 {
    struct stw_framebuffer *fb;
 
-   pipe_mutex_lock( stw_dev->fb_mutex );
+   stw_lock_framebuffers(stw_dev);
    fb = stw_framebuffer_from_hwnd_locked(hwnd);
-   pipe_mutex_unlock( stw_dev->fb_mutex );
+   stw_unlock_framebuffers(stw_dev);
 
    return fb;
 }
@@ -444,12 +437,12 @@ DrvSetPixelFormat(HDC hdc, LONG iPixelFormat)
    fb = stw_framebuffer_from_hdc_locked(hdc);
    if (fb) {
       /*
-       * SetPixelFormat must be called only once.  However ignore 
+       * SetPixelFormat must be called only once.  However ignore
        * pbuffers, for which the framebuffer object is created first.
        */
       boolean bPbuffer = fb->bPbuffer;
 
-      stw_framebuffer_release( fb );
+      stw_framebuffer_unlock( fb );
 
       return bPbuffer;
    }
@@ -459,14 +452,16 @@ DrvSetPixelFormat(HDC hdc, LONG iPixelFormat)
       return FALSE;
    }
 
-   stw_framebuffer_release( fb );
+   stw_framebuffer_unlock( fb );
 
    /* Some applications mistakenly use the undocumented wglSetPixelFormat
     * function instead of SetPixelFormat, so we call SetPixelFormat here to
     * avoid opengl32.dll's wglCreateContext to fail */
    if (GetPixelFormat(hdc) == 0) {
       BOOL bRet = SetPixelFormat(hdc, iPixelFormat, NULL);
-      assert(bRet);
+      if (!bRet) {
+	  debug_printf("SetPixelFormat failed\n");
+      }
    }
 
    return TRUE;
@@ -482,7 +477,7 @@ stw_pixelformat_get(HDC hdc)
    fb = stw_framebuffer_from_hdc(hdc);
    if (fb) {
       iPixelFormat = fb->iPixelFormat;
-      stw_framebuffer_release(fb);
+      stw_framebuffer_unlock(fb);
    }
 
    return iPixelFormat;
@@ -539,7 +534,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
    stw_framebuffer_update(fb);
    stw_notify_current_locked(fb);
 
-   stw_framebuffer_release(fb);
+   stw_framebuffer_unlock(fb);
 
    return TRUE;
 }
@@ -548,7 +543,8 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 /**
  * Queue a composition.
  *
- * It will drop the lock on success.
+ * The stw_framebuffer object must have its mutex locked.  The mutex will
+ * be unlocked here before returning.
  */
 BOOL
 stw_framebuffer_present_locked(HDC hdc,
@@ -567,7 +563,7 @@ stw_framebuffer_present_locked(HDC hdc,
       data.pPrivateData = (void *)res;
 
       stw_notify_current_locked(fb);
-      stw_framebuffer_release(fb);
+      stw_framebuffer_unlock(fb);
 
       return stw_dev->callbacks.wglCbPresentBuffers(hdc, &data);
    }
@@ -578,10 +574,45 @@ stw_framebuffer_present_locked(HDC hdc,
 
       stw_framebuffer_update(fb);
       stw_notify_current_locked(fb);
-      stw_framebuffer_release(fb);
+      stw_framebuffer_unlock(fb);
 
       return TRUE;
    }
+}
+
+
+/**
+ * This is called just before issuing the buffer swap/present.
+ * We query the current time and determine if we should sleep before
+ * issuing the swap/present.
+ * This is a bit of a hack and is certainly not very accurate but it
+ * basically works.
+ * This is for the WGL_ARB_swap_interval extension.
+ */
+static void
+wait_swap_interval(struct stw_framebuffer *fb)
+{
+   /* Note: all time variables here are in units of microseconds */
+   int64_t cur_time = os_time_get_nano() / 1000;
+
+   if (fb->prev_swap_time != 0) {
+      /* Compute time since previous swap */
+      int64_t delta = cur_time - fb->prev_swap_time;
+      int64_t min_swap_period =
+         1.0e6 / stw_dev->refresh_rate * stw_dev->swap_interval;
+
+      /* If time since last swap is less than wait period, wait.
+       * Note that it's possible for the delta to be negative because of
+       * rollover.  See https://bugs.freedesktop.org/show_bug.cgi?id=102241
+       */
+      if ((delta >= 0) && (delta < min_swap_period)) {
+         float fudge = 1.75f;  /* emperical fudge factor */
+         int64_t wait = (min_swap_period - delta) * fudge;
+         os_time_sleep(wait);
+      }
+   }
+
+   fb->prev_swap_time = cur_time;
 }
 
 
@@ -599,19 +630,30 @@ DrvSwapBuffers(HDC hdc)
       return FALSE;
 
    if (!(fb->pfi->pfd.dwFlags & PFD_DOUBLEBUFFER)) {
-      stw_framebuffer_release(fb);
+      stw_framebuffer_unlock(fb);
       return TRUE;
    }
 
-   /* Display the HUD */
    ctx = stw_current_context();
-   if (ctx && ctx->hud) {
-      struct pipe_resource *back =
-         stw_get_framebuffer_resource(fb->stfb, ST_ATTACHMENT_BACK_LEFT);
-      hud_draw(ctx->hud, back);
+   if (ctx) {
+      if (ctx->hud) {
+         /* Display the HUD */
+         struct pipe_resource *back =
+            stw_get_framebuffer_resource(fb->stfb, ST_ATTACHMENT_BACK_LEFT);
+         if (back) {
+            hud_run(ctx->hud, NULL, back);
+         }
+      }
+
+      if (ctx->current_framebuffer == fb) {
+         /* flush current context */
+         ctx->st->flush(ctx->st, ST_FLUSH_END_OF_FRAME, NULL);
+      }
    }
 
-   stw_flush_current_locked(fb);
+   if (stw_dev->swap_interval != 0) {
+      wait_swap_interval(fb);
+   }
 
    return stw_st_swap_framebuffer_locked(hdc, fb->stfb);
 }

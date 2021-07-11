@@ -26,10 +26,10 @@
 #ifndef UNIFORMS_H
 #define UNIFORMS_H
 
-#include "glheader.h"
+#include "main/glheader.h"
+#include "compiler/glsl_types.h"
+#include "compiler/glsl/ir_uniform.h"
 #include "program/prog_parameter.h"
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir_uniform.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +111,18 @@ _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
 void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
+
+void GLAPIENTRY
+_mesa_UniformHandleui64ARB(GLint location, GLuint64 value);
+void GLAPIENTRY
+_mesa_UniformHandleui64vARB(GLint location, GLsizei count,
+                            const GLuint64 *value);
+void GLAPIENTRY
+_mesa_ProgramUniformHandleui64ARB(GLuint program, GLint location,
+                                  GLuint64 value);
+void GLAPIENTRY
+_mesa_ProgramUniformHandleui64vARB(GLuint program, GLint location,
+                                   GLsizei count, const GLuint64 *values);
 
 void GLAPIENTRY
 _mesa_ProgramUniform1f(GLuint program, GLint, GLfloat);
@@ -212,6 +224,8 @@ void GLAPIENTRY
 _mesa_GetUniformdv(GLuint, GLint, GLdouble *);
 GLint GLAPIENTRY
 _mesa_GetUniformLocation(GLuint, const GLcharARB *);
+GLint GLAPIENTRY
+_mesa_GetUniformLocation_no_error(GLuint, const GLcharARB *);
 GLuint GLAPIENTRY
 _mesa_GetUniformBlockIndex(GLuint program,
 			   const GLchar *uniformBlockName);
@@ -220,10 +234,25 @@ _mesa_GetUniformIndices(GLuint program,
 			GLsizei uniformCount,
 			const GLchar * const *uniformNames,
 			GLuint *uniformIndices);
+
+void GLAPIENTRY
+_mesa_UniformBlockBinding_no_error(GLuint program, GLuint uniformBlockIndex,
+                                   GLuint uniformBlockBinding);
+
 void GLAPIENTRY
 _mesa_UniformBlockBinding(GLuint program,
 			  GLuint uniformBlockIndex,
 			  GLuint uniformBlockBinding);
+
+void GLAPIENTRY
+_mesa_ShaderStorageBlockBinding_no_error(GLuint program,
+                                         GLuint shaderStorageBlockIndex,
+                                         GLuint shaderStorageBlockBinding);
+
+void GLAPIENTRY
+_mesa_ShaderStorageBlockBinding(GLuint program,
+                                GLuint shaderStorageBlockIndex,
+                                GLuint shaderStorageBlockBinding);
 void GLAPIENTRY
 _mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
                                      GLenum pname, GLint *params);
@@ -254,24 +283,191 @@ _mesa_GetActiveUniformsiv(GLuint program,
 void GLAPIENTRY
 _mesa_GetUniformiv(GLuint, GLint, GLint *);
 
-long
-_mesa_parse_program_resource_name(const GLchar *name,
-                                  const GLchar **out_base_name_end);
+void GLAPIENTRY
+_mesa_Uniform1d(GLint, GLdouble);
+void GLAPIENTRY
+_mesa_Uniform2d(GLint, GLdouble, GLdouble);
+void GLAPIENTRY
+_mesa_Uniform3d(GLint, GLdouble, GLdouble, GLdouble);
+void GLAPIENTRY
+_mesa_Uniform4d(GLint, GLdouble, GLdouble, GLdouble, GLdouble);
 
-unsigned
-_mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
-			   const GLchar *name, unsigned *offset);
+void GLAPIENTRY
+_mesa_Uniform1dv(GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_Uniform2dv(GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_Uniform3dv(GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_Uniform4dv(GLint, GLsizei, const GLdouble *);
+
+void GLAPIENTRY
+_mesa_GetUniformi64vARB(GLuint, GLint, GLint64 *);
+void GLAPIENTRY
+_mesa_GetUniformui64vARB(GLuint, GLint, GLuint64 *);
+
+void GLAPIENTRY
+_mesa_GetnUniformi64vARB(GLuint, GLint, GLsizei, GLint64 *);
+void GLAPIENTRY
+_mesa_GetnUniformui64vARB(GLuint, GLint, GLsizei, GLuint64 *);
+
+void GLAPIENTRY
+_mesa_UniformMatrix2dv(GLint, GLsizei, GLboolean, const GLdouble *);
+void GLAPIENTRY
+_mesa_UniformMatrix3dv(GLint, GLsizei, GLboolean, const GLdouble *);
+void GLAPIENTRY
+_mesa_UniformMatrix4dv(GLint, GLsizei, GLboolean, const GLdouble *);
+void GLAPIENTRY
+_mesa_UniformMatrix2x3dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+void GLAPIENTRY
+_mesa_UniformMatrix3x2dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+void GLAPIENTRY
+_mesa_UniformMatrix2x4dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+void GLAPIENTRY
+_mesa_UniformMatrix4x2dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+void GLAPIENTRY
+_mesa_UniformMatrix3x4dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+void GLAPIENTRY
+_mesa_UniformMatrix4x3dv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLdouble *value);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1d(GLuint program, GLint, GLdouble);
+void GLAPIENTRY
+_mesa_ProgramUniform2d(GLuint program, GLint, GLdouble, GLdouble);
+void GLAPIENTRY
+_mesa_ProgramUniform3d(GLuint program, GLint, GLdouble, GLdouble, GLdouble);
+void GLAPIENTRY
+_mesa_ProgramUniform4d(GLuint program, GLint, GLdouble, GLdouble, GLdouble, GLdouble);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1dv(GLuint program, GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniform2dv(GLuint program, GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniform3dv(GLuint program, GLint, GLsizei, const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniform4dv(GLuint program, GLint, GLsizei, const GLdouble *);
+
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2dv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3dv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4dv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLdouble *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2x3dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3x2dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2x4dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4x2dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3x4dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4x3dv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLdouble *value);
+
+void GLAPIENTRY
+_mesa_Uniform1i64ARB(GLint, GLint64);
+void GLAPIENTRY
+_mesa_Uniform2i64ARB(GLint, GLint64, GLint64);
+void GLAPIENTRY
+_mesa_Uniform3i64ARB(GLint, GLint64, GLint64, GLint64);
+void GLAPIENTRY
+_mesa_Uniform4i64ARB(GLint, GLint64, GLint64, GLint64, GLint64);
+
+void GLAPIENTRY
+_mesa_Uniform1i64vARB(GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_Uniform2i64vARB(GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_Uniform3i64vARB(GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_Uniform4i64vARB(GLint, GLsizei, const GLint64 *);
+
+void GLAPIENTRY
+_mesa_Uniform1ui64ARB(GLint, GLuint64);
+void GLAPIENTRY
+_mesa_Uniform2ui64ARB(GLint, GLuint64, GLuint64);
+void GLAPIENTRY
+_mesa_Uniform3ui64ARB(GLint, GLuint64, GLuint64, GLuint64);
+void GLAPIENTRY
+_mesa_Uniform4ui64ARB(GLint, GLuint64, GLuint64, GLuint64, GLuint64);
+
+void GLAPIENTRY
+_mesa_Uniform1ui64vARB(GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_Uniform2ui64vARB(GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_Uniform3ui64vARB(GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_Uniform4ui64vARB(GLint, GLsizei, const GLuint64 *);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1i64ARB(GLuint, GLint, GLint64);
+void GLAPIENTRY
+_mesa_ProgramUniform2i64ARB(GLuint, GLint, GLint64, GLint64);
+void GLAPIENTRY
+_mesa_ProgramUniform3i64ARB(GLuint, GLint, GLint64, GLint64, GLint64);
+void GLAPIENTRY
+_mesa_ProgramUniform4i64ARB(GLuint, GLint, GLint64, GLint64, GLint64, GLint64);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1i64vARB(GLuint, GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform2i64vARB(GLuint, GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform3i64vARB(GLuint, GLint, GLsizei, const GLint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform4i64vARB(GLuint, GLint, GLsizei, const GLint64 *);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1ui64ARB(GLuint, GLint, GLuint64);
+void GLAPIENTRY
+_mesa_ProgramUniform2ui64ARB(GLuint, GLint, GLuint64, GLuint64);
+void GLAPIENTRY
+_mesa_ProgramUniform3ui64ARB(GLuint, GLint, GLuint64, GLuint64, GLuint64);
+void GLAPIENTRY
+_mesa_ProgramUniform4ui64ARB(GLuint, GLint, GLuint64, GLuint64, GLuint64, GLuint64);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1ui64vARB(GLuint, GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform2ui64vARB(GLuint, GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform3ui64vARB(GLuint, GLint, GLsizei, const GLuint64 *);
+void GLAPIENTRY
+_mesa_ProgramUniform4ui64vARB(GLuint, GLint, GLsizei, const GLuint64 *);
 
 void
-_mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shader_program,
-	      GLint location, GLsizei count,
-              const GLvoid *values, GLenum type);
+_mesa_uniform(GLint location, GLsizei count, const GLvoid *values,
+              struct gl_context *, struct gl_shader_program *,
+              enum glsl_base_type basicType, unsigned src_components);
 
 void
-_mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
-		     GLuint cols, GLuint rows,
-                     GLint location, GLsizei count,
-                     GLboolean transpose, const GLfloat *values);
+_mesa_uniform_matrix(GLint location, GLsizei count,
+                     GLboolean transpose, const void *values,
+                     struct gl_context *, struct gl_shader_program *,
+                     GLuint cols, GLuint rows, enum glsl_base_type basicType);
+
+void
+_mesa_uniform_handle(GLint location, GLsizei count, const GLvoid *values,
+                     struct gl_context *, struct gl_shader_program *);
 
 void
 _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
@@ -303,17 +499,13 @@ _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 extern bool
 _mesa_sampler_uniforms_pipeline_are_valid(struct gl_pipeline_object *);
 
-extern const struct gl_program_parameter *
-get_uniform_parameter(struct gl_shader_program *shProg, GLint index);
-
 extern void
-_mesa_get_uniform_name(const struct gl_uniform_storage *uni,
-                       GLsizei maxLength, GLsizei *length,
-                       GLchar *nameOut);
+_mesa_flush_vertices_for_uniforms(struct gl_context *ctx,
+                                  const struct gl_uniform_storage *uni);
 
 struct gl_builtin_uniform_element {
    const char *field;
-   int tokens[STATE_LENGTH];
+   gl_state_index16 tokens[STATE_LENGTH];
    int swizzle;
 };
 

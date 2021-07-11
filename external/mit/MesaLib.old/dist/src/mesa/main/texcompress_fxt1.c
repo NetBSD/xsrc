@@ -29,15 +29,16 @@
  */
 
 
+#include "errors.h"
 #include "glheader.h"
 #include "imports.h"
-#include "colormac.h"
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texstore.h"
+#include "mtypes.h"
 
 
 static void
@@ -61,22 +62,27 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
    GLubyte *dst;
    const GLubyte *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGB_FXT1);
+   assert(dstFormat == MESA_FORMAT_RGB_FXT1);
 
    if (srcFormat != GL_RGB ||
        srcType != GL_UNSIGNED_BYTE ||
        ctx->_ImageTransferState ||
-       srcPacking->RowLength != srcWidth ||
+       ALIGN(srcPacking->RowLength, srcPacking->Alignment) != srcWidth ||
        srcPacking->SwapBytes) {
       /* convert image to RGB/GLubyte */
-      tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                             baseInternalFormat,
-                                             _mesa_get_format_base_format(dstFormat),
-                                             srcWidth, srcHeight, srcDepth,
-                                             srcFormat, srcType, srcAddr,
-                                             srcPacking);
+      GLubyte *tempImageSlices[1];
+      int rgbRowStride = 3 * srcWidth * sizeof(GLubyte);
+      tempImage = malloc(srcWidth * srcHeight * 3 * sizeof(GLubyte));
       if (!tempImage)
          return GL_FALSE; /* out of memory */
+      tempImageSlices[0] = (GLubyte *) tempImage;
+      _mesa_texstore(ctx, dims,
+                     baseInternalFormat,
+                     MESA_FORMAT_RGB_UNORM8,
+                     rgbRowStride, tempImageSlices,
+                     srcWidth, srcHeight, srcDepth,
+                     srcFormat, srcType, srcAddr,
+                     srcPacking);
       pixels = tempImage;
       srcRowStride = 3 * srcWidth;
       srcFormat = GL_RGB;
@@ -111,21 +117,27 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
    GLubyte *dst;
    const GLubyte *tempImage = NULL;
 
-   ASSERT(dstFormat == MESA_FORMAT_RGBA_FXT1);
+   assert(dstFormat == MESA_FORMAT_RGBA_FXT1);
 
    if (srcFormat != GL_RGBA ||
        srcType != GL_UNSIGNED_BYTE ||
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {
       /* convert image to RGBA/GLubyte */
-      tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                             baseInternalFormat,
-                                             _mesa_get_format_base_format(dstFormat),
-                                             srcWidth, srcHeight, srcDepth,
-                                             srcFormat, srcType, srcAddr,
-                                             srcPacking);
+      GLubyte *tempImageSlices[1];
+      int rgbaRowStride = 4 * srcWidth * sizeof(GLubyte);
+      tempImage = malloc(srcWidth * srcHeight * 4 * sizeof(GLubyte));
       if (!tempImage)
          return GL_FALSE; /* out of memory */
+      tempImageSlices[0] = (GLubyte *) tempImage;
+      _mesa_texstore(ctx, dims,
+                     baseInternalFormat,
+                     _mesa_little_endian() ? MESA_FORMAT_R8G8B8A8_UNORM
+                                           : MESA_FORMAT_A8B8G8R8_UNORM,
+                     rgbaRowStride, tempImageSlices,
+                     srcWidth, srcHeight, srcDepth,
+                     srcFormat, srcType, srcAddr,
+                     srcPacking);
       pixels = tempImage;
       srcRowStride = 4 * srcWidth;
       srcFormat = GL_RGBA;
@@ -167,8 +179,8 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 #define LL_RMS_D 10 /* fault tolerance (maximum delta) */
 #define LL_RMS_E 255 /* fault tolerance (maximum error) */
 #define ALPHA_TS 2 /* alpha threshold: (255 - ALPHA_TS) deemed opaque */
-#define ISTBLACK(v) (*((GLuint *)(v)) == 0)
-
+static const GLuint zero = 0;
+#define ISTBLACK(v) (memcmp(&(v), &zero, sizeof(zero)) == 0)
 
 /*
  * Define a 64-bit unsigned integer type and macros
@@ -1254,12 +1266,12 @@ upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
 {
    GLint i, j, k;
 
-   ASSERT(outWidth >= inWidth);
-   ASSERT(outHeight >= inHeight);
+   assert(outWidth >= inWidth);
+   assert(outHeight >= inHeight);
 #if 0
-   ASSERT(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
-   ASSERT((outWidth & 3) == 0);
-   ASSERT((outHeight & 3) == 0);
+   assert(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
+   assert((outWidth & 3) == 0);
+   assert((outHeight & 3) == 0);
 #endif
 
    for (i = 0; i < outHeight; i++) {

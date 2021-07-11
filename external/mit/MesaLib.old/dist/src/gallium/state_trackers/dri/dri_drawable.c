@@ -38,6 +38,8 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
+static uint32_t drifb_ID = 0;
+
 static void
 swap_fences_unref(struct dri_drawable *draw);
 
@@ -97,10 +99,8 @@ dri_st_framebuffer_validate(struct st_context_iface *stctx,
       return TRUE;
 
    /* Set the window-system buffers for the state tracker. */
-   for (i = 0; i < count; i++) {
-      out[i] = NULL;
+   for (i = 0; i < count; i++)
       pipe_resource_reference(&out[i], textures[statts[i]]);
-   }
 
    return TRUE;
 }
@@ -116,6 +116,23 @@ dri_st_framebuffer_flush_front(struct st_context_iface *stctx,
 
    /* XXX remove this and just set the correct one on the framebuffer */
    drawable->flush_frontbuffer(ctx, drawable, statt);
+
+   return TRUE;
+}
+
+/**
+ * The state tracker framebuffer interface flush_swapbuffers callback
+ */
+static boolean
+dri_st_framebuffer_flush_swapbuffers(struct st_context_iface *stctx,
+                                     struct st_framebuffer_iface *stfbi)
+{
+   struct dri_context *ctx = (struct dri_context *)stctx->st_manager_private;
+   struct dri_drawable *drawable =
+      (struct dri_drawable *) stfbi->st_manager_private;
+
+   if (drawable->flush_swapbuffers)
+      drawable->flush_swapbuffers(ctx, drawable);
 
    return TRUE;
 }
@@ -144,6 +161,7 @@ dri_create_buffer(__DRIscreen * sPriv,
    drawable->base.visual = &drawable->stvis;
    drawable->base.flush_front = dri_st_framebuffer_flush_front;
    drawable->base.validate = dri_st_framebuffer_validate;
+   drawable->base.flush_swapbuffers = dri_st_framebuffer_flush_swapbuffers;
    drawable->base.st_manager_private = (void *) drawable;
 
    drawable->screen = screen;
@@ -155,6 +173,8 @@ dri_create_buffer(__DRIscreen * sPriv,
 
    dPriv->driverPrivate = (void *)drawable;
    p_atomic_set(&drawable->base.stamp, 1);
+   drawable->base.ID = p_atomic_inc_return(&drifb_ID);
+   drawable->base.state_manager = &screen->base;
 
    return GL_TRUE;
 fail:
@@ -166,6 +186,8 @@ void
 dri_destroy_buffer(__DRIdrawable * dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct dri_screen *screen = drawable->screen;
+   struct st_api *stapi = screen->st_api;
    int i;
 
    pipe_surface_reference(&drawable->drisw_surface, NULL);
@@ -176,6 +198,9 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
       pipe_resource_reference(&drawable->msaa_textures[i], NULL);
 
    swap_fences_unref(drawable);
+
+   /* Notify the st manager that this drawable is no longer valid */
+   stapi->destroy_drawable(stapi, &drawable->base);
 
    FREE(drawable);
 }
@@ -217,8 +242,12 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
                     GLint format, __DRIdrawable *dPriv)
 {
    struct dri_context *ctx = dri_context(pDRICtx);
+   struct st_context_iface *st = ctx->st;
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_resource *pt;
+
+   if (st->thread_finish)
+      st->thread_finish(st);
 
    dri_drawable_validate_att(ctx, drawable, ST_ATTACHMENT_FRONT_LEFT);
 
@@ -231,11 +260,17 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
       if (format == __DRI_TEXTURE_FORMAT_RGB)  {
          /* only need to cover the formats recognized by dri_fill_st_visual */
          switch (internal_format) {
-         case PIPE_FORMAT_B8G8R8A8_UNORM:
-            internal_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+         case PIPE_FORMAT_B10G10R10A2_UNORM:
+            internal_format = PIPE_FORMAT_B10G10R10X2_UNORM;
             break;
-         case PIPE_FORMAT_A8R8G8B8_UNORM:
-            internal_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+         case PIPE_FORMAT_R10G10B10A2_UNORM:
+            internal_format = PIPE_FORMAT_R10G10B10X2_UNORM;
+            break;
+         case PIPE_FORMAT_BGRA8888_UNORM:
+            internal_format = PIPE_FORMAT_BGRX8888_UNORM;
+            break;
+         case PIPE_FORMAT_ARGB8888_UNORM:
+            internal_format = PIPE_FORMAT_XRGB8888_UNORM;
             break;
          default:
             break;
@@ -279,7 +314,12 @@ dri_drawable_get_format(struct dri_drawable *drawable,
    case ST_ATTACHMENT_BACK_LEFT:
    case ST_ATTACHMENT_FRONT_RIGHT:
    case ST_ATTACHMENT_BACK_RIGHT:
-      *format = drawable->stvis.color_format;
+      /* Other pieces of the driver stack get confused and behave incorrectly
+       * when they get an sRGB drawable. st/mesa receives "drawable->stvis"
+       * though other means and handles it correctly, so we don't really need
+       * to use an sRGB format here.
+       */
+      *format = util_format_linear(drawable->stvis.color_format);
       *bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
       break;
    case ST_ATTACHMENT_DEPTH_STENCIL:
@@ -418,7 +458,7 @@ dri_postprocessing(struct dri_context *ctx,
    struct pipe_resource *src = drawable->textures[att];
    struct pipe_resource *zsbuf = drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL];
 
-   if (ctx->pp && src && zsbuf)
+   if (ctx->pp && src)
       pp_run(ctx->pp, src, src, zsbuf);
 }
 
@@ -438,6 +478,7 @@ dri_flush(__DRIcontext *cPriv,
 {
    struct dri_context *ctx = dri_context(cPriv);
    struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct st_context_iface *st;
    unsigned flush_flags;
    boolean swap_msaa_buffers = FALSE;
 
@@ -445,6 +486,10 @@ dri_flush(__DRIcontext *cPriv,
       assert(0);
       return;
    }
+
+   st = ctx->st;
+   if (st->thread_finish)
+      st->thread_finish(st);
 
    if (drawable) {
       /* prevent recursion */
@@ -460,12 +505,12 @@ dri_flush(__DRIcontext *cPriv,
    /* Flush the drawable. */
    if ((flags & __DRI2_FLUSH_DRAWABLE) &&
        drawable->textures[ST_ATTACHMENT_BACK_LEFT]) {
-      struct pipe_context *pipe = ctx->st->pipe;
+      struct pipe_context *pipe = st->pipe;
 
       if (drawable->stvis.samples > 1 &&
           reason == __DRI2_THROTTLE_SWAPBUFFER) {
          /* Resolve the MSAA back buffer. */
-         dri_pipe_blit(ctx->st->pipe,
+         dri_pipe_blit(st->pipe,
                        drawable->textures[ST_ATTACHMENT_BACK_LEFT],
                        drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT]);
 
@@ -479,8 +524,17 @@ dri_flush(__DRIcontext *cPriv,
 
       dri_postprocessing(ctx, drawable, ST_ATTACHMENT_BACK_LEFT);
 
+      if (pipe->invalidate_resource &&
+          (flags & __DRI2_FLUSH_INVALIDATE_ANCILLARY)) {
+         if (drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
+            pipe->invalidate_resource(pipe, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+         if (drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL])
+            pipe->invalidate_resource(pipe, drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+      }
+
       if (ctx->hud) {
-         hud_draw(ctx->hud, drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
+         hud_run(ctx->hud, ctx->st->cso_context,
+                 drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
       }
 
       pipe->flush_resource(pipe, drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
@@ -493,7 +547,7 @@ dri_flush(__DRIcontext *cPriv,
       flush_flags |= ST_FLUSH_END_OF_FRAME;
 
    /* Flush the context and throttle if needed. */
-   if (dri_screen(ctx->sPriv)->throttling_enabled &&
+   if (dri_screen(ctx->sPriv)->default_throttle_frames &&
        drawable &&
        (reason == __DRI2_THROTTLE_SWAPBUFFER ||
         reason == __DRI2_THROTTLE_FLUSHFRONT)) {
@@ -508,23 +562,23 @@ dri_flush(__DRIcontext *cPriv,
        * flush method returns a fence even if there are no commands to flush.
        */
       struct pipe_screen *screen = drawable->screen->base.screen;
-      struct pipe_fence_handle *fence;
+      struct pipe_fence_handle *oldest_fence, *new_fence = NULL;
 
-      fence = swap_fences_pop_front(drawable);
-      if (fence) {
-         (void) screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
-         screen->fence_reference(screen, &fence, NULL);
+      st->flush(st, flush_flags, &new_fence);
+
+      oldest_fence = swap_fences_pop_front(drawable);
+      if (oldest_fence) {
+         screen->fence_finish(screen, NULL, oldest_fence, PIPE_TIMEOUT_INFINITE);
+         screen->fence_reference(screen, &oldest_fence, NULL);
       }
 
-      ctx->st->flush(ctx->st, flush_flags, &fence);
-
-      if (fence) {
-         swap_fences_push_back(drawable, fence);
-         screen->fence_reference(screen, &fence, NULL);
+      if (new_fence) {
+         swap_fences_push_back(drawable, new_fence);
+         screen->fence_reference(screen, &new_fence, NULL);
       }
    }
    else if (flags & (__DRI2_FLUSH_DRAWABLE | __DRI2_FLUSH_CONTEXT)) {
-      ctx->st->flush(ctx->st, flush_flags, NULL);
+      st->flush(st, flush_flags, NULL);
    }
 
    if (drawable) {

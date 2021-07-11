@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -40,13 +38,13 @@ struct fd2_context {
 	struct pipe_resource *solid_vertexbuf;
 };
 
-static INLINE struct fd2_context *
+static inline struct fd2_context *
 fd2_context(struct fd_context *ctx)
 {
 	return (struct fd2_context *)ctx;
 }
 
 struct pipe_context *
-fd2_context_create(struct pipe_screen *pscreen, void *priv);
+fd2_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags);
 
 #endif /* FD2_CONTEXT_H_ */

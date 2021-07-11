@@ -32,14 +32,17 @@
   */
 
 
+#include "main/context.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
+#include "main/teximage.h"
 #include "main/texobj.h"
 #include "program/prog_instruction.h"
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_sampler_view.h"
 #include "st_texture.h"
 #include "st_format.h"
 #include "st_cb_texture.h"
@@ -50,476 +53,250 @@
 
 
 /**
- * Return swizzle1(swizzle2)
+ * Get a pipe_sampler_view object from a texture unit.
  */
-static unsigned
-swizzle_swizzle(unsigned swizzle1, unsigned swizzle2)
-{
-   unsigned i, swz[4];
-
-   for (i = 0; i < 4; i++) {
-      unsigned s = GET_SWZ(swizzle1, i);
-      switch (s) {
-      case SWIZZLE_X:
-      case SWIZZLE_Y:
-      case SWIZZLE_Z:
-      case SWIZZLE_W:
-         swz[i] = GET_SWZ(swizzle2, s);
-         break;
-      case SWIZZLE_ZERO:
-         swz[i] = SWIZZLE_ZERO;
-         break;
-      case SWIZZLE_ONE:
-         swz[i] = SWIZZLE_ONE;
-         break;
-      default:
-         assert(!"Bad swizzle term");
-         swz[i] = SWIZZLE_X;
-      }
-   }
-
-   return MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
-}
-
-
-/**
- * Given a user-specified texture base format, the actual gallium texture
- * format and the current GL_DEPTH_MODE, return a texture swizzle.
- *
- * Consider the case where the user requests a GL_RGB internal texture
- * format the driver actually uses an RGBA format.  The A component should
- * be ignored and sampling from the texture should always return (r,g,b,1).
- * But if we rendered to the texture we might have written A values != 1.
- * By sampling the texture with a ".xyz1" swizzle we'll get the expected A=1.
- * This function computes the texture swizzle needed to get the expected
- * values.
- *
- * In the case of depth textures, the GL_DEPTH_MODE state determines the
- * texture swizzle.
- *
- * This result must be composed with the user-specified swizzle to get
- * the final swizzle.
- */
-static unsigned
-compute_texture_format_swizzle(GLenum baseFormat, GLenum depthMode,
-                               enum pipe_format actualFormat)
-{
-   switch (baseFormat) {
-   case GL_RGBA:
-      return SWIZZLE_XYZW;
-   case GL_RGB:
-      if (util_format_has_alpha(actualFormat))
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
-      else
-         return SWIZZLE_XYZW;
-   case GL_RG:
-      if (util_format_get_nr_components(actualFormat) > 2)
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ONE);
-      else
-         return SWIZZLE_XYZW;
-   case GL_RED:
-      if (util_format_get_nr_components(actualFormat) > 1)
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO,
-                              SWIZZLE_ZERO, SWIZZLE_ONE);
-      else
-         return SWIZZLE_XYZW;
-   case GL_ALPHA:
-      if (util_format_get_nr_components(actualFormat) > 1)
-         return MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO,
-                              SWIZZLE_ZERO, SWIZZLE_W);
-      else
-         return SWIZZLE_XYZW;
-   case GL_LUMINANCE:
-      if (util_format_get_nr_components(actualFormat) > 1)
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
-      else
-         return SWIZZLE_XYZW;
-   case GL_LUMINANCE_ALPHA:
-      if (util_format_get_nr_components(actualFormat) > 2)
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_W);
-      else
-         return SWIZZLE_XYZW;
-   case GL_INTENSITY:
-      if (util_format_get_nr_components(actualFormat) > 1)
-         return SWIZZLE_XXXX;
-      else
-         return SWIZZLE_XYZW;
-   case GL_STENCIL_INDEX:
-      return SWIZZLE_XYZW;
-   case GL_DEPTH_STENCIL:
-      /* fall-through */
-   case GL_DEPTH_COMPONENT:
-      /* Now examine the depth mode */
-      switch (depthMode) {
-      case GL_LUMINANCE:
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
-      case GL_INTENSITY:
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
-      case GL_ALPHA:
-         return MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO,
-                              SWIZZLE_ZERO, SWIZZLE_X);
-      case GL_RED:
-         return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO,
-                              SWIZZLE_ZERO, SWIZZLE_ONE);
-      default:
-         assert(!"Unexpected depthMode");
-         return SWIZZLE_XYZW;
-      }
-   default:
-      assert(!"Unexpected baseFormat");
-      return SWIZZLE_XYZW;
-   }
-}
-
-
-static unsigned
-get_texture_format_swizzle(const struct st_texture_object *stObj)
-{
-   const struct gl_texture_image *texImage =
-      stObj->base.Image[0][stObj->base.BaseLevel];
-   unsigned tex_swizzle;
-
-   if (texImage) {
-      tex_swizzle = compute_texture_format_swizzle(texImage->_BaseFormat,
-                                                   stObj->base.DepthMode,
-                                                   stObj->pt->format);
-   }
-   else {
-      tex_swizzle = SWIZZLE_XYZW;
-   }
-
-   /* Combine the texture format swizzle with user's swizzle */
-   return swizzle_swizzle(stObj->base._Swizzle, tex_swizzle);
-}
-
-                            
-/**
- * Return TRUE if the texture's sampler view swizzle is equal to
- * the texture's swizzle.
- *
- * \param stObj  the st texture object,
- */
-static boolean
-check_sampler_swizzle(const struct st_texture_object *stObj,
-		      struct pipe_sampler_view *sv)
-{
-   unsigned swizzle = get_texture_format_swizzle(stObj);
-
-   return ((sv->swizzle_r != GET_SWZ(swizzle, 0)) ||
-           (sv->swizzle_g != GET_SWZ(swizzle, 1)) ||
-           (sv->swizzle_b != GET_SWZ(swizzle, 2)) ||
-           (sv->swizzle_a != GET_SWZ(swizzle, 3)));
-}
-
-
-static unsigned last_level(struct st_texture_object *stObj)
-{
-   return MIN2(stObj->base._MaxLevel, stObj->pt->last_level);
-}
-
-
-static struct pipe_sampler_view *
-st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
-					  struct st_texture_object *stObj,
-                                          const struct gl_sampler_object *samp,
-					  enum pipe_format format)
-{
-   struct pipe_sampler_view templ;
-   unsigned swizzle = get_texture_format_swizzle(stObj);
-
-   u_sampler_view_default_template(&templ,
-                                   stObj->pt,
-                                   format);
-
-   if (stObj->pt->target == PIPE_BUFFER) {
-      unsigned base, size;
-      unsigned f, n;
-      const struct util_format_description *desc
-         = util_format_description(templ.format);
-
-      base = stObj->base.BufferOffset;
-      if (base >= stObj->pt->width0)
-         return NULL;
-      size = MIN2(stObj->pt->width0 - base, (unsigned)stObj->base.BufferSize);
-
-      f = ((base * 8) / desc->block.bits) * desc->block.width;
-      n = ((size * 8) / desc->block.bits) * desc->block.width;
-      if (!n)
-         return NULL;
-      templ.u.buf.first_element = f;
-      templ.u.buf.last_element  = f + (n - 1);
-   } else {
-      templ.u.tex.first_level = stObj->base.BaseLevel;
-      templ.u.tex.last_level = last_level(stObj);
-      assert(templ.u.tex.first_level <= templ.u.tex.last_level);
-   }
-
-   if (swizzle != SWIZZLE_NOOP) {
-      templ.swizzle_r = GET_SWZ(swizzle, 0);
-      templ.swizzle_g = GET_SWZ(swizzle, 1);
-      templ.swizzle_b = GET_SWZ(swizzle, 2);
-      templ.swizzle_a = GET_SWZ(swizzle, 3);
-   }
-
-   return pipe->create_sampler_view(pipe, stObj->pt, &templ);
-}
-
-
-static struct pipe_sampler_view *
-st_get_texture_sampler_view_from_stobj(struct st_context *st,
-                                       struct st_texture_object *stObj,
-                                       const struct gl_sampler_object *samp,
-				       enum pipe_format format)
-{
-   struct pipe_sampler_view **sv;
-
-   if (!stObj || !stObj->pt) {
-      return NULL;
-   }
-
-   sv = st_texture_get_sampler_view(st, stObj);
-
-   if (stObj->base.StencilSampling &&
-       util_format_is_depth_and_stencil(format))
-      format = util_format_stencil_only(format);
-
-   /* if sampler view has changed dereference it */
-   if (*sv) {
-      if (check_sampler_swizzle(stObj, *sv) ||
-	  (format != (*sv)->format) ||
-          stObj->base.BaseLevel != (*sv)->u.tex.first_level ||
-          last_level(stObj) != (*sv)->u.tex.last_level) {
-	 pipe_sampler_view_reference(sv, NULL);
-      }
-   }
-
-   if (!*sv) {
-      *sv = st_create_texture_sampler_view_from_stobj(st->pipe, stObj, samp, format);
-
-   } else if ((*sv)->context != st->pipe) {
-      /* Recreate view in correct context, use existing view as template */
-      struct pipe_sampler_view *new_sv =
-         st->pipe->create_sampler_view(st->pipe, stObj->pt, *sv);
-      pipe_sampler_view_reference(sv, NULL);
-      *sv = new_sv;
-   }
-
-   return *sv;
-}
-
-static GLboolean
-update_single_texture(struct st_context *st,
-                      struct pipe_sampler_view **sampler_view,
-		      GLuint texUnit)
+void
+st_update_single_texture(struct st_context *st,
+                         struct pipe_sampler_view **sampler_view,
+                         GLuint texUnit, bool glsl130_or_later,
+                         bool ignore_srgb_decode)
 {
    struct gl_context *ctx = st->ctx;
    const struct gl_sampler_object *samp;
    struct gl_texture_object *texObj;
    struct st_texture_object *stObj;
-   enum pipe_format view_format;
-   GLboolean retval;
 
    samp = _mesa_get_samplerobj(ctx, texUnit);
 
    texObj = ctx->Texture.Unit[texUnit]._Current;
+   assert(texObj);
 
-   if (!texObj) {
-      texObj = _mesa_get_fallback_texture(ctx, TEXTURE_2D_INDEX);
-      samp = &texObj->Sampler;
-   }
    stObj = st_texture_object(texObj);
 
-   retval = st_finalize_texture(ctx, st->pipe, texObj);
-   if (!retval) {
+   if (unlikely(texObj->Target == GL_TEXTURE_BUFFER)) {
+      *sampler_view = st_get_buffer_sampler_view_from_stobj(st, stObj);
+      return;
+   }
+
+   if (!st_finalize_texture(ctx, st->pipe, texObj, 0) ||
+       !stObj->pt) {
       /* out of mem */
-      return GL_FALSE;
+      *sampler_view = NULL;
+      return;
    }
 
-   /* Determine the format of the texture sampler view */
-   if (texObj->Target == GL_TEXTURE_BUFFER) {
-      view_format =
-         st_mesa_format_to_pipe_format(st, stObj->base._BufferObjectFormat);
-   }
-   else {
-      view_format =
-         stObj->surface_based ? stObj->surface_format : stObj->pt->format;
+   if (texObj->TargetIndex == TEXTURE_EXTERNAL_INDEX &&
+       stObj->pt->screen->resource_changed)
+         stObj->pt->screen->resource_changed(stObj->pt->screen, stObj->pt);
 
-      /* If sRGB decoding is off, use the linear format */
-      if (samp->sRGBDecode == GL_SKIP_DECODE_EXT) {
-         view_format = util_format_linear(view_format);
-      }
-   }
-
-   *sampler_view = st_get_texture_sampler_view_from_stobj(st, stObj, samp,
-							  view_format);
-   return GL_TRUE;
+   *sampler_view =
+      st_get_texture_sampler_view_from_stobj(st, stObj, samp,
+                                             glsl130_or_later,
+                                             ignore_srgb_decode);
 }
 
 
 
 static void
 update_textures(struct st_context *st,
-                unsigned shader_stage,
+                enum pipe_shader_type shader_stage,
                 const struct gl_program *prog,
-                unsigned max_units,
-                struct pipe_sampler_view **sampler_views,
-                unsigned *num_textures)
+                struct pipe_sampler_view **sampler_views)
 {
-   const GLuint old_max = *num_textures;
+   const GLuint old_max = st->state.num_sampler_views[shader_stage];
    GLbitfield samplers_used = prog->SamplersUsed;
+   GLbitfield texel_fetch_samplers = prog->info.textures_used_by_txf;
+   GLbitfield free_slots = ~prog->SamplersUsed;
+   GLbitfield external_samplers_used = prog->ExternalSamplersUsed;
    GLuint unit;
 
    if (samplers_used == 0x0 && old_max == 0)
       return;
 
-   *num_textures = 0;
+   unsigned num_textures = 0;
+
+   /* prog->sh.data is NULL if it's ARB_fragment_program */
+   bool glsl130 = (prog->sh.data ? prog->sh.data->Version : 0) >= 130;
 
    /* loop over sampler units (aka tex image units) */
-   for (unit = 0; unit < max_units; unit++, samplers_used >>= 1) {
+   for (unit = 0; samplers_used || unit < old_max;
+        unit++, samplers_used >>= 1, texel_fetch_samplers >>= 1) {
       struct pipe_sampler_view *sampler_view = NULL;
 
       if (samplers_used & 1) {
          const GLuint texUnit = prog->SamplerUnits[unit];
-         GLboolean retval;
 
-         retval = update_single_texture(st, &sampler_view, texUnit);
-         if (retval == GL_FALSE)
-            continue;
-
-         *num_textures = unit + 1;
-      }
-      else if (samplers_used == 0 && unit >= old_max) {
-         /* if we've reset all the old views and we have no more new ones */
-         break;
+         /* The EXT_texture_sRGB_decode extension says:
+          *
+          *    "The conversion of sRGB color space components to linear color
+          *     space is always performed if the texel lookup function is one
+          *     of the texelFetch builtin functions.
+          *
+          *     Otherwise, if the texel lookup function is one of the texture
+          *     builtin functions or one of the texture gather functions, the
+          *     conversion of sRGB color space components to linear color space
+          *     is controlled by the TEXTURE_SRGB_DECODE_EXT parameter.
+          *
+          *     If the TEXTURE_SRGB_DECODE_EXT parameter is DECODE_EXT, the
+          *     conversion of sRGB color space components to linear color space
+          *     is performed.
+          *
+          *     If the TEXTURE_SRGB_DECODE_EXT parameter is SKIP_DECODE_EXT,
+          *     the value is returned without decoding. However, if the texture
+          *     is also [statically] accessed with a texelFetch function, then
+          *     the result of texture builtin functions and/or texture gather
+          *     functions may be returned with decoding or without decoding."
+          *
+          * Note: the "statically" will be added to the language per
+          *       https://cvs.khronos.org/bugzilla/show_bug.cgi?id=14934
+          *
+          * So we simply ignore the setting entirely for samplers that are
+          * (statically) accessed with a texelFetch function.
+          */
+         st_update_single_texture(st, &sampler_view, texUnit, glsl130,
+                                  texel_fetch_samplers & 1);
+         num_textures = unit + 1;
       }
 
       pipe_sampler_view_reference(&(sampler_views[unit]), sampler_view);
    }
 
+   /* For any external samplers with multiplaner YUV, stuff the additional
+    * sampler views we need at the end.
+    *
+    * Trying to cache the sampler view in the stObj looks painful, so just
+    * re-create the sampler view for the extra planes each time.  Main use
+    * case is video playback (ie. fps games wouldn't be using this) so I
+    * guess no point to try to optimize this feature.
+    */
+   while (unlikely(external_samplers_used)) {
+      GLuint unit = u_bit_scan(&external_samplers_used);
+      GLuint extra = 0;
+      struct st_texture_object *stObj =
+            st_get_texture_object(st->ctx, prog, unit);
+      struct pipe_sampler_view tmpl;
+
+      if (!stObj)
+         continue;
+
+      /* use original view as template: */
+      tmpl = *sampler_views[unit];
+
+      switch (st_get_view_format(stObj)) {
+      case PIPE_FORMAT_NV12:
+         /* we need one additional R8G8 view: */
+         tmpl.format = PIPE_FORMAT_RG88_UNORM;
+         tmpl.swizzle_g = PIPE_SWIZZLE_Y;   /* tmpl from Y plane is R8 */
+         extra = u_bit_scan(&free_slots);
+         sampler_views[extra] =
+               st->pipe->create_sampler_view(st->pipe, stObj->pt->next, &tmpl);
+         break;
+      case PIPE_FORMAT_IYUV:
+         /* we need two additional R8 views: */
+         tmpl.format = PIPE_FORMAT_R8_UNORM;
+         extra = u_bit_scan(&free_slots);
+         sampler_views[extra] =
+               st->pipe->create_sampler_view(st->pipe, stObj->pt->next, &tmpl);
+         extra = u_bit_scan(&free_slots);
+         sampler_views[extra] =
+               st->pipe->create_sampler_view(st->pipe, stObj->pt->next->next, &tmpl);
+         break;
+      default:
+         break;
+      }
+
+      num_textures = MAX2(num_textures, extra + 1);
+   }
+
    cso_set_sampler_views(st->cso_context,
                          shader_stage,
-                         *num_textures,
+                         num_textures,
                          sampler_views);
+   st->state.num_sampler_views[shader_stage] = num_textures;
 }
 
-
-
+/* Same as update_textures, but don't store the views in st_context. */
 static void
-update_vertex_textures(struct st_context *st)
+update_textures_local(struct st_context *st,
+                      enum pipe_shader_type shader_stage,
+                      const struct gl_program *prog)
+{
+   struct pipe_sampler_view *local_views[PIPE_MAX_SAMPLERS] = {0};
+
+   update_textures(st, shader_stage, prog, local_views);
+
+   unsigned num = st->state.num_sampler_views[shader_stage];
+   for (unsigned i = 0; i < num; i++)
+      pipe_sampler_view_reference(&local_views[i], NULL);
+}
+
+void
+st_update_vertex_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
 
    if (ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits > 0) {
-      update_textures(st,
-                      PIPE_SHADER_VERTEX,
-                      &ctx->VertexProgram._Current->Base,
-                      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
-                      st->state.sampler_views[PIPE_SHADER_VERTEX],
-                      &st->state.num_sampler_views[PIPE_SHADER_VERTEX]);
+      update_textures_local(st, PIPE_SHADER_VERTEX,
+                            ctx->VertexProgram._Current);
    }
 }
 
 
-static void
-update_fragment_textures(struct st_context *st)
+void
+st_update_fragment_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
 
    update_textures(st,
                    PIPE_SHADER_FRAGMENT,
-                   &ctx->FragmentProgram._Current->Base,
-                   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
-                   st->state.sampler_views[PIPE_SHADER_FRAGMENT],
-                   &st->state.num_sampler_views[PIPE_SHADER_FRAGMENT]);
+                   ctx->FragmentProgram._Current,
+                   st->state.frag_sampler_views);
 }
 
 
-static void
-update_geometry_textures(struct st_context *st)
+void
+st_update_geometry_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
 
    if (ctx->GeometryProgram._Current) {
-      update_textures(st,
-                      PIPE_SHADER_GEOMETRY,
-                      &ctx->GeometryProgram._Current->Base,
-                      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
-                      st->state.sampler_views[PIPE_SHADER_GEOMETRY],
-                      &st->state.num_sampler_views[PIPE_SHADER_GEOMETRY]);
+      update_textures_local(st, PIPE_SHADER_GEOMETRY,
+                            ctx->GeometryProgram._Current);
    }
 }
 
 
-const struct st_tracked_state st_update_fragment_texture = {
-   "st_update_texture",					/* name */
-   {							/* dirty */
-      _NEW_TEXTURE,					/* mesa */
-      ST_NEW_FRAGMENT_PROGRAM,				/* st */
-   },
-   update_fragment_textures				/* update */
-};
-
-
-const struct st_tracked_state st_update_vertex_texture = {
-   "st_update_vertex_texture",				/* name */
-   {							/* dirty */
-      _NEW_TEXTURE,					/* mesa */
-      ST_NEW_VERTEX_PROGRAM,				/* st */
-   },
-   update_vertex_textures				/* update */
-};
-
-
-const struct st_tracked_state st_update_geometry_texture = {
-   "st_update_geometry_texture",			/* name */
-   {							/* dirty */
-      _NEW_TEXTURE,					/* mesa */
-      ST_NEW_GEOMETRY_PROGRAM,				/* st */
-   },
-   update_geometry_textures				/* update */
-};
-
-
-
-static void
-finalize_textures(struct st_context *st)
+void
+st_update_tessctrl_textures(struct st_context *st)
 {
-   struct gl_context *ctx = st->ctx;
-   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
-   const GLboolean prev_missing_textures = st->missing_textures;
-   GLuint su;
+   const struct gl_context *ctx = st->ctx;
 
-   st->missing_textures = GL_FALSE;
-
-   for (su = 0; su < ctx->Const.MaxTextureCoordUnits; su++) {
-      if (fprog->Base.SamplersUsed & (1 << su)) {
-         const GLuint texUnit = fprog->Base.SamplerUnits[su];
-         struct gl_texture_object *texObj
-            = ctx->Texture.Unit[texUnit]._Current;
-
-         if (texObj) {
-            GLboolean retval;
-
-            retval = st_finalize_texture(ctx, st->pipe, texObj);
-            if (!retval) {
-               /* out of mem */
-               st->missing_textures = GL_TRUE;
-               continue;
-            }
-         }
-      }
+   if (ctx->TessCtrlProgram._Current) {
+      update_textures_local(st, PIPE_SHADER_TESS_CTRL,
+                            ctx->TessCtrlProgram._Current);
    }
-
-   if (prev_missing_textures != st->missing_textures)
-      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 }
 
 
-const struct st_tracked_state st_finalize_textures = {
-   "st_finalize_textures",		/* name */
-   {					/* dirty */
-      _NEW_TEXTURE,			/* mesa */
-      0,				/* st */
-   },
-   finalize_textures			/* update */
-};
+void
+st_update_tesseval_textures(struct st_context *st)
+{
+   const struct gl_context *ctx = st->ctx;
+
+   if (ctx->TessEvalProgram._Current) {
+      update_textures_local(st, PIPE_SHADER_TESS_EVAL,
+                            ctx->TessEvalProgram._Current);
+   }
+}
+
+
+void
+st_update_compute_textures(struct st_context *st)
+{
+   const struct gl_context *ctx = st->ctx;
+
+   if (ctx->ComputeProgram._Current) {
+      update_textures_local(st, PIPE_SHADER_COMPUTE,
+                            ctx->ComputeProgram._Current);
+   }
+}

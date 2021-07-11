@@ -31,10 +31,12 @@
  */
 
 #include "main/arrayobj.h"
+#include "main/blend.h"
 #include "main/buffers.h"
 #include "main/enums.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
+#include "main/framebuffer.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
@@ -56,7 +58,6 @@ static bool
 fallback_required(struct gl_context *ctx, GLenum target,
                   struct gl_texture_object *texObj)
 {
-   const GLuint fboSave = ctx->DrawBuffer->Name;
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
    struct gl_texture_image *baseImage;
    GLuint srcLevel;
@@ -66,12 +67,12 @@ fallback_required(struct gl_context *ctx, GLenum target,
    if (target == GL_TEXTURE_3D) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() to %s target\n",
-                       _mesa_lookup_enum_by_nr(target));
+                       _mesa_enum_to_string(target));
       return true;
    }
 
    srcLevel = texObj->BaseLevel;
-   baseImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
+   baseImage = _mesa_select_tex_image(texObj, target, srcLevel);
    if (!baseImage) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() couldn't find base teximage\n");
@@ -100,16 +101,19 @@ fallback_required(struct gl_context *ctx, GLenum target,
    /*
     * Test that we can actually render in the texture's format.
     */
-   if (!mipmap->FBO)
-      _mesa_GenFramebuffers(1, &mipmap->FBO);
-   _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
+   if (mipmap->fb == NULL) {
+      mipmap->fb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
+      if (mipmap->fb == NULL) {
+         _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                          "glGenerateMipmap() ran out of memory\n");
+         return true;
+      }
+   }
 
-   _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, baseImage, 0);
+   _mesa_meta_framebuffer_texture_image(ctx, mipmap->fb,
+                                        GL_COLOR_ATTACHMENT0, baseImage, 0);
 
-   status = _mesa_CheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
-
-   _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, fboSave);
-
+   status = _mesa_check_framebuffer_status(ctx, mipmap->fb);
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() got incomplete FBO\n");
@@ -120,38 +124,24 @@ fallback_required(struct gl_context *ctx, GLenum target,
 }
 
 void
-_mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
+_mesa_meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
+                                        struct gen_mipmap_state *mipmap)
 {
    if (mipmap->VAO == 0)
       return;
    _mesa_DeleteVertexArrays(1, &mipmap->VAO);
    mipmap->VAO = 0;
-   _mesa_DeleteBuffers(1, &mipmap->VBO);
-   mipmap->VBO = 0;
+   _mesa_reference_buffer_object(ctx, &mipmap->buf_obj, NULL);
+   _mesa_reference_sampler_object(ctx, &mipmap->samp_obj, NULL);
+   _mesa_reference_framebuffer(&mipmap->fb, NULL);
 
-   _mesa_meta_blit_shader_table_cleanup(&mipmap->shaders);
+   _mesa_meta_blit_shader_table_cleanup(ctx, &mipmap->shaders);
 }
 
-static GLboolean
-prepare_mipmap_level(struct gl_context *ctx,
-                     struct gl_texture_object *texObj, GLuint level,
-                     GLsizei width, GLsizei height, GLsizei depth,
-                     GLenum intFormat, mesa_format format)
-{
-   if (texObj->Target == GL_TEXTURE_1D_ARRAY) {
-      /* Work around Mesa expecting the number of array slices in "height". */
-      height = depth;
-      depth = 1;
-   }
-
-   return _mesa_prepare_mipmap_level(ctx, texObj, level, width, height, depth,
-                                     0, intFormat, format);
-}
 
 /**
  * Called via ctx->Driver.GenerateMipmap()
- * Note: We don't yet support 3D textures, 1D/2D array textures or texture
- * borders.
+ * Note: We don't yet support 3D textures, or texture borders.
  */
 void
 _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
@@ -163,14 +153,19 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint maxLevel = texObj->MaxLevel;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
-   const GLuint currentTexUnitSave = ctx->Texture.CurrentUnit;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
    GLenum faceTarget;
    GLuint dstLevel;
-   GLuint samplerSave;
+   struct gl_sampler_object *samp_obj_save = NULL;
    GLint swizzle[4];
    GLboolean swizzleSaved = GL_FALSE;
+
+   /* GLint so the compiler won't complain about type signedness mismatch in
+    * the calls to _mesa_texture_parameteriv below.
+    */
+   static const GLint always_false = GL_FALSE;
+   static const GLint always_true = GL_TRUE;
 
    if (fallback_required(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
@@ -186,59 +181,73 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    }
 
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
+   _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   _mesa_Disable(GL_DITHER);
 
    /* Choose between glsl version and fixed function version of
     * GenerateMipmap function.
     */
    if (use_glsl_version) {
-      _mesa_meta_setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true,
+      _mesa_meta_setup_vertex_objects(ctx, &mipmap->VAO, &mipmap->buf_obj, true,
                                       2, 4, 0);
-      _mesa_meta_setup_blit_shader(ctx, target, &mipmap->shaders);
+      _mesa_meta_setup_blit_shader(ctx, target, false, &mipmap->shaders);
    } else {
-      _mesa_meta_setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
+      _mesa_meta_setup_ff_tnl_for_blit(ctx, &mipmap->VAO, &mipmap->buf_obj, 3);
       _mesa_set_enable(ctx, target, GL_TRUE);
    }
 
-   samplerSave = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
-      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
+   _mesa_reference_sampler_object(ctx, &samp_obj_save,
+                                  ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler);
 
-   if (currentTexUnitSave != 0)
-      _mesa_BindTexture(target, texObj->Name);
+   /* We may have been called from glGenerateTextureMipmap with CurrentUnit
+    * still set to 0, so we don't know when we can skip binding the texture.
+    * Assume that _mesa_bind_texture will be fast if we're rebinding the same
+    * texture.
+    */
+   _mesa_bind_texture(ctx, target, texObj);
 
-   if (!mipmap->Sampler) {
-      _mesa_GenSamplers(1, &mipmap->Sampler);
-      _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
-
-      _mesa_SamplerParameteri(mipmap->Sampler,
-                              GL_TEXTURE_MIN_FILTER,
-                              GL_LINEAR_MIPMAP_LINEAR);
-      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-      /* We don't want to encode or decode sRGB values; treat them as linear.
-       * This is not technically correct for GLES3 but we don't get any API
-       * error at the moment.
-       */
-      if (ctx->Extensions.EXT_texture_sRGB_decode) {
-         _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_SRGB_DECODE_EXT,
-               GL_SKIP_DECODE_EXT);
+   if (mipmap->samp_obj == NULL) {
+      mipmap->samp_obj =  ctx->Driver.NewSamplerObject(ctx, 0xDEADBEEF);
+      if (mipmap->samp_obj == NULL) {
+         /* This is a bit lazy.  Flag out of memory, and then don't bother to
+          * clean up.  Once out of memory is flagged, the only realistic next
+          * move is to destroy the context.  That will trigger all the right
+          * clean up.
+          */
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenerateMipmap");
+         return;
       }
-   } else {
-      _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
+
+      _mesa_set_sampler_filters(ctx, mipmap->samp_obj, GL_LINEAR_MIPMAP_LINEAR,
+                                GL_LINEAR);
+      _mesa_set_sampler_wrap(ctx, mipmap->samp_obj, GL_CLAMP_TO_EDGE,
+                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
    }
 
-   assert(mipmap->FBO != 0);
-   _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
+   if (ctx->Extensions.EXT_texture_sRGB_decode) {
+      const struct gl_texture_image *baseImage =
+         _mesa_select_tex_image(texObj, target, texObj->BaseLevel);
+      const bool srgb =
+         _mesa_get_format_color_encoding(baseImage->TexFormat) == GL_SRGB;
 
-   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
+      _mesa_set_sampler_srgb_decode(ctx, mipmap->samp_obj,
+                                    srgb ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
+      _mesa_set_framebuffer_srgb(ctx, srgb);
+   }
+
+   _mesa_bind_sampler(ctx, ctx->Texture.CurrentUnit, mipmap->samp_obj);
+
+   assert(mipmap->fb != NULL);
+   _mesa_bind_framebuffers(ctx, mipmap->fb, mipmap->fb);
+
+   _mesa_texture_parameteriv(ctx, texObj, GL_GENERATE_MIPMAP, &always_false, false);
 
    if (texObj->_Swizzle != SWIZZLE_NOOP) {
       static const GLint swizzleNoop[4] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA };
       memcpy(swizzle, texObj->Swizzle, sizeof(swizzle));
       swizzleSaved = GL_TRUE;
-      _mesa_TexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, swizzleNoop);
+      _mesa_texture_parameteriv(ctx, texObj, GL_TEXTURE_SWIZZLE_RGBA,
+                                swizzleNoop, false);
    }
 
    /* Silence valgrind warnings about reading uninitialized stack. */
@@ -257,6 +266,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
 
+   _mesa_prepare_mipmap_levels(ctx, texObj, baseLevel, maxLevel);
+
    for (dstLevel = baseLevel + 1; dstLevel <= maxLevel; dstLevel++) {
       const struct gl_texture_image *srcImage;
       struct gl_texture_image *dstImage;
@@ -265,7 +276,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       GLsizei srcWidth, srcHeight, srcDepth;
       GLsizei dstWidth, dstHeight, dstDepth;
 
-      srcImage = _mesa_select_tex_image(ctx, texObj, faceTarget, srcLevel);
+      srcImage = _mesa_select_tex_image(texObj, faceTarget, srcLevel);
       assert(srcImage->Border == 0);
 
       /* src size */
@@ -293,21 +304,20 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* Allocate storage for the destination mipmap image(s) */
 
       /* Set MaxLevel large enough to hold the new level when we allocate it */
-      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, dstLevel);
+      _mesa_texture_parameteriv(ctx, texObj, GL_TEXTURE_MAX_LEVEL,
+                                (GLint *) &dstLevel, false);
 
-      if (!prepare_mipmap_level(ctx, texObj, dstLevel,
-                                dstWidth, dstHeight, dstDepth,
-                                srcImage->InternalFormat,
-                                srcImage->TexFormat)) {
-         /* All done.  We either ran out of memory or we would go beyond the
-          * last valid level of an immutable texture if we continued.
-          */
+      dstImage = _mesa_select_tex_image(texObj, faceTarget, dstLevel);
+
+      /* All done.  We either ran out of memory or we would go beyond the last
+       * valid level of an immutable texture if we continued.
+       */
+      if (dstImage == NULL)
          break;
-      }
-      dstImage = _mesa_select_tex_image(ctx, texObj, faceTarget, dstLevel);
 
       /* limit minification to src level */
-      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+      _mesa_texture_parameteriv(ctx, texObj, GL_TEXTURE_MAX_LEVEL,
+                                (GLint *) &srcLevel, false);
 
       /* setup viewport */
       _mesa_set_viewport(ctx, 0, 0, 0, dstWidth, dstHeight);
@@ -317,20 +327,24 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
          /* Setup texture coordinates */
          _mesa_meta_setup_texture_coords(faceTarget,
                                          layer,
-                                         0, 0, 1, /* width, height never used here */
+                                         0, 0, /* xoffset, yoffset */
+                                         srcWidth, srcHeight, /* img size */
+                                         srcWidth, srcHeight, srcDepth,
                                          verts[0].tex,
                                          verts[1].tex,
                                          verts[2].tex,
                                          verts[3].tex);
 
          /* upload vertex data */
-         _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                          verts, GL_DYNAMIC_DRAW_ARB);
+         _mesa_buffer_data(ctx, mipmap->buf_obj, GL_NONE, sizeof(verts), verts,
+                           GL_DYNAMIC_DRAW, __func__);
 
-         _mesa_meta_bind_fbo_image(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dstImage, layer);
+         _mesa_meta_framebuffer_texture_image(ctx, ctx->DrawBuffer,
+                                              GL_COLOR_ATTACHMENT0, dstImage,
+                                              layer);
 
          /* sanity check */
-         if (_mesa_CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         if (_mesa_check_framebuffer_status(ctx, ctx->DrawBuffer) !=
              GL_FRAMEBUFFER_COMPLETE) {
             _mesa_problem(ctx, "Unexpected incomplete framebuffer in "
                           "_mesa_meta_GenerateMipmap()");
@@ -350,13 +364,17 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_lock_texture(ctx, texObj); /* relock */
 
-   _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
+   _mesa_bind_sampler(ctx, ctx->Texture.CurrentUnit, samp_obj_save);
+   _mesa_reference_sampler_object(ctx, &samp_obj_save, NULL);
 
    _mesa_meta_end(ctx);
 
-   _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+   _mesa_texture_parameteriv(ctx, texObj, GL_TEXTURE_MAX_LEVEL, &maxLevelSave,
+                             false);
    if (genMipmapSave)
-      _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
+      _mesa_texture_parameteriv(ctx, texObj, GL_GENERATE_MIPMAP, &always_true,
+                                false);
    if (swizzleSaved)
-      _mesa_TexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+      _mesa_texture_parameteriv(ctx, texObj, GL_TEXTURE_SWIZZLE_RGBA, swizzle,
+                                false);
 }

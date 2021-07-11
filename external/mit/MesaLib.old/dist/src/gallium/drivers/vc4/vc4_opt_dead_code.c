@@ -24,47 +24,126 @@
 /**
  * @file vc4_opt_dead_code.c
  *
- * This is a simmple dead code eliminator for QIR with no control flow.
+ * This is a simple dead code eliminator for SSA values in QIR.
  *
- * It walks from the bottom of the instruction list, removing instructions
- * with a destination that is never used, and marking the sources of non-dead
- * instructions as used.
+ * It walks all the instructions finding what temps are used, then walks again
+ * to remove instructions writing unused temps.
+ *
+ * This is an inefficient implementation if you have long chains of
+ * instructions where the entire chain is dead, but we expect those to have
+ * been eliminated at the NIR level, and here we're just cleaning up small
+ * problems produced by NIR->QIR.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "vc4_qir.h"
 
-bool
-qir_opt_dead_code(struct qcompile *c)
+static bool debug;
+
+static void
+dce(struct vc4_compile *c, struct qinst *inst)
 {
-        bool progress = false;
-        bool debug = false;
-        bool *used = calloc(c->num_temps, sizeof(bool));
+        if (debug) {
+                fprintf(stderr, "Removing: ");
+                qir_dump_inst(c, inst);
+                fprintf(stderr, "\n");
+        }
+        assert(!inst->sf);
+        qir_remove_instruction(c, inst);
+}
 
-        struct simple_node *node, *t;
-        for (node = c->instructions.prev, t = node->prev;
-             &c->instructions != node;
-             node = t, t = t->prev) {
-                struct qinst *inst = (struct qinst *)node;
+static bool
+has_nonremovable_reads(struct vc4_compile *c, struct qinst *inst)
+{
+        for (int i = 0; i < qir_get_nsrc(inst); i++) {
+                if (inst->src[i].file == QFILE_VPM) {
+                        uint32_t attr = inst->src[i].index / 4;
+                        uint32_t offset = (inst->src[i].index % 4) * 4;
 
-                if (inst->dst.file == QFILE_TEMP &&
-                    !used[inst->dst.index] &&
-                    !qir_has_side_effects(inst)) {
-                        if (debug) {
-                                fprintf(stderr, "Removing: ");
-                                qir_dump_inst(inst);
-                                fprintf(stderr, "\n");
-                        }
-                        remove_from_list(&inst->link);
-                        free(inst);
-                        progress = true;
-                        continue;
+                        if (c->vattr_sizes[attr] != offset + 4)
+                                return true;
+
+                        /* Can't get rid of the last VPM read, or the
+                         * simulator (at least) throws an error.
+                         */
+                        uint32_t total_size = 0;
+                        for (uint32_t i = 0; i < ARRAY_SIZE(c->vattr_sizes); i++)
+                                total_size += c->vattr_sizes[i];
+                        if (total_size == 4)
+                                return true;
                 }
 
-                for (int i = 0; i < qir_get_op_nsrc(inst->op); i++) {
+                if (inst->src[i].file == QFILE_VARY &&
+                    c->input_slots[inst->src[i].index].slot == 0xff) {
+                        return true;
+                }
+        }
+
+        return false;
+}
+
+bool
+qir_opt_dead_code(struct vc4_compile *c)
+{
+        bool progress = false;
+        bool *used = calloc(c->num_temps, sizeof(bool));
+
+        qir_for_each_inst_inorder(inst, c) {
+                for (int i = 0; i < qir_get_nsrc(inst); i++) {
                         if (inst->src[i].file == QFILE_TEMP)
                                 used[inst->src[i].index] = true;
+                }
+        }
+
+        qir_for_each_block(block, c) {
+                qir_for_each_inst_safe(inst, block) {
+                        if (inst->dst.file != QFILE_NULL &&
+                            !(inst->dst.file == QFILE_TEMP &&
+                              !used[inst->dst.index])) {
+                                continue;
+                        }
+
+                        if (qir_has_side_effects(c, inst))
+                                continue;
+
+                        if (inst->sf ||
+                            has_nonremovable_reads(c, inst)) {
+                                /* If we can't remove the instruction, but we
+                                 * don't need its destination value, just
+                                 * remove the destination.  The register
+                                 * allocator would trivially color it and it
+                                 * wouldn't cause any register pressure, but
+                                 * it's nicer to read the QIR code without
+                                 * unused destination regs.
+                                 */
+                                if (inst->dst.file == QFILE_TEMP) {
+                                        if (debug) {
+                                                fprintf(stderr,
+                                                        "Removing dst from: ");
+                                                qir_dump_inst(c, inst);
+                                                fprintf(stderr, "\n");
+                                        }
+                                        c->defs[inst->dst.index] = NULL;
+                                        inst->dst.file = QFILE_NULL;
+                                        progress = true;
+                                }
+                                continue;
+                        }
+
+                        for (int i = 0; i < qir_get_nsrc(inst); i++) {
+                                if (inst->src[i].file != QFILE_VPM)
+                                        continue;
+                                uint32_t attr = inst->src[i].index / 4;
+                                uint32_t offset = (inst->src[i].index % 4) * 4;
+
+                                if (c->vattr_sizes[attr] == offset + 4) {
+                                        c->num_inputs--;
+                                        c->vattr_sizes[attr] -= 4;
+                                }
+                        }
+
+                        dce(c, inst);
+                        progress = true;
+                        continue;
                 }
         }
 

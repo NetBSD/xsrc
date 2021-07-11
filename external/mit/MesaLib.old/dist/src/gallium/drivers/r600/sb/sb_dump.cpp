@@ -354,7 +354,9 @@ void dump::dump_op(node &n, const char *name) {
 					"WRITE_IND_ACK"};
 			sblog << "  " << exp_type[c->bc.type] << " " << c->bc.array_base
 					<< "   ES:" << c->bc.elem_size;
-			has_dst = false;
+			if (!(c->bc.op_ptr->flags & CF_EMIT)) {
+				has_dst = false;
+			}
 		}
 	}
 
@@ -467,6 +469,7 @@ void dump::dump_op(node* n) {
 	case NST_ALU_CLAUSE:
 	case NST_TEX_CLAUSE:
 	case NST_VTX_CLAUSE:
+	case NST_GDS_CLAUSE:
 		dump_op(*n, static_cast<cf_node*>(n)->bc.op_ptr->name);
 		break;
 	case NST_ALU_PACKED_INST:

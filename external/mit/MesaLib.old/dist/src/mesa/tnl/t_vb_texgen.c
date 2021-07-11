@@ -34,8 +34,8 @@
  * including any use thereof or modifications thereto.
  */
 
+#include "main/errors.h"
 #include "main/glheader.h"
-#include "main/colormac.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -116,7 +116,7 @@ static void build_m3( GLfloat f[][3], GLfloat m[],
       fz = f[i][2] = u[2] - norm[2] * two_nu;
       m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
       if (m[i] != 0.0F) {
-	 m[i] = 0.5F * INV_SQRTF(m[i]);
+	 m[i] = 0.5F * (1.0f / sqrtf(m[i]));
       }
    }
 }
@@ -145,7 +145,7 @@ static void build_m2( GLfloat f[][3], GLfloat m[],
       fz = f[i][2] = u[2] - norm[2] * two_nu;
       m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
       if (m[i] != 0.0F) {
-	 m[i] = 0.5F * INV_SQRTF(m[i]);
+	 m[i] = 0.5F * (1.0f / sqrtf(m[i]));
       }
    }
 }
@@ -338,7 +338,8 @@ static void texgen( struct gl_context *ctx,
    struct vertex_buffer *VB = &tnl->vb;
    GLvector4f *in = VB->AttribPtr[VERT_ATTRIB_TEX0 + unit];
    GLvector4f *out = &store->texcoord[unit];
-   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   const struct gl_fixedfunc_texture_unit *texUnit =
+      &ctx->Texture.FixedFuncUnit[unit];
    const GLvector4f *obj = VB->AttribPtr[_TNL_ATTRIB_POS];
    const GLvector4f *eye = VB->EyePtr;
    const GLvector4f *normal = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
@@ -490,10 +491,10 @@ static GLboolean run_texgen_stage( struct gl_context *ctx,
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      struct gl_fixedfunc_texture_unit *texUnit =
+         &ctx->Texture.FixedFuncUnit[i];
 
       if (texUnit->TexGenEnabled) {
-
 	 store->TexgenFunc[i]( ctx, store, i );
 
          VB->AttribPtr[VERT_ATTRIB_TEX0 + i] = &store->texcoord[i];
@@ -514,7 +515,8 @@ static void validate_texgen_stage( struct gl_context *ctx,
       return;
 
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      struct gl_fixedfunc_texture_unit *texUnit =
+         &ctx->Texture.FixedFuncUnit[i];
 
       if (texUnit->TexGenEnabled) {
 	 GLuint sz;

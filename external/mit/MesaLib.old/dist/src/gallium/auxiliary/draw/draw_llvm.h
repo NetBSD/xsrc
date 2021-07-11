@@ -37,7 +37,7 @@
 #include "gallivm/lp_bld_limits.h"
 
 #include "pipe/p_context.h"
-#include "util/u_simple_list.h"
+#include "util/simple_list.h"
 
 
 struct draw_llvm;
@@ -104,8 +104,7 @@ enum {
 
 enum {
    DRAW_JIT_VERTEX_VERTEX_ID = 0,
-   DRAW_JIT_VERTEX_CLIP,
-   DRAW_JIT_VERTEX_PRE_CLIP_POS,
+   DRAW_JIT_VERTEX_CLIP_POS,
    DRAW_JIT_VERTEX_DATA
 };
 
@@ -125,7 +124,7 @@ struct draw_jit_context
    const float *vs_constants[LP_MAX_TGSI_CONST_BUFFERS];
    int num_vs_constants[LP_MAX_TGSI_CONST_BUFFERS];
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
-   float *viewport;
+   struct pipe_viewport_state *viewports;
 
    struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
@@ -150,8 +149,8 @@ enum {
 #define draw_jit_context_planes(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_CTX_PLANES, "planes")
 
-#define draw_jit_context_viewport(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_CTX_VIEWPORT, "viewport")
+#define draw_jit_context_viewports(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_CTX_VIEWPORT, "viewports")
 
 #define draw_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
@@ -162,11 +161,8 @@ enum {
 #define draw_jit_header_id(_gallivm, _ptr)              \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_VERTEX_ID, "id")
 
-#define draw_jit_header_clip(_gallivm, _ptr) \
-   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_CLIP, "clip")
-
-#define draw_jit_header_pre_clip_pos(_gallivm, _ptr) \
-   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_PRE_CLIP_POS, "pre_clip_pos")
+#define draw_jit_header_clip_pos(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_CLIP_POS, "clip_pos")
 
 #define draw_jit_header_data(_gallivm, _ptr)            \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_DATA, "data")
@@ -176,7 +172,7 @@ enum {
    lp_build_struct_get(_gallivm, _ptr, 0, "stride")
 
 #define draw_jit_vbuffer_offset(_gallivm, _ptr)         \
-   lp_build_struct_get(_gallivm, _ptr, 1, "buffer_offset")
+   lp_build_struct_get(_gallivm, _ptr, 2, "buffer_offset")
 
 enum {
    DRAW_JIT_DVBUFFER_MAP = 0,
@@ -207,7 +203,7 @@ struct draw_gs_jit_context
    const float *constants[LP_MAX_TGSI_CONST_BUFFERS];
    int num_constants[LP_MAX_TGSI_CONST_BUFFERS];
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
-   float *viewport;
+   struct pipe_viewport_state *viewports;
 
    /* There two need to be exactly at DRAW_JIT_CTX_TEXTURES and
     * DRAW_JIT_CTX_SAMPLERS positions in the struct */
@@ -245,8 +241,8 @@ enum {
 #define draw_gs_jit_context_planes(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_PLANES, "planes")
 
-#define draw_gs_jit_context_viewport(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_VIEWPORT, "viewport")
+#define draw_gs_jit_context_viewports(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_VIEWPORT, "viewports")
 
 #define draw_gs_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_TEXTURES, "textures")
@@ -265,29 +261,18 @@ enum {
 
 
 
-typedef int
+typedef boolean
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
                       const struct draw_vertex_buffer vbuffers[PIPE_MAX_ATTRIBS],
-                      unsigned start,
                       unsigned count,
+                      unsigned start_or_maxelt,
                       unsigned stride,
                       struct pipe_vertex_buffer *vertex_buffers,
                       unsigned instance_id,
-                      unsigned vertex_id_offset);
-
-
-typedef int
-(*draw_jit_vert_func_elts)(struct draw_jit_context *context,
-                           struct vertex_header *io,
-                           const struct draw_vertex_buffer vbuffers[PIPE_MAX_ATTRIBS],
-                           const unsigned *fetch_elts,
-                           unsigned fetch_max_elt,
-                           unsigned fetch_count,
-                           unsigned stride,
-                           struct pipe_vertex_buffer *vertex_buffers,
-                           unsigned instance_id,
-                           unsigned vertex_id_offset);
+                      unsigned vertex_id_offset,
+                      unsigned start_instance,
+                      const unsigned *fetch_elts);
 
 
 typedef int
@@ -296,7 +281,8 @@ typedef int
                     struct vertex_header *output,
                     unsigned num_prims,
                     unsigned instance_id,
-                    int *prim_ids);
+                    int *prim_ids,
+                    unsigned invocation_id);
 
 struct draw_llvm_variant_key
 {
@@ -312,12 +298,8 @@ struct draw_llvm_variant_key
    unsigned need_edgeflags:1;
    unsigned has_gs:1;
    unsigned num_outputs:8;
-   /*
-    * it is important there are no holes in this struct
-    * (and all padding gets zeroed).
-    */
    unsigned ucp_enable:PIPE_MAX_CLIP_PLANES;
-   unsigned pad1:24-PIPE_MAX_CLIP_PLANES;
+   /* note padding here - must use memset */
 
    /* Variable number of vertex elements:
     */
@@ -333,6 +315,7 @@ struct draw_gs_llvm_variant_key
    unsigned nr_samplers:8;
    unsigned nr_sampler_views:8;
    unsigned num_outputs:8;
+   /* note padding here - must use memset */
 
    struct draw_sampler_static_state samplers[1];
 };
@@ -347,7 +330,7 @@ struct draw_gs_llvm_variant_key
     PIPE_MAX_SHADER_SAMPLER_VIEWS * sizeof(struct draw_sampler_static_state))
 
 
-static INLINE size_t
+static inline size_t
 draw_llvm_variant_key_size(unsigned nr_vertex_elements,
                            unsigned nr_samplers)
 {
@@ -357,7 +340,7 @@ draw_llvm_variant_key_size(unsigned nr_vertex_elements,
 }
 
 
-static INLINE size_t
+static inline size_t
 draw_gs_llvm_variant_key_size(unsigned nr_samplers)
 {
    return (sizeof(struct draw_gs_llvm_variant_key) +
@@ -365,7 +348,7 @@ draw_gs_llvm_variant_key_size(unsigned nr_samplers)
 }
 
 
-static INLINE struct draw_sampler_static_state *
+static inline struct draw_sampler_static_state *
 draw_llvm_variant_key_samplers(struct draw_llvm_variant_key *key)
 {
    return (struct draw_sampler_static_state *)
@@ -397,9 +380,7 @@ struct draw_llvm_variant
    LLVMTypeRef vertex_header_ptr_type;
 
    LLVMValueRef function;
-   LLVMValueRef function_elts;
    draw_jit_vert_func jit_func;
-   draw_jit_vert_func_elts jit_func_elts;
 
    struct llvm_vertex_shader *shader;
 
@@ -459,6 +440,9 @@ struct llvm_geometry_shader {
 struct draw_llvm {
    struct draw_context *draw;
 
+   LLVMContextRef context;
+   boolean context_owned;
+
    struct draw_jit_context jit_context;
    struct draw_gs_jit_context gs_jit_context;
 
@@ -470,13 +454,13 @@ struct draw_llvm {
 };
 
 
-static INLINE struct llvm_vertex_shader *
+static inline struct llvm_vertex_shader *
 llvm_vertex_shader(struct draw_vertex_shader *vs)
 {
    return (struct llvm_vertex_shader *)vs;
 }
 
-static INLINE struct llvm_geometry_shader *
+static inline struct llvm_geometry_shader *
 llvm_geometry_shader(struct draw_geometry_shader *gs)
 {
    return (struct llvm_geometry_shader *)gs;
@@ -486,7 +470,7 @@ llvm_geometry_shader(struct draw_geometry_shader *gs)
 
 
 struct draw_llvm *
-draw_llvm_create(struct draw_context *draw);
+draw_llvm_create(struct draw_context *draw, LLVMContextRef llvm_context);
 
 void
 draw_llvm_destroy(struct draw_llvm *llvm);
@@ -521,15 +505,15 @@ void
 draw_gs_llvm_dump_variant_key(struct draw_gs_llvm_variant_key *key);
 
 struct lp_build_sampler_soa *
-draw_llvm_sampler_soa_create(const struct draw_sampler_static_state *static_state,
-                             LLVMValueRef context_ptr);
+draw_llvm_sampler_soa_create(const struct draw_sampler_static_state *static_state);
 
 void
-draw_llvm_set_sampler_state(struct draw_context *draw, unsigned shader_stage);
+draw_llvm_set_sampler_state(struct draw_context *draw,
+                            enum pipe_shader_type shader_stage);
 
 void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
-                             unsigned shader_stage,
+                             enum pipe_shader_type shader_stage,
                              unsigned sview_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
                              uint32_t first_level, uint32_t last_level,

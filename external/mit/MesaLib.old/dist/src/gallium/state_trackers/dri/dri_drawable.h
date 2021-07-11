@@ -85,9 +85,11 @@ struct dri_drawable
    void (*update_tex_buffer)(struct dri_drawable *drawable,
                              struct dri_context *ctx,
                              struct pipe_resource *res);
+   void (*flush_swapbuffers)(struct dri_context *ctx,
+                             struct dri_drawable *drawable);
 };
 
-static INLINE struct dri_drawable *
+static inline struct dri_drawable *
 dri_drawable(__DRIdrawable * driDrawPriv)
 {
    return (struct dri_drawable *) (driDrawPriv)

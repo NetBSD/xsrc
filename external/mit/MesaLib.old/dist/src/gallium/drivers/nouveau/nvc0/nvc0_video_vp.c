@@ -27,32 +27,33 @@
 static void dump_comm_vp(struct nouveau_vp3_decoder *dec, struct comm *comm, u32 comm_seq,
                          struct nouveau_bo *inter_bo, unsigned slice_size)
 {
-	unsigned i, idx = comm->pvp_cur_index & 0xf;
-	debug_printf("Status: %08x, stage: %08x\n", comm->status_vp[idx], comm->pvp_stage);
+   unsigned i, idx = comm->pvp_cur_index & 0xf;
+   debug_printf("Status: %08x, stage: %08x\n", comm->status_vp[idx], comm->pvp_stage);
 #if 0
-	debug_printf("Acked byte ofs: %x, bsp byte ofs: %x\n", comm->acked_byte_ofs, comm->byte_ofs);
-	debug_printf("Irq/parse indexes: %i %i\n", comm->irq_index, comm->parse_endpos_index);
+   debug_printf("Acked byte ofs: %x, bsp byte ofs: %x\n", comm->acked_byte_ofs, comm->byte_ofs);
+   debug_printf("Irq/parse indexes: %i %i\n", comm->irq_index, comm->parse_endpos_index);
 
-	for (i = 0; i != comm->irq_index; ++i)
-		debug_printf("irq[%i] = { @ %08x -> %04x }\n", i, comm->irq_pos[i], comm->irq_470[i]);
-	for (i = 0; i != comm->parse_endpos_index; ++i)
-		debug_printf("parse_endpos[%i] = { @ %08x}\n", i, comm->parse_endpos[i]);
+   for (i = 0; i != comm->irq_index; ++i)
+      debug_printf("irq[%i] = { @ %08x -> %04x }\n", i, comm->irq_pos[i], comm->irq_470[i]);
+   for (i = 0; i != comm->parse_endpos_index; ++i)
+      debug_printf("parse_endpos[%i] = { @ %08x}\n", i, comm->parse_endpos[i]);
 #endif
-	debug_printf("mb_y = %u\n", comm->mb_y[idx]);
-	if (comm->status_vp[idx] <= 1)
-		return;
+   debug_printf("mb_y = %u\n", comm->mb_y[idx]);
+   if (comm->status_vp[idx] <= 1)
+      return;
 
-	if ((comm->pvp_stage & 0xff) != 0xff) {
-		unsigned *map;
-		assert(nouveau_bo_map(inter_bo, NOUVEAU_BO_RD|NOUVEAU_BO_NOBLOCK, dec->client) >= 0);
-		map = inter_bo->map;
-		for (i = 0; i < comm->byte_ofs + slice_size; i += 0x10) {
-			debug_printf("%05x: %08x %08x %08x %08x\n", i, map[i/4], map[i/4+1], map[i/4+2], map[i/4+3]);
-		}
-		munmap(inter_bo->map, inter_bo->size);
-		inter_bo->map = NULL;
-	}
-	assert((comm->pvp_stage & 0xff) == 0xff);
+   if ((comm->pvp_stage & 0xff) != 0xff) {
+      unsigned *map;
+      int ret = nouveau_bo_map(inter_bo, NOUVEAU_BO_RD|NOUVEAU_BO_NOBLOCK, dec->client);
+      assert(ret >= 0);
+      map = inter_bo->map;
+      for (i = 0; i < comm->byte_ofs + slice_size; i += 0x10) {
+         debug_printf("%05x: %08x %08x %08x %08x\n", i, map[i/4], map[i/4+1], map[i/4+2], map[i/4+3]);
+      }
+      munmap(inter_bo->map, inter_bo->size);
+      inter_bo->map = NULL;
+   }
+   assert((comm->pvp_stage & 0xff) == 0xff);
 }
 #endif
 
@@ -75,7 +76,7 @@ nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    struct nouveau_bo *inter_bo = dec->inter_bo[comm_seq & 1];
-   u32 fence_extra = 0, codec_extra = 0;
+   u32 codec_extra = 0;
    struct nouveau_pushbuf_refn bo_refs[] = {
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { dec->ref_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
@@ -85,11 +86,7 @@ nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
 #endif
       { dec->fw_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
    };
-   int num_refs = sizeof(bo_refs)/sizeof(*bo_refs) - !dec->fw_bo;
-
-#if NOUVEAU_VP3_DEBUG_FENCE
-   fence_extra = 4;
-#endif
+   int num_refs = ARRAY_SIZE(bo_refs) - !dec->fw_bo;
 
    if (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC) {
       nouveau_vp3_inter_sizes(dec, desc.h264->slice_count, &slice_size, &bucket_size, &ring_size);
@@ -114,8 +111,7 @@ nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    if (!is_ref && (dec->refs[target->valid_ref].decoded_top && dec->refs[target->valid_ref].decoded_bottom))
       nvc0_decoder_kick_ref(dec, target);
 
-   nouveau_pushbuf_space(push, 8 + 3 * (codec != PIPE_VIDEO_FORMAT_MPEG12) +
-              6 + codec_extra + fence_extra + 2, num_refs, 0);
+   nouveau_pushbuf_space(push, 32 + codec_extra, num_refs, 0);
 
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
 

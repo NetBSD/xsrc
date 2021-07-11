@@ -109,7 +109,7 @@ draw_pt_arrays(struct draw_context *draw,
 
    frontend = draw->pt.frontend;
 
-   if (frontend ) {
+   if (frontend) {
       if (draw->pt.prim != prim || draw->pt.opt != opt) {
          /* In certain conditions switching primitives requires us to flush
           * and validate the different stages. One example is when smooth
@@ -443,7 +443,7 @@ resolve_draw_info(const struct pipe_draw_info *raw_info,
       info->count = target->internal_offset / vertex_buffer->stride;
 
       /* Stream output draw can not be indexed */
-      debug_assert(!info->indexed);
+      debug_assert(!info->index_size);
       info->max_index = info->count - 1;
    }
 }
@@ -464,6 +464,9 @@ draw_vbo(struct draw_context *draw,
    unsigned fpstate = util_fpstate_get();
    struct pipe_draw_info resolved_info;
 
+   if (info->instance_count == 0)
+      return;
+
    /* Make sure that denorms are treated like zeros. This is 
     * the behavior required by D3D10. OpenGL doesn't care.
     */
@@ -472,8 +475,7 @@ draw_vbo(struct draw_context *draw,
    resolve_draw_info(info, &resolved_info, &(draw->pt.vertex_buffer[0]));
    info = &resolved_info;
 
-   assert(info->instance_count > 0);
-   if (info->indexed)
+   if (info->index_size)
       assert(draw->pt.user.elts);
 
    count = info->count;
@@ -481,7 +483,7 @@ draw_vbo(struct draw_context *draw,
    draw->pt.user.eltBias = info->index_bias;
    draw->pt.user.min_index = info->min_index;
    draw->pt.user.max_index = info->max_index;
-   draw->pt.user.eltSize = info->indexed ? draw->pt.user.eltSizeIB : 0;
+   draw->pt.user.eltSize = info->index_size ? draw->pt.user.eltSizeIB : 0;
 
    if (0)
       debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",
@@ -524,7 +526,7 @@ draw_vbo(struct draw_context *draw,
 #endif
    {
       if (index_limit == 0) {
-      /* one of the buffers is too small to do any valid drawing */
+         /* one of the buffers is too small to do any valid drawing */
          debug_warning("draw: VBO too small to draw anything\n");
          util_fpstate_set(fpstate);
          return;

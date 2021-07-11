@@ -36,6 +36,11 @@ struct pipe_resource;
 struct pipe_shader_state;
 
 
+extern void
+util_pstipple_update_stipple_texture(struct pipe_context *pipe,
+                                     struct pipe_resource *tex,
+                                     const uint32_t pattern[32]);
+
 extern struct pipe_resource *
 util_pstipple_create_stipple_texture(struct pipe_context *pipe,
                                      const uint32_t pattern[32]);
@@ -47,10 +52,11 @@ util_pstipple_create_sampler_view(struct pipe_context *pipe,
 extern void *
 util_pstipple_create_sampler(struct pipe_context *pipe);
 
-extern struct pipe_shader_state *
-util_pstipple_create_fragment_shader(struct pipe_context *pipe,
-                                     struct pipe_shader_state *fs,
-                                     unsigned *samplerUnitOut);
+struct tgsi_token *
+util_pstipple_create_fragment_shader(const struct tgsi_token *tokens,
+                                     unsigned *samplerUnitOut,
+                                     unsigned fixed_unit,
+                                     unsigned wincoordFile);
 
 
 #endif

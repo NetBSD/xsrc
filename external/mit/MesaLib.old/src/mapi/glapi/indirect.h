@@ -4,18 +4,18 @@
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
  * (C) Copyright IBM Corporation 2004
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -42,7 +42,7 @@
 #  else
 #    define FASTCALL
 #  endif
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#  if defined(__GNUC__)
 #    define NOINLINE __attribute__((noinline))
 #  else
 #    define NOINLINE
@@ -413,11 +413,11 @@ extern _X_HIDDEN void __indirect_glColorTableParameterfv(GLenum target, GLenum p
 extern _X_HIDDEN void __indirect_glColorTableParameteriv(GLenum target, GLenum pname, const GLint * params);
 extern _X_HIDDEN void __indirect_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width);
 extern _X_HIDDEN void __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid * table);
-GLAPI void GLAPIENTRY glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table);
+extern _X_HIDDEN void gl_dispatch_stub_343(GLenum target, GLenum format, GLenum type, GLvoid * table);
 extern _X_HIDDEN void __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat * params);
-GLAPI void GLAPIENTRY glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params);
+extern _X_HIDDEN void gl_dispatch_stub_344(GLenum target, GLenum pname, GLfloat * params);
 extern _X_HIDDEN void __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname, GLint * params);
-GLAPI void GLAPIENTRY glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params);
+extern _X_HIDDEN void gl_dispatch_stub_345(GLenum target, GLenum pname, GLint * params);
 extern _X_HIDDEN void __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid * data);
 extern _X_HIDDEN void __indirect_glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width);
 extern _X_HIDDEN void __indirect_glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * image);
@@ -625,7 +625,7 @@ extern _X_HIDDEN void __indirect_glDeleteRenderbuffers(GLsizei n, const GLuint *
 extern _X_HIDDEN void __indirect_glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 extern _X_HIDDEN void __indirect_glFramebufferTexture1D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
 extern _X_HIDDEN void __indirect_glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern _X_HIDDEN void __indirect_glFramebufferTexture3D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+extern _X_HIDDEN void __indirect_glFramebufferTexture3D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint layer);
 extern _X_HIDDEN void __indirect_glFramebufferTextureLayer(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 extern _X_HIDDEN void __indirect_glGenFramebuffers(GLsizei n, GLuint * framebuffers);
 extern _X_HIDDEN void __indirect_glGenRenderbuffers(GLsizei n, GLuint * renderbuffers);
@@ -714,7 +714,7 @@ extern _X_HIDDEN void __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei
 extern _X_HIDDEN void __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer);
 extern _X_HIDDEN void __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer);
 
-#ifdef GLX_SHARED_GLAPI
+#ifdef GLX_INDIRECT_RENDERING
 extern _X_HIDDEN void (*__indirect_get_proc_address(const char *name))(void);
 #endif
 

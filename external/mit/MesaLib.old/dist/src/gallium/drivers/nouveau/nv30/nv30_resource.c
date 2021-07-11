@@ -39,15 +39,11 @@ nv30_memory_barrier(struct pipe_context *pipe, unsigned flags)
 
    if (flags & PIPE_BARRIER_MAPPED_BUFFER) {
       for (i = 0; i < nv30->num_vtxbufs; ++i) {
-         if (!nv30->vtxbuf[i].buffer)
+         if (!nv30->vtxbuf[i].buffer.resource)
             continue;
-         if (nv30->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
-            nv30->base.vbo_dirty = TRUE;
+         if (nv30->vtxbuf[i].buffer.resource->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+            nv30->base.vbo_dirty = true;
       }
-
-      if (nv30->idxbuf.buffer &&
-          nv30->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
-         nv30->base.vbo_dirty = TRUE;
    }
 }
 
@@ -66,7 +62,8 @@ nv30_resource_create(struct pipe_screen *pscreen,
 static struct pipe_resource *
 nv30_resource_from_handle(struct pipe_screen *pscreen,
                           const struct pipe_resource *tmpl,
-                          struct winsys_handle *handle)
+                          struct winsys_handle *handle,
+                          unsigned usage)
 {
    if (tmpl->target == PIPE_BUFFER)
       return NULL;
@@ -89,7 +86,8 @@ nv30_resource_init(struct pipe_context *pipe)
    pipe->transfer_map = u_transfer_map_vtbl;
    pipe->transfer_flush_region = u_transfer_flush_region_vtbl;
    pipe->transfer_unmap = u_transfer_unmap_vtbl;
-   pipe->transfer_inline_write = u_transfer_inline_write_vtbl;
+   pipe->buffer_subdata = u_default_buffer_subdata;
+   pipe->texture_subdata = u_default_texture_subdata;
    pipe->create_surface = nv30_miptree_surface_new;
    pipe->surface_destroy = nv30_miptree_surface_del;
    pipe->resource_copy_region = nv30_resource_copy_region;

@@ -31,7 +31,7 @@
 #include <stdio.h>
 
 #include "main/glheader.h"
-#include "program/register_allocate.h"
+#include "util/register_allocate.h"
 #include "util/u_memory.h"
 #include "util/ralloc.h"
 
@@ -387,11 +387,8 @@ static enum rc_reg_class variable_get_class(
 						 * instructions can't be
 						 * swizzle on r300/r400 GPUs.
 						 */
-						if (!variable->C->is_r500) {
-							can_change_writemask = 0;
-							break;
-						}
-						old_swizzle = r.U.I.Src->Swizzle;
+						can_change_writemask = 0;
+						break;
 					}
 					new_swizzle = rc_adjust_channels(
 						old_swizzle, conversion_swizzle);
@@ -696,7 +693,8 @@ void rc_init_regalloc_state(struct rc_regalloc_state *s)
 	};
 
 	/* Allocate the main ra data structure */
-	s->regs = ra_alloc_reg_set(NULL, R500_PFS_NUM_TEMP_REGS * RC_MASK_XYZW);
+	s->regs = ra_alloc_reg_set(NULL, R500_PFS_NUM_TEMP_REGS * RC_MASK_XYZW,
+                                   true);
 
 	/* Create the register classes */
 	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {

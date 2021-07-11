@@ -1,7 +1,4 @@
-/*
- * DO NOT EDIT - This file generated automatically by glX_proto_size.py (from
- * Mesa) script
- */
+/* DO NOT EDIT - This file generated automatically by glX_proto_size.py (from Mesa) script */
 
 /*
  * (C) Copyright IBM Corporation 2004
@@ -29,7 +26,7 @@
  */
 
 #if !defined( _INDIRECT_SIZE_H_ )
-#define _INDIRECT_SIZE_H_
+#  define _INDIRECT_SIZE_H_
 
 /**
  * \file
@@ -41,17 +38,17 @@
 
 #include <X11/Xfuncproto.h>
 
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#define PURE __attribute__((pure))
-#else
-#define PURE
-#endif
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#    define PURE __attribute__((pure))
+#  else
+#    define PURE
+#  endif
 
-#if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#define FASTCALL __attribute__((fastcall))
-#else
-#define FASTCALL
-#endif
+#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif
 
 extern _X_INTERNAL PURE FASTCALL GLint __glCallLists_size(GLenum);
 extern _X_INTERNAL PURE FASTCALL GLint __glFogfv_size(GLenum);
@@ -80,7 +77,7 @@ extern _X_INTERNAL PURE FASTCALL GLint __glConvolutionParameteriv_size(GLenum);
 extern _X_INTERNAL PURE FASTCALL GLint __glPointParameterfv_size(GLenum);
 extern _X_INTERNAL PURE FASTCALL GLint __glPointParameteriv_size(GLenum);
 
-#undef PURE
-#undef FASTCALL
+#  undef PURE
+#  undef FASTCALL
 
-#endif                          /* !defined( _INDIRECT_SIZE_H_ ) */
+#endif /* !defined( _INDIRECT_SIZE_H_ ) */

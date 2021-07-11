@@ -50,10 +50,12 @@
 #define S___ PIPE_BIND_SAMPLER_VIEW
 #define _R__ PIPE_BIND_RENDER_TARGET
 #define _B__ PIPE_BIND_RENDER_TARGET | PIPE_BIND_BLENDABLE
+#define _D__ PIPE_BIND_SCANOUT | PIPE_BIND_DISPLAY_TARGET | _B__
 #define _Z__ PIPE_BIND_DEPTH_STENCIL
 #define __V_ PIPE_BIND_VERTEX_BUFFER
 #define SR__ (S___ | _R__)
 #define SB__ (S___ | _B__)
+#define SD__ (S___ | _D__)
 #define SZ__ (S___ | _Z__)
 #define S_V_ (S___ | __V_)
 #define SRV_ (SR__ | __V_)
@@ -73,17 +75,17 @@ nv30_format_info_table[PIPE_FORMAT_COUNT] = {
    _(A8_SNORM            , S___),
    _(R8_UNORM            , S_V_),
    _(R8_SNORM            , S___),
-   _(B5G5R5X1_UNORM      , SB__),
+   _(B5G5R5X1_UNORM      , SD__),
    _(B5G5R5A1_UNORM      , S___),
    _(B4G4R4X4_UNORM      , S___),
    _(B4G4R4A4_UNORM      , S___),
-   _(B5G6R5_UNORM        , SB__),
-   _(B8G8R8X8_UNORM      , SB__),
-   _(B8G8R8X8_SRGB       , S___),
-   _(B8G8R8A8_UNORM      , SB__),
-   _(B8G8R8A8_SRGB       , S___),
+   _(B5G6R5_UNORM        , SD__),
+   _(BGRX8888_UNORM      , SD__),
+   _(BGRX8888_SRGB       , S___),
+   _(BGRA8888_UNORM      , SD__),
+   _(BGRA8888_SRGB       , S___),
    _(R8G8B8A8_UNORM      , __V_),
-   _(R8G8B8A8_SNORM      , S___),
+   _(RGBA8888_SNORM      , S___),
    _(DXT1_RGB            , S___),
    _(DXT1_SRGB           , S___),
    _(DXT1_RGBA           , S___),
@@ -138,8 +140,8 @@ const struct nv30_format
 nv30_format_table[PIPE_FORMAT_COUNT] = {
    R_(B5G5R5X1_UNORM    , X1R5G5B5          ),
    R_(B5G6R5_UNORM      , R5G6B5            ),
-   R_(B8G8R8X8_UNORM    , X8R8G8B8          ),
-   R_(B8G8R8A8_UNORM    , A8R8G8B8          ),
+   R_(BGRX8888_UNORM    , X8R8G8B8          ),
+   R_(BGRA8888_UNORM    , A8R8G8B8          ),
    Z_(Z16_UNORM         , Z16               ),
    Z_(X8Z24_UNORM       , Z24S8             ),
    Z_(S8_UINT_Z24_UNORM , Z24S8             ),
@@ -223,11 +225,11 @@ nv30_texfmt_table[PIPE_FORMAT_COUNT] = {
    _(B4G4R4X4_UNORM    , A4R4G4B4, 0, C, C, C, 1, 2, 1, 0, x, NONE, ____),
    _(B4G4R4A4_UNORM    , A4R4G4B4, 0, C, C, C, C, 2, 1, 0, 3, NONE, ____),
    _(B5G6R5_UNORM      , R5G6B5  , 0, C, C, C, 1, 2, 1, 0, x, NONE, ____),
-   _(B8G8R8X8_UNORM    , A8R8G8B8, 0, C, C, C, 1, 2, 1, 0, x, NONE, ____),
-   _(B8G8R8X8_SRGB     , A8R8G8B8, 0, C, C, C, 1, 2, 1, 0, x, SRGB, ____),
-   _(B8G8R8A8_UNORM    , A8R8G8B8, 0, C, C, C, C, 2, 1, 0, 3, NONE, ____),
-   _(B8G8R8A8_SRGB     , A8R8G8B8, 0, C, C, C, C, 2, 1, 0, 3, SRGB, ____),
-   _(R8G8B8A8_SNORM    , A8R8G8B8, 0, C, C, C, C, 0, 1, 2, 3, NONE, SSSS),
+   _(BGRX8888_UNORM    , A8R8G8B8, 0, C, C, C, 1, 2, 1, 0, x, NONE, ____),
+   _(BGRX8888_SRGB     , A8R8G8B8, 0, C, C, C, 1, 2, 1, 0, x, SRGB, ____),
+   _(BGRA8888_UNORM    , A8R8G8B8, 0, C, C, C, C, 2, 1, 0, 3, NONE, ____),
+   _(BGRA8888_SRGB     , A8R8G8B8, 0, C, C, C, C, 2, 1, 0, 3, SRGB, ____),
+   _(RGBA8888_SNORM    , A8R8G8B8, 0, C, C, C, C, 0, 1, 2, 3, NONE, SSSS),
    _(DXT1_RGB          , DXT1    , 0, C, C, C, 1, 2, 1, 0, x, NONE, ____),
    _(DXT1_SRGB         , DXT1    , 0, C, C, C, 1, 2, 1, 0, x, SRGB, ____),
    _(DXT1_RGBA         , DXT1    , 0, C, C, C, C, 2, 1, 0, 3, NONE, ____),

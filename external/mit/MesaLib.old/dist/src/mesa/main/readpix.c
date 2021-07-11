@@ -39,31 +39,55 @@
 #include "state.h"
 #include "glformats.h"
 #include "fbobject.h"
+#include "format_utils.h"
+#include "pixeltransfer.h"
 
 
 /**
  * Return true if the conversion L=R+G+B is needed.
  */
-static GLboolean
-need_rgb_to_luminance_conversion(mesa_format texFormat, GLenum format)
+GLboolean
+_mesa_need_rgb_to_luminance_conversion(GLenum srcBaseFormat,
+                                       GLenum dstBaseFormat)
 {
-   GLenum baseTexFormat = _mesa_get_format_base_format(texFormat);
-
-   return (baseTexFormat == GL_RG ||
-           baseTexFormat == GL_RGB ||
-           baseTexFormat == GL_RGBA) &&
-          (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA);
+   return (srcBaseFormat == GL_RG ||
+           srcBaseFormat == GL_RGB ||
+           srcBaseFormat == GL_RGBA) &&
+          (dstBaseFormat == GL_LUMINANCE ||
+           dstBaseFormat == GL_LUMINANCE_ALPHA);
 }
 
+/**
+ * Return true if the conversion L,I to RGB conversion is needed.
+ */
+GLboolean
+_mesa_need_luminance_to_rgb_conversion(GLenum srcBaseFormat,
+                                       GLenum dstBaseFormat)
+{
+   return (srcBaseFormat == GL_LUMINANCE ||
+           srcBaseFormat == GL_LUMINANCE_ALPHA ||
+           srcBaseFormat == GL_INTENSITY) &&
+          (dstBaseFormat == GL_GREEN ||
+           dstBaseFormat == GL_BLUE ||
+           dstBaseFormat == GL_RG ||
+           dstBaseFormat == GL_RGB ||
+           dstBaseFormat == GL_BGR ||
+           dstBaseFormat == GL_RGBA ||
+           dstBaseFormat == GL_BGRA);
+}
 
 /**
  * Return transfer op flags for this ReadPixels operation.
  */
-static GLbitfield
-get_readpixels_transfer_ops(const struct gl_context *ctx, mesa_format texFormat,
-                            GLenum format, GLenum type, GLboolean uses_blit)
+GLbitfield
+_mesa_get_readpixels_transfer_ops(const struct gl_context *ctx,
+                                  mesa_format texFormat,
+                                  GLenum format, GLenum type,
+                                  GLboolean uses_blit)
 {
    GLbitfield transferOps = ctx->_ImageTransferState;
+   GLenum srcBaseFormat = _mesa_get_format_base_format(texFormat);
+   GLenum dstBaseFormat = _mesa_unpack_format_to_base_format(format);
 
    if (format == GL_DEPTH_COMPONENT ||
        format == GL_DEPTH_STENCIL ||
@@ -81,16 +105,18 @@ get_readpixels_transfer_ops(const struct gl_context *ctx, mesa_format texFormat,
    if (uses_blit) {
       /* For blit-based ReadPixels packing, the clamping is done automatically
        * unless the type is float. */
-      if (_mesa_get_clamp_read_color(ctx) &&
-          (type == GL_FLOAT || type == GL_HALF_FLOAT)) {
+      if (_mesa_get_clamp_read_color(ctx, ctx->ReadBuffer) &&
+          (type == GL_FLOAT || type == GL_HALF_FLOAT ||
+           type == GL_UNSIGNED_INT_10F_11F_11F_REV)) {
          transferOps |= IMAGE_CLAMP_BIT;
       }
    }
    else {
       /* For CPU-based ReadPixels packing, the clamping must always be done
        * for non-float types, */
-      if (_mesa_get_clamp_read_color(ctx) ||
-          (type != GL_FLOAT && type != GL_HALF_FLOAT)) {
+      if (_mesa_get_clamp_read_color(ctx, ctx->ReadBuffer) ||
+          (type != GL_FLOAT && type != GL_HALF_FLOAT &&
+           type != GL_UNSIGNED_INT_10F_11F_11F_REV)) {
          transferOps |= IMAGE_CLAMP_BIT;
       }
    }
@@ -100,7 +126,7 @@ get_readpixels_transfer_ops(const struct gl_context *ctx, mesa_format texFormat,
     * have any effect anyway.
     */
    if (_mesa_get_format_datatype(texFormat) == GL_UNSIGNED_NORMALIZED &&
-       !need_rgb_to_luminance_conversion(texFormat, format)) {
+       !_mesa_need_rgb_to_luminance_conversion(srcBaseFormat, dstBaseFormat)) {
       transferOps &= ~IMAGE_CLAMP_BIT;
    }
 
@@ -123,9 +149,9 @@ _mesa_readpixels_needs_slow_path(const struct gl_context *ctx, GLenum format,
 {
    struct gl_renderbuffer *rb =
          _mesa_get_read_renderbuffer_for_format(ctx, format);
-   GLenum srcType;
+   GLenum dstBaseFormat = _mesa_unpack_format_to_base_format(format);
 
-   ASSERT(rb);
+   assert(rb);
 
    /* There are different rules depending on the base format. */
    switch (format) {
@@ -144,28 +170,14 @@ _mesa_readpixels_needs_slow_path(const struct gl_context *ctx, GLenum format,
 
    default:
       /* Color formats. */
-      if (need_rgb_to_luminance_conversion(rb->Format, format)) {
-         return GL_TRUE;
-      }
-
-      /* Conversion between signed and unsigned integers needs masking
-       * (it isn't just memcpy). */
-      srcType = _mesa_get_format_datatype(rb->Format);
-
-      if ((srcType == GL_INT &&
-           (type == GL_UNSIGNED_INT ||
-            type == GL_UNSIGNED_SHORT ||
-            type == GL_UNSIGNED_BYTE)) ||
-          (srcType == GL_UNSIGNED_INT &&
-           (type == GL_INT ||
-            type == GL_SHORT ||
-            type == GL_BYTE))) {
+      if (_mesa_need_rgb_to_luminance_conversion(rb->_BaseFormat,
+                                                 dstBaseFormat)) {
          return GL_TRUE;
       }
 
       /* And finally, see if there are any transfer ops. */
-      return get_readpixels_transfer_ops(ctx, rb->Format, format, type,
-                                         uses_blit) != 0;
+      return _mesa_get_readpixels_transfer_ops(ctx, rb->Format, format, type,
+                                               uses_blit) != 0;
    }
    return GL_FALSE;
 }
@@ -178,7 +190,7 @@ readpixels_can_use_memcpy(const struct gl_context *ctx, GLenum format, GLenum ty
    struct gl_renderbuffer *rb =
          _mesa_get_read_renderbuffer_for_format(ctx, format);
 
-   ASSERT(rb);
+   assert(rb);
 
    if (_mesa_readpixels_needs_slow_path(ctx, format, type, GL_FALSE)) {
       return GL_FALSE;
@@ -191,7 +203,7 @@ readpixels_can_use_memcpy(const struct gl_context *ctx, GLenum format, GLenum ty
 
    /* The Mesa format must match the input format and type. */
    if (!_mesa_format_matches_format_and_type(rb->Format, format, type,
-                                             packing->SwapBytes)) {
+                                             packing->SwapBytes, NULL)) {
       return GL_FALSE;
    }
 
@@ -210,7 +222,7 @@ readpixels_memcpy(struct gl_context *ctx,
    struct gl_renderbuffer *rb =
          _mesa_get_read_renderbuffer_for_format(ctx, format);
    GLubyte *dst, *map;
-   int dstStride, stride, j, texelBytes;
+   int dstStride, stride, j, texelBytes, bytesPerRow;
 
    /* Fail if memcpy cannot be used. */
    if (!readpixels_can_use_memcpy(ctx, format, type, packing)) {
@@ -222,19 +234,24 @@ readpixels_memcpy(struct gl_context *ctx,
 					   format, type, 0, 0);
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
+			       &map, &stride, ctx->ReadBuffer->FlipY);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return GL_TRUE;  /* don't bother trying the slow path */
    }
 
    texelBytes = _mesa_get_format_bytes(rb->Format);
+   bytesPerRow = texelBytes * width;
 
    /* memcpy*/
-   for (j = 0; j < height; j++) {
-      memcpy(dst, map, width * texelBytes);
-      dst += dstStride;
-      map += stride;
+   if (dstStride == stride && dstStride == bytesPerRow) {
+      memcpy(dst, map, bytesPerRow * height);
+   } else {
+      for (j = 0; j < height; j++) {
+         memcpy(dst, map, bytesPerRow);
+         dst += dstStride;
+         map += stride;
+      }
    }
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
@@ -258,7 +275,7 @@ read_uint_depth_pixels( struct gl_context *ctx,
    GLubyte *map, *dst;
    int stride, dstStride, j;
 
-   if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0)
+   if (ctx->Pixel.DepthScale != 1.0F || ctx->Pixel.DepthBias != 0.0F)
       return GL_FALSE;
 
    if (packing->SwapBytes)
@@ -268,7 +285,7 @@ read_uint_depth_pixels( struct gl_context *ctx,
       return GL_FALSE;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
+			       &map, &stride, fb->FlipY);
 
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
@@ -311,10 +328,10 @@ read_depth_pixels( struct gl_context *ctx,
       return;
 
    /* clipping should have been done already */
-   ASSERT(x >= 0);
-   ASSERT(y >= 0);
-   ASSERT(x + width <= (GLint) rb->Width);
-   ASSERT(y + height <= (GLint) rb->Height);
+   assert(x >= 0);
+   assert(y >= 0);
+   assert(x + width <= (GLint) rb->Width);
+   assert(y + height <= (GLint) rb->Height);
 
    if (type == GL_UNSIGNED_INT &&
        read_uint_depth_pixels(ctx, x, y, width, height, type, pixels, packing)) {
@@ -326,7 +343,7 @@ read_depth_pixels( struct gl_context *ctx,
 					   GL_DEPTH_COMPONENT, type, 0, 0);
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
+			       &map, &stride, fb->FlipY);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return;
@@ -374,7 +391,7 @@ read_stencil_pixels( struct gl_context *ctx,
       return;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
+			       &map, &stride, fb->FlipY);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return;
@@ -405,145 +422,6 @@ read_stencil_pixels( struct gl_context *ctx,
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
-
-/**
- * Try to do glReadPixels of RGBA data using swizzle.
- * \return GL_TRUE if successful, GL_FALSE otherwise (use the slow path)
- */
-static GLboolean
-read_rgba_pixels_swizzle(struct gl_context *ctx,
-                         GLint x, GLint y,
-                         GLsizei width, GLsizei height,
-                         GLenum format, GLenum type,
-                         GLvoid *pixels,
-                         const struct gl_pixelstore_attrib *packing)
-{
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   GLubyte *dst, *map;
-   int dstStride, stride, j;
-   GLboolean swizzle_rb = GL_FALSE, copy_xrgb = GL_FALSE;
-
-   /* XXX we could check for other swizzle/special cases here as needed */
-   if (rb->Format == MESA_FORMAT_R8G8B8A8_UNORM &&
-       format == GL_BGRA &&
-       type == GL_UNSIGNED_INT_8_8_8_8_REV &&
-       !ctx->Pack.SwapBytes) {
-      swizzle_rb = GL_TRUE;
-   }
-   else if (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM &&
-       format == GL_BGRA &&
-       type == GL_UNSIGNED_INT_8_8_8_8_REV &&
-       !ctx->Pack.SwapBytes) {
-      copy_xrgb = GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
-
-   dstStride = _mesa_image_row_stride(packing, width, format, type);
-   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
-					   format, type, 0, 0);
-
-   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
-   if (!map) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-      return GL_TRUE;  /* don't bother trying the slow path */
-   }
-
-   if (swizzle_rb) {
-      /* swap R/B */
-      for (j = 0; j < height; j++) {
-         int i;
-         for (i = 0; i < width; i++) {
-            GLuint *dst4 = (GLuint *) dst, *map4 = (GLuint *) map;
-            GLuint pixel = map4[i];
-            dst4[i] = (pixel & 0xff00ff00)
-                   | ((pixel & 0x00ff0000) >> 16)
-                   | ((pixel & 0x000000ff) << 16);
-         }
-         dst += dstStride;
-         map += stride;
-      }
-   } else if (copy_xrgb) {
-      /* convert xrgb -> argb */
-      for (j = 0; j < height; j++) {
-         GLuint *dst4 = (GLuint *) dst, *map4 = (GLuint *) map;
-         int i;
-         for (i = 0; i < width; i++) {
-            dst4[i] = map4[i] | 0xff000000;  /* set A=0xff */
-         }
-         dst += dstStride;
-         map += stride;
-      }
-   }
-
-   ctx->Driver.UnmapRenderbuffer(ctx, rb);
-
-   return GL_TRUE;
-}
-
-static void
-slow_read_rgba_pixels( struct gl_context *ctx,
-		       GLint x, GLint y,
-		       GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       GLvoid *pixels,
-		       const struct gl_pixelstore_attrib *packing,
-		       GLbitfield transferOps )
-{
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   const mesa_format rbFormat = _mesa_get_srgb_format_linear(rb->Format);
-   void *rgba;
-   GLubyte *dst, *map;
-   int dstStride, stride, j;
-   GLboolean dst_is_integer = _mesa_is_enum_format_integer(format);
-   GLboolean dst_is_uint = _mesa_is_format_unsigned(rbFormat);
-
-   dstStride = _mesa_image_row_stride(packing, width, format, type);
-   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
-					   format, type, 0, 0);
-
-   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
-   if (!map) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
-      return;
-   }
-
-   rgba = malloc(width * MAX_PIXEL_BYTES);
-   if (!rgba)
-      goto done;
-
-   for (j = 0; j < height; j++) {
-      if (dst_is_integer) {
-	 _mesa_unpack_uint_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
-         _mesa_rebase_rgba_uint(width, (GLuint (*)[4]) rgba,
-                                rb->_BaseFormat);
-         if (dst_is_uint) {
-            _mesa_pack_rgba_span_from_uints(ctx, width, (GLuint (*)[4]) rgba, format,
-                                            type, dst);
-         } else {
-            _mesa_pack_rgba_span_from_ints(ctx, width, (GLint (*)[4]) rgba, format,
-                                           type, dst);
-         }
-      } else {
-	 _mesa_unpack_rgba_row(rbFormat, width, map, (GLfloat (*)[4]) rgba);
-         _mesa_rebase_rgba_float(width, (GLfloat (*)[4]) rgba,
-                                 rb->_BaseFormat);
-	 _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
-                                    type, dst, packing, transferOps);
-      }
-      dst += dstStride;
-      map += stride;
-   }
-
-   free(rgba);
-
-done:
-   ctx->Driver.UnmapRenderbuffer(ctx, rb);
-}
-
 /*
  * Read R, G, B, A, RGB, L, or LA pixels.
  */
@@ -555,24 +433,199 @@ read_rgba_pixels( struct gl_context *ctx,
                   const struct gl_pixelstore_attrib *packing )
 {
    GLbitfield transferOps;
+   bool dst_is_integer, convert_rgb_to_lum, needs_rebase;
+   int dst_stride, src_stride, rb_stride;
+   uint32_t dst_format, src_format;
+   GLubyte *dst, *map;
+   mesa_format rb_format;
+   bool needs_rgba;
+   void *rgba, *src;
+   bool src_is_uint = false;
+   uint8_t rebase_swizzle[4];
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
+   GLenum dstBaseFormat = _mesa_unpack_format_to_base_format(format);
 
    if (!rb)
       return;
 
-   transferOps = get_readpixels_transfer_ops(ctx, rb->Format, format, type,
-                                             GL_FALSE);
+   transferOps = _mesa_get_readpixels_transfer_ops(ctx, rb->Format, format,
+                                                   type, GL_FALSE);
+   /* Describe the dst format */
+   dst_is_integer = _mesa_is_enum_format_integer(format);
+   dst_stride = _mesa_image_row_stride(packing, width, format, type);
+   dst_format = _mesa_format_from_format_and_type(format, type);
+   convert_rgb_to_lum =
+      _mesa_need_rgb_to_luminance_conversion(rb->_BaseFormat, dstBaseFormat);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+                                           format, type, 0, 0);
 
-   /* Try the optimized paths first. */
-   if (!transferOps &&
-       read_rgba_pixels_swizzle(ctx, x, y, width, height,
-                                    format, type, pixels, packing)) {
+   /* Map the source render buffer */
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+                               &map, &rb_stride, fb->FlipY);
+   if (!map) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return;
    }
+   rb_format = _mesa_get_srgb_format_linear(rb->Format);
 
-   slow_read_rgba_pixels(ctx, x, y, width, height,
-			 format, type, pixels, packing, transferOps);
+   /*
+    * Depending on the base formats involved in the conversion we might need to
+    * rebase some values, so for these formats we compute a rebase swizzle.
+    */
+   if (rb->_BaseFormat == GL_LUMINANCE || rb->_BaseFormat == GL_INTENSITY) {
+      needs_rebase = true;
+      rebase_swizzle[0] = MESA_FORMAT_SWIZZLE_X;
+      rebase_swizzle[1] = MESA_FORMAT_SWIZZLE_ZERO;
+      rebase_swizzle[2] = MESA_FORMAT_SWIZZLE_ZERO;
+      rebase_swizzle[3] = MESA_FORMAT_SWIZZLE_ONE;
+   } else if (rb->_BaseFormat == GL_LUMINANCE_ALPHA) {
+      needs_rebase = true;
+      rebase_swizzle[0] = MESA_FORMAT_SWIZZLE_X;
+      rebase_swizzle[1] = MESA_FORMAT_SWIZZLE_ZERO;
+      rebase_swizzle[2] = MESA_FORMAT_SWIZZLE_ZERO;
+      rebase_swizzle[3] = MESA_FORMAT_SWIZZLE_W;
+   } else if (_mesa_get_format_base_format(rb_format) != rb->_BaseFormat) {
+      needs_rebase =
+         _mesa_compute_rgba2base2rgba_component_mapping(rb->_BaseFormat,
+                                                        rebase_swizzle);
+   } else {
+      needs_rebase = false;
+   }
+
+   /* Since _mesa_format_convert does not handle transferOps we need to handle
+    * them before we call the function. This requires to convert to RGBA float
+    * first so we can call _mesa_apply_rgba_transfer_ops. If the dst format is
+    * integer transferOps do not apply.
+    *
+    * Converting to luminance also requires converting to RGBA first, so we can
+    * then compute luminance values as L=R+G+B. Notice that this is different
+    * from GetTexImage, where we compute L=R.
+    */
+   assert(!transferOps || (transferOps && !dst_is_integer));
+
+   needs_rgba = transferOps || convert_rgb_to_lum;
+   rgba = NULL;
+   if (needs_rgba) {
+      uint32_t rgba_format;
+      int rgba_stride;
+      bool need_convert;
+
+      /* Convert to RGBA float or int/uint depending on the type of the src */
+      if (dst_is_integer) {
+         src_is_uint = _mesa_is_format_unsigned(rb_format);
+         if (src_is_uint) {
+            rgba_format = RGBA32_UINT;
+            rgba_stride = width * 4 * sizeof(GLuint);
+         } else {
+            rgba_format = RGBA32_INT;
+            rgba_stride = width * 4 * sizeof(GLint);
+         }
+      } else {
+         rgba_format = RGBA32_FLOAT;
+         rgba_stride = width * 4 * sizeof(GLfloat);
+      }
+
+      /* If we are lucky and the dst format matches the RGBA format we need to
+       * convert to, then we can convert directly into the dst buffer and avoid
+       * the final conversion/copy from the rgba buffer to the dst buffer.
+       */
+      if (dst_format == rgba_format &&
+          dst_stride == rgba_stride) {
+         need_convert = false;
+         rgba = dst;
+      } else {
+         need_convert = true;
+         rgba = malloc(height * rgba_stride);
+         if (!rgba) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+            goto done_unmap;
+         }
+      }
+
+      /* Convert to RGBA now */
+      _mesa_format_convert(rgba, rgba_format, rgba_stride,
+                           map, rb_format, rb_stride,
+                           width, height,
+                           needs_rebase ? rebase_swizzle : NULL);
+
+      /* Handle transfer ops if necessary */
+      if (transferOps)
+         _mesa_apply_rgba_transfer_ops(ctx, transferOps, width * height, rgba);
+
+      /* If we had to rebase, we have already taken care of that */
+      needs_rebase = false;
+
+      /* If we were lucky and our RGBA conversion matches the dst format, then
+       * we are done.
+       */
+      if (!need_convert)
+         goto done_swap;
+
+      /* Otherwise, we need to convert from RGBA to dst next */
+      src = rgba;
+      src_format = rgba_format;
+      src_stride = rgba_stride;
+   } else {
+      /* No RGBA conversion needed, convert directly to dst */
+      src = map;
+      src_format = rb_format;
+      src_stride = rb_stride;
+   }
+
+   /* Do the conversion.
+    *
+    * If the dst format is Luminance, we need to do the conversion by computing
+    * L=R+G+B values.
+    */
+   if (!convert_rgb_to_lum) {
+      _mesa_format_convert(dst, dst_format, dst_stride,
+                           src, src_format, src_stride,
+                           width, height,
+                           needs_rebase ? rebase_swizzle : NULL);
+   } else if (!dst_is_integer) {
+      /* Compute float Luminance values from RGBA float */
+      int luminance_stride, luminance_bytes;
+      void *luminance;
+      uint32_t luminance_format;
+
+      luminance_stride = width * sizeof(GLfloat);
+      if (format == GL_LUMINANCE_ALPHA)
+         luminance_stride *= 2;
+      luminance_bytes = height * luminance_stride;
+      luminance = malloc(luminance_bytes);
+      if (!luminance) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+         free(rgba);
+         goto done_unmap;
+      }
+      _mesa_pack_luminance_from_rgba_float(width * height, src,
+                                           luminance, format, transferOps);
+
+      /* Convert from Luminance float to dst (this will hadle type conversion
+       * from float to the type of dst if necessary)
+       */
+      luminance_format = _mesa_format_from_format_and_type(format, GL_FLOAT);
+      _mesa_format_convert(dst, dst_format, dst_stride,
+                           luminance, luminance_format, luminance_stride,
+                           width, height, NULL);
+      free(luminance);
+   } else {
+      _mesa_pack_luminance_from_rgba_integer(width * height, src, !src_is_uint,
+                                             dst, format, type);
+   }
+
+   free(rgba);
+
+done_swap:
+   /* Handle byte swapping if required */
+   if (packing->SwapBytes) {
+      _mesa_swap_bytes_2d_image(format, type, packing,
+                                width, height, dst, dst);
+   }
+
+done_unmap:
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
 /**
@@ -599,7 +652,7 @@ fast_read_depth_stencil_pixels(struct gl_context *ctx,
       return GL_FALSE;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
-			       &map, &stride);
+			       &map, &stride, fb->FlipY);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return GL_TRUE;  /* don't bother trying the slow path */
@@ -639,14 +692,14 @@ fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
       return GL_FALSE;
 
    ctx->Driver.MapRenderbuffer(ctx, depthRb, x, y, width, height,
-			       GL_MAP_READ_BIT, &depthMap, &depthStride);
+			       GL_MAP_READ_BIT, &depthMap, &depthStride, fb->FlipY);
    if (!depthMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return GL_TRUE;  /* don't bother trying the slow path */
    }
 
    ctx->Driver.MapRenderbuffer(ctx, stencilRb, x, y, width, height,
-			       GL_MAP_READ_BIT, &stencilMap, &stencilStride);
+			       GL_MAP_READ_BIT, &stencilMap, &stencilStride, fb->FlipY);
    if (!stencilMap) {
       ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
@@ -703,7 +756,7 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
     * If one buffer, only map it once.
     */
    ctx->Driver.MapRenderbuffer(ctx, depthRb, x, y, width, height,
-			       GL_MAP_READ_BIT, &depthMap, &depthStride);
+			       GL_MAP_READ_BIT, &depthMap, &depthStride, fb->FlipY);
    if (!depthMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return;
@@ -712,7 +765,7 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    if (stencilRb != depthRb) {
       ctx->Driver.MapRenderbuffer(ctx, stencilRb, x, y, width, height,
                                   GL_MAP_READ_BIT, &stencilMap,
-                                  &stencilStride);
+                                  &stencilStride, fb->FlipY);
       if (!stencilMap) {
          ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
@@ -768,7 +821,7 @@ read_depth_stencil_pixels(struct gl_context *ctx,
                           const struct gl_pixelstore_attrib *packing )
 {
    const GLboolean scaleOrBias
-      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+      = ctx->Pixel.DepthScale != 1.0F || ctx->Pixel.DepthBias != 0.0F;
    const GLboolean stencilTransfer = ctx->Pixel.IndexShift
       || ctx->Pixel.IndexOffset || ctx->Pixel.MapStencilFlag;
    GLubyte *dst;
@@ -811,62 +864,54 @@ _mesa_readpixels(struct gl_context *ctx,
                  const struct gl_pixelstore_attrib *packing,
                  GLvoid *pixels)
 {
-   struct gl_pixelstore_attrib clippedPacking = *packing;
-
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   /* Do all needed clipping here, so that we can forget about it later */
-   if (_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
+   pixels = _mesa_map_pbo_dest(ctx, packing, pixels);
 
-      pixels = _mesa_map_pbo_dest(ctx, &clippedPacking, pixels);
-
-      if (pixels) {
-         /* Try memcpy first. */
-         if (readpixels_memcpy(ctx, x, y, width, height, format, type,
-                               pixels, packing)) {
-            _mesa_unmap_pbo_dest(ctx, &clippedPacking);
-            return;
-         }
-
-         /* Otherwise take the slow path. */
-         switch (format) {
-         case GL_STENCIL_INDEX:
-            read_stencil_pixels(ctx, x, y, width, height, type, pixels,
-                                &clippedPacking);
-            break;
-         case GL_DEPTH_COMPONENT:
-            read_depth_pixels(ctx, x, y, width, height, type, pixels,
-                              &clippedPacking);
-            break;
-         case GL_DEPTH_STENCIL_EXT:
-            read_depth_stencil_pixels(ctx, x, y, width, height, type, pixels,
-                                      &clippedPacking);
-            break;
-         default:
-            /* all other formats should be color formats */
-            read_rgba_pixels(ctx, x, y, width, height, format, type, pixels,
-                             &clippedPacking);
-         }
-
-         _mesa_unmap_pbo_dest(ctx, &clippedPacking);
+   if (pixels) {
+      /* Try memcpy first. */
+      if (readpixels_memcpy(ctx, x, y, width, height, format, type,
+                            pixels, packing)) {
+         _mesa_unmap_pbo_dest(ctx, packing);
+         return;
       }
+
+      /* Otherwise take the slow path. */
+      switch (format) {
+      case GL_STENCIL_INDEX:
+         read_stencil_pixels(ctx, x, y, width, height, type, pixels,
+                             packing);
+         break;
+      case GL_DEPTH_COMPONENT:
+         read_depth_pixels(ctx, x, y, width, height, type, pixels,
+                           packing);
+         break;
+      case GL_DEPTH_STENCIL_EXT:
+         read_depth_stencil_pixels(ctx, x, y, width, height, type, pixels,
+                                   packing);
+         break;
+      default:
+         /* all other formats should be color formats */
+         read_rgba_pixels(ctx, x, y, width, height, format, type, pixels,
+                          packing);
+      }
+
+      _mesa_unmap_pbo_dest(ctx, packing);
    }
 }
 
 
 static GLenum
-read_pixels_es3_error_check(GLenum format, GLenum type,
+read_pixels_es3_error_check(struct gl_context *ctx, GLenum format, GLenum type,
                             const struct gl_renderbuffer *rb)
 {
    const GLenum internalFormat = rb->InternalFormat;
    const GLenum data_type = _mesa_get_format_datatype(rb->Format);
    GLboolean is_unsigned_int = GL_FALSE;
    GLboolean is_signed_int = GL_FALSE;
-
-   if (!_mesa_is_color_format(internalFormat)) {
-      return GL_INVALID_OPERATION;
-   }
+   GLboolean is_float_depth = (internalFormat == GL_DEPTH_COMPONENT32F) ||
+         (internalFormat == GL_DEPTH32F_STENCIL8);
 
    is_unsigned_int = _mesa_is_enum_format_unsigned_int(internalFormat);
    if (!is_unsigned_int) {
@@ -884,6 +929,44 @@ read_pixels_es3_error_check(GLenum format, GLenum type,
          return GL_NO_ERROR;
       if (internalFormat == GL_RGB10_A2UI && type == GL_UNSIGNED_BYTE)
          return GL_NO_ERROR;
+      if (type == GL_UNSIGNED_SHORT) {
+         switch (internalFormat) {
+         case GL_R16:
+         case GL_RG16:
+         case GL_RGB16:
+         case GL_RGBA16:
+            if (_mesa_has_EXT_texture_norm16(ctx))
+               return GL_NO_ERROR;
+         }
+      }
+      if (type == GL_SHORT) {
+         switch (internalFormat) {
+         case GL_R16_SNORM:
+         case GL_RG16_SNORM:
+         case GL_RGBA16_SNORM:
+            if (_mesa_has_EXT_texture_norm16(ctx) &&
+                _mesa_has_EXT_render_snorm(ctx))
+               return GL_NO_ERROR;
+         }
+      }
+      if (type == GL_BYTE) {
+         switch (internalFormat) {
+         case GL_R8_SNORM:
+         case GL_RG8_SNORM:
+         case GL_RGBA8_SNORM:
+            if (_mesa_has_EXT_render_snorm(ctx))
+               return GL_NO_ERROR;
+         }
+      }
+      if (type == GL_UNSIGNED_BYTE) {
+         switch (internalFormat) {
+         case GL_R8_SNORM:
+         case GL_RG8_SNORM:
+         case GL_RGBA8_SNORM:
+            if (_mesa_has_EXT_render_snorm(ctx))
+               return GL_NO_ERROR;
+         }
+      }
       break;
    case GL_BGRA:
       /* GL_EXT_read_format_bgra */
@@ -897,19 +980,57 @@ read_pixels_es3_error_check(GLenum format, GLenum type,
           (is_unsigned_int && type == GL_UNSIGNED_INT))
          return GL_NO_ERROR;
       break;
+   case GL_DEPTH_STENCIL:
+      switch (type) {
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         if (is_float_depth)
+            return GL_NO_ERROR;
+         break;
+      case GL_UNSIGNED_INT_24_8:
+         if (!is_float_depth)
+            return GL_NO_ERROR;
+         break;
+      default:
+         return GL_INVALID_ENUM;
+      }
+      break;
+   case GL_DEPTH_COMPONENT:
+      switch (type) {
+      case GL_FLOAT:
+         if (is_float_depth)
+            return GL_NO_ERROR;
+         break;
+      case GL_UNSIGNED_SHORT:
+      case GL_UNSIGNED_INT:
+      case GL_UNSIGNED_INT_24_8:
+         if (!is_float_depth)
+            return GL_NO_ERROR;
+         break;
+      default:
+         return GL_INVALID_ENUM;
+      }
+      break;
+   case GL_STENCIL_INDEX:
+      switch (type) {
+      case GL_UNSIGNED_BYTE:
+         return GL_NO_ERROR;
+      default:
+         return GL_INVALID_ENUM;
+      }
+      break;
    }
 
    return GL_INVALID_OPERATION;
 }
 
 
-void GLAPIENTRY
-_mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
-		      GLenum format, GLenum type, GLsizei bufSize,
-                      GLvoid *pixels )
+static ALWAYS_INLINE void
+read_pixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format,
+            GLenum type, GLsizei bufSize, GLvoid *pixels, bool no_error)
 {
    GLenum err = GL_NO_ERROR;
    struct gl_renderbuffer *rb;
+   struct gl_pixelstore_attrib clippedPacking;
 
    GET_CURRENT_CONTEXT(ctx);
 
@@ -919,11 +1040,11 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadPixels(%d, %d, %s, %s, %p)\n",
                   width, height,
-                  _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type),
+                  _mesa_enum_to_string(format),
+                  _mesa_enum_to_string(type),
                   pixels);
 
-   if (width < 0 || height < 0) {
+   if (!no_error && (width < 0 || height < 0)) {
       _mesa_error( ctx, GL_INVALID_VALUE,
                    "glReadPixels(width=%d height=%d)", width, height );
       return;
@@ -932,120 +1053,145 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+   if (!no_error && ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glReadPixels(incomplete framebuffer)" );
       return;
    }
 
    rb = _mesa_get_read_renderbuffer_for_format(ctx, format);
-   if (rb == NULL) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glReadPixels(read buffer)");
-      return;
-   }
+   if (!no_error) {
+      if (rb == NULL) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(read buffer)");
+         return;
+      }
 
-   /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
-    * combinations of format and type that can be used.
-    *
-    * Technically, only two combinations are actually allowed:
-    * GL_RGBA/GL_UNSIGNED_BYTE, and some implementation-specific internal
-    * preferred combination.  This code doesn't know what that preferred
-    * combination is, and Mesa can handle anything valid.  Just work instead.
-    */
-   if (_mesa_is_gles(ctx)) {
-      if (ctx->API == API_OPENGLES2 &&
-          _mesa_is_color_format(format) &&
-          _mesa_get_color_read_format(ctx) == format &&
-          _mesa_get_color_read_type(ctx) == type) {
-         err = GL_NO_ERROR;
-      } else if (ctx->Version < 30) {
-         err = _mesa_es_error_check_format_and_type(format, type, 2);
-         if (err == GL_NO_ERROR) {
-            if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
-               err = GL_INVALID_OPERATION;
+      /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
+       * combinations of format and type that can be used.
+       *
+       * Technically, only two combinations are actually allowed:
+       * GL_RGBA/GL_UNSIGNED_BYTE, and some implementation-specific internal
+       * preferred combination.  This code doesn't know what that preferred
+       * combination is, and Mesa can handle anything valid.  Just work instead.
+       */
+      if (_mesa_is_gles(ctx)) {
+         if (ctx->API == API_OPENGLES2 &&
+             _mesa_is_color_format(format) &&
+             _mesa_get_color_read_format(ctx, NULL, "glReadPixels") == format &&
+             _mesa_get_color_read_type(ctx, NULL, "glReadPixels") == type) {
+            err = GL_NO_ERROR;
+         } else if (ctx->Version < 30) {
+            err = _mesa_es_error_check_format_and_type(ctx, format, type, 2);
+            if (err == GL_NO_ERROR) {
+               if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
+                  err = GL_INVALID_OPERATION;
+               }
             }
+         } else {
+            err = read_pixels_es3_error_check(ctx, format, type, rb);
          }
-      } else {
-         err = read_pixels_es3_error_check(format, type, rb);
+
+         if (err != GL_NO_ERROR) {
+            _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
+                        _mesa_enum_to_string(format),
+                        _mesa_enum_to_string(type));
+            return;
+         }
       }
 
-      if (err == GL_NO_ERROR && (format == GL_DEPTH_COMPONENT
-          || format == GL_DEPTH_STENCIL)) {
-         err = GL_INVALID_ENUM;
-      }
-
+      err = _mesa_error_check_format_and_type(ctx, format, type);
       if (err != GL_NO_ERROR) {
          _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
-                     _mesa_lookup_enum_by_nr(format),
-                     _mesa_lookup_enum_by_nr(type));
+                     _mesa_enum_to_string(format),
+                     _mesa_enum_to_string(type));
          return;
+      }
+
+      if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
+          ctx->ReadBuffer->Visual.samples > 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(multisample FBO)");
+         return;
+      }
+
+      if (!_mesa_source_buffer_exists(ctx, format)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
+         return;
+      }
+
+      /* Check that the destination format and source buffer are both
+       * integer-valued or both non-integer-valued.
+       */
+      if (ctx->Extensions.EXT_texture_integer && _mesa_is_color_format(format)) {
+         const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+         const GLboolean srcInteger = _mesa_is_format_integer_color(rb->Format);
+         const GLboolean dstInteger = _mesa_is_enum_format_integer(format);
+         if (dstInteger != srcInteger) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glReadPixels(integer / non-integer format mismatch");
+            return;
+         }
       }
    }
 
-   err = _mesa_error_check_format_and_type(ctx, format, type);
-   if (err != GL_NO_ERROR) {
-      _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
-                  _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type));
-      return;
-   }
-
-   if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
-       ctx->ReadBuffer->Visual.samples > 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(multisample FBO)");
-      return;
-   }
-
-   if (!_mesa_source_buffer_exists(ctx, format)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
-      return;
-   }
-
-   /* Check that the destination format and source buffer are both
-    * integer-valued or both non-integer-valued.
-    */
-   if (ctx->Extensions.EXT_texture_integer && _mesa_is_color_format(format)) {
-      const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-      const GLboolean srcInteger = _mesa_is_format_integer_color(rb->Format);
-      const GLboolean dstInteger = _mesa_is_enum_format_integer(format);
-      if (dstInteger != srcInteger) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(integer / non-integer format mismatch");
-         return;
-      }
-   }
-
-   if (width == 0 || height == 0)
+   /* Do all needed clipping here, so that we can forget about it later */
+   clippedPacking = ctx->Pack;
+   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking))
       return; /* nothing to do */
 
-   if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
-                                  format, type, bufSize, pixels)) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(out of bounds PBO access)");
-      } else {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadnPixelsARB(out of bounds access:"
-                     " bufSize (%d) is too small)", bufSize);
+   if (!no_error) {
+      if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
+                                     format, type, bufSize, pixels)) {
+         if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glReadPixels(out of bounds PBO access)");
+         } else {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glReadnPixelsARB(out of bounds access:"
+                        " bufSize (%d) is too small)", bufSize);
+         }
+         return;
       }
-      return;
-   }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) &&
-       _mesa_check_disallowed_mapping(ctx->Pack.BufferObj)) {
-      /* buffer is mapped - that's an error */
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-      return;
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj) &&
+          _mesa_check_disallowed_mapping(ctx->Pack.BufferObj)) {
+         /* buffer is mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
+         return;
+      }
    }
 
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
-			  format, type, &ctx->Pack, pixels);
+                          format, type, &clippedPacking, pixels);
 }
 
 void GLAPIENTRY
-_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
-		  GLenum format, GLenum type, GLvoid *pixels )
+_mesa_ReadnPixelsARB_no_error(GLint x, GLint y, GLsizei width, GLsizei height,
+                              GLenum format, GLenum type, GLsizei bufSize,
+                              GLvoid *pixels)
+{
+   read_pixels(x, y, width, height, format, type, bufSize, pixels, true);
+}
+
+void GLAPIENTRY
+_mesa_ReadnPixelsARB(GLint x, GLint y, GLsizei width, GLsizei height,
+                     GLenum format, GLenum type, GLsizei bufSize,
+                     GLvoid *pixels)
+{
+   read_pixels(x, y, width, height, format, type, bufSize, pixels, false);
+}
+
+void GLAPIENTRY
+_mesa_ReadPixels_no_error(GLint x, GLint y, GLsizei width, GLsizei height,
+                          GLenum format, GLenum type, GLvoid *pixels)
+{
+   _mesa_ReadnPixelsARB_no_error(x, y, width, height, format, type, INT_MAX,
+                                 pixels);
+}
+
+void GLAPIENTRY
+_mesa_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+                 GLenum format, GLenum type, GLvoid *pixels)
 {
    _mesa_ReadnPixelsARB(x, y, width, height, format, type, INT_MAX, pixels);
 }

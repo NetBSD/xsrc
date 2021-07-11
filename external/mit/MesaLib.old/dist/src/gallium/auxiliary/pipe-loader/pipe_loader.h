@@ -35,10 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "state_tracker/drm_driver.h"
-
-#ifdef HAVE_PIPE_LOADER_XLIB
-#include <X11/Xlib.h>
-#endif
+#include "util/xmlconfig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +66,9 @@ struct pipe_loader_device {
 
    char *driver_name;
    const struct pipe_loader_ops *ops;
+
+   driOptionCache option_cache;
+   driOptionCache option_info;
 };
 
 /**
@@ -86,23 +86,27 @@ pipe_loader_probe(struct pipe_loader_device **devs, int ndev);
  * Create a pipe_screen for the specified device.
  *
  * \param dev Device the screen will be created for.
- * \param library_paths Colon-separated list of filesystem paths that
- *                      will be used to look for the pipe driver
- *                      module that handles this device.
  */
 struct pipe_screen *
-pipe_loader_create_screen(struct pipe_loader_device *dev,
-                          const char *library_paths);
+pipe_loader_create_screen(struct pipe_loader_device *dev);
 
 /**
- * Query the configuration parameters for the specified device.
+ * Ensure that dev->option_cache is initialized appropriately for the driver.
  *
- * \param dev Device that will be queried.
- * \param conf The drm_conf id of the option to be queried.
+ * This function can be called multiple times.
+ *
+ * \param dev Device for which options should be loaded.
  */
-const struct drm_conf_ret *
-pipe_loader_configuration(struct pipe_loader_device *dev,
-                          enum drm_conf conf);
+void
+pipe_loader_load_options(struct pipe_loader_device *dev);
+
+/**
+ * Get the driinfo XML string used by the given driver.
+ *
+ * The returned string is heap-allocated.
+ */
+char *
+pipe_loader_get_driinfo_xml(const char *driver_name);
 
 /**
  * Release resources allocated for a list of devices.
@@ -116,35 +120,32 @@ pipe_loader_configuration(struct pipe_loader_device *dev,
 void
 pipe_loader_release(struct pipe_loader_device **devs, int ndev);
 
-#ifdef HAVE_PIPE_LOADER_XLIB
-
-/**
- * Initialize Xlib for an associated display.
- *
- * This function is platform-specific.
- *
- * \sa pipe_loader_probe
- */
-bool
-pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display);
-
-#endif
-
-
-#ifdef HAVE_PIPE_LOADER_DRI
-
 /**
  * Initialize sw dri device give the drisw_loader_funcs.
  *
  * This function is platform-specific.
  *
+ * Function does not take ownership of the fd, but duplicates it locally.
+ * The local fd is closed during pipe_loader_release.
+ *
  * \sa pipe_loader_probe
  */
 bool
 pipe_loader_sw_probe_dri(struct pipe_loader_device **devs,
-                         struct drisw_loader_funcs *drisw_lf);
+                         const struct drisw_loader_funcs *drisw_lf);
 
-#endif
+/**
+ * Initialize a kms backed sw device given an fd.
+ *
+ * This function is platform-specific.
+ *
+ * Function does not take ownership of the fd, but duplicates it locally.
+ * The local fd is closed during pipe_loader_release.
+ *
+ * \sa pipe_loader_probe
+ */
+bool
+pipe_loader_sw_probe_kms(struct pipe_loader_device **devs, int fd);
 
 /**
  * Initialize a null sw device.
@@ -166,7 +167,16 @@ pipe_loader_sw_probe_null(struct pipe_loader_device **devs);
 int
 pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev);
 
-#ifdef HAVE_PIPE_LOADER_DRM
+/**
+ * Get a software device wrapped atop another device.
+ *
+ * This function is platform-specific.
+ *
+ * \sa pipe_loader_probe
+ */
+boolean
+pipe_loader_sw_probe_wrapped(struct pipe_loader_device **dev,
+                             struct pipe_screen *screen);
 
 /**
  * Get a list of known DRM devices.
@@ -184,15 +194,19 @@ pipe_loader_drm_probe(struct pipe_loader_device **devs, int ndev);
  * This function is platform-specific.
  *
  * \sa pipe_loader_probe
- *
- * \param auth_x If true, the pipe-loader will attempt to
- *               authenticate with the X server.
  */
 bool
-pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
-                         boolean auth_x);
+pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd);
 
-#endif
+/**
+ * Get the driinfo XML used for the DRM driver of the given name, if any.
+ *
+ * The returned string is heap-allocated.
+ */
+char *
+pipe_loader_drm_get_driinfo_xml(const char *driver_name);
+
+extern const char gallium_driinfo_xml[];
 
 #ifdef __cplusplus
 }

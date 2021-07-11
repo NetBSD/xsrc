@@ -22,8 +22,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef EGL_DRI2_FALLBACKS_INCLUDED
+#define EGL_DRI2_FALLBACKS_INCLUDED
 
+#include "eglcurrent.h"
 #include "egltypedefs.h"
 
 struct wl_buffer;
@@ -45,23 +47,27 @@ dri2_fallback_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *disp,
    return NULL;
 }
 
-static inline EGLBoolean
-dri2_fallback_swap_interval(_EGLDriver *drv, _EGLDisplay *dpy,
-                            _EGLSurface *surf, EGLint interval)
+static inline _EGLImage*
+dri2_fallback_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
+                               _EGLContext *ctx, EGLenum target,
+                               EGLClientBuffer buffer,
+                               const EGLint *attr_list)
 {
-   return EGL_FALSE;
+   return NULL;
 }
 
 static inline EGLBoolean
-dri2_fallback_swap_buffers_with_damage(_EGLDriver *drv, _EGLDisplay *dpy,
+dri2_fallback_swap_buffers_with_damage(_EGLDriver *drv, _EGLDisplay *disp,
                                       _EGLSurface *surf,
                                       const EGLint *rects, EGLint n_rects)
 {
-   return EGL_FALSE;
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   dri2_dpy->vtbl->set_damage_region(drv, disp, surf, rects, n_rects);
+   return dri2_dpy->vtbl->swap_buffers(drv, disp, surf);
 }
 
 static inline EGLBoolean
-dri2_fallback_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy,
+dri2_fallback_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp,
                                   _EGLSurface *surf,
                                   EGLint numRects, const EGLint *rects)
 {
@@ -69,7 +75,7 @@ dri2_fallback_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static inline EGLBoolean
-dri2_fallback_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
+dri2_fallback_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp,
                               _EGLSurface *draw,
                               EGLint x, EGLint y, EGLint width, EGLint height)
 {
@@ -77,15 +83,23 @@ dri2_fallback_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static inline EGLBoolean
-dri2_fallback_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy,
+dri2_fallback_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp,
                            _EGLSurface *surf,
                            void *native_pixmap_target)
+{
+   return _eglError(EGL_BAD_NATIVE_PIXMAP, "no support for native pixmaps");
+}
+
+static inline EGLBoolean
+dri2_fallback_set_damage_region(_EGLDriver *drv, _EGLDisplay *disp,
+                                _EGLSurface *surf,
+                                const EGLint *rects, EGLint n_rects)
 {
    return EGL_FALSE;
 }
 
 static inline EGLint
-dri2_fallback_query_buffer_age(_EGLDriver *drv, _EGLDisplay *dpy,
+dri2_fallback_query_buffer_age(_EGLDriver *drv, _EGLDisplay *disp,
                                _EGLSurface *surf)
 {
    return 0;
@@ -93,16 +107,18 @@ dri2_fallback_query_buffer_age(_EGLDriver *drv, _EGLDisplay *dpy,
 
 static inline struct wl_buffer*
 dri2_fallback_create_wayland_buffer_from_image(_EGLDriver *drv,
-                                               _EGLDisplay *dpy,
+                                               _EGLDisplay *disp,
                                                _EGLImage *img)
 {
    return NULL;
 }
 
 static inline EGLBoolean
-dri2_fallback_get_sync_values(_EGLDisplay *dpy, _EGLSurface *surf,
+dri2_fallback_get_sync_values(_EGLDisplay *disp, _EGLSurface *surf,
                               EGLuint64KHR *ust, EGLuint64KHR *msc,
                               EGLuint64KHR *sbc)
 {
    return EGL_FALSE;
 }
+
+#endif /* EGL_DRI2_FALLBACKS_INCLUDED */

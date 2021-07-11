@@ -27,8 +27,8 @@
 #define USE_TRACE 0
 #define WIDTH 300
 #define HEIGHT 300
-#define NEAR 30
-#define FAR 1000
+#define NEAR 0
+#define FAR 1
 #define FLIP 0
 
 /* pipe_*_state structs */
@@ -50,7 +50,7 @@
 /* u_sampler_view_default_template */
 #include "util/u_sampler.h"
 /* debug_dump_surface_bmp */
-#include "util/u_debug.h"
+#include "util/u_debug_image.h"
 /* util_draw_vertex_buffer helper */
 #include "util/u_draw_quad.h"
 /* FREE & CALLOC_STRUCT */
@@ -96,12 +96,12 @@ static void init_prog(struct program *p)
 	assert(ret);
 
 	/* init a pipe screen */
-	p->screen = pipe_loader_create_screen(p->dev, PIPE_SEARCH_DIR);
+	p->screen = pipe_loader_create_screen(p->dev);
 	assert(p->screen);
 
 	/* create the pipe driver context and cso context */
-	p->pipe = p->screen->context_create(p->screen, NULL);
-	p->cso = cso_create_context(p->pipe);
+	p->pipe = p->screen->context_create(p->screen, NULL, 0);
+	p->cso = cso_create_context(p->pipe, 0);
 
 	/* set clear color */
 	p->clear_color.f[0] = 0.3;
@@ -174,6 +174,7 @@ static void init_prog(struct program *p)
 		memset(&box, 0, sizeof(box));
 		box.width = 2;
 		box.height = 2;
+		box.depth = 1;
 
 		ptr = p->pipe->transfer_map(p->pipe, p->tex, 0, PIPE_TRANSFER_WRITE, &box, &t);
 		ptr[0] = 0xffff0000;
@@ -199,7 +200,8 @@ static void init_prog(struct program *p)
 	p->rasterizer.cull_face = PIPE_FACE_NONE;
 	p->rasterizer.half_pixel_center = 1;
 	p->rasterizer.bottom_edge_rule = 1;
-	p->rasterizer.depth_clip = 1;
+	p->rasterizer.depth_clip_near = 1;
+	p->rasterizer.depth_clip_far = 1;
 
 	/* sampler */
 	memset(&p->sampler, 0, sizeof(p->sampler));
@@ -226,7 +228,7 @@ static void init_prog(struct program *p)
 	{
 		float x = 0;
 		float y = 0;
-		float z = FAR;
+		float z = NEAR;
 		float half_width = (float)WIDTH / 2.0f;
 		float half_height = (float)HEIGHT / 2.0f;
 		float half_depth = ((float)FAR - (float)NEAR) / 2.0f;
@@ -243,12 +245,10 @@ static void init_prog(struct program *p)
 		p->viewport.scale[0] = half_width;
 		p->viewport.scale[1] = half_height * scale;
 		p->viewport.scale[2] = half_depth;
-		p->viewport.scale[3] = 1.0f;
 
 		p->viewport.translate[0] = half_width + x;
 		p->viewport.translate[1] = (half_height + y) * scale + bias;
 		p->viewport.translate[2] = half_depth + z;
-		p->viewport.translate[3] = 0.0f;
 	}
 
 	/* vertex elements state */
@@ -265,23 +265,23 @@ static void init_prog(struct program *p)
 
 	/* vertex shader */
 	{
-		const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-		                                TGSI_SEMANTIC_GENERIC };
+		const enum tgsi_semantic semantic_names[] =
+                   { TGSI_SEMANTIC_POSITION, TGSI_SEMANTIC_GENERIC };
 		const uint semantic_indexes[] = { 0, 0 };
-		p->vs = util_make_vertex_passthrough_shader(p->pipe, 2, semantic_names, semantic_indexes);
+		p->vs = util_make_vertex_passthrough_shader(p->pipe, 2, semantic_names, semantic_indexes, FALSE);
 	}
 
 	/* fragment shader */
-	p->fs = util_make_fragment_tex_shader(p->pipe, TGSI_TEXTURE_2D, TGSI_INTERPOLATE_LINEAR);
+	p->fs = util_make_fragment_tex_shader(p->pipe, TGSI_TEXTURE_2D,
+	                                      TGSI_INTERPOLATE_LINEAR,
+	                                      TGSI_RETURN_TYPE_FLOAT,
+	                                      TGSI_RETURN_TYPE_FLOAT, false,
+                                              false);
 }
 
 static void close_prog(struct program *p)
 {
-	/* unset bound textures as well */
-	cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
-
-	/* unset all state */
-	cso_release_all(p->cso);
+	cso_destroy_context(p->cso);
 
 	p->pipe->delete_vs_state(p->pipe, p->vs);
 	p->pipe->delete_fs_state(p->pipe, p->fs);
@@ -292,7 +292,6 @@ static void close_prog(struct program *p)
 	pipe_resource_reference(&p->tex, NULL);
 	pipe_resource_reference(&p->vbuf, NULL);
 
-	cso_destroy_context(p->cso);
 	p->pipe->destroy(p->pipe);
 	p->screen->destroy(p->screen);
 	pipe_loader_release(&p->dev, 1);
@@ -302,6 +301,8 @@ static void close_prog(struct program *p)
 
 static void draw(struct program *p)
 {
+	const struct pipe_sampler_state *samplers[] = {&p->sampler};
+
 	/* set the render target */
 	cso_set_framebuffer(p->cso, &p->framebuffer);
 
@@ -315,8 +316,7 @@ static void draw(struct program *p)
 	cso_set_viewport(p->cso, &p->viewport);
 
 	/* sampler */
-	cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler);
-	cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
+	cso_set_samplers(p->cso, PIPE_SHADER_FRAGMENT, 1, samplers);
 
 	/* texture sampler view */
 	cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->view);

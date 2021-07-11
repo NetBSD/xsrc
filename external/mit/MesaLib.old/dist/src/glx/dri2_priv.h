@@ -30,6 +30,13 @@
  *   Kristian Høgsberg (krh@redhat.com)
  */
 
+#ifndef DRI2_PRIV_H
+#define DRI2_PRIV_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct dri2_screen {
    struct glx_screen base;
 
@@ -43,6 +50,7 @@ struct dri2_screen {
    const __DRItexBufferExtension *texBuffer;
    const __DRI2throttleExtension *throttle;
    const __DRI2rendererQueryExtension *rendererQuery;
+   const __DRI2interopExtension *interop;
    const __DRIconfig **driver_configs;
 
    void *driver;
@@ -50,3 +58,32 @@ struct dri2_screen {
 
    int show_fps_interval;
 };
+
+struct dri2_context
+{
+   struct glx_context base;
+   __DRIcontext *driContext;
+};
+
+_X_HIDDEN int
+dri2_query_renderer_integer(struct glx_screen *base, int attribute,
+                            unsigned int *value);
+
+_X_HIDDEN int
+dri2_query_renderer_string(struct glx_screen *base, int attribute,
+                           const char **value);
+
+_X_HIDDEN int
+dri2_interop_query_device_info(struct glx_context *ctx,
+                               struct mesa_glinterop_device_info *out);
+
+_X_HIDDEN int
+dri2_interop_export_object(struct glx_context *ctx,
+                           struct mesa_glinterop_export_in *in,
+                           struct mesa_glinterop_export_out *out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

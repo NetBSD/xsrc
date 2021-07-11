@@ -28,17 +28,38 @@ include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(C_SOURCES)
+LOCAL_SRC_FILES := \
+	$(C_SOURCES) \
+	$(NIR_SOURCES) \
+	$(RENDERONLY_SOURCES) \
+	$(VL_STUB_SOURCES)
+
+ifeq ($(USE_LIBBACKTRACE),true)
+	LOCAL_SRC_FILES += util/u_debug_stack_android.cpp
+endif
 
 LOCAL_C_INCLUDES := \
 	$(GALLIUM_TOP)/auxiliary/util \
-	$(MESA_TOP)/src
+	$(MESA_TOP)/src/util
 
+ifeq ($(MESA_ENABLE_LLVM),true)
+LOCAL_SRC_FILES += \
+	$(GALLIVM_SOURCES)
+$(call mesa-build-with-llvm)
+endif
+
+LOCAL_CPPFLAGS += -std=c++11
+
+# We need libmesa_nir to get NIR's generated include directories.
 LOCAL_MODULE := libmesa_gallium
+LOCAL_STATIC_LIBRARIES += libmesa_nir
+
+LOCAL_WHOLE_STATIC_LIBRARIES += cpufeatures
+LOCAL_CFLAGS += -DHAS_ANDROID_CPUFEATURES
 
 # generate sources
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-intermediates := $(call local-intermediates-dir)
+intermediates := $(call local-generated-sources-dir)
 LOCAL_GENERATED_SOURCES := $(addprefix $(intermediates)/, $(GENERATED_SOURCES))
 
 $(LOCAL_GENERATED_SOURCES): PRIVATE_PYTHON := $(MESA_PYTHON2)
@@ -51,6 +72,8 @@ $(intermediates)/util/u_format_srgb.c: $(intermediates)/%.c: $(LOCAL_PATH)/%.py
 
 $(intermediates)/util/u_format_table.c: $(intermediates)/%.c: $(LOCAL_PATH)/%.py $(LOCAL_PATH)/util/u_format.csv
 	$(transform-generated-source)
+
+LOCAL_GENERATED_SOURCES += $(MESA_GEN_NIR_H)
 
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)

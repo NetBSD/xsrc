@@ -26,8 +26,8 @@
 
 #include "main/glheader.h"
 #include "main/imports.h"
-#include "main/mtypes.h"
 #include "prog_instruction.h"
+#include "prog_parameter.h"
 
 
 /**
@@ -52,49 +52,9 @@ _mesa_init_instructions(struct prog_instruction *inst, GLuint count)
 
       inst[i].DstReg.File = PROGRAM_UNDEFINED;
       inst[i].DstReg.WriteMask = WRITEMASK_XYZW;
-      inst[i].DstReg.CondMask = COND_TR;
-      inst[i].DstReg.CondSwizzle = SWIZZLE_NOOP;
 
-      inst[i].SaturateMode = SATURATE_OFF;
-      inst[i].Precision = FLOAT32;
+      inst[i].Saturate = GL_FALSE;
    }
-}
-
-
-/**
- * Allocate an array of program instructions.
- * \param numInst  number of instructions
- * \return pointer to instruction memory
- */
-struct prog_instruction *
-_mesa_alloc_instructions(GLuint numInst)
-{
-   return
-      calloc(1, numInst * sizeof(struct prog_instruction));
-}
-
-
-/**
- * Reallocate memory storing an array of program instructions.
- * This is used when we need to append additional instructions onto an
- * program.
- * \param oldInst  pointer to first of old/src instructions
- * \param numOldInst  number of instructions at <oldInst>
- * \param numNewInst  desired size of new instruction array.
- * \return  pointer to start of new instruction array.
- */
-struct prog_instruction *
-_mesa_realloc_instructions(struct prog_instruction *oldInst,
-                           GLuint numOldInst, GLuint numNewInst)
-{
-   struct prog_instruction *newInst;
-
-   newInst = (struct prog_instruction *)
-      _mesa_realloc(oldInst,
-                    numOldInst * sizeof(struct prog_instruction),
-                    numNewInst * sizeof(struct prog_instruction));
-
-   return newInst;
 }
 
 
@@ -109,27 +69,8 @@ struct prog_instruction *
 _mesa_copy_instructions(struct prog_instruction *dest,
                         const struct prog_instruction *src, GLuint n)
 {
-   GLuint i;
    memcpy(dest, src, n * sizeof(struct prog_instruction));
-   for (i = 0; i < n; i++) {
-      if (src[i].Comment)
-         dest[i].Comment = _mesa_strdup(src[i].Comment);
-   }
    return dest;
-}
-
-
-/**
- * Free an array of instructions
- */
-void
-_mesa_free_instructions(struct prog_instruction *inst, GLuint count)
-{
-   GLuint i;
-   for (i = 0; i < count; i++) {
-      free((char *)inst[i].Comment);
-   }
-   free(inst);
 }
 
 
@@ -138,7 +79,7 @@ _mesa_free_instructions(struct prog_instruction *inst, GLuint count)
  */
 struct instruction_info
 {
-   gl_inst_opcode Opcode;
+   enum prog_opcode Opcode;
    const char *Name;
    GLuint NumSrcRegs;
    GLuint NumDstRegs;
@@ -178,7 +119,6 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_FRC,    "FRC",     1, 1 },
    { OPCODE_IF,     "IF",      1, 0 },
    { OPCODE_KIL,    "KIL",     1, 0 },
-   { OPCODE_KIL_NV, "KIL_NV",  0, 0 },
    { OPCODE_LG2,    "LG2",     1, 1 },
    { OPCODE_LIT,    "LIT",     1, 1 },
    { OPCODE_LOG,    "LOG",     1, 1 },
@@ -192,26 +132,15 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_NOISE2, "NOISE2",  1, 1 },
    { OPCODE_NOISE3, "NOISE3",  1, 1 },
    { OPCODE_NOISE4, "NOISE4",  1, 1 },
-   { OPCODE_PK2H,   "PK2H",    1, 1 },
-   { OPCODE_PK2US,  "PK2US",   1, 1 },
-   { OPCODE_PK4B,   "PK4B",    1, 1 },
-   { OPCODE_PK4UB,  "PK4UB",   1, 1 },
    { OPCODE_POW,    "POW",     2, 1 },
    { OPCODE_RCP,    "RCP",     1, 1 },
    { OPCODE_RET,    "RET",     0, 0 },
-   { OPCODE_RFL,    "RFL",     1, 1 },
    { OPCODE_RSQ,    "RSQ",     1, 1 },
    { OPCODE_SCS,    "SCS",     1, 1 },
-   { OPCODE_SEQ,    "SEQ",     2, 1 },
-   { OPCODE_SFL,    "SFL",     0, 1 },
    { OPCODE_SGE,    "SGE",     2, 1 },
-   { OPCODE_SGT,    "SGT",     2, 1 },
    { OPCODE_SIN,    "SIN",     1, 1 },
-   { OPCODE_SLE,    "SLE",     2, 1 },
    { OPCODE_SLT,    "SLT",     2, 1 },
-   { OPCODE_SNE,    "SNE",     2, 1 },
    { OPCODE_SSG,    "SSG",     1, 1 },
-   { OPCODE_STR,    "STR",     0, 1 },
    { OPCODE_SUB,    "SUB",     2, 1 },
    { OPCODE_SWZ,    "SWZ",     1, 1 },
    { OPCODE_TEX,    "TEX",     1, 1 },
@@ -219,13 +148,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_TXD,    "TXD",     3, 1 },
    { OPCODE_TXL,    "TXL",     1, 1 },
    { OPCODE_TXP,    "TXP",     1, 1 },
-   { OPCODE_TXP_NV, "TXP_NV",  1, 1 },
    { OPCODE_TRUNC,  "TRUNC",   1, 1 },
-   { OPCODE_UP2H,   "UP2H",    1, 1 },
-   { OPCODE_UP2US,  "UP2US",   1, 1 },
-   { OPCODE_UP4B,   "UP4B",    1, 1 },
-   { OPCODE_UP4UB,  "UP4UB",   1, 1 },
-   { OPCODE_X2D,    "X2D",     3, 1 },
    { OPCODE_XPD,    "XPD",     2, 1 }
 };
 
@@ -234,11 +157,11 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
  * Return the number of src registers for the given instruction/opcode.
  */
 GLuint
-_mesa_num_inst_src_regs(gl_inst_opcode opcode)
+_mesa_num_inst_src_regs(enum prog_opcode opcode)
 {
-   ASSERT(opcode < MAX_OPCODE);
-   ASSERT(opcode == InstInfo[opcode].Opcode);
-   ASSERT(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
+   assert(opcode < MAX_OPCODE);
+   assert(opcode == InstInfo[opcode].Opcode);
+   assert(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
    return InstInfo[opcode].NumSrcRegs;
 }
 
@@ -247,17 +170,17 @@ _mesa_num_inst_src_regs(gl_inst_opcode opcode)
  * Return the number of dst registers for the given instruction/opcode.
  */
 GLuint
-_mesa_num_inst_dst_regs(gl_inst_opcode opcode)
+_mesa_num_inst_dst_regs(enum prog_opcode opcode)
 {
-   ASSERT(opcode < MAX_OPCODE);
-   ASSERT(opcode == InstInfo[opcode].Opcode);
-   ASSERT(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
+   assert(opcode < MAX_OPCODE);
+   assert(opcode == InstInfo[opcode].Opcode);
+   assert(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
    return InstInfo[opcode].NumDstRegs;
 }
 
 
 GLboolean
-_mesa_is_tex_instruction(gl_inst_opcode opcode)
+_mesa_is_tex_instruction(enum prog_opcode opcode)
 {
    return (opcode == OPCODE_TEX ||
            opcode == OPCODE_TXB ||
@@ -321,7 +244,7 @@ _mesa_check_soa_dependencies(const struct prog_instruction *inst)
  * Return string name for given program opcode.
  */
 const char *
-_mesa_opcode_string(gl_inst_opcode opcode)
+_mesa_opcode_string(enum prog_opcode opcode)
 {
    if (opcode < MAX_OPCODE)
       return InstInfo[opcode].Name;

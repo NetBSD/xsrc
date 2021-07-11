@@ -2,7 +2,7 @@
 #include "i915_drm_winsys.h"
 #include "util/u_memory.h"
 
-#include "i915_drm.h"
+#include "drm-uapi/i915_drm.h"
 #include "i915/i915_debug.h"
 #include <xf86drm.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@ struct i915_drm_batchbuffer
    drm_intel_bo *bo;
 };
 
-static INLINE struct i915_drm_batchbuffer *
+static inline struct i915_drm_batchbuffer *
 i915_drm_batchbuffer(struct i915_winsys_batchbuffer *batch)
 {
    return (struct i915_drm_batchbuffer *)batch;

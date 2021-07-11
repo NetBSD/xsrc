@@ -33,12 +33,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	$(LOADER_C_FILES)
 
-# swrast only
-ifeq ($(MESA_GPU_DRIVERS),swrast)
-LOCAL_CFLAGS += -D__NOT_HAVE_DRM_H
-else
-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libdrm
-endif
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
 
 LOCAL_MODULE := libmesa_loader
 

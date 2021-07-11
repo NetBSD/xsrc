@@ -64,10 +64,10 @@
 #define I915_DESTREG_DBUFADDR1 4
 #define I915_DESTREG_DV0 6
 #define I915_DESTREG_DV1 7
-#define I915_DESTREG_SENABLE 8
-#define I915_DESTREG_SR0 9
-#define I915_DESTREG_SR1 10
-#define I915_DESTREG_SR2 11
+#define I915_DESTREG_SR0 8
+#define I915_DESTREG_SR1 9
+#define I915_DESTREG_SR2 10
+#define I915_DESTREG_SENABLE 11
 #define I915_DESTREG_DRAWRECT0 12
 #define I915_DESTREG_DRAWRECT1 13
 #define I915_DESTREG_DRAWRECT2 14
@@ -79,12 +79,13 @@
 #define I915_CTXREG_STATE4		0
 #define I915_CTXREG_LI			1
 #define I915_CTXREG_LIS2		2
-#define I915_CTXREG_LIS4		3
-#define I915_CTXREG_LIS5		4
-#define I915_CTXREG_LIS6		5
-#define I915_CTXREG_BF_STENCIL_OPS	6
-#define I915_CTXREG_BF_STENCIL_MASKS	7
-#define I915_CTX_SETUP_SIZE		8
+#define I915_CTXREG_LIS3		3
+#define I915_CTXREG_LIS4		4
+#define I915_CTXREG_LIS5		5
+#define I915_CTXREG_LIS6		6
+#define I915_CTXREG_BF_STENCIL_OPS	7
+#define I915_CTXREG_BF_STENCIL_MASKS	8
+#define I915_CTX_SETUP_SIZE		9
 
 #define I915_BLENDREG_IAB		0
 #define I915_BLENDREG_BLENDCOLOR0	1
@@ -115,6 +116,9 @@ enum {
    I915_RASTER_RULES_SETUP_SIZE,
 };
 
+#define I915_TEX_UNITS 8
+#define I915_WPOS_TEX_INVALID 0xff
+
 #define I915_MAX_CONSTANT      32
 #define I915_CONSTANT_SIZE     (2+(4*I915_MAX_CONSTANT))
 
@@ -138,7 +142,7 @@ enum {
  */
 struct i915_fragment_program
 {
-   struct gl_fragment_program FragProg;
+   struct gl_program FragProg;
 
    bool translated;
    bool params_uptodate;
@@ -194,7 +198,8 @@ struct i915_fragment_program
 
    /* Helpers for i915_fragprog.c:
     */
-   GLuint wpos_tex;
+   uint8_t texcoord_mapping[I915_TEX_UNITS];
+   uint8_t wpos_tex;
    bool depth_written;
 
    struct
@@ -204,15 +209,6 @@ struct i915_fragment_program
    } param[I915_MAX_CONSTANT];
    GLuint nr_params;
 };
-
-
-
-
-
-
-
-#define I915_TEX_UNITS 8
-
 
 struct i915_hw_state
 {
@@ -361,7 +357,7 @@ extern void i915InitFragProgFuncs(struct dd_function_table *functions);
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
-static INLINE struct i915_context *
+static inline struct i915_context *
 i915_context(struct gl_context * ctx)
 {
    return (struct i915_context *) ctx;

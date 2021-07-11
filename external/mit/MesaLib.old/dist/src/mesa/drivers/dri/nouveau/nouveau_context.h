@@ -32,7 +32,7 @@
 #include "nouveau_scratch.h"
 #include "nouveau_render.h"
 
-#include "main/bitset.h"
+#include "util/bitset.h"
 
 enum nouveau_fallback {
 	HWTNL = 0,
@@ -110,9 +110,8 @@ struct nouveau_context {
 GLboolean
 nouveau_context_create(gl_api api,
 		       const struct gl_config *visual, __DRIcontext *dri_ctx,
-		       unsigned major_version, unsigned minor_version,
-		       uint32_t flags, bool notify_reset, unsigned *error,
-		       void *share_ctx);
+		       const struct __DriverContextConfig *ctx_config,
+		       unsigned *error, void *share_ctx);
 
 GLboolean
 nouveau_context_init(struct gl_context *ctx, gl_api api,

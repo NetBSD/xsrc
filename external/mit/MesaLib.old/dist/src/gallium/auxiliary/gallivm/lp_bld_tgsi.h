@@ -48,7 +48,11 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_info.h"
 
-#define LP_CHAN_ALL ~0
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define LP_CHAN_ALL ~0u
 
 #define LP_MAX_INSTRUCTIONS 256
 
@@ -127,6 +131,12 @@ struct lp_tgsi_info
    unsigned indirect_textures:1;
 
    /*
+    * Whether any of the texture (sample) ocpodes use different sampler
+    * and sampler view unit.
+    */
+   unsigned sampler_texture_units_different:1;
+
+   /*
     * Whether any immediate values are outside the range of 0 and 1
     */
    unsigned unclamped_immediates:1;
@@ -156,7 +166,10 @@ struct lp_tgsi_info
 struct lp_bld_tgsi_system_values {
    LLVMValueRef instance_id;
    LLVMValueRef vertex_id;
+   LLVMValueRef vertex_id_nobase;
    LLVMValueRef prim_id;
+   LLVMValueRef basevertex;
+   LLVMValueRef invocation_id;
 };
 
 
@@ -174,37 +187,21 @@ struct lp_build_sampler_soa
    (*destroy)( struct lp_build_sampler_soa *sampler );
 
    void
-   (*emit_fetch_texel)( const struct lp_build_sampler_soa *sampler,
-                        struct gallivm_state *gallivm,
-                        struct lp_type type,
-                        boolean is_fetch,
-                        unsigned texture_index,
-                        unsigned sampler_index,
-                        const LLVMValueRef *coords,
-                        const LLVMValueRef *offsets,
-                        const struct lp_derivatives *derivs,
-                        LLVMValueRef lod_bias, /* optional */
-                        LLVMValueRef explicit_lod, /* optional */
-                        enum lp_sampler_lod_property,
-                        LLVMValueRef *texel);
+   (*emit_tex_sample)(const struct lp_build_sampler_soa *sampler,
+                      struct gallivm_state *gallivm,
+                      const struct lp_sampler_params *params);
 
    void
    (*emit_size_query)( const struct lp_build_sampler_soa *sampler,
                        struct gallivm_state *gallivm,
-                       struct lp_type type,
-                       unsigned unit,
-                       unsigned target,
-                       boolean need_nr_mips,
-                       enum lp_sampler_lod_property,
-                       LLVMValueRef explicit_lod, /* optional */
-                       LLVMValueRef *sizes_out);
+                       const struct lp_sampler_size_query_params *params);
 };
 
 
 struct lp_build_sampler_aos
 {
    LLVMValueRef
-   (*emit_fetch_texel)( struct lp_build_sampler_aos *sampler,
+   (*emit_fetch_texel)( const struct lp_build_sampler_aos *sampler,
                         struct lp_build_context *bld,
                         unsigned target, /* TGSI_TEXTURE_* */
                         unsigned unit,
@@ -229,7 +226,9 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   const struct lp_bld_tgsi_system_values *system_values,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
-                  struct lp_build_sampler_soa *sampler,
+                  LLVMValueRef context_ptr,
+                  LLVMValueRef thread_data_ptr,
+                  const struct lp_build_sampler_soa *sampler,
                   const struct tgsi_shader_info *info,
                   const struct lp_build_tgsi_gs_iface *gs_iface);
 
@@ -242,7 +241,7 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *inputs,
                   LLVMValueRef *outputs,
-                  struct lp_build_sampler_aos *sampler,
+                  const struct lp_build_sampler_aos *sampler,
                   const struct tgsi_shader_info *info);
 
 
@@ -337,6 +336,11 @@ struct lp_build_tgsi_context
    struct lp_build_context uint_bld;
    struct lp_build_context int_bld;
 
+   struct lp_build_context dbl_bld;
+
+   struct lp_build_context uint64_bld;
+   struct lp_build_context int64_bld;
+
    /** This array stores functions that are used to transform TGSI opcodes to
      * LLVM instructions.
      */
@@ -348,6 +352,9 @@ struct lp_build_tgsi_context
 
    struct lp_build_tgsi_action sqrt_action;
 
+   struct lp_build_tgsi_action drsq_action;
+
+   struct lp_build_tgsi_action dsqrt_action;
    const struct tgsi_shader_info *info;
 
    lp_build_emit_fetch_fn emit_fetch_funcs[TGSI_FILE_COUNT];
@@ -363,6 +370,7 @@ struct lp_build_tgsi_context
    void (*emit_store)(struct lp_build_tgsi_context *,
                       const struct tgsi_full_instruction *,
                       const struct tgsi_opcode_info *,
+                      unsigned index,
                       LLVMValueRef dst[4]);
 
    void (*emit_declaration)(struct lp_build_tgsi_context *,
@@ -441,6 +449,8 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef consts_sizes[LP_MAX_TGSI_CONST_BUFFERS];
    const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS];
    LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS];
+   LLVMValueRef context_ptr;
+   LLVMValueRef thread_data_ptr;
 
    const struct lp_build_sampler_soa *sampler;
 
@@ -449,7 +459,6 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef immediates[LP_MAX_INLINED_IMMEDIATES][TGSI_NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_INLINED_TEMPS][TGSI_NUM_CHANNELS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][TGSI_NUM_CHANNELS];
-   LLVMValueRef preds[LP_MAX_TGSI_PREDS][TGSI_NUM_CHANNELS];
 
    /* We allocate/use this array of temps if (1 << TGSI_FILE_TEMPORARY) is
     * set in the indirect_files field.
@@ -536,12 +545,13 @@ struct lp_build_tgsi_aos_context
    const LLVMValueRef *inputs;
    LLVMValueRef *outputs;
 
-   struct lp_build_sampler_aos *sampler;
+   const struct lp_build_sampler_aos *sampler;
+
+   struct tgsi_declaration_sampler_view sv[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    LLVMValueRef immediates[LP_MAX_INLINED_IMMEDIATES];
    LLVMValueRef temps[LP_MAX_INLINED_TEMPS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS];
-   LLVMValueRef preds[LP_MAX_TGSI_PREDS];
 
    /* We allocate/use this array of temps if (1 << TGSI_FILE_TEMPORARY) is
     * set in the indirect_files field.
@@ -554,13 +564,13 @@ struct lp_build_tgsi_aos_context
 
 };
 
-static INLINE struct lp_build_tgsi_soa_context *
+static inline struct lp_build_tgsi_soa_context *
 lp_soa_context(struct lp_build_tgsi_context *bld_base)
 {
    return (struct lp_build_tgsi_soa_context *)bld_base;
 }
 
-static INLINE struct lp_build_tgsi_aos_context *
+static inline struct lp_build_tgsi_aos_context *
 lp_aos_context(struct lp_build_tgsi_context *bld_base)
 {
    return (struct lp_build_tgsi_aos_context *)bld_base;
@@ -634,6 +644,13 @@ lp_build_tgsi_inst_llvm(
    const struct tgsi_full_instruction *inst);
 
 LLVMValueRef
+lp_build_emit_fetch_src(
+   struct lp_build_tgsi_context *bld_base,
+   const struct tgsi_full_src_register *reg,
+   enum tgsi_opcode_type stype,
+   const unsigned chan_index);
+
+LLVMValueRef
 lp_build_emit_fetch(
    struct lp_build_tgsi_context *bld_base,
    const struct tgsi_full_instruction *inst,
@@ -652,5 +669,9 @@ boolean
 lp_build_tgsi_llvm(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_token *tokens);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LP_BLD_TGSI_H */

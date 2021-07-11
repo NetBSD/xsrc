@@ -30,6 +30,7 @@
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
 #include "util/u_format.h"
+#include "util/u_screen.h"
 #include "util/u_string.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_defines.h"
@@ -37,8 +38,8 @@
 #include "draw/draw_context.h"
 #include "gallivm/lp_bld_type.h"
 
-#include "os/os_misc.h"
-#include "os/os_time.h"
+#include "util/os_misc.h"
+#include "util/os_time.h"
 #include "lp_texture.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
@@ -109,8 +110,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    switch (param) {
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
+   case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
       return 1;
    case PIPE_CAP_SM3:
       return 1;
@@ -131,14 +131,14 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_QUERY_TIMESTAMP:
       return 1;
    case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
-      return 0;
-   case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 1;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
+   case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+   case PIPE_CAP_TEXTURE_MIRROR_CLAMP_TO_EDGE:
       return 1;
    case PIPE_CAP_TEXTURE_SWIZZLE:
       return 1;
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
+   case PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET:
       return 0;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return LP_MAX_TEXTURE_2D_LEVELS;
@@ -159,15 +159,17 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
       return 0;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return 1;
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
       return 1;
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
-      return 0;
+      return 1;
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+   case PIPE_CAP_START_INSTANCE:
       return 1;
    case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
       return 0;
@@ -179,10 +181,10 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    /* this is a lie could support arbitrary large offsets */
    case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MIN_TEXEL_OFFSET:
-      return -8;
+      return -32;
    case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
-      return 7;
+      return 31;
    case PIPE_CAP_CONDITIONAL_RENDER:
       return 1;
    case PIPE_CAP_TEXTURE_BARRIER:
@@ -195,7 +197,10 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1024;
    case PIPE_CAP_MAX_VERTEX_STREAMS:
       return 1;
+   case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
+      return 2048;
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
+   case PIPE_CAP_STREAM_OUTPUT_INTERLEAVE_BUFFERS:
       return 1;
    case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
       return 0;
@@ -204,15 +209,14 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return 330;
+   case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
+      return 140;
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
       return 0;
    case PIPE_CAP_COMPUTE:
       return 0;
    case PIPE_CAP_USER_VERTEX_BUFFERS:
-   case PIPE_CAP_USER_INDEX_BUFFERS:
       return 1;
-   case PIPE_CAP_USER_CONSTANT_BUFFERS:
-      return 0;
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
@@ -221,11 +225,11 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_DRAW_INDIRECT:
       return 1;
 
+   case PIPE_CAP_CUBE_MAP_ARRAY:
+      return 1;
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 16;
-   case PIPE_CAP_START_INSTANCE:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
-   case PIPE_CAP_CUBE_MAP_ARRAY:
       return 0;
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
       return 64;
@@ -242,18 +246,32 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_ENDIANNESS:
       return PIPE_ENDIAN_NATIVE;
    case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
-   case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
-   case PIPE_CAP_TEXTURE_GATHER_SM5:
+      return 1;
    case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
-   case PIPE_CAP_TEXTURE_QUERY_LOD:
+      return 1;
+   case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
+      return 4;
+   case PIPE_CAP_TEXTURE_GATHER_SM5:
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
-   case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
-   case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
       return 0;
+   case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
+      return 1;
+   case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
+   case PIPE_CAP_TGSI_TEX_TXF_LZ:
+      return 0;
+   case PIPE_CAP_SAMPLER_VIEW_TARGET:
+      return 1;
    case PIPE_CAP_FAKE_SW_MSAA:
       return 1;
+   case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
+   case PIPE_CAP_TGSI_ARRAY_COMPONENTS:
+   case PIPE_CAP_DOUBLES:
+   case PIPE_CAP_INT64:
+   case PIPE_CAP_INT64_DIVMOD:
+   case PIPE_CAP_QUERY_SO_OVERFLOW:
+   case PIPE_CAP_TGSI_DIV:
       return 1;
 
    case PIPE_CAP_VENDOR_ID:
@@ -269,18 +287,113 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       if (!os_get_total_physical_memory(&system_memory))
          return 0;
 
+      if (sizeof(void *) == 4)
+         /* Cap to 2 GB on 32 bits system. We do this because llvmpipe does
+          * eat application memory, which is quite limited on 32 bits. App
+          * shouldn't expect too much available memory. */
+         system_memory = MIN2(system_memory, 2048 << 20);
+
       return (int)(system_memory >> 20);
    }
    case PIPE_CAP_UMA:
       return 0;
+   case PIPE_CAP_CLIP_HALFZ:
+      return 1;
+   case PIPE_CAP_VERTEXID_NOBASE:
+      return 0;
+   case PIPE_CAP_POLYGON_OFFSET_CLAMP:
+   case PIPE_CAP_TEXTURE_FLOAT_LINEAR:
+   case PIPE_CAP_TEXTURE_HALF_FLOAT_LINEAR:
+      return 1;
+   case PIPE_CAP_CULL_DISTANCE:
+      return 1;
+   case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
+      return 1;
+   case PIPE_CAP_CLEAR_TEXTURE:
+      return 1;
+   case PIPE_CAP_MAX_VARYINGS:
+      return 32;
+   case PIPE_CAP_MULTISAMPLE_Z_RESOLVE:
+   case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
+   case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
+   case PIPE_CAP_MAX_SHADER_PATCH_VARYINGS:
+   case PIPE_CAP_DEPTH_BOUNDS_TEST:
+   case PIPE_CAP_TGSI_TXQS:
+   case PIPE_CAP_FORCE_PERSAMPLE_INTERP:
+   case PIPE_CAP_SHAREABLE_SHADERS:
+   case PIPE_CAP_DRAW_PARAMETERS:
+   case PIPE_CAP_TGSI_PACK_HALF_FLOAT:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
+   case PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL:
+   case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
+   case PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT:
+   case PIPE_CAP_INVALIDATE_BUFFER:
+   case PIPE_CAP_GENERATE_MIPMAP:
+   case PIPE_CAP_STRING_MARKER:
+   case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
+   case PIPE_CAP_SURFACE_REINTERPRET_BLOCKS:
+   case PIPE_CAP_QUERY_BUFFER_OBJECT:
+   case PIPE_CAP_QUERY_MEMORY_INFO:
+   case PIPE_CAP_PCI_GROUP:
+   case PIPE_CAP_PCI_BUS:
+   case PIPE_CAP_PCI_DEVICE:
+   case PIPE_CAP_PCI_FUNCTION:
+   case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
+   case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
+   case PIPE_CAP_PRIMITIVE_RESTART_FOR_PATCHES:
+   case PIPE_CAP_TGSI_VOTE:
+   case PIPE_CAP_MAX_WINDOW_RECTANGLES:
+   case PIPE_CAP_POLYGON_OFFSET_UNITS_UNSCALED:
+   case PIPE_CAP_VIEWPORT_SUBPIXEL_BITS:
+   case PIPE_CAP_TGSI_CAN_READ_OUTPUTS:
+   case PIPE_CAP_NATIVE_FENCE_FD:
+   case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
+   case PIPE_CAP_TGSI_FS_FBFETCH:
+   case PIPE_CAP_TGSI_MUL_ZERO_WINS:
+   case PIPE_CAP_TGSI_CLOCK:
+   case PIPE_CAP_POLYGON_MODE_FILL_RECTANGLE:
+   case PIPE_CAP_SPARSE_BUFFER_PAGE_SIZE:
+   case PIPE_CAP_TGSI_BALLOT:
+   case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
+   case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
+   case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
+   case PIPE_CAP_POST_DEPTH_COVERAGE:
+   case PIPE_CAP_BINDLESS_TEXTURE:
+   case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
+   case PIPE_CAP_MEMOBJ:
+   case PIPE_CAP_LOAD_CONSTBUF:
+   case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
+   case PIPE_CAP_TILE_RASTER_ORDER:
+   case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
+   case PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS:
+   case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
+   case PIPE_CAP_CONTEXT_PRIORITY_MASK:
+   case PIPE_CAP_FENCE_SIGNAL:
+   case PIPE_CAP_CONSTBUF0_FLAGS:
+   case PIPE_CAP_PACKED_UNIFORMS:
+   case PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_TRIANGLES:
+   case PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_POINTS_LINES:
+   case PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_TRIANGLES:
+   case PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_POINTS_LINES:
+   case PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE:
+   case PIPE_CAP_MAX_CONSERVATIVE_RASTER_SUBPIXEL_PRECISION_BIAS:
+   case PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS:
+      return 0;
+   case PIPE_CAP_MAX_GS_INVOCATIONS:
+      return 32;
+   case PIPE_CAP_MAX_SHADER_BUFFER_SIZE:
+      return 1 << 27;
+
+   default:
+      return u_pipe_screen_get_param_defaults(screen, param);
    }
-   /* should only get here on unhandled cases */
-   debug_printf("Unexpected PIPE_CAP %d query\n", param);
-   return 0;
 }
 
 static int
-llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+llvmpipe_get_shader_param(struct pipe_screen *screen,
+                          enum pipe_shader_type shader,
+                          enum pipe_shader_cap param)
 {
    switch(shader)
    {
@@ -330,10 +443,11 @@ llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
       return 16.0; /* not actually signficant at this time */
    case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
-   case PIPE_CAPF_GUARD_BAND_LEFT:
-   case PIPE_CAPF_GUARD_BAND_TOP:
-   case PIPE_CAPF_GUARD_BAND_RIGHT:
-   case PIPE_CAPF_GUARD_BAND_BOTTOM:
+   case PIPE_CAPF_MIN_CONSERVATIVE_RASTER_DILATE:
+      return 0.0;
+   case PIPE_CAPF_MAX_CONSERVATIVE_RASTER_DILATE:
+      return 0.0;
+   case PIPE_CAPF_CONSERVATIVE_RASTER_DILATE_GRANULARITY:
       return 0.0;
    }
    /* should only get here on unhandled cases */
@@ -352,6 +466,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
                               unsigned sample_count,
+                              unsigned storage_sample_count,
                               unsigned bind)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
@@ -375,6 +490,9 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    if (sample_count > 1)
       return FALSE;
 
+   if (MAX2(1, sample_count) != MAX2(1, storage_sample_count))
+      return false;
+
    if (bind & PIPE_BIND_RENDER_TARGET) {
       if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
          /* this is a lie actually other formats COULD exist where we would fail */
@@ -397,19 +515,20 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       if (!format_desc->is_array && !format_desc->is_bitmask &&
           format != PIPE_FORMAT_R11G11B10_FLOAT)
          return FALSE;
+   }
 
-      /*
-       * XXX refuse formats known to crash in generate_unswizzled_blend().
-       * These include all 3-channel 24bit RGB8 variants, plus 48bit
-       * (except those using floats) 3-channel RGB16 variants (the latter
-       * seems to be more of a llvm bug though).
-       * The mesa state tracker only seems to use these for SINT/UINT formats.
+   if ((bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW)) &&
+       ((bind & PIPE_BIND_DISPLAY_TARGET) == 0)) {
+      /* Disable all 3-channel formats, where channel size != 32 bits.
+       * In some cases we run into crashes (in generate_unswizzled_blend()),
+       * for 3-channel RGB16 variants, there was an apparent LLVM bug.
+       * In any case, disabling the shallower 3-channel formats avoids a
+       * number of issues with GL_ARB_copy_image support.
        */
-      if (format_desc->is_array && format_desc->nr_channels == 3) {
-         if (format_desc->block.bits == 24 || (format_desc->block.bits == 48 &&
-               !util_format_is_float(format))) {
-            return FALSE;
-         }
+      if (format_desc->is_array &&
+          format_desc->nr_channels == 3 &&
+          format_desc->block.bits != 96) {
+         return FALSE;
       }
    }
 
@@ -426,19 +545,20 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          return FALSE;
 
       /* TODO: Support stencil-only formats */
-      if (format_desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_NONE) {
+      if (format_desc->swizzle[0] == PIPE_SWIZZLE_NONE) {
          return FALSE;
       }
    }
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_BPTC) {
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC ||
+       format_desc->layout == UTIL_FORMAT_LAYOUT_ATC) {
       /* Software decoding is not hooked up. */
       return FALSE;
    }
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-      return util_format_s3tc_enabled;
-   }
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_ETC &&
+       format != PIPE_FORMAT_ETC1_RGB8)
+      return FALSE;
 
    /*
     * Everything can be supported by u_format
@@ -481,7 +601,7 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
    if(winsys->destroy)
       winsys->destroy(winsys);
 
-   pipe_mutex_destroy(screen->rast_mutex);
+   mtx_destroy(&screen->rast_mutex);
 
    FREE(screen);
 }
@@ -505,28 +625,25 @@ llvmpipe_fence_reference(struct pipe_screen *screen,
 
 
 /**
- * Has the fence been executed/finished?
- */
-static boolean
-llvmpipe_fence_signalled(struct pipe_screen *screen,
-                         struct pipe_fence_handle *fence)
-{
-   struct lp_fence *f = (struct lp_fence *) fence;
-   return lp_fence_signalled(f);
-}
-
-
-/**
  * Wait for the fence to finish.
  */
 static boolean
 llvmpipe_fence_finish(struct pipe_screen *screen,
+                      struct pipe_context *ctx,
                       struct pipe_fence_handle *fence_handle,
                       uint64_t timeout)
 {
    struct lp_fence *f = (struct lp_fence *) fence_handle;
 
-   lp_fence_wait(f);
+   if (!timeout)
+      return lp_fence_signalled(f);
+
+   if (!lp_fence_signalled(f)) {
+      if (timeout != PIPE_TIMEOUT_INFINITE)
+         return lp_fence_timedwait(f, timeout);
+
+      lp_fence_wait(f);
+   }
    return TRUE;
 }
 
@@ -547,12 +664,6 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 
    util_cpu_detect();
 
-#if defined(PIPE_ARCH_X86) && HAVE_LLVM < 0x0302
-   /* require SSE2 due to LLVM PR6960. */
-   if (!util_cpu_caps.has_sse2)
-       return NULL;
-#endif
-
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 #endif
@@ -563,12 +674,18 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    if (!screen)
       return NULL;
 
+   if (!lp_jit_screen_init(screen)) {
+      FREE(screen);
+      return NULL;
+   }
+
    screen->winsys = winsys;
 
    screen->base.destroy = llvmpipe_destroy_screen;
 
    screen->base.get_name = llvmpipe_get_name;
    screen->base.get_vendor = llvmpipe_get_vendor;
+   screen->base.get_device_vendor = llvmpipe_get_vendor; // TODO should be the CPU vendor
    screen->base.get_param = llvmpipe_get_param;
    screen->base.get_shader_param = llvmpipe_get_shader_param;
    screen->base.get_paramf = llvmpipe_get_paramf;
@@ -577,14 +694,11 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
    screen->base.fence_reference = llvmpipe_fence_reference;
-   screen->base.fence_signalled = llvmpipe_fence_signalled;
    screen->base.fence_finish = llvmpipe_fence_finish;
 
    screen->base.get_timestamp = llvmpipe_get_timestamp;
 
    llvmpipe_init_screen_resource_funcs(&screen->base);
-
-   lp_jit_screen_init(screen);
 
    screen->num_threads = util_cpu_caps.nr_cpus > 1 ? util_cpu_caps.nr_cpus : 0;
 #ifdef PIPE_SUBSYSTEM_EMBEDDED
@@ -599,9 +713,7 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
       FREE(screen);
       return NULL;
    }
-   pipe_mutex_init(screen->rast_mutex);
-
-   util_format_s3tc_init();
+   (void) mtx_init(&screen->rast_mutex, mtx_plain);
 
    return &screen->base;
 }

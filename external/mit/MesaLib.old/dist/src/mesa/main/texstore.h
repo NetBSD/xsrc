@@ -36,9 +36,13 @@
 #define TEXSTORE_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 #include "formats.h"
+#include "util/macros.h"
 
+struct gl_context;
+struct gl_pixelstore_attrib;
+struct gl_texture_image;
 
 /**
  * This macro defines the (many) parameters to the texstore functions.
@@ -56,8 +60,8 @@
  */
 #define TEXSTORE_PARAMS \
 	struct gl_context *ctx, GLuint dims, \
-	GLenum baseInternalFormat, \
-	mesa_format dstFormat, \
+        MAYBE_UNUSED GLenum baseInternalFormat, \
+        MAYBE_UNUSED mesa_format dstFormat, \
         GLint dstRowStride, \
         GLubyte **dstSlices, \
 	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
@@ -65,6 +69,20 @@
 	const GLvoid *srcAddr, \
 	const struct gl_pixelstore_attrib *srcPacking
 
+/* This macro must be kept in sync with TEXSTORE_PARAMS.  It is used in the
+ * few places where none of the parameters are used (i.e., the ETC texstore
+ * functions).
+ */
+#define UNUSED_TEXSTORE_PARAMS                                          \
+        UNUSED struct gl_context *ctx, UNUSED GLuint dims,              \
+        UNUSED GLenum baseInternalFormat,                               \
+        UNUSED mesa_format dstFormat,                                   \
+        UNUSED GLint dstRowStride,                                      \
+        UNUSED GLubyte **dstSlices,                                     \
+        UNUSED GLint srcWidth, UNUSED GLint srcHeight, UNUSED GLint srcDepth, \
+        UNUSED GLenum srcFormat, UNUSED GLenum srcType,                 \
+        UNUSED const GLvoid *srcAddr,                                   \
+        UNUSED const struct gl_pixelstore_attrib *srcPacking
 
 extern GLboolean
 _mesa_texstore(TEXSTORE_PARAMS);
@@ -74,31 +92,23 @@ _mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
                                   GLenum baseInternalFormat,
                                   mesa_format dstFormat);
 
+extern void
+_mesa_memcpy_texture(struct gl_context *ctx,
+                     GLuint dimensions,
+                     mesa_format dstFormat,
+                     GLint dstRowStride,
+                     GLubyte **dstSlices,
+                     GLint srcWidth, GLint srcHeight, GLint srcDepth,
+                     GLenum srcFormat, GLenum srcType,
+                     const GLvoid *srcAddr,
+                     const struct gl_pixelstore_attrib *srcPacking);
+
 extern GLboolean
 _mesa_texstore_can_use_memcpy(struct gl_context *ctx,
                               GLenum baseInternalFormat, mesa_format dstFormat,
                               GLenum srcFormat, GLenum srcType,
                               const struct gl_pixelstore_attrib *srcPacking);
 
-
-extern GLubyte *
-_mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
-                           GLenum logicalBaseFormat,
-                           GLenum textureBaseFormat,
-                           GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                           GLenum srcFormat, GLenum srcType,
-                           const GLvoid *srcAddr,
-                           const struct gl_pixelstore_attrib *srcPacking);
-
-GLfloat *
-_mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
-			    GLenum logicalBaseFormat,
-			    GLenum textureBaseFormat,
-			    GLint srcWidth, GLint srcHeight, GLint srcDepth,
-			    GLenum srcFormat, GLenum srcType,
-			    const GLvoid *srcAddr,
-			    const struct gl_pixelstore_attrib *srcPacking,
-			    GLbitfield transferOps);
 
 extern void
 _mesa_store_teximage(struct gl_context *ctx,

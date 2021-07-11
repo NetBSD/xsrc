@@ -83,6 +83,13 @@ util_resource_copy_region(struct pipe_context *pipe,
                           const struct pipe_box *src_box);
 
 extern void
+util_clear_texture(struct pipe_context *pipe,
+                   struct pipe_resource *tex,
+                   unsigned level,
+                   const struct pipe_box *box,
+                   const void *data);
+
+extern void
 util_clear_render_target(struct pipe_context *pipe,
                          struct pipe_surface *dst,
                          const union pipe_color_union *color,
@@ -97,6 +104,10 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                          unsigned stencil,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height);
+
+boolean
+util_can_blit_via_copy_region(const struct pipe_blit_info *blit,
+                              boolean tight_format_check);
 
 extern boolean
 util_try_blit_via_copy_region(struct pipe_context *ctx,

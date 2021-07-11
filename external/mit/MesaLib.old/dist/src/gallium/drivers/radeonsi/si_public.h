@@ -1,5 +1,7 @@
 /*
  * Copyright 2010 Jerome Glisse <glisse@freedesktop.org>
+ * Copyright 2018 Advanced Micro Devices, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +27,7 @@
 
 struct radeon_winsys;
 
-struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws);
+struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
+					   const struct pipe_screen_config *config);
 
 #endif
