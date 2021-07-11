@@ -1,6 +1,6 @@
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000-2012 Haiku, Inc. All Rights Reserved.
+ * Copyright 2000-2015 Haiku, Inc. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -15,11 +15,9 @@
 #include <GL/gl.h>
 #include <SupportDefs.h>
 
-#include "glheader.h"
+#include "main/glheader.h"
 
-extern "C" {
 #include "glapi/glapi.h"
-}
 
 
 class BGLDispatcher
@@ -36,8 +34,6 @@ class BGLDispatcher
 		void*					CurrentContext();
 
 		struct _glapi_table* 	Table();
-		status_t				CheckTable(
-									const struct _glapi_table* dispatch = NULL);
 		status_t				SetTable(struct _glapi_table* dispatch);
 		uint32					TableSize();
 

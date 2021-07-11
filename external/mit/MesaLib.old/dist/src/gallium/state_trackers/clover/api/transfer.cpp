@@ -168,13 +168,31 @@ namespace {
    }
 
    ///
+   /// Checks that the host access flags of the memory object are
+   /// within the allowed set \a flags.
+   ///
+   void
+   validate_object_access(const memory_obj &mem, const cl_mem_flags flags) {
+      if (mem.flags() & ~flags &
+          (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY |
+           CL_MEM_HOST_NO_ACCESS))
+         throw error(CL_INVALID_OPERATION);
+   }
+
+   ///
    /// Checks that the mapping flags are correct.
    ///
    void
-   validate_flags(const cl_map_flags flags) {
+   validate_map_flags(const memory_obj &mem, const cl_map_flags flags) {
       if ((flags & (CL_MAP_WRITE | CL_MAP_READ)) &&
           (flags & CL_MAP_WRITE_INVALIDATE_REGION))
          throw error(CL_INVALID_VALUE);
+
+      if (flags & CL_MAP_READ)
+         validate_object_access(mem, CL_MEM_HOST_READ_ONLY);
+
+      if (flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
+         validate_object_access(mem, CL_MEM_HOST_WRITE_ONLY);
    }
 
    ///
@@ -269,12 +287,16 @@ clEnqueueReadBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, ptr, {}, obj_pitch, region);
    validate_object(q, mem, obj_origin, obj_pitch, region);
+   validate_object_access(mem, CL_MEM_HOST_READ_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_READ_BUFFER, deps,
       soft_copy_op(q, ptr, {}, obj_pitch,
                    &mem, obj_origin, obj_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -298,12 +320,16 @@ clEnqueueWriteBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, mem, obj_origin, obj_pitch, region);
    validate_object(q, ptr, {}, obj_pitch, region);
+   validate_object_access(mem, CL_MEM_HOST_WRITE_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_WRITE_BUFFER, deps,
       soft_copy_op(q, &mem, obj_origin, obj_pitch,
                    ptr, {}, obj_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -334,12 +360,16 @@ clEnqueueReadBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, ptr, host_origin, host_pitch, region);
    validate_object(q, mem, obj_origin, obj_pitch, region);
+   validate_object_access(mem, CL_MEM_HOST_READ_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_READ_BUFFER_RECT, deps,
       soft_copy_op(q, ptr, host_origin, host_pitch,
                    &mem, obj_origin, obj_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -370,12 +400,16 @@ clEnqueueWriteBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, mem, obj_origin, obj_pitch, region);
    validate_object(q, ptr, host_origin, host_pitch, region);
+   validate_object_access(mem, CL_MEM_HOST_WRITE_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_WRITE_BUFFER_RECT, deps,
       soft_copy_op(q, &mem, obj_origin, obj_pitch,
                    ptr, host_origin, host_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -474,12 +508,16 @@ clEnqueueReadImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, ptr, {}, dst_pitch, region);
    validate_object(q, img, src_origin, region);
+   validate_object_access(img, CL_MEM_HOST_READ_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_READ_IMAGE, deps,
       soft_copy_op(q, ptr, {}, dst_pitch,
                    &img, src_origin, src_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -507,12 +545,16 @@ clEnqueueWriteImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    validate_common(q, deps);
    validate_object(q, img, dst_origin, region);
    validate_object(q, ptr, {}, src_pitch, region);
+   validate_object_access(img, CL_MEM_HOST_WRITE_ONLY);
 
    auto hev = create<hard_event>(
       q, CL_COMMAND_WRITE_IMAGE, deps,
       soft_copy_op(q, &img, dst_origin, dst_pitch,
                    ptr, {}, src_pitch,
                    region));
+
+   if (blocking)
+       hev().wait_signalled();
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -639,11 +681,15 @@ clEnqueueMapBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
    validate_common(q, deps);
    validate_object(q, mem, obj_origin, obj_pitch, region);
-   validate_flags(flags);
+   validate_map_flags(mem, flags);
 
    void *map = mem.resource(q).add_map(q, flags, blocking, obj_origin, region);
 
-   ret_object(rd_ev, create<hard_event>(q, CL_COMMAND_MAP_BUFFER, deps));
+   auto hev = create<hard_event>(q, CL_COMMAND_MAP_BUFFER, deps);
+   if (blocking)
+       hev().wait_signalled();
+
+   ret_object(rd_ev, hev);
    ret_error(r_errcode, CL_SUCCESS);
    return map;
 
@@ -667,11 +713,15 @@ clEnqueueMapImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
    validate_common(q, deps);
    validate_object(q, img, origin, region);
-   validate_flags(flags);
+   validate_map_flags(img, flags);
 
    void *map = img.resource(q).add_map(q, flags, blocking, origin, region);
 
-   ret_object(rd_ev, create<hard_event>(q, CL_COMMAND_MAP_IMAGE, deps));
+   auto hev = create<hard_event>(q, CL_COMMAND_MAP_IMAGE, deps);
+   if (blocking)
+       hev().wait_signalled();
+
+   ret_object(rd_ev, hev);
    ret_error(r_errcode, CL_SUCCESS);
    return map;
 
@@ -701,4 +751,16 @@ clEnqueueUnmapMemObject(cl_command_queue d_q, cl_mem d_mem, void *ptr,
 
 } catch (error &e) {
    return e.get();
+}
+
+CLOVER_API cl_int
+clEnqueueMigrateMemObjects(cl_command_queue command_queue,
+                           cl_uint num_mem_objects,
+                           const cl_mem *mem_objects,
+                           cl_mem_migration_flags flags,
+                           cl_uint num_events_in_wait_list,
+                           const cl_event *event_wait_list,
+                           cl_event *event) {
+   CLOVER_NOT_SUPPORTED_UNTIL("1.2");
+   return CL_INVALID_VALUE;
 }

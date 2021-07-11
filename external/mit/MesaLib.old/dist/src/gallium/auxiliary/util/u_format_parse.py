@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 '''
 /**************************************************************************
@@ -28,6 +27,9 @@
  *
  **************************************************************************/
 '''
+
+
+from __future__ import division
 
 
 VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
@@ -70,14 +72,20 @@ class Channel:
         return s
 
     def __eq__(self, other):
+        if other is None:
+            return False
+
         return self.type == other.type and self.norm == other.norm and self.pure == other.pure and self.size == other.size
+
+    def __ne__(self, other):
+        return not self == other
 
     def max(self):
         '''Maximum representable number.'''
         if self.type == FLOAT:
             return VERY_LARGE
         if self.type == FIXED:
-            return (1 << (self.size/2)) - 1
+            return (1 << (self.size // 2)) - 1
         if self.norm:
             return 1
         if self.type == UNSIGNED:
@@ -91,7 +99,7 @@ class Channel:
         if self.type == FLOAT:
             return -VERY_LARGE
         if self.type == FIXED:
-            return -(1 << (self.size/2))
+            return -(1 << (self.size // 2))
         if self.type == UNSIGNED:
             return 0
         if self.norm:
@@ -178,6 +186,26 @@ class Format:
                 if channel.pure != ref_channel.pure:
                     return True
         return False
+
+    def is_compressed(self):
+        for channel in self.le_channels:
+            if channel.type != VOID:
+                return False
+        return True
+
+    def is_unorm(self):
+        # Non-compressed formats all have unorm or srgb in their name.
+        for keyword in ['_UNORM', '_SRGB']:
+            if keyword in self.name:
+                return True
+
+        # All the compressed formats in GLES3.2 and GL4.6 ("Table 8.14: Generic
+        # and specific compressed internal formats.") that aren't snorm for
+        # border colors are unorm, other than BPTC_*_FLOAT.
+        return self.is_compressed() and not ('FLOAT' in self.name or self.is_snorm())
+
+    def is_snorm(self):
+        return '_SNORM' in self.name
 
     def is_pot(self):
         return is_pot(self.block_size())
@@ -313,7 +341,7 @@ def _parse_channels(fields, layout, colorspace, swizzles):
     return channels
 
 def parse(filename):
-    '''Parse the format descrition in CSV format in terms of the 
+    '''Parse the format description in CSV format in terms of the
     Channel and Format classes above.'''
 
     stream = open(filename)
@@ -330,6 +358,9 @@ def parse(filename):
             continue
 
         fields = [field.strip() for field in line.split(',')]
+        if len (fields) == 10:
+           fields += fields[4:9]
+        assert len (fields) == 15
         
         name = fields[0]
         layout = fields[1]
@@ -339,8 +370,8 @@ def parse(filename):
         le_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
         le_channels = _parse_channels(fields[4:8], layout, colorspace, le_swizzles)
 
-        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        be_channels = _parse_channels(fields[4:8], layout, colorspace, be_swizzles)
+        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[14]]
+        be_channels = _parse_channels(fields[10:14], layout, colorspace, be_swizzles)
 
         le_shift = 0
         for channel in le_channels:
@@ -353,6 +384,8 @@ def parse(filename):
             be_shift += channel.size
 
         assert le_shift == be_shift
+        for i in range(4):
+            assert (le_swizzles[i] != SWIZZLE_NONE) == (be_swizzles[i] != SWIZZLE_NONE)
 
         format = Format(name, layout, block_width, block_height, le_channels, le_swizzles, be_channels, be_swizzles, colorspace)
         formats.append(format)

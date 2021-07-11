@@ -34,7 +34,7 @@ void
 u_mmDumpMemInfo(const struct mem_block *heap)
 {
    debug_printf("Memory heap %p:\n", (void *) heap);
-   if (heap == 0) {
+   if (heap == NULL) {
       debug_printf("  heap == 0\n");
    }
    else {
@@ -106,7 +106,7 @@ u_mmInit(int ofs, int size)
 static struct mem_block *
 SliceBlock(struct mem_block *p, 
            int startofs, int size, 
-           int reserved, int alignment)
+           int reserved, UNUSED int alignment)
 {
    struct mem_block *newblock;
 
@@ -183,7 +183,10 @@ u_mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 
    assert(size >= 0);
    assert(align2 >= 0);
-   assert(align2 <= 12); /* sanity check, 2^12 (4KB) enough? */
+   /* Make sure that a byte alignment isn't getting passed for our
+    * power-of-two alignment arg.
+    */
+   assert(align2 < 32);
 
    if (!heap || align2 < 0 || size <= 0)
       return NULL;
@@ -224,7 +227,7 @@ u_mmFindBlock(struct mem_block *heap, int start)
 }
 
 
-static INLINE int
+static inline int
 Join2Blocks(struct mem_block *p)
 {
    /* XXX there should be some assertions here */

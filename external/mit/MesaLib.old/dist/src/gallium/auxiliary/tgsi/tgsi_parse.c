@@ -36,7 +36,7 @@ tgsi_parse_init(
    const struct tgsi_token *tokens )
 {
    ctx->FullHeader.Header = *(struct tgsi_header *) &tokens[0];
-   if( ctx->FullHeader.Header.HeaderSize >= 2 ) {
+   if (ctx->FullHeader.Header.HeaderSize >= 2) {
       ctx->FullHeader.Processor = *(struct tgsi_processor *) &tokens[1];
    }
    else {
@@ -51,7 +51,7 @@ tgsi_parse_init(
 
 void
 tgsi_parse_free(
-   struct tgsi_parse_context *ctx )
+   UNUSED struct tgsi_parse_context *ctx )
 {
 }
 
@@ -59,8 +59,12 @@ boolean
 tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx )
 {
-   return ctx->Position >=
-      ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
+   /* All values involved are unsigned, but the sum will be promoted to
+    * a signed value (at least on 64 bit). To capture a possible overflow
+    * make it a signed comparison.
+    */
+   return (int)ctx->Position >=
+	 ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
 }
 
 
@@ -69,7 +73,7 @@ tgsi_parse_end_of_tokens(
  * warnings.  The warnings seem harmless on x86 but on PPC they cause
  * real failures.
  */
-static INLINE void
+static inline void
 copy_token(void *dst, const void *src)
 {
    memcpy(dst, src, 4);
@@ -113,23 +117,23 @@ tgsi_parse_token(
          next_token(ctx, &decl->Dim);
       }
 
-      if( decl->Declaration.Interpolate ) {
+      if (decl->Declaration.Interpolate) {
          next_token( ctx, &decl->Interp );
       }
 
-      if( decl->Declaration.Semantic ) {
+      if (decl->Declaration.Semantic) {
          next_token( ctx, &decl->Semantic );
       }
 
-      if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
-         next_token(ctx, &decl->Resource);
+      if (decl->Declaration.File == TGSI_FILE_IMAGE) {
+         next_token(ctx, &decl->Image);
       }
 
       if (decl->Declaration.File == TGSI_FILE_SAMPLER_VIEW) {
          next_token(ctx, &decl->SamplerView);
       }
 
-      if( decl->Declaration.Array ) {
+      if (decl->Declaration.Array) {
          next_token(ctx, &decl->Array);
       }
 
@@ -148,18 +152,21 @@ tgsi_parse_token(
 
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
+      case TGSI_IMM_FLOAT64:
          for (i = 0; i < imm_count; i++) {
             next_token(ctx, &imm->u[i].Float);
          }
          break;
 
       case TGSI_IMM_UINT32:
+      case TGSI_IMM_UINT64:
          for (i = 0; i < imm_count; i++) {
             next_token(ctx, &imm->u[i].Uint);
          }
          break;
 
       case TGSI_IMM_INT32:
+      case TGSI_IMM_INT64:
          for (i = 0; i < imm_count; i++) {
             next_token(ctx, &imm->u[i].Int);
          }
@@ -179,31 +186,31 @@ tgsi_parse_token(
       memset(inst, 0, sizeof *inst);
       copy_token(&inst->Instruction, &token);
 
-      if (inst->Instruction.Predicate) {
-         next_token(ctx, &inst->Predicate);
-      }
-
       if (inst->Instruction.Label) {
          next_token( ctx, &inst->Label);
       }
 
       if (inst->Instruction.Texture) {
          next_token( ctx, &inst->Texture);
-         for( i = 0; i < inst->Texture.NumOffsets; i++ ) {
+         for (i = 0; i < inst->Texture.NumOffsets; i++) {
             next_token( ctx, &inst->TexOffsets[i] );
          }
       }
 
+      if (inst->Instruction.Memory) {
+         next_token(ctx, &inst->Memory);
+      }
+
       assert( inst->Instruction.NumDstRegs <= TGSI_FULL_MAX_DST_REGISTERS );
 
-      for(  i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
+      for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
 
          next_token( ctx, &inst->Dst[i].Register );
 
-         if( inst->Dst[i].Register.Indirect )
+         if (inst->Dst[i].Register.Indirect)
             next_token( ctx, &inst->Dst[i].Indirect );
 
-         if( inst->Dst[i].Register.Dimension ) {
+         if (inst->Dst[i].Register.Dimension) {
             next_token( ctx, &inst->Dst[i].Dimension );
 
             /*
@@ -211,21 +218,21 @@ tgsi_parse_token(
              */
             assert( !inst->Dst[i].Dimension.Dimension );
 
-            if( inst->Dst[i].Dimension.Indirect )
+            if (inst->Dst[i].Dimension.Indirect)
                next_token( ctx, &inst->Dst[i].DimIndirect );
          }
       }
 
       assert( inst->Instruction.NumSrcRegs <= TGSI_FULL_MAX_SRC_REGISTERS );
 
-      for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
+      for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 
          next_token( ctx, &inst->Src[i].Register );
 
-         if( inst->Src[i].Register.Indirect )
+         if (inst->Src[i].Register.Indirect)
             next_token( ctx, &inst->Src[i].Indirect );
 
-         if( inst->Src[i].Register.Dimension ) {
+         if (inst->Src[i].Register.Dimension) {
             next_token( ctx, &inst->Src[i].Dimension );
 
             /*
@@ -233,7 +240,7 @@ tgsi_parse_token(
              */
             assert( !inst->Src[i].Dimension.Dimension );
 
-            if( inst->Src[i].Dimension.Indirect )
+            if (inst->Src[i].Dimension.Indirect)
                next_token( ctx, &inst->Src[i].DimIndirect );
          }
       }
@@ -291,6 +298,16 @@ tgsi_alloc_tokens(unsigned num_tokens)
 }
 
 
+/**
+ * Free tokens allocated by tgsi_alloc_tokens() or tgsi_dup_tokens()
+ */
+void
+tgsi_free_tokens(const struct tgsi_token *tokens)
+{
+   FREE((void *) tokens);
+}
+
+
 void
 tgsi_dump_tokens(const struct tgsi_token *tokens)
 {
@@ -298,10 +315,22 @@ tgsi_dump_tokens(const struct tgsi_token *tokens)
    int nr = tgsi_num_tokens(tokens);
    int i;
    
-   assert(sizeof(*tokens) == sizeof(unsigned));
+   STATIC_ASSERT(sizeof(*tokens) == sizeof(unsigned));
 
    debug_printf("const unsigned tokens[%d] = {\n", nr);
    for (i = 0; i < nr; i++)
       debug_printf("0x%08x,\n", dwords[i]);
    debug_printf("};\n");
+}
+
+unsigned
+tgsi_get_processor_type(const struct tgsi_token *tokens)
+{
+   struct tgsi_parse_context parse;
+
+   if (tgsi_parse_init( &parse, tokens ) != TGSI_PARSE_OK) {
+      debug_printf("tgsi_parse_init() failed in %s:%i!\n", __func__, __LINE__);
+      return ~0;
+   }
+   return parse.FullHeader.Processor.Processor;
 }

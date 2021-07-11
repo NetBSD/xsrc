@@ -16,24 +16,22 @@ The EGL code here basically consists of two things:
 
 Bootstrapping:
 
-When the apps calls eglOpenDisplay() a device driver is selected and loaded
-(look for dlsym() or LoadLibrary() in egldriver.c).
+When the apps calls eglInitialize() a device driver is selected and loaded
+(look for _eglAddDrivers() and _eglLoadModule() in egldriver.c).
 
-The driver's _eglMain() function is then called.  This driver function
-allocates, initializes and returns a new _EGLDriver object (usually a
-subclass of that type).
+The built-in driver's entry point function is then called and given
+a freshly allocated and initialised _EGLDriver, with default fallback
+entrypoints set.
 
 As part of initialization, the dispatch table in _EGLDriver->API must be
-populated with all the EGL entrypoints.  Typically, _eglInitDriverFallbacks()
-can be used to plug in default/fallback functions.  Some functions like
+populated with all the EGL entrypoints. Some functions like
 driver->API.Initialize and driver->API.Terminate _must_ be implemented
 with driver-specific code (no default/fallback function is possible).
 
 
-A bit later, the app will call eglInitialize().  This will get routed
-to the driver->API.Initialize() function.  Any additional driver
-initialization that wasn't done in _eglMain() should be done at this
-point.  Typically, this will involve setting up visual configs, etc.
+Shortly after, the driver->API.Initialize() function is executed.  Any additional
+driver initialization that wasn't done in the driver entry point should be
+done at this point.  Typically, this will involve setting up visual configs, etc.
 
 
 

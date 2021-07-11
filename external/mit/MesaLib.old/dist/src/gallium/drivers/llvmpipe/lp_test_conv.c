@@ -140,7 +140,7 @@ add_conv_test(struct gallivm_state *gallivm,
       LLVMBuildStore(builder, dst[i], ptr);
    }
 
-   LLVMBuildRetVoid(builder);;
+   LLVMBuildRetVoid(builder);
 
    gallivm_verify_function(gallivm, func);
 
@@ -155,6 +155,7 @@ test_one(unsigned verbose,
          struct lp_type src_type,
          struct lp_type dst_type)
 {
+   LLVMContextRef context;
    struct gallivm_state *gallivm;
    LLVMValueRef func = NULL;
    conv_test_ptr_t conv_test_ptr;
@@ -210,8 +211,17 @@ test_one(unsigned verbose,
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
    eps = MAX2(lp_const_eps(src_type), lp_const_eps(dst_type));
+   if (dst_type.norm && dst_type.sign && src_type.sign && !src_type.floating) {
+      /*
+       * This is quite inaccurate due to shift being used.
+       * I don't think it's possible to hit such conversions with
+       * llvmpipe though.
+       */
+      eps *= 2;
+   }
 
-   gallivm = gallivm_create("test_module");
+   context = LLVMContextCreate();
+   gallivm = gallivm_create("test_module", context);
 
    func = add_conv_test(gallivm, src_type, num_srcs, dst_type, num_dsts);
 
@@ -322,6 +332,7 @@ test_one(unsigned verbose,
       write_tsv_row(fp, src_type, dst_type, cycles_avg, success);
 
    gallivm_destroy(gallivm);
+   LLVMContextDispose(context);
 
    return success;
 }
@@ -382,7 +393,7 @@ const struct lp_type conv_types[] = {
 };
 
 
-const unsigned num_types = sizeof(conv_types)/sizeof(conv_types[0]);
+const unsigned num_types = ARRAY_SIZE(conv_types);
 
 
 boolean

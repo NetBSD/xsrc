@@ -36,6 +36,7 @@
 #include "util/u_memory.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_format.h"
 #include "lp_context.h"
 #include "lp_jit.h"
 
@@ -55,7 +56,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       elem_types[LP_JIT_VIEWPORT_MAX_DEPTH] = LLVMFloatTypeInContext(lc);
 
       viewport_type = LLVMStructTypeInContext(lc, elem_types,
-                                              Elements(elem_types), 0);
+                                              ARRAY_SIZE(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_viewport, min_depth,
                              gallivm->target, viewport_type,
@@ -83,7 +84,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
          LLVMArrayType(LLVMInt32TypeInContext(lc), LP_MAX_TEXTURE_LEVELS);
 
       texture_type = LLVMStructTypeInContext(lc, elem_types,
-                                             Elements(elem_types), 0);
+                                             ARRAY_SIZE(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, width,
                              gallivm->target, texture_type,
@@ -126,7 +127,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
          LLVMArrayType(LLVMFloatTypeInContext(lc), 4);
 
       sampler_type = LLVMStructTypeInContext(lc, elem_types,
-                                             Elements(elem_types), 0);
+                                             ARRAY_SIZE(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_sampler, min_lod,
                              gallivm->target, sampler_type,
@@ -165,7 +166,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
                                                       PIPE_MAX_SAMPLERS);
 
       context_type = LLVMStructTypeInContext(lc, elem_types,
-                                             Elements(elem_types), 0);
+                                             ARRAY_SIZE(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, constants,
                              gallivm->target, context_type,
@@ -208,18 +209,27 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LLVMTypeRef elem_types[LP_JIT_THREAD_DATA_COUNT];
       LLVMTypeRef thread_data_type;
 
+      elem_types[LP_JIT_THREAD_DATA_CACHE] =
+            LLVMPointerType(lp_build_format_cache_type(gallivm), 0);
       elem_types[LP_JIT_THREAD_DATA_COUNTER] = LLVMInt64TypeInContext(lc);
+      elem_types[LP_JIT_THREAD_DATA_INVOCATIONS] = LLVMInt64TypeInContext(lc);
       elem_types[LP_JIT_THREAD_DATA_RASTER_STATE_VIEWPORT_INDEX] =
             LLVMInt32TypeInContext(lc);
 
       thread_data_type = LLVMStructTypeInContext(lc, elem_types,
-                                                 Elements(elem_types), 0);
+                                                 ARRAY_SIZE(elem_types), 0);
 
       lp->jit_thread_data_ptr_type = LLVMPointerType(thread_data_type, 0);
    }
 
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
+#if HAVE_LLVM >= 0x304
+      char *str = LLVMPrintModuleToString(gallivm->module);
+      fprintf(stderr, "%s", str);
+      LLVMDisposeMessage(str);
+#else
       LLVMDumpModule(gallivm->module);
+#endif
    }
 }
 
@@ -231,10 +241,10 @@ lp_jit_screen_cleanup(struct llvmpipe_screen *screen)
 }
 
 
-void
+boolean
 lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
-   lp_build_init();
+   return lp_build_init();
 }
 
 

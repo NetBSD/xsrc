@@ -1,0 +1,466 @@
+# Copyright (C) 2016 Intel Corporation.   All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#
+# Provides definitions for events.
+
+enum AR_DRAW_TYPE
+{
+    Instanced = 0,
+    IndexedInstanced = 1,
+    InstancedSplit = 2,
+    IndexedInstancedSplit = 3
+};
+
+event ThreadStartApiEvent
+{
+};
+
+event ThreadStartWorkerEvent
+{
+};
+
+event DrawInfoEvent
+{
+    uint32_t drawId;
+    AR_DRAW_TYPE type;
+    uint32_t topology;
+    uint32_t numVertices;
+    uint32_t numIndices;
+    int32_t  indexOffset;
+    int32_t  baseVertex;
+    uint32_t numInstances;
+    uint32_t startInstance;
+    uint32_t tsEnable;
+    uint32_t gsEnable;
+    uint32_t soEnable;
+    uint32_t soTopology;
+    uint32_t splitId; // Split draw count or id.
+};
+
+event DispatchEvent
+{
+    uint32_t drawId;
+    uint32_t threadGroupCountX;
+    uint32_t threadGroupCountY;
+    uint32_t threadGroupCountZ;
+};
+
+event FrameEndEvent
+{
+    uint32_t frameId;
+    uint32_t nextDrawId;
+};
+
+///@brief API Stat: Synchonization event.
+event SwrSyncEvent
+{
+    uint32_t drawId;
+};
+
+///@brief API Stat: Invalidate hot tiles (i.e. tile cache)
+event SwrInvalidateTilesEvent
+{
+    uint32_t drawId;
+};
+
+///@brief API Stat: Invalidate and discard hot tiles within pixel region
+event SwrDiscardRectEvent
+{
+    uint32_t drawId;
+};
+
+///@brief API Stat: Flush tiles out to memory that is typically owned by driver (e.g. Flush RT cache)
+event SwrStoreTilesEvent
+{
+    uint32_t drawId;
+};
+
+event FrontendStatsEvent
+{
+    uint32_t drawId;
+    uint64_t counter IaVertices;
+    uint64_t counter IaPrimitives;
+    uint64_t counter VsInvocations;
+    uint64_t counter HsInvocations;
+    uint64_t counter DsInvocations;
+    uint64_t counter GsInvocations;
+    uint64_t counter GsPrimitives;
+    uint64_t counter CInvocations;
+    uint64_t counter CPrimitives;
+    uint64_t counter SoPrimStorageNeeded0;
+    uint64_t counter SoPrimStorageNeeded1;
+    uint64_t counter SoPrimStorageNeeded2;
+    uint64_t counter SoPrimStorageNeeded3;
+    uint64_t counter SoNumPrimsWritten0;
+    uint64_t counter SoNumPrimsWritten1;
+    uint64_t counter SoNumPrimsWritten2;
+    uint64_t counter SoNumPrimsWritten3;
+};
+
+event BackendStatsEvent
+{
+    uint32_t drawId;
+    uint64_t counter DepthPassCount;
+    uint64_t counter PsInvocations;
+    uint64_t counter CsInvocations;
+
+};
+
+event EarlyZSingleSample
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateZSingleSample
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyStencilSingleSample
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateStencilSingleSample
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyZSampleRate
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateZSampleRate
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyStencilSampleRate
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateStencilSampleRate
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+// Total Early-Z counts, SingleSample and SampleRate
+event EarlyZ
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+// Total LateZ counts, SingleSample and SampleRate
+event LateZ
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+// Total EarlyStencil counts, SingleSample and SampleRate
+event EarlyStencil
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+// Total LateStencil counts, SingleSample and SampleRate
+event LateStencil
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyZNullPS
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyStencilNullPS
+{
+    uint32_t drawId; 
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyZPixelRate
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateZPixelRate
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+
+event EarlyOmZ
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event EarlyOmStencil
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateOmZ
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event LateOmStencil
+{
+    uint32_t drawId;
+    uint64_t counter passCount;
+    uint64_t counter failCount;
+};
+
+event GSInputPrims
+{
+    uint32_t drawId;
+    uint64_t counter inputPrimCount;
+};
+
+event GSPrimsGen
+{
+    uint32_t drawId;
+    uint64_t counter primGeneratedCount;
+};
+
+event GSVertsInput
+{
+    uint32_t drawId;
+    uint64_t counter vertsInput;
+};
+
+event TessPrims
+{
+    uint32_t drawId;
+    uint64_t counter primCount;
+};
+
+event RasterTiles
+{
+    uint32_t drawId;
+    uint32_t counter rastTileCount;
+};
+
+event ClipperEvent
+{
+    uint32_t drawId;
+    uint32_t counter trivialRejectCount;
+    uint32_t counter trivialAcceptCount;
+    uint32_t counter mustClipCount;
+};
+
+event CullEvent
+{
+    uint32_t drawId;
+    uint64_t counter backfacePrimCount;
+    uint64_t counter degeneratePrimCount;
+};
+
+event AlphaEvent
+{
+    uint32_t drawId;
+    uint32_t counter alphaTestCount;
+    uint32_t counter alphaBlendCount;
+};
+
+event VSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+};
+
+event HSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+};
+
+event DSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+};
+
+event GSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+
+};
+
+event PSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+};
+
+event CSInfo
+{
+    uint32_t drawId;
+    uint32_t counter numInstExecuted;
+    uint32_t counter numSampleExecuted;
+    uint32_t counter numSampleLExecuted;
+    uint32_t counter numSampleBExecuted;
+    uint32_t counter numSampleCExecuted;
+    uint32_t counter numSampleCLZExecuted;
+    uint32_t counter numSampleCDExecuted;
+    uint32_t counter numGather4Executed;
+    uint32_t counter numGather4CExecuted;
+    uint32_t counter numGather4CPOExecuted;
+    uint32_t counter numGather4CPOCExecuted;
+    uint32_t counter numLodExecuted;
+};
+
+event SWTagFrameEvent
+{
+	uint64_t swTagFrame;
+};
+
+event SWTagRenderpassEvent
+{
+	uint64_t swTagFrame;
+	uint32_t swTagDrawOrDispatch;
+	uint32_t swTagDraw;
+	uint32_t swTagDispatch;
+	uint32_t swTagRenderpassCount;
+};
+
+event SWTagDrawEvent
+{
+	uint64_t swTagFrame;
+	uint32_t swTagDrawOrDispatch;
+	uint32_t swTagDraw;
+	uint32_t swTagDispatch;
+};
+
+event SWTagDispatchEvent
+{
+	uint64_t swTagFrame;
+	uint32_t swTagDrawOrDispatch;
+	uint32_t swTagDraw;
+	uint32_t swTagDispatch;
+};
+
+event SWTagFlushEvent
+{
+	uint64_t swTagFrame;
+	uint32_t swTagDrawOrDispatch;
+	uint32_t swTagDraw;
+	uint32_t swTagDispatch;
+	uint32_t swTagFlushCounter;
+    char swTagFlushReason[256];
+    uint32_t swTagFlushType;
+};

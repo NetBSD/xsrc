@@ -29,6 +29,11 @@
 #include "main/glheader.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 struct gl_context;
 struct gl_program;
 struct prog_instruction;
@@ -41,9 +46,15 @@ _mesa_find_temp_intervals(const struct prog_instruction *instructions,
                           GLint intEnd[MAX_PROGRAM_TEMPS]);
 
 extern void
-_mesa_optimize_program(struct gl_context *ctx, struct gl_program *program);
+_mesa_optimize_program(struct gl_program *program, void *mem_ctx);
 
 extern GLboolean
 _mesa_constant_fold(struct gl_program *prog);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

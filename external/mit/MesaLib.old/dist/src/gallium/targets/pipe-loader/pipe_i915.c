@@ -5,7 +5,7 @@
 #include "i915/i915_public.h"
 
 static struct pipe_screen *
-create_screen(int fd)
+create_screen(int fd, const struct pipe_screen_config *config)
 {
    struct i915_winsys *iws;
    struct pipe_screen *screen;
@@ -24,4 +24,4 @@ create_screen(int fd)
 }
 
 PUBLIC
-DRM_DRIVER_DESCRIPTOR("i915", "i915", create_screen, NULL)
+DRM_DRIVER_DESCRIPTOR("i915", NULL, create_screen)

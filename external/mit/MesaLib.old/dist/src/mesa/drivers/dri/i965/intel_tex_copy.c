@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,18 +16,18 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/teximage.h"
+#include "main/texobj.h"
 #include "main/texstate.h"
 #include "main/fbobject.h"
 
@@ -38,62 +37,9 @@
 #include "intel_mipmap_tree.h"
 #include "intel_fbo.h"
 #include "intel_tex.h"
-#include "intel_blit.h"
 #include "brw_context.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
-
-
-static bool
-intel_copy_texsubimage(struct brw_context *brw,
-                       struct intel_texture_image *intelImage,
-                       GLint dstx, GLint dsty, GLint slice,
-                       struct intel_renderbuffer *irb,
-                       GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   const GLenum internalFormat = intelImage->base.Base.InternalFormat;
-   bool ret;
-
-   intel_prepare_render(brw);
-
-   /* glCopyTexSubImage() can be called on a multisampled renderbuffer (if
-    * that renderbuffer is associated with the window system framebuffer),
-    * however the hardware blitter can't handle this case, so fall back to
-    * meta (which can, since it uses ReadPixels).
-    */
-   if (irb->Base.Base.NumSamples != 0)
-      return false;
-
-   /* glCopyTexSubImage() can't be called on a multisampled texture. */
-   assert(intelImage->base.Base.NumSamples == 0);
-
-   if (!intelImage->mt || !irb || !irb->mt) {
-      if (unlikely(INTEL_DEBUG & DEBUG_PERF))
-	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
-		 __FUNCTION__, intelImage->mt, irb, internalFormat);
-      return false;
-   }
-
-   /* account for view parameters and face index */
-   int dst_level = intelImage->base.Base.Level +
-                   intelImage->base.Base.TexObject->MinLevel;
-   int dst_slice = slice + intelImage->base.Base.Face +
-                   intelImage->base.Base.TexObject->MinLayer;
-
-   _mesa_unlock_texture(&brw->ctx, intelImage->base.Base.TexObject);
-
-   /* blit from src buffer to texture */
-   ret = intel_miptree_blit(brw,
-                            irb->mt, irb->mt_level, irb->mt_layer,
-                            x, y, irb->Base.Base.Name == 0,
-                            intelImage->mt, dst_level, dst_slice,
-                            dstx, dsty, false,
-                            width, height, GL_COPY);
-
-   _mesa_lock_texture(&brw->ctx, intelImage->base.Base.TexObject);
-
-   return ret;
-}
 
 
 static void
@@ -111,16 +57,8 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                                  xoffset, yoffset, width, height))
       return;
 
-   /* Next, try the BLT engine. */
-   if (intel_copy_texsubimage(brw,
-                              intel_texture_image(texImage),
-                              xoffset, yoffset, slice,
-                              intel_renderbuffer(rb), x, y, width, height)) {
-      return;
-   }
-
    /* Finally, fall back to meta.  This will likely be slow. */
-   perf_debug("%s - fallback to swrast\n", __FUNCTION__);
+   perf_debug("%s - fallback to swrast\n", __func__);
    _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
                               xoffset, yoffset, slice,
                               rb, x, y, width, height);

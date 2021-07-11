@@ -215,8 +215,8 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
     cs_dwords += r300_get_num_cs_end_dwords(r300);
 
     /* Reserve requested CS space. */
-    if (cs_dwords > (RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-        r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
+    if (!r300->rws->cs_check_space(r300->cs, cs_dwords)) {
+        r300_flush(&r300->context, PIPE_FLUSH_ASYNC, NULL);
         flushed = TRUE;
     }
 
@@ -373,7 +373,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         /* Map the buffer. */
         if (!map[vbi]) {
             map[vbi] = (uint32_t*)r300->rws->buffer_map(
-                r300_resource(vbuf->buffer)->cs_buf,
+                r300_resource(vbuf->buffer.resource)->buf,
                 r300->cs, PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * info->start;
         }
@@ -501,7 +501,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
     const uint8_t *ptr1;
     const uint16_t *ptr2;
     const uint32_t *ptr4;
-    unsigned index_size = r300->index_buffer.index_size;
+    unsigned index_size = info->index_size;
     unsigned i, count_dwords = index_size == 4 ? info->count :
                                                  (info->count + 1) / 2;
     CS_LOCALS(r300);
@@ -519,7 +519,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
 
     switch (index_size) {
     case 1:
-        ptr1 = (uint8_t*)r300->index_buffer.user_buffer;
+        ptr1 = (uint8_t*)info->index.user;
         ptr1 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -543,7 +543,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 2:
-        ptr2 = (uint16_t*)r300->index_buffer.user_buffer;
+        ptr2 = (uint16_t*)info->index.user;
         ptr2 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -562,7 +562,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 4:
-        ptr4 = (uint32_t*)r300->index_buffer.user_buffer;
+        ptr4 = (uint32_t*)info->index.user;
         ptr4 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -584,8 +584,9 @@ static void r300_draw_elements(struct r300_context *r300,
                                const struct pipe_draw_info *info,
                                int instance_id)
 {
-    struct pipe_resource *indexBuffer = r300->index_buffer.buffer;
-    unsigned indexSize = r300->index_buffer.index_size;
+    struct pipe_resource *indexBuffer =
+       info->has_user_indices ? NULL : info->index.resource;
+    unsigned indexSize = info->index_size;
     struct pipe_resource* orgIndexBuffer = indexBuffer;
     unsigned start = info->start;
     unsigned count = info->count;
@@ -600,13 +601,13 @@ static void r300_draw_elements(struct r300_context *r300,
                               &index_offset);
     }
 
-    r300_translate_index_buffer(r300, &r300->index_buffer, &indexBuffer,
+    r300_translate_index_buffer(r300, info, &indexBuffer,
                                 &indexSize, index_offset, &start, count);
 
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) && indexBuffer) {
         /* If we got here, then orgIndexBuffer == indexBuffer. */
-        uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->cs_buf,
+        uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->buf,
                                               r300->cs,
                                               PIPE_TRANSFER_READ |
                                               PIPE_TRANSFER_UNSYNCHRONIZED);
@@ -621,10 +622,10 @@ static void r300_draw_elements(struct r300_context *r300,
                                      count, (uint8_t*)ptr);
         }
     } else {
-        if (r300->index_buffer.user_buffer)
+        if (info->has_user_indices)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
                                      &start, count,
-                                     r300->index_buffer.user_buffer);
+                                     info->index.user);
     }
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
@@ -741,13 +742,13 @@ static unsigned r300_max_vertex_count(struct r300_context *r300)
       unsigned size, max_count, value;
 
       /* We're not interested in constant and per-instance attribs. */
-      if (!vb->buffer ||
+      if (!vb->buffer.resource ||
           !vb->stride ||
           velems[i].instance_divisor) {
          continue;
       }
 
-      size = vb->buffer->width0;
+      size = vb->buffer.resource->width0;
 
       /* Subtract buffer_offset. */
       value = vb->buffer_offset;
@@ -784,8 +785,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_draw_info info = *dinfo;
 
-    info.indexed = info.indexed;
-
     if (r300->skip_rendering ||
         !u_trim_pipe_prim(info.mode, &info.count)) {
         return;
@@ -794,7 +793,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Draw. */
-    if (info.indexed) {
+    if (info.index_size) {
         unsigned max_count = r300_max_vertex_count(r300);
 
         if (!max_count) {
@@ -809,11 +808,9 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         }
 
         info.max_index = max_count - 1;
-        info.start += r300->index_buffer.offset / r300->index_buffer.index_size;
 
         if (info.instance_count <= 1) {
-            if (info.count <= 8 &&
-                r300->index_buffer.user_buffer) {
+            if (info.count <= 8 && info.has_user_indices) {
                 r300_draw_elements_immediate(r300, &info);
             } else {
                 r300_draw_elements(r300, &info, -1);
@@ -849,6 +846,17 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         return;
     }
 
+    if (!u_trim_pipe_prim(info->mode, (unsigned*)&info->count))
+       return;
+
+    if (info->index_size) {
+        draw_set_indexes(r300->draw,
+                         info->has_user_indices ?
+                             info->index.user :
+                             r300_resource(info->index.resource)->malloced_buffer,
+                         info->index_size, ~0);
+    }
+
     r300_update_derived_state(r300);
 
     draw_vbo(r300->draw, info);
@@ -873,7 +881,7 @@ struct r300_render {
     uint8_t *vbo_ptr;
 };
 
-static INLINE struct r300_render*
+static inline struct r300_render*
 r300_render(struct vbuf_render* render)
 {
     return (struct r300_render*)render;
@@ -901,19 +909,19 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
 
     if (!r300->vbo || size + r300->draw_vbo_offset > r300->vbo->size) {
 	pb_reference(&r300->vbo, NULL);
-        r300->vbo_cs = NULL;
+        r300->vbo = NULL;
         r300render->vbo_ptr = NULL;
 
         r300->vbo = rws->buffer_create(rws,
                                        MAX2(R300_MAX_DRAW_VBO_SIZE, size),
-                                       R300_BUFFER_ALIGNMENT, TRUE,
-                                       RADEON_DOMAIN_GTT, 0);
+                                       R300_BUFFER_ALIGNMENT,
+                                       RADEON_DOMAIN_GTT,
+                                       RADEON_FLAG_NO_INTERPROCESS_SHARING);
         if (!r300->vbo) {
             return FALSE;
         }
-        r300->vbo_cs = rws->buffer_get_cs_handle(r300->vbo);
         r300->draw_vbo_offset = 0;
-        r300render->vbo_ptr = rws->buffer_map(r300->vbo_cs, r300->cs,
+        r300render->vbo_ptr = rws->buffer_map(r300->vbo, r300->cs,
                                               PIPE_TRANSFER_WRITE);
     }
 
@@ -957,7 +965,7 @@ static void r300_render_release_vertices(struct vbuf_render* render)
 }
 
 static void r300_render_set_primitive(struct vbuf_render* render,
-                                      unsigned prim)
+                                      enum pipe_prim_type prim)
 {
     struct r300_render* r300render = r300_render(render);
 
@@ -1013,7 +1021,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     CS_LOCALS(r300);
     DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
-    u_upload_data(r300->uploader, 0, count * 2, indices,
+    u_upload_data(r300->uploader, 0, count * 2, 4, indices,
                   &index_buffer_offset, &index_buffer);
     if (!index_buffer) {
         return;
@@ -1106,10 +1114,12 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
  * would be computed and stored twice, which makes the clear/copy codepaths
  * somewhat inefficient. Instead we use a rectangular point sprite. */
 void r300_blitter_draw_rectangle(struct blitter_context *blitter,
+                                 void *vertex_elements_cso,
+                                 blitter_get_vs_func get_vs,
                                  int x1, int y1, int x2, int y2,
-                                 float depth,
+                                 float depth, unsigned num_instances,
                                  enum blitter_attrib_type type,
-                                 const union pipe_color_union *attrib)
+                                 const union blitter_attrib *attrib)
 {
     struct r300_context *r300 = r300_context(util_blitter_get_pipe(blitter));
     unsigned last_sprite_coord_enable = r300->sprite_coord_enable;
@@ -1118,21 +1128,28 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     unsigned vertex_size =
             type == UTIL_BLITTER_ATTRIB_COLOR || !r300->draw ? 8 : 4;
     unsigned dwords = 13 + vertex_size +
-                      (type == UTIL_BLITTER_ATTRIB_TEXCOORD ? 7 : 0);
-    static const union pipe_color_union zeros;
+                      (type == UTIL_BLITTER_ATTRIB_TEXCOORD_XY ? 7 : 0);
+    static const union blitter_attrib zeros;
     CS_LOCALS(r300);
 
     /* XXX workaround for a lockup in MSAA resolve on SWTCL chipsets, this
      * function most probably doesn't handle type=NONE correctly */
-    if (!r300->screen->caps.has_tcl && type == UTIL_BLITTER_ATTRIB_NONE) {
-        util_blitter_draw_rectangle(blitter, x1, y1, x2, y2, depth, type, attrib);
+    if ((!r300->screen->caps.has_tcl && type == UTIL_BLITTER_ATTRIB_NONE) ||
+        type == UTIL_BLITTER_ATTRIB_TEXCOORD_XYZW ||
+        num_instances > 1) {
+        util_blitter_draw_rectangle(blitter, vertex_elements_cso, get_vs,
+                                    x1, y1, x2, y2,
+                                    depth, num_instances, type, attrib);
         return;
     }
 
     if (r300->skip_rendering)
         return;
 
-    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
+    r300->context.bind_vertex_elements_state(&r300->context, vertex_elements_cso);
+    r300->context.bind_vs_state(&r300->context, get_vs(blitter));
+
+    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD_XY)
         r300->sprite_coord_enable = 1;
 
     r300_update_derived_state(r300);
@@ -1149,15 +1166,15 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     /* Set up GA. */
     OUT_CS_REG(R300_GA_POINT_SIZE, (height * 6) | ((width * 6) << 16));
 
-    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD) {
+    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD_XY) {
         /* Set up the GA to generate texcoords. */
         OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
                    (R300_GB_TEX_STR << R300_GB_TEX0_SOURCE_SHIFT));
         OUT_CS_REG_SEQ(R300_GA_POINT_S0, 4);
-        OUT_CS_32F(attrib->f[0]);
-        OUT_CS_32F(attrib->f[3]);
-        OUT_CS_32F(attrib->f[2]);
-        OUT_CS_32F(attrib->f[1]);
+        OUT_CS_32F(attrib->texcoord.x1);
+        OUT_CS_32F(attrib->texcoord.y2);
+        OUT_CS_32F(attrib->texcoord.x2);
+        OUT_CS_32F(attrib->texcoord.y1);
     }
 
     /* Set up VAP controls. */
@@ -1181,7 +1198,7 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     if (vertex_size == 8) {
         if (!attrib)
             attrib = &zeros;
-        OUT_CS_TABLE(attrib->f, 4);
+        OUT_CS_TABLE(attrib->color, 4);
     }
     END_CS;
 

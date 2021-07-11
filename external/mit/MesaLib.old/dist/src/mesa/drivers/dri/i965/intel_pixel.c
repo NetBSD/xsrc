@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,17 +16,17 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #include "main/accum.h"
 #include "main/enums.h"
 #include "main/state.h"
+#include "main/stencil.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "swrast/swrast.h"
@@ -60,7 +59,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (ctx->FragmentProgram._Enabled) {
+   if (_mesa_arb_fragment_program_enabled(ctx)) {
       DBG("fallback due to fragment program\n");
       return false;
    }
@@ -81,10 +80,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
-   if (!(ctx->Color.ColorMask[0][0] &&
-	 ctx->Color.ColorMask[0][1] &&
-	 ctx->Color.ColorMask[0][2] &&
-	 ctx->Color.ColorMask[0][3])) {
+   if (GET_COLORMASK(ctx->Color.ColorMask, 0) != 0xf) {
       DBG("fallback due to color masking\n");
       return false;
    }
@@ -109,7 +105,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
-   if (ctx->Stencil._Enabled) {
+   if (_mesa_stencil_is_enabled(ctx)) {
       DBG("fallback due to image stencil\n");
       return false;
    }
@@ -130,7 +126,6 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
-   functions->Accum = _mesa_accum;
    functions->Bitmap = intelBitmap;
    functions->CopyPixels = intelCopyPixels;
    functions->DrawPixels = intelDrawPixels;

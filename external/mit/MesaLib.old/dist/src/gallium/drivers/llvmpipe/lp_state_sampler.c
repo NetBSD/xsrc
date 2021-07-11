@@ -66,7 +66,7 @@ llvmpipe_create_sampler_state(struct pipe_context *pipe,
 
 static void
 llvmpipe_bind_sampler_states(struct pipe_context *pipe,
-                             unsigned shader,
+                             enum pipe_shader_type shader,
                              unsigned start,
                              unsigned num,
                              void **samplers)
@@ -75,7 +75,7 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
    unsigned i;
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(start + num <= Elements(llvmpipe->samplers[shader]));
+   assert(start + num <= ARRAY_SIZE(llvmpipe->samplers[shader]));
 
    draw_flush(llvmpipe->draw);
 
@@ -98,14 +98,15 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
                         llvmpipe->samplers[shader],
                         llvmpipe->num_samplers[shader]);
    }
-
-   llvmpipe->dirty |= LP_NEW_SAMPLER;
+   else {
+      llvmpipe->dirty |= LP_NEW_SAMPLER;
+   }
 }
 
 
 static void
 llvmpipe_set_sampler_views(struct pipe_context *pipe,
-                           unsigned shader,
+                           enum pipe_shader_type shader,
                            unsigned start,
                            unsigned num,
                            struct pipe_sampler_view **views)
@@ -116,18 +117,21 @@ llvmpipe_set_sampler_views(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(start + num <= Elements(llvmpipe->sampler_views[shader]));
+   assert(start + num <= ARRAY_SIZE(llvmpipe->sampler_views[shader]));
 
    draw_flush(llvmpipe->draw);
 
    /* set the new sampler views */
    for (i = 0; i < num; i++) {
-      /* Note: we're using pipe_sampler_view_release() here to work around
-       * a possible crash when the old view belongs to another context that
-       * was already destroyed.
+      /*
+       * Warn if someone tries to set a view created in a different context
+       * (which is why we need the hack above in the first place).
+       * An assert would be better but st/mesa relies on it...
        */
-      pipe_sampler_view_release(pipe,
-                                &llvmpipe->sampler_views[shader][start + i]);
+      if (views[i] && views[i]->context != pipe) {
+         debug_printf("Illegal setting of sampler_view %d created in another "
+                      "context\n", i);
+      }
       pipe_sampler_view_reference(&llvmpipe->sampler_views[shader][start + i],
                                   views[i]);
    }
@@ -146,8 +150,9 @@ llvmpipe_set_sampler_views(struct pipe_context *pipe,
                              llvmpipe->sampler_views[shader],
                              llvmpipe->num_sampler_views[shader]);
    }
-
-   llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
+   else {
+      llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
+   }
 }
 
 
@@ -158,11 +163,13 @@ llvmpipe_create_sampler_view(struct pipe_context *pipe,
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
    /*
-    * XXX we REALLY want to see the correct bind flag here but the OpenGL
-    * state tracker can't guarantee that at least for texture buffer objects.
+    * XXX: bind flags from OpenGL state tracker are notoriously unreliable.
+    * This looks unfixable, so fix the bind flags instead when it happens.
     */
-   if (!(texture->bind & PIPE_BIND_SAMPLER_VIEW))
+   if (!(texture->bind & PIPE_BIND_SAMPLER_VIEW)) {
       debug_printf("Illegal sampler view creation without bind flag\n");
+      texture->bind |= PIPE_BIND_SAMPLER_VIEW;
+   }
 
    if (view) {
       *view = *templ;
@@ -170,6 +177,36 @@ llvmpipe_create_sampler_view(struct pipe_context *pipe,
       view->texture = NULL;
       pipe_resource_reference(&view->texture, texture);
       view->context = pipe;
+
+#ifdef DEBUG
+     /*
+      * This is possibly too lenient, but the primary reason is just
+      * to catch state trackers which forget to initialize this, so
+      * it only catches clearly impossible view targets.
+      */
+      if (view->target != texture->target) {
+         if (view->target == PIPE_TEXTURE_1D)
+            assert(texture->target == PIPE_TEXTURE_1D_ARRAY);
+         else if (view->target == PIPE_TEXTURE_1D_ARRAY)
+            assert(texture->target == PIPE_TEXTURE_1D);
+         else if (view->target == PIPE_TEXTURE_2D)
+            assert(texture->target == PIPE_TEXTURE_2D_ARRAY ||
+                   texture->target == PIPE_TEXTURE_CUBE ||
+                   texture->target == PIPE_TEXTURE_CUBE_ARRAY);
+         else if (view->target == PIPE_TEXTURE_2D_ARRAY)
+            assert(texture->target == PIPE_TEXTURE_2D ||
+                   texture->target == PIPE_TEXTURE_CUBE ||
+                   texture->target == PIPE_TEXTURE_CUBE_ARRAY);
+         else if (view->target == PIPE_TEXTURE_CUBE)
+            assert(texture->target == PIPE_TEXTURE_CUBE_ARRAY ||
+                   texture->target == PIPE_TEXTURE_2D_ARRAY);
+         else if (view->target == PIPE_TEXTURE_CUBE_ARRAY)
+            assert(texture->target == PIPE_TEXTURE_CUBE ||
+                   texture->target == PIPE_TEXTURE_2D_ARRAY);
+         else
+            assert(0);
+      }
+#endif
    }
 
    return view;
@@ -198,8 +235,7 @@ prepare_shader_sampling(
    struct llvmpipe_context *lp,
    unsigned num,
    struct pipe_sampler_view **views,
-   unsigned shader_type,
-   struct pipe_resource *mapped_tex[PIPE_MAX_SHADER_SAMPLER_VIEWS])
+   enum pipe_shader_type shader_type)
 {
 
    unsigned i;
@@ -212,7 +248,7 @@ prepare_shader_sampling(
    if (!num)
       return;
 
-   for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
+   for (i = 0; i < num; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       if (view) {
@@ -222,11 +258,6 @@ prepare_shader_sampling(
          unsigned num_layers = tex->depth0;
          unsigned first_level = 0;
          unsigned last_level = 0;
-
-         /* We're referencing the texture's internal data, so save a
-          * reference to it.
-          */
-         pipe_resource_reference(&mapped_tex[i], tex);
 
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level offsets */
@@ -245,15 +276,17 @@ prepare_shader_sampling(
                   row_stride[j] = lp_tex->row_stride[j];
                   img_stride[j] = lp_tex->img_stride[j];
                }
-               if (res->target == PIPE_TEXTURE_1D_ARRAY ||
-                   res->target == PIPE_TEXTURE_2D_ARRAY ||
-                   res->target == PIPE_TEXTURE_CUBE_ARRAY) {
+               if (tex->target == PIPE_TEXTURE_1D_ARRAY ||
+                   tex->target == PIPE_TEXTURE_2D_ARRAY ||
+                   tex->target == PIPE_TEXTURE_CUBE ||
+                   tex->target == PIPE_TEXTURE_CUBE_ARRAY) {
                   num_layers = view->u.tex.last_layer - view->u.tex.first_layer + 1;
                   for (j = first_level; j <= last_level; j++) {
                      mip_offsets[j] += view->u.tex.first_layer *
                                        lp_tex->img_stride[j];
                   }
-                  if (res->target == PIPE_TEXTURE_CUBE_ARRAY) {
+                  if (view->target == PIPE_TEXTURE_CUBE ||
+                      view->target == PIPE_TEXTURE_CUBE_ARRAY) {
                      assert(num_layers % 6 == 0);
                   }
                   assert(view->u.tex.first_layer <= view->u.tex.last_layer);
@@ -266,14 +299,12 @@ prepare_shader_sampling(
                /* probably don't really need to fill that out */
                mip_offsets[0] = 0;
                row_stride[0] = 0;
-               row_stride[0] = 0;
+               img_stride[0] = 0;
 
                /* everything specified in number of elements here. */
-               width0 = view->u.buf.last_element - view->u.buf.first_element + 1;
-               addr = (uint8_t *)addr + view->u.buf.first_element *
-                               view_blocksize;
-               assert(view->u.buf.first_element <= view->u.buf.last_element);
-               assert(view->u.buf.last_element * view_blocksize < res->width0);
+               width0 = view->u.buf.size / view_blocksize;
+               addr = (uint8_t *)addr + view->u.buf.offset;
+               assert(view->u.buf.offset + view->u.buf.size <= res->width0);
             }
          }
          else {
@@ -303,47 +334,28 @@ prepare_shader_sampling(
 
 
 /**
- * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ * Called whenever we're about to draw (no dirty flag, FIXME?).
  */
 void
 llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
                                  unsigned num,
                                  struct pipe_sampler_view **views)
 {
-   prepare_shader_sampling(lp, num, views, PIPE_SHADER_VERTEX,
-                           lp->mapped_vs_tex);
-}
-
-void
-llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx)
-{
-   unsigned i;
-   for (i = 0; i < Elements(ctx->mapped_vs_tex); i++) {
-      pipe_resource_reference(&ctx->mapped_vs_tex[i], NULL);
-   }
+   prepare_shader_sampling(lp, num, views, PIPE_SHADER_VERTEX);
 }
 
 
 /**
- * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ * Called whenever we're about to draw (no dirty flag, FIXME?).
  */
 void
 llvmpipe_prepare_geometry_sampling(struct llvmpipe_context *lp,
                                    unsigned num,
                                    struct pipe_sampler_view **views)
 {
-   prepare_shader_sampling(lp, num, views, PIPE_SHADER_GEOMETRY,
-                           lp->mapped_gs_tex);
+   prepare_shader_sampling(lp, num, views, PIPE_SHADER_GEOMETRY);
 }
 
-void
-llvmpipe_cleanup_geometry_sampling(struct llvmpipe_context *ctx)
-{
-   unsigned i;
-   for (i = 0; i < Elements(ctx->mapped_gs_tex); i++) {
-      pipe_resource_reference(&ctx->mapped_gs_tex[i], NULL);
-   }
-}
 
 void
 llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe)

@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -34,5 +32,12 @@
 #include "freedreno_draw.h"
 
 void fd2_draw_init(struct pipe_context *pctx);
+
+enum {
+	GMEM_PATCH_FASTCLEAR_COLOR,
+	GMEM_PATCH_FASTCLEAR_DEPTH,
+	GMEM_PATCH_FASTCLEAR_COLOR_DEPTH,
+	GMEM_PATCH_RESTORE_INFO,
+};
 
 #endif /* FD2_DRAW_H_ */

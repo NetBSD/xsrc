@@ -29,6 +29,7 @@
 #define DRAW_GS_H
 
 #include "draw_context.h"
+#include "tgsi/tgsi_exec.h"
 #include "draw_private.h"
 
 #define MAX_TGSI_PRIMITIVES 4
@@ -56,6 +57,13 @@ struct draw_gs_inputs {
 /**
  * Private version of the compiled geometry shader
  */
+struct draw_vertex_stream {
+   unsigned *primitive_lengths;
+   unsigned emitted_vertices;
+   unsigned emitted_primitives;
+   float (*tmp_output)[4];
+};
+
 struct draw_geometry_shader {
    struct draw_context *draw;
 
@@ -67,20 +75,16 @@ struct draw_geometry_shader {
    struct tgsi_shader_info info;
    unsigned position_output;
    unsigned viewport_index_output;
-   unsigned clipdistance_output[PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT];
-   unsigned culldistance_output[PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT];
+   unsigned ccdistance_output[PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT];
 
    unsigned max_output_vertices;
    unsigned primitive_boundary;
    unsigned input_primitive;
    unsigned output_primitive;
-
-   unsigned *primitive_lengths;
-   unsigned emitted_vertices;
-   unsigned emitted_primitives;
-
-   float (*tmp_output)[4];
    unsigned vertex_size;
+
+   struct draw_vertex_stream stream[TGSI_MAX_VERTEX_STREAMS];
+   unsigned num_vertex_streams;
 
    unsigned in_prim_idx;
    unsigned input_vertex_stride;
@@ -90,6 +94,8 @@ struct draw_geometry_shader {
    unsigned vector_length;
    unsigned max_out_prims;
 
+   unsigned num_invocations;
+   unsigned invocation_id;
 #ifdef HAVE_LLVM
    struct draw_gs_inputs *gs_input;
    struct draw_gs_jit_context *jit_context;
@@ -107,14 +113,15 @@ struct draw_geometry_shader {
                         unsigned num_vertices,
                         unsigned prim_idx);
    void (*fetch_outputs)(struct draw_geometry_shader *shader,
+                         unsigned vertex_stream,
                          unsigned num_primitives,
                          float (**p_output)[4]);
 
    void     (*prepare)(struct draw_geometry_shader *shader,
                        const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
                        const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS]);
-   unsigned (*run)(struct draw_geometry_shader *shader,
-                   unsigned input_primitives);
+   void (*run)(struct draw_geometry_shader *shader,
+               unsigned input_primitives, unsigned *out_prims);
 };
 
 void draw_geometry_shader_new_instance(struct draw_geometry_shader *gs);

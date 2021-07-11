@@ -23,6 +23,7 @@
 #include "api/util.hpp"
 #include "core/platform.hpp"
 #include "core/device.hpp"
+#include "git_sha1.h"
 
 using namespace clover;
 
@@ -145,11 +146,11 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
-      buf.as_scalar<cl_uint>() = 2;
+      buf.as_scalar<cl_uint>() = dev.has_doubles() ? 2 : 0;
       break;
 
    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF:
-      buf.as_scalar<cl_uint>() = 0;
+      buf.as_scalar<cl_uint>() = dev.has_halves() ? 8 : 0;
       break;
 
    case CL_DEVICE_MAX_CLOCK_FREQUENCY:
@@ -157,7 +158,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_ADDRESS_BITS:
-      buf.as_scalar<cl_uint>() = 32;
+      buf.as_scalar<cl_uint>() = dev.address_bits();
       break;
 
    case CL_DEVICE_MAX_READ_IMAGE_ARGS:
@@ -183,6 +184,14 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       buf.as_scalar<size_t>() = 1 << dev.max_image_levels_3d();
       break;
 
+   case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE:
+      buf.as_scalar<size_t>() = dev.max_image_buffer_size();
+      break;
+
+   case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE:
+      buf.as_scalar<size_t>() = dev.max_image_array_number();
+      break;
+
    case CL_DEVICE_IMAGE_SUPPORT:
       buf.as_scalar<cl_bool>() = dev.image_support();
       break;
@@ -196,13 +205,42 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MEM_BASE_ADDR_ALIGN:
+      buf.as_scalar<cl_uint>() = 8 *
+         std::max(dev.mem_base_addr_align(), (cl_uint) sizeof(cl_long) * 16);
+      break;
+
    case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE:
       buf.as_scalar<cl_uint>() = 128;
       break;
 
-   case CL_DEVICE_SINGLE_FP_CONFIG:
+   case CL_DEVICE_HALF_FP_CONFIG:
+      // This is the "mandated minimum half precision floating-point
+      // capability" for OpenCL 1.x.
       buf.as_scalar<cl_device_fp_config>() =
-         CL_FP_DENORM | CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST;
+         CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST;
+      break;
+
+   case CL_DEVICE_SINGLE_FP_CONFIG:
+      // This is the "mandated minimum single precision floating-point
+      // capability" for OpenCL 1.1.  In OpenCL 1.2, nothing is required for
+      // custom devices.
+      buf.as_scalar<cl_device_fp_config>() =
+         CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST;
+      break;
+
+   case CL_DEVICE_DOUBLE_FP_CONFIG:
+      if (dev.has_doubles())
+         // This is the "mandated minimum double precision floating-point
+         // capability"
+         buf.as_scalar<cl_device_fp_config>() =
+               CL_FP_FMA
+             | CL_FP_ROUND_TO_NEAREST
+             | CL_FP_ROUND_TO_ZERO
+             | CL_FP_ROUND_TO_INF
+             | CL_FP_INF_NAN
+             | CL_FP_DENORM;
+      else
+         buf.as_scalar<cl_device_fp_config>() = 0;
       break;
 
    case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE:
@@ -251,6 +289,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
 
    case CL_DEVICE_AVAILABLE:
    case CL_DEVICE_COMPILER_AVAILABLE:
+   case CL_DEVICE_LINKER_AVAILABLE:
       buf.as_scalar<cl_bool>() = CL_TRUE;
       break;
 
@@ -260,6 +299,10 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
 
    case CL_DEVICE_QUEUE_PROPERTIES:
       buf.as_scalar<cl_command_queue_properties>() = CL_QUEUE_PROFILING_ENABLE;
+      break;
+
+   case CL_DEVICE_BUILT_IN_KERNELS:
+      buf.as_string() = "";
       break;
 
    case CL_DEVICE_NAME:
@@ -279,11 +322,11 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_VERSION:
-      buf.as_string() = "OpenCL 1.1 MESA " PACKAGE_VERSION;
+      buf.as_string() = "OpenCL " + dev.device_version() + " Mesa " PACKAGE_VERSION MESA_GIT_SHA1;
       break;
 
    case CL_DEVICE_EXTENSIONS:
-      buf.as_string() = "";
+      buf.as_string() = dev.supported_extensions();
       break;
 
    case CL_DEVICE_PLATFORM:
@@ -291,7 +334,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_HOST_UNIFIED_MEMORY:
-      buf.as_scalar<cl_bool>() = CL_TRUE;
+      buf.as_scalar<cl_bool>() = dev.has_unified_memory();
       break;
 
    case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR:
@@ -315,15 +358,25 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE:
-      buf.as_scalar<cl_uint>() = 2;
+      buf.as_scalar<cl_uint>() = dev.has_doubles() ? 2 : 0;
       break;
 
    case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF:
-      buf.as_scalar<cl_uint>() = 0;
+      buf.as_scalar<cl_uint>() = dev.has_halves() ? 8 : 0;
       break;
 
    case CL_DEVICE_OPENCL_C_VERSION:
-      buf.as_string() = "OpenCL C 1.1";
+      buf.as_string() = "OpenCL C " + dev.device_clc_version() + " ";
+      break;
+
+   case CL_DEVICE_PRINTF_BUFFER_SIZE:
+      // Per the spec, the minimum value for the FULL profile is 1 MB.
+      // However, clover is not ready yet to support it
+      buf.as_scalar<size_t>() = 0 /* 1024 */;
+      break;
+
+   case CL_DEVICE_PREFERRED_INTEROP_USER_SYNC:
+      buf.as_scalar<cl_bool>() = CL_TRUE;
       break;
 
    case CL_DEVICE_PARENT_DEVICE:

@@ -23,11 +23,24 @@
 #include "codegen/nv50_ir.h"
 #include "codegen/nv50_ir_target.h"
 
+#include <algorithm>
 #include <stack>
 #include <limits>
-#include <unordered_set>
+#if __cplusplus >= 201103L
+#include <unordered_map>
+#else
+#include <tr1/unordered_map>
+#endif
 
 namespace nv50_ir {
+
+#if __cplusplus >= 201103L
+using std::hash;
+using std::unordered_map;
+#else
+using std::tr1::hash;
+using std::tr1::unordered_map;
+#endif
 
 #define MAX_REGISTER_FILE_SIZE 256
 
@@ -42,7 +55,7 @@ public:
    void periodicMask(DataFile f, uint32_t lock, uint32_t unlock);
    void intersect(DataFile f, const RegisterSet *);
 
-   bool assign(int32_t& reg, DataFile f, unsigned int size);
+   bool assign(int32_t& reg, DataFile f, unsigned int size, unsigned int maxReg);
    void release(DataFile f, int32_t reg, unsigned int size);
    void occupy(DataFile f, int32_t reg, unsigned int size);
    void occupy(const Value *);
@@ -53,10 +66,8 @@ public:
 
    inline int getMaxAssigned(DataFile f) const { return fill[f]; }
 
-   inline unsigned int getFileSize(DataFile f, uint8_t regSize) const
+   inline unsigned int getFileSize(DataFile f) const
    {
-      if (restrictedGPR16Range && f == FILE_GPR && regSize == 2)
-         return (last[f] + 1) / 2;
       return last[f] + 1;
    }
 
@@ -86,7 +97,9 @@ public:
       return (size < 4) ? u : ((u << unit[f]) / 4);
    }
 
-   void print() const;
+   void print(DataFile f) const;
+
+   const bool restrictedGPR16Range;
 
 private:
    BitSet bits[LAST_REGISTER_FILE + 1];
@@ -95,8 +108,6 @@ private:
 
    int last[LAST_REGISTER_FILE + 1];
    int fill[LAST_REGISTER_FILE + 1];
-
-   const bool restrictedGPR16Range;
 };
 
 void
@@ -141,17 +152,17 @@ RegisterSet::intersect(DataFile f, const RegisterSet *set)
 }
 
 void
-RegisterSet::print() const
+RegisterSet::print(DataFile f) const
 {
    INFO("GPR:");
-   bits[FILE_GPR].print();
+   bits[f].print();
    INFO("\n");
 }
 
 bool
-RegisterSet::assign(int32_t& reg, DataFile f, unsigned int size)
+RegisterSet::assign(int32_t& reg, DataFile f, unsigned int size, unsigned int maxReg)
 {
-   reg = bits[f].findFreeRange(size);
+   reg = bits[f].findFreeRange(size, maxReg);
    if (reg < 0)
       return false;
    fill[f] = MAX2(fill[f], (int32_t)(reg + size - 1));
@@ -223,6 +234,7 @@ private:
    private:
       virtual bool visit(BasicBlock *);
       inline bool needNewElseBlock(BasicBlock *b, BasicBlock *p);
+      inline void splitEdges(BasicBlock *b);
    };
 
    class ArgumentMovesPass : public Pass {
@@ -243,9 +255,11 @@ private:
    private:
       virtual bool visit(BasicBlock *);
 
+      void insertConstraintMove(Instruction *, int s);
       bool insertConstraintMoves();
 
       void condenseDefs(Instruction *);
+      void condenseDefs(Instruction *, const int first, const int last);
       void condenseSrcs(Instruction *, const int first, const int last);
 
       void addHazard(Instruction *i, const ValueRef *src);
@@ -258,6 +272,9 @@ private:
       void texConstraintNVC0(TexInstruction *);
       void texConstraintNVE0(TexInstruction *);
       void texConstraintGM107(TexInstruction *);
+
+      bool isScalarTexGM107(TexInstruction *);
+      void handleScalarTexGM107(TexInstruction *);
 
       std::list<Instruction *> constrList;
 
@@ -346,28 +363,55 @@ RegAlloc::PhiMovesPass::needNewElseBlock(BasicBlock *b, BasicBlock *p)
    return (n == 2);
 }
 
-// For each operand of each PHI in b, generate a new value by inserting a MOV
-// at the end of the block it is coming from and replace the operand with its
-// result. This eliminates liveness conflicts and enables us to let values be
-// copied to the right register if such a conflict exists nonetheless.
+struct PhiMapHash {
+   size_t operator()(const std::pair<Instruction *, BasicBlock *>& val) const {
+      return hash<Instruction*>()(val.first) * 31 +
+         hash<BasicBlock*>()(val.second);
+   }
+};
+
+typedef unordered_map<
+   std::pair<Instruction *, BasicBlock *>, Value *, PhiMapHash> PhiMap;
+
+// Critical edges need to be split up so that work can be inserted along
+// specific edge transitions. Unfortunately manipulating incident edges into a
+// BB invalidates all the PHI nodes since their sources are implicitly ordered
+// by incident edge order.
 //
-// These MOVs are also crucial in making sure the live intervals of phi srces
-// are extended until the end of the loop, since they are not included in the
-// live-in sets.
-bool
-RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
+// TODO: Make it so that that is not the case, and PHI nodes store pointers to
+// the original BBs.
+void
+RegAlloc::PhiMovesPass::splitEdges(BasicBlock *bb)
 {
-   Instruction *phi, *mov;
    BasicBlock *pb, *pn;
-
+   Instruction *phi;
+   Graph::EdgeIterator ei;
    std::stack<BasicBlock *> stack;
+   int j = 0;
 
-   for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
+   for (ei = bb->cfg.incident(); !ei.end(); ei.next()) {
       pb = BasicBlock::get(ei.getNode());
       assert(pb);
       if (needNewElseBlock(bb, pb))
          stack.push(pb);
    }
+
+   // No critical edges were found, no need to perform any work.
+   if (stack.empty())
+      return;
+
+   // We're about to, potentially, reorder the inbound edges. This means that
+   // we need to hold on to the (phi, bb) -> src mapping, and fix up the phi
+   // nodes after the graph has been modified.
+   PhiMap phis;
+
+   j = 0;
+   for (ei = bb->cfg.incident(); !ei.end(); ei.next(), j++) {
+      pb = BasicBlock::get(ei.getNode());
+      for (phi = bb->getPhi(); phi && phi->op == OP_PHI; phi = phi->next)
+         phis.insert(std::make_pair(std::make_pair(phi, pb), phi->getSrc(j)));
+   }
+
    while (!stack.empty()) {
       pb = stack.top();
       pn = new BasicBlock(func);
@@ -380,12 +424,47 @@ RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
       assert(pb->getExit()->op != OP_CALL);
       if (pb->getExit()->asFlow()->target.bb == bb)
          pb->getExit()->asFlow()->target.bb = pn;
+
+      for (phi = bb->getPhi(); phi && phi->op == OP_PHI; phi = phi->next) {
+         PhiMap::iterator it = phis.find(std::make_pair(phi, pb));
+         assert(it != phis.end());
+         phis.insert(std::make_pair(std::make_pair(phi, pn), it->second));
+         phis.erase(it);
+      }
    }
+
+   // Now go through and fix up all of the phi node sources.
+   j = 0;
+   for (ei = bb->cfg.incident(); !ei.end(); ei.next(), j++) {
+      pb = BasicBlock::get(ei.getNode());
+      for (phi = bb->getPhi(); phi && phi->op == OP_PHI; phi = phi->next) {
+         PhiMap::const_iterator it = phis.find(std::make_pair(phi, pb));
+         assert(it != phis.end());
+
+         phi->setSrc(j, it->second);
+      }
+   }
+}
+
+// For each operand of each PHI in b, generate a new value by inserting a MOV
+// at the end of the block it is coming from and replace the operand with its
+// result. This eliminates liveness conflicts and enables us to let values be
+// copied to the right register if such a conflict exists nonetheless.
+//
+// These MOVs are also crucial in making sure the live intervals of phi srces
+// are extended until the end of the loop, since they are not included in the
+// live-in sets.
+bool
+RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
+{
+   Instruction *phi, *mov;
+
+   splitEdges(bb);
 
    // insert MOVs (phi->src(j) should stem from j-th in-BB)
    int j = 0;
    for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
-      pb = BasicBlock::get(ei.getNode());
+      BasicBlock *pb = BasicBlock::get(ei.getNode());
       if (!pb->isTerminated())
          pb->insertTail(new_FlowInstruction(func, OP_BRA, bb));
 
@@ -668,6 +747,7 @@ private:
    public:
       uint32_t degree;
       uint16_t degreeLimit; // if deg < degLimit, node is trivially colourable
+      uint16_t maxReg;
       uint16_t colors;
 
       DataFile f;
@@ -693,7 +773,7 @@ private:
    bool coalesce(ArrayList&);
    bool doCoalesce(ArrayList&, unsigned int mask);
    void calculateSpillWeights();
-   void simplify();
+   bool simplify();
    bool selectRegisters();
    void cleanup(const bool success);
 
@@ -723,7 +803,21 @@ private:
    Function *func;
    Program *prog;
 
-   static uint8_t relDegree[17][17];
+   struct RelDegree {
+      uint8_t data[17][17];
+
+      RelDegree() {
+         for (int i = 1; i <= 16; ++i)
+            for (int j = 1; j <= 16; ++j)
+               data[i][j] = j * ((i + j - 1) / j);
+      }
+
+      const uint8_t* operator[](std::size_t i) const {
+         return data[i];
+      }
+   };
+
+   static const RelDegree relDegree;
 
    RegisterSet regs;
 
@@ -735,7 +829,7 @@ private:
    std::list<ValuePair> mustSpill;
 };
 
-uint8_t GCRA::relDegree[17][17];
+const GCRA::RelDegree GCRA::relDegree;
 
 GCRA::RIG_Node::RIG_Node() : Node(NULL), next(this), prev(this)
 {
@@ -762,6 +856,34 @@ GCRA::printNodeInfo() const
    }
 }
 
+static bool
+isShortRegOp(Instruction *insn)
+{
+   // Immediates are always in src1 (except zeroes, which end up getting
+   // replaced with a zero reg). Every other situation can be resolved by
+   // using a long encoding.
+   return insn->srcExists(1) && insn->src(1).getFile() == FILE_IMMEDIATE &&
+      insn->getSrc(1)->reg.data.u64;
+}
+
+// Check if this LValue is ever used in an instruction that can't be encoded
+// with long registers (i.e. > r63)
+static bool
+isShortRegVal(LValue *lval)
+{
+   if (lval->getInsn() == NULL)
+      return false;
+   for (Value::DefCIterator def = lval->defs.begin();
+        def != lval->defs.end(); ++def)
+      if (isShortRegOp((*def)->getInsn()))
+         return true;
+   for (Value::UseCIterator use = lval->uses.begin();
+        use != lval->uses.end(); ++use)
+      if (isShortRegOp((*use)->getInsn()))
+         return true;
+   return false;
+}
+
 void
 GCRA::RIG_Node::init(const RegisterSet& regs, LValue *lval)
 {
@@ -777,7 +899,12 @@ GCRA::RIG_Node::init(const RegisterSet& regs, LValue *lval)
 
    weight = std::numeric_limits<float>::infinity();
    degree = 0;
-   degreeLimit = regs.getFileSize(f, lval->reg.size);
+   maxReg = regs.getFileSize(f);
+   // On nv50, we lose a bit of gpr encoding when there's an embedded
+   // immediate.
+   if (regs.restrictedGPR16Range && f == FILE_GPR && (lval->reg.size == 2 || isShortRegVal(lval)))
+      maxReg /= 2;
+   degreeLimit = maxReg;
    degreeLimit -= relDegree[1][colors] - 1;
 
    livei.insert(lval->livei);
@@ -837,6 +964,8 @@ GCRA::coalesceValues(Value *dst, Value *src, bool force)
    // add val's definitions to rep and extend the live interval of its RIG node
    rep->defs.insert(rep->defs.end(), val->defs.begin(), val->defs.end());
    nRep->livei.unify(nVal->livei);
+   nRep->degreeLimit = MIN2(nRep->degreeLimit, nVal->degreeLimit);
+   nRep->maxReg = MIN2(nRep->maxReg, nVal->maxReg);
    return true;
 }
 
@@ -859,6 +988,8 @@ GCRA::coalesce(ArrayList& insns)
    case 0xf0:
    case 0x100:
    case 0x110:
+   case 0x120:
+   case 0x130:
       ret = doCoalesce(insns, JOIN_MASK_UNION);
       break;
    default:
@@ -1038,11 +1169,6 @@ GCRA::GCRA(Function *fn, SpillCodeInserter& spill) :
    spill(spill)
 {
    prog = func->getProgram();
-
-   // initialize relative degrees array - i takes away from j
-   for (int i = 1; i <= 16; ++i)
-      for (int j = 1; j <= 16; ++j)
-         relDegree[i][j] = j * ((i + j - 1) / j);
 }
 
 GCRA::~GCRA()
@@ -1194,7 +1320,7 @@ GCRA::simplifyNode(RIG_Node *node)
             (node->degree < node->degreeLimit) ? "" : "(spill)");
 }
 
-void
+bool
 GCRA::simplify()
 {
    for (;;) {
@@ -1208,22 +1334,26 @@ GCRA::simplify()
       } else
       if (!DLLIST_EMPTY(&hi)) {
          RIG_Node *best = hi.next;
+         unsigned bestMaxReg = best->maxReg;
          float bestScore = best->weight / (float)best->degree;
-         // spill candidate
+         // Spill candidate. First go through the ones with the highest max
+         // register, then the ones with lower. That way the ones with the
+         // lowest requirement will be allocated first, since it's a stack.
          for (RIG_Node *it = best->next; it != &hi; it = it->next) {
             float score = it->weight / (float)it->degree;
-            if (score < bestScore) {
+            if (score < bestScore || it->maxReg > bestMaxReg) {
                best = it;
                bestScore = score;
+               bestMaxReg = it->maxReg;
             }
          }
          if (isinf(bestScore)) {
             ERROR("no viable spill candidates left\n");
-            break;
+            return false;
          }
          simplifyNode(best);
       } else {
-         break;
+         return true;
       }
    }
 }
@@ -1314,8 +1444,8 @@ GCRA::selectRegisters()
          continue;
       LValue *lval = node->getValue();
       if (prog->dbgFlags & NV50_IR_DEBUG_REG_ALLOC)
-         regs.print();
-      bool ret = regs.assign(node->reg, node->f, node->colors);
+         regs.print(node->f);
+      bool ret = regs.assign(node->reg, node->f, node->colors, node->maxReg);
       if (ret) {
          INFO_DBG(prog->dbgFlags, REG_ALLOC, "assigned reg %i\n", node->reg);
          lval->compMask = node->getCompMask();
@@ -1356,6 +1486,38 @@ GCRA::allocateRegisters(ArrayList& insns)
       if (lval) {
          nodes[i].init(regs, lval);
          RIG.insert(&nodes[i]);
+
+         if (lval->inFile(FILE_GPR) && lval->getInsn() != NULL) {
+            Instruction *insn = lval->getInsn();
+            if (insn->op != OP_MAD && insn->op != OP_FMA && insn->op != OP_SAD)
+               continue;
+            // For both of the cases below, we only want to add the preference
+            // if all arguments are in registers.
+            if (insn->src(0).getFile() != FILE_GPR ||
+                insn->src(1).getFile() != FILE_GPR ||
+                insn->src(2).getFile() != FILE_GPR)
+               continue;
+            if (prog->getTarget()->getChipset() < 0xc0) {
+               // Outputting a flag is not supported with short encodings nor
+               // with immediate arguments.
+               // See handleMADforNV50.
+               if (insn->flagsDef >= 0)
+                  continue;
+            } else {
+               // We can only fold immediate arguments if dst == src2. This
+               // only matters if one of the first two arguments is an
+               // immediate. This form is also only supported for floats.
+               // See handleMADforNVC0.
+               ImmediateValue imm;
+               if (insn->dType != TYPE_F32)
+                  continue;
+               if (!insn->src(0).getImmediate(imm) &&
+                   !insn->src(1).getImmediate(imm))
+                  continue;
+            }
+
+            nodes[i].addRegPreference(getNode(insn->getSrc(2)->asLValue()));
+         }
       }
    }
 
@@ -1369,7 +1531,9 @@ GCRA::allocateRegisters(ArrayList& insns)
 
    buildRIG(insns);
    calculateSpillWeights();
-   simplify();
+   ret = simplify();
+   if (!ret)
+      goto out;
 
    ret = selectRegisters();
    if (!ret) {
@@ -1422,6 +1586,9 @@ GCRA::cleanup(const bool success)
 
    delete[] nodes;
    nodes = NULL;
+   hi.next = hi.prev = &hi;
+   lo[0].next = lo[0].prev = &lo[0];
+   lo[1].next = lo[1].prev = &lo[1];
 }
 
 Symbol *
@@ -1496,14 +1663,34 @@ SpillCodeInserter::spill(Instruction *defi, Value *slot, LValue *lval)
 
    Instruction *st;
    if (slot->reg.file == FILE_MEMORY_LOCAL) {
-      st = new_Instruction(func, OP_STORE, ty);
-      st->setSrc(0, slot);
-      st->setSrc(1, lval);
       lval->noSpill = 1;
+      if (ty != TYPE_B96) {
+         st = new_Instruction(func, OP_STORE, ty);
+         st->setSrc(0, slot);
+         st->setSrc(1, lval);
+      } else {
+         st = new_Instruction(func, OP_SPLIT, ty);
+         st->setSrc(0, lval);
+         for (int d = 0; d < lval->reg.size / 4; ++d)
+            st->setDef(d, new_LValue(func, FILE_GPR));
+
+         for (int d = lval->reg.size / 4 - 1; d >= 0; --d) {
+            Value *tmp = cloneShallow(func, slot);
+            tmp->reg.size = 4;
+            tmp->reg.data.offset += 4 * d;
+
+            Instruction *s = new_Instruction(func, OP_STORE, TYPE_U32);
+            s->setSrc(0, tmp);
+            s->setSrc(1, st->getDef(d));
+            defi->bb->insertAfter(defi, s);
+         }
+      }
    } else {
       st = new_Instruction(func, OP_CVT, ty);
       st->setDef(0, slot);
       st->setSrc(0, lval);
+      if (lval->reg.file == FILE_FLAGS)
+         st->flagsSrc = 0;
    }
    defi->bb->insertAfter(defi, st);
 }
@@ -1519,17 +1706,46 @@ SpillCodeInserter::unspill(Instruction *usei, LValue *lval, Value *slot)
    Instruction *ld;
    if (slot->reg.file == FILE_MEMORY_LOCAL) {
       lval->noSpill = 1;
-      ld = new_Instruction(func, OP_LOAD, ty);
+      if (ty != TYPE_B96) {
+         ld = new_Instruction(func, OP_LOAD, ty);
+      } else {
+         ld = new_Instruction(func, OP_MERGE, ty);
+         for (int d = 0; d < lval->reg.size / 4; ++d) {
+            Value *tmp = cloneShallow(func, slot);
+            LValue *val;
+            tmp->reg.size = 4;
+            tmp->reg.data.offset += 4 * d;
+
+            Instruction *l = new_Instruction(func, OP_LOAD, TYPE_U32);
+            l->setDef(0, (val = new_LValue(func, FILE_GPR)));
+            l->setSrc(0, tmp);
+            usei->bb->insertBefore(usei, l);
+            ld->setSrc(d, val);
+            val->noSpill = 1;
+         }
+         ld->setDef(0, lval);
+         usei->bb->insertBefore(usei, ld);
+         return lval;
+      }
    } else {
       ld = new_Instruction(func, OP_CVT, ty);
    }
    ld->setDef(0, lval);
    ld->setSrc(0, slot);
+   if (lval->reg.file == FILE_FLAGS)
+      ld->flagsDef = 0;
 
    usei->bb->insertBefore(usei, ld);
    return lval;
 }
 
+static bool
+value_cmp(ValueRef *a, ValueRef *b) {
+   Instruction *ai = a->getInsn(), *bi = b->getInsn();
+   if (ai->bb != bi->bb)
+      return ai->bb->getId() < bi->bb->getId();
+   return ai->serial < bi->serial;
+}
 
 // For each value that is to be spilled, go through all its definitions.
 // A value can have multiple definitions if it has been coalesced before.
@@ -1551,7 +1767,7 @@ SpillCodeInserter::run(const std::list<ValuePair>& lst)
       // Keep track of which instructions to delete later. Deleting them
       // inside the loop is unsafe since a single instruction may have
       // multiple destinations that all need to be spilled (like OP_SPLIT).
-      std::unordered_set<Instruction *> to_del;
+      unordered_set<Instruction *> to_del;
 
       for (Value::DefIterator d = lval->defs.begin(); d != lval->defs.end();
            ++d) {
@@ -1563,18 +1779,25 @@ SpillCodeInserter::run(const std::list<ValuePair>& lst)
          LValue *dval = (*d)->get()->asLValue();
          Instruction *defi = (*d)->getInsn();
 
+         // Sort all the uses by BB/instruction so that we don't unspill
+         // multiple times in a row, and also remove a source of
+         // non-determinism.
+         std::vector<ValueRef *> refs(dval->uses.begin(), dval->uses.end());
+         std::sort(refs.begin(), refs.end(), value_cmp);
+
          // Unspill at each use *before* inserting spill instructions,
          // we don't want to have the spill instructions in the use list here.
-         while (!dval->uses.empty()) {
-            ValueRef *u = *dval->uses.begin();
+         for (std::vector<ValueRef*>::const_iterator it = refs.begin();
+              it != refs.end(); ++it) {
+            ValueRef *u = *it;
             Instruction *usei = u->getInsn();
             assert(usei);
             if (usei->isPseudo()) {
                tmp = (slot->reg.file == FILE_MEMORY_LOCAL) ? NULL : slot;
                last = NULL;
-            } else
-            if (!last || usei != last->next) { // TODO: sort uses
-               tmp = unspill(usei, dval, slot);
+            } else {
+               if (!last || (usei != last->next && usei != last))
+                  tmp = unspill(usei, dval, slot);
                last = usei;
             }
             u->set(tmp);
@@ -1593,7 +1816,7 @@ SpillCodeInserter::run(const std::list<ValuePair>& lst)
          }
       }
 
-      for (std::unordered_set<Instruction *>::const_iterator it = to_del.begin();
+      for (unordered_set<Instruction *>::const_iterator it = to_del.begin();
            it != to_del.end(); ++it)
          delete_Instruction(func->getProgram(), *it);
    }
@@ -1720,8 +1943,10 @@ GCRA::resolveSplitsAndMerges()
          // their registers should be identical.
          if (v->getInsn()->op == OP_PHI || v->getInsn()->op == OP_UNION) {
             Instruction *phi = v->getInsn();
-            for (int phis = 0; phi->srcExists(phis); ++phis)
+            for (int phis = 0; phi->srcExists(phis); ++phis) {
                phi->getSrc(phis)->join = v;
+               phi->getSrc(phis)->reg.data.id = v->reg.data.id;
+            }
          }
          reg += v->reg.size;
       }
@@ -1843,24 +2068,35 @@ RegAlloc::InsertConstraintsPass::addHazard(Instruction *i, const ValueRef *src)
 void
 RegAlloc::InsertConstraintsPass::condenseDefs(Instruction *insn)
 {
-   uint8_t size = 0;
    int n;
-   for (n = 0; insn->defExists(n) && insn->def(n).getFile() == FILE_GPR; ++n)
-      size += insn->getDef(n)->reg.size;
-   if (n < 2)
+   for (n = 0; insn->defExists(n) && insn->def(n).getFile() == FILE_GPR; ++n);
+   condenseDefs(insn, 0, n - 1);
+}
+
+void
+RegAlloc::InsertConstraintsPass::condenseDefs(Instruction *insn,
+                                              const int a, const int b)
+{
+   uint8_t size = 0;
+   if (a >= b)
       return;
+   for (int s = a; s <= b; ++s)
+      size += insn->getDef(s)->reg.size;
+   if (!size)
+      return;
+
    LValue *lval = new_LValue(func, FILE_GPR);
    lval->reg.size = size;
 
    Instruction *split = new_Instruction(func, OP_SPLIT, typeOfSize(size));
    split->setSrc(0, lval);
-   for (int d = 0; d < n; ++d) {
-      split->setDef(d, insn->getDef(d));
+   for (int d = a; d <= b; ++d) {
+      split->setDef(d - a, insn->getDef(d));
       insn->setDef(d, NULL);
    }
-   insn->setDef(0, lval);
+   insn->setDef(a, lval);
 
-   for (int k = 1, d = n; insn->defExists(d); ++d, ++k) {
+   for (int k = a + 1, d = b + 1; insn->defExists(d); ++d, ++k) {
       insn->setDef(k, insn->getDef(d));
       insn->setDef(d, NULL);
    }
@@ -1870,6 +2106,7 @@ RegAlloc::InsertConstraintsPass::condenseDefs(Instruction *insn)
    insn->bb->insertAfter(insn, split);
    constrList.push_back(split);
 }
+
 void
 RegAlloc::InsertConstraintsPass::condenseSrcs(Instruction *insn,
                                               const int a, const int b)
@@ -1891,19 +2128,167 @@ RegAlloc::InsertConstraintsPass::condenseSrcs(Instruction *insn,
    merge->setDef(0, lval);
    for (int s = a, i = 0; s <= b; ++s, ++i) {
       merge->setSrc(i, insn->getSrc(s));
-      insn->setSrc(s, NULL);
    }
+   insn->moveSources(b + 1, a - b);
    insn->setSrc(a, lval);
-
-   for (int k = a + 1, s = b + 1; insn->srcExists(s); ++s, ++k) {
-      insn->setSrc(k, insn->getSrc(s));
-      insn->setSrc(s, NULL);
-   }
    insn->bb->insertBefore(insn, merge);
 
    insn->putExtraSources(0, save);
 
    constrList.push_back(merge);
+}
+
+bool
+RegAlloc::InsertConstraintsPass::isScalarTexGM107(TexInstruction *tex)
+{
+   if (tex->tex.sIndirectSrc >= 0 ||
+       tex->tex.rIndirectSrc >= 0 ||
+       tex->tex.derivAll)
+      return false;
+
+   if (tex->tex.mask == 5 || tex->tex.mask == 6)
+      return false;
+
+   switch (tex->op) {
+   case OP_TEX:
+   case OP_TXF:
+   case OP_TXG:
+   case OP_TXL:
+      break;
+   default:
+      return false;
+   }
+
+   // legal variants:
+   // TEXS.1D.LZ
+   // TEXS.2D
+   // TEXS.2D.LZ
+   // TEXS.2D.LL
+   // TEXS.2D.DC
+   // TEXS.2D.LL.DC
+   // TEXS.2D.LZ.DC
+   // TEXS.A2D
+   // TEXS.A2D.LZ
+   // TEXS.A2D.LZ.DC
+   // TEXS.3D
+   // TEXS.3D.LZ
+   // TEXS.CUBE
+   // TEXS.CUBE.LL
+
+   // TLDS.1D.LZ
+   // TLDS.1D.LL
+   // TLDS.2D.LZ
+   // TLSD.2D.LZ.AOFFI
+   // TLDS.2D.LZ.MZ
+   // TLDS.2D.LL
+   // TLDS.2D.LL.AOFFI
+   // TLDS.A2D.LZ
+   // TLDS.3D.LZ
+
+   // TLD4S: all 2D/RECT variants and only offset
+
+   switch (tex->op) {
+   case OP_TEX:
+      if (tex->tex.useOffsets)
+         return false;
+
+      switch (tex->tex.target.getEnum()) {
+      case TEX_TARGET_1D:
+      case TEX_TARGET_2D_ARRAY_SHADOW:
+         return tex->tex.levelZero;
+      case TEX_TARGET_CUBE:
+         return !tex->tex.levelZero;
+      case TEX_TARGET_2D:
+      case TEX_TARGET_2D_ARRAY:
+      case TEX_TARGET_2D_SHADOW:
+      case TEX_TARGET_3D:
+      case TEX_TARGET_RECT:
+      case TEX_TARGET_RECT_SHADOW:
+         return true;
+      default:
+         return false;
+      }
+
+   case OP_TXL:
+      if (tex->tex.useOffsets)
+         return false;
+
+      switch (tex->tex.target.getEnum()) {
+      case TEX_TARGET_2D:
+      case TEX_TARGET_2D_SHADOW:
+      case TEX_TARGET_RECT:
+      case TEX_TARGET_RECT_SHADOW:
+      case TEX_TARGET_CUBE:
+         return true;
+      default:
+         return false;
+      }
+
+   case OP_TXF:
+      switch (tex->tex.target.getEnum()) {
+      case TEX_TARGET_1D:
+         return !tex->tex.useOffsets;
+      case TEX_TARGET_2D:
+      case TEX_TARGET_RECT:
+         return true;
+      case TEX_TARGET_2D_ARRAY:
+      case TEX_TARGET_2D_MS:
+      case TEX_TARGET_3D:
+         return !tex->tex.useOffsets && tex->tex.levelZero;
+      default:
+         return false;
+      }
+
+   case OP_TXG:
+      if (tex->tex.useOffsets > 1)
+         return false;
+      if (tex->tex.mask != 0x3 && tex->tex.mask != 0xf)
+         return false;
+
+      switch (tex->tex.target.getEnum()) {
+      case TEX_TARGET_2D:
+      case TEX_TARGET_2D_MS:
+      case TEX_TARGET_2D_SHADOW:
+      case TEX_TARGET_RECT:
+      case TEX_TARGET_RECT_SHADOW:
+         return true;
+      default:
+         return false;
+      }
+
+   default:
+      return false;
+   }
+}
+
+void
+RegAlloc::InsertConstraintsPass::handleScalarTexGM107(TexInstruction *tex)
+{
+   int defCount = tex->defCount(0xff);
+   int srcCount = tex->srcCount(0xff);
+
+   tex->tex.scalar = true;
+
+   // 1. handle defs
+   if (defCount > 3)
+      condenseDefs(tex, 2, 3);
+   if (defCount > 1)
+      condenseDefs(tex, 0, 1);
+
+   // 2. handle srcs
+   // special case for TXF.A2D
+   if (tex->op == OP_TXF && tex->tex.target == TEX_TARGET_2D_ARRAY) {
+      assert(srcCount >= 3);
+      condenseSrcs(tex, 1, 2);
+   } else {
+      if (srcCount > 3)
+         condenseSrcs(tex, 2, 3);
+      // only if we have more than 2 sources
+      if (srcCount > 2)
+         condenseSrcs(tex, 0, 1);
+   }
+
+   assert(!tex->defExists(2) && !tex->srcExists(2));
 }
 
 void
@@ -1913,10 +2298,38 @@ RegAlloc::InsertConstraintsPass::texConstraintGM107(TexInstruction *tex)
 
    if (isTextureOp(tex->op))
       textureMask(tex);
+
+   if (isScalarTexGM107(tex)) {
+      handleScalarTexGM107(tex);
+      return;
+   }
+
+   assert(!tex->tex.scalar);
    condenseDefs(tex);
 
-   if (tex->op == OP_SUSTB || tex->op == OP_SUSTP) {
-      condenseSrcs(tex, 3, (3 + typeSizeof(tex->dType) / 4) - 1);
+   if (isSurfaceOp(tex->op)) {
+      int s = tex->tex.target.getDim() +
+         (tex->tex.target.isArray() || tex->tex.target.isCube());
+      int n = 0;
+
+      switch (tex->op) {
+      case OP_SUSTB:
+      case OP_SUSTP:
+         n = 4;
+         break;
+      case OP_SUREDB:
+      case OP_SUREDP:
+         if (tex->subOp == NV50_IR_SUBOP_ATOM_CAS)
+            n = 2;
+         break;
+      default:
+         break;
+      }
+
+      if (s > 1)
+         condenseSrcs(tex, 0, s - 1);
+      if (n > 1)
+         condenseSrcs(tex, 1, n); // do not condense the tex handle
    } else
    if (isTextureOp(tex->op)) {
       if (tex->op != OP_TXQ) {
@@ -1928,9 +2341,19 @@ RegAlloc::InsertConstraintsPass::texConstraintGM107(TexInstruction *tex)
             if (!tex->tex.target.isArray() && tex->tex.useOffsets)
                s++;
          }
-         n = tex->srcCount(0xff) - s;
+         n = tex->srcCount(0xff, true) - s;
+         // TODO: Is this necessary? Perhaps just has to be aligned to the
+         // level that the first arg is, not necessarily to 4. This
+         // requirement has not been rigorously verified, as it has been on
+         // Kepler.
+         if (n > 0 && n < 3) {
+            if (tex->srcExists(n + s)) // move potential predicate out of the way
+               tex->moveSources(n + s, 3 - n);
+            while (n < 3)
+               tex->setSrc(s + n++, new_LValue(func, FILE_GPR));
+         }
       } else {
-         s = tex->srcCount(0xff);
+         s = tex->srcCount(0xff, true);
          n = 0;
       }
 
@@ -1949,18 +2372,22 @@ RegAlloc::InsertConstraintsPass::texConstraintNVE0(TexInstruction *tex)
    condenseDefs(tex);
 
    if (tex->op == OP_SUSTB || tex->op == OP_SUSTP) {
-      condenseSrcs(tex, 3, (3 + typeSizeof(tex->dType) / 4) - 1);
+      condenseSrcs(tex, 3, 6);
    } else
    if (isTextureOp(tex->op)) {
       int n = tex->srcCount(0xff, true);
-      if (n > 4) {
-         condenseSrcs(tex, 0, 3);
-         if (n > 5) // NOTE: first call modified positions already
-            condenseSrcs(tex, 4 - (4 - 1), n - 1 - (4 - 1));
-      } else
-      if (n > 1) {
-         condenseSrcs(tex, 0, n - 1);
+      int s = n > 4 ? 4 : n;
+      if (n > 4 && n < 7) {
+         if (tex->srcExists(n)) // move potential predicate out of the way
+            tex->moveSources(n, 7 - n);
+
+         while (n < 7)
+            tex->setSrc(n++, new_LValue(func, FILE_GPR));
       }
+      if (s > 1)
+         condenseSrcs(tex, 0, s - 1);
+      if (n > 4)
+         condenseSrcs(tex, 1, n - s);
    }
 }
 
@@ -1969,11 +2396,18 @@ RegAlloc::InsertConstraintsPass::texConstraintNVC0(TexInstruction *tex)
 {
    int n, s;
 
-   textureMask(tex);
+   if (isTextureOp(tex->op))
+      textureMask(tex);
 
    if (tex->op == OP_TXQ) {
       s = tex->srcCount(0xff);
       n = 0;
+   } else if (isSurfaceOp(tex->op)) {
+      s = tex->tex.target.getDim() + (tex->tex.target.isArray() || tex->tex.target.isCube());
+      if (tex->op == OP_SUSTB || tex->op == OP_SUSTP)
+         n = 4;
+      else
+         n = 0;
    } else {
       s = tex->tex.target.getArgCount() - tex->tex.target.isMS();
       if (!tex->tex.target.isArray() &&
@@ -2008,6 +2442,8 @@ RegAlloc::InsertConstraintsPass::texConstraintNV50(TexInstruction *tex)
    for (c = 0; tex->srcExists(c) || tex->defExists(c); ++c) {
       if (!tex->srcExists(c))
          tex->setSrc(c, new_LValue(func, tex->getSrc(0)->asLValue()));
+      else
+         insertConstraintMove(tex, c);
       if (!tex->defExists(c))
          tex->setDef(c, new_LValue(func, tex->getDef(0)->asLValue()));
    }
@@ -2049,6 +2485,8 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
             texConstraintNVE0(tex);
             break;
          case 0x110:
+         case 0x120:
+         case 0x130:
             texConstraintGM107(tex);
             break;
          default:
@@ -2066,6 +2504,8 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
          condenseDefs(i);
          if (i->src(0).isIndirect(0) && typeSizeof(i->dType) >= 8)
             addHazard(i, i->src(0).getIndirect(0));
+         if (i->src(0).isIndirect(1) && typeSizeof(i->dType) >= 8)
+            addHazard(i, i->src(0).getIndirect(1));
       } else
       if (i->op == OP_UNION ||
           i->op == OP_MERGE ||
@@ -2074,6 +2514,54 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
       }
    }
    return true;
+}
+
+void
+RegAlloc::InsertConstraintsPass::insertConstraintMove(Instruction *cst, int s)
+{
+   const uint8_t size = cst->src(s).getSize();
+
+   assert(cst->getSrc(s)->defs.size() == 1); // still SSA
+
+   Instruction *defi = cst->getSrc(s)->defs.front()->getInsn();
+
+   bool imm = defi->op == OP_MOV &&
+      defi->src(0).getFile() == FILE_IMMEDIATE;
+   bool load = defi->op == OP_LOAD &&
+      defi->src(0).getFile() == FILE_MEMORY_CONST &&
+      !defi->src(0).isIndirect(0);
+   // catch some cases where don't really need MOVs
+   if (cst->getSrc(s)->refCount() == 1 && !defi->constrainedDefs()) {
+      if (imm || load) {
+         // Move the defi right before the cst. No point in expanding
+         // the range.
+         defi->bb->remove(defi);
+         cst->bb->insertBefore(cst, defi);
+      }
+      return;
+   }
+
+   LValue *lval = new_LValue(func, cst->src(s).getFile());
+   lval->reg.size = size;
+
+   Instruction *mov = new_Instruction(func, OP_MOV, typeOfSize(size));
+   mov->setDef(0, lval);
+   mov->setSrc(0, cst->getSrc(s));
+
+   if (load) {
+      mov->op = OP_LOAD;
+      mov->setSrc(0, defi->getSrc(0));
+   } else if (imm) {
+      mov->setSrc(0, defi->getSrc(0));
+   }
+
+   if (defi->getPredicate())
+      mov->setPredicate(defi->cc, defi->getPredicate());
+
+   cst->setSrc(s, mov->getDef(0));
+   cst->bb->insertBefore(cst, mov);
+
+   cst->getDef(0)->asLValue()->noSpill = 1; // doesn't help
 }
 
 // Insert extra moves so that, if multiple register constraints on a value are
@@ -2116,26 +2604,8 @@ RegAlloc::InsertConstraintsPass::insertConstraintMoves()
                cst->bb->insertBefore(cst, mov);
                continue;
             }
-            assert(cst->getSrc(s)->defs.size() == 1); // still SSA
 
-            Instruction *defi = cst->getSrc(s)->defs.front()->getInsn();
-            // catch some cases where don't really need MOVs
-            if (cst->getSrc(s)->refCount() == 1 && !defi->constrainedDefs())
-               continue;
-
-            LValue *lval = new_LValue(func, cst->src(s).getFile());
-            lval->reg.size = size;
-
-            mov = new_Instruction(func, OP_MOV, typeOfSize(size));
-            mov->setDef(0, lval);
-            mov->setSrc(0, cst->getSrc(s));
-            cst->setSrc(s, mov->getDef(0));
-            cst->bb->insertBefore(cst, mov);
-
-            cst->getDef(0)->asLValue()->noSpill = 1; // doesn't help
-
-            if (cst->op == OP_UNION)
-               mov->setPredicate(defi->cc, defi->getPredicate());
+            insertConstraintMove(cst, s);
          }
       }
    }

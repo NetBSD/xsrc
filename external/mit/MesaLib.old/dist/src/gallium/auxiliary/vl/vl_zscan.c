@@ -49,6 +49,13 @@ enum VS_OUTPUT
    VS_O_VTEX = 0
 };
 
+const int vl_zscan_normal_16[] =
+{
+   /* Zig-Zag scan pattern */
+    0, 1, 4, 8, 5, 2, 3, 6,
+    9,12,13,10, 7,11,14,15
+};
+
 const int vl_zscan_linear[] =
 {
    /* Linear scan pattern */
@@ -88,21 +95,39 @@ const int vl_zscan_alternate[] =
    38,46,54,62,39,47,55,63
 };
 
+const int vl_zscan_h265_up_right_diagonal_16[] =
+{
+   /* Up-right diagonal scan order for 4x4 blocks - see H.265 section 6.5.3. */
+    0,  4,  1,  8,  5,  2, 12,  9,
+    6,  3, 13, 10,  7, 14, 11, 15,
+};
+
+const int vl_zscan_h265_up_right_diagonal[] =
+{
+   /* Up-right diagonal scan order for 8x8 blocks - see H.265 section 6.5.3. */
+    0,  8,  1, 16,  9,  2, 24, 17,
+   10,  3, 32, 25, 18, 11,  4, 40,
+   33, 26, 19, 12,  5, 48, 41, 34,
+   27, 20, 13,  6, 56, 49, 42, 35,
+   28, 21, 14,  7, 57, 50, 43, 36,
+   29, 22, 15, 58, 51, 44, 37, 30,
+   23, 59, 52, 45, 38, 31, 60, 53,
+   46, 39, 61, 54, 47, 62, 55, 63,
+};
+
+
 static void *
 create_vert_shader(struct vl_zscan *zscan)
 {
    struct ureg_program *shader;
-
    struct ureg_src scale;
    struct ureg_src vrect, vpos, block_num;
-
    struct ureg_dst tmp;
    struct ureg_dst o_vpos;
    struct ureg_dst *o_vtex;
+   unsigned i;
 
-   signed i;
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   shader = ureg_create(PIPE_SHADER_VERTEX);
    if (!shader)
       return NULL;
 
@@ -148,7 +173,7 @@ create_vert_shader(struct vl_zscan *zscan)
    for (i = 0; i < zscan->num_channels; ++i) {
       ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y),
                ureg_imm1f(shader, 1.0f / (zscan->blocks_per_line * VL_BLOCK_WIDTH)
-                * (i - (signed)zscan->num_channels / 2)));
+                * ((signed)i - (signed)zscan->num_channels / 2)));
 
       ureg_MAD(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_X), vrect,
                ureg_imm1f(shader, 1.0f / zscan->blocks_per_line), ureg_src(tmp));
@@ -179,7 +204,7 @@ create_frag_shader(struct vl_zscan *zscan)
 
    unsigned i;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   shader = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!shader)
       return NULL;
 
@@ -272,7 +297,9 @@ init_state(struct vl_zscan *zscan)
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.half_pixel_center = true;
    rs_state.bottom_edge_rule = true;
-   rs_state.depth_clip = 1;
+   rs_state.depth_clip_near = 1;
+   rs_state.depth_clip_far = 1;
+
    zscan->rs_state = zscan->pipe->create_rasterizer_state(zscan->pipe, &rs_state);
    if (!zscan->rs_state)
       goto error_rs_state;
@@ -470,11 +497,9 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    buffer->viewport.scale[0] = dst->width;
    buffer->viewport.scale[1] = dst->height;
    buffer->viewport.scale[2] = 1;
-   buffer->viewport.scale[3] = 1;
    buffer->viewport.translate[0] = 0;
    buffer->viewport.translate[1] = 0;
    buffer->viewport.translate[2] = 0;
-   buffer->viewport.translate[3] = 0;
 
    buffer->fb_state.width = dst->width;
    buffer->fb_state.height = dst->height;

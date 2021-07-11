@@ -30,11 +30,15 @@
  */
 
 
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 #include "glapi/glapi_priv.h"
-#include "glapi/glapitable.h"
+#include "glapitable.h"
 
 
 #define FIRST_DYNAMIC_OFFSET (sizeof(struct _glapi_table) / sizeof(void *))
+
 
 
 /**********************************************************************
@@ -45,7 +49,7 @@
 #if !defined(DISPATCH_FUNCTION_SIZE) 
 # define NEED_FUNCTION_POINTER
 #endif
-#include "glapi/glprocs.h"
+#include "glprocs.h"
 
 
 /**
@@ -58,12 +62,7 @@ get_static_proc( const char * n )
    GLuint i;
    for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       const char *testName = gl_string_table + static_functions[i].Name_offset;
-#ifdef MANGLE
-      /* skip the prefix on the name */
-      if (strcmp(testName, n + 1) == 0)
-#else
       if (strcmp(testName, n) == 0)
-#endif
       {
 	 return &static_functions[i];
       }
@@ -326,7 +325,7 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
  * Fill-in the dispatch stub for the named function.
  * 
  * This function is intended to be called by a hardware driver.  When called,
- * a dispatch stub may be created created for the function.  A pointer to this
+ * a dispatch stub may be created for the function.  A pointer to this
  * dispatch function will be returned by glXGetProcAddress.
  *
  * \param function_names       Array of pointers to function names that should
@@ -512,14 +511,13 @@ _glapi_get_proc_address(const char *funcName)
 
    init_glapi_relocs_once();
 
-#ifdef MANGLE
-   /* skip the prefix on the name */
-   if (funcName[1] != 'g' || funcName[2] != 'l')
-      return NULL;
-#else
-   if (funcName[0] != 'g' || funcName[1] != 'l')
-      return NULL;
+#ifdef USE_MGL_NAMESPACE
+   if (funcName && funcName[0] == 'm')
+      funcName++;
 #endif
+
+  if (!funcName || funcName[0] != 'g' || funcName[1] != 'l')
+      return NULL;
 
    /* search extension functions first */
    func = get_extension_proc_address(funcName);
@@ -581,86 +579,4 @@ _glapi_get_dispatch_table_size(void)
     * extension functions.
     */
    return FIRST_DYNAMIC_OFFSET + MAX_EXTENSION_FUNCS;
-}
-
-
-/**
- * Make sure there are no NULL pointers in the given dispatch table.
- * Intended for debugging purposes.
- */
-void
-_glapi_check_table_not_null(const struct _glapi_table *table)
-{
-#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
-   const GLuint entries = _glapi_get_dispatch_table_size();
-   const void **tab = (const void **) table;
-   GLuint i;
-   for (i = 1; i < entries; i++) {
-      assert(tab[i]);
-   }
-#else
-   (void) table;
-#endif
-}
-
-
-/**
- * Do some spot checks to be sure that the dispatch table
- * slots are assigned correctly. For debugging only.
- */
-void
-_glapi_check_table(const struct _glapi_table *table)
-{
-#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
-   {
-      GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
-      char *BeginFunc = (char*) &table->Begin;
-      GLuint offset = (BeginFunc - (char *) table) / sizeof(void *);
-      assert(BeginOffset == offset);
-   }
-   {
-      GLuint viewportOffset = _glapi_get_proc_offset("glViewport");
-      char *viewportFunc = (char*) &table->Viewport;
-      GLuint offset = (viewportFunc - (char *) table) / sizeof(void *);
-      assert(viewportOffset == offset);
-   }
-   {
-      GLuint VertexPointerOffset = _glapi_get_proc_offset("glVertexPointer");
-      char *VertexPointerFunc = (char*) &table->VertexPointer;
-      GLuint offset = (VertexPointerFunc - (char *) table) / sizeof(void *);
-      assert(VertexPointerOffset == offset);
-   }
-   {
-      GLuint ResetMinMaxOffset = _glapi_get_proc_offset("glResetMinmax");
-      char *ResetMinMaxFunc = (char*) &table->ResetMinmax;
-      GLuint offset = (ResetMinMaxFunc - (char *) table) / sizeof(void *);
-      assert(ResetMinMaxOffset == offset);
-   }
-   {
-      GLuint blendColorOffset = _glapi_get_proc_offset("glBlendColor");
-      char *blendColorFunc = (char*) &table->BlendColor;
-      GLuint offset = (blendColorFunc - (char *) table) / sizeof(void *);
-      assert(blendColorOffset == offset);
-   }
-   {
-      GLuint secondaryColor3fOffset = _glapi_get_proc_offset("glSecondaryColor3fEXT");
-      char *secondaryColor3fFunc = (char*) &table->SecondaryColor3fEXT;
-      GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
-      assert(secondaryColor3fOffset == offset);
-   }
-   {
-      GLuint pointParameterivOffset = _glapi_get_proc_offset("glPointParameterivNV");
-      char *pointParameterivFunc = (char*) &table->PointParameterivNV;
-      GLuint offset = (pointParameterivFunc - (char *) table) / sizeof(void *);
-      assert(pointParameterivOffset == offset);
-   }
-   {
-      GLuint setFenceOffset = _glapi_get_proc_offset("glSetFenceNV");
-      char *setFenceFunc = (char*) &table->SetFenceNV;
-      GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
-      assert(setFenceOffset == offset);
-   }
-#else
-   (void) table;
-#endif
 }

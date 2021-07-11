@@ -36,12 +36,13 @@
 #include <inttypes.h>
 #include <pthread.h>
 #include "apple_glx_log.h"
+#include "util/debug.h"
 
 static bool diagnostic = false;
 static aslclient aslc;
 
 void apple_glx_log_init(void) {
-    if (getenv("LIBGL_DIAGNOSTIC")) {
+    if (env_var_as_boolean("LIBGL_DIAGNOSTIC", false)) {
         diagnostic = true;
     }
 
@@ -96,6 +97,7 @@ void _apple_glx_vlog(int level, const char *file, const char *function,
         fprintf(stderr, "%-9s %24s:%-4d %s(%"PRIu64"): ",
                 _asl_level_string(level), file, line, function, thread);
         vfprintf(stderr, fmt, args2);
+        va_end(args2);
     }
 
     msg = asl_new(ASL_TYPE_MSG);

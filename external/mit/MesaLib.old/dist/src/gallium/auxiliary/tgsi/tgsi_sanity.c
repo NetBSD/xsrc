@@ -58,11 +58,12 @@ struct sanity_check_ctx
    uint errors;
    uint warnings;
    uint implied_array_size;
+   uint implied_out_array_size;
 
    boolean print;
 };
 
-static INLINE unsigned
+static inline unsigned
 scan_register_key(const scan_register *reg)
 {
    unsigned key = reg->file;
@@ -255,7 +256,6 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "SAMP",
    "ADDR",
    "IMM",
-   "PRED",
    "SV",
    "RES"
 };
@@ -313,23 +313,25 @@ iter_instruction(
    uint i;
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
-      if (ctx->index_of_END != ~0) {
+      if (ctx->index_of_END != ~0u) {
          report_error( ctx, "Too many END instructions" );
       }
       ctx->index_of_END = ctx->num_instructions;
    }
 
    info = tgsi_get_opcode_info( inst->Instruction.Opcode );
-   if (info == NULL) {
+   if (!info) {
       report_error( ctx, "(%u): Invalid instruction opcode", inst->Instruction.Opcode );
       return TRUE;
    }
 
    if (info->num_dst != inst->Instruction.NumDstRegs) {
-      report_error( ctx, "%s: Invalid number of destination operands, should be %u", info->mnemonic, info->num_dst );
+      report_error( ctx, "%s: Invalid number of destination operands, should be %u",
+                    tgsi_get_opcode_name(inst->Instruction.Opcode), info->num_dst );
    }
    if (info->num_src != inst->Instruction.NumSrcRegs) {
-      report_error( ctx, "%s: Invalid number of source operands, should be %u", info->mnemonic, info->num_src );
+      report_error( ctx, "%s: Invalid number of source operands, should be %u",
+                    tgsi_get_opcode_name(inst->Instruction.Opcode), info->num_src );
    }
 
    /* Check destination and source registers' validity.
@@ -406,12 +408,26 @@ iter_declaration(
    if (!check_file_name( ctx, file ))
       return TRUE;
    for (i = decl->Range.First; i <= decl->Range.Last; i++) {
-      /* declared TGSI_FILE_INPUT's for geometry processor
+      /* declared TGSI_FILE_INPUT's for geometry and tessellation
        * have an implied second dimension */
-      if (file == TGSI_FILE_INPUT &&
-          ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+      uint processor = ctx->iter.processor.Processor;
+      uint patch = decl->Semantic.Name == TGSI_SEMANTIC_PATCH ||
+         decl->Semantic.Name == TGSI_SEMANTIC_TESSOUTER ||
+         decl->Semantic.Name == TGSI_SEMANTIC_TESSINNER;
+      if (file == TGSI_FILE_INPUT && !patch && (
+                processor == PIPE_SHADER_GEOMETRY ||
+                processor == PIPE_SHADER_TESS_CTRL ||
+                processor == PIPE_SHADER_TESS_EVAL)) {
          uint vert;
          for (vert = 0; vert < ctx->implied_array_size; ++vert) {
+            scan_register *reg = MALLOC(sizeof(scan_register));
+            fill_scan_register2d(reg, file, i, vert);
+            check_and_declare(ctx, reg);
+         }
+      } else if (file == TGSI_FILE_OUTPUT && !patch &&
+                 processor == PIPE_SHADER_TESS_CTRL) {
+         uint vert;
+         for (vert = 0; vert < ctx->implied_out_array_size; ++vert) {
             scan_register *reg = MALLOC(sizeof(scan_register));
             fill_scan_register2d(reg, file, i, vert);
             check_and_declare(ctx, reg);
@@ -470,10 +486,23 @@ iter_property(
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
 
-   if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY &&
+   if (iter->processor.Processor == PIPE_SHADER_GEOMETRY &&
        prop->Property.PropertyName == TGSI_PROPERTY_GS_INPUT_PRIM) {
       ctx->implied_array_size = u_vertices_per_prim(prop->u[0].Data);
    }
+   if (iter->processor.Processor == PIPE_SHADER_TESS_CTRL &&
+       prop->Property.PropertyName == TGSI_PROPERTY_TCS_VERTICES_OUT)
+      ctx->implied_out_array_size = prop->u[0].Data;
+   return TRUE;
+}
+
+static boolean
+prolog(struct tgsi_iterate_context *iter)
+{
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
+   if (iter->processor.Processor == PIPE_SHADER_TESS_CTRL ||
+       iter->processor.Processor == PIPE_SHADER_TESS_EVAL)
+      ctx->implied_array_size = 32;
    return TRUE;
 }
 
@@ -485,7 +514,7 @@ epilog(
 
    /* There must be an END instruction somewhere.
     */
-   if (ctx->index_of_END == ~0) {
+   if (ctx->index_of_END == ~0u) {
       report_error( ctx, "Missing END instruction" );
    }
 
@@ -531,8 +560,9 @@ tgsi_sanity_check(
    const struct tgsi_token *tokens )
 {
    struct sanity_check_ctx ctx;
+   boolean retval;
 
-   ctx.iter.prolog = NULL;
+   ctx.iter.prolog = prolog;
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
    ctx.iter.iterate_immediate = iter_immediate;
@@ -552,11 +582,12 @@ tgsi_sanity_check(
    ctx.implied_array_size = 0;
    ctx.print = debug_get_option_print_sanity();
 
-   if (!tgsi_iterate_shader( tokens, &ctx.iter ))
-      return FALSE;
-
+   retval = tgsi_iterate_shader( tokens, &ctx.iter );
    regs_hash_destroy(ctx.regs_decl);
    regs_hash_destroy(ctx.regs_used);
    regs_hash_destroy(ctx.regs_ind_used);
+   if (retval == FALSE)
+      return FALSE;
+
    return ctx.errors == 0;
 }

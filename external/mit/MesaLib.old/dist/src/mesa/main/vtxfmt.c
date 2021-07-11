@@ -34,7 +34,7 @@
 #include "eval.h"
 #include "dlist.h"
 #include "main/dispatch.h"
-#include "vbo/vbo_context.h"
+#include "vbo/vbo.h"
 
 
 /**
@@ -205,6 +205,23 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_VertexAttribP2uiv(tab, vfmt->VertexAttribP2uiv);
       SET_VertexAttribP3uiv(tab, vfmt->VertexAttribP3uiv);
       SET_VertexAttribP4uiv(tab, vfmt->VertexAttribP4uiv);
+
+      /* GL_ARB_bindless_texture */
+      SET_VertexAttribL1ui64ARB(tab, vfmt->VertexAttribL1ui64ARB);
+      SET_VertexAttribL1ui64vARB(tab, vfmt->VertexAttribL1ui64vARB);
+   }
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      /* GL_ARB_vertex_attrib_64bit */
+      SET_VertexAttribL1d(tab, vfmt->VertexAttribL1d);
+      SET_VertexAttribL2d(tab, vfmt->VertexAttribL2d);
+      SET_VertexAttribL3d(tab, vfmt->VertexAttribL3d);
+      SET_VertexAttribL4d(tab, vfmt->VertexAttribL4d);
+
+      SET_VertexAttribL1dv(tab, vfmt->VertexAttribL1dv);
+      SET_VertexAttribL2dv(tab, vfmt->VertexAttribL2dv);
+      SET_VertexAttribL3dv(tab, vfmt->VertexAttribL3dv);
+      SET_VertexAttribL4dv(tab, vfmt->VertexAttribL4dv);
    }
 }
 
@@ -241,8 +258,7 @@ _mesa_install_save_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 void
 _mesa_initialize_vbo_vtxfmt(struct gl_context *ctx)
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   _mesa_install_exec_vtxfmt(ctx, &exec->vtxfmt);
+   _vbo_install_exec_vtxfmt(ctx);
    if (ctx->API == API_OPENGL_COMPAT) {
       _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
    }

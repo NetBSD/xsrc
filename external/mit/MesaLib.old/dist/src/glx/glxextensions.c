@@ -61,49 +61,111 @@ struct extension_info
     */
    unsigned char version_major;
    unsigned char version_minor;
+
+   /**
+    * The client (i.e., libGL) supports this extension.
+    *
+    * Except during bring up, all extensions should have this set to Y.  There
+    * are a few cases of extensions that have partial (or speculative)
+    * support, but these are rare.  There also shouldn't be any new ones
+    * added.
+    *
+    * Generally, extensions require server support and ::client_support to be
+    * enabled.  If the display is capable of direct rendering,
+    * ::direct_support is also required.
+    *
+    * \sa ::client_only
+    */
    unsigned char client_support;
+
+   /**
+    * The direct-renderer (e.g., i965_dri.so) supports this extension.
+    *
+    * For cases where all of the infrastructure to support the extension is a
+    * required part of the loader/driver interface, this can default to Y.
+    * For most cases, extended functionality, usually in the form of DRI2
+    * extensions, is necessary to support the extension.  The loader will set
+    * the flag true if all the requirements are met.
+    *
+    * If the display is capable of direct rendering, ::direct_support is
+    * required for the extension to be enabled.
+    */
    unsigned char direct_support;
-   unsigned char client_only;        /** Is the extension client-side only? */
-   unsigned char direct_only;        /** Is the extension for direct
-				      * contexts only?
-				      */
+
+   /**
+    * The extension depends only on client support.
+    *
+    * This is for extensions like GLX_ARB_get_proc_address that are contained
+    * entirely in the client library.  There is no dependency on the server or
+    * the direct-renderer.
+    *
+    * These extensions will be enabled if ::client_support is set.
+    *
+    * \note
+    * An extension \b cannot be both client-only and direct-only because being
+    * direct-only implies a dependency on the direct renderer.
+    *
+    * \sa ::client_support, ::direct_only
+    */
+   unsigned char client_only;
+
+   /**
+    * The extension only functions with direct-rendering contexts
+    *
+    * The extension has no GLX protocol, and, therefore, no explicit
+    * dependency on the server.  The functionality is contained entirely in
+    * the client library and the direct renderer.  A few of the swap-related
+    * extensions are intended to behave this way.
+    *
+    * These extensions will be enabled if both ::client_support and
+    * ::direct_support are set.
+    *
+    * \note
+    * An extension \b cannot be both client-only and direct-only because being
+    * client-only implies that all functionality is outside the
+    * direct-renderer.
+    *
+    * \sa ::direct_support, ::client_only
+    */
+   unsigned char direct_only;
 };
 
 /* *INDENT-OFF* */
 static const struct extension_info known_glx_extensions[] = {
+   { GLX(ARB_context_flush_control),   VER(0,0), Y, N, N, N },
    { GLX(ARB_create_context),          VER(0,0), Y, N, N, N },
+   { GLX(ARB_create_context_no_error), VER(1,4), Y, N, N, N },
    { GLX(ARB_create_context_profile),  VER(0,0), Y, N, N, N },
    { GLX(ARB_create_context_robustness), VER(0,0), Y, N, N, N },
    { GLX(ARB_fbconfig_float),          VER(0,0), Y, Y, N, N },
    { GLX(ARB_framebuffer_sRGB),        VER(0,0), Y, Y, N, N },
    { GLX(ARB_get_proc_address),        VER(1,4), Y, N, Y, N },
    { GLX(ARB_multisample),             VER(1,4), Y, Y, N, N },
-   { GLX(ATI_pixel_format_float),      VER(0,0), N, N, N, N },
-   { GLX(EXT_import_context),          VER(0,0), Y, Y, N, N },
-   { GLX(EXT_visual_info),             VER(0,0), Y, Y, N, N },
-   { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
+   { GLX(EXT_buffer_age),              VER(0,0), Y, N, N, Y },
+   { GLX(EXT_create_context_es2_profile), VER(0,0), Y, N, N, N },
+   { GLX(EXT_create_context_es_profile), VER(0,0), Y, N, N, N },
    { GLX(EXT_fbconfig_packed_float),   VER(0,0), Y, Y, N, N },
    { GLX(EXT_framebuffer_sRGB),        VER(0,0), Y, Y, N, N },
-   { GLX(EXT_create_context_es2_profile), VER(0,0), Y, N, N, Y },
+   { GLX(EXT_import_context),          VER(0,0), Y, Y, N, N },
+   { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
+   { GLX(EXT_visual_info),             VER(0,0), Y, Y, N, N },
+   { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
+   { GLX(ATI_pixel_format_float),      VER(0,0), N, N, N, N },
+   { GLX(INTEL_swap_event),            VER(0,0), Y, N, N, N },
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
-   { GLX(MESA_multithread_makecurrent),VER(0,0), Y, N, Y, N },
+   { GLX(MESA_multithread_makecurrent),VER(0,0), Y, N, N, Y },
    { GLX(MESA_query_renderer),         VER(0,0), Y, N, N, Y },
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
    { GLX(OML_swap_method),             VER(0,0), Y, Y, N, N },
    { GLX(OML_sync_control),            VER(0,0), Y, N, N, Y },
-   { GLX(SGI_make_current_read),       VER(1,3), Y, N, N, N },
-   { GLX(SGI_swap_control),            VER(0,0), Y, N, N, N },
-   { GLX(SGI_video_sync),              VER(0,0), Y, N, N, Y },
    { GLX(SGIS_multisample),            VER(0,0), Y, Y, N, N },
    { GLX(SGIX_fbconfig),               VER(1,3), Y, Y, N, N },
    { GLX(SGIX_pbuffer),                VER(1,3), Y, Y, N, N },
-   { GLX(SGIX_swap_barrier),           VER(0,0), N, N, N, N },
-   { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
-   { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
-   { GLX(INTEL_swap_event),            VER(0,0), Y, N, N, N },
-   { GLX(EXT_buffer_age),              VER(0,0), Y, N, N, Y },
+   { GLX(SGI_make_current_read),       VER(1,3), Y, N, N, N },
+   { GLX(SGI_swap_control),            VER(0,0), Y, N, N, N },
+   { GLX(SGI_video_sync),              VER(0,0), Y, N, N, Y },
    { NULL }
 };
 
@@ -128,6 +190,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(ARB_texture_env_combine),        VER(1,3), Y, N, N, N },
    { GL(ARB_texture_env_crossbar),       VER(1,4), Y, N, N, N },
    { GL(ARB_texture_env_dot3),           VER(1,3), Y, N, N, N },
+   { GL(ARB_texture_filter_anisotropic), VER(0,0), Y, N, N, N },
    { GL(ARB_texture_mirrored_repeat),    VER(1,4), Y, N, N, N },
    { GL(ARB_texture_non_power_of_two),   VER(1,5), Y, N, N, N },
    { GL(ARB_texture_rectangle),          VER(0,0), Y, N, N, N },
@@ -180,6 +243,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(EXT_texture_env_combine),        VER(1,3), Y, N, N, N },
    { GL(EXT_texture_env_dot3),           VER(0,0), Y, N, N, N },
    { GL(EXT_texture_filter_anisotropic), VER(0,0), Y, N, N, N },
+   { GL(EXT_texture_integer),            VER(0,0), Y, N, N, N },
    { GL(EXT_texture_lod),                VER(1,2), Y, N, N, N },
    { GL(EXT_texture_lod_bias),           VER(1,4), Y, N, N, N },
    { GL(EXT_texture_mirror_clamp),       VER(0,0), Y, N, N, N },
@@ -625,16 +689,6 @@ __glXCalculateUsableExtensions(struct glx_screen * psc,
          usable[i] = (client_glx_support[i] & client_glx_only[i])
             | (client_glx_support[i] & server_support[i]);
       }
-   }
-
-   /* This hack is necessary because GLX_ARB_create_context_profile depends on
-    * server support, but GLX_EXT_create_context_es2_profile is direct-only.
-    * Without this hack, it would be possible to advertise
-    * GLX_EXT_create_context_es2_profile without
-    * GLX_ARB_create_context_profile.  That would be a problem.
-    */
-   if (!IS_SET(server_support, ARB_create_context_profile_bit)) {
-      CLR_BIT(usable, EXT_create_context_es2_profile_bit);
    }
 
    psc->effectiveGLXexts = __glXGetStringFromTable(known_glx_extensions,

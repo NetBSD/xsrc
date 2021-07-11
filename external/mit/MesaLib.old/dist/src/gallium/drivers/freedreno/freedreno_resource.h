@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -29,15 +27,31 @@
 #ifndef FREEDRENO_RESOURCE_H_
 #define FREEDRENO_RESOURCE_H_
 
-#include "util/u_transfer.h"
+#include "util/list.h"
+#include "util/u_range.h"
+#include "util/u_transfer_helper.h"
 
+#include "freedreno_batch.h"
 #include "freedreno_util.h"
 
-/* for mipmap, cubemap, etc, each level is represented by a slice.
- * Currently all slices are part of same bo (just different offsets),
- * this is at least how it needs to be for cubemaps, although mipmap
- * can be different bo's (although, not sure if there is a strong
- * advantage to doing that)
+/* Texture Layout on a3xx:
+ *
+ * Each mipmap-level contains all of it's layers (ie. all cubmap
+ * faces, all 1d/2d array elements, etc).  The texture sampler is
+ * programmed with the start address of each mipmap level, and hw
+ * derives the layer offset within the level.
+ *
+ * Texture Layout on a4xx+:
+ *
+ * For cubemap and 2d array, each layer contains all of it's mipmap
+ * levels (layer_first layout).
+ *
+ * 3d textures are layed out as on a3xx, but unknown about 3d-array
+ * textures.
+ *
+ * In either case, the slice represents the per-miplevel information,
+ * but in layer_first layout it only includes the first layer, and
+ * an additional offset of (rsc->layer_size * layer) must be added.
  */
 struct fd_resource_slice {
 	uint32_t offset;         /* offset of first layer in slice */
@@ -46,28 +60,162 @@ struct fd_resource_slice {
 };
 
 struct fd_resource {
-	struct u_resource base;
+	struct pipe_resource base;
 	struct fd_bo *bo;
 	uint32_t cpp;
+	enum pipe_format internal_format;
+	bool layer_first;        /* see above description */
+	uint32_t layer_size;
 	struct fd_resource_slice slices[MAX_MIP_LEVELS];
-	uint32_t timestamp;
-	bool dirty;
+	/* buffer range that has been initialized */
+	struct util_range valid_buffer_range;
+	bool valid;
+	struct renderonly_scanout *scanout;
+
+	/* reference to the resource holding stencil data for a z32_s8 texture */
+	/* TODO rename to secondary or auxiliary? */
+	struct fd_resource *stencil;
+
+	uint32_t offset;
+	uint32_t ubwc_offset;
+	uint32_t ubwc_pitch;
+	uint32_t ubwc_size;
+
+	/* bitmask of in-flight batches which reference this resource.  Note
+	 * that the batch doesn't hold reference to resources (but instead
+	 * the fd_ringbuffer holds refs to the underlying fd_bo), but in case
+	 * the resource is destroyed we need to clean up the batch's weak
+	 * references to us.
+	 */
+	uint32_t batch_mask;
+
+	/* reference to batch that writes this resource: */
+	struct fd_batch *write_batch;
+
+	/* Set of batches whose batch-cache key references this resource.
+	 * We need to track this to know which batch-cache entries to
+	 * invalidate if, for example, the resource is invalidated or
+	 * shadowed.
+	 */
+	uint32_t bc_batch_mask;
+
+	/* Sequence # incremented each time bo changes: */
+	uint16_t seqno;
+
+	unsigned tile_mode : 2;
+
+	/*
+	 * LRZ
+	 */
+	bool lrz_valid : 1;
+	uint16_t lrz_width;  // for lrz clear, does this differ from lrz_pitch?
+	uint16_t lrz_height;
+	uint16_t lrz_pitch;
+	struct fd_bo *lrz;
 };
 
-static INLINE struct fd_resource *
+static inline struct fd_resource *
 fd_resource(struct pipe_resource *ptex)
 {
 	return (struct fd_resource *)ptex;
 }
 
-static INLINE struct fd_resource_slice *
+static inline bool
+pending(struct fd_resource *rsc, bool write)
+{
+	/* if we have a pending GPU write, we are busy in any case: */
+	if (rsc->write_batch)
+		return true;
+
+	/* if CPU wants to write, but we are pending a GPU read, we are busy: */
+	if (write && rsc->batch_mask)
+		return true;
+
+	if (rsc->stencil && pending(rsc->stencil, write))
+		return true;
+
+	return false;
+}
+
+struct fd_transfer {
+	struct pipe_transfer base;
+	struct pipe_resource *staging_prsc;
+	struct pipe_box staging_box;
+};
+
+static inline struct fd_transfer *
+fd_transfer(struct pipe_transfer *ptrans)
+{
+	return (struct fd_transfer *)ptrans;
+}
+
+static inline struct fd_resource_slice *
 fd_resource_slice(struct fd_resource *rsc, unsigned level)
 {
-	assert(level <= rsc->base.b.last_level);
+	assert(level <= rsc->base.last_level);
 	return &rsc->slices[level];
+}
+
+/* get offset for specified mipmap level and texture/array layer */
+static inline uint32_t
+fd_resource_offset(struct fd_resource *rsc, unsigned level, unsigned layer)
+{
+	struct fd_resource_slice *slice = fd_resource_slice(rsc, level);
+	unsigned offset;
+	if (rsc->layer_first) {
+		offset = slice->offset + (rsc->layer_size * layer);
+	} else {
+		offset = slice->offset + (slice->size0 * layer);
+	}
+	debug_assert(offset < fd_bo_size(rsc->bo));
+	return offset + rsc->offset;
+}
+
+static inline uint32_t
+fd_resource_ubwc_offset(struct fd_resource *rsc, unsigned level, unsigned layer)
+{
+	/* for now this doesn't do anything clever, but when UBWC is enabled
+	 * for multi layer/level images, it will.
+	 */
+	if (rsc->ubwc_size) {
+		debug_assert(level == 0);
+		debug_assert(layer == 0);
+	}
+	return rsc->ubwc_offset;
+}
+
+/* This might be a5xx specific, but higher mipmap levels are always linear: */
+static inline bool
+fd_resource_level_linear(struct pipe_resource *prsc, int level)
+{
+	unsigned w = u_minify(prsc->width0, level);
+	if (w < 16)
+		return true;
+	return false;
+}
+
+static inline bool
+fd_resource_ubwc_enabled(struct fd_resource *rsc, int level)
+{
+	return rsc->ubwc_size && rsc->tile_mode &&
+			!fd_resource_level_linear(&rsc->base, level);
+}
+
+/* access # of samples, with 0 normalized to 1 (which is what we care about
+ * most of the time)
+ */
+static inline unsigned
+fd_resource_nr_samples(struct pipe_resource *prsc)
+{
+	return MAX2(1, prsc->nr_samples);
 }
 
 void fd_resource_screen_init(struct pipe_screen *pscreen);
 void fd_resource_context_init(struct pipe_context *pctx);
+
+uint32_t fd_setup_slices(struct fd_resource *rsc);
+void fd_resource_resize(struct pipe_resource *prsc, uint32_t sz);
+
+bool fd_render_condition_check(struct pipe_context *pctx);
 
 #endif /* FREEDRENO_RESOURCE_H_ */

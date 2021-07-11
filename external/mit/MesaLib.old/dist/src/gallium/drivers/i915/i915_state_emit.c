@@ -110,7 +110,7 @@ static void
 emit_invariant(struct i915_context *i915)
 {
    i915_winsys_batchbuffer_write(i915->batch, invariant_state,
-                                 Elements(invariant_state)*sizeof(uint32_t));
+                                 ARRAY_SIZE(invariant_state)*sizeof(uint32_t));
 }
 
 static void
@@ -326,11 +326,13 @@ emit_map(struct i915_context *i915)
          if (enabled & (1 << unit)) {
             struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
             struct i915_winsys_buffer *buf = texture->buffer;
+            unsigned offset = i915->current.texbuffer[unit][2];
+
             assert(buf);
 
             count++;
 
-            OUT_RELOC(buf, I915_USAGE_SAMPLER, 0);
+            OUT_RELOC(buf, I915_USAGE_SAMPLER, offset);
             OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
             OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
          }
@@ -493,7 +495,7 @@ i915_validate_state(struct i915_context *i915, unsigned *batch_space)
 
    i915->num_validation_buffers = 0;
    if (i915->hardware_dirty & I915_HW_INVARIANT)
-      *batch_space = Elements(invariant_state);
+      *batch_space = ARRAY_SIZE(invariant_state);
    else
       *batch_space = 0;
 

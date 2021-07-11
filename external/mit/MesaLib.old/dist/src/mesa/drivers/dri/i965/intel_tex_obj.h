@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,19 +16,21 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #ifndef _INTEL_TEX_OBJ_H
 #define _INTEL_TEX_OBJ_H
 
 #include "swrast/s_context.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct intel_texture_object
 {
@@ -56,10 +57,12 @@ struct intel_texture_object
    bool needs_validate;
 
    /* Mesa format for the validated texture object. For non-views this
-    * will always be the same as mt->format. For views, it may differ
-    * since the mt is shared across views with differing formats.
+    * will always be the same as texObj->Image[0][0].TexFormat. For views, it
+    * may differ since the mt is shared across views with differing formats.
     */
    mesa_format _Format;
+
+   const struct intel_image_format *planar_format;
 };
 
 
@@ -89,5 +92,9 @@ intel_texture_image(struct gl_texture_image *img)
 {
    return (struct intel_texture_image *) img;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INTEL_TEX_OBJ_H */

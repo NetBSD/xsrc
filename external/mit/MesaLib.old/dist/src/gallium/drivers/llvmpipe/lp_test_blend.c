@@ -95,12 +95,12 @@ write_tsv_row(FILE *fp,
 
    fprintf(fp,
            "%s\t%s\t%s\t%s\t%s\t%s\n",
-           util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
-           util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
-           util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
-           util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
-           util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
-           util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
+           util_str_blend_func(blend->rt[0].rgb_func, TRUE),
+           util_str_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           util_str_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           util_str_blend_func(blend->rt[0].alpha_func, TRUE),
+           util_str_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           util_str_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fflush(fp);
 }
@@ -119,12 +119,12 @@ dump_blend_type(FILE *fp,
 
    fprintf(fp,
            " %s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-           "rgb_func",         util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
-           "rgb_src_factor",   util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
-           "rgb_dst_factor",   util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
-           "alpha_func",       util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
-           "alpha_src_factor", util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
-           "alpha_dst_factor", util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
+           "rgb_func",         util_str_blend_func(blend->rt[0].rgb_func, TRUE),
+           "rgb_src_factor",   util_str_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           "rgb_dst_factor",   util_str_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           "alpha_func",       util_str_blend_func(blend->rt[0].alpha_func, TRUE),
+           "alpha_src_factor", util_str_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           "alpha_dst_factor", util_str_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fprintf(fp, " ...\n");
    fflush(fp);
@@ -184,7 +184,7 @@ add_blend_test(struct gallivm_state *gallivm,
 
    LLVMBuildStore(builder, res, res_ptr);
 
-   LLVMBuildRetVoid(builder);;
+   LLVMBuildRetVoid(builder);
 
    gallivm_verify_function(gallivm, func);
 
@@ -437,6 +437,7 @@ test_one(unsigned verbose,
          const struct pipe_blend_state *blend,
          struct lp_type type)
 {
+   LLVMContextRef context;
    struct gallivm_state *gallivm;
    LLVMValueRef func = NULL;
    blend_test_ptr_t blend_test_ptr;
@@ -450,7 +451,8 @@ test_one(unsigned verbose,
    if(verbose >= 1)
       dump_blend_type(stdout, blend, type);
 
-   gallivm = gallivm_create("test_module");
+   context = LLVMContextCreate();
+   gallivm = gallivm_create("test_module", context);
 
    func = add_blend_test(gallivm, blend, type);
 
@@ -579,6 +581,7 @@ test_one(unsigned verbose,
       write_tsv_row(fp, blend, type, cycles_avg, success);
 
    gallivm_destroy(gallivm);
+   LLVMContextDispose(context);
 
    return success;
 }
@@ -625,9 +628,9 @@ const struct lp_type blend_types[] = {
 };
 
 
-const unsigned num_funcs = sizeof(blend_funcs)/sizeof(blend_funcs[0]);
-const unsigned num_factors = sizeof(blend_factors)/sizeof(blend_factors[0]);
-const unsigned num_types = sizeof(blend_types)/sizeof(blend_types[0]);
+const unsigned num_funcs = ARRAY_SIZE(blend_funcs);
+const unsigned num_factors = ARRAY_SIZE(blend_factors);
+const unsigned num_types = ARRAY_SIZE(blend_types);
 
 
 boolean

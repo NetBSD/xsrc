@@ -53,13 +53,12 @@ struct nv50_program {
    struct pipe_shader_state pipe;
 
    ubyte type;
-   boolean translated;
+   bool translated;
 
    uint32_t *code;
    unsigned code_size;
    unsigned code_base;
    uint32_t *immd;
-   unsigned immd_size;
    unsigned parm_size; /* size limit of uniform buffer */
    uint32_t tls_space; /* required local memory per thread */
 
@@ -78,6 +77,10 @@ struct nv50_program {
       ubyte edgeflag;
       ubyte clpd[2];     /* output slot of clip distance[i]'s 1st component */
       ubyte clpd_nr;
+      bool need_vertex_id;
+      uint32_t clip_mode;
+      uint8_t clip_enable; /* mask of defined clip planes */
+      uint8_t cull_enable; /* mask of defined cull distances */
    } vp;
 
    struct {
@@ -85,7 +88,8 @@ struct nv50_program {
       uint32_t interp; /* 0x1988 */
       uint32_t colors; /* 0x1904 */
       uint8_t has_samplemask;
-      uint8_t sample_interp;
+      uint8_t force_persample_interp;
+      uint8_t alphatest;
    } fp;
 
    struct {
@@ -97,15 +101,26 @@ struct nv50_program {
       ubyte viewportid; /* hw value of viewport index output */
    } gp;
 
+   struct {
+      uint32_t lmem_size; /* local memory (TGSI PRIVATE resource) size */
+      uint32_t smem_size; /* shared memory (TGSI LOCAL resource) size */
+      void *syms;
+      unsigned num_syms;
+   } cp;
+
+   bool mul_zero_wins;
+
    void *fixups; /* relocation records */
+   void *interps; /* interpolation records */
 
    struct nouveau_heap *mem;
 
    struct nv50_stream_output_state *so;
 };
 
-boolean nv50_program_translate(struct nv50_program *, uint16_t chipset);
-boolean nv50_program_upload_code(struct nv50_context *, struct nv50_program *);
+bool nv50_program_translate(struct nv50_program *, uint16_t chipset,
+                            struct pipe_debug_callback *);
+bool nv50_program_upload_code(struct nv50_context *, struct nv50_program *);
 void nv50_program_destroy(struct nv50_context *, struct nv50_program *);
 
 #endif /* __NV50_PROG_H__ */

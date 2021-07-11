@@ -21,42 +21,103 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# use c99 compiler by default
-ifeq ($(LOCAL_CC),)
 ifeq ($(LOCAL_IS_HOST_MODULE),true)
-LOCAL_CC := $(HOST_CC) -std=c99
-else
-LOCAL_CC := $(TARGET_CC) -std=c99
-endif
+LOCAL_CFLAGS += -D_GNU_SOURCE
 endif
 
 LOCAL_C_INCLUDES += \
+	$(MESA_TOP)/src \
 	$(MESA_TOP)/include
 
-MESA_VERSION=$(shell cat $(MESA_TOP)/VERSION)
-# define ANDROID_VERSION (e.g., 4.0.x => 0x0400)
+MESA_VERSION := $(shell cat $(MESA_TOP)/VERSION)
 LOCAL_CFLAGS += \
+	-Wno-error \
+	-Werror=incompatible-pointer-types \
+	-Wno-unused-parameter \
+	-Wno-pointer-arith \
+	-Wno-missing-field-initializers \
+	-Wno-initializer-overrides \
+	-Wno-mismatched-tags \
 	-DPACKAGE_VERSION=\"$(MESA_VERSION)\" \
-	-DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\" \
-	-DANDROID_VERSION=0x0$(MESA_ANDROID_MAJOR_VERSION)0$(MESA_ANDROID_MINOR_VERSION)
+	-DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\"
 
+# XXX: The following __STDC_*_MACROS defines should not be needed.
+# It's likely due to a bug elsewhere, but let's temporarily add them
+# here to fix the radeonsi build.
 LOCAL_CFLAGS += \
+	-DANDROID_API_LEVEL=$(PLATFORM_SDK_VERSION) \
+	-DENABLE_SHADER_CACHE \
+	-D__STDC_CONSTANT_MACROS \
+	-D__STDC_LIMIT_MACROS \
+	-DHAVE___BUILTIN_EXPECT \
+	-DHAVE___BUILTIN_FFS \
+	-DHAVE___BUILTIN_FFSLL \
+	-DHAVE_DLFCN_H \
+	-DHAVE_FUNC_ATTRIBUTE_FLATTEN \
+	-DHAVE_FUNC_ATTRIBUTE_UNUSED \
+	-DHAVE_FUNC_ATTRIBUTE_FORMAT \
+	-DHAVE_FUNC_ATTRIBUTE_PACKED \
+	-DHAVE_FUNC_ATTRIBUTE_ALIAS \
+	-DHAVE_FUNC_ATTRIBUTE_NORETURN \
+	-DHAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL \
+	-DHAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT \
+	-DHAVE___BUILTIN_CTZ \
+	-DHAVE___BUILTIN_POPCOUNT \
+	-DHAVE___BUILTIN_POPCOUNTLL \
+	-DHAVE___BUILTIN_CLZ \
+	-DHAVE___BUILTIN_CLZLL \
+	-DHAVE___BUILTIN_UNREACHABLE \
 	-DHAVE_PTHREAD=1 \
+	-DHAVE_DLADDR \
+	-DHAVE_DL_ITERATE_PHDR \
+	-DHAVE_LINUX_FUTEX_H \
+	-DHAVE_ENDIAN_H \
+	-DHAVE_ZLIB \
+	-DMAJOR_IN_SYSMACROS \
+	-DVK_USE_PLATFORM_ANDROID_KHR \
 	-fvisibility=hidden \
+	-fno-math-errno \
+	-fno-trapping-math \
 	-Wno-sign-compare
+
+LOCAL_CPPFLAGS += \
+	-D__STDC_CONSTANT_MACROS \
+	-D__STDC_FORMAT_MACROS \
+	-D__STDC_LIMIT_MACROS \
+	-Wno-error=non-virtual-dtor \
+	-Wno-non-virtual-dtor
+
+# mesa requires at least c99 compiler
+LOCAL_CONLYFLAGS += \
+	-std=c99
+
+# c11 timespec_get is part of bionic as well
+# https://android-review.googlesource.com/c/718518
+# This means releases from P and earlier won't need this
+ifeq ($(filter 5 6 7 8 9, $(MESA_ANDROID_MAJOR_VERSION)),)
+LOCAL_CFLAGS += -DHAVE_TIMESPEC_GET
+endif
 
 ifeq ($(strip $(MESA_ENABLE_ASM)),true)
 ifeq ($(TARGET_ARCH),x86)
 LOCAL_CFLAGS += \
-	-DUSE_X86_ASM \
-	-DHAVE_DLOPEN \
+	-DUSE_X86_ASM
 
 endif
 endif
+ifeq ($(ARCH_ARM_HAVE_NEON),true)
+LOCAL_CFLAGS_arm += -DUSE_ARM_ASM
+endif
+LOCAL_CFLAGS_arm64 += -DUSE_AARCH64_ASM
 
-LOCAL_CPPFLAGS += \
-	-Wno-error=non-virtual-dtor \
-	-Wno-non-virtual-dtor
+ifneq ($(LOCAL_IS_HOST_MODULE),true)
+LOCAL_CFLAGS += -DHAVE_LIBDRM
+LOCAL_SHARED_LIBRARIES += libdrm
+endif
+
+LOCAL_CFLAGS_32 += -DDEFAULT_DRIVER_DIR=\"/vendor/lib/$(MESA_DRI_MODULE_REL_PATH)\"
+LOCAL_CFLAGS_64 += -DDEFAULT_DRIVER_DIR=\"/vendor/lib64/$(MESA_DRI_MODULE_REL_PATH)\"
+LOCAL_PROPRIETARY_MODULE := true
 
 # uncomment to keep the debug symbols
 #LOCAL_STRIP_MODULE := false
@@ -64,3 +125,6 @@ LOCAL_CPPFLAGS += \
 ifeq ($(strip $(LOCAL_MODULE_TAGS)),)
 LOCAL_MODULE_TAGS := optional
 endif
+
+# Quiet down the build system and remove any .h files from the sources
+LOCAL_SRC_FILES := $(patsubst %.h, , $(LOCAL_SRC_FILES))

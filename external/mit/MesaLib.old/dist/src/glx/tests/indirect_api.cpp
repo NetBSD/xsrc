@@ -45,11 +45,9 @@
 
 #include <gtest/gtest.h>
 #include "main/glheader.h"
-extern "C" {
 #include "../indirect_init.h"
 #include "glapi/glapi.h"
 #include "../../mesa/main/dispatch.h"
-}
 
 static const void *nil = 0;
 
@@ -706,6 +704,8 @@ void __indirect_glBlitFramebuffer(void) { }
 void __indirect_glFramebufferTextureLayer(void) { }
 }
 /*@}*/
+
+#ifndef GLX_USE_APPLEGL
 
 class IndirectAPI : public ::testing::Test {
 public:
@@ -1520,3 +1520,5 @@ TEST_F(IndirectAPI, EXT_texture_array)
 {
    EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTextureLayer, table[_glapi_get_proc_offset("glFramebufferTextureLayerEXT")]);
 }
+
+#endif

@@ -122,16 +122,16 @@ namespace clover {
       clReleaseDevice,
       clCreateImage,
       clCreateProgramWithBuiltInKernels,
-      NULL, // clCompileProgram
-      NULL, // clLinkProgram
+      clCompileProgram,
+      clLinkProgram,
       clUnloadPlatformCompiler,
-      NULL, // clGetKernelArgInfo
-      NULL, // clEnqueueFillBuffer
-      NULL, // clEnqueueFillImage
-      NULL, // clEnqueueMigrateMemObjects
+      clGetKernelArgInfo,
+      clEnqueueFillBuffer,
+      clEnqueueFillImage,
+      clEnqueueMigrateMemObjects,
       clEnqueueMarkerWithWaitList,
       clEnqueueBarrierWithWaitList,
-      NULL, // clGetExtensionFunctionAddressForPlatform
+      GetExtensionFunctionAddressForPlatform,
       NULL, // clCreateFromGLTexture
       NULL, // clGetDeviceIDsFromD3D11KHR
       NULL, // clCreateFromD3D11BufferKHR
@@ -142,6 +142,33 @@ namespace clover {
       NULL, // clEnqueueReleaseD3D11ObjectsKHR
       NULL, // clGetDeviceIDsFromDX9MediaAdapterKHR
       NULL, // clEnqueueAcquireDX9MediaSurfacesKHR
-      NULL // clEnqueueReleaseDX9MediaSurfacesKHR
+      NULL, // clEnqueueReleaseDX9MediaSurfacesKHR
+      NULL, // clCreateFromEGLImageKHR
+      NULL, // clEnqueueAcquireEGLObjectsKHR
+      NULL, // clEnqueueReleaseEGLObjectsKHR
+      NULL, // clCreateEventFromEGLSyncKHR
+      NULL, // clCreateCommandQueueWithProperties
+      NULL, // clCreatePipe
+      NULL, // clGetPipeInfo
+      NULL, // clSVMAlloc
+      NULL, // clSVMFree
+      NULL, // clEnqueueSVMFree
+      NULL, // clEnqueueSVMMemcpy
+      NULL, // clEnqueueSVMMemFill
+      NULL, // clEnqueueSVMMap
+      NULL, // clEnqueueSVMUnmap
+      NULL, // clCreateSamplerWithProperties
+      NULL, // clSetKernelArgSVMPointer
+      NULL, // clSetKernelExecInfo
+      NULL, // clGetKernelSubGroupInfoKHR
+      NULL, // clCloneKernel
+      NULL, // clCreateProgramWithIL
+      NULL, // clEnqueueSVMMigrateMem
+      NULL, // clGetDeviceAndHostTimer
+      NULL, // clGetHostTimer
+      NULL, // clGetKernelSubGroupInfo
+      NULL, // clSetDefaultDeviceCommandQueue
+      NULL, // clSetProgramReleaseCallback
+      NULL, // clSetProgramSpecializationConstant
    };
 }

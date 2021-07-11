@@ -32,6 +32,7 @@
 #define GLX_GLXEXT_PROTOTYPES
 
 #include <string.h>
+#include "pipe/p_compiler.h"
 #include "GL/glx.h"
 #include "glapi/glapi.h"
 
@@ -42,7 +43,7 @@ struct name_address_pair {
 };
 
 
-static struct name_address_pair GLX_functions[] = {
+static const struct name_address_pair GLX_functions[] = {
    /*** GLX_VERSION_1_0 ***/
    { "glXChooseVisual", (__GLXextFuncPtr) glXChooseVisual },
    { "glXCopyContext", (__GLXextFuncPtr) glXCopyContext },
@@ -145,13 +146,6 @@ static struct name_address_pair GLX_functions[] = {
 #if defined(_DM_BUFFER_H_)
    { "glXAssociateDMPbufferSGIX", (__GLXextFuncPtr) glXAssociateDMPbufferSGIX },
 #endif
-
-   /*** GLX_SGIX_swap_group ***/
-   { "glXJoinSwapGroupSGIX", (__GLXextFuncPtr) glXJoinSwapGroupSGIX },
-
-   /*** GLX_SGIX_swap_barrier ***/
-   { "glXBindSwapBarrierSGIX", (__GLXextFuncPtr) glXBindSwapBarrierSGIX },
-   { "glXQueryMaxSwapBarriersSGIX", (__GLXextFuncPtr) glXQueryMaxSwapBarriersSGIX },
 
    /*** GLX_SUN_get_transparent_index ***/
    { "glXGetTransparentIndexSUN", (__GLXextFuncPtr) glXGetTransparentIndexSUN },

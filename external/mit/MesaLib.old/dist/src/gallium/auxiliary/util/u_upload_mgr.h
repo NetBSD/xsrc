@@ -33,23 +33,45 @@
 #define U_UPLOAD_MGR_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 
 struct pipe_context;
 struct pipe_resource;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Create the upload manager.
  *
  * \param pipe          Pipe driver.
  * \param default_size  Minimum size of the upload buffer, in bytes.
- * \param alignment     Alignment of each suballocation in the upload buffer.
  * \param bind          Bitmask of PIPE_BIND_* flags.
+ * \param usage         PIPE_USAGE_*
+ * \param flags         bitmask of PIPE_RESOURCE_FLAG_* flags.
  */
-struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
-                                      unsigned default_size,
-                                      unsigned alignment,
-                                      unsigned bind );
+struct u_upload_mgr *
+u_upload_create(struct pipe_context *pipe, unsigned default_size,
+                unsigned bind, enum pipe_resource_usage usage, unsigned flags);
+
+/**
+ * Create the default uploader for pipe_context. Only pipe_context::screen
+ * needs to be set for this to succeed.
+ */
+struct u_upload_mgr *
+u_upload_create_default(struct pipe_context *pipe);
+
+/**
+ * Create an uploader with identical parameters as another one, but using
+ * the given pipe_context instead.
+ */
+struct u_upload_mgr *
+u_upload_clone(struct pipe_context *pipe, struct u_upload_mgr *upload);
+
+/** Whether to use FLUSH_EXPLICIT with persistent mappings. */
+void
+u_upload_enable_flush_explicit(struct u_upload_mgr *upload);
 
 /**
  * Destroy the upload manager.
@@ -74,16 +96,18 @@ void u_upload_unmap( struct u_upload_mgr *upload );
  * \param upload           Upload manager
  * \param min_out_offset   Minimum offset that should be returned in out_offset.
  * \param size             Size of the allocation.
+ * \param alignment        Alignment of the suballocation within the buffer
  * \param out_offset       Pointer to where the new buffer offset will be returned.
  * \param outbuf           Pointer to where the upload buffer will be returned.
  * \param ptr              Pointer to the allocated memory that is returned.
  */
-enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
-                                unsigned min_out_offset,
-                                unsigned size,
-                                unsigned *out_offset,
-                                struct pipe_resource **outbuf,
-                                void **ptr );
+void u_upload_alloc(struct u_upload_mgr *upload,
+                    unsigned min_out_offset,
+                    unsigned size,
+                    unsigned alignment,
+                    unsigned *out_offset,
+                    struct pipe_resource **outbuf,
+                    void **ptr);
 
 
 /**
@@ -92,29 +116,16 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
  * Same as u_upload_alloc, but in addition to that, it copies "data"
  * to the pointer returned from u_upload_alloc.
  */
-enum pipe_error u_upload_data( struct u_upload_mgr *upload,
-                               unsigned min_out_offset,
-                               unsigned size,
-                               const void *data,
-                               unsigned *out_offset,
-                               struct pipe_resource **outbuf);
+void u_upload_data(struct u_upload_mgr *upload,
+                   unsigned min_out_offset,
+                   unsigned size,
+                   unsigned alignment,
+                   const void *data,
+                   unsigned *out_offset,
+                   struct pipe_resource **outbuf);
 
-
-/**
- * Allocate space in an upload buffer and copy an input buffer to it.
- *
- * Same as u_upload_data, except that the input data comes from a buffer
- * instead of a user pointer.
- */
-enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
-                                 unsigned min_out_offset,
-                                 unsigned offset,
-                                 unsigned size,
-                                 struct pipe_resource *inbuf,
-                                 unsigned *out_offset,
-                                 struct pipe_resource **outbuf);
-
-
-
+#ifdef __cplusplus
+} // extern "C" {
 #endif
 
+#endif

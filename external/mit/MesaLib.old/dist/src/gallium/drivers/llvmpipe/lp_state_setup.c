@@ -28,8 +28,8 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_simple_list.h"
-#include "os/os_time.h"
+#include "util/simple_list.h"
+#include "util/os_time.h"
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_const.h"
@@ -135,8 +135,8 @@ emit_facing_coef(struct gallivm_state *gallivm,
    LLVMValueRef a0_0 = args->facing;
    LLVMValueRef a0_0f = LLVMBuildSIToFP(builder, a0_0, float_type, "");
    LLVMValueRef a0, face_val;
-   const unsigned char swizzles[4] = { PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ZERO,
-                                       PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO };
+   const unsigned char swizzles[4] = { PIPE_SWIZZLE_X, PIPE_SWIZZLE_0,
+                                       PIPE_SWIZZLE_0, PIPE_SWIZZLE_0 };
    /* Our face val is either 1 or 0 so we do
     * face = (val * 2) - 1
     * to make it 1 or -1
@@ -624,8 +624,7 @@ set_noalias(LLVMBuilderRef builder,
    int i;
    for(i = 0; i < nr_args; ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
-         LLVMAddAttribute(LLVMGetParam(function, i),
-            LLVMNoAliasAttribute);
+         lp_add_function_attr(function, i + 1, LP_FUNC_ATTR_NOALIAS);
 }
 
 static void
@@ -723,7 +722,7 @@ generate_setup_variant(struct lp_setup_variant_key *key,
       goto fail;
 
    variant = CALLOC_STRUCT(lp_setup_variant);
-   if (variant == NULL)
+   if (!variant)
       goto fail;
 
    variant->no = setup_no++;
@@ -731,7 +730,7 @@ generate_setup_variant(struct lp_setup_variant_key *key,
    util_snprintf(func_name, sizeof(func_name), "setup_variant_%u",
                  variant->no);
 
-   variant->gallivm = gallivm = gallivm_create(func_name);
+   variant->gallivm = gallivm = gallivm_create(func_name, lp->context);
    if (!variant->gallivm) {
       goto fail;
    }
@@ -760,7 +759,7 @@ generate_setup_variant(struct lp_setup_variant_key *key,
    arg_types[6] = LLVMPointerType(vec4f_type, 0);	/* dady, aligned */
 
    func_type = LLVMFunctionType(LLVMVoidTypeInContext(gallivm->context),
-                                arg_types, Elements(arg_types), 0);
+                                arg_types, ARRAY_SIZE(arg_types), 0);
 
    variant->function = LLVMAddFunction(gallivm->module, func_name, func_type);
    if (!variant->function)
@@ -791,7 +790,7 @@ generate_setup_variant(struct lp_setup_variant_key *key,
                                          variant->function, "entry");
    LLVMPositionBuilderAtEnd(builder, block);
 
-   set_noalias(builder, variant->function, arg_types, Elements(arg_types));
+   set_noalias(builder, variant->function, arg_types, ARRAY_SIZE(arg_types));
    init_args(gallivm, &variant->key, &args);
    emit_tri_coef(gallivm, &variant->key, &args);
 
@@ -848,14 +847,10 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->size = Offset(struct lp_setup_variant_key,
                       inputs[key->num_inputs]);
 
-   key->color_slot  = lp->color_slot [0];
+   key->color_slot = lp->color_slot[0];
    key->bcolor_slot = lp->bcolor_slot[0];
-   key->spec_slot   = lp->color_slot [1];
-   key->bspec_slot  = lp->bcolor_slot[1];
-   assert(key->color_slot  == lp->color_slot [0]);
-   assert(key->bcolor_slot == lp->bcolor_slot[0]);
-   assert(key->spec_slot   == lp->color_slot [1]);
-   assert(key->bspec_slot  == lp->bcolor_slot[1]);
+   key->spec_slot = lp->color_slot[1];
+   key->bspec_slot = lp->bcolor_slot[1];
 
    /*
     * If depth is floating point, depth bias is calculated with respect

@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -33,6 +31,7 @@
 #include "fd2_emit.h"
 #include "fd2_gmem.h"
 #include "fd2_program.h"
+#include "fd2_query.h"
 #include "fd2_rasterizer.h"
 #include "fd2_texture.h"
 #include "fd2_zsa.h"
@@ -41,23 +40,25 @@ static void
 fd2_context_destroy(struct pipe_context *pctx)
 {
 	fd_context_destroy(pctx);
+	free(pctx);
 }
 
 static struct pipe_resource *
 create_solid_vertexbuf(struct pipe_context *pctx)
 {
 	static const float init_shader_const[] = {
-			/* for clear/gmem2mem: */
-			-1.000000, +1.000000, +1.000000, +1.100000,
-			+1.000000, +1.000000, -1.000000, -1.100000,
-			+1.000000, +1.100000, -1.100000, +1.000000,
-			/* for mem2gmem: (vertices) */
-			-1.000000, +1.000000, +1.000000, +1.000000,
-			+1.000000, +1.000000, -1.000000, -1.000000,
-			+1.000000, +1.000000, -1.000000, +1.000000,
+			/* for clear/gmem2mem/mem2gmem (vertices): */
+			-1.000000, +1.000000, +1.000000,
+			+1.000000, +1.000000, +1.000000,
+			-1.000000, -1.000000, +1.000000,
 			/* for mem2gmem: (tex coords) */
-			+0.000000, +0.000000, +1.000000, +0.000000,
-			+0.000000, +1.000000, +1.000000, +1.000000,
+			+0.000000, +0.000000,
+			+1.000000, +0.000000,
+			+0.000000, +1.000000,
+			/* SCREEN_SCISSOR_BR value (must be at 60 byte offset in page) */
+			0.0,
+			/* zero indices dummy draw workaround (3 16-bit zeros) */
+			0.0, 0.0,
 	};
 	struct pipe_resource *prsc = pipe_buffer_create(pctx->screen,
 			PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, sizeof(init_shader_const));
@@ -67,7 +68,7 @@ create_solid_vertexbuf(struct pipe_context *pctx)
 }
 
 static const uint8_t a22x_primtypes[PIPE_PRIM_MAX] = {
-		[PIPE_PRIM_POINTS]         = DI_PT_POINTLIST_A2XX,
+		[PIPE_PRIM_POINTS]         = DI_PT_POINTLIST_PSIZE,
 		[PIPE_PRIM_LINES]          = DI_PT_LINELIST,
 		[PIPE_PRIM_LINE_STRIP]     = DI_PT_LINESTRIP,
 		[PIPE_PRIM_LINE_LOOP]      = DI_PT_LINELOOP,
@@ -77,7 +78,7 @@ static const uint8_t a22x_primtypes[PIPE_PRIM_MAX] = {
 };
 
 static const uint8_t a20x_primtypes[PIPE_PRIM_MAX] = {
-		[PIPE_PRIM_POINTS]         = DI_PT_POINTLIST_A2XX,
+		[PIPE_PRIM_POINTS]         = DI_PT_POINTLIST_PSIZE,
 		[PIPE_PRIM_LINES]          = DI_PT_LINELIST,
 		[PIPE_PRIM_LINE_STRIP]     = DI_PT_LINESTRIP,
 		[PIPE_PRIM_TRIANGLES]      = DI_PT_TRILIST,
@@ -86,7 +87,7 @@ static const uint8_t a20x_primtypes[PIPE_PRIM_MAX] = {
 };
 
 struct pipe_context *
-fd2_context_create(struct pipe_screen *pscreen, void *priv)
+fd2_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
 {
 	struct fd_screen *screen = fd_screen(pscreen);
 	struct fd2_context *fd2_ctx = CALLOC_STRUCT(fd2_context);
@@ -96,6 +97,7 @@ fd2_context_create(struct pipe_screen *pscreen, void *priv)
 		return NULL;
 
 	pctx = &fd2_ctx->base.base;
+	pctx->screen = pscreen;
 
 	fd2_ctx->base.dev = fd_device_ref(screen->dev);
 	fd2_ctx->base.screen = fd_screen(pscreen);
@@ -109,17 +111,18 @@ fd2_context_create(struct pipe_screen *pscreen, void *priv)
 	fd2_gmem_init(pctx);
 	fd2_texture_init(pctx);
 	fd2_prog_init(pctx);
+	fd2_emit_init(pctx);
 
 	pctx = fd_context_init(&fd2_ctx->base, pscreen,
 			(screen->gpu_id >= 220) ? a22x_primtypes : a20x_primtypes,
-			priv);
+			priv, flags);
 	if (!pctx)
 		return NULL;
 
 	/* construct vertex state used for solid ops (clear, and gmem<->mem) */
 	fd2_ctx->solid_vertexbuf = create_solid_vertexbuf(pctx);
 
-	fd2_emit_setup(&fd2_ctx->base);
+	fd2_query_context_init(pctx);
 
 	return pctx;
 }

@@ -37,7 +37,11 @@
 XA_EXPORT void
 xa_context_flush(struct xa_context *ctx)
 {
-	ctx->pipe->flush(ctx->pipe, &ctx->last_fence, 0);
+    if (ctx->last_fence) {
+        struct pipe_screen *screen = ctx->xa->screen;
+        screen->fence_reference(screen, &ctx->last_fence, NULL);
+    }
+    ctx->pipe->flush(ctx->pipe, &ctx->last_fence, 0);
 }
 
 XA_EXPORT struct xa_context *
@@ -52,8 +56,8 @@ xa_context_create(struct xa_tracker *xa)
     struct xa_context *ctx = calloc(1, sizeof(*ctx));
 
     ctx->xa = xa;
-    ctx->pipe = xa->screen->context_create(xa->screen, NULL);
-    ctx->cso = cso_create_context(ctx->pipe);
+    ctx->pipe = xa->screen->context_create(xa->screen, NULL, 0);
+    ctx->cso = cso_create_context(ctx->pipe, 0);
     ctx->shaders = xa_shaders_create(ctx);
     renderer_init_state(ctx);
 
@@ -82,12 +86,12 @@ xa_context_destroy(struct xa_context *r)
         pipe_surface_reference(&r->srf, NULL);
 
     if (r->cso) {
-	cso_release_all(r->cso);
 	cso_destroy_context(r->cso);
 	r->cso = NULL;
     }
 
     r->pipe->destroy(r->pipe);
+    free(r);
 }
 
 XA_EXPORT int
@@ -198,7 +202,7 @@ xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst)
     }
 
     if (!screen->is_format_supported(screen,  dst->tex->format,
-				     PIPE_TEXTURE_2D, 0,
+				     PIPE_TEXTURE_2D, 0, 0,
 				     PIPE_BIND_RENDER_TARGET))
 	return -XA_ERR_INVAL;
 
@@ -305,7 +309,7 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 	xa_pixel_to_float4_a8(fg, ctx->solid_color);
     else
 	xa_pixel_to_float4(fg, ctx->solid_color);
-    ctx->has_solid_color = 1;
+    ctx->has_solid_src = 1;
 
     ctx->dst = dst;
 
@@ -317,8 +321,8 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 		 exa->solid_color[2], exa->solid_color[3]);
 #endif
 
-    vs_traits = VS_SOLID_FILL;
-    fs_traits = FS_SOLID_FILL;
+    vs_traits = VS_SRC_SRC | VS_COMPOSITE;
+    fs_traits = FS_SRC_SRC | VS_COMPOSITE;
 
     renderer_bind_destination(ctx, ctx->srf);
     bind_solid_blend_state(ctx);
@@ -339,7 +343,7 @@ XA_EXPORT void
 xa_solid(struct xa_context *ctx, int x, int y, int width, int height)
 {
     xa_scissor_update(ctx, x, y, x + width, y + height);
-    renderer_solid(ctx, x, y, x + width, y + height, ctx->solid_color);
+    renderer_solid(ctx, x, y, x + width, y + height);
 }
 
 XA_EXPORT void
@@ -347,7 +351,7 @@ xa_solid_done(struct xa_context *ctx)
 {
     renderer_draw_flush(ctx);
     ctx->comp = NULL;
-    ctx->has_solid_color = FALSE;
+    ctx->has_solid_src = FALSE;
     ctx->num_bound_samplers = 0;
 }
 
@@ -380,7 +384,7 @@ xa_fence_wait(struct xa_fence *fence, uint64_t timeout)
 	struct pipe_screen *screen = fence->xa->screen;
 	boolean timed_out;
 
-	timed_out = !screen->fence_finish(screen, fence->pipe_fence, timeout);
+	timed_out = !screen->fence_finish(screen, NULL, fence->pipe_fence, timeout);
 	if (timed_out)
 	    return -XA_ERR_BUSY;
 

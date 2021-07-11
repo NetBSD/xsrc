@@ -43,12 +43,16 @@ struct svga_vbuf_render {
 
    unsigned vertex_size;
 
-   unsigned prim;
+   SVGA3dElementLayoutId layout_id; /**< current element layout id */
+
+   enum pipe_prim_type prim;
 
    struct pipe_resource *vbuf;
    struct pipe_resource *ibuf;
    struct pipe_transfer *vbuf_transfer;
    struct pipe_transfer *ibuf_transfer;
+
+   void *vbuf_ptr;
 
    /* current size of buffer */
    size_t vbuf_size;
@@ -76,7 +80,7 @@ struct svga_vbuf_render {
 /**
  * Basically a cast wrapper.
  */
-static INLINE struct svga_vbuf_render *
+static inline struct svga_vbuf_render *
 svga_vbuf_render( struct vbuf_render *render )
 {
    assert(render);

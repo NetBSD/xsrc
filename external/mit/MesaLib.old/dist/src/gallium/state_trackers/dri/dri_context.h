@@ -59,7 +59,7 @@ struct dri_context
    struct hud_context *hud;
 };
 
-static INLINE struct dri_context *
+static inline struct dri_context *
 dri_context(__DRIcontext * driContextPriv)
 {
    if (!driContextPriv)
@@ -84,14 +84,11 @@ dri_get_current(__DRIscreen * driScreenPriv);
 
 boolean
 dri_create_context(gl_api api,
-		   const struct gl_config * visual,
-		   __DRIcontext * driContextPriv,
-		   unsigned major_version,
-		   unsigned minor_version,
-		   uint32_t flags,
-		   bool notify_reset,
-		   unsigned *error,
-		   void *sharedContextPrivate);
+                   const struct gl_config * visual,
+                   __DRIcontext * driContextPriv,
+                   const struct __DriverContextConfig *ctx_config,
+                   unsigned *error,
+                   void *sharedContextPrivate);
 
 #endif
 

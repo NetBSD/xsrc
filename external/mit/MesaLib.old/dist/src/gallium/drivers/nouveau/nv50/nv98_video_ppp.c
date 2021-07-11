@@ -40,7 +40,7 @@ nv98_decoder_setup_ppp(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
    };
-   unsigned num_refs = sizeof(bo_refs)/sizeof(*bo_refs);
+   unsigned num_refs = ARRAY_SIZE(bo_refs);
 
    for (i = 0; i < 2; ++i) {
       struct nv50_miptree *mt = (struct nv50_miptree *)target->resources[i];
@@ -93,13 +93,8 @@ nv98_decoder_ppp(struct nouveau_vp3_decoder *dec, union pipe_desc desc, struct n
    enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_pushbuf *push = dec->pushbuf[2];
    unsigned ppp_caps = 0x10;
-   unsigned fence_extra = 0;
 
-#if NOUVEAU_VP3_DEBUG_FENCE
-   fence_extra = 4;
-#endif
-
-   nouveau_pushbuf_space(push, 11 + (codec == PIPE_VIDEO_FORMAT_VC1 ? 2 : 0) + 3 + fence_extra + 2, 4, 0);
+   nouveau_pushbuf_space(push, 32, 4, 0);
 
    switch (codec) {
    case PIPE_VIDEO_FORMAT_MPEG12: {

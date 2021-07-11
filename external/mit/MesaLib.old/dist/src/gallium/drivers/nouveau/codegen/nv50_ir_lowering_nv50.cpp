@@ -44,6 +44,8 @@ static bool
 expandIntegerMUL(BuildUtil *bld, Instruction *mul)
 {
    const bool highResult = mul->subOp == NV50_IR_SUBOP_MUL_HIGH;
+   ImmediateValue src1;
+   bool src1imm = mul->src(1).getImmediate(src1);
 
    DataType fTy; // full type
    switch (mul->sType) {
@@ -72,24 +74,41 @@ expandIntegerMUL(BuildUtil *bld, Instruction *mul)
    for (int j = 0; j < 4; ++j)
       t[j] = bld->getSSA(fullSize);
 
-   s[0] = mul->getSrc(0);
-   s[1] = mul->getSrc(1);
-
-   if (isSignedType(mul->sType)) {
+   if (isSignedType(mul->sType) && highResult) {
       s[0] = bld->getSSA(fullSize);
       s[1] = bld->getSSA(fullSize);
       bld->mkOp1(OP_ABS, mul->sType, s[0], mul->getSrc(0));
       bld->mkOp1(OP_ABS, mul->sType, s[1], mul->getSrc(1));
+      src1.reg.data.s32 = abs(src1.reg.data.s32);
+   } else {
+      s[0] = mul->getSrc(0);
+      s[1] = mul->getSrc(1);
    }
 
    // split sources into halves
    i[0] = bld->mkSplit(a, halfSize, s[0]);
    i[1] = bld->mkSplit(b, halfSize, s[1]);
 
-   i[2] = bld->mkOp2(OP_MUL, fTy, t[0], a[0], b[1]);
-   i[3] = bld->mkOp3(OP_MAD, fTy, t[1], a[1], b[0], t[0]);
+   if (src1imm && (src1.reg.data.u32 & 0xffff0000) == 0) {
+      i[2] = i[3] = bld->mkOp2(OP_MUL, fTy, t[1], a[1],
+                               bld->mkImm(src1.reg.data.u32 & 0xffff));
+   } else {
+      i[2] = bld->mkOp2(OP_MUL, fTy, t[0], a[0],
+                        src1imm ? bld->mkImm(src1.reg.data.u32 >> 16) : b[1]);
+      if (src1imm && (src1.reg.data.u32 & 0x0000ffff) == 0) {
+         i[3] = i[2];
+         t[1] = t[0];
+      } else {
+         i[3] = bld->mkOp3(OP_MAD, fTy, t[1], a[1], b[0], t[0]);
+      }
+   }
    i[7] = bld->mkOp2(OP_SHL, fTy, t[2], t[1], bld->mkImm(halfSize * 8));
-   i[4] = bld->mkOp3(OP_MAD, fTy, t[3], a[0], b[0], t[2]);
+   if (src1imm && (src1.reg.data.u32 & 0x0000ffff) == 0) {
+      i[4] = i[3];
+      t[3] = t[2];
+   } else {
+      i[4] = bld->mkOp3(OP_MAD, fTy, t[3], a[0], b[0], t[2]);
+   }
 
    if (highResult) {
       Value *c[2];
@@ -202,7 +221,11 @@ NV50LegalizePostRA::visit(Function *fn)
    Program *prog = fn->getProgram();
 
    r63 = new_LValue(fn, FILE_GPR);
-   r63->reg.data.id = 63;
+   // GPR units on nv50 are in half-regs
+   if (prog->maxGPR < 126)
+      r63->reg.data.id = 63;
+   else
+      r63->reg.data.id = 127;
 
    // this is actually per-program, but we can do it all on visiting main()
    std::list<Instruction *> *outWrites =
@@ -290,8 +313,7 @@ NV50LegalizePostRA::visit(BasicBlock *bb)
                next = hi;
          }
 
-         if (i->op != OP_MOV && i->op != OP_PFETCH &&
-             i->op != OP_BAR &&
+         if (i->op != OP_PFETCH && i->op != OP_BAR &&
              (!i->defExists(0) || i->def(0).getFile() != FILE_ADDRESS))
             replaceZero(i);
       }
@@ -350,7 +372,8 @@ NV50LegalizeSSA::propagateWriteToOutput(Instruction *st)
       return;
 
    for (int s = 0; di->srcExists(s); ++s)
-      if (di->src(s).getFile() == FILE_IMMEDIATE)
+      if (di->src(s).getFile() == FILE_IMMEDIATE ||
+          di->src(s).getFile() == FILE_MEMORY_LOCAL)
          return;
 
    if (prog->getType() == Program::TYPE_GEOMETRY) {
@@ -614,6 +637,7 @@ private:
    bool handleTXL(TexInstruction *); // hate
    bool handleTXD(TexInstruction *); // these 3
    bool handleTXLQ(TexInstruction *);
+   bool handleTXQ(TexInstruction *);
 
    bool handleCALL(Instruction *);
    bool handlePRECONT(Instruction *);
@@ -659,7 +683,7 @@ void NV50LoweringPreSSA::loadTexMsInfo(uint32_t off, Value **ms,
                                        Value **ms_x, Value **ms_y) {
    // This loads the texture-indexed ms setting from the constant buffer
    Value *tmp = new_LValue(func, FILE_GPR);
-   uint8_t b = prog->driver->io.resInfoCBSlot;
+   uint8_t b = prog->driver->io.auxCBSlot;
    off += prog->driver->io.suInfoBase;
    if (prog->getType() > Program::TYPE_VERTEX)
       off += 16 * 2 * 4;
@@ -700,6 +724,23 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
    const int arg = i->tex.target.getArgCount();
    const int dref = arg;
    const int lod = i->tex.target.isShadow() ? (arg + 1) : arg;
+
+   /* Only normalize in the non-explicit derivatives case.
+    */
+   if (i->tex.target.isCube() && i->op != OP_TXD) {
+      Value *src[3], *val;
+      int c;
+      for (c = 0; c < 3; ++c)
+         src[c] = bld.mkOp1v(OP_ABS, TYPE_F32, bld.getSSA(), i->getSrc(c));
+      val = bld.getScratch();
+      bld.mkOp2(OP_MAX, TYPE_F32, val, src[0], src[1]);
+      bld.mkOp2(OP_MAX, TYPE_F32, val, src[2], val);
+      bld.mkOp1(OP_RCP, TYPE_F32, val, val);
+      for (c = 0; c < 3; ++c) {
+         i->setSrc(c, bld.mkOp2v(OP_MUL, TYPE_F32, bld.getSSA(),
+                                 i->getSrc(c), val));
+      }
+   }
 
    // handle MS, which means looking up the MS params for this texture, and
    // adjusting the input coordinates to point at the right sample.
@@ -772,7 +813,8 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
    if (i->tex.useOffsets) {
       for (int c = 0; c < 3; ++c) {
          ImmediateValue val;
-         assert(i->offset[0][c].getImmediate(val));
+         if (!i->offset[0][c].getImmediate(val))
+            assert(!"non-immediate offset");
          i->tex.offset[c] = val.reg.data.u32;
          i->offset[0][c].set(NULL);
       }
@@ -827,7 +869,7 @@ NV50LoweringPreSSA::handleTXB(TexInstruction *i)
    }
    Value *flags = bld.getScratch(1, FILE_FLAGS);
    bld.setPosition(cond, true);
-   bld.mkCvt(OP_CVT, TYPE_U8, flags, TYPE_U32, cond->getDef(0));
+   bld.mkCvt(OP_CVT, TYPE_U8, flags, TYPE_U32, cond->getDef(0))->flagsDef = 0;
 
    Instruction *tex[4];
    for (l = 0; l < 4; ++l) {
@@ -870,6 +912,7 @@ NV50LoweringPreSSA::handleTXL(TexInstruction *i)
    BasicBlock *joinBB = i->bb->splitAfter(i);
 
    bld.setPosition(currBB, true);
+   assert(!currBB->joinAt);
    currBB->joinAt = bld.mkFlow(OP_JOINAT, joinBB, CC_ALWAYS, NULL);
 
    for (int l = 0; l <= 3; ++l) {
@@ -886,7 +929,7 @@ NV50LoweringPreSSA::handleTXL(TexInstruction *i)
       }
    }
    bld.setPosition(joinBB, false);
-   bld.mkOp(OP_JOIN, TYPE_NONE, NULL);
+   bld.mkFlow(OP_JOIN, NULL, CC_ALWAYS, NULL)->fixed = 1;
    return true;
 }
 
@@ -905,16 +948,18 @@ NV50LoweringPreSSA::handleTXD(TexInstruction *i)
    Instruction *tex;
    Value *zero = bld.loadImm(bld.getSSA(), 0);
    int l, c;
-   const int dim = i->tex.target.getDim();
+   const int dim = i->tex.target.getDim() + i->tex.target.isCube();
 
    handleTEX(i);
    i->op = OP_TEX; // no need to clone dPdx/dPdy later
+   i->tex.derivAll = true;
 
    for (c = 0; c < dim; ++c)
       crd[c] = bld.getScratch();
 
    bld.mkOp(OP_QUADON, TYPE_NONE, NULL);
    for (l = 0; l < 4; ++l) {
+      Value *src[3], *val;
       // mov coordinates from lane l to all lanes
       for (c = 0; c < dim; ++c)
          bld.mkQuadop(0x00, crd[c], l, i->getSrc(c), zero);
@@ -924,10 +969,24 @@ NV50LoweringPreSSA::handleTXD(TexInstruction *i)
       // add dPdy from lane l to lanes dy
       for (c = 0; c < dim; ++c)
          bld.mkQuadop(qOps[l][1], crd[c], l, i->dPdy[c].get(), crd[c]);
+      // normalize cube coordinates if necessary
+      if (i->tex.target.isCube()) {
+         for (c = 0; c < 3; ++c)
+            src[c] = bld.mkOp1v(OP_ABS, TYPE_F32, bld.getSSA(), crd[c]);
+         val = bld.getScratch();
+         bld.mkOp2(OP_MAX, TYPE_F32, val, src[0], src[1]);
+         bld.mkOp2(OP_MAX, TYPE_F32, val, src[2], val);
+         bld.mkOp1(OP_RCP, TYPE_F32, val, val);
+         for (c = 0; c < 3; ++c)
+            src[c] = bld.mkOp2v(OP_MUL, TYPE_F32, bld.getSSA(), crd[c], val);
+      } else {
+         for (c = 0; c < dim; ++c)
+            src[c] = crd[c];
+      }
       // texture
       bld.insert(tex = cloneForward(func, i));
       for (c = 0; c < dim; ++c)
-         tex->setSrc(c, crd[c]);
+         tex->setSrc(c, src[c]);
       // save results
       for (c = 0; i->defExists(c); ++c) {
          Instruction *mov;
@@ -968,6 +1027,23 @@ NV50LoweringPreSSA::handleTXLQ(TexInstruction *i)
    }
    return true;
 }
+
+bool
+NV50LoweringPreSSA::handleTXQ(TexInstruction *i)
+{
+   Value *ms, *ms_x, *ms_y;
+   if (i->tex.query == TXQ_DIMS)
+      return true;
+   assert(i->tex.query == TXQ_TYPE);
+   assert(i->tex.mask == 4);
+
+   loadTexMsInfo(i->tex.r * 4 * 2, &ms, &ms_x, &ms_y);
+   bld.mkOp2(OP_SHL, TYPE_U32, i->getDef(0), bld.loadImm(NULL, 1), ms);
+   i->bb->remove(i);
+
+   return true;
+}
+
 
 bool
 NV50LoweringPreSSA::handleSET(Instruction *i)
@@ -1093,8 +1169,9 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
    case SV_FACE:
       bld.mkInterp(NV50_IR_INTERP_FLAT, def, addr, NULL);
       if (i->dType == TYPE_F32) {
-         bld.mkOp2(OP_AND, TYPE_U32, def, def, bld.mkImm(0x80000000));
-         bld.mkOp2(OP_XOR, TYPE_U32, def, def, bld.mkImm(0xbf800000));
+         bld.mkOp2(OP_OR, TYPE_U32, def, def, bld.mkImm(0x00000001));
+         bld.mkOp1(OP_NEG, TYPE_S32, def, def);
+         bld.mkCvt(OP_CVT, TYPE_F32, def, TYPE_S32, def);
       }
       break;
    case SV_NCTAID:
@@ -1124,6 +1201,9 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
          bld.mkMov(def, bld.mkImm(0));
       }
       break;
+   case SV_COMBINED_TID:
+      bld.mkMov(def, tid);
+      break;
    case SV_SAMPLE_POS: {
       Value *off = new_LValue(func, FILE_ADDRESS);
       bld.mkOp1(OP_RDSV, TYPE_U32, def, bld.mkSysVal(SV_SAMPLE_INDEX, 0));
@@ -1131,7 +1211,7 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
       bld.mkLoad(TYPE_F32,
                  def,
                  bld.mkSymbol(
-                       FILE_MEMORY_CONST, prog->driver->io.resInfoCBSlot,
+                       FILE_MEMORY_CONST, prog->driver->io.auxCBSlot,
                        TYPE_U32, prog->driver->io.sampleInfoBase + 4 * idx),
                  off);
       break;
@@ -1160,10 +1240,9 @@ NV50LoweringPreSSA::handleDIV(Instruction *i)
 bool
 NV50LoweringPreSSA::handleSQRT(Instruction *i)
 {
-   Instruction *rsq = bld.mkOp1(OP_RSQ, TYPE_F32,
-                                bld.getSSA(), i->getSrc(0));
-   i->op = OP_MUL;
-   i->setSrc(1, rsq->getDef(0));
+   bld.setPosition(i, true);
+   i->op = OP_RSQ;
+   bld.mkOp1(OP_RCP, i->dType, i->getDef(0), i->getDef(0));
 
    return true;
 }
@@ -1201,7 +1280,7 @@ NV50LoweringPreSSA::handleEXPORT(Instruction *i)
          i->setDef(0, new_LValue(func, FILE_GPR));
          i->getDef(0)->reg.data.id = id;
 
-         prog->maxGPR = MAX2(prog->maxGPR, id);
+         prog->maxGPR = MAX2(prog->maxGPR, id * 2);
       }
    }
    return true;
@@ -1327,6 +1406,8 @@ NV50LoweringPreSSA::visit(Instruction *i)
       return handleTXD(i->asTex());
    case OP_TXLQ:
       return handleTXLQ(i->asTex());
+   case OP_TXQ:
+      return handleTXQ(i->asTex());
    case OP_EX2:
       bld.mkOp1(OP_PREEX2, TYPE_F32, i->getDef(0), i->getSrc(0));
       i->setSrc(0, i->getDef(0));

@@ -69,14 +69,13 @@ static boolean same_src_reg(struct i915_full_src_register *d1, struct i915_full_
            d1->Register.Negate == d2->Register.Negate);
 }
 
-const static struct {
+static const struct {
    boolean is_texture;
    boolean commutes;
    unsigned neutral_element;
    unsigned num_dst;
    unsigned num_src;
 } op_table [TGSI_OPCODE_LAST] = {
-   [ TGSI_OPCODE_ABS     ] = { false,  false,                  0,  1,  1 },
    [ TGSI_OPCODE_ADD     ] = { false,   true,  TGSI_SWIZZLE_ZERO,  1,  2 },
    [ TGSI_OPCODE_CEIL    ] = { false,  false,                  0,  1,  1 },
    [ TGSI_OPCODE_CMP     ] = { false,  false,                  0,  1,  2 },
@@ -86,7 +85,6 @@ const static struct {
    [ TGSI_OPCODE_DP2     ] = { false,   true,   TGSI_SWIZZLE_ONE,  1,  2 },
    [ TGSI_OPCODE_DP3     ] = { false,   true,   TGSI_SWIZZLE_ONE,  1,  2 },
    [ TGSI_OPCODE_DP4     ] = { false,   true,   TGSI_SWIZZLE_ONE,  1,  2 },
-   [ TGSI_OPCODE_DPH     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_DST     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_END     ] = { false,  false,                  0,  0,  0 },
    [ TGSI_OPCODE_EX2     ] = { false,  false,                  0,  1,  1 },
@@ -107,7 +105,6 @@ const static struct {
    [ TGSI_OPCODE_RCP     ] = { false,  false,                  0,  1,  1 },
    [ TGSI_OPCODE_RET     ] = { false,  false,                  0,  0,  0 },
    [ TGSI_OPCODE_RSQ     ] = { false,  false,                  0,  1,  1 },
-   [ TGSI_OPCODE_SCS     ] = { false,  false,                  0,  1,  1 },
    [ TGSI_OPCODE_SEQ     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_SGE     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_SGT     ] = { false,  false,                  0,  1,  2 },
@@ -116,12 +113,10 @@ const static struct {
    [ TGSI_OPCODE_SLT     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_SNE     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_SSG     ] = { false,  false,                  0,  1,  1 },
-   [ TGSI_OPCODE_SUB     ] = { false,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_TEX     ] = {  true,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_TRUNC   ] = { false,  false,                  0,  1,  1 },
    [ TGSI_OPCODE_TXB     ] = {  true,  false,                  0,  1,  2 },
    [ TGSI_OPCODE_TXP     ] = {  true,  false,                  0,  1,  2 },
-   [ TGSI_OPCODE_XPD     ] = { false,  false,                  0,  1,  2 },
 };
 
 static boolean op_has_dst(unsigned opcode)
@@ -552,7 +547,7 @@ static boolean i915_fpc_useless_mov(union tgsi_full_token *tgsi_current)
    if ( current.Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         current.FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
         op_has_dst(current.FullInstruction.Instruction.Opcode) &&
-        current.FullInstruction.Instruction.Saturate == TGSI_SAT_NONE &&
+        !current.FullInstruction.Instruction.Saturate &&
         current.FullInstruction.Src[0].Register.Absolute == 0 &&
         current.FullInstruction.Src[0].Register.Negate == 0 &&
         is_unswizzled(&current.FullInstruction.Src[0], current.FullInstruction.Dst[0].Register.WriteMask) &&
@@ -582,7 +577,7 @@ static void i915_fpc_optimize_useless_mov_after_inst(struct i915_optimize_contex
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
         op_has_dst(current->FullInstruction.Instruction.Opcode) &&
-        next->FullInstruction.Instruction.Saturate == TGSI_SAT_NONE &&
+        !next->FullInstruction.Instruction.Saturate &&
         next->FullInstruction.Src[0].Register.Absolute == 0 &&
         next->FullInstruction.Src[0].Register.Negate == 0 &&
         unused_from(ctx, &current->FullInstruction.Dst[0], index) &&

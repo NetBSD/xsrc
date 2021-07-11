@@ -38,113 +38,21 @@ _mesa_parse_instruction_suffix(const struct asm_parser_state *state,
 			       const char *suffix,
 			       struct prog_instruction *inst)
 {
-   inst->CondUpdate = 0;
-   inst->CondDst = 0;
-   inst->SaturateMode = SATURATE_OFF;
-   inst->Precision = FLOAT32;
+   inst->Saturate = GL_FALSE;
 
-
-   /* The first possible suffix element is the precision specifier from
-    * NV_fragment_program_option.
-    */
-   if (state->option.NV_fragment) {
-      switch (suffix[0]) {
-      case 'H':
-	 inst->Precision = FLOAT16;
-	 suffix++;
-	 break;
-      case 'R':
-	 inst->Precision = FLOAT32;
-	 suffix++;
-	 break;
-      case 'X':
-	 inst->Precision = FIXED12;
-	 suffix++;
-	 break;
-      default:
-	 break;
-      }
-   }
-
-   /* The next possible suffix element is the condition code modifier selection
-    * from NV_fragment_program_option.
-    */
-   if (state->option.NV_fragment) {
-      if (suffix[0] == 'C') {
-	 inst->CondUpdate = 1;
-	 suffix++;
-      }
-   }
-
-
-   /* The final possible suffix element is the saturation selector from
+   /* The only possible suffix element is the saturation selector from
     * ARB_fragment_program.
     */
    if (state->mode == ARB_fragment) {
       if (strcmp(suffix, "_SAT") == 0) {
-	 inst->SaturateMode = SATURATE_ZERO_ONE;
+	 inst->Saturate = GL_TRUE;
 	 suffix += 4;
       }
    }
 
-
    /* It is an error for all of the suffix string not to be consumed.
     */
    return suffix[0] == '\0';
-}
-
-
-int
-_mesa_parse_cc(const char *s)
-{
-   int cond = 0;
-
-   switch (s[0]) {
-   case 'E':
-      if (s[1] == 'Q') {
-	 cond = COND_EQ;
-      }
-      break;
-
-   case 'F':
-      if (s[1] == 'L') {
-	 cond = COND_FL;
-      }
-      break;
-
-   case 'G':
-      if (s[1] == 'E') {
-	 cond = COND_GE;
-      } else if (s[1] == 'T') {
-	 cond = COND_GT;
-      }
-      break;
-
-   case 'L':
-      if (s[1] == 'E') {
-	 cond = COND_LE;
-      } else if (s[1] == 'T') {
-	 cond = COND_LT;
-      }
-      break;
-
-   case 'N':
-      if (s[1] == 'E') {
-	 cond = COND_NE;
-      }
-      break;
-
-   case 'T':
-      if (s[1] == 'R') {
-	 cond = COND_TR;
-      }
-      break;
-
-   default:
-      break;
-   }
-
-   return ((cond == 0) || (s[2] != '\0')) ? 0 : cond;
 }
 
 
@@ -163,6 +71,8 @@ _mesa_ARBvp_parse_option(struct asm_parser_state *state, const char *option)
 int
 _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
 {
+   unsigned fog_option;
+
    /* All of the options currently supported start with "ARB_".  The code is
     * currently structured with nested if-statements because eventually options
     * that start with "NV_" will be supported.  This structure will result in
@@ -173,24 +83,45 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
        */
       option += 4;
 
-
       if (strncmp(option, "fog_", 4) == 0) {
 	 option += 4;
 
-	 if (state->option.Fog == OPTION_NONE) {
-	    if (strcmp(option, "exp") == 0) {
-	       state->option.Fog = OPTION_FOG_EXP;
-	       return 1;
-	    } else if (strcmp(option, "exp2") == 0) {
-	       state->option.Fog = OPTION_FOG_EXP2;
-	       return 1;
-	    } else if (strcmp(option, "linear") == 0) {
-	       state->option.Fog = OPTION_FOG_LINEAR;
-	       return 1;
-	    }
-	 }
+         if (strcmp(option, "exp") == 0) {
+            fog_option = OPTION_FOG_EXP;
+         } else if (strcmp(option, "exp2") == 0) {
+            fog_option = OPTION_FOG_EXP2;
+         } else if (strcmp(option, "linear") == 0) {
+            fog_option = OPTION_FOG_LINEAR;
+         } else {
+            /* invalid option */
+            return 0;
+         }
 
-	 return 0;
+         if (state->option.Fog == OPTION_NONE) {
+            state->option.Fog = fog_option;
+            return 1;
+         }
+
+         /* The ARB_fragment_program specification instructs us to handle
+          * redundant options in two seemingly contradictory ways:
+          *
+          * Section 3.11.4.5.1 says:
+          * "Only one fog application option may be specified by any given
+          *  fragment program.  A fragment program that specifies more than one
+          *  of the program options "ARB_fog_exp", "ARB_fog_exp2", and
+          *  "ARB_fog_linear", will fail to load."
+          *
+          * Issue 27 says:
+          * "The three mandatory options are ARB_fog_exp, ARB_fog_exp2, and
+          *  ARB_fog_linear.  As these options are mutually exclusive by
+          *  nature, specifying more than one is not useful.  If more than one
+          *  is specified, the last one encountered in the <optionSequence>
+          *  will be the one to actually modify the execution environment."
+          *
+          * We choose to allow programs to specify the same OPTION redundantly,
+          * but fail to load programs that specify contradictory options.
+          */
+         return state->option.Fog == fog_option ? 1 : 0;
       } else if (strncmp(option, "precision_hint_", 15) == 0) {
 	 option += 15;
 
@@ -202,10 +133,12 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
           * program options will fail to load.
           */
 
-         if (strcmp(option, "nicest") == 0 && state->option.PrecisionHint != OPTION_FASTEST) {
+         if (strcmp(option, "nicest") == 0 &&
+             state->option.PrecisionHint != OPTION_FASTEST) {
             state->option.PrecisionHint = OPTION_NICEST;
             return 1;
-         } else if (strcmp(option, "fastest") == 0 && state->option.PrecisionHint != OPTION_NICEST) {
+         } else if (strcmp(option, "fastest") == 0 &&
+                    state->option.PrecisionHint != OPTION_NICEST) {
             state->option.PrecisionHint = OPTION_FASTEST;
             return 1;
          }
@@ -244,17 +177,6 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
 	  */
 	 state->option.DrawBuffers = 1;
 	 return 1;
-      }
-   } else if (strncmp(option, "NV_fragment_program", 19) == 0) {
-      option += 19;
-
-      /* Other NV_fragment_program strings may be supported later.
-       */
-      if (option[0] == '\0') {
-	 if (state->ctx->Extensions.NV_fragment_program_option) {
-	    state->option.NV_fragment = 1;
-	    return 1;
-	 }
       }
    }
 

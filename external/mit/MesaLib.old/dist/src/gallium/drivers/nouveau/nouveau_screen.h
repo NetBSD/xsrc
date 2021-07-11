@@ -2,6 +2,8 @@
 #define __NOUVEAU_SCREEN_H__
 
 #include "pipe/p_screen.h"
+#include "util/disk_cache.h"
+#include "util/u_atomic.h"
 #include "util/u_memory.h"
 
 #ifdef DEBUG
@@ -15,46 +17,58 @@ extern int nouveau_mesa_debug;
 
 struct nouveau_bo;
 
+#define NOUVEAU_SHADER_CACHE_FLAGS_IR_TGSI 0 << 0
+#define NOUVEAU_SHADER_CACHE_FLAGS_IR_NIR  1 << 0
+
 struct nouveau_screen {
-	struct pipe_screen base;
-	struct nouveau_device *device;
-	struct nouveau_object *channel;
-	struct nouveau_client *client;
-	struct nouveau_pushbuf *pushbuf;
+   struct pipe_screen base;
+   struct nouveau_drm *drm;
+   struct nouveau_device *device;
+   struct nouveau_object *channel;
+   struct nouveau_client *client;
+   struct nouveau_pushbuf *pushbuf;
 
-	int refcount;
+   int refcount;
 
-	unsigned vidmem_bindings; /* PIPE_BIND_* where VRAM placement is desired */
-	unsigned sysmem_bindings; /* PIPE_BIND_* where GART placement is desired */
-	unsigned lowmem_bindings; /* PIPE_BIND_* that require an address < 4 GiB */
-	/*
-	 * For bindings with (vidmem & sysmem) bits set, PIPE_USAGE_* decides
-	 * placement.
-	 */
+   unsigned transfer_pushbuf_threshold;
 
-	uint16_t class_3d;
+   unsigned vidmem_bindings; /* PIPE_BIND_* where VRAM placement is desired */
+   unsigned sysmem_bindings; /* PIPE_BIND_* where GART placement is desired */
+   unsigned lowmem_bindings; /* PIPE_BIND_* that require an address < 4 GiB */
+   /*
+    * For bindings with (vidmem & sysmem) bits set, PIPE_USAGE_* decides
+    * placement.
+    */
 
-	struct {
-		struct nouveau_fence *head;
-		struct nouveau_fence *tail;
-		struct nouveau_fence *current;
-		u32 sequence;
-		u32 sequence_ack;
-		void (*emit)(struct pipe_screen *, u32 *sequence);
-		u32  (*update)(struct pipe_screen *);
-	} fence;
+   uint16_t class_3d;
 
-	struct nouveau_mman *mm_VRAM;
-	struct nouveau_mman *mm_GART;
+   struct {
+      struct nouveau_fence *head;
+      struct nouveau_fence *tail;
+      struct nouveau_fence *current;
+      u32 sequence;
+      u32 sequence_ack;
+      void (*emit)(struct pipe_screen *, u32 *sequence);
+      u32  (*update)(struct pipe_screen *);
+   } fence;
 
-	int64_t cpu_gpu_time_delta;
+   struct nouveau_mman *mm_VRAM;
+   struct nouveau_mman *mm_GART;
 
-	boolean hint_buf_keep_sysmem_copy;
+   int64_t cpu_gpu_time_delta;
 
-	struct {
-		unsigned profiles_checked;
-		unsigned profiles_present;
-	} firmware_info;
+   bool hint_buf_keep_sysmem_copy;
+
+   unsigned vram_domain;
+
+   struct {
+      unsigned profiles_checked;
+      unsigned profiles_present;
+   } firmware_info;
+
+   struct disk_cache *disk_shader_cache;
+
+   bool prefer_nir;
 
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
    union {
@@ -94,12 +108,14 @@ struct nouveau_screen {
 #endif
 };
 
+#define NV_VRAM_DOMAIN(screen) ((screen)->vram_domain)
+
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
 # define NOUVEAU_DRV_STAT(s, n, v) do {         \
-      (s)->stats.named.n += (v);               \
+      p_atomic_add(&(s)->stats.named.n, (v));   \
    } while(0)
-# define NOUVEAU_DRV_STAT_RES(r, n, v) do {                       \
-      nouveau_screen((r)->base.screen)->stats.named.n += (v);    \
+# define NOUVEAU_DRV_STAT_RES(r, n, v) do {                                \
+      p_atomic_add(&nouveau_screen((r)->base.screen)->stats.named.n, v);   \
    } while(0)
 # define NOUVEAU_DRV_STAT_IFD(x) x
 #else
@@ -108,23 +124,23 @@ struct nouveau_screen {
 # define NOUVEAU_DRV_STAT_IFD(x)
 #endif
 
-static INLINE struct nouveau_screen *
+static inline struct nouveau_screen *
 nouveau_screen(struct pipe_screen *pscreen)
 {
-	return (struct nouveau_screen *)pscreen;
+   return (struct nouveau_screen *)pscreen;
 }
 
-boolean nouveau_drm_screen_unref(struct nouveau_screen *screen);
+bool nouveau_drm_screen_unref(struct nouveau_screen *screen);
 
-boolean
+bool
 nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
-			     struct nouveau_bo *bo,
-			     unsigned stride,
-			     struct winsys_handle *whandle);
+                             struct nouveau_bo *bo,
+                             unsigned stride,
+                             struct winsys_handle *whandle);
 struct nouveau_bo *
 nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
-			      struct winsys_handle *whandle,
-			      unsigned *out_stride);
+                              struct winsys_handle *whandle,
+                              unsigned *out_stride);
 
 
 int nouveau_screen_init(struct nouveau_screen *, struct nouveau_device *);

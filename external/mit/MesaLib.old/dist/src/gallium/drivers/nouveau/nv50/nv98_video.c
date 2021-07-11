@@ -25,6 +25,8 @@
 #include "util/u_sampler.h"
 #include "util/u_format.h"
 
+#include <nvif/class.h>
+
 static void
 nv98_decoder_decode_bitstream(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *video_target,
@@ -38,7 +40,8 @@ nv98_decoder_decode_bitstream(struct pipe_video_codec *decoder,
    uint32_t comm_seq = ++dec->fence_seq;
    union pipe_desc desc;
 
-   unsigned vp_caps, is_ref, ret;
+   unsigned vp_caps, is_ref;
+   MAYBE_UNUSED unsigned ret; /* used in debug checks */
    struct nouveau_vp3_video_buffer *refs[16] = {};
 
    desc.base = picture;
@@ -55,6 +58,28 @@ nv98_decoder_decode_bitstream(struct pipe_video_codec *decoder,
    nv98_decoder_vp(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
    nv98_decoder_ppp(dec, desc, target, comm_seq);
 }
+
+static const struct nouveau_mclass
+nv98_decoder_msvld[] = {
+   { G98_MSVLD, -1 },
+   { IGT21A_MSVLD, -1 },
+   { GT212_MSVLD, -1 },
+   {}
+};
+
+static const struct nouveau_mclass
+nv98_decoder_mspdec[] = {
+   { G98_MSPDEC, -1 },
+   { GT212_MSPDEC, -1 },
+   {}
+};
+
+static const struct nouveau_mclass
+nv98_decoder_msppp[] = {
+   { G98_MSPPP, -1 },
+   { GT212_MSPPP, -1 },
+   {}
+};
 
 struct pipe_video_codec *
 nv98_create_decoder(struct pipe_context *context,
@@ -103,12 +128,33 @@ nv98_create_decoder(struct pipe_context *context,
    }
    push = dec->pushbuf;
 
-   if (!ret)
-      ret = nouveau_object_new(dec->channel[0], 0x390b1, 0x85b1, NULL, 0, &dec->bsp);
-   if (!ret)
-      ret = nouveau_object_new(dec->channel[1], 0x190b2, 0x85b2, NULL, 0, &dec->vp);
-   if (!ret)
-      ret = nouveau_object_new(dec->channel[2], 0x290b3, 0x85b3, NULL, 0, &dec->ppp);
+   if (!ret) {
+      ret = nouveau_object_mclass(dec->channel[0], nv98_decoder_msvld);
+      if (ret >= 0) {
+         ret = nouveau_object_new(dec->channel[0], 0xbeef85b1,
+                                  nv98_decoder_msvld[ret].oclass, NULL, 0,
+                                  &dec->bsp);
+      }
+   }
+
+   if (!ret) {
+      ret = nouveau_object_mclass(dec->channel[1], nv98_decoder_mspdec);
+      if (ret >= 0) {
+         ret = nouveau_object_new(dec->channel[1], 0xbeef85b2,
+                                  nv98_decoder_mspdec[ret].oclass, NULL, 0,
+                                  &dec->vp);
+      }
+   }
+
+   if (!ret) {
+      ret = nouveau_object_mclass(dec->channel[2], nv98_decoder_msppp);
+      if (ret >= 0) {
+         ret = nouveau_object_new(dec->channel[2], 0xbeef85b3,
+                                  nv98_decoder_msppp[ret].oclass, NULL, 0,
+                                  &dec->ppp);
+      }
+   }
+
    if (ret)
       goto fail;
 
@@ -228,7 +274,7 @@ nv98_create_decoder(struct pipe_context *context,
    dec->comm = (struct comm *)(dec->fence_map + (COMM_OFFSET/sizeof(*dec->fence_map)));
 
    /* So lets test if the fence is working? */
-   nouveau_pushbuf_space(push[0], 6, 1, 0);
+   nouveau_pushbuf_space(push[0], 16, 1, 0);
    PUSH_REFN (push[0], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NV04(push[0], SUBC_BSP(0x240), 3);
    PUSH_DATAh(push[0], dec->fence_bo->offset);
@@ -239,7 +285,7 @@ nv98_create_decoder(struct pipe_context *context,
    PUSH_DATA (push[0], 0);
    PUSH_KICK (push[0]);
 
-   nouveau_pushbuf_space(push[1], 6, 1, 0);
+   nouveau_pushbuf_space(push[1], 16, 1, 0);
    PUSH_REFN (push[1], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NV04(push[1], SUBC_VP(0x240), 3);
    PUSH_DATAh(push[1], (dec->fence_bo->offset + 0x10));
@@ -250,7 +296,7 @@ nv98_create_decoder(struct pipe_context *context,
    PUSH_DATA (push[1], 0);
    PUSH_KICK (push[1]);
 
-   nouveau_pushbuf_space(push[2], 6, 1, 0);
+   nouveau_pushbuf_space(push[2], 16, 1, 0);
    PUSH_REFN (push[2], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NV04(push[2], SUBC_PPP(0x240), 3);
    PUSH_DATAh(push[2], (dec->fence_bo->offset + 0x20));

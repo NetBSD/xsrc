@@ -34,15 +34,16 @@
 
 struct lp_sampler_static_state;
 
+/**
+ * Whether texture cache is used for s3tc textures.
+ */
+#define LP_USE_TEXTURE_CACHE 0
 
 /**
  * Pure-LLVM texture sampling code generator.
  *
- * @param context_ptr LLVM value with the pointer to the struct lp_jit_context.
  */
 struct lp_build_sampler_soa *
-lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *key,
-                           LLVMValueRef context_ptr);
-
+lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *key);
 
 #endif /* LP_TEX_SAMPLE_H */

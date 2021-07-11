@@ -42,7 +42,7 @@ void r300_upload_index_buffer(struct r300_context *r300,
     *index_buffer = NULL;
 
     u_upload_data(r300->uploader,
-                  0, count * index_size,
+                  0, count * index_size, 4,
                   ptr + (*start * index_size),
                   &index_offset,
                   index_buffer);
@@ -77,7 +77,7 @@ r300_buffer_transfer_map( struct pipe_context *context,
     struct pipe_transfer *transfer;
     uint8_t *map;
 
-    transfer = util_slab_alloc(&r300->pool_transfers);
+    transfer = slab_alloc(&r300->pool_transfers);
     transfer->resource = resource;
     transfer->level = level;
     transfer->usage = usage;
@@ -95,24 +95,24 @@ r300_buffer_transfer_map( struct pipe_context *context,
         assert(usage & PIPE_TRANSFER_WRITE);
 
         /* Check if mapping this buffer would cause waiting for the GPU. */
-        if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf, RADEON_USAGE_READWRITE) ||
-            r300->rws->buffer_is_busy(rbuf->buf, RADEON_USAGE_READWRITE)) {
+        if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->buf, RADEON_USAGE_READWRITE) ||
+            !r300->rws->buffer_wait(rbuf->buf, 0, RADEON_USAGE_READWRITE)) {
             unsigned i;
             struct pb_buffer *new_buf;
 
             /* Create a new one in the same pipe_resource. */
             new_buf = r300->rws->buffer_create(r300->rws, rbuf->b.b.width0,
-                                               R300_BUFFER_ALIGNMENT, TRUE,
-                                               rbuf->domain, 0);
+                                               R300_BUFFER_ALIGNMENT,
+                                               rbuf->domain,
+                                               RADEON_FLAG_NO_INTERPROCESS_SHARING);
             if (new_buf) {
                 /* Discard the old buffer. */
                 pb_reference(&rbuf->buf, NULL);
                 rbuf->buf = new_buf;
-                rbuf->cs_buf = r300->rws->buffer_get_cs_handle(rbuf->buf);
 
                 /* We changed the buffer, now we need to bind it where the old one was bound. */
                 for (i = 0; i < r300->nr_vertex_buffers; i++) {
-                    if (r300->vertex_buffer[i].buffer == &rbuf->b.b) {
+                    if (r300->vertex_buffer[i].buffer.resource == &rbuf->b.b) {
                         r300->vertex_arrays_dirty = TRUE;
                         break;
                     }
@@ -127,10 +127,10 @@ r300_buffer_transfer_map( struct pipe_context *context,
        usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
     }
 
-    map = rws->buffer_map(rbuf->cs_buf, r300->cs, usage);
+    map = rws->buffer_map(rbuf->buf, r300->cs, usage);
 
-    if (map == NULL) {
-        util_slab_free(&r300->pool_transfers, transfer);
+    if (!map) {
+        slab_free(&r300->pool_transfers, transfer);
         return NULL;
     }
 
@@ -143,7 +143,7 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
-    util_slab_free(&r300->pool_transfers, transfer);
+    slab_free(&r300->pool_transfers, transfer);
 }
 
 static const struct u_resource_vtbl r300_buffer_vtbl =
@@ -153,7 +153,6 @@ static const struct u_resource_vtbl r300_buffer_vtbl =
    r300_buffer_transfer_map,           /* transfer_map */
    NULL,                               /* transfer_flush_region */
    r300_buffer_transfer_unmap,         /* transfer_unmap */
-   NULL   /* transfer_inline_write */
 };
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
@@ -184,15 +183,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws, rbuf->b.b.width0,
-                                       R300_BUFFER_ALIGNMENT, TRUE,
-                                       rbuf->domain, 0);
+                                       R300_BUFFER_ALIGNMENT,
+                                       rbuf->domain,
+                                       RADEON_FLAG_NO_INTERPROCESS_SHARING);
     if (!rbuf->buf) {
         FREE(rbuf);
         return NULL;
     }
-
-    rbuf->cs_buf =
-        r300screen->rws->buffer_get_cs_handle(rbuf->buf);
-
     return &rbuf->b.b;
 }

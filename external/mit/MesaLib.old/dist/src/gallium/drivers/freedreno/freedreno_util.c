@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -44,6 +42,9 @@ fd_pipe2depth(enum pipe_format format)
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		return DEPTHX_24_8;
+	case PIPE_FORMAT_Z32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+		return DEPTHX_32;
 	default:
 		return ~0;
 	}
@@ -64,6 +65,26 @@ fd_pipe2index(enum pipe_format format)
 	}
 }
 
+/* we need to special case a bit the depth/stencil restore, because we are
+ * using the texture sampler to blit into the depth/stencil buffer, *not*
+ * into a color buffer.  Otherwise fdN_tex_swiz() will do the wrong thing,
+ * as it is assuming that you are sampling into normal render target..
+ */
+enum pipe_format
+fd_gmem_restore_format(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+		return PIPE_FORMAT_R8G8B8A8_UNORM;
+	case PIPE_FORMAT_Z16_UNORM:
+		return PIPE_FORMAT_R8G8_UNORM;
+	case PIPE_FORMAT_S8_UINT:
+		return PIPE_FORMAT_R8_UNORM;
+	default:
+		return format;
+	}
+}
 
 enum adreno_rb_blend_factor
 fd_blend_factor(unsigned factor)
@@ -101,10 +122,13 @@ fd_blend_factor(unsigned factor)
 	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
 		return FACTOR_ONE_MINUS_CONSTANT_ALPHA;
 	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+		return FACTOR_ONE_MINUS_SRC1_COLOR;
 	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+		return FACTOR_ONE_MINUS_SRC1_ALPHA;
 	case PIPE_BLENDFACTOR_SRC1_COLOR:
+		return FACTOR_SRC1_COLOR;
 	case PIPE_BLENDFACTOR_SRC1_ALPHA:
-		/* I don't think these are supported */
+		return FACTOR_SRC1_ALPHA;
 	default:
 		DBG("invalid blend factor: %x", factor);
 		return 0;

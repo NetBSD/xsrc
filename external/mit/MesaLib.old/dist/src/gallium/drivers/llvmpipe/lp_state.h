@@ -46,7 +46,7 @@
 #define LP_NEW_STIPPLE       0x40
 #define LP_NEW_FRAMEBUFFER   0x80
 #define LP_NEW_DEPTH_STENCIL_ALPHA 0x100
-#define LP_NEW_CONSTANTS     0x200
+#define LP_NEW_FS_CONSTANTS  0x200
 #define LP_NEW_SAMPLER       0x400
 #define LP_NEW_SAMPLER_VIEW  0x800
 #define LP_NEW_VERTEX        0x1000
@@ -130,16 +130,10 @@ void
 llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *ctx,
                                  unsigned num,
                                  struct pipe_sampler_view **views);
-void
-llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx);
-
 
 void
 llvmpipe_prepare_geometry_sampling(struct llvmpipe_context *ctx,
                                    unsigned num,
                                    struct pipe_sampler_view **views);
-void
-llvmpipe_cleanup_geometry_sampling(struct llvmpipe_context *ctx);
-
 
 #endif

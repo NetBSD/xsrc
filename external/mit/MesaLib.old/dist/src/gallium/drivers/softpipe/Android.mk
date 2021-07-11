@@ -35,3 +35,8 @@ LOCAL_MODULE := libmesa_pipe_softpipe
 
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
+
+ifneq ($(HAVE_GALLIUM_SOFTPIPE),)
+GALLIUM_TARGET_DRIVERS += swrast kms_swrast
+$(eval GALLIUM_LIBS += $(LOCAL_MODULE) libmesa_winsys_sw_dri libmesa_winsys_sw_kms_dri)
+endif

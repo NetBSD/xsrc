@@ -27,33 +27,13 @@
 #define REMAP_H
 
 
-#include "main/compiler.h"
-
 struct gl_function_pool_remap {
    int pool_index;
    int remap_index;
 };
 
-struct gl_function_remap {
-   int func_index;
-   int dispatch_offset; /* for sanity check */
-};
-
-
 extern int
 driDispatchRemapTable[];
-
-extern const char *
-_mesa_get_function_spec(int func_index);
-
-extern int
-_mesa_map_function_spec(const char *spec);
-
-extern void
-_mesa_map_function_array(const struct gl_function_remap *func_array);
-
-extern void
-_mesa_map_static_functions(void);
 
 extern void
 _mesa_init_remap_table(void);

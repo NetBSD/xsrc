@@ -33,13 +33,23 @@
  * Client-side GLX interface for current context management.
  */
 
-#ifdef HAVE_PTHREAD
 #include <pthread.h>
-#endif
 
 #include "glxclient.h"
-
 #include "glapi.h"
+#include "glx_error.h"
+
+/*
+ * MASSIVE KLUDGE!
+ * We need these to not be extern in libGL.so because of
+ * PR toolchain/50277
+ */
+#if defined(GLX_USE_TLS) && defined(__NetBSD__)
+_X_EXPORT __thread struct _glapi_table * _glapi_tls_Dispatch
+    __attribute__((tls_model("initial-exec"))) = NULL;
+_X_EXPORT __thread void * _glapi_tls_Context
+    __attribute__((tls_model("initial-exec")));
+#endif
 
 /*
 ** We setup some dummy structures here so that the API can be used
@@ -67,8 +77,6 @@ struct glx_context dummyContext = {
  * Current context management and locking
  */
 
-#if defined( HAVE_PTHREAD )
-
 _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
 # if defined( GLX_USE_TLS )
@@ -81,7 +89,11 @@ _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
  * \c __glXGetCurrentContext can be implemented as trivial macro.
  */
 __thread void *__glX_tls_Context __attribute__ ((tls_model("initial-exec")))
+#if defined(__NetBSD__)
+   = NULL; /* non-zero initializers not supported with dlopen */
+#else
    = &dummyContext;
+#endif
 
 _X_HIDDEN void
 __glXSetCurrentContext(struct glx_context * c)
@@ -138,17 +150,6 @@ __glXGetCurrentContext(void)
 
 # endif /* defined( GLX_USE_TLS ) */
 
-#elif defined( THREADS )
-
-#error Unknown threading method specified.
-
-#else
-
-/* not thread safe */
-_X_HIDDEN struct glx_context *__glXcurrentContext = &dummyContext;
-
-#endif
-
 
 _X_HIDDEN void
 __glXSetCurrentContextNull(void)
@@ -160,7 +161,7 @@ __glXSetCurrentContextNull(void)
 #endif
 }
 
-_X_EXPORT GLXContext
+_GLX_PUBLIC GLXContext
 glXGetCurrentContext(void)
 {
    struct glx_context *cx = __glXGetCurrentContext();
@@ -173,26 +174,11 @@ glXGetCurrentContext(void)
    }
 }
 
-_X_EXPORT GLXDrawable
+_GLX_PUBLIC GLXDrawable
 glXGetCurrentDrawable(void)
 {
    struct glx_context *gc = __glXGetCurrentContext();
    return gc->currentDrawable;
-}
-
-static void
-__glXGenerateError(Display * dpy, XID resource,
-                   BYTE errorCode, CARD16 minorCode)
-{
-   xError error;
-
-   error.errorCode = errorCode;
-   error.resourceID = resource;
-   error.sequenceNumber = dpy->request;
-   error.type = X_Error;
-   error.majorCode = __glXSetupForCommand(dpy);
-   error.minorCode = minorCode;
-   _XError(dpy, &error);
 }
 
 /**
@@ -224,6 +210,13 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return True;
    }
 
+   /* can't have only one be 0 */
+   if (!!draw != !!read) {
+      __glXUnlock();
+      __glXSendError(dpy, BadMatch, None, X_GLXMakeContextCurrent, True);
+      return False;
+   }
+
    if (oldGC != &dummyContext) {
       if (--oldGC->thread_refcount == 0) {
 	 oldGC->vtable->unbind(oldGC, gc);
@@ -243,7 +236,8 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       if (gc->vtable->bind(gc, oldGC, draw, read) != Success) {
          __glXSetCurrentContextNull();
          __glXUnlock();
-         __glXGenerateError(dpy, None, GLXBadContext, X_GLXMakeContextCurrent);
+         __glXSendError(dpy, GLXBadContext, None, X_GLXMakeContextCurrent,
+                        False);
          return GL_FALSE;
       }
 
@@ -267,22 +261,34 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 
    __glXUnlock();
 
+   /* The indirect vertex array state must to be initialised after we
+    * have setup the context, as it needs to query server attributes.
+    */
+   if (gc && !gc->isDirect) {
+      __GLXattribute *state = gc->client_state_private;
+      if (state && state->array_state == NULL) {
+         glGetString(GL_EXTENSIONS);
+         glGetString(GL_VERSION);
+         __glXInitVertexArrayState(gc);
+      }
+   }
+
    return GL_TRUE;
 }
 
 
-_X_EXPORT Bool
+_GLX_PUBLIC Bool
 glXMakeCurrent(Display * dpy, GLXDrawable draw, GLXContext gc)
 {
    return MakeContextCurrent(dpy, draw, draw, gc);
 }
 
-_X_EXPORT
+_GLX_PUBLIC
 GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
           (Display * dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
           (dpy, d, r, ctx), MakeContextCurrent)
 
-_X_EXPORT
+_GLX_PUBLIC
 GLX_ALIAS(Bool, glXMakeContextCurrent,
           (Display * dpy, GLXDrawable d, GLXDrawable r,
            GLXContext ctx), (dpy, d, r, ctx), MakeContextCurrent)

@@ -23,13 +23,13 @@ struct nvc0_blend_stateobj {
 struct nvc0_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;
    int size;
-   uint32_t state[43];
+   uint32_t state[44];
 };
 
 struct nvc0_zsa_stateobj {
    struct pipe_depth_stencil_alpha_state pipe;
    int size;
-   uint32_t state[26];
+   uint32_t state[30];
 };
 
 struct nvc0_constbuf {
@@ -39,7 +39,7 @@ struct nvc0_constbuf {
    } u;
    uint32_t size;
    uint32_t offset;
-   boolean user; /* should only be TRUE if u.data is valid and non-NULL */
+   bool user; /* should only be true if u.data is valid and non-NULL */
 };
 
 struct nvc0_vertex_element {
@@ -55,20 +55,26 @@ struct nvc0_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
-   boolean shared_slots;
-   boolean need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
+   bool shared_slots;
+   bool need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
    unsigned size; /* size of vertex in bytes (when packed) */
    struct nvc0_vertex_element element[0];
+};
+
+struct nvc0_window_rect_stateobj {
+   bool inclusive;
+   unsigned rects;
+   struct pipe_scissor_state rect[PIPE_MAX_WINDOW_RECTANGLES];
 };
 
 struct nvc0_so_target {
    struct pipe_stream_output_target pipe;
    struct pipe_query *pq;
    unsigned stride;
-   boolean clean;
+   bool clean;
 };
 
-static INLINE struct nvc0_so_target *
+static inline struct nvc0_so_target *
 nvc0_so_target(struct pipe_stream_output_target *ptarg)
 {
    return (struct nvc0_so_target *)ptarg;

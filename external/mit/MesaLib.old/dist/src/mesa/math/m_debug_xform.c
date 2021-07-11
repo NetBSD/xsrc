@@ -187,7 +187,7 @@ static int test_transform_function( transform_func func, int psize,
    mat->type = mtypes[mtype];
 
    m = mat->m;
-   ASSERT( ((long)m & 15) == 0 );
+   assert( ((long)m & 15) == 0 );
 
    init_matrix( m );
 
@@ -206,7 +206,7 @@ static int test_transform_function( transform_func func, int psize,
          case VAR:
             break;
          default:
-            ASSERT(0);
+            assert(0);
             return 0;
          }
       }
@@ -285,7 +285,7 @@ void _math_test_all_transform_functions( char *description )
 
    if ( first_time ) {
       first_time = 0;
-      mesa_profile = _mesa_getenv( "MESA_PROFILE" );
+      mesa_profile = getenv( "MESA_PROFILE" );
    }
 
 #ifdef RUN_DEBUG_BENCHMARK

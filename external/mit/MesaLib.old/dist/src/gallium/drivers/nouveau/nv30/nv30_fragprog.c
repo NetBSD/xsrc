@@ -23,6 +23,7 @@
  *
  */
 
+#include "draw/draw_context.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "nv_object.xml.h"
@@ -36,22 +37,26 @@ nv30_fragprog_upload(struct nv30_context *nv30)
    struct nouveau_context *nv = &nv30->base;
    struct nv30_fragprog *fp = nv30->fragprog.program;
    struct pipe_context *pipe = &nv30->base.pipe;
-   struct pipe_transfer *transfer;
-   uint32_t *map;
-   int i; (void)i;
 
-   if (unlikely(!fp->buffer)) {
+   if (unlikely(!fp->buffer))
       fp->buffer = pipe_buffer_create(pipe->screen, 0, 0, fp->insn_len * 4);
-   }
 
-   map = pipe_buffer_map(pipe, fp->buffer, PIPE_TRANSFER_WRITE, &transfer);
 #ifndef PIPE_ARCH_BIG_ENDIAN
-   memcpy(map, fp->insn, fp->insn_len * 4);
+   pipe_buffer_write(pipe, fp->buffer, 0, fp->insn_len * 4, fp->insn);
 #else
-   for (i = 0; i < fp->insn_len; i++)
-      *map++ = (fp->insn[i] >> 16) | (fp->insn[i] << 16);
+   {
+      struct pipe_transfer *transfer;
+      uint32_t *map;
+      int i;
+
+      map = pipe_buffer_map(pipe, fp->buffer,
+                            PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE,
+                            &transfer);
+      for (i = 0; i < fp->insn_len; i++)
+         *map++ = (fp->insn[i] >> 16) | (fp->insn[i] << 16);
+      pipe_buffer_unmap(pipe, transfer);
+   }
 #endif
-   pipe_buffer_unmap(pipe, transfer);
 
    if (nv04_resource(fp->buffer)->domain != NOUVEAU_BO_VRAM)
       nouveau_buffer_migrate(nv, nv04_resource(fp->buffer), NOUVEAU_BO_VRAM);
@@ -63,7 +68,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
    struct nouveau_pushbuf *push = nv30->base.pushbuf;
    struct nouveau_object *eng3d = nv30->screen->eng3d;
    struct nv30_fragprog *fp = nv30->fragprog.program;
-   boolean upload = FALSE;
+   bool upload = false;
    int i;
 
    if (!fp->translated) {
@@ -71,7 +76,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
       if (!fp->translated)
          return;
 
-      upload = TRUE;
+      upload = true;
    }
 
    /* update constants, also needs to be done on every fp switch as we
@@ -88,7 +93,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
          if (!memcmp(&fp->insn[off], &cbuf[idx], 4 * 4))
             continue;
          memcpy(&fp->insn[off], &cbuf[idx], 4 * 4);
-         upload = TRUE;
+         upload = true;
       }
    }
 
@@ -147,8 +152,12 @@ nv30_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 
    pipe_resource_reference(&fp->buffer, NULL);
 
+   if (fp->draw)
+      draw_delete_fragment_shader(nv30_context(pipe)->draw, fp->draw);
+
    FREE((void *)fp->pipe.tokens);
    FREE(fp->insn);
+   FREE(fp->consts);
    FREE(fp);
 }
 
@@ -156,8 +165,15 @@ static void
 nv30_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
+   struct nv30_fragprog *fp = hwcso;
 
-   nv30->fragprog.program = hwcso;
+   /* reset the bucftx so that we don't keep a dangling reference to the fp
+    * code
+    */
+   if (fp != nv30->state.fragprog)
+      nouveau_bufctx_reset(nv30->bufctx, BUFCTX_FRAGPROG);
+
+   nv30->fragprog.program = fp;
    nv30->dirty |= NV30_NEW_FRAGPROG;
 }
 

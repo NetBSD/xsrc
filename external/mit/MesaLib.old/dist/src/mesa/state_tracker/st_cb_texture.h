@@ -37,6 +37,7 @@ struct gl_context;
 struct gl_texture_object;
 struct pipe_context;
 struct st_context;
+struct st_texture_object;
 
 extern enum pipe_texture_target
 gl_target_to_pipe(GLenum target);
@@ -47,11 +48,11 @@ st_get_blit_mask(GLenum srcFormat, GLenum dstFormat);
 extern GLboolean
 st_finalize_texture(struct gl_context *ctx,
 		    struct pipe_context *pipe, 
-		    struct gl_texture_object *tObj);
+		    struct gl_texture_object *tObj,
+		    GLuint cubeMapFace);
 
 
 extern void
 st_init_texture_functions(struct dd_function_table *functions);
-
 
 #endif /* ST_CB_TEXTURE_H */

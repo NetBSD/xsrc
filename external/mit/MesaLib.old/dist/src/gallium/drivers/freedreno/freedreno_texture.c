@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -33,6 +31,7 @@
 
 #include "freedreno_texture.h"
 #include "freedreno_context.h"
+#include "freedreno_resource.h"
 #include "freedreno_util.h"
 
 static void
@@ -50,117 +49,125 @@ fd_sampler_view_destroy(struct pipe_context *pctx,
 }
 
 static void bind_sampler_states(struct fd_texture_stateobj *tex,
-		unsigned nr, void **hwcso)
+		unsigned start, unsigned nr, void **hwcso)
 {
 	unsigned i;
-	unsigned new_nr = 0;
 
 	for (i = 0; i < nr; i++) {
-		if (hwcso[i])
-			new_nr = i + 1;
-		tex->samplers[i] = hwcso[i];
-		tex->dirty_samplers |= (1 << i);
+		unsigned p = i + start;
+		tex->samplers[p] = hwcso[i];
+		if (tex->samplers[p])
+			tex->valid_samplers |= (1 << p);
+		else
+			tex->valid_samplers &= ~(1 << p);
 	}
 
-	for (; i < tex->num_samplers; i++) {
-		tex->samplers[i] = NULL;
-		tex->dirty_samplers |= (1 << i);
-	}
-
-	tex->num_samplers = new_nr;
+	tex->num_samplers = util_last_bit(tex->valid_samplers);
 }
 
 static void set_sampler_views(struct fd_texture_stateobj *tex,
-		unsigned nr, struct pipe_sampler_view **views)
+		unsigned start, unsigned nr, struct pipe_sampler_view **views)
 {
 	unsigned i;
-	unsigned new_nr = 0;
+	unsigned samplers = 0;
 
 	for (i = 0; i < nr; i++) {
-		if (views[i])
-			new_nr = i + 1;
-		pipe_sampler_view_reference(&tex->textures[i], views[i]);
-		tex->dirty_samplers |= (1 << i);
+		struct pipe_sampler_view *view = views ? views[i] : NULL;
+		unsigned p = i + start;
+		pipe_sampler_view_reference(&tex->textures[p], view);
+		if (tex->textures[p])
+			tex->valid_textures |= (1 << p);
+		else
+			tex->valid_textures &= ~(1 << p);
 	}
 
-	for (; i < tex->num_textures; i++) {
-		pipe_sampler_view_reference(&tex->textures[i], NULL);
-		tex->dirty_samplers |= (1 << i);
+	tex->num_textures = util_last_bit(tex->valid_textures);
+
+	for (i = 0; i < tex->num_textures; i++) {
+		uint nr_samples = fd_resource_nr_samples(tex->textures[i]->texture);
+		samplers |= (nr_samples >> 1) << (i * 2);
 	}
 
-	tex->num_textures = new_nr;
+	tex->samples = samplers;
 }
 
 void
 fd_sampler_states_bind(struct pipe_context *pctx,
-		unsigned shader, unsigned start,
+		enum pipe_shader_type shader, unsigned start,
 		unsigned nr, void **hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 
-	assert(start == 0);
-
-	if (shader == PIPE_SHADER_FRAGMENT) {
-		bind_sampler_states(&ctx->fragtex, nr, hwcso);
-		ctx->dirty |= FD_DIRTY_FRAGTEX;
-	}
-	else if (shader == PIPE_SHADER_VERTEX) {
-		bind_sampler_states(&ctx->verttex, nr, hwcso);
-		ctx->dirty |= FD_DIRTY_VERTTEX;
-	}
+	bind_sampler_states(&ctx->tex[shader], start, nr, hwcso);
+	ctx->dirty_shader[shader] |= FD_DIRTY_SHADER_TEX;
+	ctx->dirty |= FD_DIRTY_TEX;
 }
 
-
-static void
-fd_fragtex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
+void
+fd_set_sampler_views(struct pipe_context *pctx, enum pipe_shader_type shader,
+		unsigned start, unsigned nr,
 		struct pipe_sampler_view **views)
 {
 	struct fd_context *ctx = fd_context(pctx);
 
-	/* on a2xx, since there is a flat address space for textures/samplers,
-	 * a change in # of fragment textures/samplers will trigger patching and
-	 * re-emitting the vertex shader:
-	 */
-	if (nr != ctx->fragtex.num_textures)
-		ctx->dirty |= FD_DIRTY_TEXSTATE;
-
-	set_sampler_views(&ctx->fragtex, nr, views);
-	ctx->dirty |= FD_DIRTY_FRAGTEX;
-}
-
-static void
-fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
-		struct pipe_sampler_view **views)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	set_sampler_views(&ctx->verttex, nr, views);
-	ctx->dirty |= FD_DIRTY_VERTTEX;
-}
-
-static void
-fd_set_sampler_views(struct pipe_context *pctx, unsigned shader,
-                     unsigned start, unsigned nr,
-                     struct pipe_sampler_view **views)
-{
-   assert(start == 0);
-   switch (shader) {
-   case PIPE_SHADER_FRAGMENT:
-      fd_fragtex_set_sampler_views(pctx, nr, views);
-      break;
-   case PIPE_SHADER_VERTEX:
-      fd_verttex_set_sampler_views(pctx, nr, views);
-      break;
-   default:
-      ;
-   }
+	set_sampler_views(&ctx->tex[shader], start, nr, views);
+	ctx->dirty_shader[shader] |= FD_DIRTY_SHADER_TEX;
+	ctx->dirty |= FD_DIRTY_TEX;
 }
 
 void
 fd_texture_init(struct pipe_context *pctx)
 {
-	pctx->delete_sampler_state = fd_sampler_state_delete;
+	if (!pctx->delete_sampler_state)
+		pctx->delete_sampler_state = fd_sampler_state_delete;
+	if (!pctx->sampler_view_destroy)
+		pctx->sampler_view_destroy = fd_sampler_view_destroy;
+}
 
-	pctx->sampler_view_destroy = fd_sampler_view_destroy;
+/* helper for setting up border-color buffer for a3xx/a4xx: */
+void
+fd_setup_border_colors(struct fd_texture_stateobj *tex, void *ptr,
+		unsigned offset)
+{
+	unsigned i, j;
 
-	pctx->set_sampler_views = fd_set_sampler_views;
+	for (i = 0; i < tex->num_samplers; i++) {
+		struct pipe_sampler_state *sampler = tex->samplers[i];
+		uint16_t *bcolor = (uint16_t *)((uint8_t *)ptr +
+				(BORDERCOLOR_SIZE * offset) +
+				(BORDERCOLOR_SIZE * i));
+		uint32_t *bcolor32 = (uint32_t *)&bcolor[16];
+
+		if (!sampler)
+			continue;
+
+		/*
+		 * XXX HACK ALERT XXX
+		 *
+		 * The border colors need to be swizzled in a particular
+		 * format-dependent order. Even though samplers don't know about
+		 * formats, we can assume that with a GL state tracker, there's a
+		 * 1:1 correspondence between sampler and texture. Take advantage
+		 * of that knowledge.
+		 */
+		if (i < tex->num_textures && tex->textures[i]) {
+			const struct util_format_description *desc =
+					util_format_description(tex->textures[i]->format);
+			for (j = 0; j < 4; j++) {
+				if (desc->swizzle[j] >= 4)
+					continue;
+
+				const struct util_format_channel_description *chan =
+					&desc->channel[desc->swizzle[j]];
+				if (chan->pure_integer) {
+					bcolor32[desc->swizzle[j] + 4] = sampler->border_color.i[j];
+					bcolor[desc->swizzle[j] + 8] = sampler->border_color.i[j];
+				} else {
+					bcolor32[desc->swizzle[j]] = fui(sampler->border_color.f[j]);
+					bcolor[desc->swizzle[j]] =
+						util_float_to_half(sampler->border_color.f[j]);
+				}
+			}
+		}
+	}
 }

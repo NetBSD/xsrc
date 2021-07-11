@@ -36,7 +36,6 @@
 #include "r300_defines.h"
 #include "r300_screen.h"
 #include "compiler/radeon_regalloc.h"
-#include "../../winsys/radeon/drm/radeon_winsys.h"
 
 struct u_upload_mgr;
 struct r300_context;
@@ -200,7 +199,7 @@ struct r300_sampler_view {
     unsigned width0_override;
     unsigned height0_override;
 
-    /* Swizzles in the UTIL_FORMAT_SWIZZLE_* representation,
+    /* Swizzles in the PIPE_SWIZZLE_* representation,
      * derived from base. */
     unsigned char swizzle[4];
 
@@ -296,7 +295,6 @@ struct r300_query {
 
     /* The buffer where query results are stored. */
     struct pb_buffer *buf;
-    struct radeon_winsys_cs_handle *cs_buf;
 };
 
 struct r300_surface {
@@ -304,7 +302,6 @@ struct r300_surface {
 
     /* Winsys buffer backing the texture. */
     struct pb_buffer *buf;
-    struct radeon_winsys_cs_handle *cs_buf;
 
     enum radeon_bo_domain domain;
 
@@ -396,7 +393,6 @@ struct r300_resource
 
     /* Winsys buffer backing this resource. */
     struct pb_buffer *buf;
-    struct radeon_winsys_cs_handle *cs_buf;
     enum radeon_bo_domain domain;
 
     /* Constant buffers and SWTCL vertex and index buffers are in user
@@ -450,8 +446,10 @@ struct r300_context {
 
     /* The interface to the windowing system, etc. */
     struct radeon_winsys *rws;
+    /* The submission context. */
+    struct radeon_winsys_ctx *ctx;
     /* The command stream. */
-    struct radeon_winsys_cs *cs;
+    struct radeon_cmdbuf *cs;
     /* Screen. */
     struct r300_screen *screen;
 
@@ -459,7 +457,6 @@ struct r300_context {
     struct draw_context* draw;
     /* Vertex buffer for SW TCL. */
     struct pb_buffer *vbo;
-    struct radeon_winsys_cs_handle *vbo_cs;
     /* Offset and size into the SW TCL VBO. */
     size_t draw_vbo_offset;
 
@@ -580,6 +577,7 @@ struct r300_context {
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
     boolean flatshade;
+    boolean clip_halfz;
     /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
     /* Whether fragment shader needs to be validated. */
@@ -593,12 +591,11 @@ struct r300_context {
 
     void *dsa_decompress_zmask;
 
-    struct pipe_index_buffer index_buffer;
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     unsigned nr_vertex_buffers;
     struct u_upload_mgr *uploader;
 
-    struct util_slab_mempool pool_transfers;
+    struct slab_child_pool pool_transfers;
 
     /* Stat counter. */
     uint64_t flush_counter;
@@ -647,32 +644,32 @@ struct r300_context {
     for (atom = r300->first_dirty; atom != r300->last_dirty; atom++)
 
 /* Convenience cast wrappers. */
-static INLINE struct r300_query* r300_query(struct pipe_query* q)
+static inline struct r300_query* r300_query(struct pipe_query* q)
 {
     return (struct r300_query*)q;
 }
 
-static INLINE struct r300_surface* r300_surface(struct pipe_surface* surf)
+static inline struct r300_surface* r300_surface(struct pipe_surface* surf)
 {
     return (struct r300_surface*)surf;
 }
 
-static INLINE struct r300_resource* r300_resource(struct pipe_resource* tex)
+static inline struct r300_resource* r300_resource(struct pipe_resource* tex)
 {
     return (struct r300_resource*)tex;
 }
 
-static INLINE struct r300_context* r300_context(struct pipe_context* context)
+static inline struct r300_context* r300_context(struct pipe_context* context)
 {
     return (struct r300_context*)context;
 }
 
-static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
+static inline struct r300_fragment_shader *r300_fs(struct r300_context *r300)
 {
     return (struct r300_fragment_shader*)r300->fs.state;
 }
 
-static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
+static inline void r300_mark_atom_dirty(struct r300_context *r300,
                                         struct r300_atom *atom)
 {
     atom->dirty = TRUE;
@@ -688,7 +685,7 @@ static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
     }
 }
 
-static INLINE struct pipe_surface *
+static inline struct pipe_surface *
 r300_get_nonnull_cb(struct pipe_framebuffer_state *fb, unsigned i)
 {
     if (fb->cbufs[i])
@@ -703,7 +700,7 @@ r300_get_nonnull_cb(struct pipe_framebuffer_state *fb, unsigned i)
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         void *priv);
+                                         void *priv, unsigned flags);
 
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
@@ -735,7 +732,7 @@ void r300_stop_query(struct r300_context *r300);
 
 /* r300_render_translate.c */
 void r300_translate_index_buffer(struct r300_context *r300,
-                                 struct pipe_index_buffer *ib,
+                                 const struct pipe_draw_info *info,
                                  struct pipe_resource **out_index_buffer,
                                  unsigned *index_size, unsigned index_offset,
                                  unsigned *start, unsigned count);
@@ -746,10 +743,12 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 /* r300_render.c */
 void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 void r300_blitter_draw_rectangle(struct blitter_context *blitter,
+                                 void *vertex_elements_cso,
+                                 blitter_get_vs_func get_vs,
                                  int x1, int y1, int x2, int y2,
-                                 float depth,
+                                 float depth, unsigned num_instances,
                                  enum blitter_attrib_type type,
-                                 const union pipe_color_union *attrib);
+                                 const union blitter_attrib *attrib);
 
 /* r300_state.c */
 enum r300_fb_state_change {
@@ -777,12 +776,12 @@ void r300_update_derived_state(struct r300_context* r300);
 void r500_dump_rs_block(struct r300_rs_block *rs);
 
 
-static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
+static inline boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
     return SCREEN_DBG_ON(ctx->screen, flags);
 }
 
-static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
+static inline void CTX_DBG(struct r300_context * ctx, unsigned flags,
                        const char * fmt, ...)
 {
     if (CTX_DBG_ON(ctx, flags)) {

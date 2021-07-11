@@ -34,7 +34,10 @@
 #include "util/u_debug.h"
 #include "util/u_rect.h"
 #include "util/u_surface.h"
+#include "util/u_video.h"
 #include "vl/vl_defines.h"
+
+#include "state_tracker/drm_driver.h"
 
 #include "vdpau_private.h"
 
@@ -77,7 +80,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    DeviceReference(&p_surf->device, dev);
    pipe = dev->context;
 
-   pipe_mutex_lock(dev->mutex);
+   mtx_lock(&dev->mutex);
    memset(&p_surf->templat, 0, sizeof(p_surf->templat));
    p_surf->templat.buffer_format = pipe->screen->get_video_param
    (
@@ -101,7 +104,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
 
    /* do not mandate early allocation of a video buffer */
    vlVdpVideoSurfaceClear(p_surf);
-   pipe_mutex_unlock(dev->mutex);
+   mtx_unlock(&dev->mutex);
 
    *surface = vlAddDataHTAB(p_surf);
    if (*surface == 0) {
@@ -135,10 +138,10 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe_mutex_lock(p_surf->device->mutex);
+   mtx_lock(&p_surf->device->mutex);
    if (p_surf->video_buffer)
       p_surf->video_buffer->destroy(p_surf->video_buffer);
-   pipe_mutex_unlock(p_surf->device->mutex);
+   mtx_unlock(&p_surf->device->mutex);
 
    vlRemoveDataHTAB(surface);
    DeviceReference(&p_surf->device, NULL);
@@ -182,90 +185,9 @@ vlVdpVideoSurfaceSize(vlVdpSurface *p_surf, int component,
    *width = p_surf->templat.width;
    *height = p_surf->templat.height;
 
-   if (component > 0) {
-      if (p_surf->templat.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-         *width /= 2;
-         *height /= 2;
-      } else if (p_surf->templat.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-         *width /= 2;
-      }
-   }
-   if (p_surf->templat.interlaced)
-      *height /= 2;
-}
-
-static void
-vlVdpCopyNV12ToYV12(void *const *destination_data,
-                    uint32_t const *destination_pitches,
-                    int src_plane, int src_field,
-                    int src_stride, int num_fields,
-                    uint8_t const *src,
-                    int width, int height)
-{
-   int x, y;
-   unsigned u_stride = destination_pitches[2] * num_fields;
-   unsigned v_stride = destination_pitches[1] * num_fields;
-   uint8_t *u_dst = (uint8_t *)destination_data[2] + destination_pitches[2] * src_field;
-   uint8_t *v_dst = (uint8_t *)destination_data[1] + destination_pitches[1] * src_field;
-
-   /* TODO: SIMD */
-   for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-         u_dst[x] = src[2*x];
-         v_dst[x] = src[2*x+1];
-      }
-      u_dst += u_stride;
-      v_dst += v_stride;
-      src += src_stride;
-   }
-}
-
-static void
-vlVdpCopyYV12ToNV12(void *const *destination_data,
-                    uint32_t const *destination_pitches,
-                    int src_plane, int src_field,
-                    int src_stride, int num_fields,
-                    uint8_t const *src,
-                    int width, int height)
-{
-   int x, y;
-   unsigned offset = 2 - src_plane;
-   unsigned stride = destination_pitches[1] * num_fields;
-   uint8_t *dst = (uint8_t *)destination_data[1] + destination_pitches[1] * src_field;
-
-   /* TODO: SIMD */
-   for (y = 0; y < height; y++) {
-      for (x = 0; x < 2 * width; x += 2) {
-         dst[x+offset] = src[x>>1];
-      }
-      dst += stride;
-      src += src_stride;
-   }
-}
-
-static void
-vlVdpCopySwap422Packed(void *const *destination_data,
-                       uint32_t const *destination_pitches,
-                       int src_plane, int src_field,
-                       int src_stride, int num_fields,
-                       uint8_t const *src,
-                       int width, int height)
-{
-   int x, y;
-   unsigned stride = destination_pitches[0] * num_fields;
-   uint8_t *dst = (uint8_t *)destination_data[0] + destination_pitches[0] * src_field;
-
-   /* TODO: SIMD */
-   for (y = 0; y < height; y++) {
-      for (x = 0; x < 4 * width; x += 4) {
-         dst[x+0] = src[x+1];
-         dst[x+1] = src[x+0];
-         dst[x+2] = src[x+3];
-         dst[x+3] = src[x+2];
-      }
-      dst += stride;
-      src += src_stride;
-   }
+   vl_video_buffer_adjust_size(width, height, component,
+                               p_surf->templat.chroma_format,
+                               p_surf->templat.interlaced);
 }
 
 /**
@@ -293,6 +215,9 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
+   if (!destination_data || !destination_pitches)
+       return VDP_STATUS_INVALID_POINTER;
+
    format = FormatYCBCRToPipe(destination_ycbcr_format);
    if (format == PIPE_FORMAT_NONE)
       return VDP_STATUS_INVALID_Y_CB_CR_FORMAT;
@@ -313,10 +238,10 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
          return VDP_STATUS_NO_IMPLEMENTATION;
    }
 
-   pipe_mutex_lock(vlsurface->device->mutex);
+   mtx_lock(&vlsurface->device->mutex);
    sampler_views = vlsurface->video_buffer->get_sampler_view_planes(vlsurface->video_buffer);
    if (!sampler_views) {
-      pipe_mutex_unlock(vlsurface->device->mutex);
+      mtx_unlock(&vlsurface->device->mutex);
       return VDP_STATUS_RESOURCES;
    }
 
@@ -338,20 +263,20 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
          map = pipe->transfer_map(pipe, sv->texture, 0,
                                        PIPE_TRANSFER_READ, &box, &transfer);
          if (!map) {
-            pipe_mutex_unlock(vlsurface->device->mutex);
+            mtx_unlock(&vlsurface->device->mutex);
             return VDP_STATUS_RESOURCES;
          }
 
          if (conversion == CONVERSION_NV12_TO_YV12 && i == 1) {
-            vlVdpCopyNV12ToYV12(destination_data, destination_pitches,
+            u_copy_nv12_to_yv12(destination_data, destination_pitches,
                                 i, j, transfer->stride, sv->texture->array_size,
                                 map, box.width, box.height);
          } else if (conversion == CONVERSION_YV12_TO_NV12 && i > 0) {
-            vlVdpCopyYV12ToNV12(destination_data, destination_pitches,
+            u_copy_yv12_to_nv12(destination_data, destination_pitches,
                                 i, j, transfer->stride, sv->texture->array_size,
                                 map, box.width, box.height);
          } else if (conversion == CONVERSION_SWAP_YUYV_UYVY) {
-            vlVdpCopySwap422Packed(destination_data, destination_pitches,
+            u_copy_swap422_packed(destination_data, destination_pitches,
                                    i, j, transfer->stride, sv->texture->array_size,
                                    map, box.width, box.height);
          } else {
@@ -363,7 +288,7 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
          pipe_transfer_unmap(pipe, transfer);
       }
    }
-   pipe_mutex_unlock(vlsurface->device->mutex);
+   mtx_unlock(&vlsurface->device->mutex);
 
    return VDP_STATUS_OK;
 }
@@ -379,9 +304,11 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
                               uint32_t const *source_pitches)
 {
    enum pipe_format pformat = FormatYCBCRToPipe(source_ycbcr_format);
+   enum getbits_conversion conversion = CONVERSION_NONE;
    struct pipe_context *pipe;
    struct pipe_sampler_view **sampler_views;
    unsigned i, j;
+   unsigned usage = PIPE_TRANSFER_WRITE;
 
    vlVdpSurface *p_surf = vlGetDataHTAB(surface);
    if (!p_surf)
@@ -391,54 +318,115 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe_mutex_lock(p_surf->device->mutex);
-   if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {
+   if (!source_data || !source_pitches)
+       return VDP_STATUS_INVALID_POINTER;
 
-      /* destroy the old one */
-      if (p_surf->video_buffer)
-         p_surf->video_buffer->destroy(p_surf->video_buffer);
+   mtx_lock(&p_surf->device->mutex);
 
-      /* adjust the template parameters */
-      p_surf->templat.buffer_format = pformat;
+   if (p_surf->video_buffer == NULL ||
+       ((pformat != p_surf->video_buffer->buffer_format))) {
+      enum pipe_format nformat = pformat;
+      struct pipe_screen *screen = pipe->screen;
 
-      /* and try to create the video buffer with the new format */
-      p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+      /* Determine the most suitable format for the new surface */
+      if (!screen->is_video_format_supported(screen, nformat,
+                                             PIPE_VIDEO_PROFILE_UNKNOWN,
+                                             PIPE_VIDEO_ENTRYPOINT_BITSTREAM)) {
+         nformat = screen->get_video_param(screen,
+                                           PIPE_VIDEO_PROFILE_UNKNOWN,
+                                           PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                           PIPE_VIDEO_CAP_PREFERED_FORMAT);
+         if (nformat == PIPE_FORMAT_NONE) {
+            mtx_unlock(&p_surf->device->mutex);
+            return VDP_STATUS_NO_IMPLEMENTATION;
+         }
+      }
 
-      /* stil no luck? ok forget it we don't support it */
-      if (!p_surf->video_buffer) {
-         pipe_mutex_unlock(p_surf->device->mutex);
+      if (p_surf->video_buffer == NULL  ||
+          nformat != p_surf->video_buffer->buffer_format) {
+         /* destroy the old one */
+         if (p_surf->video_buffer)
+            p_surf->video_buffer->destroy(p_surf->video_buffer);
+
+         /* adjust the template parameters */
+         p_surf->templat.buffer_format = nformat;
+         if (nformat == PIPE_FORMAT_YUYV || nformat == PIPE_FORMAT_UYVY)
+            p_surf->templat.interlaced = false;
+
+         /* and try to create the video buffer with the new format */
+         p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+
+         /* stil no luck? ok forget it we don't support it */
+         if (!p_surf->video_buffer) {
+            mtx_unlock(&p_surf->device->mutex);
+            return VDP_STATUS_NO_IMPLEMENTATION;
+         }
+         vlVdpVideoSurfaceClear(p_surf);
+      }
+   }
+
+   if (pformat != p_surf->video_buffer->buffer_format) {
+      if (pformat == PIPE_FORMAT_YV12 &&
+          p_surf->video_buffer->buffer_format == PIPE_FORMAT_NV12)
+         conversion = CONVERSION_YV12_TO_NV12;
+      else {
+         mtx_unlock(&p_surf->device->mutex);
          return VDP_STATUS_NO_IMPLEMENTATION;
       }
-      vlVdpVideoSurfaceClear(p_surf);
    }
 
    sampler_views = p_surf->video_buffer->get_sampler_view_planes(p_surf->video_buffer);
    if (!sampler_views) {
-      pipe_mutex_unlock(p_surf->device->mutex);
+      mtx_unlock(&p_surf->device->mutex);
       return VDP_STATUS_RESOURCES;
    }
 
    for (i = 0; i < 3; ++i) {
       unsigned width, height;
       struct pipe_sampler_view *sv = sampler_views[i];
+      struct pipe_resource *tex;
       if (!sv || !source_pitches[i]) continue;
 
+      tex = sv->texture;
       vlVdpVideoSurfaceSize(p_surf, i, &width, &height);
 
-      for (j = 0; j < sv->texture->array_size; ++j) {
+      for (j = 0; j < tex->array_size; ++j) {
          struct pipe_box dst_box = {
             0, 0, j,
             width, height, 1
          };
 
-         pipe->transfer_inline_write(pipe, sv->texture, 0,
-                                     PIPE_TRANSFER_WRITE, &dst_box,
-                                     source_data[i] + source_pitches[i] * j,
-                                     source_pitches[i] * sv->texture->array_size,
-                                     0);
+         if (conversion == CONVERSION_YV12_TO_NV12 && i == 1) {
+            struct pipe_transfer *transfer;
+            uint8_t *map;
+
+            map = pipe->transfer_map(pipe, tex, 0, usage,
+                                     &dst_box, &transfer);
+            if (!map) {
+               mtx_unlock(&p_surf->device->mutex);
+               return VDP_STATUS_RESOURCES;
+            }
+
+            u_copy_nv12_from_yv12(source_data, source_pitches,
+                                  i, j, transfer->stride, tex->array_size,
+                                  map, dst_box.width, dst_box.height);
+
+            pipe_transfer_unmap(pipe, transfer);
+         } else {
+            pipe->texture_subdata(pipe, tex, 0,
+                                  PIPE_TRANSFER_WRITE, &dst_box,
+                                  source_data[i] + source_pitches[i] * j,
+                                  source_pitches[i] * tex->array_size,
+                                  0);
+         }
+         /*
+          * This surface has already been synced
+          * by the first map.
+          */
+         usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
       }
    }
-   pipe_mutex_unlock(p_surf->device->mutex);
+   mtx_unlock(&p_surf->device->mutex);
 
    return VDP_STATUS_OK;
 }
@@ -467,7 +455,7 @@ vlVdpVideoSurfaceClear(vlVdpSurface *vlsurf)
          c.f[0] = c.f[1] = c.f[2] = c.f[3] = 0.5f;
 
       pipe->clear_render_target(pipe, surfaces[i], &c, 0, 0,
-                                surfaces[i]->width, surfaces[i]->height);
+                                surfaces[i]->width, surfaces[i]->height, false);
    }
    pipe->flush(pipe, NULL, 0);
 }
@@ -481,14 +469,86 @@ struct pipe_video_buffer *vlVdpVideoSurfaceGallium(VdpVideoSurface surface)
    if (!p_surf)
       return NULL;
 
-   pipe_mutex_lock(p_surf->device->mutex);
+   mtx_lock(&p_surf->device->mutex);
    if (p_surf->video_buffer == NULL) {
       struct pipe_context *pipe = p_surf->device->context;
 
       /* try to create a video buffer if we don't already have one */
       p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
    }
-   pipe_mutex_unlock(p_surf->device->mutex);
+   mtx_unlock(&p_surf->device->mutex);
 
    return p_surf->video_buffer;
+}
+
+VdpStatus vlVdpVideoSurfaceDMABuf(VdpVideoSurface surface,
+                                  VdpVideoSurfacePlane plane,
+                                  struct VdpSurfaceDMABufDesc *result)
+{
+   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+
+   struct pipe_screen *pscreen;
+   struct winsys_handle whandle;
+
+   struct pipe_surface *surf;
+
+   if (!p_surf)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (plane > 3)
+      return VDP_STATUS_INVALID_VALUE;
+
+   if (!result)
+      return VDP_STATUS_INVALID_POINTER;
+
+   memset(result, 0, sizeof(*result));
+   result->handle = -1;
+
+   mtx_lock(&p_surf->device->mutex);
+   if (p_surf->video_buffer == NULL) {
+      struct pipe_context *pipe = p_surf->device->context;
+
+      /* try to create a video buffer if we don't already have one */
+      p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+   }
+
+   /* Check if surface match interop requirements */
+   if (p_surf->video_buffer == NULL || !p_surf->video_buffer->interlaced ||
+       p_surf->video_buffer->buffer_format != PIPE_FORMAT_NV12) {
+      mtx_unlock(&p_surf->device->mutex);
+      return VDP_STATUS_NO_IMPLEMENTATION;
+   }
+
+   surf = p_surf->video_buffer->get_surfaces(p_surf->video_buffer)[plane];
+   if (!surf) {
+      mtx_unlock(&p_surf->device->mutex);
+      return VDP_STATUS_RESOURCES;
+   }
+
+   memset(&whandle, 0, sizeof(struct winsys_handle));
+   whandle.type = WINSYS_HANDLE_TYPE_FD;
+   whandle.layer = surf->u.tex.first_layer;
+
+   pscreen = surf->texture->screen;
+   if (!pscreen->resource_get_handle(pscreen, p_surf->device->context,
+                                     surf->texture, &whandle,
+                                     PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE)) {
+      mtx_unlock(&p_surf->device->mutex);
+      return VDP_STATUS_NO_IMPLEMENTATION;
+   }
+
+   mtx_unlock(&p_surf->device->mutex);
+
+   result->handle = whandle.handle;
+   result->width = surf->width;
+   result->height = surf->height;
+   result->offset = whandle.offset;
+   result->stride = whandle.stride;
+
+   if (surf->format == PIPE_FORMAT_R8_UNORM)
+      result->format = VDP_RGBA_FORMAT_R8;
+   else
+      result->format = VDP_RGBA_FORMAT_R8G8;
+
+   return VDP_STATUS_OK;
 }

@@ -134,27 +134,28 @@ i830_render_start(struct intel_context *intel)
             GLuint mcs = (i830->state.Tex[i][I830_TEXREG_MCS] &
                           ~TEXCOORDTYPE_MASK);
 
-            switch (sz) {
-            case 1:
-            case 2:
-               emit = EMIT_2F;
-               sz = 2;
-               mcs |= TEXCOORDTYPE_CARTESIAN;
-               break;
-            case 3:
+            if (intel->ctx.Texture.Unit[i]._Current->Target == GL_TEXTURE_CUBE_MAP) {
                emit = EMIT_3F;
                sz = 3;
                mcs |= TEXCOORDTYPE_VECTOR;
-               break;
-            case 4:
-               emit = EMIT_3F_XYW;
-               sz = 3;
-               mcs |= TEXCOORDTYPE_HOMOGENEOUS;
-               break;
-            default:
-               continue;
-            };
-
+            } else {
+               switch (sz) {
+               case 1:
+               case 2:
+               case 3:
+                  emit = EMIT_2F;
+                  sz = 2;
+                  mcs |= TEXCOORDTYPE_CARTESIAN;
+                  break;
+               case 4:
+                  emit = EMIT_3F_XYW;
+                  sz = 3;
+                  mcs |= TEXCOORDTYPE_HOMOGENEOUS;
+                  break;
+               default:
+                  continue;
+               }
+            }
 
             EMIT_ATTR(_TNL_ATTRIB_TEX0 + i, emit, 0);
             v2 |= VRTX_TEX_SET_FMT(count, SZ_TO_HW(sz));
@@ -510,10 +511,10 @@ i830_emit_state(struct intel_context *intel)
 
       OUT_BATCH(state->Buffer[I830_DESTREG_DV0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_DV1]);
-      OUT_BATCH(state->Buffer[I830_DESTREG_SENABLE]);
       OUT_BATCH(state->Buffer[I830_DESTREG_SR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I830_DESTREG_SR2]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_SENABLE]);
 
       assert(state->Buffer[I830_DESTREG_DRAWRECT0] != MI_NOOP);
       OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT0]);
@@ -729,9 +730,9 @@ i830_update_draw_buffer(struct intel_context *intel)
     */
    if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
-      _mesa_update_framebuffer(ctx);
+      _mesa_update_framebuffer(ctx, ctx->ReadBuffer, ctx->DrawBuffer);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
-      _mesa_update_draw_buffer_bounds(ctx);
+      _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
    }
 
    if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {

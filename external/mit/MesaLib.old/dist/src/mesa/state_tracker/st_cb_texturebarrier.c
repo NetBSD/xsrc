@@ -50,7 +50,19 @@ st_TextureBarrier(struct gl_context *ctx)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
 
-   pipe->texture_barrier(pipe);
+   pipe->texture_barrier(pipe, PIPE_TEXTURE_BARRIER_SAMPLER);
+}
+
+
+/**
+ * Called via ctx->Driver.FramebufferFetchBarrier()
+ */
+static void
+st_FramebufferFetchBarrier(struct gl_context *ctx)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+
+   pipe->texture_barrier(pipe, PIPE_TEXTURE_BARRIER_FRAMEBUFFER);
 }
 
 
@@ -63,8 +75,57 @@ st_MemoryBarrier(struct gl_context *ctx, GLbitfield barriers)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    unsigned flags = 0;
 
+   if (barriers & GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
+      flags |= PIPE_BARRIER_VERTEX_BUFFER;
+   if (barriers & GL_ELEMENT_ARRAY_BARRIER_BIT)
+      flags |= PIPE_BARRIER_INDEX_BUFFER;
+   if (barriers & GL_UNIFORM_BARRIER_BIT)
+      flags |= PIPE_BARRIER_CONSTANT_BUFFER;
+   if (barriers & GL_TEXTURE_FETCH_BARRIER_BIT)
+      flags |= PIPE_BARRIER_TEXTURE;
+   if (barriers & GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
+      flags |= PIPE_BARRIER_IMAGE;
+   if (barriers & GL_COMMAND_BARRIER_BIT)
+      flags |= PIPE_BARRIER_INDIRECT_BUFFER;
+   if (barriers & GL_PIXEL_BUFFER_BARRIER_BIT) {
+      /* The PBO may be
+       *  (1) bound as a texture for PBO uploads, or
+       *  (2) accessed by the CPU via transfer ops.
+       * For case (2), we assume automatic flushing by the driver.
+       */
+      flags |= PIPE_BARRIER_TEXTURE;
+   }
+   if (barriers & GL_TEXTURE_UPDATE_BARRIER_BIT) {
+      /* GL_TEXTURE_UPDATE_BARRIER_BIT:
+       * Texture updates translate to:
+       *  (1) texture transfers to/from the CPU,
+       *  (2) texture as blit destination, or
+       *  (3) texture as framebuffer.
+       * Some drivers may handle these automatically, and can ignore the bit.
+       */
+      flags |= PIPE_BARRIER_UPDATE_TEXTURE;
+   }
+   if (barriers & GL_BUFFER_UPDATE_BARRIER_BIT) {
+      /* GL_BUFFER_UPDATE_BARRIER_BIT:
+       * Buffer updates translate to
+       *  (1) buffer transfers to/from the CPU,
+       *  (2) resource copies and clears.
+       * Some drivers may handle these automatically, and can ignore the bit.
+       */
+      flags |= PIPE_BARRIER_UPDATE_BUFFER;
+   }
    if (barriers & GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT)
       flags |= PIPE_BARRIER_MAPPED_BUFFER;
+   if (barriers & GL_QUERY_BUFFER_BARRIER_BIT)
+      flags |= PIPE_BARRIER_QUERY_BUFFER;
+   if (barriers & GL_FRAMEBUFFER_BARRIER_BIT)
+      flags |= PIPE_BARRIER_FRAMEBUFFER;
+   if (barriers & GL_TRANSFORM_FEEDBACK_BARRIER_BIT)
+      flags |= PIPE_BARRIER_STREAMOUT_BUFFER;
+   if (barriers & GL_ATOMIC_COUNTER_BARRIER_BIT)
+      flags |= PIPE_BARRIER_SHADER_BUFFER;
+   if (barriers & GL_SHADER_STORAGE_BARRIER_BIT)
+      flags |= PIPE_BARRIER_SHADER_BUFFER;
 
    if (flags && pipe->memory_barrier)
       pipe->memory_barrier(pipe, flags);
@@ -73,5 +134,6 @@ st_MemoryBarrier(struct gl_context *ctx, GLbitfield barriers)
 void st_init_texture_barrier_functions(struct dd_function_table *functions)
 {
    functions->TextureBarrier = st_TextureBarrier;
+   functions->FramebufferFetchBarrier = st_FramebufferFetchBarrier;
    functions->MemoryBarrier = st_MemoryBarrier;
 }

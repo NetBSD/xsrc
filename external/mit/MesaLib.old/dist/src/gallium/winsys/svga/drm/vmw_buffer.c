@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -69,7 +69,7 @@ struct vmw_gmr_buffer
 extern const struct pb_vtbl vmw_gmr_buffer_vtbl;
 
 
-static INLINE struct vmw_gmr_buffer *
+static inline struct vmw_gmr_buffer *
 vmw_gmr_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -86,10 +86,15 @@ struct vmw_gmr_bufmgr
 };
 
 
-static INLINE struct vmw_gmr_bufmgr *
+static inline struct vmw_gmr_bufmgr *
 vmw_gmr_bufmgr(struct pb_manager *mgr)
 {
    assert(mgr);
+
+   /* Make sure our extra flags don't collide with pipebuffer's flags */
+   STATIC_ASSERT((VMW_BUFFER_USAGE_SHARED & PB_USAGE_ALL) == 0);
+   STATIC_ASSERT((VMW_BUFFER_USAGE_SYNC & PB_USAGE_ALL) == 0);
+
    return (struct vmw_gmr_bufmgr *)mgr;
 }
 
@@ -109,7 +114,7 @@ vmw_gmr_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 vmw_gmr_buffer_map(struct pb_buffer *_buf,
-                   unsigned flags,
+                   enum pb_usage_flags flags,
                    void *flush_ctx)
 {
    struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
@@ -140,7 +145,7 @@ static void
 vmw_gmr_buffer_unmap(struct pb_buffer *_buf)
 {
    struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
-   unsigned flags = buf->map_flags;
+   enum pb_usage_flags flags = buf->map_flags;
 
    if ((_buf->usage & VMW_BUFFER_USAGE_SYNC) &&
        !(flags & PB_USAGE_UNSYNCHRONIZED)) {
@@ -154,7 +159,7 @@ vmw_gmr_buffer_unmap(struct pb_buffer *_buf)
 static void
 vmw_gmr_buffer_get_base_buffer(struct pb_buffer *buf,
                            struct pb_buffer **base_buf,
-                           unsigned *offset)
+                           pb_size *offset)
 {
    *base_buf = buf;
    *offset = 0;
@@ -164,7 +169,7 @@ vmw_gmr_buffer_get_base_buffer(struct pb_buffer *buf,
 static enum pipe_error
 vmw_gmr_buffer_validate( struct pb_buffer *_buf, 
                          struct pb_validate *vl,
-                         unsigned flags )
+                         enum pb_usage_flags flags )
 {
    /* Always pinned */
    return PIPE_OK;
@@ -266,7 +271,7 @@ vmw_gmr_bufmgr_region_ptr(struct pb_buffer *buf,
                           struct SVGAGuestPtr *ptr)
 {
    struct pb_buffer *base_buf;
-   unsigned offset = 0;
+   pb_size offset = 0;
    struct vmw_gmr_buffer *gmr_buf;
    
    pb_get_base_buffer( buf, &base_buf, &offset );
@@ -338,13 +343,27 @@ vmw_svga_winsys_buffer_destroy(struct svga_winsys_screen *sws,
 void *
 vmw_svga_winsys_buffer_map(struct svga_winsys_screen *sws,
                            struct svga_winsys_buffer *buf,
-                           unsigned flags)
+                           enum pipe_transfer_usage flags)
 {
    void *map;
 
    (void)sws;
    if (flags & PIPE_TRANSFER_UNSYNCHRONIZED)
       flags &= ~PIPE_TRANSFER_DONTBLOCK;
+
+   /* NOTE: we're passing PIPE_TRANSFER_x flags instead of
+    * PB_USAGE_x flags here.  We should probably fix that.
+    */
+   STATIC_ASSERT((unsigned) PB_USAGE_CPU_READ ==
+                 (unsigned) PIPE_TRANSFER_READ);
+   STATIC_ASSERT((unsigned) PB_USAGE_CPU_WRITE ==
+                 (unsigned) PIPE_TRANSFER_WRITE);
+   STATIC_ASSERT((unsigned) PB_USAGE_GPU_READ ==
+                 (unsigned) PIPE_TRANSFER_MAP_DIRECTLY);
+   STATIC_ASSERT((unsigned) PB_USAGE_DONTBLOCK ==
+                 (unsigned) PIPE_TRANSFER_DONTBLOCK);
+   STATIC_ASSERT((unsigned) PB_USAGE_UNSYNCHRONIZED ==
+                 (unsigned) PIPE_TRANSFER_UNSYNCHRONIZED);
 
    map = pb_map(vmw_pb_buffer(buf), flags, NULL);
 

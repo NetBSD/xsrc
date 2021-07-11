@@ -2,19 +2,19 @@ Import('*')
 
 env.Prepend(LIBS = [
     ws_haiku,
-    trace,
-    rbug,
+    st_haiku,
     mesautil,
+    compiler,
     mesa,
     glsl,
+    nir,
+    spirv,
     gallium
 ])
 
 if True:
     env.Append(CPPDEFINES = [
         'GALLIUM_SOFTPIPE',
-        'GALLIUM_RBUG',
-        'GALLIUM_TRACE',
     ])
     env.Prepend(LIBS = [softpipe])
 
@@ -25,7 +25,8 @@ env.Append(CPPPATH = [
     '#/src/mesa',
     '#/src/mesa/main',
     '#/include/HaikuGL',
-    '#/src/gallium/winsys/sw/hgl',
+    '#/src/gallium/winsys',
+    '#/src/gallium/state_trackers/hgl',
     '/boot/system/develop/headers/private',
 ])
 
@@ -35,7 +36,6 @@ if env['llvm']:
 
 softpipe_sources = [
     'GalliumContext.cpp',
-    'GalliumFramebuffer.cpp',
     'SoftwareRenderer.cpp'
 ]
 

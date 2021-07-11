@@ -38,9 +38,9 @@
 #include "os/os_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_double_list.h"
-#include "util/u_time.h"
+#include "util/list.h"
 #include "util/u_debug_stack.h"
+#include <inttypes.h>
 
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
@@ -77,7 +77,7 @@ struct pb_debug_buffer
 
    struct debug_stack_frame create_backtrace[PB_DEBUG_CREATE_BACKTRACE];
 
-   pipe_mutex mutex;
+   mtx_t mutex;
    unsigned map_count;
    struct debug_stack_frame map_backtrace[PB_DEBUG_MAP_BACKTRACE];
    
@@ -94,12 +94,12 @@ struct pb_debug_manager
    pb_size underflow_size;
    pb_size overflow_size;
    
-   pipe_mutex mutex;
+   mtx_t mutex;
    struct list_head list;
 };
 
 
-static INLINE struct pb_debug_buffer *
+static inline struct pb_debug_buffer *
 pb_debug_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -107,7 +107,7 @@ pb_debug_buffer(struct pb_buffer *buf)
 }
 
 
-static INLINE struct pb_debug_manager *
+static inline struct pb_debug_manager *
 pb_debug_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -123,7 +123,7 @@ static const uint8_t random_pattern[32] = {
 };
 
 
-static INLINE void 
+static inline void 
 fill_random_pattern(uint8_t *dst, pb_size size)
 {
    pb_size i = 0;
@@ -134,7 +134,7 @@ fill_random_pattern(uint8_t *dst, pb_size size)
 }
 
 
-static INLINE boolean 
+static inline boolean 
 check_random_pattern(const uint8_t *dst, pb_size size, 
                      pb_size *min_ofs, pb_size *max_ofs) 
 {
@@ -160,7 +160,7 @@ pb_debug_buffer_fill(struct pb_debug_buffer *buf)
    
    map = pb_map(buf->buffer, PB_USAGE_CPU_WRITE, NULL);
    assert(map);
-   if(map) {
+   if (map) {
       fill_random_pattern(map, buf->underflow_size);
       fill_random_pattern(map + buf->underflow_size + buf->base.size,
                           buf->overflow_size);
@@ -183,14 +183,14 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
                 PB_USAGE_CPU_READ |
                 PB_USAGE_UNSYNCHRONIZED, NULL);
    assert(map);
-   if(map) {
+   if (map) {
       boolean underflow, overflow;
       pb_size min_ofs, max_ofs;
       
       underflow = !check_random_pattern(map, buf->underflow_size, 
                                         &min_ofs, &max_ofs);
       if(underflow) {
-         debug_printf("buffer underflow (offset -%u%s to -%u bytes) detected\n",
+         debug_printf("buffer underflow (offset -%"PRIu64"%s to -%"PRIu64" bytes) detected\n",
                       buf->underflow_size - min_ofs,
                       min_ofs == 0 ? "+" : "",
                       buf->underflow_size - max_ofs);
@@ -200,7 +200,7 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
                                        buf->overflow_size, 
                                        &min_ofs, &max_ofs);
       if(overflow) {
-         debug_printf("buffer overflow (size %u plus offset %u to %u%s bytes) detected\n",
+         debug_printf("buffer overflow (size %"PRIu64" plus offset %"PRIu64" to %"PRIu64"%s bytes) detected\n",
                       buf->base.size,
                       min_ofs,
                       max_ofs,
@@ -235,11 +235,11 @@ pb_debug_buffer_destroy(struct pb_buffer *_buf)
    
    pb_debug_buffer_check(buf);
 
-   pipe_mutex_lock(mgr->mutex);
+   mtx_lock(&mgr->mutex);
    LIST_DEL(&buf->head);
-   pipe_mutex_unlock(mgr->mutex);
+   mtx_unlock(&mgr->mutex);
 
-   pipe_mutex_destroy(buf->mutex);
+   mtx_destroy(&buf->mutex);
    
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
@@ -248,7 +248,7 @@ pb_debug_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 pb_debug_buffer_map(struct pb_buffer *_buf, 
-                    unsigned flags, void *flush_ctx)
+                    enum pb_usage_flags flags, void *flush_ctx)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    void *map;
@@ -256,15 +256,13 @@ pb_debug_buffer_map(struct pb_buffer *_buf,
    pb_debug_buffer_check(buf);
 
    map = pb_map(buf->buffer, flags, flush_ctx);
-   if(!map)
+   if (!map)
       return NULL;
    
-   if(map) {
-      pipe_mutex_lock(buf->mutex);
-      ++buf->map_count;
-      debug_backtrace_capture(buf->map_backtrace, 1, PB_DEBUG_MAP_BACKTRACE);
-      pipe_mutex_unlock(buf->mutex);
-   }
+   mtx_lock(&buf->mutex);
+   ++buf->map_count;
+   debug_backtrace_capture(buf->map_backtrace, 1, PB_DEBUG_MAP_BACKTRACE);
+   mtx_unlock(&buf->mutex);
    
    return (uint8_t *)map + buf->underflow_size;
 }
@@ -275,11 +273,11 @@ pb_debug_buffer_unmap(struct pb_buffer *_buf)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);   
    
-   pipe_mutex_lock(buf->mutex);
+   mtx_lock(&buf->mutex);
    assert(buf->map_count);
    if(buf->map_count)
       --buf->map_count;
-   pipe_mutex_unlock(buf->mutex);
+   mtx_unlock(&buf->mutex);
    
    pb_unmap(buf->buffer);
    
@@ -301,17 +299,19 @@ pb_debug_buffer_get_base_buffer(struct pb_buffer *_buf,
 static enum pipe_error 
 pb_debug_buffer_validate(struct pb_buffer *_buf, 
                          struct pb_validate *vl,
-                         unsigned flags)
+                         enum pb_usage_flags flags)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    
-   pipe_mutex_lock(buf->mutex);
+   assert((flags & ~PB_USAGE_ALL) == 0);
+
+   mtx_lock(&buf->mutex);
    if(buf->map_count) {
       debug_printf("%s: attempting to validate a mapped buffer\n", __FUNCTION__);
       debug_printf("last map backtrace is\n");
       debug_backtrace_dump(buf->map_backtrace, PB_DEBUG_MAP_BACKTRACE);
    }
-   pipe_mutex_unlock(buf->mutex);
+   mtx_unlock(&buf->mutex);
 
    pb_debug_buffer_check(buf);
 
@@ -351,7 +351,7 @@ pb_debug_manager_dump_locked(struct pb_debug_manager *mgr)
       buf = LIST_ENTRY(struct pb_debug_buffer, curr, head);
 
       debug_printf("buffer = %p\n", (void *) buf);
-      debug_printf("    .size = 0x%x\n", buf->base.size);
+      debug_printf("    .size = 0x%"PRIx64"\n", buf->base.size);
       debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
       
       curr = next; 
@@ -375,7 +375,7 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    assert(desc->alignment);
 
    buf = CALLOC_STRUCT(pb_debug_buffer);
-   if(!buf)
+   if (!buf)
       return NULL;
    
    real_size = mgr->underflow_size + size + mgr->overflow_size;
@@ -389,11 +389,11 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    if(!buf->buffer) {
       FREE(buf);
 #if 0
-      pipe_mutex_lock(mgr->mutex);
+      mtx_lock(&mgr->mutex);
       debug_printf("%s: failed to create buffer\n", __FUNCTION__);
       if(!LIST_IS_EMPTY(&mgr->list))
          pb_debug_manager_dump_locked(mgr);
-      pipe_mutex_unlock(mgr->mutex);
+      mtx_unlock(&mgr->mutex);
 #endif
       return NULL;
    }
@@ -418,11 +418,11 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
 
    pb_debug_buffer_fill(buf);
    
-   pipe_mutex_init(buf->mutex);
+   (void) mtx_init(&buf->mutex, mtx_plain);
    
-   pipe_mutex_lock(mgr->mutex);
+   mtx_lock(&mgr->mutex);
    LIST_ADDTAIL(&buf->head, &mgr->list);
-   pipe_mutex_unlock(mgr->mutex);
+   mtx_unlock(&mgr->mutex);
 
    return &buf->base;
 }
@@ -443,14 +443,14 @@ pb_debug_manager_destroy(struct pb_manager *_mgr)
 {
    struct pb_debug_manager *mgr = pb_debug_manager(_mgr);
    
-   pipe_mutex_lock(mgr->mutex);
+   mtx_lock(&mgr->mutex);
    if(!LIST_IS_EMPTY(&mgr->list)) {
       debug_printf("%s: unfreed buffers\n", __FUNCTION__);
       pb_debug_manager_dump_locked(mgr);
    }
-   pipe_mutex_unlock(mgr->mutex);
+   mtx_unlock(&mgr->mutex);
    
-   pipe_mutex_destroy(mgr->mutex);
+   mtx_destroy(&mgr->mutex);
    mgr->provider->destroy(mgr->provider);
    FREE(mgr);
 }
@@ -462,7 +462,7 @@ pb_debug_manager_create(struct pb_manager *provider,
 {
    struct pb_debug_manager *mgr;
 
-   if(!provider)
+   if (!provider)
       return NULL;
    
    mgr = CALLOC_STRUCT(pb_debug_manager);
@@ -476,7 +476,7 @@ pb_debug_manager_create(struct pb_manager *provider,
    mgr->underflow_size = underflow_size;
    mgr->overflow_size = overflow_size;
     
-   pipe_mutex_init(mgr->mutex);
+   (void) mtx_init(&mgr->mutex, mtx_plain);
    LIST_INITHEAD(&mgr->list);
 
    return &mgr->base;

@@ -129,7 +129,11 @@ int bc_builder::build_fetch_clause(cf_node* n) {
 			I != E; ++I) {
 		fetch_node *f = static_cast<fetch_node*>(*I);
 
-		if (f->bc.op_ptr->flags & FF_VTX)
+		if (f->bc.op_ptr->flags & FF_GDS)
+			build_fetch_gds(f);
+		else if (f->bc.op_ptr->flags & FF_MEM)
+			build_fetch_mem(f);
+		else if (f->bc.op_ptr->flags & FF_VTX)
 			build_fetch_vtx(f);
 		else
 			build_fetch_tex(f);
@@ -334,7 +338,7 @@ int bc_builder::build_cf_mem(cf_node* n) {
 
 	if (!ctx.is_egcm())
 		bb << CF_ALLOC_EXPORT_WORD1_BUF_R6R7()
-				.ARRAY_SIZE(bc.array_size)
+				.ARR_SIZE(bc.array_size)
 				.BARRIER(bc.barrier)
 				.BURST_COUNT(bc.burst_count)
 				.CF_INST(ctx.cf_opcode(bc.op))
@@ -345,7 +349,7 @@ int bc_builder::build_cf_mem(cf_node* n) {
 
 	else if (ctx.is_evergreen())
 		bb << CF_ALLOC_EXPORT_WORD1_BUF_EG()
-				.ARRAY_SIZE(bc.array_size)
+				.ARR_SIZE(bc.array_size)
 				.BARRIER(bc.barrier)
 				.BURST_COUNT(bc.burst_count)
 				.CF_INST(ctx.cf_opcode(bc.op))
@@ -356,7 +360,7 @@ int bc_builder::build_cf_mem(cf_node* n) {
 
 	else // cayman
 		bb << CF_ALLOC_EXPORT_WORD1_BUF_CM()
-		.ARRAY_SIZE(bc.array_size)
+		.ARR_SIZE(bc.array_size)
 		.BARRIER(bc.barrier)
 		.BURST_COUNT(bc.burst_count)
 		.CF_INST(ctx.cf_opcode(bc.op))
@@ -370,6 +374,37 @@ int bc_builder::build_cf_mem(cf_node* n) {
 int bc_builder::build_alu(alu_node* n) {
 	const bc_alu &bc = n->bc;
 	const alu_op_info *aop = bc.op_ptr;
+
+	if (n->bc.op_ptr->flags & AF_LDS) {
+		assert(ctx.is_egcm());
+		bb << ALU_WORD0_LDS_IDX_OP_EGCM()
+			.SRC0_SEL(bc.src[0].sel)
+			.SRC0_REL(bc.src[0].rel)
+			.SRC0_CHAN(bc.src[0].chan)
+			.IDX_OFFSET_4((bc.lds_idx_offset >> 4) & 1)
+			.SRC1_SEL(bc.src[1].sel)
+			.SRC1_REL(bc.src[1].rel)
+			.SRC1_CHAN(bc.src[1].chan)
+			.IDX_OFFSET_5((bc.lds_idx_offset >> 5) & 1)
+			.INDEX_MODE(bc.index_mode)
+			.PRED_SEL(bc.pred_sel)
+			.LAST(bc.last);
+
+		bb << ALU_WORD1_LDS_IDX_OP_EGCM()
+			.SRC2_SEL(bc.src[2].sel)
+			.SRC2_REL(bc.src[2].rel)
+			.SRC2_CHAN(bc.src[2].chan)
+			.IDX_OFFSET_1((bc.lds_idx_offset >> 1) & 1)
+			.ALU_INST(ctx.alu_opcode(ALU_OP3_LDS_IDX_OP))
+			.BANK_SWIZZLE(bc.bank_swizzle)
+			.LDS_OP((bc.op_ptr->opcode[1] >> 8) & 0xff)
+			.IDX_OFFSET_0((bc.lds_idx_offset >> 0) & 1)
+			.IDX_OFFSET_2((bc.lds_idx_offset >> 2) & 1)
+			.DST_CHAN(bc.dst_chan)
+			.IDX_OFFSET_3((bc.lds_idx_offset >> 3) & 1);
+
+		return 0;
+	}
 
 	bb << ALU_WORD0_ALL()
 			.INDEX_MODE(bc.index_mode)
@@ -527,6 +562,46 @@ int bc_builder::build_fetch_tex(fetch_node* n) {
 	return 0;
 }
 
+int bc_builder::build_fetch_gds(fetch_node *n) {
+	const bc_fetch &bc = n->bc;
+	const fetch_op_info *fop = bc.op_ptr;
+	unsigned gds_op = (ctx.fetch_opcode(bc.op) >> 8) & 0x3f;
+	unsigned mem_op = 4;
+	assert(fop->flags & FF_GDS);
+
+	if (bc.op == FETCH_OP_TF_WRITE) {
+		mem_op = 5;
+		gds_op = 0;
+	}
+
+	bb << MEM_GDS_WORD0_EGCM()
+		.MEM_INST(2)
+		.MEM_OP(mem_op)
+		.SRC_GPR(bc.src_gpr)
+		.SRC_SEL_X(bc.src_sel[0])
+		.SRC_SEL_Y(bc.src_sel[1])
+		.SRC_SEL_Z(bc.src_sel[2]);
+
+	bb << MEM_GDS_WORD1_EGCM()
+		.DST_GPR(bc.dst_gpr)
+		.DST_REL_MODE(bc.dst_rel)
+		.GDS_OP(gds_op)
+		.SRC_GPR(bc.src2_gpr)
+		.UAV_INDEX_MODE(bc.uav_index_mode)
+		.UAV_ID(bc.uav_id)
+		.ALLOC_CONSUME(bc.alloc_consume)
+		.BCAST_FIRST_REQ(bc.bcast_first_req);
+
+	bb << MEM_GDS_WORD2_EGCM()
+		.DST_SEL_X(bc.dst_sel[0])
+		.DST_SEL_Y(bc.dst_sel[1])
+		.DST_SEL_Z(bc.dst_sel[2])
+		.DST_SEL_W(bc.dst_sel[3]);
+
+	bb << 0;
+	return 0;
+}
+
 int bc_builder::build_fetch_vtx(fetch_node* n) {
 	const bc_fetch &bc = n->bc;
 	const fetch_op_info *fop = bc.op_ptr;
@@ -621,6 +696,48 @@ int bc_builder::build_fetch_vtx(fetch_node* n) {
 		assert(!"unknown hw class");
 		return -1;
 	}
+
+	bb << 0;
+	return 0;
+}
+
+int bc_builder::build_fetch_mem(fetch_node* n) {
+	const bc_fetch &bc = n->bc;
+	const fetch_op_info *fop = bc.op_ptr;
+
+	assert(fop->flags & FF_MEM);
+
+	bb << MEM_RD_WORD0_R7EGCM()
+		.MEM_INST(2)
+		.ELEM_SIZE(bc.elem_size)
+		.FETCH_WHOLE_QUAD(bc.fetch_whole_quad)
+		.MEM_OP(0)
+		.UNCACHED(bc.uncached)
+		.INDEXED(bc.indexed)
+		.SRC_SEL_Y(bc.src_sel[1])
+		.SRC_GPR(bc.src_gpr)
+		.SRC_REL(bc.src_rel)
+		.SRC_SEL_X(bc.src_sel[0])
+		.BURST_COUNT(bc.burst_count)
+		.LDS_REQ(bc.lds_req)
+		.COALESCED_READ(bc.coalesced_read);
+
+	bb << MEM_RD_WORD1_R7EGCM()
+		.DST_GPR(bc.dst_gpr)
+		.DST_REL(bc.dst_rel)
+		.DST_SEL_X(bc.dst_sel[0])
+		.DST_SEL_Y(bc.dst_sel[1])
+		.DST_SEL_Z(bc.dst_sel[2])
+		.DST_SEL_W(bc.dst_sel[3])
+		.DATA_FORMAT(bc.data_format)
+		.NUM_FORMAT_ALL(bc.num_format_all)
+		.FORMAT_COMP_ALL(bc.format_comp_all)
+		.SRF_MODE_ALL(bc.srf_mode_all);
+
+	bb << MEM_RD_WORD2_R7EGCM()
+		.ARRAY_BASE(bc.array_base)
+		.ENDIAN_SWAP(bc.endian_swap)
+		.ARR_SIZE(bc.array_size);
 
 	bb << 0;
 	return 0;

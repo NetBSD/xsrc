@@ -49,7 +49,7 @@ struct offset_stage {
 
 
 
-static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
+static inline struct offset_stage *offset_stage( struct draw_stage *stage )
 {
    return (struct offset_stage *) stage;
 }
@@ -231,7 +231,7 @@ static void offset_destroy( struct draw_stage *stage )
 struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
-   if (offset == NULL)
+   if (!offset)
       goto fail;
 
    offset->stage.draw = draw;

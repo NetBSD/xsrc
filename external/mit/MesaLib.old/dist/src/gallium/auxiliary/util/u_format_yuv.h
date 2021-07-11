@@ -46,7 +46,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "u_math.h"
+#include "util/u_math.h"
 
 
 /*
@@ -54,7 +54,7 @@
  * precision in the coefficients.
  */
 
-static INLINE void
+static inline void
 util_format_rgb_float_to_yuv(float r, float g, float b,
                              uint8_t *y, uint8_t *u, uint8_t *v)
 {
@@ -74,7 +74,7 @@ util_format_rgb_float_to_yuv(float r, float g, float b,
 }
 
 
-static INLINE void
+static inline void
 util_format_yuv_to_rgb_float(uint8_t y, uint8_t u, uint8_t v,
                              float *r, float *g, float *b)
 {
@@ -92,7 +92,7 @@ util_format_yuv_to_rgb_float(uint8_t y, uint8_t u, uint8_t v,
 }
 
 
-static INLINE void
+static inline void
 util_format_rgb_8unorm_to_yuv(uint8_t r, uint8_t g, uint8_t b,
                 	      uint8_t *y, uint8_t *u, uint8_t *v)
 {
@@ -102,7 +102,7 @@ util_format_rgb_8unorm_to_yuv(uint8_t r, uint8_t g, uint8_t b,
 }
 
 
-static INLINE void
+static inline void
 util_format_yuv_to_rgb_8unorm(uint8_t y, uint8_t u, uint8_t v,
                               uint8_t *r, uint8_t *g, uint8_t *b)
 {
@@ -264,6 +264,25 @@ util_format_nv21_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
                              unsigned width, unsigned height);
 void
 util_format_nv21_fetch_rgba_float(float *dst, const uint8_t *src,
+                             unsigned i, unsigned j);
+void
+util_format_p016_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                             const uint8_t *src_row, unsigned src_stride,
+                             unsigned width, unsigned height);
+void
+util_format_p016_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                             const uint8_t *src_row, unsigned src_stride,
+                             unsigned width, unsigned height);
+void
+util_format_p016_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                             const uint8_t *src_row, unsigned src_stride,
+                             unsigned width, unsigned height);
+void
+util_format_p016_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
+                             const float *src_row, unsigned src_stride,
+                             unsigned width, unsigned height);
+void
+util_format_p016_fetch_rgba_float(float *dst, const uint8_t *src,
                              unsigned i, unsigned j);
 void
 util_format_r8g8_b8g8_unorm_unpack_rgba_float(float *dst_row, unsigned dst_stride,

@@ -41,6 +41,7 @@
 #include "sp_query.h"
 #include "sp_state.h"
 #include "sp_texture.h"
+#include "sp_screen.h"
 
 #include "draw/draw_context.h"
 
@@ -81,34 +82,31 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
    /* Map vertex buffers */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      const void *buf = sp->vertex_buffer[i].user_buffer;
+      const void *buf = sp->vertex_buffer[i].is_user_buffer ?
+                           sp->vertex_buffer[i].buffer.user : NULL;
       size_t size = ~0;
       if (!buf) {
-         if (!sp->vertex_buffer[i].buffer) {
+         if (!sp->vertex_buffer[i].buffer.resource) {
             continue;
          }
-         buf = softpipe_resource_data(sp->vertex_buffer[i].buffer);
-         size = sp->vertex_buffer[i].buffer->width0;
+         buf = softpipe_resource_data(sp->vertex_buffer[i].buffer.resource);
+         size = sp->vertex_buffer[i].buffer.resource->width0;
       }
       draw_set_mapped_vertex_buffer(draw, i, buf, size);
    }
 
    /* Map index buffer, if present */
-   if (info->indexed) {
+   if (info->index_size) {
       unsigned available_space = ~0;
-      mapped_indices = sp->index_buffer.user_buffer;
+      mapped_indices = info->has_user_indices ? info->index.user : NULL;
       if (!mapped_indices) {
-         mapped_indices = softpipe_resource_data(sp->index_buffer.buffer);
-         if (sp->index_buffer.buffer->width0 > sp->index_buffer.offset)
-            available_space =
-               (sp->index_buffer.buffer->width0 - sp->index_buffer.offset);
-         else
-            available_space = 0;
+         mapped_indices = softpipe_resource_data(info->index.resource);
+         available_space = info->index.resource->width0;
       }
 
       draw_set_indexes(draw,
-                       (ubyte *) mapped_indices + sp->index_buffer.offset,
-                       sp->index_buffer.index_size, available_space);
+                       (ubyte *) mapped_indices,
+                       info->index_size, available_space);
    }
 
 
@@ -122,6 +120,15 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
                               sp->so_targets);
+
+   if (softpipe_screen(sp->pipe.screen)->use_llvm) {
+      softpipe_prepare_vertex_sampling(sp,
+                                       sp->num_sampler_views[PIPE_SHADER_VERTEX],
+                                       sp->sampler_views[PIPE_SHADER_VERTEX]);
+      softpipe_prepare_geometry_sampling(sp,
+                                         sp->num_sampler_views[PIPE_SHADER_GEOMETRY],
+                                         sp->sampler_views[PIPE_SHADER_GEOMETRY]);
+   }
 
    if (sp->gs && !sp->gs->shader.tokens) {
       /* we have an empty geometry shader with stream output, so
@@ -145,6 +152,11 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    }
 
    draw_set_mapped_so_targets(draw, 0, NULL);
+
+   if (softpipe_screen(sp->pipe.screen)->use_llvm) {
+      softpipe_cleanup_vertex_sampling(sp);
+      softpipe_cleanup_geometry_sampling(sp);
+   }
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

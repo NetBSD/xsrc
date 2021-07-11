@@ -26,7 +26,12 @@
  */
 
 #include <string.h>
-#include "u_macros.h"
+
+#ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
+#define HIDDEN __attribute__((visibility("hidden")))
+#else
+#define HIDDEN
+#endif
 
 __asm__(".text");
 
@@ -37,6 +42,20 @@ __asm__("x86_current_tls:\n\t"
 	"addl $_GLOBAL_OFFSET_TABLE_+[.-1b], %eax\n\t"
 	"movl " ENTRY_CURRENT_TABLE "@GOTNTPOFF(%eax), %eax\n\t"
 	"ret");
+
+#if defined(__NetBSD__)
+__asm__("x86_current_table_helper:\n\t"
+	"movl %gs:(%eax), %eax\n\t"   \
+	"testl %eax, %eax\n\t"        \
+	"je 1f\n\t"                   \
+	"ret\n\t"                     \
+	"1:\n\t"                      \
+	"call 2f\n\t"                 \
+	"2:\n\t"                      \
+	"popl %eax\n\t"               \
+	"addl $_GLOBAL_OFFSET_TABLE_+[.-2b], %eax\n\t" \
+	"jmp *" ENTRY_CURRENT_TABLE_GET "@GOT(%eax)");
+#endif
 
 #ifndef GLX_X86_READONLY_TEXT
 __asm__(".section wtext, \"awx\", @progbits");
@@ -51,10 +70,10 @@ __asm__(".balign 16\n"
    ".balign 16\n"                \
    func ":"
 
-#ifdef __PIC__
+#if defined(__NetBSD__)
 #define STUB_ASM_CODE(slot)      \
-   "call x86_current_tls@PLT\n\t"\
-   "movl %gs:(%eax), %eax\n\t"   \
+   "call x86_current_tls\n\t"    \
+   "call x86_current_table_helper\n\t"    \
    "jmp *(4 * " slot ")(%eax)"
 #else
 #define STUB_ASM_CODE(slot)      \
@@ -79,8 +98,8 @@ __asm__(".text");
 extern unsigned long
 x86_current_tls();
 
-extern char x86_entry_start[] __attribute__((__visibility__("hidden")));
-extern char x86_entry_end[] __attribute__((__visibility__("hidden")));
+extern char x86_entry_start[] HIDDEN;
+extern char x86_entry_end[] HIDDEN;
 
 void
 entry_patch_public(void)
@@ -120,7 +139,7 @@ entry_generate(int slot)
       0xff, 0xa0, 0x34, 0x12, 0x00, 0x00, /* jmp *0x1234(%eax) */
       0x90, 0x90, 0x90, 0x90              /* nop's */
    };
-   void *code;
+   char *code;
    mapi_func entry;
 
    code = u_execmem_alloc(sizeof(code_templ));

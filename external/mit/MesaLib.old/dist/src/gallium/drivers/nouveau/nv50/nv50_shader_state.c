@@ -27,6 +27,9 @@
 #include "util/u_inlines.h"
 
 #include "nv50/nv50_context.h"
+#include "nv50/nv50_query_hw.h"
+
+#include "nv50/nv50_compute.xml.h"
 
 void
 nv50_constbufs_validate(struct nv50_context *nv50)
@@ -60,19 +63,14 @@ nv50_constbufs_validate(struct nv50_context *nv50)
                continue;
             }
             if (!nv50->state.uniform_buffer_bound[s]) {
-               nv50->state.uniform_buffer_bound[s] = TRUE;
+               nv50->state.uniform_buffer_bound[s] = true;
                BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
                PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
             }
             while (words) {
-               unsigned nr;
+               unsigned nr = MIN2(words, NV04_PFIFO_MAX_PACKET_LEN);
 
-               if (!PUSH_SPACE(push, 16))
-                  break;
-               nr = PUSH_AVAIL(push);
-               assert(nr >= 16);
-               nr = MIN2(MIN2(nr - 3, words), NV04_PFIFO_MAX_PACKET_LEN);
-
+               PUSH_SPACE(push, nr + 3);
                BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
                PUSH_DATA (push, (start << 8) | b);
                BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
@@ -98,34 +96,37 @@ nv50_constbufs_validate(struct nv50_context *nv50)
                BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
                PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
 
-               BCTX_REFN(nv50->bufctx_3d, CB(s, i), res, RD);
+               BCTX_REFN(nv50->bufctx_3d, 3D_CB(s, i), res, RD);
+
+               nv50->cb_dirty = 1; /* Force cache flush for UBO. */
+               res->cb_bindings[s] |= 1 << i;
             } else {
                BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
                PUSH_DATA (push, (i << 8) | p | 0);
             }
             if (i == 0)
-               nv50->state.uniform_buffer_bound[s] = FALSE;
+               nv50->state.uniform_buffer_bound[s] = false;
          }
       }
    }
 }
 
-static boolean
+static bool
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
 {
    if (!prog->translated) {
       prog->translated = nv50_program_translate(
-         prog, nv50->screen->base.device->chipset);
+         prog, nv50->screen->base.device->chipset, &nv50->base.debug);
       if (!prog->translated)
-         return FALSE;
+         return false;
    } else
    if (prog->mem)
-      return TRUE;
+      return true;
 
    return nv50_program_upload_code(nv50, prog);
 }
 
-static INLINE void
+static inline void
 nv50_program_update_context_state(struct nv50_context *nv50,
                                   struct nv50_program *prog, int stage)
 {
@@ -133,14 +134,14 @@ nv50_program_update_context_state(struct nv50_context *nv50,
 
    if (prog && prog->tls_space) {
       if (nv50->state.new_tls_space)
-         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TLS);
+         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_TLS);
       if (!nv50->state.tls_required || nv50->state.new_tls_space)
-         BCTX_REFN_bo(nv50->bufctx_3d, TLS, flags, nv50->screen->tls_bo);
-      nv50->state.new_tls_space = FALSE;
+         BCTX_REFN_bo(nv50->bufctx_3d, 3D_TLS, flags, nv50->screen->tls_bo);
+      nv50->state.new_tls_space = false;
       nv50->state.tls_required |= 1 << stage;
    } else {
       if (nv50->state.tls_required == (1 << stage))
-         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TLS);
+         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_TLS);
       nv50->state.tls_required &= ~(1 << stage);
    }
 }
@@ -171,11 +172,63 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *fp = nv50->fragprog;
+   struct pipe_rasterizer_state *rast = &nv50->rast->pipe;
 
-   fp->fp.sample_interp = nv50->min_samples > 1;
+   if (!fp || !rast)
+      return;
+
+   if (nv50->zsa && nv50->zsa->pipe.alpha.enabled) {
+      struct pipe_framebuffer_state *fb = &nv50->framebuffer;
+      bool blendable = fb->nr_cbufs == 0 || !fb->cbufs[0] ||
+         nv50->screen->base.base.is_format_supported(
+               &nv50->screen->base.base,
+               fb->cbufs[0]->format,
+               fb->cbufs[0]->texture->target,
+               fb->cbufs[0]->texture->nr_samples,
+               fb->cbufs[0]->texture->nr_storage_samples,
+               PIPE_BIND_BLENDABLE);
+      /* If we already have alphatest code, we have to keep updating
+       * it. However we only have to have different code if the current RT0 is
+       * non-blendable. Otherwise we just set it to always pass and use the
+       * hardware alpha test.
+       */
+      if (fp->fp.alphatest || !blendable) {
+         uint8_t alphatest = PIPE_FUNC_ALWAYS + 1;
+         if (!blendable)
+            alphatest = nv50->zsa->pipe.alpha.func + 1;
+         if (!fp->fp.alphatest)
+            nv50_program_destroy(nv50, fp);
+         else if (fp->mem && fp->fp.alphatest != alphatest)
+            nouveau_heap_free(&fp->mem);
+
+         fp->fp.alphatest = alphatest;
+      }
+   } else if (fp->fp.alphatest && fp->fp.alphatest != PIPE_FUNC_ALWAYS + 1) {
+      /* Alpha test is disabled but we have a shader where it's filled
+       * in. Make sure to reset the function to 'always', otherwise it'll end
+       * up discarding fragments incorrectly.
+       */
+      if (fp->mem)
+         nouveau_heap_free(&fp->mem);
+
+      fp->fp.alphatest = PIPE_FUNC_ALWAYS + 1;
+   }
+
+   if (fp->fp.force_persample_interp != rast->force_persample_interp) {
+      /* Force the program to be reuploaded, which will trigger interp fixups
+       * to get applied
+       */
+      if (fp->mem)
+         nouveau_heap_free(&fp->mem);
+
+      fp->fp.force_persample_interp = rast->force_persample_interp;
+   }
+
+   if (fp->mem && !(nv50->dirty_3d & (NV50_NEW_3D_FRAGPROG | NV50_NEW_3D_MIN_SAMPLES)))
+      return;
 
    if (!nv50_program_validate(nv50, fp))
-         return;
+      return;
    nv50_program_update_context_state(nv50, fp, 1);
 
    BEGIN_NV04(push, NV50_3D(FP_REG_ALLOC_TEMP), 1);
@@ -228,6 +281,19 @@ nv50_gmtyprog_validate(struct nv50_context *nv50)
    /* GP_ENABLE is updated in linkage validation */
 }
 
+void
+nv50_compprog_validate(struct nv50_context *nv50)
+{
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nv50_program *cp = nv50->compprog;
+
+   if (cp && !nv50_program_validate(nv50, cp))
+      return;
+
+   BEGIN_NV04(push, NV50_CP(CODE_CB_FLUSH), 1);
+   PUSH_DATA (push, 0);
+}
+
 static void
 nv50_sprite_coords_validate(struct nv50_context *nv50)
 {
@@ -243,11 +309,11 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
          for (i = 0; i < 8; ++i)
             PUSH_DATA(push, 0);
 
-         nv50->state.point_sprite = FALSE;
+         nv50->state.point_sprite = false;
       }
       return;
    } else {
-      nv50->state.point_sprite = TRUE;
+      nv50->state.point_sprite = true;
    }
 
    memset(pntc, 0, sizeof(pntc));
@@ -299,7 +365,7 @@ nv50_validate_derived_rs(struct nv50_context *nv50)
       PUSH_DATA (push, !nv50->rast->pipe.rasterizer_discard);
    }
 
-   if (nv50->dirty & NV50_NEW_FRAGPROG)
+   if (nv50->dirty_3d & NV50_NEW_3D_FRAGPROG)
       return;
    psize = nv50->state.semantic_psize & ~NV50_3D_SEMANTIC_PTSZ_PTSZ_EN__MASK;
    color = nv50->state.semantic_color & ~NV50_3D_SEMANTIC_COLOR_CLMP_EN;
@@ -364,13 +430,14 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    uint32_t psiz = 0x000;
    uint32_t interp = fp->fp.interp;
    uint32_t colors = fp->fp.colors;
+   uint32_t clpd_nr = util_last_bit(vp->vp.clip_enable | vp->vp.cull_enable);
    uint32_t lin[4];
    uint8_t map[64];
    uint8_t so_map[64];
 
-   if (!(nv50->dirty & (NV50_NEW_VERTPROG |
-                        NV50_NEW_FRAGPROG |
-                        NV50_NEW_GMTYPROG))) {
+   if (!(nv50->dirty_3d & (NV50_NEW_3D_VERTPROG |
+                           NV50_NEW_3D_FRAGPROG |
+                           NV50_NEW_3D_GMTYPROG))) {
       uint8_t bfc, ffc;
       ffc = (nv50->state.semantic_color & NV50_3D_SEMANTIC_COLOR_FFC0_ID__MASK);
       bfc = (nv50->state.semantic_color & NV50_3D_SEMANTIC_COLOR_BFC0_ID__MASK)
@@ -390,7 +457,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    dummy.linear = 0;
    m = nv50_vec4_map(map, 0, lin, &dummy, &vp->out[0]);
 
-   for (c = 0; c < vp->vp.clpd_nr; ++c)
+   for (c = 0; c < clpd_nr; ++c)
       map[m++] = vp->vp.clpd[c / 4] + (c % 4);
 
    colors |= m << 8; /* adjust BFC0 id */
@@ -497,7 +564,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(GP_VIEWPORT_ID_ENABLE), 5);
    PUSH_DATA (push, vp->gp.has_viewport);
    PUSH_DATA (push, colors);
-   PUSH_DATA (push, (vp->vp.clpd_nr << 8) | 4);
+   PUSH_DATA (push, (clpd_nr << 8) | 4);
    PUSH_DATA (push, layerid);
    PUSH_DATA (push, psiz);
 
@@ -623,8 +690,6 @@ nv50_stream_output_validate(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(STRMOUT_BUFFERS_CTRL), 1);
    PUSH_DATA (push, ctrl);
 
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_SO);
-
    for (i = 0; i < nv50->num_so_targets; ++i) {
       struct nv50_so_target *targ = nv50_so_target(nv50->so_target[i]);
       struct nv04_resource *buf = nv04_resource(targ->pipe.buffer);
@@ -632,28 +697,29 @@ nv50_stream_output_validate(struct nv50_context *nv50)
       const unsigned n = nv50->screen->base.class_3d >= NVA0_3D_CLASS ? 4 : 3;
 
       if (n == 4 && !targ->clean)
-         nv84_query_fifo_wait(push, targ->pq);
+         nv84_hw_query_fifo_wait(push, nv50_query(targ->pq));
       BEGIN_NV04(push, NV50_3D(STRMOUT_ADDRESS_HIGH(i)), n);
       PUSH_DATAh(push, buf->address + targ->pipe.buffer_offset);
       PUSH_DATA (push, buf->address + targ->pipe.buffer_offset);
       PUSH_DATA (push, so->num_attribs[i]);
       if (n == 4) {
          PUSH_DATA(push, targ->pipe.buffer_size);
-
-         BEGIN_NV04(push, NVA0_3D(STRMOUT_OFFSET(i)), 1);
          if (!targ->clean) {
             assert(targ->pq);
-            nv50_query_pushbuf_submit(push, targ->pq, 0x4);
+            nv50_hw_query_pushbuf_submit(push, NVA0_3D_STRMOUT_OFFSET(i),
+                                         nv50_query(targ->pq), 0x4);
          } else {
+            BEGIN_NV04(push, NVA0_3D(STRMOUT_OFFSET(i)), 1);
             PUSH_DATA(push, 0);
-            targ->clean = FALSE;
+            targ->clean = false;
          }
       } else {
          const unsigned limit = targ->pipe.buffer_size /
             (so->stride[i] * nv50->state.prim_size);
          prims = MIN2(prims, limit);
       }
-      BCTX_REFN(nv50->bufctx_3d, SO, buf, WR);
+      targ->stride = so->stride[i];
+      BCTX_REFN(nv50->bufctx_3d, 3D_SO, buf, WR);
    }
    if (prims != ~0) {
       BEGIN_NV04(push, NV50_3D(STRMOUT_PRIMITIVE_LIMIT), 1);

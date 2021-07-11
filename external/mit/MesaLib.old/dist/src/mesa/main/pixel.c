@@ -30,13 +30,11 @@
 
 #include "glheader.h"
 #include "bufferobj.h"
-#include "colormac.h"
 #include "context.h"
 #include "macros.h"
 #include "pixel.h"
 #include "pbo.h"
 #include "mtypes.h"
-#include "main/dispatch.h"
 
 
 /**********************************************************************/
@@ -284,7 +282,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
    if (map >= GL_PIXEL_MAP_S_TO_S && map <= GL_PIXEL_MAP_I_TO_A) {
       /* test that mapsize is a power of two */
       if (!_mesa_is_pow_two(mapsize)) {
-	 _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapuiv(mapsize)" );
+	 _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapusv(mapsize)" );
          return;
       }
    }
@@ -456,12 +454,12 @@ _mesa_GetnPixelMapusvARB( GLenum map, GLsizei bufSize, GLushort *values )
    /* special cases */
    case GL_PIXEL_MAP_I_TO_I:
       for (i = 0; i < mapsize; i++) {
-         values[i] = (GLushort) CLAMP(ctx->PixelMaps.ItoI.Map[i], 0.0, 65535.);
+         values[i] = (GLushort) CLAMP(ctx->PixelMaps.ItoI.Map[i], 0.0F, 65535.0F);
       }
       break;
    case GL_PIXEL_MAP_S_TO_S:
       for (i = 0; i < mapsize; i++) {
-         values[i] = (GLushort) CLAMP(ctx->PixelMaps.StoS.Map[i], 0.0, 65535.);
+         values[i] = (GLushort) CLAMP(ctx->PixelMaps.StoS.Map[i], 0.0F, 65535.0F);
       }
       break;
    default:
@@ -599,12 +597,13 @@ _mesa_PixelTransferi( GLenum pname, GLint param )
 /*****                    State Management                        *****/
 /**********************************************************************/
 
-/*
- * Return a bitmask of IMAGE_*_BIT flags which to indicate which
- * pixel transfer operations are enabled.
+
+/**
+ * Update mesa pixel transfer derived state to indicate which operations are
+ * enabled.
  */
-static void
-update_image_transfer_state(struct gl_context *ctx)
+void
+_mesa_update_pixel( struct gl_context *ctx )
 {
    GLuint mask = 0;
 
@@ -621,16 +620,6 @@ update_image_transfer_state(struct gl_context *ctx)
       mask |= IMAGE_MAP_COLOR_BIT;
 
    ctx->_ImageTransferState = mask;
-}
-
-
-/**
- * Update mesa pixel transfer derived state.
- */
-void _mesa_update_pixel( struct gl_context *ctx, GLuint new_state )
-{
-   if (new_state & _NEW_PIXEL)
-      update_image_transfer_state(ctx);
 }
 
 

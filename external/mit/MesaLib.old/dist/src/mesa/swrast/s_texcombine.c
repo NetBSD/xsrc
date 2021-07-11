@@ -26,8 +26,8 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/colormac.h"
 #include "main/imports.h"
+#include "main/macros.h"
 #include "main/pixeltransfer.h"
 #include "main/samplerobj.h"
 #include "program/prog_instruction.h"
@@ -84,7 +84,8 @@ texture_combine( struct gl_context *ctx, GLuint unit,
                  SWspan *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
+   const struct gl_fixedfunc_texture_unit *textureUnit =
+      &ctx->Texture.FixedFuncUnit[unit];
    const struct gl_tex_env_combine_state *combine = textureUnit->_CurrentCombine;
    float4_array argRGB[MAX_COMBINER_TERMS];
    float4_array argA[MAX_COMBINER_TERMS];
@@ -188,7 +189,7 @@ texture_combine( struct gl_context *ctx, GLuint unit,
             /* ARB_texture_env_crossbar source */
             {
                const GLuint srcUnit = srcRGB - GL_TEXTURE0;
-               ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
+               assert(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._Current)
                   goto end;
                argRGB[term] = get_texel_array(swrast, srcUnit);
@@ -278,7 +279,7 @@ texture_combine( struct gl_context *ctx, GLuint unit,
             /* ARB_texture_env_crossbar source */
             {
                const GLuint srcUnit = srcA - GL_TEXTURE0;
-               ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
+               assert(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._Current)
                   goto end;
                argA[term] = get_texel_array(swrast, srcUnit);
@@ -628,7 +629,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       return;
    }
 
-   ASSERT(span->end <= SWRAST_MAX_WIDTH);
+   assert(span->end <= SWRAST_MAX_WIDTH);
 
    /*
     * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
@@ -645,7 +646,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
 
    /*
     * Must do all texture sampling before combining in order to
-    * accomodate GL_ARB_texture_env_crossbar.
+    * accommodate GL_ARB_texture_env_crossbar.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -670,8 +671,8 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
 
-            if (samp->MinLod != -1000.0 ||
-                samp->MaxLod != 1000.0) {
+            if (samp->MinLod != -1000.0F ||
+                samp->MaxLod != 1000.0F) {
                /* apply LOD clamping to lambda */
                const GLfloat min = samp->MinLod;
                const GLfloat max = samp->MaxLod;
@@ -682,7 +683,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
          }
-         else if (samp->MaxAnisotropy > 1.0 &&
+         else if (samp->MaxAnisotropy > 1.0F &&
                   samp->MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
             /* sample_lambda_2d_aniso is beeing used as texture_sample_func,
              * it requires the current SWspan *span as an additional parameter.

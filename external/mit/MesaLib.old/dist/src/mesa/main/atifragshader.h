@@ -8,15 +8,15 @@
 #ifndef ATIFRAGSHADER_H
 #define ATIFRAGSHADER_H
 
-#include "compiler.h"
 #include "glheader.h"
 
-struct _glapi_table;
+
 struct gl_context;
 
 #define MAX_NUM_INSTRUCTIONS_PER_PASS_ATI 8
 #define MAX_NUM_PASSES_ATI                2
 #define MAX_NUM_FRAGMENT_REGISTERS_ATI    6
+#define MAX_NUM_FRAGMENT_CONSTANTS_ATI    8
 
 struct ati_fs_opcode_st
 {

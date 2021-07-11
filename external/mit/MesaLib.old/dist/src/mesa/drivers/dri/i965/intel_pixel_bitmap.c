@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,16 +16,14 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #include "main/blend.h"
-#include "main/glheader.h"
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/colormac.h"
@@ -50,7 +47,6 @@
 #include "intel_image.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
-#include "intel_reg.h"
 
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
@@ -120,7 +116,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLuint count = 0;
 
    DBG("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
-       __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
+       __func__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
       first = h-1;
@@ -162,10 +158,10 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 static inline int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
-   if (_mesa_is_user_fbo(fb))
-      return y;
-   else
+   if (fb->FlipY)
       return fb->Height - y - height;
+   else
+      return y;
 }
 
 /*
@@ -260,7 +256,7 @@ do_blit_bitmap( struct gl_context *ctx,
    /* The blitter has no idea about fast color clears, so we need to resolve
     * the miptree before we do anything.
     */
-   intel_miptree_resolve_color(brw, irb->mt);
+   intel_miptree_access_raw(brw, irb->mt, irb->mt_level, irb->mt_layer, true);
 
    /* Chop it all into chunks that can be digested by hardware: */
    for (py = 0; py < height; py += DY) {
@@ -268,8 +264,8 @@ do_blit_bitmap( struct gl_context *ctx,
 	 int h = MIN2(DY, height - py);
 	 int w = MIN2(DX, width - px);
 	 GLuint sz = ALIGN(ALIGN(w,8) * h, 64)/8;
-	 GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
-	    ctx->Color.LogicOp : GL_COPY;
+	 const enum gl_logicop_mode logic_op = ctx->Color.ColorLogicOpEnabled ?
+	    ctx->Color._LogicOp : COLOR_LOGICOP_COPY;
 
 	 assert(sz <= sizeof(stipple));
 	 memset(stipple, 0, sz);
@@ -287,7 +283,7 @@ do_blit_bitmap( struct gl_context *ctx,
                                      w, h,
                                      (GLubyte *)stipple,
                                      8,
-                                     _mesa_is_winsys_fbo(fb));
+                                     fb->FlipY);
          if (count == 0)
 	    continue;
 
@@ -296,10 +292,10 @@ do_blit_bitmap( struct gl_context *ctx,
 						(GLubyte *)stipple,
 						sz,
 						color,
-						irb->mt->pitch,
+						irb->mt->surf.row_pitch_B,
 						irb->mt->bo,
-						0,
-						irb->mt->tiling,
+						irb->mt->offset,
+						irb->mt->surf.tiling,
 						dstx + px,
 						dsty + py,
 						w, h,
@@ -352,11 +348,13 @@ intelBitmap(struct gl_context * ctx,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
 {
+   struct brw_context *brw = brw_context(ctx);
+
    if (!_mesa_check_conditional_render(ctx))
       return;
 
-   if (do_blit_bitmap(ctx, x, y, width, height,
-                          unpack, pixels))
+   if (brw->screen->devinfo.gen < 6 &&
+       do_blit_bitmap(ctx, x, y, width, height, unpack, pixels))
       return;
 
    _mesa_meta_Bitmap(ctx, x, y, width, height, unpack, pixels);

@@ -11,6 +11,7 @@ env.Prepend(CPPPATH = [
 	'.',           # the build/<platform>/glx/ directory
 	'#include',
 	'#include/GL/internal',
+	'#src/',
 	'#src/loader',
 	'#src/mesa',
 	'#src/mapi',
@@ -23,24 +24,18 @@ env.Prepend(CPPPATH = [
 
 env.Append(CPPDEFINES = [
     '_REENTRANT',
-    #('DEFAULT_DRIVER_DIR', 'DRI_DRIVER_SEARCH_DIR')
 ])
 
 env.Prepend(LIBS = [
     libloader,
+    mesautil,
     glapi
 ])
 
 env.PkgUseModules('X11')
 env.PkgUseModules('XCB')
 env.PkgUseModules('DRM')
-
-if env['HAVE_XF86VIDMODE']:
-    env.Append(CPPDEFINES = ['XF86VIDMODE'])
-    env.PkgUseModules('XF86VIDMODE')
-
-if False: # XXX: SHARED_GLAPI
-    env.Append(CPPDEFINES = ['GLX_SHARED_GLAPI'])
+env.PkgUseModules('XF86VIDMODE')
 
 sources = [
     'clientattrib.c',
@@ -81,7 +76,8 @@ sources = [
     'glxhash.c',
     'dri2_glx.c',
     'dri2.c',
-    'dri2_query_renderer.c',
+    'dri_common_query_renderer.c',
+    'dri_common_interop.c',
     #'dri3_glx.c',
     'applegl_glx.c',
 ]
@@ -107,14 +103,14 @@ env.CodeGenerate(
     )
 
 env.CodeGenerate(
-    target = 'indirect_size.c', 
+    target = 'indirect_size.c',
     script = GLAPI + 'gen/glX_proto_size.py',
     source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE -m size_c --only-set > $TARGET'
 )
 
 env.CodeGenerate(
-    target = 'indirect_init.c', 
+    target = 'indirect_init.c',
     script = GLAPI + 'gen/glX_proto_send.py',
     source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE -m init_c > $TARGET'
@@ -124,7 +120,7 @@ env.CodeGenerate(
     target = 'indirect_size.h',
     script = GLAPI + 'gen/glX_proto_size.py',
     source = sources,
-    command = python_cmd + ' $SCRIPT -f $SOURCE -m size_h --only-set -h _INDIRECT_SIZE_H > $TARGET'
+    command = python_cmd + ' $SCRIPT -f $SOURCE -m size_h --only-set --header-tag _INDIRECT_SIZE_H > $TARGET'
 )
 
 env.CodeGenerate(

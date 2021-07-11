@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -33,14 +31,9 @@
 
 struct fd_surface {
 	struct pipe_surface base;
-	uint32_t offset;
-	uint32_t pitch;
-	uint32_t width;
-	uint16_t height;
-	uint16_t depth;
 };
 
-static INLINE struct fd_surface *
+static inline struct fd_surface *
 fd_surface(struct pipe_surface *psurf)
 {
 	return (struct fd_surface *)psurf;

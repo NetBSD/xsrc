@@ -57,20 +57,6 @@
 static float constants[] = { 1, 1, 0, 0 };
 static unsigned int dimensions[2] = { 0, 0 };
 
-/** Upload the constants. */
-static void
-up_consts(struct pp_queue_t *ppq)
-{
-   struct pipe_context *pipe = ppq->p->pipe;
-   struct pipe_box box;
-
-   u_box_2d(0, 0, sizeof(constants), 1, &box);
-
-   pipe->transfer_inline_write(pipe, ppq->constbuf, 0, PIPE_TRANSFER_WRITE,
-                               &box, constants, sizeof(constants),
-                               sizeof(constants));
-}
-
 /** Run function of the MLAA filter. */
 static void
 pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
@@ -90,7 +76,6 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    /* Insufficient initialization checks. */
    assert(p);
    assert(ppq);
-   assert(ppq->constbuf);
    assert(ppq->areamaptex);
    assert(ppq->inner_tmp);
    assert(ppq->shaders[n]);
@@ -108,15 +93,14 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
       constants[0] = 1.0f / p->framebuffer.width;
       constants[1] = 1.0f / p->framebuffer.height;
 
-      up_consts(ppq);
       dimensions[0] = p->framebuffer.width;
       dimensions[1] = p->framebuffer.height;
    }
 
-   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_VERTEX,
-                                    0, ppq->constbuf);
-   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_FRAGMENT,
-                                    0, ppq->constbuf);
+   cso_set_constant_user_buffer(p->cso, PIPE_SHADER_VERTEX,
+                                0, constants, sizeof(constants));
+   cso_set_constant_user_buffer(p->cso, PIPE_SHADER_FRAGMENT,
+                                0, constants, sizeof(constants));
 
    mstencil.stencil[0].enabled = 1;
    mstencil.stencil[0].valuemask = mstencil.stencil[0].writemask = ~0;
@@ -141,8 +125,10 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    p->pipe->clear(p->pipe, PIPE_CLEAR_STENCIL | PIPE_CLEAR_COLOR0,
                   &p->clear_color, 0, 0);
 
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler_point);
-   cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
+   {
+      const struct pipe_sampler_state *samplers[] = {&p->sampler_point};
+      cso_set_samplers(p->cso, PIPE_SHADER_FRAGMENT, 1, samplers);
+   }
    cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->view);
 
    cso_set_vertex_shader_handle(p->cso, ppq->shaders[n][1]);    /* offsetvs */
@@ -168,10 +154,11 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
    pp_filter_set_clear_fb(p);
 
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler_point);
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->sampler_point);
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 2, &p->sampler);
-   cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
+   {
+      const struct pipe_sampler_state *samplers[] =
+         {&p->sampler_point, &p->sampler_point, &p->sampler};
+      cso_set_samplers(p->cso, PIPE_SHADER_FRAGMENT, 3, samplers);
+   }
 
    arr[0] = p->view;
    cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 3, arr);
@@ -199,9 +186,11 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    u_sampler_view_default_template(&v_tmp, in, in->format);
    arr[0] = p->pipe->create_sampler_view(p->pipe, in, &v_tmp);
 
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler_point);
-   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->sampler_point);
-   cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
+   {
+      const struct pipe_sampler_state *samplers[] =
+         {&p->sampler_point, &p->sampler_point};
+      cso_set_samplers(p->cso, PIPE_SHADER_FRAGMENT, 2, samplers);
+   }
 
    arr[1] = p->view;
    cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 2, arr);
@@ -233,18 +222,9 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    tmp_text = CALLOC(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
                      IMM_SPACE, sizeof(char));
 
-   if (tmp_text == NULL) {
+   if (!tmp_text) {
       pp_debug("Failed to allocate shader space\n");
       return FALSE;
-   }
-
-   ppq->constbuf = pipe_buffer_create(ppq->p->screen,
-                                      PIPE_BIND_CONSTANT_BUFFER,
-                                      PIPE_USAGE_DEFAULT,
-                                      sizeof(constants));
-   if (ppq->constbuf == NULL) {
-      pp_debug("Failed to allocate constant buffer\n");
-      goto fail;
    }
 
    pp_debug("mlaa: using %u max search steps\n", val);
@@ -260,10 +240,10 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    res.width0 = res.height0 = 165;
    res.bind = PIPE_BIND_SAMPLER_VIEW;
    res.usage = PIPE_USAGE_DEFAULT;
-   res.depth0 = res.array_size = res.nr_samples = 1;
+   res.depth0 = res.array_size = res.nr_samples = res.nr_storage_samples = 1;
 
    if (!ppq->p->screen->is_format_supported(ppq->p->screen, res.format,
-                                            res.target, 1, res.bind))
+                                            res.target, 1, 1, res.bind))
       pp_debug("Areamap format not supported\n");
 
    ppq->areamaptex = ppq->p->screen->resource_create(ppq->p->screen, &res);
@@ -275,9 +255,9 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    
    u_box_2d(0, 0, 165, 165, &box);
 
-   ppq->p->pipe->transfer_inline_write(ppq->p->pipe, ppq->areamaptex, 0,
-                                       PIPE_TRANSFER_WRITE, &box,
-                                       areamap, 165 * 2, sizeof(areamap));
+   ppq->p->pipe->texture_subdata(ppq->p->pipe, ppq->areamaptex, 0,
+                                 PIPE_TRANSFER_WRITE, &box,
+                                 areamap, 165 * 2, sizeof(areamap));
 
    ppq->shaders[n][1] = pp_tgsi_to_state(ppq->p->pipe, offsetvs, true,
                                          "offsetvs");
@@ -329,6 +309,9 @@ void
 pp_jimenezmlaa(struct pp_queue_t *ppq, struct pipe_resource *in,
                struct pipe_resource *out, unsigned int n)
 {
+   if (!ppq->depth) {
+      return;
+   }
    pp_jimenezmlaa_run(ppq, in, out, n, false);
 }
 
@@ -348,14 +331,6 @@ pp_jimenezmlaa_color(struct pp_queue_t *ppq, struct pipe_resource *in,
 void
 pp_jimenezmlaa_free(struct pp_queue_t *ppq, unsigned int n)
 {
-   if (ppq->areamaptex) {
-      ppq->p->screen->resource_destroy(ppq->p->screen, ppq->areamaptex);
-      ppq->areamaptex = NULL;
-   }
-
-   if (ppq->constbuf) {
-      ppq->p->screen->resource_destroy(ppq->p->screen, ppq->constbuf);
-      ppq->constbuf = NULL;
-   }
+   pipe_resource_reference(&ppq->areamaptex, NULL);
 }
 

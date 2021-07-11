@@ -31,7 +31,6 @@
 #include "draw/draw_context.h"
 
 #include "svga_context.h"
-#include "svga_tgsi.h"
 #include "svga_hw_reg.h"
 #include "svga_cmd.h"
 #include "svga_debug.h"
@@ -49,6 +48,8 @@ svga_create_fs_state(struct pipe_context *pipe,
    if (!fs)
       return NULL;
 
+   SVGA_STATS_TIME_PUSH(svga_sws(svga), SVGA_STATS_TIME_CREATEFS);
+
    fs->base.tokens = tgsi_dup_tokens(templ->tokens);
 
    /* Collect basic info that we'll need later:
@@ -63,12 +64,7 @@ svga_create_fs_state(struct pipe_context *pipe,
 
    fs->draw_shader = draw_create_fragment_shader(svga->swtnl.draw, templ);
 
-   if (SVGA_DEBUG & DEBUG_TGSI || 0) {
-      debug_printf("%s id: %u, inputs: %u, outputs: %u\n",
-                   __FUNCTION__, fs->base.id,
-                   fs->base.info.num_inputs, fs->base.info.num_outputs);
-   }
-
+   SVGA_STATS_TIME_POP(svga_sws(svga));
    return fs;
 }
 
@@ -94,20 +90,25 @@ svga_delete_fs_state(struct pipe_context *pipe, void *shader)
 
    svga_hwtnl_flush_retry(svga);
 
+   assert(fs->base.parent == NULL);
+
    draw_delete_fragment_shader(svga->swtnl.draw, fs->draw_shader);
 
    for (variant = fs->base.variants; variant; variant = tmp) {
       tmp = variant->next;
 
-      ret = svga_destroy_shader_variant(svga, SVGA3D_SHADERTYPE_PS, variant);
-      (void) ret;  /* PIPE_ERROR_ not handled yet */
-
-      /*
-       * Remove stale references to this variant to ensure a new variant on the
-       * same address will be detected as a change.
-       */
-      if (variant == svga->state.hw_draw.fs)
+      /* Check if deleting currently bound shader */
+      if (variant == svga->state.hw_draw.fs) {
+         ret = svga_set_shader(svga, SVGA3D_SHADERTYPE_PS, NULL);
+         if (ret != PIPE_OK) {
+            svga_context_flush(svga, NULL);
+            ret = svga_set_shader(svga, SVGA3D_SHADERTYPE_PS, NULL);
+            assert(ret == PIPE_OK);
+         }
          svga->state.hw_draw.fs = NULL;
+      }
+
+      svga_destroy_shader_variant(svga, variant);
    }
 
    FREE((void *)fs->base.tokens);

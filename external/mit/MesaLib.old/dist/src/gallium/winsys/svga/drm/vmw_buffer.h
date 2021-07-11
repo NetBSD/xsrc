@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -33,6 +33,7 @@
 #include "util/u_debug_flush.h"
 
 
+/* These extra flags are used wherever the pb_usage_flags enum type is used */
 #define VMW_BUFFER_USAGE_SHARED    (1 << 20)
 #define VMW_BUFFER_USAGE_SYNC      (1 << 21)
 
@@ -59,7 +60,7 @@ struct debug_flush_buf *
 vmw_debug_flush_buf(struct svga_winsys_buffer *buffer);
 
 #else
-static INLINE struct pb_buffer *
+static inline struct pb_buffer *
 vmw_pb_buffer(struct svga_winsys_buffer *buffer)
 {
    assert(buffer);
@@ -67,7 +68,7 @@ vmw_pb_buffer(struct svga_winsys_buffer *buffer)
 }
 
 
-static INLINE struct svga_winsys_buffer *
+static inline struct svga_winsys_buffer *
 vmw_svga_winsys_buffer_wrap(struct pb_buffer *buffer)
 {
    return (struct svga_winsys_buffer *)buffer;

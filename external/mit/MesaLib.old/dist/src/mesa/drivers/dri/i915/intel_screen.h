@@ -32,8 +32,8 @@
 #include <sys/time.h>
 #include "dri_util.h"
 #include "intel_bufmgr.h"
-#include "i915_drm.h"
-#include "xmlconfig.h"
+#include "drm-uapi/i915_drm.h"
+#include "util/xmlconfig.h"
 
 struct intel_screen
 {
@@ -43,8 +43,6 @@ struct intel_screen
    __DRIscreen *driScrnPriv;
 
    bool no_hw;
-
-   bool hw_has_swizzling;
 
    bool no_vbo;
    dri_bufmgr *bufmgr;
@@ -117,7 +115,6 @@ struct intel_screen
 #define intel_check_front_buffer_rendering  old_intel_check_front_buffer_rendering
 #define intelInitBufferFuncs                old_intelInitBufferFuncs
 #define intelClearWithBlit                  old_intelClearWithBlit
-#define intelEmitCopyBlit                   old_intelEmitCopyBlit
 #define intelEmitImmediateColorExpandBlit   old_intelEmitImmediateColorExpandBlit
 #define intel_emit_linear_blit              old_intel_emit_linear_blit
 #define intel_miptree_blit                  old_intel_miptree_blit
@@ -139,7 +136,6 @@ struct intel_screen
 #define get_time                            old_get_time
 #define intel_translate_blend_factor        old_intel_translate_blend_factor
 #define intel_translate_compare_func        old_intel_translate_compare_func
-#define intel_translate_logic_op            old_intel_translate_logic_op
 #define intel_translate_shadow_compare_func old_intel_translate_shadow_compare_func
 #define intel_translate_stencil_op          old_intel_translate_stencil_op
 #define intel_init_syncobj_functions        old_intel_init_syncobj_functions
@@ -156,12 +152,14 @@ struct intel_screen
 #define intel_get_rb_region                 old_intel_get_rb_region
 #define intel_renderbuffer_set_draw_offset  old_intel_renderbuffer_set_draw_offset
 #define intel_miptree_create_for_image_buffer old_intel_miptree_create_for_image_buffer
+#define intelFenceExtension                 old_intelFenceExtension
 
 extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
 extern GLboolean intelUnbindContext(__DRIcontext * driContextPriv);
 
 const __DRIextension **__driDriverGetExtensions_i915(void);
+extern const __DRI2fenceExtension intelFenceExtension;
 
 extern GLboolean
 intelMakeCurrent(__DRIcontext * driContextPriv,

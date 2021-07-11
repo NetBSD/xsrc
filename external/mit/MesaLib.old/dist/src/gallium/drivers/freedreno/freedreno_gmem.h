@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -31,8 +29,11 @@
 
 #include "pipe/p_context.h"
 
+#include "freedreno_util.h"
+
 /* per-pipe configuration for hw binning: */
 struct fd_vsc_pipe {
+	// TODO a3xx/a4xx/a5xx could probably move to single bo for vsc stream, like a6xx does
 	struct fd_bo *bo;
 	uint8_t x, y, w, h;      /* VSC_PIPE[p].CONFIG */
 };
@@ -47,19 +48,23 @@ struct fd_tile {
 
 struct fd_gmem_stateobj {
 	struct pipe_scissor_state scissor;
-	uint cpp;
+	uint32_t cbuf_base[MAX_RENDER_TARGETS];
+	uint32_t zsbuf_base[2];
+	uint8_t cbuf_cpp[MAX_RENDER_TARGETS];
+	uint8_t zsbuf_cpp[2];
 	uint16_t bin_h, nbins_y;
 	uint16_t bin_w, nbins_x;
 	uint16_t minx, miny;
 	uint16_t width, height;
-	bool has_zs;  /* gmem config using depth/stencil? */
+	uint16_t maxpw, maxph;   /* maximum pipe width/height */
+	uint8_t num_vsc_pipes;   /* number of pipes for a20x */
 };
 
-struct fd_context;
+struct fd_batch;
 
-void fd_gmem_render_tiles(struct fd_context *ctx);
+void fd_gmem_render_tiles(struct fd_batch *batch);
 
-bool fd_gmem_needs_restore(struct fd_context *ctx, struct fd_tile *tile,
+bool fd_gmem_needs_restore(struct fd_batch *batch, struct fd_tile *tile,
 		uint32_t buffers);
 
 #endif /* FREEDRENO_GMEM_H_ */

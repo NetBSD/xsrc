@@ -15,14 +15,14 @@
 #endif
 
 
-static INLINE void
+static inline void
 nv50_add_bufctx_resident_bo(struct nouveau_bufctx *bufctx, int bin,
                             unsigned flags, struct nouveau_bo *bo)
 {
    nouveau_bufctx_refn(bufctx, bin, bo, flags)->priv = NULL;
 }
 
-static INLINE void
+static inline void
 nvc0_add_resident(struct nouveau_bufctx *bufctx, int bin,
                   struct nv04_resource *res, unsigned flags)
 {
@@ -38,7 +38,7 @@ nvc0_add_resident(struct nouveau_bufctx *bufctx, int bin,
 #define BCTX_REFN(bctx, bin, res, acc) \
    nvc0_add_resident(bctx, NVC0_BIND_##bin, res, NOUVEAU_BO_##acc)
 
-static INLINE void
+static inline void
 PUSH_REFN(struct nouveau_pushbuf *push, struct nouveau_bo *bo, uint32_t flags)
 {
    struct nouveau_pushbuf_refn ref = { bo, flags };
@@ -50,9 +50,9 @@ PUSH_REFN(struct nouveau_pushbuf *push, struct nouveau_bo *bo, uint32_t flags)
 #define NVC0_3D(n) SUBC_3D(NVC0_3D_##n)
 #define NVE4_3D(n) SUBC_3D(NVE4_3D_##n)
 
-#define SUBC_COMPUTE(m) 1, (m)
-#define NVC0_COMPUTE(n) SUBC_COMPUTE(NVC0_COMPUTE_##n)
-#define NVE4_COMPUTE(n) SUBC_COMPUTE(NVE4_COMPUTE_##n)
+#define SUBC_CP(m) 1, (m)
+#define NVC0_CP(n) SUBC_CP(NVC0_COMPUTE_##n)
+#define NVE4_CP(n) SUBC_CP(NVE4_COMPUTE_##n)
 
 #define SUBC_M2MF(m) 2, (m)
 #define SUBC_P2MF(m) 2, (m)
@@ -60,53 +60,56 @@ PUSH_REFN(struct nouveau_pushbuf *push, struct nouveau_bo *bo, uint32_t flags)
 #define NVE4_P2MF(n) SUBC_P2MF(NVE4_P2MF_##n)
 
 #define SUBC_2D(m) 3, (m)
-#define NVC0_2D(n) SUBC_2D(NVC0_2D_##n)
+#define NVC0_2D(n) SUBC_2D(NV50_2D_##n)
 
 #define SUBC_COPY(m) 4, (m)
 #define NVE4_COPY(m) SUBC_COPY(NVE4_COPY_##n)
 
 #define SUBC_SW(m) 7, (m)
 
-static INLINE uint32_t
+#define NVC0_3D_SERIALIZE NV50_GRAPH_SERIALIZE
+#define NVC0_IB_ENTRY_1_NO_PREFETCH (1 << (31 - 8))
+
+static inline uint32_t
 NVC0_FIFO_PKHDR_SQ(int subc, int mthd, unsigned size)
 {
    return 0x20000000 | (size << 16) | (subc << 13) | (mthd >> 2);
 }
 
-static INLINE uint32_t
+static inline uint32_t
 NVC0_FIFO_PKHDR_NI(int subc, int mthd, unsigned size)
 {
    return 0x60000000 | (size << 16) | (subc << 13) | (mthd >> 2);
 }
 
-static INLINE uint32_t
+static inline uint32_t
 NVC0_FIFO_PKHDR_IL(int subc, int mthd, uint16_t data)
 {
    assert(data < 0x2000);
    return 0x80000000 | (data << 16) | (subc << 13) | (mthd >> 2);
 }
 
-static INLINE uint32_t
+static inline uint32_t
 NVC0_FIFO_PKHDR_1I(int subc, int mthd, unsigned size)
 {
    return 0xa0000000 | (size << 16) | (subc << 13) | (mthd >> 2);
 }
 
 
-static INLINE uint8_t
+static inline uint8_t
 nouveau_bo_memtype(const struct nouveau_bo *bo)
 {
    return bo->config.nvc0.memtype;
 }
 
 
-static INLINE void
+static inline void
 PUSH_DATAh(struct nouveau_pushbuf *push, uint64_t data)
 {
    *push->cur++ = (uint32_t)(data >> 32);
 }
 
-static INLINE void
+static inline void
 BEGIN_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
 {
 #ifndef NVC0_PUSH_EXPLICIT_SPACE_CHECKING
@@ -115,7 +118,7 @@ BEGIN_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
    PUSH_DATA (push, NVC0_FIFO_PKHDR_SQ(subc, mthd, size));
 }
 
-static INLINE void
+static inline void
 BEGIN_NIC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
 {
 #ifndef NVC0_PUSH_EXPLICIT_SPACE_CHECKING
@@ -124,7 +127,7 @@ BEGIN_NIC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
    PUSH_DATA (push, NVC0_FIFO_PKHDR_NI(subc, mthd, size));
 }
 
-static INLINE void
+static inline void
 BEGIN_1IC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
 {
 #ifndef NVC0_PUSH_EXPLICIT_SPACE_CHECKING
@@ -133,7 +136,7 @@ BEGIN_1IC0(struct nouveau_pushbuf *push, int subc, int mthd, unsigned size)
    PUSH_DATA (push, NVC0_FIFO_PKHDR_1I(subc, mthd, size));
 }
 
-static INLINE void
+static inline void
 IMMED_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, uint16_t data)
 {
 #ifndef NVC0_PUSH_EXPLICIT_SPACE_CHECKING

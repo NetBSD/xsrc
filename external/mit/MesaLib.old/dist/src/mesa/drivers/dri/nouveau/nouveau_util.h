@@ -129,12 +129,6 @@ log2i(unsigned i)
 	return r;
 }
 
-static inline unsigned
-align(unsigned x, unsigned m)
-{
-	return (x + m - 1) & ~(m - 1);
-}
-
 static inline void
 get_scissors(struct gl_framebuffer *fb, int *x, int *y, int *w, int *h)
 {
@@ -199,7 +193,7 @@ is_texture_source(int s)
 }
 
 static inline struct gl_texgen *
-get_texgen_coord(struct gl_texture_unit *u, int i)
+get_texgen_coord(struct gl_fixedfunc_texture_unit *u, int i)
 {
 	return ((struct gl_texgen *[])
 		{ &u->GenS, &u->GenT, &u->GenR, &u->GenQ }) [i];

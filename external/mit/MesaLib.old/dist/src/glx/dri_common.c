@@ -73,9 +73,8 @@ dri_message(int level, const char *f, ...)
    }
 }
 
-#ifndef DEFAULT_DRIVER_DIR
-/* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
-#define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"
+#ifndef GL_LIB_NAME
+#define GL_LIB_NAME "libGL.so.1"
 #endif
 
 /**
@@ -86,101 +85,31 @@ dri_message(int level, const char *f, ...)
  * order to find the driver.
  *
  * \param driverName - a name like "i965", "radeon", "nouveau", etc.
+ * \param out_driver_handle - Address to return the resulting dlopen() handle.
  *
  * \returns
- * A handle from \c dlopen, or \c NULL if driver file not found.
+ * The __DRIextension entrypoint table for the driver, or \c NULL if driver
+ * file not found.
  */
-_X_HIDDEN void *
-driOpenDriver(const char *driverName)
+_X_HIDDEN const __DRIextension **
+driOpenDriver(const char *driverName, void **out_driver_handle)
 {
-   void *glhandle, *handle;
-   const char *libPaths, *p, *next;
-   char realDriverName[200];
-   int len;
+   void *glhandle;
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
-#ifdef __NetBSD__ // base only, pkgsrc didn't get bumped for time_t
-   glhandle = dlopen("libGL.so.2", RTLD_NOW | RTLD_GLOBAL);
-#else
-   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
-#endif
+   glhandle = dlopen(GL_LIB_NAME, RTLD_NOW | RTLD_GLOBAL);
 
-   libPaths = NULL;
-   if (geteuid() == getuid()) {
-      /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
-      libPaths = getenv("LIBGL_DRIVERS_PATH");
-      if (!libPaths)
-         libPaths = getenv("LIBGL_DRIVERS_DIR");        /* deprecated */
-   }
-   if (libPaths == NULL)
-      libPaths = DEFAULT_DRIVER_DIR;
+   static const char *search_path_vars[] = {
+      "LIBGL_DRIVERS_PATH",
+      "LIBGL_DRIVERS_DIR", /* deprecated */
+      NULL
+   };
 
-   handle = NULL;
-   for (p = libPaths; *p; p = next) {
-      next = strchr(p, ':');
-      if (next == NULL) {
-         len = strlen(p);
-         next = p + len;
-      }
-      else {
-         len = next - p;
-         next++;
-      }
-
-#ifdef GLX_USE_TLS
-      snprintf(realDriverName, sizeof realDriverName,
-               "%.*s/tls/%s_dri.so", len, p, driverName);
-      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
-#endif
-
-      if (handle == NULL) {
-         snprintf(realDriverName, sizeof realDriverName,
-                  "%.*s/%s_dri.so", len, p, driverName);
-         InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-         handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
-      }
-
-      if (handle != NULL)
-         break;
-      else
-         InfoMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
-   }
-
-   if (!handle)
-      ErrorMessageF("unable to load driver: %s_dri.so\n", driverName);
+   const __DRIextension **extensions =
+      loader_open_driver(driverName, out_driver_handle, search_path_vars);
 
    if (glhandle)
       dlclose(glhandle);
-
-   return handle;
-}
-
-_X_HIDDEN const __DRIextension **
-driGetDriverExtensions(void *handle, const char *driver_name)
-{
-   const __DRIextension **extensions = NULL;
-   const __DRIextension **(*get_extensions)(void);
-   char *get_extensions_name;
-
-   if (asprintf(&get_extensions_name, "%s_%s",
-                __DRI_DRIVER_GET_EXTENSIONS, driver_name) != -1) {
-      get_extensions = dlsym(handle, get_extensions_name);
-      if (get_extensions) {
-         free(get_extensions_name);
-         return get_extensions();
-      } else {
-         InfoMessageF("driver does not expose %s(): %s\n",
-                      get_extensions_name, dlerror());
-         free(get_extensions_name);
-      }
-   }
-
-   extensions = dlsym(handle, __DRI_DRIVER_EXTENSIONS);
-   if (extensions == NULL) {
-      ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
-      return NULL;
-   }
 
    return extensions;
 }
@@ -243,10 +172,8 @@ static const struct
       __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_PIXELS, maxPbufferPixels),
       __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_WIDTH, optimalPbufferWidth),
       __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT, optimalPbufferHeight),
-#if 0
       __ATTRIB(__DRI_ATTRIB_SWAP_METHOD, swapMethod),
-#endif
-__ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
+      __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
       __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA, bindToTextureRgba),
       __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,
                      bindToMipmapTexture),
@@ -257,8 +184,7 @@ __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
 static int
 scalarEqual(struct glx_config *mode, unsigned int attrib, unsigned int value)
 {
-   unsigned int glxValue;
-   int i;
+   unsigned glxValue, i;
 
    for (i = 0; i < ARRAY_SIZE(attribMap); i++)
       if (attribMap[i].attrib == attrib) {
@@ -319,6 +245,19 @@ driConfigEqual(const __DRIcoreExtension *core,
          if (config->bindToTextureTargets != GLX_DONT_CARE &&
              glxValue != config->bindToTextureTargets)
             return GL_FALSE;
+         break;
+
+      case __DRI_ATTRIB_SWAP_METHOD:
+         if (value == __DRI_ATTRIB_SWAP_EXCHANGE)
+            glxValue = GLX_SWAP_EXCHANGE_OML;
+         else if (value == __DRI_ATTRIB_SWAP_COPY)
+            glxValue = GLX_SWAP_COPY_OML;
+         else
+            glxValue = GLX_SWAP_UNDEFINED_OML;
+
+         if (!scalarEqual(config, attrib, glxValue))
+            return GL_FALSE;
+
          break;
 
       default:
@@ -387,12 +326,25 @@ driDestroyConfigs(const __DRIconfig **configs)
    free(configs);
 }
 
+static struct glx_config *
+driInferDrawableConfig(struct glx_screen *psc, GLXDrawable draw)
+{
+   unsigned int fbconfig = 0;
+
+   if (__glXGetDrawableAttribute(psc->dpy, draw, GLX_FBCONFIG_ID, &fbconfig)) {
+      return glx_config_find_fbconfig(psc->configs, fbconfig);
+   }
+
+   return NULL;
+}
+
 _X_HIDDEN __GLXDRIdrawable *
 driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
 {
    struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
+   struct glx_config *config = gc->config;
 
    if (priv == NULL)
       return NULL;
@@ -409,8 +361,13 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
       return pdraw;
    }
 
-   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
-                                          glxDrawable, gc->config);
+   if (config == NULL)
+      config = driInferDrawableConfig(gc->psc, glxDrawable);
+   if (config == NULL)
+      return NULL;
+
+   pdraw = psc->driScreen->createDrawable(psc, glxDrawable, glxDrawable,
+                                          config);
 
    if (pdraw == NULL) {
       ErrorMessageF("failed to create drawable\n");
@@ -466,16 +423,18 @@ _X_HIDDEN bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
                          unsigned *major_ver, unsigned *minor_ver,
                          uint32_t *render_type, uint32_t *flags, unsigned *api,
-                         int *reset, unsigned *error)
+                         int *reset, int *release, unsigned *error)
 {
    unsigned i;
    bool got_profile = false;
+   int no_error = 0;
    uint32_t profile;
 
    *major_ver = 1;
    *minor_ver = 0;
    *render_type = GLX_RGBA_TYPE;
    *reset = __DRI_CTX_RESET_NO_NOTIFICATION;
+   *release = __DRI_CTX_RELEASE_BEHAVIOR_FLUSH;
    *flags = 0;
    *api = __DRI_API_OPENGL;
 
@@ -501,6 +460,9 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       case GLX_CONTEXT_FLAGS_ARB:
 	 *flags = attribs[i * 2 + 1];
 	 break;
+      case GLX_CONTEXT_OPENGL_NO_ERROR_ARB:
+	 no_error = attribs[i * 2 + 1];
+	 break;
       case GLX_CONTEXT_PROFILE_MASK_ARB:
 	 profile = attribs[i * 2 + 1];
 	 got_profile = true;
@@ -521,12 +483,29 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
             return false;
          }
          break;
+      case GLX_CONTEXT_RELEASE_BEHAVIOR_ARB:
+         switch (attribs[i * 2 + 1]) {
+         case GLX_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB:
+            *release = __DRI_CTX_RELEASE_BEHAVIOR_NONE;
+            break;
+         case GLX_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB:
+            *release = __DRI_CTX_RELEASE_BEHAVIOR_FLUSH;
+            break;
+         default:
+            *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+            return false;
+         }
+         break;
       default:
 	 /* If an unknown attribute is received, fail.
 	  */
 	 *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	 return false;
       }
+   }
+
+   if (no_error) {
+      *flags |= __DRI_CTX_FLAG_NO_ERROR;
    }
 
    if (!got_profile) {
@@ -548,9 +527,18 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       case GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB:
 	 *api = __DRI_API_OPENGL;
 	 break;
-      case GLX_CONTEXT_ES2_PROFILE_BIT_EXT:
-	 *api = __DRI_API_GLES2;
-	 break;
+      case GLX_CONTEXT_ES_PROFILE_BIT_EXT:
+         if (*major_ver >= 3)
+            *api = __DRI_API_GLES3;
+         else if (*major_ver == 2 && *minor_ver == 0)
+            *api = __DRI_API_GLES2;
+         else if (*major_ver == 1 && *minor_ver < 2)
+            *api = __DRI_API_GLES;
+         else {
+            *error = __DRI_CTX_ERROR_BAD_API;
+            return false;
+         }
+         break;
       default:
 	 *error = __DRI_CTX_ERROR_BAD_API;
 	 return false;
@@ -560,7 +548,8 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
    /* Unknown flag value.
     */
    if (*flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE
-                  | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS)) {
+                  | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS
+                  | __DRI_CTX_FLAG_NO_ERROR)) {
       *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
       return false;
    }
@@ -581,20 +570,48 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       return false;
    }
 
-   /* The GLX_EXT_create_context_es2_profile spec says:
+   *error = __DRI_CTX_ERROR_SUCCESS;
+   return true;
+}
+
+_X_HIDDEN bool
+dri2_check_no_error(uint32_t flags, struct glx_context *share_context,
+                    int major, unsigned *error)
+{
+   Bool noError = flags & __DRI_CTX_FLAG_NO_ERROR;
+
+   /* The KHR_no_error specs say:
     *
-    *     "... If the version requested is 2.0, and the
-    *     GLX_CONTEXT_ES2_PROFILE_BIT_EXT bit is set in the
-    *     GLX_CONTEXT_PROFILE_MASK_ARB attribute (see below), then the context
-    *     returned will implement OpenGL ES 2.0. This is the only way in which
-    *     an implementation may request an OpenGL ES 2.0 context."
+    *    Requires OpenGL ES 2.0 or OpenGL 2.0.
     */
-   if (*api == __DRI_API_GLES2 && (*major_ver != 2 || *minor_ver != 0)) {
-      *error = __DRI_CTX_ERROR_BAD_API;
+   if (noError && major < 2) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       return false;
    }
 
-   *error = __DRI_CTX_ERROR_SUCCESS;
+   /* The GLX_ARB_create_context_no_error specs say:
+    *
+    *    BadMatch is generated if the value of GLX_CONTEXT_OPENGL_NO_ERROR_ARB
+    *    used to create <share_context> does not match the value of
+    *    GLX_CONTEXT_OPENGL_NO_ERROR_ARB for the context being created.
+    */
+   if (share_context && !!share_context->noError != !!noError) {
+      *error = __DRI_CTX_ERROR_BAD_FLAG;
+      return false;
+   }
+
+   /* The GLX_ARB_create_context_no_error specs say:
+    *
+    *    BadMatch is generated if the GLX_CONTEXT_OPENGL_NO_ERROR_ARB is TRUE at
+    *    the same time as a debug or robustness context is specified.
+    *
+    */
+   if (noError && ((flags & __DRI_CTX_FLAG_DEBUG) ||
+                   (flags & __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS))) {
+      *error = __DRI_CTX_ERROR_BAD_FLAG;
+      return false;
+   }
+
    return true;
 }
 

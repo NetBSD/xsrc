@@ -41,7 +41,6 @@
 #include "pipe/p_defines.h"
 #include "cso_cache/cso_context.h"
 
-#include "main/core.h"
 #include "main/stencil.h"
 
 
@@ -95,8 +94,8 @@ gl_stencil_op_to_pipe(GLenum func)
    }
 }
 
-static void
-update_depth_stencil_alpha(struct st_context *st)
+void
+st_update_depth_stencil_alpha(struct st_context *st)
 {
    struct pipe_depth_stencil_alpha_state *dsa = &st->state.depth_stencil;
    struct pipe_stencil_ref sr;
@@ -105,10 +104,18 @@ update_depth_stencil_alpha(struct st_context *st)
    memset(dsa, 0, sizeof(*dsa));
    memset(&sr, 0, sizeof(sr));
 
-   if (ctx->Depth.Test && ctx->DrawBuffer->Visual.depthBits > 0) {
-      dsa->depth.enabled = 1;
-      dsa->depth.writemask = ctx->Depth.Mask;
-      dsa->depth.func = st_compare_func_to_pipe(ctx->Depth.Func);
+   if (ctx->DrawBuffer->Visual.depthBits > 0) {
+      if (ctx->Depth.Test) {
+         dsa->depth.enabled = 1;
+         dsa->depth.func = st_compare_func_to_pipe(ctx->Depth.Func);
+         if (dsa->depth.func != PIPE_FUNC_EQUAL)
+            dsa->depth.writemask = ctx->Depth.Mask;
+      }
+      if (ctx->Depth.BoundsTest) {
+         dsa->depth.bounds_test = 1;
+         dsa->depth.bounds_min = ctx->Depth.BoundsMin;
+         dsa->depth.bounds_max = ctx->Depth.BoundsMax;
+      }
    }
 
    if (ctx->Stencil.Enabled && ctx->DrawBuffer->Visual.stencilBits > 0) {
@@ -121,7 +128,7 @@ update_depth_stencil_alpha(struct st_context *st)
       dsa->stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
       sr.ref_value[0] = _mesa_get_stencil_ref(ctx, 0);
 
-      if (ctx->Stencil._TestTwoSide) {
+      if (_mesa_stencil_is_two_sided(ctx)) {
          const GLuint back = ctx->Stencil._BackFace;
          dsa->stencil[1].enabled = 1;
          dsa->stencil[1].func = st_compare_func_to_pipe(ctx->Stencil.Function[back]);
@@ -142,7 +149,8 @@ update_depth_stencil_alpha(struct st_context *st)
       }
    }
 
-   if (ctx->Color.AlphaEnabled) {
+   if (ctx->Color.AlphaEnabled &&
+       !(ctx->DrawBuffer->_IntegerBuffers & 0x1)) {
       dsa->alpha.enabled = 1;
       dsa->alpha.func = st_compare_func_to_pipe(ctx->Color.AlphaFunc);
       dsa->alpha.ref_value = ctx->Color.AlphaRefUnclamped;
@@ -151,13 +159,3 @@ update_depth_stencil_alpha(struct st_context *st)
    cso_set_depth_stencil_alpha(st->cso_context, dsa);
    cso_set_stencil_ref(st->cso_context, &sr);
 }
-
-
-const struct st_tracked_state st_update_depth_stencil_alpha = {
-   "st_update_depth_stencil",				/* name */
-   {							/* dirty */
-      (_NEW_DEPTH|_NEW_STENCIL|_NEW_COLOR|_NEW_BUFFERS),/* mesa */
-      0,						/* st */
-   },
-   update_depth_stencil_alpha				/* update */
-};

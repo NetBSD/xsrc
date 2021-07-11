@@ -37,6 +37,7 @@
 #include "draw/draw_vertex.h"
 
 #include "sp_quad_pipe.h"
+#include "sp_setup.h"
 
 
 /** Do polygon stipple in the draw module? */
@@ -70,6 +71,7 @@ struct softpipe_context {
    struct sp_geometry_shader *gs;
    struct sp_velems_state *velems;
    struct sp_so_state *so;
+   struct sp_compute_shader *cs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -79,17 +81,20 @@ struct softpipe_context {
    struct pipe_resource *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
-   struct pipe_scissor_state scissor;
+   struct pipe_scissor_state scissors[PIPE_MAX_VIEWPORTS];
    struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
-   struct pipe_viewport_state viewport;
+   struct pipe_image_view images[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_IMAGES];
+   struct pipe_shader_buffer buffers[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_BUFFERS];
+   struct pipe_viewport_state viewports[PIPE_MAX_VIEWPORTS];
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   struct pipe_index_buffer index_buffer;
+   struct pipe_resource *mapped_vs_tex[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct pipe_resource *mapped_gs_tex[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
    unsigned num_so_targets;
    
-   struct pipe_query_data_so_statistics so_stats;
+   struct pipe_query_data_so_statistics so_stats[PIPE_MAX_VERTEX_STREAMS];
 
    struct pipe_query_data_pipeline_statistics pipeline_statistics;
    unsigned active_statistics_queries;
@@ -115,14 +120,17 @@ struct softpipe_context {
    unsigned const_buffer_size[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
+   struct sp_setup_info setup_info;
    struct vertex_info vertex_info;
-   struct vertex_info vertex_info_vbuf;
 
    /** Which vertex shader output slot contains point size */
-   int psize_slot;
+   int8_t psize_slot;
+
+   /** Which vertex shader output slot contains viewport index */
+   int8_t viewport_index_slot;
 
    /** Which vertex shader output slot contains layer */
-   int layer_slot;
+   int8_t layer_slot;
 
    /** The reduced version of the primitive supplied by the state tracker */
    unsigned reduced_api_prim;
@@ -138,13 +146,11 @@ struct softpipe_context {
    unsigned reduced_prim;
 
    /** Derived from scissor and surface bounds: */
-   struct pipe_scissor_state cliprect;
-
-   unsigned line_stipple_counter;
+   struct pipe_scissor_state cliprect[PIPE_MAX_VIEWPORTS];
 
    /** Conditional query object and mode */
    struct pipe_query *render_cond_query;
-   uint render_cond_mode;
+   enum pipe_render_cond_flag render_cond_mode;
    boolean render_cond_cond;
 
    /** Polygon stipple items */
@@ -166,9 +172,13 @@ struct softpipe_context {
    /** TGSI exec things */
    struct {
       struct sp_tgsi_sampler *sampler[PIPE_SHADER_TYPES];
+      struct sp_tgsi_image *image[PIPE_SHADER_TYPES];
+      struct sp_tgsi_buffer *buffer[PIPE_SHADER_TYPES];
    } tgsi;
 
    struct tgsi_exec_machine *fs_machine;
+   /** whether early depth testing is enabled */
+   bool early_depth;
 
    /** The primitive drawing context */
    struct draw_context *draw;
@@ -193,15 +203,16 @@ struct softpipe_context {
     * XXX wouldn't it make more sense for the tile cache to just be part
     * of sp_sampler_view?
     */
-   struct softpipe_tex_tile_cache *tex_cache[PIPE_SHADER_GEOMETRY+1][PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct softpipe_tex_tile_cache *tex_cache[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    unsigned dump_fs : 1;
    unsigned dump_gs : 1;
+   unsigned dump_cs : 1;
    unsigned no_rast : 1;
 };
 
 
-static INLINE struct softpipe_context *
+static inline struct softpipe_context *
 softpipe_context( struct pipe_context *pipe )
 {
    return (struct softpipe_context *)pipe;
@@ -209,7 +220,7 @@ softpipe_context( struct pipe_context *pipe )
 
 
 struct pipe_context *
-softpipe_create_context( struct pipe_screen *, void *priv );
+softpipe_create_context(struct pipe_screen *, void *priv, unsigned flags);
 
 struct pipe_resource *
 softpipe_user_buffer_create(struct pipe_screen *screen,

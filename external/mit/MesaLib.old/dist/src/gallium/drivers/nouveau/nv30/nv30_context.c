@@ -24,6 +24,7 @@
  */
 
 #include "draw/draw_context.h"
+#include "util/u_upload_mgr.h"
 
 #include "nv_object.xml.h"
 #include "nv30/nv30-40_3d.xml.h"
@@ -45,7 +46,7 @@ nv30_context_kick_notify(struct nouveau_pushbuf *push)
    screen = &nv30->screen->base;
 
    nouveau_fence_next(screen);
-   nouveau_fence_update(screen, TRUE);
+   nouveau_fence_update(screen, true);
 
    if (push->bufctx) {
       struct nouveau_bufref *bref;
@@ -114,19 +115,12 @@ nv30_invalidate_resource_storage(struct nouveau_context *nv,
 
    if (res->bind & PIPE_BIND_VERTEX_BUFFER) {
       for (i = 0; i < nv30->num_vtxbufs; ++i) {
-         if (nv30->vtxbuf[i].buffer == res) {
+         if (nv30->vtxbuf[i].buffer.resource == res) {
             nv30->dirty |= NV30_NEW_ARRAYS;
             nouveau_bufctx_reset(nv30->bufctx, BUFCTX_VTXBUF);
             if (!--ref)
                return ref;
          }
-      }
-   }
-   if (res->bind & PIPE_BIND_INDEX_BUFFER) {
-      if (nv30->idxbuf.buffer == res) {
-         nouveau_bufctx_reset(nv30->bufctx, BUFCTX_IDXBUF);
-         if (!--ref)
-            return ref;
       }
    }
 
@@ -165,6 +159,15 @@ nv30_context_destroy(struct pipe_context *pipe)
    if (nv30->draw)
       draw_destroy(nv30->draw);
 
+   if (nv30->base.pipe.stream_uploader)
+      u_upload_destroy(nv30->base.pipe.stream_uploader);
+
+   if (nv30->blit_vp)
+      nouveau_heap_free(&nv30->blit_vp);
+
+   if (nv30->blit_fp)
+      pipe_resource_reference(&nv30->blit_fp, NULL);
+
    if (nv30->screen->base.pushbuf->user_priv == &nv30->bufctx)
       nv30->screen->base.pushbuf->user_priv = NULL;
 
@@ -184,7 +187,7 @@ nv30_context_destroy(struct pipe_context *pipe)
    } while(0)
 
 struct pipe_context *
-nv30_context_create(struct pipe_screen *pscreen, void *priv)
+nv30_context_create(struct pipe_screen *pscreen, void *priv, unsigned ctxflags)
 {
    struct nv30_screen *screen = nv30_screen(pscreen);
    struct nv30_context *nv30 = CALLOC_STRUCT(nv30_context);
@@ -205,15 +208,20 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
    pipe->destroy = nv30_context_destroy;
    pipe->flush = nv30_context_flush;
 
+   nv30->base.pipe.stream_uploader = u_upload_create_default(&nv30->base.pipe);
+   if (!nv30->base.pipe.stream_uploader) {
+      nv30_context_destroy(pipe);
+      return NULL;
+   }
+   nv30->base.pipe.const_uploader = nv30->base.pipe.stream_uploader;
+
    /*XXX: *cough* per-context client */
    nv30->base.client = screen->base.client;
 
    /*XXX: *cough* per-context pushbufs */
    push = screen->base.pushbuf;
    nv30->base.pushbuf = push;
-   nv30->base.pushbuf->user_priv = &nv30->bufctx; /* hack at validate time */
-   nv30->base.pushbuf->rsvd_kick = 16; /* hack in screen before first space */
-   nv30->base.pushbuf->kick_notify = nv30_context_kick_notify;
+   push->kick_notify = nv30_context_kick_notify;
 
    nv30->base.invalidate_resource_storage = nv30_invalidate_resource_storage;
 
@@ -233,9 +241,10 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
 
    nv30->config.aniso = NV40_3D_TEX_WRAP_ANISO_MIP_FILTER_OPTIMIZATION_OFF;
 
-   if (debug_get_bool_option("NV30_SWTNL", FALSE))
+   if (debug_get_bool_option("NV30_SWTNL", false))
       nv30->draw_flags |= NV30_NEW_SWTNL;
 
+   nouveau_context_init(&nv30->base);
    nv30->sample_mask = 0xffff;
    nv30_vbo_init(pipe);
    nv30_query_init(pipe);

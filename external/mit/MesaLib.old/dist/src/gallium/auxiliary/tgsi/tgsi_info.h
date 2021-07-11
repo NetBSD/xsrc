@@ -74,22 +74,22 @@ struct tgsi_opcode_info
    unsigned num_dst:3;
    unsigned num_src:3;
    unsigned is_tex:1;
+   unsigned is_store:1;
    unsigned is_branch:1;
-   int pre_dedent:2;
-   int post_indent:2;
-   enum tgsi_output_mode output_mode:3;
-   const char *mnemonic;
-   uint opcode;
+   unsigned pre_dedent:1;
+   unsigned post_indent:1;
+   enum tgsi_output_mode output_mode:4;
+   enum tgsi_opcode opcode:10;
 };
 
 const struct tgsi_opcode_info *
-tgsi_get_opcode_info( uint opcode );
+tgsi_get_opcode_info(enum tgsi_opcode opcode);
 
 const char *
-tgsi_get_opcode_name( uint opcode );
+tgsi_get_opcode_name(enum tgsi_opcode opcode);
 
 const char *
-tgsi_get_processor_name( uint processor );
+tgsi_get_processor_name(enum pipe_shader_type processor);
 
 enum tgsi_opcode_type {
    TGSI_TYPE_UNTYPED, /* for MOV */
@@ -97,14 +97,24 @@ enum tgsi_opcode_type {
    TGSI_TYPE_UNSIGNED,
    TGSI_TYPE_SIGNED,
    TGSI_TYPE_FLOAT,
-   TGSI_TYPE_DOUBLE
+   TGSI_TYPE_DOUBLE,
+   TGSI_TYPE_UNSIGNED64,
+   TGSI_TYPE_SIGNED64,
 };
 
-enum tgsi_opcode_type
-tgsi_opcode_infer_src_type( uint opcode );
+static inline bool tgsi_type_is_64bit(enum tgsi_opcode_type type)
+{
+   if (type == TGSI_TYPE_DOUBLE || type == TGSI_TYPE_UNSIGNED64 ||
+       type == TGSI_TYPE_SIGNED64)
+      return true;
+   return false;
+}
 
 enum tgsi_opcode_type
-tgsi_opcode_infer_dst_type( uint opcode );
+tgsi_opcode_infer_src_type(enum tgsi_opcode opcode, uint src_idx);
+
+enum tgsi_opcode_type
+tgsi_opcode_infer_dst_type(enum tgsi_opcode opcode, uint dst_idx);
 
 #if defined __cplusplus
 }

@@ -32,6 +32,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
 
+#include "util/u_draw.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,8 +40,6 @@ extern "C" {
 
 struct pipe_resource;
 struct cso_context;
-
-#include "util/u_draw.h"
 
 extern void 
 util_draw_vertex_buffer(struct pipe_context *pipe, struct cso_context *cso,
@@ -51,12 +50,6 @@ util_draw_vertex_buffer(struct pipe_context *pipe, struct cso_context *cso,
 void
 util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
                              uint prim_type, uint num_verts, uint num_attribs);
-
-extern void 
-util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
-                  uint vbuf_slot,
-                  float x0, float y0, float x1, float y1, float z);
-
 
 #ifdef __cplusplus
 }

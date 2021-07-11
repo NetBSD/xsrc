@@ -33,7 +33,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 #include "radeon_common.h"
-#include "xmlpool.h"		/* for symbolic values of enum-type options */
+#include "util/xmlpool.h"		/* for symbolic values of enum-type options */
 #include "utils.h"
 #include "drivers/common/meta.h"
 #include "main/context.h"
@@ -41,7 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/fbobject.h"
 #include "main/renderbuffer.h"
 #include "main/state.h"
-#include "main/simple_list.h"
+#include "util/simple_list.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -70,7 +70,7 @@ static const char* get_chip_family_name(int chip_family)
 	}
 }
 
-const char * const radeonVendorString = "Mesa Project";
+const char *const radeonVendorString = "Mesa Project";
 
 /* Return complete renderer string.
  */
@@ -162,10 +162,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	_mesa_meta_init(ctx);
 
 	/* DRI fields */
-	radeon->dri.context = driContextPriv;
-	radeon->dri.screen = sPriv;
-	radeon->dri.fd = sPriv->fd;
-	radeon->dri.drmMinor = sPriv->drm_version.minor;
+	radeon->driContext = driContextPriv;
 
 	/* Setup IRQs */
 	fthrottle_mode = driQueryOptioni(&radeon->optionCache, "fthrottle_mode");
@@ -185,7 +182,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
         radeon->texture_depth = driQueryOptioni (&radeon->optionCache,
 					        "texture_depth");
         if (radeon->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
-                radeon->texture_depth = ( glVisual->rgbBits > 16 ) ?
+                radeon->texture_depth = (glVisual == NULL || glVisual->rgbBits > 16) ?
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	radeon->texture_row_align = 32;
@@ -193,6 +190,29 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	radeon->texture_compressed_row_align = 32;
 
 	radeon_init_dma(radeon);
+
+        /* _mesa_initialize_context calls _mesa_init_queryobj which
+         * initializes all of the counter sizes to 64.  The counters on r100
+         * and r200 are only 32-bits for occlusion queries.  Those are the
+         * only counters, so set the other sizes to zero.
+         */
+        radeon->glCtx.Const.QueryCounterBits.SamplesPassed = 32;
+
+        radeon->glCtx.Const.QueryCounterBits.TimeElapsed = 0;
+        radeon->glCtx.Const.QueryCounterBits.Timestamp = 0;
+        radeon->glCtx.Const.QueryCounterBits.PrimitivesGenerated = 0;
+        radeon->glCtx.Const.QueryCounterBits.PrimitivesWritten = 0;
+        radeon->glCtx.Const.QueryCounterBits.VerticesSubmitted = 0;
+        radeon->glCtx.Const.QueryCounterBits.PrimitivesSubmitted = 0;
+        radeon->glCtx.Const.QueryCounterBits.VsInvocations = 0;
+        radeon->glCtx.Const.QueryCounterBits.TessPatches = 0;
+        radeon->glCtx.Const.QueryCounterBits.TessInvocations = 0;
+        radeon->glCtx.Const.QueryCounterBits.GsInvocations = 0;
+        radeon->glCtx.Const.QueryCounterBits.GsPrimitives = 0;
+        radeon->glCtx.Const.QueryCounterBits.FsInvocations = 0;
+        radeon->glCtx.Const.QueryCounterBits.ComputeInvocations = 0;
+        radeon->glCtx.Const.QueryCounterBits.ClInPrimitives = 0;
+        radeon->glCtx.Const.QueryCounterBits.ClOutPrimitives = 0;
 
 	return GL_TRUE;
 }
@@ -236,7 +256,7 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 
 	radeon_firevertices(radeon);
 	if (!is_empty_list(&radeon->dma.reserved)) {
-		rcommonFlushCmdBuf( radeon, __FUNCTION__ );
+		rcommonFlushCmdBuf( radeon, __func__ );
 	}
 
 	radeonFreeDmaRegions(radeon);
@@ -250,7 +270,7 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 
 	/* free atom list */
 	/* free the Mesa context data */
-	_mesa_free_context_data(&radeon->glCtx);
+	_mesa_free_context_data(&radeon->glCtx, true);
 
 	/* free the option cache */
 	driDestroyOptionCache(&radeon->optionCache);
@@ -276,7 +296,7 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 
 	if (RADEON_DEBUG & RADEON_DRI)
-		fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
+		fprintf(stderr, "%s ctx %p\n", __func__,
 			&radeon->glCtx);
 
 	/* Unset current context and dispath table */
@@ -302,7 +322,7 @@ radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
  */
 void radeon_prepare_render(radeonContextPtr radeon)
 {
-    __DRIcontext *driContext = radeon->dri.context;
+    __DRIcontext *driContext = radeon->driContext;
     __DRIdrawable *drawable;
     __DRIscreen *screen;
 
@@ -332,7 +352,7 @@ void radeon_prepare_render(radeonContextPtr radeon)
      * that will happen next will probably dirty the front buffer.  So
      * mark it as dirty here.
      */
-    if (radeon->is_front_buffer_rendering)
+    if (_mesa_is_front_buffer_drawing(radeon->glCtx.DrawBuffer))
 	radeon->front_buffer_dirty = GL_TRUE;
 }
 
@@ -369,10 +389,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 		struct radeon_renderbuffer *stencil_rb;
 
 		i = 0;
-		if ((front_only || radeon->is_front_buffer_rendering ||
-		     radeon->is_front_buffer_reading ||
-		     !draw->color_rb[1])
-		    && draw->color_rb[0]) {
+                if ((front_only || _mesa_is_front_buffer_drawing(&draw->base) ||
+                     _mesa_is_front_buffer_reading(&draw->base) ||
+                     !draw->color_rb[1])
+                    && draw->color_rb[0]) {
 			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 			attachments[i++] = radeon_bits_per_pixel(draw->color_rb[0]);
 		}
@@ -398,12 +418,12 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			}
 		}
 
-		buffers = (*screen->dri2.loader->getBuffersWithFormat)(drawable,
-								&drawable->w,
-								&drawable->h,
-								attachments, i / 2,
-								&count,
-								drawable->loaderPrivate);
+		buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
+								    &drawable->w,
+								    &drawable->h,
+								    attachments, i / 2,
+								    &count,
+								    drawable->loaderPrivate);
 	} else if (screen->dri2.loader) {
 		i = 0;
 		if (draw->color_rb[0])
@@ -417,12 +437,12 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 				attachments[i++] = __DRI_BUFFER_STENCIL;
 		}
 
-		buffers = (*screen->dri2.loader->getBuffers)(drawable,
-								 &drawable->w,
-								 &drawable->h,
-								 attachments, i,
-								 &count,
-								 drawable->loaderPrivate);
+		buffers = screen->dri2.loader->getBuffers(drawable,
+							  &drawable->w,
+							  &drawable->h,
+							  attachments, i,
+							  &count,
+							  drawable->loaderPrivate);
 	}
 
 	if (buffers == NULL)
@@ -578,7 +598,7 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 
 	if (!driContextPriv) {
 		if (RADEON_DEBUG & RADEON_DRI)
-			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
+			fprintf(stderr, "%s ctx is null\n", __func__);
 		_mesa_make_current(NULL, NULL, NULL);
 		return GL_TRUE;
 	}
@@ -602,7 +622,7 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 		&(radeon_get_renderbuffer(drfb, BUFFER_DEPTH)->base.Base));
 
 	if (RADEON_DEBUG & RADEON_DRI)
-	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, &radeon->glCtx, drfb, readfb);
+	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __func__, &radeon->glCtx, drfb, readfb);
 
 	if(driDrawPriv)
 		driUpdateFramebufferSize(&radeon->glCtx, driDrawPriv);
@@ -625,7 +645,7 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 
 
 	if (RADEON_DEBUG & RADEON_DRI)
-		fprintf(stderr, "End %s\n", __FUNCTION__);
+		fprintf(stderr, "End %s\n", __func__);
 
 	return GL_TRUE;
 }

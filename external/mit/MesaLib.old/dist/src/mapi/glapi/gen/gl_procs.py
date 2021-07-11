@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
@@ -25,9 +24,14 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
+from __future__ import print_function
+
+import argparse
+
 import license
-import gl_XML, glX_XML
-import sys, getopt
+import gl_XML
+import glX_XML
+
 
 class PrintGlProcs(gl_XML.gl_print_base):
     def __init__(self, es=False):
@@ -39,9 +43,8 @@ class PrintGlProcs(gl_XML.gl_print_base):
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004, 2006""", "BRIAN PAUL, IBM")
 
-
     def printRealHeader(self):
-        print """
+        print("""
 /* This file is only included by glapi.c and is used for
  * the GetProcAddress() function
  */
@@ -64,20 +67,20 @@ typedef struct {
 #  define NAME_FUNC_OFFSET(n,f1,f2,f3,o) { n , (_glapi_proc) f3 , o }
 #endif
 
-"""
+""")
         return
 
     def printRealFooter(self):
-        print ''
-        print '#undef NAME_FUNC_OFFSET'
+        print('')
+        print('#undef NAME_FUNC_OFFSET')
         return
 
     def printFunctionString(self, name):
-        print '    "gl%s\\0"' % (name)
+        print('    "gl%s\\0"' % (name))
 
     def printBody(self, api):
-        print ''
-        print 'static const char gl_string_table[] ='
+        print('')
+        print('static const char gl_string_table[] =')
 
         base_offset = 0
         table = []
@@ -107,23 +110,23 @@ typedef struct {
                     base_offset += len(n) + 3
 
 
-        print '    ;'
-        print ''
-        print ''
-        print "#ifdef USE_MGL_NAMESPACE"
+        print('    ;')
+        print('')
+        print('')
+        print("#ifdef USE_MGL_NAMESPACE")
         for func in api.functionIterateByOffset():
             for n in func.entry_points:
                 if (not func.is_static_entry_point(func.name)) or (func.has_different_protocol(n) and not func.is_static_entry_point(n)):
-                    print '#define gl_dispatch_stub_%u mgl_dispatch_stub_%u' % (func.offset, func.offset)
+                    print('#define gl_dispatch_stub_%u mgl_dispatch_stub_%u' % (func.offset, func.offset))
                     break
-        print "#endif /* USE_MGL_NAMESPACE */"
-        print ''
-        print ''
-        print '#if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)'
+        print("#endif /* USE_MGL_NAMESPACE */")
+        print('')
+        print('')
+        print('#if defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING)')
         for func in api.functionIterateByOffset():
             for n in func.entry_points:
                 if (not func.is_static_entry_point(func.name)) or (func.has_different_protocol(n) and not func.is_static_entry_point(n)):
-                    print '%s GLAPIENTRY gl_dispatch_stub_%u(%s);' % (func.return_type, func.offset, func.get_parameter_string())
+                    print('%s GLAPIENTRY gl_dispatch_stub_%u(%s);' % (func.return_type, func.offset, func.get_parameter_string()))
                     break
 
         if self.es:
@@ -132,55 +135,56 @@ typedef struct {
                 for n in func.entry_points:
                     cat, num = api.get_category_for_name(n)
                     if (cat.startswith("es") or cat.startswith("GL_OES")):
-                        if not categories.has_key(cat):
+                        if cat not in categories:
                             categories[cat] = []
                         proto = 'GLAPI %s GLAPIENTRY %s(%s);' \
                                         % (func.return_type, "gl" + n, func.get_parameter_string(n))
                         categories[cat].append(proto)
             if categories:
-                print ''
-                print '/* OpenGL ES specific prototypes */'
-                print ''
-                keys = categories.keys()
-                keys.sort()
+                print('')
+                print('/* OpenGL ES specific prototypes */')
+                print('')
+                keys = sorted(categories.keys())
                 for key in keys:
-                    print '/* category %s */' % key
-                    print "\n".join(categories[key])
-                print ''
+                    print('/* category %s */' % key)
+                    print("\n".join(categories[key]))
+                print('')
 
-        print '#endif /* defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING) */'
+        print('#endif /* defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING) */')
 
-        print ''
-        print 'static const glprocs_table_t static_functions[] = {'
+        print('')
+        print('static const glprocs_table_t static_functions[] = {')
 
         for info in table:
-            print '    NAME_FUNC_OFFSET(%5u, %s, %s, %s, %d),' % info
+            print('    NAME_FUNC_OFFSET(%5u, %s, %s, %s, %d),' % info)
 
-        print '    NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)'
-        print '};'
+        print('    NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)')
+        print('};')
         return
 
 
-def show_usage():
-    print "Usage: %s [-f input_file_name] [-c]" % sys.argv[0]
-    print "-c          Enable compatibility with OpenGL ES."
-    sys.exit(1)
+def _parser():
+    """Parse arguments and return a namepsace."""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--filename',
+                        default='gl_API.xml',
+                        metavar="input_file_name",
+                        dest='file_name',
+                        help="Path to an XML description of OpenGL API.")
+    parser.add_argument('-c', '--es-version',
+                        dest='es',
+                        action="store_true",
+                        help="filter functions for es")
+    return parser.parse_args()
+
+
+def main():
+    """Main function."""
+    args = _parser()
+    api = gl_XML.parse_GL_API(args.file_name, glX_XML.glx_item_factory())
+    PrintGlProcs(args.es).Print(api)
+
 
 if __name__ == '__main__':
-    file_name = "gl_API.xml"
-
-    try:
-        (args, trail) = getopt.getopt(sys.argv[1:], "f:c")
-    except Exception,e:
-        show_usage()
-
-    es = False
-    for (arg,val) in args:
-        if arg == "-f":
-            file_name = val
-        elif arg == "-c":
-            es = True
-
-    api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
-    printer = PrintGlProcs(es)
-    printer.Print(api)
+    main()

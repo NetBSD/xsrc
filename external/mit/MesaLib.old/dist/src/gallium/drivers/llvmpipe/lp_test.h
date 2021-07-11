@@ -71,13 +71,12 @@ test_all(unsigned verbose, FILE *fp);
 
 #if defined(PIPE_CC_MSVC)
 
-unsigned __int64 __rdtsc();
-#pragma intrinsic(__rdtsc)
+#include <intrin.h>
 #define rdtsc() __rdtsc()
 
 #elif defined(PIPE_CC_GCC) && (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64))
 
-static INLINE uint64_t
+static inline uint64_t
 rdtsc(void)
 {
    uint32_t hi, lo;

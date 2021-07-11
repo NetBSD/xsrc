@@ -94,7 +94,11 @@ public:
    virtual void reset() { assert(0); } // only for graph iterators
 };
 
+#if __cplusplus >= 201103L
 typedef std::unique_ptr<Iterator> IteratorRef;
+#else
+typedef std::auto_ptr<Iterator> IteratorRef;
+#endif
 
 class ManipIterator : public Iterator
 {
@@ -199,7 +203,7 @@ public:
       virtual void erase();
       virtual bool insert(void *data);
 
-      // move item to a another list, no consistency with its iterators though
+      // move item to another list, no consistency with its iterators though
       void moveToList(DLList&);
 
    private:
@@ -535,8 +539,11 @@ public:
       return data[i / 32] & (((1 << n) - 1) << (i % 32));
    }
 
-   // Find a range of size (<= 32) clear bits aligned to roundup_pow2(size).
-   int findFreeRange(unsigned int size) const;
+   // Find a range of count (<= 32) clear bits aligned to roundup_pow2(count).
+   int findFreeRange(unsigned int count, unsigned int max) const;
+   inline int findFreeRange(unsigned int count) const {
+      return findFreeRange(count, size);
+   }
 
    BitSet& operator|=(const BitSet&);
 

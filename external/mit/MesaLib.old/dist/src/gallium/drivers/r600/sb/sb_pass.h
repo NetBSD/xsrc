@@ -124,7 +124,9 @@ class dce_cleanup : public vpass {
 public:
 
 	dce_cleanup(shader &s) : vpass(s),
-		remove_unused(s.dce_flags & DF_REMOVE_UNUSED) {}
+		remove_unused(s.dce_flags & DF_REMOVE_UNUSED), nodes_changed(false) {}
+
+	virtual int run();
 
 	virtual bool visit(node &n, bool enter);
 	virtual bool visit(alu_group_node &n, bool enter);
@@ -140,6 +142,8 @@ private:
 	void cleanup_dst(node &n);
 	bool cleanup_dst_vec(vvec &vv);
 
+	// Did we alter/remove nodes during a single pass?
+	bool nodes_changed;
 };
 
 
@@ -219,6 +223,7 @@ class gcm : public pass {
 	sched_queue ready;
 	sched_queue ready_above;
 
+	unsigned outstanding_lds_oq;
 	container_node pending;
 
 	struct op_info {
@@ -259,7 +264,8 @@ public:
 
 	gcm(shader &sh) : pass(sh),
 		bu_ready(), bu_ready_next(), bu_ready_early(),
-		ready(), op_map(), uses(), nuc_stk(1), ucs_level(),
+		ready(), outstanding_lds_oq(),
+		op_map(), uses(), nuc_stk(1), ucs_level(),
 		bu_bb(), pending_defs(), pending_nodes(), cur_sq(),
 		live(), live_count(), pending_exec_mask_update() {}
 
@@ -628,7 +634,11 @@ class ssa_rename : public vpass {
 	typedef sb_map<value*, unsigned> def_map;
 
 	def_map def_count;
+	def_map lds_oq_count;
+	def_map lds_rw_count;
 	std::stack<def_map> rename_stack;
+	std::stack<def_map> rename_lds_oq_stack;
+	std::stack<def_map> rename_lds_rw_stack;
 
 	typedef std::map<uint32_t, value*> val_map;
 	val_map values;
@@ -695,8 +705,9 @@ public:
 
 	void run_on(container_node *c);
 
-	void finalize_alu_group(alu_group_node *g);
-	void finalize_alu_src(alu_group_node *g, alu_node *a);
+	void insert_rv6xx_load_ar_workaround(alu_group_node *b4);
+	void finalize_alu_group(alu_group_node *g, node *prev_node);
+	bool finalize_alu_src(alu_group_node *g, alu_node *a, alu_group_node *prev_node);
 
 	void emit_set_grad(fetch_node* f);
 	void finalize_fetch(fetch_node *f);

@@ -28,47 +28,42 @@ include $(LOCAL_PATH)/common/Makefile.sources
 #-----------------------------------------------
 # Variables common to all DRI drivers
 
-MESA_DRI_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/dri
-MESA_DRI_MODULE_UNSTRIPPED_PATH := $(TARGET_OUT_SHARED_LIBRARIES_UNSTRIPPED)/dri
-
 MESA_DRI_CFLAGS := \
 	-DHAVE_ANDROID_PLATFORM
 
 MESA_DRI_C_INCLUDES := \
-	$(MESA_TOP)/src \
-	$(call intermediates-dir-for,STATIC_LIBRARIES,libmesa_dri_common) \
 	$(addprefix $(MESA_TOP)/, $(mesa_dri_common_INCLUDES)) \
-	$(TARGET_OUT_HEADERS)/libdrm \
+	$(MESA_TOP)/src/gallium/include \
+	$(MESA_TOP)/src/gallium/auxiliary \
 	external/expat/lib
 
 MESA_DRI_WHOLE_STATIC_LIBRARIES := \
 	libmesa_glsl \
+	libmesa_compiler \
+	libmesa_nir \
 	libmesa_megadriver_stub \
 	libmesa_dri_common \
-	libmesa_dricore
+	libmesa_dricore \
+	libmesa_util
 
 MESA_DRI_SHARED_LIBRARIES := \
 	libcutils \
 	libdl \
-	libdrm \
-	libexpat \
 	libglapi \
-	liblog
+	liblog \
+	libz
 
-# All DRI modules must add this to LOCAL_GENERATED_SOURCES.
-MESA_DRI_OPTIONS_H := $(call intermediates-dir-for,STATIC_LIBRARIES,libmesa_dri_common)/xmlpool/options.h
+# If Android version >=8 MESA should static link libexpat else should dynamic link
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?), 0)
+MESA_DRI_WHOLE_STATIC_LIBRARIES += \
+	libexpat
+else
+MESA_DRI_SHARED_LIBRARIES += \
+	libexpat
+endif
 
 #-----------------------------------------------
 # Build drivers and libmesa_dri_common
 
-SUBDIRS := common
-
-ifneq ($(filter i915, $(MESA_GPU_DRIVERS)),)
-	SUBDIRS += i915
-endif
-
-ifneq ($(filter i965, $(MESA_GPU_DRIVERS)),)
-	SUBDIRS += i965
-endif
-
+SUBDIRS := common i915 i965
 include $(foreach d, $(SUBDIRS), $(LOCAL_PATH)/$(d)/Android.mk)

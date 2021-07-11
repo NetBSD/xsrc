@@ -32,6 +32,7 @@
 
 #include "lp_bld.h"
 #include <llvm-c/ExecutionEngine.h>
+#include <llvm-c/Target.h>
 
 
 #ifdef __cplusplus
@@ -41,19 +42,21 @@ extern "C" {
 
 struct lp_generated_code;
 
+extern LLVMTargetLibraryInfoRef
+gallivm_create_target_library_info(const char *triple);
+
+extern void
+gallivm_dispose_target_library_info(LLVMTargetLibraryInfoRef library_info);
 
 extern void
 lp_set_target_options(void);
 
 
-extern LLVMValueRef
-lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
-                       const char *Name);
-
 extern int
 lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
                                         struct lp_generated_code **OutCode,
                                         LLVMModuleRef M,
+                                        LLVMMCJITMemoryManagerRef MM,
                                         unsigned OptLevel,
                                         int useMCJIT,
                                         char **OutError);
@@ -61,6 +64,17 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
 extern void
 lp_free_generated_code(struct lp_generated_code *code);
 
+extern LLVMMCJITMemoryManagerRef
+lp_get_default_memory_manager();
+
+extern void
+lp_free_memory_manager(LLVMMCJITMemoryManagerRef memorymgr);
+
+extern LLVMValueRef
+lp_get_called_value(LLVMValueRef call);
+
+extern bool
+lp_is_function(LLVMValueRef v);
 
 #ifdef __cplusplus
 }

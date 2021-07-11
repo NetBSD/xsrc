@@ -392,10 +392,22 @@ BuildUtil::mkImm(float f)
    return mkImm(u.u32);
 }
 
+ImmediateValue *
+BuildUtil::mkImm(double d)
+{
+   return new_ImmediateValue(prog, d);
+}
+
 Value *
 BuildUtil::loadImm(Value *dst, float f)
 {
    return mkOp1v(OP_MOV, TYPE_F32, dst ? dst : getScratch(), mkImm(f));
+}
+
+Value *
+BuildUtil::loadImm(Value *dst, double d)
+{
+   return mkOp1v(OP_MOV, TYPE_F64, dst ? dst : getScratch(8), mkImm(d));
 }
 
 Value *
@@ -428,8 +440,7 @@ BuildUtil::mkSysVal(SVSemantic svName, uint32_t svIndex)
 {
    Symbol *sym = new_Symbol(prog, FILE_SYSTEM_VALUE, 0);
 
-   assert(svIndex < 4 ||
-          (svName == SV_CLIP_DISTANCE || svName == SV_TESS_FACTOR));
+   assert(svIndex < 4 || svName == SV_CLIP_DISTANCE);
 
    switch (svName) {
    case SV_POSITION:
@@ -438,7 +449,9 @@ BuildUtil::mkSysVal(SVSemantic svName, uint32_t svIndex)
    case SV_POINT_SIZE:
    case SV_POINT_COORD:
    case SV_CLIP_DISTANCE:
-   case SV_TESS_FACTOR:
+   case SV_TESS_OUTER:
+   case SV_TESS_INNER:
+   case SV_TESS_COORD:
       sym->reg.type = TYPE_F32;
       break;
    default:
@@ -486,7 +499,7 @@ BuildUtil::DataArray::acquire(ValueMap &m, int i, int c)
 
       return v;
    } else {
-      return up->getScratch();
+      return up->getScratch(eltSize);
    }
 }
 
@@ -554,6 +567,12 @@ BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
    switch (i->dType) {
    case TYPE_U64: hTy = TYPE_U32; break;
    case TYPE_S64: hTy = TYPE_S32; break;
+   case TYPE_F64:
+      if (i->op == OP_MOV) {
+         hTy = TYPE_U32;
+         break;
+      }
+      /* fallthrough */
    default:
       return NULL;
    }
@@ -566,6 +585,7 @@ BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
          return NULL;
       srcNr = 2;
       break;
+   case OP_SELP: srcNr = 3; break;
    default:
       // TODO when needed
       return NULL;
@@ -582,7 +602,10 @@ BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
 
    for (int s = 0; s < srcNr; ++s) {
       if (lo->getSrc(s)->reg.size < 8) {
-         hi->setSrc(s, zero);
+         if (s == 2)
+            hi->setSrc(s, lo->getSrc(s));
+         else
+            hi->setSrc(s, zero);
       } else {
          if (lo->getSrc(s)->refCount() > 1)
             lo->setSrc(s, cloneShallow(fn, lo->getSrc(s)));
@@ -596,6 +619,7 @@ BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
          case FILE_MEMORY_CONST:
          case FILE_MEMORY_SHARED:
          case FILE_SHADER_INPUT:
+         case FILE_SHADER_OUTPUT:
             hi->getSrc(s)->reg.data.offset += 4;
             break;
          default:
@@ -606,7 +630,7 @@ BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
       }
    }
    if (srcNr == 2) {
-      lo->setDef(1, carry);
+      lo->setFlagsDef(1, carry);
       hi->setFlagsSrc(hi->srcCount(), carry);
    }
    return hi;

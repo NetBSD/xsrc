@@ -96,7 +96,7 @@ struct i915_vbuf_render {
 /**
  * Basically a cast wrapper.
  */
-static INLINE struct i915_vbuf_render *
+static inline struct i915_vbuf_render *
 i915_vbuf_render(struct vbuf_render *render)
 {
    assert(render);
@@ -266,7 +266,7 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
    struct i915_context *i915 = i915_render->i915;
 
    if (i915->vbo_flushed)
-      debug_printf("%s bad vbo flush occured stalling on hw\n", __FUNCTION__);
+      debug_printf("%s bad vbo flush occurred stalling on hw\n", __FUNCTION__);
 
 #ifdef VBUF_MAP_BUFFER
    return (unsigned char *)i915_render->vbo_ptr + i915_render->vbo_sw_offset;
@@ -324,7 +324,7 @@ i915_vbuf_ensure_index_bounds(struct vbuf_render *render,
 
 static void
 i915_vbuf_render_set_primitive(struct vbuf_render *render, 
-                               unsigned prim)
+                               enum pipe_prim_type prim)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    i915_render->prim = prim;
@@ -761,11 +761,11 @@ struct draw_stage *i915_draw_vbuf_stage(struct i915_context *i915)
    struct draw_stage *stage;
    
    render = i915_vbuf_render_create(i915);
-   if(!render)
+   if (!render)
       return NULL;
    
    stage = draw_vbuf_stage(i915->draw, render);
-   if(!stage) {
+   if (!stage) {
       render->destroy(render);
       return NULL;
    }

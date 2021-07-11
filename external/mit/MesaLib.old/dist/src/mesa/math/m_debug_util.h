@@ -32,6 +32,9 @@
 #ifdef DEBUG_MATH  /* This code only used for debugging */
 
 
+#include "c99_math.h"
+
+
 /* Comment this out to deactivate the cycle counter.
  * NOTE: it works only on CPUs which know the 'rdtsc' command (586 or higher)
  * (hope, you don't try to debug Mesa on a 386 ;)
@@ -213,7 +216,7 @@ extern char *mesa_profile;
    x = LONG_MAX;							\
    for ( cycle_i = 0 ; cycle_i < 10 ; cycle_i++ ) {			\
       unsigned long cycle_tmp1, cycle_tmp2;				\
-      rdtscll(cycle_tmp1);						\
+      rdtscll(cycle_tmp1);
 
 #define END_RACE(x)							\
       rdtscll(cycle_tmp2);						\
@@ -286,9 +289,9 @@ static int significand_match( GLfloat a, GLfloat b )
       return 0;
    }
 
-   FREXPF( a, &a_ex );
-   FREXPF( b, &b_ex );
-   FREXPF( d, &d_ex );
+   frexpf( a, &a_ex );
+   frexpf( b, &b_ex );
+   frexpf( d, &d_ex );
 
    if ( a_ex < b_ex ) {
       return a_ex - d_ex;

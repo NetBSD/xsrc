@@ -27,6 +27,7 @@
 #include "util/u_inlines.h"
 #include "util/u_pack_color.h"
 #include "util/u_format.h"
+#include "util/u_math.h"
 #include "util/u_surface.h"
 
 #include "tgsi/tgsi_ureg.h"
@@ -36,8 +37,8 @@
 #include "nv50/nv50_context.h"
 #include "nv50/nv50_resource.h"
 
-#include "nv50/nv50_defs.xml.h"
-#include "nv50/nv50_texture.xml.h"
+#include "nv50/g80_defs.xml.h"
+#include "nv50/g80_texture.xml.h"
 
 /* these are used in nv50_blit.h */
 #define NV50_ENG2D_SUPPORTED_FORMATS 0xff0843e080608409ULL
@@ -49,8 +50,8 @@
 #define NOUVEAU_DRIVER 0x50
 #include "nv50/nv50_blit.h"
 
-static INLINE uint8_t
-nv50_2d_format(enum pipe_format format, boolean dst, boolean dst_src_equal)
+static inline uint8_t
+nv50_2d_format(enum pipe_format format, bool dst, bool dst_src_equal)
 {
    uint8_t id = nv50_format_table[format].rt;
 
@@ -63,11 +64,15 @@ nv50_2d_format(enum pipe_format format, boolean dst, boolean dst_src_equal)
 
    switch (util_format_get_blocksize(format)) {
    case 1:
-      return NV50_SURFACE_FORMAT_R8_UNORM;
+      return G80_SURFACE_FORMAT_R8_UNORM;
    case 2:
-      return NV50_SURFACE_FORMAT_R16_UNORM;
+      return G80_SURFACE_FORMAT_R16_UNORM;
    case 4:
-      return NV50_SURFACE_FORMAT_BGRA8_UNORM;
+      return G80_SURFACE_FORMAT_BGRA8_UNORM;
+   case 8:
+      return G80_SURFACE_FORMAT_RGBA16_FLOAT;
+   case 16:
+      return G80_SURFACE_FORMAT_RGBA32_FLOAT;
    default:
       return 0;
    }
@@ -76,7 +81,7 @@ nv50_2d_format(enum pipe_format format, boolean dst, boolean dst_src_equal)
 static int
 nv50_2d_texture_set(struct nouveau_pushbuf *push, int dst,
                     struct nv50_miptree *mt, unsigned level, unsigned layer,
-                    enum pipe_format pformat, boolean dst_src_pformat_equal)
+                    enum pipe_format pformat, bool dst_src_pformat_equal)
 {
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t width, height, depth;
@@ -153,7 +158,7 @@ nv50_2d_texture_do_copy(struct nouveau_pushbuf *push,
    const enum pipe_format dfmt = dst->base.base.format;
    const enum pipe_format sfmt = src->base.base.format;
    int ret;
-   boolean eqfmt = dfmt == sfmt;
+   bool eqfmt = dfmt == sfmt;
 
    if (!PUSH_SPACE(push, 2 * 16 + 32))
       return PIPE_ERROR;
@@ -196,7 +201,7 @@ nv50_resource_copy_region(struct pipe_context *pipe,
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    int ret;
-   boolean m2mf;
+   bool m2mf;
    unsigned dst_layer = dstz, src_layer = src_box->z;
 
    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
@@ -216,10 +221,14 @@ nv50_resource_copy_region(struct pipe_context *pipe,
    nv04_resource(dst)->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
 
    if (m2mf) {
+      struct nv50_miptree *src_mt = nv50_miptree(src);
+      struct nv50_miptree *dst_mt = nv50_miptree(dst);
       struct nv50_m2mf_rect drect, srect;
       unsigned i;
-      unsigned nx = util_format_get_nblocksx(src->format, src_box->width);
-      unsigned ny = util_format_get_nblocksy(src->format, src_box->height);
+      unsigned nx = util_format_get_nblocksx(src->format, src_box->width)
+         << src_mt->ms_x;
+      unsigned ny = util_format_get_nblocksy(src->format, src_box->height)
+         << src_mt->ms_y;
 
       nv50_m2mf_rect_setup(&drect, dst, dst_level, dstx, dsty, dstz);
       nv50_m2mf_rect_setup(&srect, src, src_level,
@@ -228,15 +237,15 @@ nv50_resource_copy_region(struct pipe_context *pipe,
       for (i = 0; i < src_box->depth; ++i) {
          nv50_m2mf_transfer_rect(nv50, &drect, &srect, nx, ny);
 
-         if (nv50_miptree(dst)->layout_3d)
+         if (dst_mt->layout_3d)
             drect.z++;
          else
-            drect.base += nv50_miptree(dst)->layer_stride;
+            drect.base += dst_mt->layer_stride;
 
-         if (nv50_miptree(src)->layout_3d)
+         if (src_mt->layout_3d)
             srect.z++;
          else
-            srect.base += nv50_miptree(src)->layer_stride;
+            srect.base += src_mt->layer_stride;
       }
       return;
    }
@@ -266,9 +275,10 @@ nv50_resource_copy_region(struct pipe_context *pipe,
 static void
 nv50_clear_render_target(struct pipe_context *pipe,
                          struct pipe_surface *dst,
-			 const union pipe_color_union *color,
+                         const union pipe_color_union *color,
                          unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+                         unsigned width, unsigned height,
+                         bool render_condition_enabled)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
@@ -277,13 +287,15 @@ nv50_clear_render_target(struct pipe_context *pipe,
    struct nouveau_bo *bo = mt->base.bo;
    unsigned z;
 
+   assert(dst->texture->target != PIPE_BUFFER);
+
    BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
    PUSH_DATAf(push, color->f[0]);
    PUSH_DATAf(push, color->f[1]);
    PUSH_DATAf(push, color->f[2]);
    PUSH_DATAf(push, color->f[3]);
 
-   if (nouveau_pushbuf_space(push, 32 + sf->depth, 1, 0))
+   if (nouveau_pushbuf_space(push, 64 + sf->depth, 1, 0))
       return;
 
    PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
@@ -316,6 +328,9 @@ nv50_clear_render_target(struct pipe_context *pipe,
    else
       PUSH_DATA(push, 512);
 
+   BEGIN_NV04(push, NV50_3D(MULTISAMPLE_MODE), 1);
+   PUSH_DATA (push, mt->ms_mode);
+
    if (!nouveau_bo_memtype(bo)) {
       BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
       PUSH_DATA (push, 0);
@@ -327,13 +342,23 @@ nv50_clear_render_target(struct pipe_context *pipe,
    PUSH_DATA (push, (width << 16) | dstx);
    PUSH_DATA (push, (height << 16) | dsty);
 
+   if (!render_condition_enabled) {
+      BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+      PUSH_DATA (push, NV50_3D_COND_MODE_ALWAYS);
+   }
+
    BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), sf->depth);
    for (z = 0; z < sf->depth; ++z) {
       PUSH_DATA (push, 0x3c |
                  (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
    }
 
-   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
+   if (!render_condition_enabled) {
+      BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+      PUSH_DATA (push, nv50->cond_condmode);
+   }
+
+   nv50->dirty_3d |= NV50_NEW_3D_FRAMEBUFFER | NV50_NEW_3D_SCISSOR;
 }
 
 static void
@@ -343,7 +368,8 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
                          double depth,
                          unsigned stencil,
                          unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+                         unsigned width, unsigned height,
+                         bool render_condition_enabled)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
@@ -353,6 +379,7 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    uint32_t mode = 0;
    unsigned z;
 
+   assert(dst->texture->target != PIPE_BUFFER);
    assert(nouveau_bo_memtype(bo)); /* ZETA cannot be linear */
 
    if (clear_flags & PIPE_CLEAR_DEPTH) {
@@ -367,7 +394,7 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
       mode |= NV50_3D_CLEAR_BUFFERS_S;
    }
 
-   if (nouveau_pushbuf_space(push, 32 + sf->depth, 1, 0))
+   if (nouveau_pushbuf_space(push, 64 + sf->depth, 1, 0))
       return;
 
    PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
@@ -396,9 +423,17 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
    PUSH_DATA (push, 512);
 
+   BEGIN_NV04(push, NV50_3D(MULTISAMPLE_MODE), 1);
+   PUSH_DATA (push, mt->ms_mode);
+
    BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
    PUSH_DATA (push, (width << 16) | dstx);
    PUSH_DATA (push, (height << 16) | dsty);
+
+   if (!render_condition_enabled) {
+      BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+      PUSH_DATA (push, NV50_3D_COND_MODE_ALWAYS);
+   }
 
    BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), sf->depth);
    for (z = 0; z < sf->depth; ++z) {
@@ -406,7 +441,86 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
                  (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
    }
 
-   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
+   if (!render_condition_enabled) {
+      BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+      PUSH_DATA (push, nv50->cond_condmode);
+   }
+
+   nv50->dirty_3d |= NV50_NEW_3D_FRAMEBUFFER | NV50_NEW_3D_SCISSOR;
+}
+
+void
+nv50_clear_texture(struct pipe_context *pipe,
+                   struct pipe_resource *res,
+                   unsigned level,
+                   const struct pipe_box *box,
+                   const void *data)
+{
+   struct pipe_surface tmpl = {{0}}, *sf;
+
+   tmpl.format = res->format;
+   tmpl.u.tex.first_layer = box->z;
+   tmpl.u.tex.last_layer = box->z + box->depth - 1;
+   tmpl.u.tex.level = level;
+   sf = pipe->create_surface(pipe, res, &tmpl);
+   if (!sf)
+      return;
+
+   if (util_format_is_depth_or_stencil(res->format)) {
+      float depth = 0;
+      uint8_t stencil = 0;
+      unsigned clear = 0;
+      const struct util_format_description *desc =
+         util_format_description(res->format);
+
+      if (util_format_has_depth(desc)) {
+         clear |= PIPE_CLEAR_DEPTH;
+         desc->unpack_z_float(&depth, 0, data, 0, 1, 1);
+      }
+      if (util_format_has_stencil(desc)) {
+         clear |= PIPE_CLEAR_STENCIL;
+         desc->unpack_s_8uint(&stencil, 0, data, 0, 1, 1);
+      }
+      pipe->clear_depth_stencil(pipe, sf, clear, depth, stencil,
+                                box->x, box->y, box->width, box->height, false);
+   } else {
+      union pipe_color_union color;
+
+      switch (util_format_get_blocksizebits(res->format)) {
+      case 128:
+         sf->format = PIPE_FORMAT_R32G32B32A32_UINT;
+         memcpy(&color.ui, data, 128 / 8);
+         break;
+      case 64:
+         sf->format = PIPE_FORMAT_R32G32_UINT;
+         memcpy(&color.ui, data, 64 / 8);
+         memset(&color.ui[2], 0, 64 / 8);
+         break;
+      case 32:
+         sf->format = PIPE_FORMAT_R32_UINT;
+         memcpy(&color.ui, data, 32 / 8);
+         memset(&color.ui[1], 0, 96 / 8);
+         break;
+      case 16:
+         sf->format = PIPE_FORMAT_R16_UINT;
+         color.ui[0] = util_cpu_to_le32(
+            util_le16_to_cpu(*(unsigned short *)data));
+         memset(&color.ui[1], 0, 96 / 8);
+         break;
+      case 8:
+         sf->format = PIPE_FORMAT_R8_UINT;
+         color.ui[0] = util_cpu_to_le32(*(unsigned char *)data);
+         memset(&color.ui[1], 0, 96 / 8);
+         break;
+      default:
+         assert(!"Unknown texel element size");
+         return;
+      }
+
+      pipe->clear_render_target(pipe, sf, &color,
+                                box->x, box->y, box->width, box->height, false);
+   }
+   pipe->surface_destroy(pipe, sf);
 }
 
 void
@@ -421,7 +535,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    uint32_t mode = 0;
 
    /* don't need NEW_BLEND, COLOR_MASK doesn't affect CLEAR_BUFFERS */
-   if (!nv50_state_validate(nv50, NV50_NEW_FRAMEBUFFER, 9 + (fb->nr_cbufs * 2)))
+   if (!nv50_state_validate_3d(nv50, NV50_NEW_3D_FRAMEBUFFER))
       return;
 
    /* We have to clear ALL of the layers, not up to the min number of layers
@@ -456,11 +570,9 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    if (mode) {
       int zs_layers = 0, color0_layers = 0;
       if (fb->cbufs[0] && (mode & 0x3c))
-         color0_layers = fb->cbufs[0]->u.tex.last_layer -
-            fb->cbufs[0]->u.tex.first_layer + 1;
+         color0_layers = nv50_surface(fb->cbufs[0])->depth;
       if (fb->zsbuf && (mode & ~0x3c))
-         zs_layers = fb->zsbuf->u.tex.last_layer -
-            fb->zsbuf->u.tex.first_layer + 1;
+         zs_layers = nv50_surface(fb->zsbuf)->depth;
 
       for (j = 0; j < MIN2(zs_layers, color0_layers); j++) {
          BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
@@ -480,7 +592,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
       struct pipe_surface *sf = fb->cbufs[i];
       if (!sf || !(buffers & (PIPE_CLEAR_COLOR0 << i)))
          continue;
-      for (j = 0; j <= sf->u.tex.last_layer - sf->u.tex.first_layer; j++) {
+      for (j = 0; j < nv50_surface(sf)->depth; j++) {
          BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
          PUSH_DATA (push, (i << 6) | 0x3c |
                     (j << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
@@ -490,6 +602,79 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    /* restore the array mode */
    BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
    PUSH_DATA (push, nv50->rt_array_mode);
+}
+
+static void
+nv50_clear_buffer_push(struct pipe_context *pipe,
+                       struct pipe_resource *res,
+                       unsigned offset, unsigned size,
+                       const void *data, int data_size)
+{
+   struct nv50_context *nv50 = nv50_context(pipe);
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nv04_resource *buf = nv04_resource(res);
+   unsigned count = (size + 3) / 4;
+   unsigned xcoord = offset & 0xff;
+   unsigned tmp, i;
+
+   if (data_size == 1) {
+      tmp = *(unsigned char *)data;
+      tmp = (tmp << 24) | (tmp << 16) | (tmp << 8) | tmp;
+      data = &tmp;
+      data_size = 4;
+   } else if (data_size == 2) {
+      tmp = *(unsigned short *)data;
+      tmp = (tmp << 16) | tmp;
+      data = &tmp;
+      data_size = 4;
+   }
+
+   unsigned data_words = data_size / 4;
+
+   nouveau_bufctx_refn(nv50->bufctx, 0, buf->bo, buf->domain | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, nv50->bufctx);
+   nouveau_pushbuf_validate(push);
+
+   offset &= ~0xff;
+
+   BEGIN_NV04(push, NV50_2D(DST_FORMAT), 2);
+   PUSH_DATA (push, G80_SURFACE_FORMAT_R8_UNORM);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_2D(DST_PITCH), 5);
+   PUSH_DATA (push, 262144);
+   PUSH_DATA (push, 65536);
+   PUSH_DATA (push, 1);
+   PUSH_DATAh(push, buf->address + offset);
+   PUSH_DATA (push, buf->address + offset);
+   BEGIN_NV04(push, NV50_2D(SIFC_BITMAP_ENABLE), 2);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, G80_SURFACE_FORMAT_R8_UNORM);
+   BEGIN_NV04(push, NV50_2D(SIFC_WIDTH), 10);
+   PUSH_DATA (push, size);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, xcoord);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 0);
+
+   while (count) {
+      unsigned nr_data = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN) / data_words;
+      unsigned nr = nr_data * data_words;
+
+      BEGIN_NI04(push, NV50_2D(SIFC_DATA), nr);
+      for (i = 0; i < nr_data; i++)
+         PUSH_DATAp(push, data, data_words);
+
+      count -= nr;
+   }
+
+   nv50_resource_validate(buf, NOUVEAU_BO_WR);
+
+   nouveau_bufctx_reset(nv50->bufctx, 0);
 }
 
 static void
@@ -539,19 +724,34 @@ nv50_clear_buffer(struct pipe_context *pipe,
       return;
    }
 
+   util_range_add(&buf->valid_buffer_range, offset, offset + size);
+
    assert(size % data_size == 0);
+
+   if (offset & 0xff) {
+      unsigned fixup_size = MIN2(size, align(offset, 0x100) - offset);
+      assert(fixup_size % data_size == 0);
+      nv50_clear_buffer_push(pipe, res, offset, fixup_size, data, data_size);
+      offset += fixup_size;
+      size -= fixup_size;
+      if (!size)
+         return;
+   }
 
    elements = size / data_size;
    height = (elements + 8191) / 8192;
    width = elements / height;
+   if (height > 1)
+      width &= ~0xff;
+   assert(width > 0);
 
    BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
-   PUSH_DATAf(push, color.f[0]);
-   PUSH_DATAf(push, color.f[1]);
-   PUSH_DATAf(push, color.f[2]);
-   PUSH_DATAf(push, color.f[3]);
+   PUSH_DATA (push, color.ui[0]);
+   PUSH_DATA (push, color.ui[1]);
+   PUSH_DATA (push, color.ui[2]);
+   PUSH_DATA (push, color.ui[3]);
 
-   if (nouveau_pushbuf_space(push, 32, 1, 0))
+   if (nouveau_pushbuf_space(push, 64, 1, 0))
       return;
 
    PUSH_REFN(push, buf->bo, buf->domain | NOUVEAU_BO_WR);
@@ -567,15 +767,17 @@ nv50_clear_buffer(struct pipe_context *pipe,
    BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
-   PUSH_DATAh(push, buf->bo->offset + buf->offset + offset);
-   PUSH_DATA (push, buf->bo->offset + buf->offset + offset);
+   PUSH_DATAh(push, buf->address + offset);
+   PUSH_DATA (push, buf->address + offset);
    PUSH_DATA (push, nv50_format_table[dst_fmt].rt);
    PUSH_DATA (push, 0);
    PUSH_DATA (push, 0);
    BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
-   PUSH_DATA (push, NV50_3D_RT_HORIZ_LINEAR | (width * data_size));
+   PUSH_DATA (push, NV50_3D_RT_HORIZ_LINEAR | align(width * data_size, 0x100));
    PUSH_DATA (push, height);
    BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(MULTISAMPLE_MODE), 1);
    PUSH_DATA (push, 0);
 
    /* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
@@ -584,27 +786,25 @@ nv50_clear_buffer(struct pipe_context *pipe,
    PUSH_DATA (push, (width << 16));
    PUSH_DATA (push, (height << 16));
 
+   BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+   PUSH_DATA (push, NV50_3D_COND_MODE_ALWAYS);
+
    BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), 1);
    PUSH_DATA (push, 0x3c);
+
+   BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+   PUSH_DATA (push, nv50->cond_condmode);
+
+   nv50_resource_validate(buf, NOUVEAU_BO_WR);
 
    if (width * height != elements) {
       offset += width * height * data_size;
       width = elements - width * height;
-      height = 1;
-      BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 2);
-      PUSH_DATAh(push, buf->bo->offset + buf->offset + offset);
-      PUSH_DATA (push, buf->bo->offset + buf->offset + offset);
-      BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
-      PUSH_DATA (push, NV50_3D_RT_HORIZ_LINEAR | (width * data_size));
-      PUSH_DATA (push, height);
-      BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), 1);
-      PUSH_DATA (push, 0x3c);
+      nv50_clear_buffer_push(pipe, res, offset, width * data_size,
+                             data, data_size);
    }
 
-   nouveau_fence_ref(nv50->screen->base.fence.current, &buf->fence);
-   nouveau_fence_ref(nv50->screen->base.fence.current, &buf->fence_wr);
-
-   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
+   nv50->dirty_3d |= NV50_NEW_3D_FRAMEBUFFER | NV50_NEW_3D_SCISSOR;
 }
 
 /* =============================== BLIT CODE ===================================
@@ -617,7 +817,7 @@ struct nv50_blitter
 
    struct nv50_tsc_entry sampler[2]; /* nearest, bilinear */
 
-   pipe_mutex mutex;
+   mtx_t mutex;
 };
 
 struct nv50_blitctx
@@ -631,6 +831,7 @@ struct nv50_blitctx
    enum pipe_texture_target target;
    struct {
       struct pipe_framebuffer_state fb;
+      struct nv50_window_rect_stateobj window_rect;
       struct nv50_rasterizer_stateobj *rast;
       struct nv50_program *vp;
       struct nv50_program *gp;
@@ -640,7 +841,7 @@ struct nv50_blitctx
       struct pipe_sampler_view *texture[2];
       struct nv50_tsc_entry *sampler[2];
       unsigned min_samples;
-      uint32_t dirty;
+      uint32_t dirty_3d;
    } saved;
    struct nv50_rasterizer_stateobj rast;
 };
@@ -658,7 +859,7 @@ nv50_blitter_make_vp(struct nv50_blitter *blit)
    };
 
    blit->vp.type = PIPE_SHADER_VERTEX;
-   blit->vp.translated = TRUE;
+   blit->vp.translated = true;
    blit->vp.code = (uint32_t *)code; /* const_cast */
    blit->vp.code_size = sizeof(code);
    blit->vp.max_gpr = 4;
@@ -687,26 +888,30 @@ nv50_blitter_make_fp(struct pipe_context *pipe,
 
    const unsigned target = nv50_blit_get_tgsi_texture_target(ptarg);
 
-   boolean tex_rgbaz = FALSE;
-   boolean tex_s = FALSE;
-   boolean cvt_un8 = FALSE;
+   bool tex_rgbaz = false;
+   bool tex_s = false;
+   bool cvt_un8 = false;
+
+   bool int_clamp = mode == NV50_BLIT_MODE_INT_CLAMP;
+   if (int_clamp)
+      mode = NV50_BLIT_MODE_PASS;
 
    if (mode != NV50_BLIT_MODE_PASS &&
        mode != NV50_BLIT_MODE_Z24X8 &&
        mode != NV50_BLIT_MODE_X8Z24)
-      tex_s = TRUE;
+      tex_s = true;
 
    if (mode != NV50_BLIT_MODE_X24S8 &&
        mode != NV50_BLIT_MODE_S8X24 &&
        mode != NV50_BLIT_MODE_XS)
-      tex_rgbaz = TRUE;
+      tex_rgbaz = true;
 
    if (mode != NV50_BLIT_MODE_PASS &&
        mode != NV50_BLIT_MODE_ZS &&
        mode != NV50_BLIT_MODE_XS)
-      cvt_un8 = TRUE;
+      cvt_un8 = true;
 
-   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   ureg = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!ureg)
       return NULL;
 
@@ -734,6 +939,10 @@ nv50_blitter_make_fp(struct pipe_context *pipe,
       ureg_TEX(ureg, ureg_writemask(data, mask),
                target, tc, ureg_DECL_sampler(ureg, 0));
    }
+
+   /* handle signed to unsigned integer conversions */
+   if (int_clamp)
+      ureg_UMIN(ureg, data, ureg_src(data), ureg_imm1u(ureg, 0x7fffffff));
 
    if (cvt_un8) {
       struct ureg_src mask;
@@ -803,12 +1012,14 @@ nv50_blitter_make_sampler(struct nv50_blitter *blit)
 
    blit->sampler[0].id = -1;
 
-   blit->sampler[0].tsc[0] = NV50_TSC_0_SRGB_CONVERSION_ALLOWED |
-      (NV50_TSC_WRAP_CLAMP_TO_EDGE << NV50_TSC_0_WRAPS__SHIFT) |
-      (NV50_TSC_WRAP_CLAMP_TO_EDGE << NV50_TSC_0_WRAPT__SHIFT) |
-      (NV50_TSC_WRAP_CLAMP_TO_EDGE << NV50_TSC_0_WRAPR__SHIFT);
+   blit->sampler[0].tsc[0] = G80_TSC_0_SRGB_CONVERSION |
+      (G80_TSC_WRAP_CLAMP_TO_EDGE << G80_TSC_0_ADDRESS_U__SHIFT) |
+      (G80_TSC_WRAP_CLAMP_TO_EDGE << G80_TSC_0_ADDRESS_V__SHIFT) |
+      (G80_TSC_WRAP_CLAMP_TO_EDGE << G80_TSC_0_ADDRESS_P__SHIFT);
    blit->sampler[0].tsc[1] =
-      NV50_TSC_1_MAGF_NEAREST | NV50_TSC_1_MINF_NEAREST | NV50_TSC_1_MIPF_NONE;
+      G80_TSC_1_MAG_FILTER_NEAREST |
+      G80_TSC_1_MIN_FILTER_NEAREST |
+      G80_TSC_1_MIP_FILTER_NONE;
 
    /* clamp to edge, min/max lod = 0, bilinear filtering */
 
@@ -816,7 +1027,9 @@ nv50_blitter_make_sampler(struct nv50_blitter *blit)
 
    blit->sampler[1].tsc[0] = blit->sampler[0].tsc[0];
    blit->sampler[1].tsc[1] =
-      NV50_TSC_1_MAGF_LINEAR | NV50_TSC_1_MINF_LINEAR | NV50_TSC_1_MIPF_NONE;
+      G80_TSC_1_MAG_FILTER_LINEAR |
+      G80_TSC_1_MIN_FILTER_LINEAR |
+      G80_TSC_1_MIP_FILTER_NONE;
 }
 
 unsigned
@@ -827,6 +1040,7 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
    switch (info->dst.resource->format) {
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
    case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X24S8_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_Z24S8;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_Z24X8;
@@ -834,6 +1048,8 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
          return NV50_BLIT_MODE_X24S8;
       }
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8X24_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_S8Z24;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_X8Z24;
@@ -842,6 +1058,7 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
       }
    case PIPE_FORMAT_Z32_FLOAT:
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+   case PIPE_FORMAT_X32_S8X24_UINT:
       switch (mask & PIPE_MASK_ZS) {
       case PIPE_MASK_ZS: return NV50_BLIT_MODE_ZS;
       case PIPE_MASK_Z:  return NV50_BLIT_MODE_PASS;
@@ -849,6 +1066,9 @@ nv50_blit_select_mode(const struct pipe_blit_info *info)
          return NV50_BLIT_MODE_XS;
       }
    default:
+      if (util_format_is_pure_uint(info->src.format) &&
+          util_format_is_pure_sint(info->dst.format))
+         return NV50_BLIT_MODE_INT_CLAMP;
       return NV50_BLIT_MODE_PASS;
    }
 }
@@ -865,11 +1085,11 @@ nv50_blit_select_fp(struct nv50_blitctx *ctx, const struct pipe_blit_info *info)
    const unsigned mode = ctx->mode;
 
    if (!blitter->fp[targ][mode]) {
-      pipe_mutex_lock(blitter->mutex);
+      mtx_lock(&blitter->mutex);
       if (!blitter->fp[targ][mode])
          blitter->fp[targ][mode] =
             nv50_blitter_make_fp(&ctx->nv50->base.pipe, mode, ptarg);
-      pipe_mutex_unlock(blitter->mutex);
+      mtx_unlock(&blitter->mutex);
    }
    ctx->fp = blitter->fp[targ][mode];
 }
@@ -920,10 +1140,10 @@ nv50_blit_set_src(struct nv50_blitctx *blit,
    templ.format = format;
    templ.u.tex.first_level = templ.u.tex.last_level = level;
    templ.u.tex.first_layer = templ.u.tex.last_layer = layer;
-   templ.swizzle_r = PIPE_SWIZZLE_RED;
-   templ.swizzle_g = PIPE_SWIZZLE_GREEN;
-   templ.swizzle_b = PIPE_SWIZZLE_BLUE;
-   templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
+   templ.swizzle_r = PIPE_SWIZZLE_X;
+   templ.swizzle_g = PIPE_SWIZZLE_Y;
+   templ.swizzle_b = PIPE_SWIZZLE_Z;
+   templ.swizzle_a = PIPE_SWIZZLE_W;
 
    if (layer == -1) {
       templ.u.tex.first_layer = 0;
@@ -999,6 +1219,8 @@ nv50_blitctx_prepare_state(struct nv50_blitctx *blit)
    /* zsa state */
    BEGIN_NV04(push, NV50_3D(DEPTH_TEST_ENABLE), 1);
    PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(DEPTH_BOUNDS_EN), 1);
+   PUSH_DATA (push, 0);
    BEGIN_NV04(push, NV50_3D(STENCIL_ENABLE), 1);
    PUSH_DATA (push, 0);
    BEGIN_NV04(push, NV50_3D(ALPHA_TEST_ENABLE), 1);
@@ -1006,7 +1228,8 @@ nv50_blitctx_prepare_state(struct nv50_blitctx *blit)
 }
 
 static void
-nv50_blitctx_pre_blit(struct nv50_blitctx *ctx)
+nv50_blitctx_pre_blit(struct nv50_blitctx *ctx,
+                      const struct pipe_blit_info *info)
 {
    struct nv50_context *nv50 = ctx->nv50;
    struct nv50_blitter *blitter = nv50->screen->blitter;
@@ -1025,12 +1248,20 @@ nv50_blitctx_pre_blit(struct nv50_blitctx *ctx)
    ctx->saved.fp = nv50->fragprog;
 
    ctx->saved.min_samples = nv50->min_samples;
+   ctx->saved.window_rect = nv50->window_rect;
 
    nv50->rast = &ctx->rast;
 
    nv50->vertprog = &blitter->vp;
    nv50->gmtyprog = NULL;
    nv50->fragprog = ctx->fp;
+
+   nv50->window_rect.rects =
+      MIN2(info->num_window_rectangles, NV50_MAX_WINDOW_RECTANGLES);
+   nv50->window_rect.inclusive = info->window_rectangle_include;
+   if (nv50->window_rect.rects)
+      memcpy(nv50->window_rect.rect, info->window_rectangles,
+             sizeof(struct pipe_scissor_state) * nv50->window_rect.rects);
 
    for (s = 0; s < 3; ++s) {
       ctx->saved.num_textures[s] = nv50->num_textures[s];
@@ -1049,15 +1280,15 @@ nv50_blitctx_pre_blit(struct nv50_blitctx *ctx)
 
    nv50->min_samples = 1;
 
-   ctx->saved.dirty = nv50->dirty;
+   ctx->saved.dirty_3d = nv50->dirty_3d;
 
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_FB);
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TEXTURES);
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_FB);
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_TEXTURES);
 
-   nv50->dirty =
-      NV50_NEW_FRAMEBUFFER | NV50_NEW_MIN_SAMPLES |
-      NV50_NEW_VERTPROG | NV50_NEW_FRAGPROG | NV50_NEW_GMTYPROG |
-      NV50_NEW_TEXTURES | NV50_NEW_SAMPLERS;
+   nv50->dirty_3d =
+      NV50_NEW_3D_FRAMEBUFFER | NV50_NEW_3D_MIN_SAMPLES |
+      NV50_NEW_3D_VERTPROG | NV50_NEW_3D_FRAGPROG | NV50_NEW_3D_GMTYPROG |
+      NV50_NEW_3D_TEXTURES | NV50_NEW_3D_SAMPLERS | NV50_NEW_3D_WINDOW_RECTS;
 }
 
 static void
@@ -1081,6 +1312,7 @@ nv50_blitctx_post_blit(struct nv50_blitctx *blit)
    nv50->fragprog = blit->saved.fp;
 
    nv50->min_samples = blit->saved.min_samples;
+   nv50->window_rect = blit->saved.window_rect;
 
    pipe_sampler_view_reference(&nv50->textures[2][0], NULL);
    pipe_sampler_view_reference(&nv50->textures[2][1], NULL);
@@ -1098,14 +1330,14 @@ nv50_blitctx_post_blit(struct nv50_blitctx *blit)
       nv50->base.pipe.render_condition(&nv50->base.pipe, nv50->cond_query,
                                        nv50->cond_cond, nv50->cond_mode);
 
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_FB);
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TEXTURES);
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_FB);
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_TEXTURES);
 
-   nv50->dirty = blit->saved.dirty |
-      (NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR | NV50_NEW_SAMPLE_MASK |
-       NV50_NEW_RASTERIZER | NV50_NEW_ZSA | NV50_NEW_BLEND |
-       NV50_NEW_TEXTURES | NV50_NEW_SAMPLERS |
-       NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG | NV50_NEW_FRAGPROG);
+   nv50->dirty_3d = blit->saved.dirty_3d |
+      (NV50_NEW_3D_FRAMEBUFFER | NV50_NEW_3D_SCISSOR | NV50_NEW_3D_SAMPLE_MASK |
+       NV50_NEW_3D_RASTERIZER | NV50_NEW_3D_ZSA | NV50_NEW_3D_BLEND |
+       NV50_NEW_3D_TEXTURES | NV50_NEW_3D_SAMPLERS | NV50_NEW_3D_WINDOW_RECTS |
+       NV50_NEW_3D_VERTPROG | NV50_NEW_3D_GMTYPROG | NV50_NEW_3D_FRAGPROG);
    nv50->scissors_dirty |= 1;
 
    nv50->base.pipe.set_min_samples(&nv50->base.pipe, blit->saved.min_samples);
@@ -1132,7 +1364,7 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
    blit->render_condition_enable = info->render_condition_enable;
 
    nv50_blit_select_fp(blit, info);
-   nv50_blitctx_pre_blit(blit);
+   nv50_blitctx_pre_blit(blit, info);
 
    nv50_blit_set_dst(blit, dst, info->dst.level, -1, info->dst.format);
    nv50_blit_set_src(blit, src, info->src.level, -1, info->src.format,
@@ -1140,7 +1372,7 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
 
    nv50_blitctx_prepare_state(blit);
 
-   nv50_state_validate(nv50, ~0, 36);
+   nv50_state_validate_3d(nv50, ~0);
 
    x_range = (float)info->src.box.width / (float)info->dst.box.width;
    y_range = (float)info->src.box.height / (float)info->dst.box.height;
@@ -1267,7 +1499,7 @@ nv50_blit_eng2d(struct nv50_context *nv50, const struct pipe_blit_info *info)
    int i;
    uint32_t mode;
    uint32_t mask = nv50_blit_eng2d_get_mask(info);
-   boolean b;
+   bool b;
 
    mode = nv50_blit_get_filter(info) ?
       NV50_2D_BLIT_CONTROL_FILTER_BILINEAR :
@@ -1293,15 +1525,15 @@ nv50_blit_eng2d(struct nv50_context *nv50, const struct pipe_blit_info *info)
 
    if (nv50->cond_query && info->render_condition_enable) {
       BEGIN_NV04(push, NV50_2D(COND_MODE), 1);
-      PUSH_DATA (push, NV50_2D_COND_MODE_RES_NON_ZERO);
+      PUSH_DATA (push, nv50->cond_condmode);
    }
 
    if (mask != 0xffffffff) {
       BEGIN_NV04(push, NV50_2D(ROP), 1);
       PUSH_DATA (push, 0xca); /* DPSDxax */
       BEGIN_NV04(push, NV50_2D(PATTERN_COLOR_FORMAT), 1);
-      PUSH_DATA (push, NV50_2D_PATTERN_COLOR_FORMAT_32BPP);
-      BEGIN_NV04(push, NV50_2D(PATTERN_COLOR(0)), 4);
+      PUSH_DATA (push, NV50_2D_PATTERN_COLOR_FORMAT_A8R8G8B8);
+      BEGIN_NV04(push, NV50_2D(PATTERN_BITMAP_COLOR(0)), 4);
       PUSH_DATA (push, 0x00000000);
       PUSH_DATA (push, mask);
       PUSH_DATA (push, 0xffffffff);
@@ -1383,18 +1615,24 @@ nv50_blit_eng2d(struct nv50_context *nv50, const struct pipe_blit_info *info)
             PUSH_DATA (push, info->dst.box.z + i);
          } else {
             const unsigned z = info->dst.box.z + i;
+            const uint64_t address = dst->base.address +
+               dst->level[info->dst.level].offset +
+               z * dst->layer_stride;
             BEGIN_NV04(push, NV50_2D(DST_ADDRESS_HIGH), 2);
-            PUSH_DATAh(push, dst->base.address + z * dst->layer_stride);
-            PUSH_DATA (push, dst->base.address + z * dst->layer_stride);
+            PUSH_DATAh(push, address);
+            PUSH_DATA (push, address);
          }
          if (src->layout_3d) {
             /* not possible because of depth tiling */
             assert(0);
          } else {
             const unsigned z = info->src.box.z + i;
+            const uint64_t address = src->base.address +
+               src->level[info->src.level].offset +
+               z * src->layer_stride;
             BEGIN_NV04(push, NV50_2D(SRC_ADDRESS_HIGH), 2);
-            PUSH_DATAh(push, src->base.address + z * src->layer_stride);
-            PUSH_DATA (push, src->base.address + z * src->layer_stride);
+            PUSH_DATAh(push, address);
+            PUSH_DATA (push, address);
          }
          BEGIN_NV04(push, NV50_2D(BLIT_SRC_Y_INT), 1); /* trigger */
          PUSH_DATA (push, srcy >> 32);
@@ -1406,7 +1644,7 @@ nv50_blit_eng2d(struct nv50_context *nv50, const struct pipe_blit_info *info)
          PUSH_DATA (push, srcy >> 32);
       }
    }
-   nv50_bufctx_fence(nv50->bufctx, FALSE);
+   nv50_bufctx_fence(nv50->bufctx, false);
 
    nouveau_bufctx_reset(nv50->bufctx, NV50_BIND_2D);
 
@@ -1428,71 +1666,92 @@ static void
 nv50_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   boolean eng3d = FALSE;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   bool eng3d = FALSE;
+
+   if (info->src.box.width == 0 || info->src.box.height == 0 ||
+       info->dst.box.width == 0 || info->dst.box.height == 0) {
+      pipe_debug_message(&nv50->base.debug, ERROR,
+                         "Blit with zero-size src or dst box");
+      return;
+   }
 
    if (util_format_is_depth_or_stencil(info->dst.resource->format)) {
       if (!(info->mask & PIPE_MASK_ZS))
          return;
       if (info->dst.resource->format == PIPE_FORMAT_Z32_FLOAT ||
           info->dst.resource->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT)
-         eng3d = TRUE;
+         eng3d = true;
       if (info->filter != PIPE_TEX_FILTER_NEAREST)
-         eng3d = TRUE;
+         eng3d = true;
    } else {
       if (!(info->mask & PIPE_MASK_RGBA))
          return;
       if (info->mask != PIPE_MASK_RGBA)
-         eng3d = TRUE;
+         eng3d = true;
    }
 
    if (nv50_miptree(info->src.resource)->layout_3d) {
-      eng3d = TRUE;
+      eng3d = true;
    } else
    if (info->src.box.depth != info->dst.box.depth) {
-      eng3d = TRUE;
+      eng3d = true;
       debug_printf("blit: cannot filter array or cube textures in z direction");
    }
 
    if (!eng3d && info->dst.format != info->src.format) {
       if (!nv50_2d_dst_format_faithful(info->dst.format) ||
           !nv50_2d_src_format_faithful(info->src.format)) {
-         eng3d = TRUE;
+         eng3d = true;
       } else
       if (!nv50_2d_src_format_faithful(info->src.format)) {
          if (!util_format_is_luminance(info->src.format)) {
             if (util_format_is_intensity(info->src.format))
-               eng3d = TRUE;
+               eng3d = true;
             else
             if (!nv50_2d_dst_format_ops_supported(info->dst.format))
-               eng3d = TRUE;
+               eng3d = true;
             else
                eng3d = !nv50_2d_format_supported(info->src.format);
          }
       } else
       if (util_format_is_luminance_alpha(info->src.format))
-         eng3d = TRUE;
+         eng3d = true;
    }
 
    if (info->src.resource->nr_samples == 8 &&
        info->dst.resource->nr_samples <= 1)
-      eng3d = TRUE;
+      eng3d = true;
+
+   if (info->num_window_rectangles > 0 || info->window_rectangle_include)
+      eng3d = true;
 
    /* FIXME: can't make this work with eng2d anymore */
    if ((info->src.resource->nr_samples | 1) !=
        (info->dst.resource->nr_samples | 1))
-      eng3d = TRUE;
+      eng3d = true;
 
    /* FIXME: find correct src coordinate adjustments */
    if ((info->src.box.width !=  info->dst.box.width &&
         info->src.box.width != -info->dst.box.width) ||
        (info->src.box.height !=  info->dst.box.height &&
         info->src.box.height != -info->dst.box.height))
-      eng3d = TRUE;
+      eng3d = true;
+
+   if (nv50->screen->num_occlusion_queries_active) {
+      BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
+      PUSH_DATA (push, 0);
+   }
 
    if (!eng3d)
       nv50_blit_eng2d(nv50, info);
    else
       nv50_blit_3d(nv50, info);
+
+   if (nv50->screen->num_occlusion_queries_active) {
+      BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
+      PUSH_DATA (push, 1);
+   }
 }
 
 static void
@@ -1501,21 +1760,21 @@ nv50_flush_resource(struct pipe_context *ctx,
 {
 }
 
-boolean
+bool
 nv50_blitter_create(struct nv50_screen *screen)
 {
    screen->blitter = CALLOC_STRUCT(nv50_blitter);
    if (!screen->blitter) {
       NOUVEAU_ERR("failed to allocate blitter struct\n");
-      return FALSE;
+      return false;
    }
 
-   pipe_mutex_init(screen->blitter->mutex);
+   (void) mtx_init(&screen->blitter->mutex, mtx_plain);
 
    nv50_blitter_make_vp(screen->blitter);
    nv50_blitter_make_sampler(screen->blitter);
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -1535,23 +1794,24 @@ nv50_blitter_destroy(struct nv50_screen *screen)
       }
    }
 
+   mtx_destroy(&blitter->mutex);
    FREE(blitter);
 }
 
-boolean
+bool
 nv50_blitctx_create(struct nv50_context *nv50)
 {
    nv50->blit = CALLOC_STRUCT(nv50_blitctx);
    if (!nv50->blit) {
       NOUVEAU_ERR("failed to allocate blit context\n");
-      return FALSE;
+      return false;
    }
 
    nv50->blit->nv50 = nv50;
 
    nv50->blit->rast.pipe.half_pixel_center = 1;
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -1562,6 +1822,7 @@ nv50_init_surface_functions(struct nv50_context *nv50)
    pipe->resource_copy_region = nv50_resource_copy_region;
    pipe->blit = nv50_blit;
    pipe->flush_resource = nv50_flush_resource;
+   pipe->clear_texture = nv50_clear_texture;
    pipe->clear_render_target = nv50_clear_render_target;
    pipe->clear_depth_stencil = nv50_clear_depth_stencil;
    pipe->clear_buffer = nv50_clear_buffer;

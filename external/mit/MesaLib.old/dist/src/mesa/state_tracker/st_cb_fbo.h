@@ -29,7 +29,7 @@
 #ifndef ST_CB_FBO_H
 #define ST_CB_FBO_H
 
-#include "main/compiler.h"
+#include "main/fbobject.h"
 #include "main/glheader.h"
 #include "main/mtypes.h"
 
@@ -47,7 +47,12 @@ struct st_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct pipe_resource *texture;
-   struct pipe_surface *surface; /* temporary view into texture */
+   /* This points to either "surface_linear" or "surface_srgb".
+    * It doesn't hold the pipe_surface reference. The other two do.
+    */
+   struct pipe_surface *surface;
+   struct pipe_surface *surface_linear;
+   struct pipe_surface *surface_srgb;
    GLboolean defined;        /**< defined contents? */
 
    struct pipe_transfer *transfer; /**< only used when mapping the resource */
@@ -58,22 +63,47 @@ struct st_renderbuffer
    boolean software;
    void *data;
 
+   bool use_readpix_cache;
+
    /* Inputs from Driver.RenderTexture, don't use directly. */
    boolean is_rtt; /**< whether Driver.RenderTexture was called */
    unsigned rtt_face, rtt_slice;
    boolean rtt_layered; /**< whether glFramebufferTexture was called */
+   unsigned rtt_nr_samples; /**< from FramebufferTexture2DMultisampleEXT */
 };
 
 
-static INLINE struct st_renderbuffer *
+static inline struct st_renderbuffer *
 st_renderbuffer(struct gl_renderbuffer *rb)
 {
    return (struct st_renderbuffer *) rb;
 }
 
+static inline struct pipe_resource *
+st_get_renderbuffer_resource(struct gl_renderbuffer *rb)
+{
+   return st_renderbuffer(rb)->texture;
+}
+
+/**
+ * Cast wrapper to convert a struct gl_framebuffer to an st_framebuffer.
+ * Return NULL if the struct gl_framebuffer is a user-created framebuffer.
+ * We'll only return non-null for window system framebuffers.
+ * Note that this function may fail.
+ */
+static inline struct st_framebuffer *
+st_ws_framebuffer(struct gl_framebuffer *fb)
+{
+   /* FBO cannot be casted.  See st_new_framebuffer */
+   if (fb && _mesa_is_winsys_fbo(fb) &&
+       fb != _mesa_get_incomplete_framebuffer())
+      return (struct st_framebuffer *) fb;
+   return NULL;
+}
+
 
 extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
+st_new_renderbuffer_fb(enum pipe_format format, unsigned samples, boolean sw);
 
 extern void
 st_update_renderbuffer_surface(struct st_context *st,

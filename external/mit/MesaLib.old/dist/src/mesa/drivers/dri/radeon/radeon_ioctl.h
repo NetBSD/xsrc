@@ -36,7 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_IOCTL_H__
 #define __RADEON_IOCTL_H__
 
-#include "main/simple_list.h"
 #include "radeon_bo_gem.h"
 #include "radeon_cs_gem.h"
 
@@ -95,7 +94,7 @@ do {						\
       rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );	\
 } while (0)
 
-/* Can accomodate several state changes and primitive changes without
+/* Can accommodate several state changes and primitive changes without
  * actually firing the buffer.
  */
 
@@ -110,7 +109,7 @@ do {								\
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
-static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
+static inline int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
 					struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {

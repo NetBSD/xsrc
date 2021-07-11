@@ -43,19 +43,17 @@ struct softpipe_tex_tile_cache;
 #define TEX_TILE_SIZE_LOG2 5
 #define TEX_TILE_SIZE (1 << TEX_TILE_SIZE_LOG2)
 
-
-#define TEX_ADDR_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1 - TEX_TILE_SIZE_LOG2)
-#define TEX_Z_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1)
+#define TEX_ADDR_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1)
+#define TEX_Y_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1 - TEX_TILE_SIZE_LOG2)
 
 /**
  * Texture tile address as a union for fast compares.
  */
 union tex_tile_address {
    struct {
-      unsigned x:TEX_ADDR_BITS;  /* 16K / TILE_SIZE */
-      unsigned y:TEX_ADDR_BITS;  /* 16K / TILE_SIZE */
-      unsigned z:TEX_Z_BITS;     /* 16K -- z not tiled */
-      unsigned face:3;
+      unsigned x:TEX_ADDR_BITS;  /* 16K -- need extra bits for texture buffers */
+      unsigned y:TEX_Y_BITS;  /* 16K / TILE_SIZE */
+      unsigned z:TEX_ADDR_BITS;  /* 16K -- z not tiled */
       unsigned level:4;
       unsigned invalid:1;
    } bits;
@@ -94,7 +92,7 @@ struct softpipe_tex_tile_cache
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;
-   int tex_face, tex_level, tex_z;
+   int tex_level, tex_z;
 
    unsigned swizzle_r;
    unsigned swizzle_g;
@@ -128,7 +126,7 @@ extern const struct softpipe_tex_cached_tile *
 sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
                         union tex_tile_address addr );
 
-static INLINE union tex_tile_address
+static inline union tex_tile_address
 tex_tile_address( unsigned x,
                   unsigned y,
                   unsigned z,
@@ -141,7 +139,6 @@ tex_tile_address( unsigned x,
    addr.bits.x = x / TEX_TILE_SIZE;
    addr.bits.y = y / TEX_TILE_SIZE;
    addr.bits.z = z;
-   addr.bits.face = face;
    addr.bits.level = level;
 
    return addr;
@@ -149,7 +146,7 @@ tex_tile_address( unsigned x,
 
 /* Quickly retrieve tile if it matches last lookup.
  */
-static INLINE const struct softpipe_tex_cached_tile *
+static inline const struct softpipe_tex_cached_tile *
 sp_get_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
                        union tex_tile_address addr )
 {

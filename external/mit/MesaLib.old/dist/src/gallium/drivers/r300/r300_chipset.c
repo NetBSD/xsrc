@@ -22,7 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_chipset.h"
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/radeon_winsys.h"
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
@@ -53,7 +53,7 @@ static void r300_apply_hyperz_blacklist(struct r300_capabilities* caps)
     if (!os_get_process_name(proc_name, sizeof(proc_name)))
         return;
 
-    for (i = 0; i < Elements(list); i++) {
+    for (i = 0; i < ARRAY_SIZE(list); i++) {
         if (strcmp(list[i], proc_name) == 0) {
             caps->zmask_ram = 0;
             caps->hiz_ram = 0;

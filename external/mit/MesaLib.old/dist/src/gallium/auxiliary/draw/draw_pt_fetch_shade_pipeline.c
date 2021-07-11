@@ -54,7 +54,7 @@ struct fetch_pipeline_middle_end {
 
 
 /** cast wrapper */
-static INLINE struct fetch_pipeline_middle_end *
+static inline struct fetch_pipeline_middle_end *
 fetch_pipeline_middle_end(struct draw_pt_middle_end *middle)
 {
    return (struct fetch_pipeline_middle_end *) middle;
@@ -117,7 +117,7 @@ fetch_pipeline_prepare(struct draw_pt_middle_end *middle,
                             draw->clip_user,
                             point_clip ? draw->guard_band_points_xy :
                                          draw->guard_band_xy,
-                            draw->identity_viewport,
+                            draw->bypass_viewport,
                             draw->rasterizer->clip_halfz,
                             (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
@@ -205,6 +205,7 @@ static void
 draw_vertex_shader_run(struct draw_vertex_shader *vshader,
                        const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
                        unsigned const_size[PIPE_MAX_CONSTANT_BUFFERS],
+                       const struct draw_fetch_info *fetch_info,
                        const struct draw_vertex_info *input_verts,
                        struct draw_vertex_info *output_verts)
 {
@@ -222,7 +223,8 @@ draw_vertex_shader_run(struct draw_vertex_shader *vshader,
                        const_size,
                        input_verts->count,
                        input_verts->vertex_size,
-                       input_verts->vertex_size);
+                       input_verts->vertex_size,
+                       fetch_info->elts);
 }
 
 
@@ -235,16 +237,17 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
-   struct draw_prim_info gs_prim_info;
+   struct draw_prim_info gs_prim_info[TGSI_MAX_VERTEX_STREAMS];
    struct draw_vertex_info fetched_vert_info;
    struct draw_vertex_info vs_vert_info;
-   struct draw_vertex_info gs_vert_info;
+   struct draw_vertex_info gs_vert_info[TGSI_MAX_VERTEX_STREAMS];
    struct draw_vertex_info *vert_info;
    struct draw_prim_info ia_prim_info;
    struct draw_vertex_info ia_vert_info;
    const struct draw_prim_info *prim_info = in_prim_info;
    boolean free_prim_info = FALSE;
    unsigned opt = fpme->opt;
+   int num_vertex_streams = 1;
 
    fetched_vert_info.count = fetch_info->count;
    fetched_vert_info.vertex_size = fpme->vertex_size;
@@ -267,24 +270,27 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
     */
    fetch( fpme->fetch, fetch_info, (char *)fetched_vert_info.verts );
 
-   /* Finished with fetch:
-    */
-   fetch_info = NULL;
    vert_info = &fetched_vert_info;
 
    /* Run the shader, note that this overwrites the data[] parts of
     * the pipeline verts.
+    * Need fetch info to get vertex id correct.
     */
    if (fpme->opt & PT_SHADE) {
       draw_vertex_shader_run(vshader,
                              draw->pt.user.vs_constants,
                              draw->pt.user.vs_constants_size,
+                             fetch_info,
                              vert_info,
                              &vs_vert_info);
 
       FREE(vert_info->verts);
       vert_info = &vs_vert_info;
    }
+
+   /* Finished with fetch:
+    */
+   fetch_info = NULL;
 
    if ((fpme->opt & PT_SHADE) && gshader) {
       draw_geometry_shader_run(gshader,
@@ -293,12 +299,23 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
                                vert_info,
                                prim_info,
                                &vshader->info,
-                               &gs_vert_info,
-                               &gs_prim_info);
+                               gs_vert_info,
+                               gs_prim_info);
 
       FREE(vert_info->verts);
-      vert_info = &gs_vert_info;
-      prim_info = &gs_prim_info;
+      vert_info = &gs_vert_info[0];
+      prim_info = &gs_prim_info[0];
+      num_vertex_streams = gshader->num_vertex_streams;
+
+      /*
+       * pt emit can only handle ushort number of vertices (see
+       * render->allocate_vertices).
+       * vsplit guarantees there's never more than 4096, however GS can
+       * easily blow this up (by a factor of 256 (or even 1024) max).
+       */
+      if (vert_info->count > 65535) {
+         opt |= PT_PIPELINE;
+      }
    } else {
       if (draw_prim_assembler_is_required(draw, prim_info, vert_info)) {
          draw_prim_assembler_run(draw, prim_info, vert_info,
@@ -328,7 +345,7 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
     * XXX: Stream output surely needs to respect the prim_info->elt
     *      lists.
     */
-   draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
+   draw_pt_so_emit( fpme->so_emit, num_vertex_streams, vert_info, prim_info );
 
    draw_stats_clipper_primitives(draw, prim_info);
 
@@ -359,6 +376,16 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
 }
 
 
+static inline unsigned
+prim_type(unsigned prim, unsigned flags)
+{
+   if (flags & DRAW_LINE_LOOP_AS_STRIP)
+      return PIPE_PRIM_LINE_STRIP;
+   else
+      return prim;
+}
+
+
 static void
 fetch_pipeline_run(struct draw_pt_middle_end *middle,
                    const unsigned *fetch_elts,
@@ -380,7 +407,7 @@ fetch_pipeline_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
@@ -408,7 +435,7 @@ fetch_pipeline_linear_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = count;
    prim_info.elts = NULL;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
@@ -439,7 +466,7 @@ fetch_pipeline_linear_run_elts(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;

@@ -32,7 +32,6 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "colormac.h"
 #include "context.h"
 #include "formats.h"
 #include "mtypes.h"
@@ -101,6 +100,13 @@ _mesa_gl_compressed_format_base_format(GLenum format)
    case GL_ETC1_RGB8_OES:
    case GL_COMPRESSED_RGB8_ETC2:
    case GL_COMPRESSED_SRGB8_ETC2:
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_ATC_RGB_AMD:
       return GL_RGB;
 
    case GL_COMPRESSED_RGBA:
@@ -118,6 +124,16 @@ _mesa_gl_compressed_format_base_format(GLenum format)
    case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
    case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
    case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_ATC_RGBA_EXPLICIT_ALPHA_AMD:
+   case GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD:
       return GL_RGBA;
 
    case GL_COMPRESSED_ALPHA:
@@ -250,26 +266,23 @@ _mesa_gl_compressed_format_base_format(GLenum format)
 GLuint
 _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
 {
+   GLint discard_formats[100];
    GLuint n = 0;
-   if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-      if (formats) {
-         formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
-         formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
-      }
-      else {
-         n += 2;
-      }
+
+   if (!formats) {
+      formats = discard_formats;
+   }
+
+   if (_mesa_is_desktop_gl(ctx) &&
+       ctx->Extensions.TDFX_texture_compression_FXT1) {
+      formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
+      formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
    }
 
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
-      if (formats) {
-         formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-      }
-      else {
-         n += 3;
-      }
+      formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+      formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+      formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 
       /* The ES and desktop GL specs diverge here.
        *
@@ -301,11 +314,7 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
        * Note that the addition is only to the OpenGL ES specification!
        */
       if (_mesa_is_gles(ctx)) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-         } else {
-            n += 1;
-         }
+         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
       }
    }
 
@@ -318,55 +327,159 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
     */
    if (_mesa_is_gles(ctx)
        && ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
-      if (formats) {
-         formats[n++] = GL_ETC1_RGB8_OES;
-      }
-      else {
-         n += 1;
-      }
+      formats[n++] = GL_ETC1_RGB8_OES;
+   }
+
+   /* Required by EXT_texture_compression_bptc in GLES. */
+   if (_mesa_has_EXT_texture_compression_bptc(ctx)) {
+      formats[n++] = GL_COMPRESSED_RGBA_BPTC_UNORM;
+      formats[n++] = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+      formats[n++] = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+      formats[n++] = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+   }
+
+   /* Required by EXT_texture_compression_rgtc in GLES. */
+   if (_mesa_is_gles3(ctx) &&
+       _mesa_has_EXT_texture_compression_rgtc(ctx)) {
+      formats[n++] = GL_COMPRESSED_RED_RGTC1_EXT;
+      formats[n++] = GL_COMPRESSED_SIGNED_RED_RGTC1_EXT;
+      formats[n++] = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+      formats[n++] = GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT;
    }
 
    if (ctx->API == API_OPENGLES) {
-      if (formats) {
-	 formats[n++] = GL_PALETTE4_RGB8_OES;
-	 formats[n++] = GL_PALETTE4_RGBA8_OES;
-	 formats[n++] = GL_PALETTE4_R5_G6_B5_OES;
-	 formats[n++] = GL_PALETTE4_RGBA4_OES;
-	 formats[n++] = GL_PALETTE4_RGB5_A1_OES;
-	 formats[n++] = GL_PALETTE8_RGB8_OES;
-	 formats[n++] = GL_PALETTE8_RGBA8_OES;
-	 formats[n++] = GL_PALETTE8_R5_G6_B5_OES;
-	 formats[n++] = GL_PALETTE8_RGBA4_OES;
-	 formats[n++] = GL_PALETTE8_RGB5_A1_OES;
-      }
-      else {
-	 n += 10;
-      }
+      formats[n++] = GL_PALETTE4_RGB8_OES;
+      formats[n++] = GL_PALETTE4_RGBA8_OES;
+      formats[n++] = GL_PALETTE4_R5_G6_B5_OES;
+      formats[n++] = GL_PALETTE4_RGBA4_OES;
+      formats[n++] = GL_PALETTE4_RGB5_A1_OES;
+      formats[n++] = GL_PALETTE8_RGB8_OES;
+      formats[n++] = GL_PALETTE8_RGBA8_OES;
+      formats[n++] = GL_PALETTE8_R5_G6_B5_OES;
+      formats[n++] = GL_PALETTE8_RGBA4_OES;
+      formats[n++] = GL_PALETTE8_RGB5_A1_OES;
+   }
+
+   if (_mesa_is_gles3(ctx) || ctx->Extensions.ARB_ES3_compatibility) {
+      formats[n++] = GL_COMPRESSED_RGB8_ETC2;
+      formats[n++] = GL_COMPRESSED_RGBA8_ETC2_EAC;
+      formats[n++] = GL_COMPRESSED_R11_EAC;
+      formats[n++] = GL_COMPRESSED_RG11_EAC;
+      formats[n++] = GL_COMPRESSED_SIGNED_R11_EAC;
+      formats[n++] = GL_COMPRESSED_SIGNED_RG11_EAC;
+      formats[n++] = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
    }
 
    if (_mesa_is_gles3(ctx)) {
-      if (formats) {
-         formats[n++] = GL_COMPRESSED_RGB8_ETC2;
-         formats[n++] = GL_COMPRESSED_SRGB8_ETC2;
-         formats[n++] = GL_COMPRESSED_RGBA8_ETC2_EAC;
-         formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
-         formats[n++] = GL_COMPRESSED_R11_EAC;
-         formats[n++] = GL_COMPRESSED_RG11_EAC;
-         formats[n++] = GL_COMPRESSED_SIGNED_R11_EAC;
-         formats[n++] = GL_COMPRESSED_SIGNED_RG11_EAC;
-         formats[n++] = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
-         formats[n++] = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
-      }
-      else {
-         n += 10;
-      }
+      formats[n++] = GL_COMPRESSED_SRGB8_ETC2;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+      formats[n++] = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
    }
+
+   /* The KHR_texture_compression_astc_hdr spec says:
+    *
+    *    "Interactions with OpenGL 4.2
+    *
+    *        OpenGL 4.2 supports the feature that compressed textures can be
+    *        compressed online, by passing the compressed texture format enum
+    *        as the internal format when uploading a texture using TexImage1D,
+    *        TexImage2D or TexImage3D (see Section 3.9.3, Texture Image
+    *        Specification, subsection Encoding of Special Internal Formats).
+    *
+    *        Due to the complexity of the ASTC compression algorithm, it is
+    *        not usually suitable for online use, and therefore ASTC support
+    *        will be limited to pre-compressed textures only. Where on-device
+    *        compression is required, a domain-specific limited compressor
+    *        will typically be used, and this is therefore not suitable for
+    *        implementation in the driver.
+    *
+    *        In particular, the ASTC format specifiers will not be added to
+    *        Table 3.14, and thus will not be accepted by the TexImage*D
+    *        functions, and will not be returned by the (already deprecated)
+    *        COMPRESSED_TEXTURE_FORMATS query."
+    *
+    * The ES and the desktop specs diverge here. In OpenGL ES, the
+    * COMPRESSED_TEXTURE_FORMATS query returns the set of supported specific
+    * compressed formats.
+    */
+   if (ctx->API == API_OPENGLES2 &&
+       ctx->Extensions.KHR_texture_compression_astc_ldr) {
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR;
+   }
+
+   if (_mesa_is_gles3(ctx) &&
+       ctx->Extensions.OES_texture_compression_astc) {
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_3x3x3_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_4x3x3_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_4x4x3_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_4x4x4_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_5x4x4_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_5x5x4_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_5x5x5_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_6x5x5_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_6x6x5_OES;
+      formats[n++] = GL_COMPRESSED_RGBA_ASTC_6x6x6_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES;
+      formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES;
+   }
+
+   /* The GL_AMD_compressed_ATC_texture spec says:
+    *
+    *     "New State
+    *
+    *         The queries for NUM_COMPRESSED_TEXTURE_FORMATS and
+    *         COMPRESSED_TEXTURE_FORMATS include ATC_RGB_AMD,
+    *         ATC_RGBA_EXPLICIT_ALPHA_AMD, and ATC_RGBA_INTERPOLATED_ALPHA_AMD."
+    */
+   if (_mesa_has_AMD_compressed_ATC_texture(ctx)) {
+      formats[n++] = GL_ATC_RGB_AMD;
+      formats[n++] = GL_ATC_RGBA_EXPLICIT_ALPHA_AMD;
+      formats[n++] = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+   }
+
+   assert(n <= ARRAY_SIZE(discard_formats));
+
    return n;
 }
 
 
 /**
- * Convert a compressed MESA_FORMAT_x to a GLenum.
+ * Convert GLenum to a compressed MESA_FORMAT_x.
  */
 mesa_format
 _mesa_glenum_to_compressed_format(GLenum format)
@@ -379,15 +492,15 @@ _mesa_glenum_to_compressed_format(GLenum format)
 
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
       return MESA_FORMAT_RGB_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_RGB4_S3TC:
       return MESA_FORMAT_RGBA_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
       return MESA_FORMAT_RGBA_DXT3;
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-   case GL_RGBA4_S3TC:
       return MESA_FORMAT_RGBA_DXT5;
 
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
@@ -450,6 +563,110 @@ _mesa_glenum_to_compressed_format(GLenum format)
    case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
       return MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT;
 
+   case GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
+      return MESA_FORMAT_RGBA_ASTC_4x4;
+   case GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
+      return MESA_FORMAT_RGBA_ASTC_5x4;
+   case GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
+      return MESA_FORMAT_RGBA_ASTC_5x5;
+   case GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
+      return MESA_FORMAT_RGBA_ASTC_6x5;
+   case GL_COMPRESSED_RGBA_ASTC_6x6_KHR:
+      return MESA_FORMAT_RGBA_ASTC_6x6;
+   case GL_COMPRESSED_RGBA_ASTC_8x5_KHR:
+      return MESA_FORMAT_RGBA_ASTC_8x5;
+   case GL_COMPRESSED_RGBA_ASTC_8x6_KHR:
+      return MESA_FORMAT_RGBA_ASTC_8x6;
+   case GL_COMPRESSED_RGBA_ASTC_8x8_KHR:
+      return MESA_FORMAT_RGBA_ASTC_8x8;
+   case GL_COMPRESSED_RGBA_ASTC_10x5_KHR:
+      return MESA_FORMAT_RGBA_ASTC_10x5;
+   case GL_COMPRESSED_RGBA_ASTC_10x6_KHR:
+      return MESA_FORMAT_RGBA_ASTC_10x6;
+   case GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
+      return MESA_FORMAT_RGBA_ASTC_10x8;
+   case GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
+      return MESA_FORMAT_RGBA_ASTC_10x10;
+   case GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
+      return MESA_FORMAT_RGBA_ASTC_12x10;
+   case GL_COMPRESSED_RGBA_ASTC_12x12_KHR:
+      return MESA_FORMAT_RGBA_ASTC_12x12;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x6;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x8;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x6;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x8;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x10;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x10;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12;
+   case GL_COMPRESSED_RGBA_ASTC_3x3x3_OES:
+      return MESA_FORMAT_RGBA_ASTC_3x3x3;
+   case GL_COMPRESSED_RGBA_ASTC_4x3x3_OES:
+      return MESA_FORMAT_RGBA_ASTC_4x3x3;
+   case GL_COMPRESSED_RGBA_ASTC_4x4x3_OES:
+      return MESA_FORMAT_RGBA_ASTC_4x4x3;
+   case GL_COMPRESSED_RGBA_ASTC_4x4x4_OES:
+      return MESA_FORMAT_RGBA_ASTC_4x4x4;
+   case GL_COMPRESSED_RGBA_ASTC_5x4x4_OES:
+      return MESA_FORMAT_RGBA_ASTC_5x4x4;
+   case GL_COMPRESSED_RGBA_ASTC_5x5x4_OES:
+      return MESA_FORMAT_RGBA_ASTC_5x5x4;
+   case GL_COMPRESSED_RGBA_ASTC_5x5x5_OES:
+      return MESA_FORMAT_RGBA_ASTC_5x5x5;
+   case GL_COMPRESSED_RGBA_ASTC_6x5x5_OES:
+      return MESA_FORMAT_RGBA_ASTC_6x5x5;
+   case GL_COMPRESSED_RGBA_ASTC_6x6x5_OES:
+      return MESA_FORMAT_RGBA_ASTC_6x6x5;
+   case GL_COMPRESSED_RGBA_ASTC_6x6x6_OES:
+      return MESA_FORMAT_RGBA_ASTC_6x6x6;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_3x3x3;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x3x3;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x3;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x4;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4x4;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x4;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES:
+      return MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6;
+
+   case GL_ATC_RGB_AMD:
+      return MESA_FORMAT_ATC_RGB;
+   case GL_ATC_RGBA_EXPLICIT_ALPHA_AMD:
+      return MESA_FORMAT_ATC_RGBA_EXPLICIT;
+   case GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD:
+      return MESA_FORMAT_ATC_RGBA_INTERPOLATED;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -467,7 +684,8 @@ _mesa_glenum_to_compressed_format(GLenum format)
  * internal format unchanged.
  */
 GLenum
-_mesa_compressed_format_to_glenum(struct gl_context *ctx, mesa_format mesaFormat)
+_mesa_compressed_format_to_glenum(struct gl_context *ctx,
+                                  mesa_format mesaFormat)
 {
    switch (mesaFormat) {
    case MESA_FORMAT_RGB_FXT1:
@@ -540,6 +758,111 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, mesa_format mesaFormat
    case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
       return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
 
+   case MESA_FORMAT_RGBA_ASTC_4x4:
+      return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+   case MESA_FORMAT_RGBA_ASTC_5x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
+   case MESA_FORMAT_RGBA_ASTC_5x5:
+      return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+   case MESA_FORMAT_RGBA_ASTC_6x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+   case MESA_FORMAT_RGBA_ASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+   case MESA_FORMAT_RGBA_ASTC_8x5:
+      return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+   case MESA_FORMAT_RGBA_ASTC_8x6:
+      return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+   case MESA_FORMAT_RGBA_ASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+   case MESA_FORMAT_RGBA_ASTC_10x5:
+      return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+   case MESA_FORMAT_RGBA_ASTC_10x6:
+      return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+   case MESA_FORMAT_RGBA_ASTC_10x8:
+      return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+   case MESA_FORMAT_RGBA_ASTC_10x10:
+      return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+   case MESA_FORMAT_RGBA_ASTC_12x10:
+      return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
+   case MESA_FORMAT_RGBA_ASTC_12x12:
+      return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x6:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x8:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x6:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x8:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x10:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x10:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR;
+
+   case MESA_FORMAT_RGBA_ASTC_3x3x3:
+      return GL_COMPRESSED_RGBA_ASTC_3x3x3_OES;
+   case MESA_FORMAT_RGBA_ASTC_4x3x3:
+      return GL_COMPRESSED_RGBA_ASTC_4x3x3_OES;
+   case MESA_FORMAT_RGBA_ASTC_4x4x3:
+      return GL_COMPRESSED_RGBA_ASTC_4x4x3_OES;
+   case MESA_FORMAT_RGBA_ASTC_4x4x4:
+      return GL_COMPRESSED_RGBA_ASTC_4x4x4_OES;
+   case MESA_FORMAT_RGBA_ASTC_5x4x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x4x4_OES;
+   case MESA_FORMAT_RGBA_ASTC_5x5x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x5x4_OES;
+   case MESA_FORMAT_RGBA_ASTC_5x5x5:
+      return GL_COMPRESSED_RGBA_ASTC_5x5x5_OES;
+   case MESA_FORMAT_RGBA_ASTC_6x5x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x5x5_OES;
+   case MESA_FORMAT_RGBA_ASTC_6x6x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x6x5_OES;
+   case MESA_FORMAT_RGBA_ASTC_6x6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6x6_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_3x3x3:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x3x3:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x3:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x4:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4x4:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x4:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES;
+   case MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES;
+
+   case MESA_FORMAT_ATC_RGB:
+      return GL_ATC_RGB_AMD;
+   case MESA_FORMAT_ATC_RGBA_EXPLICIT:
+      return GL_ATC_RGBA_EXPLICIT_ALPHA_AMD;
+   case MESA_FORMAT_ATC_RGBA_INTERPOLATED:
+      return GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"
                     " _mesa_compressed_format_to_glenum()");
@@ -570,8 +893,8 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
    _mesa_get_format_block_size(mesaFormat, &bw, &bh);
 
-   ASSERT(col % bw == 0);
-   ASSERT(row % bh == 0);
+   assert(col % bw == 0);
+   assert(row % bh == 0);
 
    offset = ((width + bw - 1) / bw) * (row / bh) + col / bw;
    offset *= blockSize;
@@ -587,34 +910,17 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 compressed_fetch_func
 _mesa_get_compressed_fetch_func(mesa_format format)
 {
-   switch (format) {
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
+   switch (_mesa_get_format_layout(format)) {
+   case MESA_FORMAT_LAYOUT_S3TC:
       return _mesa_get_dxt_fetch_func(format);
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
+   case MESA_FORMAT_LAYOUT_FXT1:
       return _mesa_get_fxt_fetch_func(format);
-   case MESA_FORMAT_R_RGTC1_UNORM:
-   case MESA_FORMAT_L_LATC1_UNORM:
-   case MESA_FORMAT_R_RGTC1_SNORM:
-   case MESA_FORMAT_L_LATC1_SNORM:
-   case MESA_FORMAT_RG_RGTC2_UNORM:
-   case MESA_FORMAT_LA_LATC2_UNORM:
-   case MESA_FORMAT_RG_RGTC2_SNORM:
-   case MESA_FORMAT_LA_LATC2_SNORM:
+   case MESA_FORMAT_LAYOUT_RGTC:
+   case MESA_FORMAT_LAYOUT_LATC:
       return _mesa_get_compressed_rgtc_func(format);
-   case MESA_FORMAT_ETC1_RGB8:
+   case MESA_FORMAT_LAYOUT_ETC1:
       return _mesa_get_etc_fetch_func(format);
-   case MESA_FORMAT_BPTC_RGBA_UNORM:
-   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
-   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
-   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+   case MESA_FORMAT_LAYOUT_BPTC:
       return _mesa_get_bptc_fetch_func(format);
    default:
       return NULL;
@@ -645,7 +951,7 @@ _mesa_decompress_image(mesa_format format, GLuint width, GLuint height,
       _mesa_problem(NULL, "Unexpected format in _mesa_decompress_image()");
       return;
    }
- 
+
    stride = srcRowStride * bh / bytes;
 
    for (j = 0; j < height; j++) {

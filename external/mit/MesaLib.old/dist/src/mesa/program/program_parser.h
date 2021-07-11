@@ -20,7 +20,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#pragma once
+
+#ifndef PROGRAM_PARSER_H
+#define PROGRAM_PARSER_H
 
 #include "main/config.h"
 #include "program/prog_parameter.h"
@@ -132,6 +134,9 @@ struct asm_parser_state {
    struct gl_context *ctx;
    struct gl_program *prog;
 
+   /** Memory context to attach instructions to. */
+   void *mem_ctx;
+
    /**
     * Per-program target limits
     */
@@ -207,14 +212,12 @@ struct asm_parser_state {
       unsigned Shadow:1;
       unsigned TexRect:1;
       unsigned TexArray:1;
-      unsigned NV_fragment:1;
       unsigned OriginUpperLeft:1;
       unsigned PixelCenterInteger:1;
    } option;
 
    struct {
       unsigned UsesKill:1;
-      unsigned UsesDFdy:1;
    } fragment;
 };
 
@@ -286,17 +289,6 @@ extern int _mesa_ARBfp_parse_option(struct asm_parser_state *state,
 extern int _mesa_parse_instruction_suffix(const struct asm_parser_state *state,
     const char *suffix, struct prog_instruction *inst);
 
-/**
- * Parses a condition code name
- *
- * The condition code names (e.g., \c LT, \c GT, \c NE) were added to assembly
- * shaders with the \c GL_NV_fragment_program_option extension.  This function
- * converts a string representation into one of the \c COND_ macros.
- *
- * \return
- * One of the \c COND_ macros defined in prog_instruction.h on success or zero
- * on failure.
- */
-extern int _mesa_parse_cc(const char *s);
-
 /*@}*/
+
+#endif /* PROGRAM_PARSER_H */

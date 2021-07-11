@@ -2,8 +2,18 @@
 #ifndef R300_PUBLIC_H
 #define R300_PUBLIC_H
 
-struct radeon_winsys;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct pipe_screen* r300_screen_create(struct radeon_winsys *rws);
+struct radeon_winsys;
+struct pipe_screen_config;
+
+struct pipe_screen* r300_screen_create(struct radeon_winsys *rws,
+                                       const struct pipe_screen_config *config);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

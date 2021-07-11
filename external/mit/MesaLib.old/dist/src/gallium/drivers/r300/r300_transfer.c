@@ -41,7 +41,7 @@ struct r300_transfer {
 };
 
 /* Convenience cast wrapper. */
-static INLINE struct r300_transfer*
+static inline struct r300_transfer*
 r300_transfer(struct pipe_transfer* transfer)
 {
     return (struct r300_transfer*)transfer;
@@ -115,12 +115,12 @@ r300_texture_transfer_map(struct pipe_context *ctx,
     char *map;
 
     referenced_cs =
-        r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf, RADEON_USAGE_READWRITE);
+        r300->rws->cs_is_buffer_referenced(r300->cs, tex->buf, RADEON_USAGE_READWRITE);
     if (referenced_cs) {
         referenced_hw = TRUE;
     } else {
         referenced_hw =
-            r300->rws->buffer_is_busy(tex->buf, RADEON_USAGE_READWRITE);
+            !r300->rws->buffer_wait(tex->buf, 0, RADEON_USAGE_READWRITE);
     }
 
     trans = CALLOC_STRUCT(r300_transfer);
@@ -218,7 +218,7 @@ r300_texture_transfer_map(struct pipe_context *ctx,
     if (trans->linear_texture) {
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
-        map = r300->rws->buffer_map(trans->linear_texture->cs_buf,
+        map = r300->rws->buffer_map(trans->linear_texture->buf,
                                     r300->cs, usage);
         if (!map) {
             pipe_resource_reference(
@@ -230,7 +230,7 @@ r300_texture_transfer_map(struct pipe_context *ctx,
         return map;
     } else {
         /* Tiling is disabled. */
-        map = r300->rws->buffer_map(tex->cs_buf, r300->cs, usage);
+        map = r300->rws->buffer_map(tex->buf, r300->cs, usage);
         if (!map) {
             FREE(trans);
             return NULL;
@@ -246,21 +246,15 @@ r300_texture_transfer_map(struct pipe_context *ctx,
 void r300_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer *transfer)
 {
-    struct radeon_winsys *rws = r300_context(ctx)->rws;
     struct r300_transfer *trans = r300_transfer(transfer);
-    struct r300_resource *tex = r300_resource(transfer->resource);
 
     if (trans->linear_texture) {
-        rws->buffer_unmap(trans->linear_texture->cs_buf);
-
         if (transfer->usage & PIPE_TRANSFER_WRITE) {
             r300_copy_into_tiled_texture(ctx, trans);
         }
 
         pipe_resource_reference(
             (struct pipe_resource**)&trans->linear_texture, NULL);
-    } else {
-        rws->buffer_unmap(tex->cs_buf);
     }
     FREE(transfer);
 }

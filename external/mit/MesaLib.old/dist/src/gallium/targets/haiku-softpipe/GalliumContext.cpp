@@ -10,28 +10,25 @@
 
 #include "GalliumContext.h"
 
+#include <stdio.h>
+
 #include "GLView.h"
 
 #include "bitmap_wrapper.h"
-extern "C" {
+
 #include "glapi/glapi.h"
-#include "main/context.h"
-#include "main/framebuffer.h"
-#include "main/renderbuffer.h"
-#include "main/viewport.h"
 #include "pipe/p_format.h"
-#include "state_tracker/st_cb_fbo.h"
-#include "state_tracker/st_cb_flush.h"
+//#include "state_tracker/st_cb_fbo.h"
+//#include "state_tracker/st_cb_flush.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_gl_api.h"
-#include "state_tracker/st_manager.h"
 #include "state_tracker/sw_winsys.h"
+#include "sw/hgl/hgl_sw_winsys.h"
+#include "util/u_atomic.h"
 #include "util/u_memory.h"
-#include "hgl_sw_winsys.h"
 
 #include "target-helpers/inline_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"
-}
 
 
 #ifdef DEBUG
@@ -42,112 +39,6 @@ extern "C" {
 #	define CALLED()
 #endif
 #define ERROR(x...) printf("GalliumContext: " x)
-
-
-static void
-hgl_viewport(struct gl_context* glContext)
-{
-	// TODO: We should try to eliminate this function
-
-	GLint x = glContext->ViewportArray[0].X;
-	GLint y = glContext->ViewportArray[0].Y;
-	GLint width = glContext->ViewportArray[0].Width;
-	GLint height = glContext->ViewportArray[0].Height;
-
-	TRACE("%s(glContext: %p, x: %d, y: %d, w: %d, h: %d\n", __func__,
-		glContext, x, y, width, height);
-
-	_mesa_check_init_viewport(glContext, width, height);
-
-	struct gl_framebuffer *draw = glContext->WinSysDrawBuffer;
-	struct gl_framebuffer *read = glContext->WinSysReadBuffer;
-
-	if (draw)
-		_mesa_resize_framebuffer(glContext, draw, width, height);
-	if (read)
-		_mesa_resize_framebuffer(glContext, read, width, height);
-}
-
-
-static st_visual*
-hgl_fill_st_visual(gl_config* glVisual)
-{
-	struct st_visual* stVisual = CALLOC_STRUCT(st_visual);
-	if (!stVisual) {
-		ERROR("%s: Couldn't allocate st_visual\n", __func__);
-		return NULL;
-	}
-
-	// Determine color format
-	if (glVisual->redBits == 8) {
-		if (glVisual->alphaBits == 8)
-			stVisual->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
-		else
-			stVisual->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
-	} else {
-		// TODO: I think this should be RGB vs BGR
-		stVisual->color_format = PIPE_FORMAT_B5G6R5_UNORM;
-	}
-
-	// Determine depth stencil format
-	switch (glVisual->depthBits) {
-		default:
-		case 0:
-			stVisual->depth_stencil_format = PIPE_FORMAT_NONE;
-			break;
-		case 16:
-			stVisual->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
-			break;
-		case 24:
-			if (glVisual->stencilBits == 0) {
-				stVisual->depth_stencil_format = PIPE_FORMAT_X8Z24_UNORM;
-			} else {
-				stVisual->depth_stencil_format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
-			}
-			break;
-		case 32:
-			stVisual->depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
-			break;
-	}
-
-	stVisual->accum_format = (glVisual->haveAccumBuffer)
-		? PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
-
-	stVisual->buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
-	stVisual->render_buffer = ST_ATTACHMENT_FRONT_LEFT;
-	if (glVisual->doubleBufferMode) {
-		stVisual->buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
-		stVisual->render_buffer = ST_ATTACHMENT_BACK_LEFT;
-	}
-
-	if (glVisual->stereoMode) {
-		stVisual->buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
-		if (glVisual->doubleBufferMode)
-			stVisual->buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
-	}
-
-	if (glVisual->haveDepthBuffer || glVisual->haveStencilBuffer)
-		stVisual->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
-
-	return stVisual;
-}
-
-
-static int
-hook_stm_get_param(struct st_manager *smapi, enum st_manager_param param)
-{
-	CALLED();
-
-	switch (param) {
-		case ST_MANAGER_BROKEN_INVALIDATE:
-			TRACE("%s: TODO: How should we handle BROKEN_INVALIDATE calls?\n",
-				__func__);
-			// For now we force validation of the framebuffer.
-			return 1;
-	}
-
-	return 0;
-}
 
 
 GalliumContext::GalliumContext(ulong options)
@@ -164,7 +55,7 @@ GalliumContext::GalliumContext(ulong options)
 
 	CreateScreen();
 
-	pipe_mutex_init(fMutex);
+	(void) mtx_init(&fMutex, mtx_plain);
 }
 
 
@@ -178,7 +69,7 @@ GalliumContext::~GalliumContext()
 		DestroyContext(i);
 	Unlock();
 
-	pipe_mutex_destroy(fMutex);
+	mtx_destroy(&fMutex);
 
 	// TODO: Destroy fScreen
 }
@@ -229,73 +120,33 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	// Set up the initial things our context needs
 	context->bitmap = bitmap;
 	context->colorSpace = get_bitmap_color_space(bitmap);
+	context->screen = fScreen;
 	context->draw = NULL;
 	context->read = NULL;
 	context->st = NULL;
 
-	context->api = st_gl_api_create();
+	// Create st_gl_api
+	context->api = hgl_create_st_api();
 	if (!context->api) {
 		ERROR("%s: Couldn't obtain Mesa state tracker API!\n", __func__);
 		return -1;
 	}
 
-	context->manager = CALLOC_STRUCT(st_manager);
-	if (!context->manager) {
-		ERROR("%s: Couldn't allocate Mesa state tracker manager!\n", __func__);
-		return -1;
-	}
-	context->manager->get_param = hook_stm_get_param;
+	// Create state_tracker manager
+	context->manager = hgl_create_st_manager(context);
 
-	// Calculate visual configuration
-	const GLboolean rgbFlag		= ((fOptions & BGL_INDEX) == 0);
-	const GLboolean alphaFlag	= ((fOptions & BGL_ALPHA) == BGL_ALPHA);
-	const GLboolean dblFlag		= ((fOptions & BGL_DOUBLE) == BGL_DOUBLE);
-	const GLboolean stereoFlag	= false;
-	const GLint depth			= (fOptions & BGL_DEPTH) ? 24 : 0;
-	const GLint stencil			= (fOptions & BGL_STENCIL) ? 8 : 0;
-	const GLint accum			= (fOptions & BGL_ACCUM) ? 16 : 0;
-	const GLint red				= rgbFlag ? 8 : 5;
-	const GLint green			= rgbFlag ? 8 : 5;
-	const GLint blue			= rgbFlag ? 8 : 5;
-	const GLint alpha			= alphaFlag ? 8 : 0;
+	// Create state tracker visual
+	context->stVisual = hgl_create_st_visual(fOptions);
 
-	TRACE("rgb      :\t%d\n", (bool)rgbFlag);
-	TRACE("alpha    :\t%d\n", (bool)alphaFlag);
-	TRACE("dbl      :\t%d\n", (bool)dblFlag);
-	TRACE("stereo   :\t%d\n", (bool)stereoFlag);
-	TRACE("depth    :\t%d\n", depth);
-	TRACE("stencil  :\t%d\n", stencil);
-	TRACE("accum    :\t%d\n", accum);
-	TRACE("red      :\t%d\n", red);
-	TRACE("green    :\t%d\n", green);
-	TRACE("blue     :\t%d\n", blue);
-	TRACE("alpha    :\t%d\n", alpha);
-
-	gl_config* glVisual = _mesa_create_visual(dblFlag, stereoFlag, red, green,
-		blue, alpha, depth, stencil, accum, accum, accum, alpha ? accum : 0, 1);
-
-	if (!glVisual) {
-		ERROR("%s: Couldn't create Mesa visual!\n", __func__);
-		return -1;
-	}
-
-	TRACE("depthBits   :\t%d\n", glVisual->depthBits);
-	TRACE("stencilBits :\t%d\n", glVisual->stencilBits);
-
-	// Convert Mesa calculated visual into state tracker visual
-	context->stVisual = hgl_fill_st_visual(glVisual);
-
-	context->draw = new GalliumFramebuffer(context->stVisual, (void*)this);
-	context->read = new GalliumFramebuffer(context->stVisual, (void*)this);
+	// Create state tracker framebuffers
+	context->draw = hgl_create_st_framebuffer(context);
+	context->read = hgl_create_st_framebuffer(context);
 
 	if (!context->draw || !context->read) {
 		ERROR("%s: Problem allocating framebuffer!\n", __func__);
-		_mesa_destroy_visual(glVisual);
+		FREE(context->stVisual);
 		return -1;
 	}
-
-	// We need to assign the screen *before* calling st_api create_context
-	context->manager->screen = fScreen;
 
 	// Build state tracker attributes
 	struct st_context_attribs attribs;
@@ -307,12 +158,10 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	attribs.minor = 0;
 	//attribs.flags |= ST_CONTEXT_FLAG_DEBUG;
 
-	struct st_api* api = context->api;
-
 	// Create context using state tracker api call
 	enum st_context_error result;
-	context->st = api->create_context(api, context->manager, &attribs,
-		&result, context->st);
+	context->st = context->api->create_context(context->api, context->manager,
+		&attribs, &result, context->st);
 
 	if (!context->st) {
 		ERROR("%s: Couldn't create mesa state tracker context!\n",
@@ -341,6 +190,7 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 				break;
 		}
 
+		hgl_destroy_st_visual(context->stVisual);
 		FREE(context);
 		return -1;
 	}
@@ -350,8 +200,6 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 
 	struct st_context *stContext = (struct st_context*)context->st;
 	
-	stContext->ctx->Driver.Viewport = hgl_viewport;
-
 	// Init Gallium3D Post Processing
 	// TODO: no pp filters are enabled yet through postProcessEnable
 	context->postProcess = pp_init(stContext->pipe, context->postProcessEnable,
@@ -372,8 +220,8 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		ERROR("%s: The next context is invalid... something went wrong!\n",
 			__func__);
 		//st_destroy_context(context->st);
+		FREE(context->stVisual);
 		FREE(context);
-		_mesa_destroy_visual(glVisual);
 		return -1;
 	}
 
@@ -401,17 +249,17 @@ GalliumContext::DestroyContext(context_id contextID)
 	if (fContext[contextID]->postProcess)
 		pp_free(fContext[contextID]->postProcess);
 
-	// Delete framebuffer objects
+	// Delete state tracker framebuffer objects
 	if (fContext[contextID]->read)
 		delete fContext[contextID]->read;
 	if (fContext[contextID]->draw)
 		delete fContext[contextID]->draw;
 
 	if (fContext[contextID]->stVisual)
-		FREE(fContext[contextID]->stVisual);
+		hgl_destroy_st_visual(fContext[contextID]->stVisual);
 
 	if (fContext[contextID]->manager)
-		FREE(fContext[contextID]->manager);
+		hgl_destroy_st_manager(fContext[contextID]->manager);
 
 	FREE(fContext[contextID]);
 }
@@ -438,10 +286,8 @@ GalliumContext::SetCurrentContext(Bitmap *bitmap, context_id contextID)
 		return B_ERROR;
 	}
 
-	struct st_api* api = context->api;
-
 	if (!bitmap) {
-		api->make_current(context->api, NULL, NULL, NULL);
+		context->api->make_current(context->api, NULL, NULL, NULL);
 		return B_OK;
 	}
 
@@ -454,21 +300,17 @@ GalliumContext::SetCurrentContext(Bitmap *bitmap, context_id contextID)
 	}
 
 	// We need to lock and unlock framebuffers before accessing them
-	context->draw->Lock();
-	context->read->Lock();
-	api->make_current(context->api, context->st, context->draw->fBuffer,
-		context->read->fBuffer);
-	context->draw->Unlock();
-	context->read->Unlock();
+	context->api->make_current(context->api, context->st, context->draw->stfbi,
+		context->read->stfbi);
 
-	if (context->textures[ST_ATTACHMENT_BACK_LEFT]
-		&& context->textures[ST_ATTACHMENT_DEPTH_STENCIL]
-		&& context->postProcess) {
-		TRACE("Postprocessing textures...\n");
-		pp_init_fbos(context->postProcess,
-			context->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
-			context->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
-	}
+	//if (context->textures[ST_ATTACHMENT_BACK_LEFT]
+	//	&& context->textures[ST_ATTACHMENT_DEPTH_STENCIL]
+	//	&& context->postProcess) {
+	//	TRACE("Postprocessing textures...\n");
+	//	pp_init_fbos(context->postProcess,
+	//		context->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
+	//		context->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
+	//}
 
 	context->bitmap = bitmap;
 	//context->st->pipe->priv = context;
@@ -492,7 +334,7 @@ GalliumContext::SwapBuffers(context_id contextID)
 	}
 
 	// TODO: Where did st_notify_swapbuffers go?
-	//st_notify_swapbuffers(context->draw->stfb);
+	//st_notify_swapbuffers(context->draw->stfbi);
 
 	context->st->flush(context->st, ST_FLUSH_FRONT, NULL);
 
@@ -525,17 +367,38 @@ GalliumContext::SwapBuffers(context_id contextID)
 }
 
 
-void
-GalliumContext::ResizeViewport(int32 width, int32 height)
+bool
+GalliumContext::Validate(uint32 width, uint32 height)
 {
 	CALLED();
-	for (context_id i = 0; i < CONTEXT_MAX; i++) {
-		if (fContext[i] && fContext[i]->st) {
-			struct st_context *stContext = (struct st_context*)fContext[i]->st;
-			_mesa_set_viewport(stContext->ctx, 0, 0, 0, width, height);
-        		st_manager_validate_framebuffers(stContext);
-		}
+
+	if (!fContext[fCurrentContext]) {
+		return false;
 	}
+
+	if (fContext[fCurrentContext]->width != width
+		|| fContext[fCurrentContext]->height != height) {
+		Invalidate(width, height);
+		return false;
+	}
+	return true;
+}
+
+
+void
+GalliumContext::Invalidate(uint32 width, uint32 height)
+{
+	CALLED();
+
+	assert(fContext[fCurrentContext]);
+
+	// Update st_context dimensions 
+	fContext[fCurrentContext]->width = width;
+	fContext[fCurrentContext]->height = height;
+
+	// Is this the best way to invalidate?
+	p_atomic_inc(&fContext[fCurrentContext]->read->stfbi->stamp);
+	p_atomic_inc(&fContext[fCurrentContext]->draw->stfbi->stamp);
 }
 
 
@@ -543,7 +406,7 @@ void
 GalliumContext::Lock()
 {
 	CALLED();
-	pipe_mutex_lock(fMutex);
+	mtx_lock(&fMutex);
 }
 
 
@@ -551,6 +414,6 @@ void
 GalliumContext::Unlock()
 {
 	CALLED();
-	pipe_mutex_unlock(fMutex);
+	mtx_unlock(&fMutex);
 }
 /* vim: set tabstop=4: */

@@ -87,6 +87,7 @@ typedef enum {
 	SIN = 48,
 	COS = 49,
 	RETAIN_PREV = 50,
+	SCALAR_NONE = 63,
 } instr_scalar_opc_t;
 
 typedef enum {
@@ -120,6 +121,7 @@ typedef enum {
 	KILLNEv = 27,
 	DSTv = 28,
 	MOVAv = 29,
+	VECTOR_NONE = 31,
 } instr_vector_opc_t;
 
 typedef struct PACKED {
@@ -147,15 +149,25 @@ typedef struct PACKED {
 	uint8_t             const_1_rel_abs          : 1;
 	uint8_t             const_0_rel_abs          : 1;
 	/* dword2: */
-	uint8_t             src3_reg                 : 6;
-	uint8_t             src3_reg_select          : 1;
-	uint8_t             src3_reg_abs             : 1;
-	uint8_t             src2_reg                 : 6;
-	uint8_t             src2_reg_select          : 1;
-	uint8_t             src2_reg_abs             : 1;
-	uint8_t             src1_reg                 : 6;
-	uint8_t             src1_reg_select          : 1;
-	uint8_t             src1_reg_abs             : 1;
+	union {
+		struct {
+			uint8_t             src3_reg         : 6;
+			uint8_t             src3_reg_select  : 1;
+			uint8_t             src3_reg_abs     : 1;
+			uint8_t             src2_reg         : 6;
+			uint8_t             src2_reg_select  : 1;
+			uint8_t             src2_reg_abs     : 1;
+			uint8_t             src1_reg         : 6;
+			uint8_t             src1_reg_select  : 1;
+			uint8_t             src1_reg_abs     : 1;
+		};
+		/* constants have full 8-bit index */
+		struct {
+			uint8_t             src3_reg_byte    : 8;
+			uint8_t             src2_reg_byte    : 8;
+			uint8_t             src1_reg_byte    : 8;
+		};
+	};
 	instr_vector_opc_t  vector_opc               : 5;
 	uint8_t             src3_sel                 : 1;
 	uint8_t             src2_sel                 : 1;
@@ -366,10 +378,8 @@ typedef struct PACKED {
 	uint8_t             pred_select              : 1;
 	/* dword2: */
 	uint8_t             stride                   : 8;
-	/* possibly offset and reserved4 are swapped on a200? */
-	uint8_t             offset                   : 8;
-	uint8_t             reserved4                : 8;
-	uint8_t             reserved5                : 7;
+	uint32_t            offset                   : 22;
+	uint8_t             reserved4                : 1;
 	uint8_t             pred_condition           : 1;
 } instr_fetch_vtx_t;
 
@@ -381,10 +391,17 @@ typedef union PACKED {
 		instr_fetch_opc_t opc                    : 5;
 		uint32_t        dummy0                   : 27;
 		/* dword1: */
-		uint32_t        dummy1                   : 32;
+		uint32_t        dummy1                   : 31;
+		uint8_t         pred_select              : 1;
 		/* dword2: */
-		uint32_t        dummy2                   : 32;
+		uint32_t        dummy2                   : 31;
+		uint8_t         pred_condition           : 1;
 	};
 } instr_fetch_t;
+
+typedef union PACKED {
+	instr_alu_t alu;
+	instr_fetch_t fetch;
+} instr_t;
 
 #endif /* INSTR_H_ */

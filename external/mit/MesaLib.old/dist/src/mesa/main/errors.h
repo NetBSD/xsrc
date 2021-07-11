@@ -36,23 +36,17 @@
 #define ERRORS_H
 
 
-#include "compiler.h"
+#include <stdio.h>
+#include <stdarg.h>
 #include "glheader.h"
+#include "menums.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "mtypes.h"
-
-struct _glapi_table;
-
-extern void
-_mesa_init_errors( struct gl_context *ctx );
-
-extern void
-_mesa_free_errors_data( struct gl_context *ctx );
+struct gl_context;
 
 extern void
 _mesa_warning( struct gl_context *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
@@ -70,55 +64,51 @@ extern void
 _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void
+_mesa_log(const char *fmtString, ...) PRINTFLIKE(1, 2);
+
+extern FILE *
+_mesa_get_log_file(void);
+
+void
+_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
+                   const char *msg);
+
+extern void
+_mesa_gl_vdebugf(struct gl_context *ctx,
+                 GLuint *id,
+                 enum mesa_debug_source source,
+                 enum mesa_debug_type type,
+                 enum mesa_debug_severity severity,
+                 const char *fmtString,
+                 va_list args);
+
+extern void
+_mesa_gl_debugf(struct gl_context *ctx,
+                GLuint *id,
+                enum mesa_debug_source source,
+                enum mesa_debug_type type,
+                enum mesa_debug_severity severity,
+                const char *fmtString, ...) PRINTFLIKE(6, 7);
+
+extern size_t
 _mesa_gl_debug(struct gl_context *ctx,
                GLuint *id,
+               enum mesa_debug_source source,
                enum mesa_debug_type type,
                enum mesa_debug_severity severity,
-               const char *fmtString, ...) PRINTFLIKE(5, 6);
+               const char *msg);
 
 #define _mesa_perf_debug(ctx, sev, ...) do {                              \
    static GLuint msg_id = 0;                                              \
    if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {   \
-      _mesa_gl_debug(ctx, &msg_id,                                        \
-                     MESA_DEBUG_TYPE_PERFORMANCE,                         \
-                     sev,                                                 \
-                     __VA_ARGS__);                                        \
+      _mesa_gl_debugf(ctx, &msg_id,                                       \
+                      MESA_DEBUG_SOURCE_API,                              \
+                      MESA_DEBUG_TYPE_PERFORMANCE,                        \
+                      sev,                                                \
+                      __VA_ARGS__);                                       \
    }                                                                      \
 } while (0)
 
-bool
-_mesa_set_debug_state_int(struct gl_context *ctx, GLenum pname, GLint val);
-
-GLint
-_mesa_get_debug_state_int(struct gl_context *ctx, GLenum pname);
-
-void *
-_mesa_get_debug_state_ptr(struct gl_context *ctx, GLenum pname);
-
-extern void
-_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
-                   const char *msg, int len);
-
-void GLAPIENTRY
-_mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
-                         GLenum severity, GLint length,
-                         const GLchar* buf);
-GLuint GLAPIENTRY
-_mesa_GetDebugMessageLog(GLuint count, GLsizei logSize, GLenum* sources,
-                         GLenum* types, GLenum* ids, GLenum* severities,
-                         GLsizei* lengths, GLchar* messageLog);
-void GLAPIENTRY
-_mesa_DebugMessageControl(GLenum source, GLenum type, GLenum severity,
-                          GLsizei count, const GLuint *ids,
-                          GLboolean enabled);
-void GLAPIENTRY
-_mesa_DebugMessageCallback(GLDEBUGPROC callback,
-                           const void *userParam);
-void GLAPIENTRY
-_mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
-                     const GLchar *message);
-void GLAPIENTRY
-_mesa_PopDebugGroup(void);
 
 #ifdef __cplusplus
 }
