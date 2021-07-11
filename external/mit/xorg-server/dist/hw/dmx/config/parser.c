@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.7.3.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -45,11 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
-#define YYBISON 1
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30706
 
-/* Bison version.  */
-#define YYBISON_VERSION "3.7.3"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.7.6"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -148,6 +148,7 @@ extern int yydebug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 /* Token kinds.  */
+#define YYEMPTY -2
 #define YYEOF 0
 #define YYerror 256
 #define YYUNDEF 257
@@ -184,7 +185,7 @@ union YYSTYPE
     DMXConfigVirtualPtr    virtual;
     DMXConfigEntryPtr      entry;
 
-#line 188 "parser.c"
+#line 189 "parser.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -288,6 +289,18 @@ typedef int_least16_t yytype_int16;
 typedef short yytype_int16;
 #endif
 
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
+#endif
+
 #if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
 typedef __UINT_LEAST8_TYPE__ yytype_uint8;
 #elif (!defined __UINT_LEAST8_MAX__ && defined YY_STDINT_H \
@@ -385,9 +398,9 @@ typedef int yy_state_fast_t;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -715,7 +728,7 @@ static const yytype_int8 yypgoto[] =
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     3,     4,     5,     6,    26,    27,    28,    29,    62,
+       0,     3,     4,     5,     6,    26,    27,    28,    29,    62,
       63,    49,    50,    30,    31,    32,    39,    52,    53,    72,
       54,    12,    45,    33,    64
 };
@@ -867,7 +880,7 @@ yy_symbol_value_print (FILE *yyo,
                        yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
-  YYUSE (yyoutput);
+  YY_USE (yyoutput);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -875,7 +888,7 @@ yy_symbol_value_print (FILE *yyo,
     YYPRINT (yyo, yytoknum[yykind], *yyvaluep);
 # endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yykind);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -989,13 +1002,13 @@ static void
 yydestruct (const char *yymsg,
             yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
 {
-  YYUSE (yyvaluep);
+  YY_USE (yyvaluep);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yykind);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1258,97 +1271,97 @@ yyreduce:
   case 2: /* Program: EntryList  */
 #line 96 "parser.y"
                     { dmxConfigEntry = (yyvsp[0].entry); }
-#line 1262 "parser.c"
+#line 1275 "parser.c"
     break;
 
   case 4: /* EntryList: EntryList Entry  */
 #line 100 "parser.y"
                             { APPEND(DMXConfigEntryPtr,(yyvsp[-1].entry),(yyvsp[0].entry)); (yyval.entry) = (yyvsp[-1].entry); }
-#line 1268 "parser.c"
+#line 1281 "parser.c"
     break;
 
   case 5: /* Entry: Virtual  */
 #line 103 "parser.y"
                        { (yyval.entry) = dmxConfigEntryVirtual((yyvsp[0].virtual)); }
-#line 1274 "parser.c"
+#line 1287 "parser.c"
     break;
 
   case 6: /* Entry: T_LINE_COMMENT  */
 #line 104 "parser.y"
                        { (yyval.entry) = dmxConfigEntryComment((yyvsp[0].comment)); }
-#line 1280 "parser.c"
+#line 1293 "parser.c"
     break;
 
   case 7: /* Virtual: T_VIRTUAL Open SubList Close  */
 #line 108 "parser.y"
           { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-3].token), NULL, NULL, (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1286 "parser.c"
+#line 1299 "parser.c"
     break;
 
   case 8: /* Virtual: T_VIRTUAL Dimension Open SubList Close  */
 #line 110 "parser.y"
           { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-4].token), NULL, (yyvsp[-3].pair), (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1292 "parser.c"
+#line 1305 "parser.c"
     break;
 
   case 9: /* Virtual: T_VIRTUAL Name Open SubList Close  */
 #line 112 "parser.y"
           { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-4].token), (yyvsp[-3].string), NULL, (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1298 "parser.c"
+#line 1311 "parser.c"
     break;
 
   case 10: /* Virtual: T_VIRTUAL Name Dimension Open SubList Close  */
 #line 114 "parser.y"
           { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-5].token), (yyvsp[-4].string), (yyvsp[-3].pair), (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token) ); }
-#line 1304 "parser.c"
+#line 1317 "parser.c"
     break;
 
   case 12: /* SubList: SubList Sub  */
 #line 118 "parser.y"
                       { APPEND(DMXConfigSubPtr,(yyvsp[-1].subentry),(yyvsp[0].subentry)); (yyval.subentry) = (yyvsp[-1].subentry); }
-#line 1310 "parser.c"
+#line 1323 "parser.c"
     break;
 
   case 13: /* Sub: T_LINE_COMMENT  */
 #line 121 "parser.y"
                      { (yyval.subentry) = dmxConfigSubComment((yyvsp[0].comment)); }
-#line 1316 "parser.c"
+#line 1329 "parser.c"
     break;
 
   case 14: /* Sub: DisplayEntry  */
 #line 122 "parser.y"
                      { (yyval.subentry) = dmxConfigSubDisplay((yyvsp[0].display)); }
-#line 1322 "parser.c"
+#line 1335 "parser.c"
     break;
 
   case 15: /* Sub: WallEntry  */
 #line 123 "parser.y"
                      { (yyval.subentry) = dmxConfigSubWall((yyvsp[0].wall)); }
-#line 1328 "parser.c"
+#line 1341 "parser.c"
     break;
 
   case 16: /* Sub: OptionEntry  */
 #line 124 "parser.y"
                      { (yyval.subentry) = dmxConfigSubOption((yyvsp[0].option)); }
-#line 1334 "parser.c"
+#line 1347 "parser.c"
     break;
 
   case 17: /* Sub: ParamEntry  */
 #line 125 "parser.y"
                      { (yyval.subentry) = dmxConfigSubParam((yyvsp[0].param)); }
-#line 1340 "parser.c"
+#line 1353 "parser.c"
     break;
 
   case 18: /* OptionEntry: T_OPTION NameList Terminal  */
 #line 129 "parser.y"
               { (yyval.option) = dmxConfigCreateOption((yyvsp[-2].token), (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1346 "parser.c"
+#line 1359 "parser.c"
     break;
 
   case 19: /* ParamEntry: T_PARAM NameList Terminal  */
 #line 133 "parser.y"
              { (yyval.param) = dmxConfigCreateParam((yyvsp[-2].token), NULL, (yyvsp[-1].string), NULL, (yyvsp[0].token)); }
-#line 1352 "parser.c"
+#line 1365 "parser.c"
     break;
 
   case 20: /* ParamEntry: T_PARAM Open ParamList Close  */
@@ -1356,179 +1369,179 @@ yyreduce:
              { (yyval.param) = dmxConfigCreateParam((yyvsp[-3].token), (yyvsp[-2].token), NULL, (yyvsp[0].token), NULL);
                (yyval.param)->next = (yyvsp[-1].param);
              }
-#line 1360 "parser.c"
+#line 1373 "parser.c"
     break;
 
   case 22: /* ParamList: ParamList Param  */
 #line 141 "parser.y"
                             { APPEND(DMXConfigParamPtr,(yyvsp[-1].param),(yyvsp[0].param)); (yyval.param) = (yyvsp[-1].param); }
-#line 1366 "parser.c"
+#line 1379 "parser.c"
     break;
 
   case 23: /* Param: NameList Terminal  */
 #line 145 "parser.y"
         { (yyval.param) = dmxConfigCreateParam(NULL, NULL, (yyvsp[-1].string), NULL, (yyvsp[0].token)); }
-#line 1372 "parser.c"
+#line 1385 "parser.c"
     break;
 
   case 24: /* PartialDim: Dimension Offset  */
 #line 149 "parser.y"
              { (yyval.pdim) = dmxConfigCreatePartDim((yyvsp[-1].pair), (yyvsp[0].pair)); }
-#line 1378 "parser.c"
+#line 1391 "parser.c"
     break;
 
   case 25: /* PartialDim: Dimension  */
 #line 151 "parser.y"
              { (yyval.pdim) = dmxConfigCreatePartDim((yyvsp[0].pair), NULL); }
-#line 1384 "parser.c"
+#line 1397 "parser.c"
     break;
 
   case 26: /* PartialDim: Offset  */
 #line 153 "parser.y"
              { (yyval.pdim) = dmxConfigCreatePartDim(NULL, (yyvsp[0].pair)); }
-#line 1390 "parser.c"
+#line 1403 "parser.c"
     break;
 
   case 27: /* FullDim: PartialDim '/' PartialDim  */
 #line 157 "parser.y"
           { (yyval.fdim) = dmxConfigCreateFullDim((yyvsp[-2].pdim), (yyvsp[0].pdim)); }
-#line 1396 "parser.c"
+#line 1409 "parser.c"
     break;
 
   case 28: /* FullDim: '/' PartialDim  */
 #line 159 "parser.y"
           { (yyval.fdim) = dmxConfigCreateFullDim(NULL, (yyvsp[0].pdim)); }
-#line 1402 "parser.c"
+#line 1415 "parser.c"
     break;
 
   case 29: /* FullDim: PartialDim  */
 #line 161 "parser.y"
           { (yyval.fdim) = dmxConfigCreateFullDim((yyvsp[0].pdim), NULL); }
-#line 1408 "parser.c"
+#line 1421 "parser.c"
     break;
 
   case 30: /* DisplayEntry: Display Name FullDim Origin Terminal  */
 #line 165 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-4].token), (yyvsp[-3].string), (yyvsp[-2].fdim), (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1414 "parser.c"
+#line 1427 "parser.c"
     break;
 
   case 31: /* DisplayEntry: Display FullDim Origin Terminal  */
 #line 167 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), NULL, (yyvsp[-2].fdim), (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1420 "parser.c"
+#line 1433 "parser.c"
     break;
 
   case 32: /* DisplayEntry: Display Name Origin Terminal  */
 #line 169 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), (yyvsp[-2].string), NULL, (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1426 "parser.c"
+#line 1439 "parser.c"
     break;
 
   case 33: /* DisplayEntry: Display Name FullDim Terminal  */
 #line 172 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), (yyvsp[-2].string), (yyvsp[-1].fdim), NULL, (yyvsp[0].token)); }
-#line 1432 "parser.c"
+#line 1445 "parser.c"
     break;
 
   case 34: /* DisplayEntry: Display FullDim Terminal  */
 #line 174 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-2].token), NULL, (yyvsp[-1].fdim), NULL, (yyvsp[0].token)); }
-#line 1438 "parser.c"
+#line 1451 "parser.c"
     break;
 
   case 35: /* DisplayEntry: Display Name Terminal  */
 #line 176 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-2].token), (yyvsp[-1].string), NULL, NULL, (yyvsp[0].token)); }
-#line 1444 "parser.c"
+#line 1457 "parser.c"
     break;
 
   case 36: /* DisplayEntry: Display Terminal  */
 #line 178 "parser.y"
                { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-1].token), NULL, NULL, NULL, (yyvsp[0].token)); }
-#line 1450 "parser.c"
+#line 1463 "parser.c"
     break;
 
   case 37: /* WallEntry: Wall Dimension Dimension NameList Terminal  */
 #line 182 "parser.y"
             { (yyval.wall) = dmxConfigCreateWall((yyvsp[-4].token), (yyvsp[-3].pair), (yyvsp[-2].pair), (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1456 "parser.c"
+#line 1469 "parser.c"
     break;
 
   case 38: /* WallEntry: Wall Dimension NameList Terminal  */
 #line 184 "parser.y"
             { (yyval.wall) = dmxConfigCreateWall((yyvsp[-3].token), (yyvsp[-2].pair), NULL, (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1462 "parser.c"
+#line 1475 "parser.c"
     break;
 
   case 39: /* WallEntry: Wall NameList Terminal  */
 #line 186 "parser.y"
             { (yyval.wall) = dmxConfigCreateWall((yyvsp[-2].token), NULL, NULL, (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1468 "parser.c"
+#line 1481 "parser.c"
     break;
 
   case 41: /* Display: T_DISPLAY T_COMMENT  */
 #line 190 "parser.y"
                               { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1474 "parser.c"
+#line 1487 "parser.c"
     break;
 
   case 43: /* Name: T_STRING T_COMMENT  */
 #line 194 "parser.y"
                           { (yyval.string) = (yyvsp[-1].string); (yyval.string)->comment = (yyvsp[0].comment)->comment; }
-#line 1480 "parser.c"
+#line 1493 "parser.c"
     break;
 
   case 45: /* Dimension: T_DIMENSION T_COMMENT  */
 #line 198 "parser.y"
                                   { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1486 "parser.c"
+#line 1499 "parser.c"
     break;
 
   case 47: /* Offset: T_OFFSET T_COMMENT  */
 #line 202 "parser.y"
                             { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1492 "parser.c"
+#line 1505 "parser.c"
     break;
 
   case 49: /* Origin: T_ORIGIN T_COMMENT  */
 #line 206 "parser.y"
                             { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1498 "parser.c"
+#line 1511 "parser.c"
     break;
 
   case 51: /* Terminal: ';' T_COMMENT  */
 #line 210 "parser.y"
                          { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1504 "parser.c"
+#line 1517 "parser.c"
     break;
 
   case 53: /* Open: '{' T_COMMENT  */
 #line 214 "parser.y"
                      { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1510 "parser.c"
+#line 1523 "parser.c"
     break;
 
   case 55: /* Close: '}' T_COMMENT  */
 #line 218 "parser.y"
                       { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1516 "parser.c"
+#line 1529 "parser.c"
     break;
 
   case 57: /* Wall: T_WALL T_COMMENT  */
 #line 222 "parser.y"
                         { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1522 "parser.c"
+#line 1535 "parser.c"
     break;
 
   case 59: /* NameList: NameList Name  */
 #line 226 "parser.y"
                          { APPEND(DMXConfigStringPtr, (yyvsp[-1].string), (yyvsp[0].string)); (yyval.string) = (yyvsp[-1].string); }
-#line 1528 "parser.c"
+#line 1541 "parser.c"
     break;
 
 
-#line 1532 "parser.c"
+#line 1545 "parser.c"
 
       default: break;
     }
