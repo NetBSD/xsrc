@@ -164,8 +164,15 @@ foreach ruleset: ['base', 'evdev']
                   output: lst_file,
                   install: true,
                   install_dir: dir_xkb_rules)
+
 endforeach
 
+if get_option('xorg-rules-symlinks')
+	foreach suffix: ['', '.lst', '.xml']
+		meson.add_install_script('sh', '-c',
+			'ln -s base@0@ $DESTDIR@1@/xorg@0@'.format(suffix, dir_xkb_rules))
+	endforeach
+endif
 # Copy the DTD to the build directory, the man page generation expects it in
 # the same directory as the input XML file.
 configure_file(output: 'xkb.dtd',
