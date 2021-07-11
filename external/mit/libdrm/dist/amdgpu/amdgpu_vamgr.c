@@ -69,7 +69,7 @@ drm_private void amdgpu_vamgr_deinit(struct amdgpu_bo_va_mgr *mgr)
 	pthread_mutex_destroy(&mgr->bo_va_mutex);
 }
 
-static drm_private int
+static int
 amdgpu_vamgr_subtract_hole(struct amdgpu_bo_va_hole *hole, uint64_t start_va,
 			   uint64_t end_va)
 {
@@ -97,7 +97,7 @@ amdgpu_vamgr_subtract_hole(struct amdgpu_bo_va_hole *hole, uint64_t start_va,
 	return 0;
 }
 
-static drm_private int
+static int
 amdgpu_vamgr_find_va(struct amdgpu_bo_va_mgr *mgr, uint64_t size,
 		     uint64_t alignment, uint64_t base_required,
 		     bool search_from_top, uint64_t *va_out)
