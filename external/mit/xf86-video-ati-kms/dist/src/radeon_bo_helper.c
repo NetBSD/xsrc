@@ -308,7 +308,7 @@ radeon_alloc_pixmap_bo(ScrnInfoPtr pScrn, int width, int height, int depth,
     bo->bo.radeon = radeon_bo_open(info->bufmgr, 0, size, base_align,
 				   domain, flags);
 
-    if (bo && tiling && radeon_bo_set_tiling(bo->bo.radeon, tiling, pitch) == 0)
+    if (bo->bo.radeon && tiling && radeon_bo_set_tiling(bo->bo.radeon, tiling, pitch) == 0)
 	*new_tiling = tiling;
 
     *new_pitch = pitch;
@@ -504,7 +504,7 @@ Bool radeon_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle,
 #endif
 
     bo->bo.radeon = radeon_gem_bo_open_prime(info->bufmgr, ihandle, size);
-    if (!bo)
+    if (!bo->bo.radeon)
         goto error;
 
     bo->ref_count = 1;

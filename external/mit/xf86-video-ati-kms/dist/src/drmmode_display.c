@@ -373,7 +373,7 @@ create_pixmap_for_fbcon(drmmode_ptr drmmode,
 	RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
 	RADEONInfoPtr info = RADEONPTR(pScrn);
 	PixmapPtr pixmap = info->fbcon_pixmap;
-	struct radeon_buffer *bo;
+	struct radeon_buffer *bo = NULL;
 	drmModeFBPtr fbcon;
 	struct drm_gem_flink flink;
 
@@ -405,7 +405,7 @@ create_pixmap_for_fbcon(drmmode_ptr drmmode,
 	bo->ref_count = 1;
 
 	bo->bo.radeon = radeon_bo_open(drmmode->bufmgr, flink.name, 0, 0, 0, 0);
-	if (!bo) {
+	if (!bo->bo.radeon) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "Couldn't open BO for fbcon handle\n");
 		goto out_free_fb;
@@ -415,8 +415,8 @@ create_pixmap_for_fbcon(drmmode_ptr drmmode,
 					  fbcon->depth, fbcon->bpp, fbcon->pitch,
 					  bo);
 	info->fbcon_pixmap = pixmap;
-	radeon_buffer_unref(&bo);
 out_free_fb:
+	radeon_buffer_unref(&bo);
 	drmModeFreeFB(fbcon);
 	return pixmap;
 }
