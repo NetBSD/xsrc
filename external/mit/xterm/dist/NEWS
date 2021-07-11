@@ -1,23 +1,15 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #367 - 2021/03/26
+                            Patch #368 - 2021/06/07
 
-     * add  OSC 22 to allow programs to select different pointer cursor at
-       runtime.
-     * change  configuration for no-return functions to use _Noreturn when
-       it  is  available, because clang --analyze does not properly handle
-       the gcc noreturn attribute.
-     * add  cursorTheme resource to provide a way to enable or disable the
-       cursor theme feature.
-     * modified  CopyWait  event retries to use shorter sleeps, to improve
-       responsiveness (tmux #2556).
-     * improve quoting/escaping in demo-scripts per shellcheck.
-     * add  resizeByPixel  resource,  to  permit  disabling window manager
-       resizing-hints (patch by Tim Oehl).
-     * corrected  printOptsImmediate  handling of alternate-screen (report
-       by Abhijit Dasgupta).
-     * update sample terminfo to more closely match ncurses.
-     * add/improve limit-checks for Xlib calls (report by Roman Fiedler).
-     * fix a typo in the help-message (report by Tomas Korbar).
+     * add  DefaultOff  option  to  RenderFont  resource,  as  part of the
+       session-management feature.
+     * add auto-scroll-lock feature (patch by add Stelios Bounanos).
+     * update  the  window-size  information  returned via TIOCGWINSZ when
+       rows/columns  are  unchanged  but  the font-size changes (report by
+       Nick Black).
+     * improve  session-management  feature  by  saving/restoring the font
+       settings.
+     * update config.guess, config.sub
 

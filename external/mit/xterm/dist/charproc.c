@@ -1,4 +1,4 @@
-/* $XTermId: charproc.c,v 1.1830 2021/03/21 22:45:24 tom Exp $ */
+/* $XTermId: charproc.c,v 1.1832 2021/06/07 19:51:06 tom Exp $ */
 
 /*
  * Copyright 1999-2020,2021 by Thomas E. Dickey
@@ -801,6 +801,7 @@ static XtResource xterm_resources[] =
 
 #if OPT_SCROLL_LOCK
     Bres(XtNallowScrollLock, XtCAllowScrollLock, screen.allowScrollLock0, False),
+    Bres(XtNautoScrollLock, XtCAutoScrollLock, screen.autoScrollLock, False),
 #endif
 
     /* these are used only for testing ncurses, not in the manual page */
@@ -9069,6 +9070,7 @@ VTInitialize(Widget wrequest,
     static const FlagList tblRenderFont[] =
     {
 	DATA(Default)
+	,DATA(DefaultOff)
 	,DATA_END
     };
 #undef DATA
@@ -9441,6 +9443,7 @@ VTInitialize(Widget wrequest,
 
 #if OPT_SCROLL_LOCK
     init_Bres(screen.allowScrollLock0);
+    init_Bres(screen.autoScrollLock);
 #endif
 
     init_Sres(screen.disallowedColorOps);
@@ -9837,6 +9840,8 @@ VTInitialize(Widget wrequest,
 	    wnew->work.render_font = erTrue;
 	    TRACE(("initially using TrueType font\n"));
 	}
+    } else if (wnew->work.render_font == erDefaultOff) {
+	wnew->work.render_font = erFalse;
     }
     /* minor tweak to make debug traces consistent: */
     if (wnew->work.render_font) {

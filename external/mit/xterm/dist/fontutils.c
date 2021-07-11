@@ -1,4 +1,4 @@
-/* $XTermId: fontutils.c,v 1.703 2021/03/02 00:25:24 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.705 2021/06/02 23:49:10 tom Exp $ */
 
 /*
  * Copyright 1998-2020,2021 by Thomas E. Dickey
