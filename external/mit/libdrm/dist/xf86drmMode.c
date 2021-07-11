@@ -38,6 +38,9 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #if HAVE_SYS_SYSCTL_H
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#endif
 #include <sys/sysctl.h>
 #endif
 #include <stdio.h>
@@ -289,10 +292,8 @@ drm_public int drmModeAddFB2WithModifiers(int fd, uint32_t width,
 	memcpy(f.handles, bo_handles, 4 * sizeof(bo_handles[0]));
 	memcpy(f.pitches, pitches, 4 * sizeof(pitches[0]));
 	memcpy(f.offsets, offsets, 4 * sizeof(offsets[0]));
-	if (modifier) {
-		f.flags |= DRM_MODE_FB_MODIFIERS;
+	if (modifier)
 		memcpy(f.modifier, modifier, 4 * sizeof(modifier[0]));
-	}
 
 	if ((ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_ADDFB2, &f)))
 		return ret;
