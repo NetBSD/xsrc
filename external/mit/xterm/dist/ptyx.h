@@ -1,4 +1,4 @@
-/* $XTermId: ptyx.h,v 1.1030 2021/03/21 22:11:10 tom Exp $ */
+/* $XTermId: ptyx.h,v 1.1032 2021/06/07 19:29:11 tom Exp $ */
 
 /*
  * Copyright 1999-2020,2021 by Thomas E. Dickey
@@ -1946,6 +1946,7 @@ typedef enum {
 	erFalse = 0
 	, erTrue
 	, erDefault
+	, erDefaultOff
 	, erLast
 } RenderFont;
 
@@ -2731,6 +2732,7 @@ typedef struct {
 #if OPT_SCROLL_LOCK
 	Boolean		allowScrollLock;/* ScrollLock mode		*/
 	Boolean		allowScrollLock0;/* initial ScrollLock mode	*/
+	Boolean		autoScrollLock; /* Auto ScrollLock mode		*/
 	Boolean		scroll_lock;	/* true to keep buffer in view	*/
 	Boolean		scroll_dirty;	/* scrolling makes screen dirty	*/
 #endif

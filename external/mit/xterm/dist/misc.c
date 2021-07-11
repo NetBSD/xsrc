@@ -1,4 +1,4 @@
-/* $XTermId: misc.c,v 1.979 2021/03/24 00:27:48 tom Exp $ */
+/* $XTermId: misc.c,v 1.988 2021/06/07 23:19:42 tom Exp $ */
 
 /*
  * Copyright 1999-2020,2021 by Thomas E. Dickey
@@ -6991,11 +6991,73 @@ getXtermWidget(Widget w)
 }
 
 #if OPT_SESSION_MGT
+
+#if OPT_TRACE
+static void
+trace_1_SM(const char *tag, String name)
+{
+    Arg args[1];
+    char *buf = 0;
+
+    XtSetArg(args[0], name, &buf);
+    XtGetValues(toplevel, args, 1);
+
+    if (strstr(name, "Path") || strstr(name, "Directory")) {
+	TRACE(("%s %s: %s\n", tag, name, NonNull(buf)));
+    } else if (strstr(name, "Command")) {
+	if (buf != NULL) {
+	    char **vec = (char **) (void *) buf;
+	    int n;
+	    TRACE(("%s %s:\n", tag, name));
+	    for (n = 0; vec[n] != NULL; ++n) {
+		TRACE((" arg[%d] = %s\n", n, vec[n]));
+	    }
+	} else {
+	    TRACE(("%s %s: %p\n", tag, name, buf));
+	}
+    } else {
+	TRACE(("%s %s: %p\n", tag, name, buf));
+    }
+}
+
+static void
+trace_SM_props(void)
+{
+    /* *INDENT-OFF* */
+    static struct { String app, cls; } table[] = {
+	{ XtNcurrentDirectory,	XtCCurrentDirectory },
+	{ XtNdieCallback,	XtNdiscardCommand },
+	{ XtCDiscardCommand,	XtNenvironment },
+	{ XtCEnvironment,	XtNinteractCallback },
+	{ XtNjoinSession,	XtCJoinSession },
+	{ XtNprogramPath,	XtCProgramPath },
+	{ XtNresignCommand,	XtCResignCommand },
+	{ XtNrestartCommand,	XtCRestartCommand },
+	{ XtNrestartStyle,	XtCRestartStyle },
+	{ XtNsaveCallback,	XtNsaveCompleteCallback },
+	{ XtNsessionID,		XtCSessionID },
+	{ XtNshutdownCommand,	XtCShutdownCommand },
+    };
+    /* *INDENT-ON* */
+    Cardinal n;
+    TRACE(("Session properties:\n"));
+    for (n = 0; n < XtNumber(table); ++n) {
+	trace_1_SM("app", table[n].app);
+	trace_1_SM("cls", table[n].cls);
+    }
+}
+#define TRACE_SM_PROPS()	trace_SM_props()
+#else
+#define TRACE_SM_PROPS()	/* nothing */
+#endif
+
 static void
 die_callback(Widget w GCC_UNUSED,
 	     XtPointer client_data GCC_UNUSED,
 	     XtPointer call_data GCC_UNUSED)
 {
+    TRACE(("die_callback %p\n", die_callback));
+    TRACE_SM_PROPS();
     NormalExit();
 }
 
@@ -7005,7 +7067,19 @@ save_callback(Widget w GCC_UNUSED,
 	      XtPointer call_data)
 {
     XtCheckpointToken token = (XtCheckpointToken) call_data;
-    /* we have nothing to save */
+    TRACE(("save_callback:\n"));
+    TRACE(("... save_type            <-%d\n", token->save_type));
+    TRACE(("... interact_style       <-%d\n", token->interact_style));
+    TRACE(("... shutdown             <-%s\n", BtoS(token->shutdown)));
+    TRACE(("... fast                 <-%s\n", BtoS(token->fast)));
+    TRACE(("... cancel_shutdown      <-%s\n", BtoS(token->cancel_shutdown)));
+    TRACE(("... phase                <-%d\n", token->phase));
+    TRACE(("... interact_dialog_type ->%d\n", token->interact_dialog_type));
+    TRACE(("... request_cancel       ->%s\n", BtoS(token->request_cancel)));
+    TRACE(("... request_next_phase   ->%s\n", BtoS(token->request_next_phase)));
+    TRACE(("... save_success         ->%s\n", BtoS(token->save_success)));
+    xtermUpdateRestartCommand(term);
+    /* we have nothing more to save */
     token->save_success = True;
 }
 
@@ -7031,6 +7105,8 @@ xtermOpenSession(void)
 	TRACE(("Enabling session-management callbacks\n"));
 	XtAddCallback(toplevel, XtNdieCallback, die_callback, NULL);
 	XtAddCallback(toplevel, XtNsaveCallback, save_callback, NULL);
+
+	TRACE_SM_PROPS();
     }
 }
 
@@ -7038,6 +7114,267 @@ void
 xtermCloseSession(void)
 {
     IceRemoveConnectionWatch(icewatch, NULL);
+}
+
+typedef enum {
+    B_ARG = 0,
+    I_ARG,
+    D_ARG,
+    S_ARG
+} ParamType;
+
+#define Barg(name, field) { name, B_ARG, XtOffsetOf(XtermWidgetRec, field) }
+#define Iarg(name, field) { name, I_ARG, XtOffsetOf(XtermWidgetRec, field) }
+#define Darg(name, field) { name, D_ARG, XtOffsetOf(XtermWidgetRec, field) }
+#define Sarg(name, field) { name, S_ARG, XtOffsetOf(XtermWidgetRec, field) }
+
+typedef struct {
+    const char name[30];
+    ParamType type;
+    Cardinal offset;
+} FontParams;
+
+/* *INDENT-OFF* */
+static const FontParams fontParams[] = {
+    Iarg(XtNinitialFont,     screen.menu_font_number),	/* "-fc" */
+    Barg(XtNallowBoldFonts,  screen.allowBoldFonts),	/* menu */
+#if OPT_BOX_CHARS
+    Barg(XtNforceBoxChars,   screen.force_box_chars),	/* "-fbx" */
+    Barg(XtNforcePackedFont, screen.force_packed),	/* menu */
+#endif
+#if OPT_DEC_CHRSET
+    Barg(XtNfontDoublesize,  screen.font_doublesize),	/* menu */
+#endif
+#if OPT_WIDE_CHARS
+    Barg(XtNutf8Fonts,       screen.utf8_fonts),	/* menu */
+#endif
+#if OPT_RENDERFONT
+    Darg(XtNfaceSize,        misc.face_size[0]),	/* "-fs" */
+    Sarg(XtNfaceName,        misc.default_xft.f_n),	/* "-fa" */
+    Sarg(XtNrenderFont,      misc.render_font_s),	/* (resource) */
+#endif
+};
+/* *INDENT-ON* */
+
+#define RESTART_PARAMS (int)(XtNumber(fontParams) * 2)
+#define TypedPtr(type) *(type *)(void *)((char *) xw + parameter->offset)
+
+/*
+ * If no widget is given, no value is used.
+ */
+static char *
+formatFontParam(char *result, XtermWidget xw, const FontParams * parameter)
+{
+    sprintf(result, "%s*%s:", ProgramName, parameter->name);
+    if (xw != None) {
+	char *next = result + strlen(result);
+	switch (parameter->type) {
+	case B_ARG:
+	    sprintf(next, "%s", *(Boolean *) ((char *) xw + parameter->offset)
+		    ? "true"
+		    : "false");
+	    break;
+	case I_ARG:
+	    sprintf(next, "%d", TypedPtr(int));
+	    break;
+	case D_ARG:
+	    sprintf(next, "%.1f", TypedPtr(float));
+	    break;
+	case S_ARG:
+	    strcpy(next, TypedPtr(char *));
+#if OPT_RENDERFONT
+	    if (!strcmp(parameter->name, XtNfaceName)) {
+		if (IsEmpty(next)
+		    && xw->work.render_font) {
+		    strcpy(next, DEFFACENAME_AUTO);
+		}
+	    } else if (!strcmp(parameter->name, XtNrenderFont)) {
+		if (xw->work.render_font == erDefault
+		    && IsEmpty(xw->misc.default_xft.f_n)) {
+		    strcpy(next, "DefaultOff");
+		}
+	    }
+#endif
+	    break;
+	}
+    }
+    return result;
+}
+
+#if OPT_TRACE
+static void
+dumpFontParams(XtermWidget xw)
+{
+    char buffer[1024];
+    Cardinal n;
+
+    TRACE(("FontParams:\n"));
+    for (n = 0; n < XtNumber(fontParams); ++n) {
+	TRACE(("%3d:%s\n", n, formatFontParam(buffer, xw, fontParams + n)));
+    }
+}
+#else
+#define dumpFontParams(xw)	/* nothing */
+#endif
+
+static Boolean
+findFontParams(int argc, char **argv)
+{
+    Boolean result = False;
+
+    if (argc > RESTART_PARAMS && (argc - restart_params) > RESTART_PARAMS) {
+	int n;
+
+	for (n = 0; n < RESTART_PARAMS; ++n) {
+	    int my_index = argc - restart_params - n - 1;
+	    int my_param = (RESTART_PARAMS - n - 1) / 2;
+	    char *actual = argv[my_index];
+	    char expect[1024];
+	    Boolean value = (Boolean) ((n % 2) == 0);
+
+	    result = False;
+	    TRACE(("...index: %d\n", my_index));
+	    TRACE(("...param: %d\n", my_param));
+	    TRACE(("...actual %s\n", actual));
+	    if (IsEmpty(actual))
+		break;
+
+	    if (value) {
+		formatFontParam(expect, None, fontParams + my_param);
+	    } else {
+		strcpy(expect, "-xrm");
+	    }
+
+	    TRACE(("...expect %s\n", expect));
+
+	    if (value) {
+		if (strlen(expect) >= strlen(actual))
+		    break;
+		if (strncmp(expect, actual, strlen(expect)))
+		    break;
+	    } else {
+		if (strcmp(actual, expect))
+		    break;
+	    }
+	    TRACE(("fixme/ok:%d\n", n));
+	    result = True;
+	}
+	TRACE(("findFontParams: %s (tested %d of %d parameters)\n",
+	       BtoS(result), n + 1, RESTART_PARAMS));
+    }
+    return result;
+}
+
+static int
+insertFontParams(XtermWidget xw, int *targetp, Boolean first)
+{
+    int changed = 0;
+    int n;
+    int target = *targetp;
+    char buffer[1024];
+    const char *option = "-xrm";
+
+    for (n = 0; n < (int) XtNumber(fontParams); ++n) {
+	formatFontParam(buffer, xw, fontParams + n);
+	TRACE(("formatted %3d ->%3d:%s\n", n, target, buffer));
+	if (restart_command[target] == NULL)
+	    restart_command[target] = x_strdup(option);
+	++target;
+	if (first) {
+	    restart_command[target] = x_strdup(buffer);
+	    ++changed;
+	} else if (restart_command[target] == NULL
+		   || strcmp(restart_command[target], buffer)) {
+	    free(restart_command[target]);
+	    restart_command[target] = x_strdup(buffer);
+	    ++changed;
+	}
+	++target;
+    }
+    *targetp = target;
+    return changed;
+}
+
+void
+xtermUpdateRestartCommand(XtermWidget xw)
+{
+    if (resource.sessionMgt) {
+	Arg args[1];
+	char **argv = 0;
+
+	XtSetArg(args[0], XtNrestartCommand, &argv);
+	XtGetValues(toplevel, args, 1);
+	if (argv != NULL) {
+	    static int my_params = 0;
+
+	    int changes = 0;
+	    Boolean first = False;
+	    int argc;
+	    int want;
+	    int source, target;
+
+	    TRACE(("xtermUpdateRestartCommand\n"));
+	    dumpFontParams(xw);
+	    for (argc = 0; argv[argc] != NULL; ++argc) {
+		TRACE((" arg[%d] = %s\n", argc, argv[argc]));
+		;
+	    }
+	    want = argc - (restart_params + RESTART_PARAMS);
+
+	    TRACE((" argc:           %d\n", argc));
+	    TRACE((" restart_params: %d\n", restart_params));
+	    TRACE((" want to insert: %d\n", want));
+
+	    /*
+	     * If we already have the font-choice option, do not add it again.
+	     */
+	    if (findFontParams(argc, argv)) {
+		my_params = (want);
+	    } else {
+		first = True;
+		my_params = (argc - restart_params);
+	    }
+	    TRACE((" my_params:      %d\n", my_params));
+
+	    if (my_params > argc) {
+		TRACE((" re-allocate restartCommand\n"));
+		FreeAndNull(restart_command);
+	    }
+
+	    if (restart_command == NULL) {
+		int need = argc + RESTART_PARAMS + 1;
+
+		restart_command = TypeCallocN(char *, need);
+
+		TRACE(("..inserting font-parameters\n"));
+		for (source = target = 0; source < argc; ++source) {
+		    if (source == my_params) {
+			changes += insertFontParams(xw, &target, first);
+			if (!first) {
+			    source += (RESTART_PARAMS - 1);
+			    continue;
+			}
+		    }
+		    if (argv[source] == NULL)
+			break;
+		    restart_command[target++] = x_strdup(argv[source]);
+		}
+		restart_command[target] = NULL;
+	    } else {
+		TRACE(("..replacing font-parameters\n"));
+		target = my_params;
+		changes += insertFontParams(xw, &target, first);
+	    }
+	    if (changes) {
+		TRACE(("..%d parameters changed\n", changes));
+		XtSetArg(args[0], XtNrestartCommand, restart_command);
+		XtSetValues(toplevel, args, 1);
+	    } else {
+		TRACE(("..NO parameters changed\n"));
+	    }
+	}
+	TRACE_SM_PROPS();
+    }
 }
 #endif /* OPT_SESSION_MGT */
 
@@ -7207,12 +7544,23 @@ update_winsize(int fd, int rows, int cols, int height, int width)
 #ifdef TTYSIZE_STRUCT
     static int last_rows = -1;
     static int last_cols = -1;
+    static int last_high = -1;
+    static int last_wide = -1;
 
-    if (rows != last_rows || cols != last_cols) {
+    TRACE(("update_winsize %dx%d (%dx%d) -> %dx%d (%dx%d)\n",
+	   last_rows, last_cols, last_high, last_wide,
+	   rows, cols, height, width));
+
+    if (rows != last_rows
+	|| cols != last_cols
+	|| last_high != height
+	|| last_wide != width) {
 	TTYSIZE_STRUCT ts;
 
 	last_rows = rows;
 	last_cols = cols;
+	last_high = height;
+	last_wide = width;
 	setup_winsize(ts, rows, cols, height, width);
 	TRACE_RC(code, SET_TTYSIZE(fd, ts));
 	trace_winsize(ts, "from SET_TTYSIZE");
