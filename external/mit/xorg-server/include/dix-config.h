@@ -40,10 +40,8 @@
 /* Build DPMS extension */
 #define DPMSExtension 1
 
-#if 0 /* notyet */
 /* Build DRI3 extension */
 #define DRI3 1
-#endif
 
 /* Build GLX extension */
 #define GLXEXT 1
