@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: nv_exa.c,v 1.5 2018/10/05 01:53:54 macallan Exp $ */
+/* $NetBSD: nv_exa.c,v 1.6 2021/08/22 23:11:58 macallan Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -138,19 +138,23 @@ NvPrepareSolid(
 	uint32_t pitch, off;
 
 	ENTER;
-	if (pPixmap->drawable.bitsPerPixel != 32)
+
+	if (pPixmap->drawable.bitsPerPixel != 32) {
+#ifdef DEBUG
 		xf86Msg(X_ERROR, "%s %d bpp\n", __func__, pPixmap->drawable.bitsPerPixel);
+#endif
+		return FALSE;
+	}
 	planemask |= ~0 << pNv->CurrentLayout.depth;
 	off = exaGetPixmapOffset(pPixmap);
 
 	/* 
 	 * XXX
 	 * on my 6800 Ultra the drawing engine stalls when drawing at least
-	 * rectangles into off-screen memory. Draw them by software until I figure out
-	 * what's going on
+	 * rectangles into off-screen memory. Draw them by software until I
+	 * figure out what's going on
 	 */
 	if (off != 0) return FALSE;
-	
 	NVSetRopSolid(pScrn, rop, planemask);
 
 	pitch = exaGetPixmapPitch(pPixmap);
@@ -278,7 +282,6 @@ NvInitExa(ScreenPtr pScreen)
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	NVPtr pNv = NVPTR(pScrn);
 	ExaDriverPtr pExa;
-	int surfaceFormat, rectFormat;
 
 	pExa = exaDriverAlloc();
 	if (!pExa)
@@ -298,8 +301,8 @@ NvInitExa(ScreenPtr pScreen)
 	pExa->pixmapOffsetAlign = 256;
 	pExa->pixmapPitchAlign = 256;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS/* |
-		      EXA_MIXED_PIXMAPS*/;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS |
+		      EXA_MIXED_PIXMAPS;
 
 	pExa->maxX = 4096;
 	pExa->maxY = 4096;	
