@@ -1,3 +1,69 @@
+commit 8142029c10379002a3f00094060b78e9d55e8322
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Aug 1 17:59:14 2021 -0700
+
+    xorg-cf-files 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a6d4d6223ef75119d5373fa4cc04161bcdb4e769
+Author: Petr Písař < <ppisar@redhat.com>
+Date:   Mon Mar 29 10:45:10 2021 +0200
+
+    Imake.tmpl: Invoke "ar cq" with binutils
+    
+    GNU binutils 2.36 repurposed "l" modifier. It used to be ignored, now
+    it specifies the dependencies of a static library to be recorded in an
+    archive.
+    
+    That broke nas which uses imake as a build configiration tool:
+    
+    $ ar clq libdia.a dispatch.o dixutils.o events.o globals.o main.o resource.o swapreq.o        tables.o swaprep.o        audispatch.o auswap.o autables.o auevents.o auutil.o auconfig.o        auprocess.o  nasconf.o lex.o gram.o
+    ar: libdeps specified more than once
+    
+    This patch changes AR command from "ar clq" to "ar cq" if binutils are
+    used.
+    
+    <https://bugzilla.redhat.com/show_bug.cgi?id=1943274>
+
+commit ab38ff414778dd115414da00b065c73608dfd0d9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 20:17:33 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d9ac2abeabc4b39bd2c1f1d903d34b0d055a4b30
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 19 23:33:43 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d47131ed97ee491bb883c29ec0b106e8d5acfcd3
+Author: Than Ngo <than@redhat.com>
+Date:   Thu Jul 5 10:42:09 2018 -0400
+
+    linux: Update LinuxDistribution == LinuxRedHat section
+    
+    The imake config files in Fedora Core 5+ and Red Hat Enterprise Linux 5+
+    have been shipping with this patch, which has then shamefully languished
+    in the srpm and never been merged. Correct this oversight.
+    
+    [Than wrote the patch, I just wrote the commit message - ajax]
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit fbeeff56339e4d15a4a42b5e19edc12befde8f6e
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
 commit 689d873a035c05a9d6a39feb13a028762bf781e0
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Mon Dec 21 17:25:23 2015 -0800

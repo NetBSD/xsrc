@@ -3,8 +3,8 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xorg-cf-files], [1.0.6],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+AC_INIT([xorg-cf-files], [1.0.7],
+        [https://gitlab.freedesktop.org/xorg/util/cf/issues],
         [xorg-cf-files])
 AC_CONFIG_SRCDIR([Makefile.am])
 
