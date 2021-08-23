@@ -41,7 +41,7 @@
 #include <errno.h>
 #include <libgen.h>
 
-static int open_master_node(ScreenPtr screen, int *out)
+static int open_card_node(ScreenPtr screen, int *out)
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	AMDGPUEntPtr pAMDGPUEnt = AMDGPUEntPriv(scrn);
@@ -112,7 +112,7 @@ amdgpu_dri3_open(ScreenPtr screen, RRProviderPtr provider, int *out)
 		ret = open_render_node(screen, out);
 
 	if (ret != Success)
-		ret = open_master_node(screen, out);
+		ret = open_card_node(screen, out);
 
 	return ret;
 }

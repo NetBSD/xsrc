@@ -79,7 +79,7 @@ struct amdgpu_buffer *amdgpu_alloc_pixmap_bo(ScrnInfoPtr pScrn, int width,
 		}
 		pixmap_buffer->ref_count = 1;
 
-		if ( bitsPerPixel == pScrn->bitsPerPixel)
+		if (usage_hint & AMDGPU_CREATE_PIXMAP_SCANOUT)
 			bo_use |= GBM_BO_USE_SCANOUT;
 
 #ifdef HAVE_GBM_BO_USE_LINEAR
@@ -185,13 +185,15 @@ uint64_t amdgpu_pixmap_get_tiling_info(PixmapPtr pixmap)
 
 Bool amdgpu_pixmap_get_handle(PixmapPtr pixmap, uint32_t *handle)
 {
-#ifdef USE_GLAMOR
 	ScreenPtr screen = pixmap->drawable.pScreen;
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
-#endif
-	struct amdgpu_pixmap *priv = amdgpu_get_pixmap_private(pixmap);
+	struct amdgpu_pixmap *priv;
 
+	if (info->shadow_fb)
+		return FALSE;
+
+	priv = amdgpu_get_pixmap_private(pixmap);
 	if (!priv) {
 		priv = calloc(1, sizeof(*priv));
 		amdgpu_set_pixmap_private(pixmap, priv);
