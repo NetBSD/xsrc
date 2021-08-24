@@ -31,10 +31,6 @@
 #ifndef __glu_h__
 #define __glu_h__
 
-#if defined(USE_MGL_NAMESPACE)
-#include "glu_mangle.h"
-#endif
-
 #include <GL/gl.h>
 
 #ifndef GLAPIENTRY
