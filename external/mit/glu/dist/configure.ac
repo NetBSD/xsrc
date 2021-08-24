@@ -21,12 +21,12 @@
 
 AC_PREREQ([2.60])
 AC_INIT([glu],
-        [9.0.0],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa&component=GLU])
+        [9.0.2],
+        [https://gitlab.freedesktop.org/mesa/glu/issues])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CANONICAL_HOST
 
-AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects])
+AM_INIT_AUTOMAKE([dist-xz foreign subdir-objects])
 
 LT_PREREQ([2.2])
 LT_INIT
@@ -42,9 +42,13 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_ARG_ENABLE(debug,
               AS_HELP_STRING([--enable-debug],
                 [Enable debugging information]),
-              [CFLAGS="$CFLAGS -g -O0"
-               CXXFLAGS="$CXXFLAGS -g -O0"],
-              [])
+              [if test x$enableval = xyes; then
+               CFLAGS="$CFLAGS -g -O0 -DDEBUG"
+               CXXFLAGS="$CXXFLAGS -g -O0 -DDEBUG"; else
+               CFLAGS="$CFLAGS -DNDEBUG"
+               CXXFLAGS="$CXXFLAGS -DNDEBUG"; fi],
+              [CFLAGS="$CFLAGS -DNDEBUG"
+               CXXFLAGS="$CXXFLAGS -DNDEBUG"])
 
 dnl Make sure the pkg-config macros are defined
 m4_ifndef([PKG_PROG_PKG_CONFIG],
@@ -54,34 +58,52 @@ m4_ifndef([PKG_PROG_PKG_CONFIG],
   ACLOCAL="aclocal -I/other/macro/dir" before running autoreconf.])])
 PKG_PROG_PKG_CONFIG()
 
+AC_ARG_ENABLE(libglvnd,
+              AS_HELP_STRING([--enable-libglvnd],
+                [Enable use of libglvnd]),
+              [LIBGLVND="$enableval"],
+              [LIBGLVND=no])
+
 AC_ARG_ENABLE(osmesa,
               AS_HELP_STRING([--enable-osmesa],
                 [Enable use of OSMesa instead of libGL]),
               [OSMESA="$enableval"],
               [OSMESA=no])
 
-dnl Get the pkg-config definitions for libGL/OSMesa.  We include a fallback
-dnl path for implementations that don't provide a .pc file
-if test "x$OSMESA" = "xyes"; then
+dnl Get the pkg-config definitions for libglvnd/OSMesa/libGL.  We include a
+dnl fallback path for implementations that don't provide a .pc file
+AS_IF([test "x$LIBGLVND" = "xyes"], [
+    GLU_REQUIRES="libglvnd"
+    PKG_CHECK_MODULES(LIBGLVND, [opengl], [], [
+        AC_CHECK_HEADER([GL/gl.h],
+                        [],
+                        AC_MSG_ERROR([libglvnd GL not found]))
+        AC_CHECK_LIB([OpenGL],
+                     [glBegin],
+                     [GL_LIBS=-lOpenGL],
+                     AC_MSG_ERROR([libglvnd libOpenGL required]))
+    ])
+], [test "x$OSMESA" = "xyes"], [
     GLU_REQUIRES="osmesa"
     PKG_CHECK_MODULES(OSMESA, [osmesa], [], [
-          AC_CHECK_LIB([OSMesa],
-                   [glBegin],
-                   [OSMESA_LIBS=-lOSMesa],
-                   AC_MSG_ERROR([OSMesa required]))
-          ])
-else
+        AC_CHECK_LIB([OSMesa],
+                     [glBegin],
+                     [OSMESA_LIBS=-lOSMesa],
+                     AC_MSG_ERROR([OSMesa required]))
+    ])
+], [
     GLU_REQUIRES="gl"
     PKG_CHECK_MODULES(GL, [gl], [], [
-          AC_CHECK_HEADER([GL/gl.h],
-                  [],
-                  AC_MSG_ERROR([GL not found]))
-          AC_CHECK_LIB([GL],
-                   [glBegin],
-                   [GL_LIBS=-lGL],
-                   AC_MSG_ERROR([GL required]))
-          ])
-fi
+        AC_CHECK_HEADER([GL/gl.h],
+                        [],
+                        AC_MSG_ERROR([GL not found]))
+        AC_CHECK_LIB([GL],
+                     [glBegin],
+                     [GL_LIBS=-lGL],
+                     AC_MSG_ERROR([GL required]))
+    ])
+])
+
 AC_SUBST([GLU_REQUIRES])
 
 dnl Set up C warning and visibility flags.
