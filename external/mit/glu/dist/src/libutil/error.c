@@ -30,6 +30,7 @@
 
 #include "gluos.h"
 #include "gluint.h"
+#include <stddef.h>
 #include <GL/glu.h>
 
 
@@ -47,8 +48,10 @@ static const struct token_string Errors[] = {
    { GL_STACK_OVERFLOW, "stack overflow" },
    { GL_STACK_UNDERFLOW, "stack underflow" },
    { GL_OUT_OF_MEMORY, "out of memory" },
+#ifdef GL_TABLE_TOO_LARGE
    { GL_TABLE_TOO_LARGE, "table too large" },
-#ifdef GL_EXT_framebuffer_object
+#endif
+#ifdef GL_INVALID_FRAMEBUFFER_OPERATION_EXT
    { GL_INVALID_FRAMEBUFFER_OPERATION_EXT, "invalid framebuffer operation" },
 #endif
    /* GLU */
