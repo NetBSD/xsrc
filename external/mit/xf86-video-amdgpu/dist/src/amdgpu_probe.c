@@ -196,9 +196,28 @@ static Bool amdgpu_open_drm_master(ScrnInfoPtr pScrn,
 				   struct xf86_platform_device *platform_dev,
 				   AMDGPUEntPtr pAMDGPUEnt)
 {
+	drmSetVersion sv;
+	int err;
+
 	pAMDGPUEnt->fd = amdgpu_kernel_open_fd(pScrn, pci_dev, platform_dev, pAMDGPUEnt);
 	if (pAMDGPUEnt->fd == -1)
 		return FALSE;
+
+	/* Check that what we opened was a master or a master-capable FD,
+	 * by setting the version of the interface we'll use to talk to it.
+	 * (see DRIOpenDRMMaster() in DRI1)
+	 */
+	sv.drm_di_major = 1;
+	sv.drm_di_minor = 1;
+	sv.drm_dd_major = -1;
+	sv.drm_dd_minor = -1;
+	err = drmSetInterfaceVersion(pAMDGPUEnt->fd, &sv);
+	if (err != 0) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "[drm] failed to set drm interface version.\n");
+		amdgpu_kernel_close_fd(pAMDGPUEnt);
+		return FALSE;
+	}
 
 	/* Check that what we opened is a master or a master-capable FD */
 	if (!local_drmIsMaster(pAMDGPUEnt->fd)) {
