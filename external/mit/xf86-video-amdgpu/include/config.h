@@ -13,13 +13,13 @@
 #define HAVE_DRI3_H 1
 
 /* Have fbGlyphs API */
-/* #define HAVE_FBGLYPHS 1 */
+#define HAVE_FBGLYPHS 1
 
 /* Have GBM_BO_USE_LINEAR */
-/* #define HAVE_GBM_BO_USE_LINEAR 1 */
+#define HAVE_GBM_BO_USE_LINEAR 1
 
 /* Have glamor_egl_destroy_textured_pixmap API */
-/* #define HAVE_GLAMOR_EGL_DESTROY_TEXTURED_PIXMAP 1 */
+/* #undef HAVE_GLAMOR_EGL_DESTROY_TEXTURED_PIXMAP */
 
 /* Have glamor_finish API */
 #undef HAVE_GLAMOR_FINISH
