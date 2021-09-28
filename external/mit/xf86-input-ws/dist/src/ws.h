@@ -27,7 +27,10 @@ extern int ws_debug_level;
 # define DBG(lvl, f)
 #endif
 
-#define NAXES 2			/* X and Y axes only */
+#define NAXES 4			/* X and Y, horizontal and vertical scrolling */
+#define HSCROLL_AXIS	2
+#define VSCROLL_AXIS	3
+
 #define NBUTTONS 32		/* max theoretical buttons */
 #define DFLTBUTTONS 3		/* default number of buttons */
 #define NUMEVENTS 16		/* max # of ws events to read at once */
@@ -56,6 +59,7 @@ typedef struct WSDevice {
 		Time expires;     /* time of expiry */
 		Time timeout;
 	} emulateMB;
+	ValuatorMask *scroll_mask;
 } WSDeviceRec, *WSDevicePtr;
 
 extern int wsmbEmuTimer(InputInfoPtr);
