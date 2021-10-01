@@ -450,10 +450,12 @@ wsDeviceInit(DeviceIntPtr pWS)
 		axes_labels[0] = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
 		axes_labels[1] = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
 	}
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 	axes_labels[HSCROLL_AXIS] =
 	    XIGetKnownProperty(AXIS_LABEL_PROP_REL_HSCROLL);
 	axes_labels[VSCROLL_AXIS] =
 	    XIGetKnownProperty(AXIS_LABEL_PROP_REL_VSCROLL);
+#endif
 	if (!InitValuatorClassDeviceStruct(pWS,
 		NAXES,
 		axes_labels,
@@ -483,6 +485,7 @@ wsDeviceInit(DeviceIntPtr pWS)
 	xf86InitValuatorDefaults(pWS, 1);
 
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 	xf86InitValuatorAxisStruct(pWS, HSCROLL_AXIS,
 	    axes_labels[HSCROLL_AXIS], 0, -1, 0, 0, 0, Relative);
 	xf86InitValuatorAxisStruct(pWS, VSCROLL_AXIS,
@@ -500,6 +503,7 @@ wsDeviceInit(DeviceIntPtr pWS)
 	 */
 	SetScrollValuator(pWS, HSCROLL_AXIS, SCROLL_TYPE_HORIZONTAL, 4096, 0);
 	SetScrollValuator(pWS, VSCROLL_AXIS, SCROLL_TYPE_VERTICAL, 4096, 0);
+#endif
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
 	xf86MotionHistoryAllocate(pInfo);
@@ -624,7 +628,9 @@ wsReadInput(InputInfoPtr pInfo)
 		int buttons = priv->lastButtons;
 		int dx = 0, dy = 0, dz = 0, dw = 0;
 		int zbutton = 0, wbutton = 0;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 		int hscroll = 0, vscroll = 0;
+#endif
 
 		ax = 0; ay = 0;
 		switch (event->type) {
@@ -674,6 +680,7 @@ wsReadInput(InputInfoPtr pInfo)
 			DBG(4, ErrorF("Relative W %d\n", event->value));
 			dw = event->value;
 			break;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 		case WSCONS_EVENT_HSCROLL:
 			hscroll = event->value;
 			DBG(4, ErrorF("Horiz. Scrolling %d\n", event->value));
@@ -682,6 +689,7 @@ wsReadInput(InputInfoPtr pInfo)
 			vscroll = event->value;
 			DBG(4, ErrorF("Vert. Scrolling %d\n", event->value));
 			break;
+#endif
 		default:
 			xf86Msg(X_WARNING, "%s: bad wsmouse event type=%d\n",
 			    pInfo->name, event->type);
@@ -726,6 +734,7 @@ wsReadInput(InputInfoPtr pInfo)
 			buttons |= wbutton;
 			dw = 0;
 		}
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 		if (hscroll || vscroll) {
 			xf86Msg(X_WARNING, "%s: hscroll=%d, vscroll=%d\n",
 			    pInfo->name, hscroll, vscroll);
@@ -736,6 +745,7 @@ wsReadInput(InputInfoPtr pInfo)
 			    VSCROLL_AXIS, (double) vscroll);
 			xf86PostMotionEventM(pInfo->dev, FALSE, priv->scroll_mask);
  		}
+#endif
 		if (priv->lastButtons != buttons) {
 			/* button event */
 			wsSendButtons(pInfo, buttons);
