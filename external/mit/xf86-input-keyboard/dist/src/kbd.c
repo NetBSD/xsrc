@@ -384,6 +384,15 @@ KbdProc(DeviceIntPtr device, int what)
     device->public.on = FALSE;
     break;
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) * 100 + GET_ABI_MINOR(ABI_XINPUT_VERSION) >= 1901
+  case DEVICE_ABORT:
+    /*
+     * Restore original keyboard state even on crash.
+     */
+    pKbd->KbdOff(pInfo, what);
+    break;
+#endif
+
   default:
     return BadValue;
   }
