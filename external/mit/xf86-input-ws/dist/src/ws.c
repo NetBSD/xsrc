@@ -219,6 +219,10 @@ wsPreInit12(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		buttons_from = X_CONFIG;
 	}
 
+	priv->autoCalibrate = xf86SetBoolOption(pInfo->options, "AutoCalibrate", TRUE);
+	xf86Msg(X_CONFIG, "%s: auto calibration %sabled\n",
+	    pInfo->name, priv->autoCalibrate ? "en" : "dis"); 
+
 	priv->screen_no = xf86SetIntOption(pInfo->options, "ScreenNo", 0);
 	xf86Msg(X_CONFIG, "%s associated screen: %d\n",
 	    pInfo->name, priv->screen_no);
@@ -602,6 +606,45 @@ wsDeviceOff(DeviceIntPtr pWS)
 }
 
 static void
+wsAutoCalibrate(InputInfoPtr pInfo)
+{
+	WSDevicePtr priv;
+	int width, height;
+	struct wsmouse_calibcoords cal;
+
+	priv = pInfo->private;
+	width = screenInfo.screens[priv->screen_no]->width;
+	height = screenInfo.screens[priv->screen_no]->height;
+
+	if (width != priv->lastScreenWidth ||
+	    height != priv->lastScreenHeight) {
+		if (ioctl(pInfo->fd, WSMOUSEIO_GCALIBCOORDS, &cal) == 0 &&
+		    cal.minx != cal.maxy && cal.miny != cal.maxy) {
+
+			xf86Msg(X_INFO, "%s: auto-calibrating abs pointer for %dx%d screen\n",
+			    pInfo->name, width, height);
+
+			priv->min_x = cal.minx;
+			priv->min_y = cal.miny;
+			priv->max_x = cal.maxx;
+			priv->max_y = cal.maxy;
+
+			priv->translateAbs =
+			    cal.samplelen == WSMOUSE_CALIBCOORDS_RESET;
+		}
+		priv->lastScreenWidth = width;
+		priv->lastScreenHeight = height;
+	}
+}
+
+static int
+wsTranslate(InputInfoPtr pInfo, int scrRange,
+    int rawMin, int rawMax, int rawVal)
+{
+	return ((rawVal - rawMin) * scrRange) / (rawMax - rawMin);
+}
+
+static void
 wsReadInput(InputInfoPtr pInfo)
 {
 	WSDevicePtr priv;
@@ -612,6 +655,9 @@ wsReadInput(InputInfoPtr pInfo)
 	int ax, ay;
 
 	priv = pInfo->private;
+
+	if (priv->autoCalibrate)
+		wsAutoCalibrate(pInfo);
 
 	XisbBlockDuration(priv->buffer, -1);
 	pBuf = (unsigned char *)eventList;
@@ -658,12 +704,19 @@ wsReadInput(InputInfoPtr pInfo)
 			if (event->value == 4095) 
 				break;
 			ax = event->value;
+			if (priv->translateAbs)
+				ax = wsTranslate(pInfo,
+				    priv->lastScreenWidth,
+				    priv->min_x, priv->max_x, ax);
 			if (priv->inv_x)
 				ax = priv->max_x - ax + priv->min_x;
 			break;
 		case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 			DBG(4, ErrorF("Absolute Y %d\n", event->value));
 			ay = event->value;
+			if (priv->translateAbs)
+				ay = wsTranslate(pInfo, priv->lastScreenWidth,
+				    priv->min_y, priv->max_y, ay);
 			if (priv->inv_y)
 				ay = priv->max_y - ay + priv->min_y;
 			break;

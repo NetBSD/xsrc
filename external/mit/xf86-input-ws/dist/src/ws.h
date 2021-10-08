@@ -47,6 +47,9 @@ typedef struct WSDevice {
 	int screen_no;
 	int num, den, threshold; /* relative accel params */
 	pointer buffer;
+	int autoCalibrate;
+	int translateAbs;
+	int lastScreenWidth, lastScreenHeight;
 	int negativeZ, positiveZ; /* mappings for Z axis */
 	int negativeW, positiveW; /* mappings for W axis */
 	struct wsmouse_calibcoords coords; /* mirror of the kernel values */
