@@ -163,17 +163,12 @@ AbortDDX(enum ExitCode error)
 {
     int		i;
     ScreenPtr	pScreen;
-    DevicePtr	devPtr;
 
 #ifdef SVR4
     (void) OsSignal (SIGPOLL, SIG_IGN);
 #else
     (void) OsSignal (SIGIO, SIG_IGN);
 #endif
-    if (sunKeyboardDevice) {
-        devPtr = &sunKeyboardDevice->public;
-	(void) sunChangeKbdTranslation (((sunKbdPrivPtr)(devPtr->devicePrivate))->fd, FALSE);
-    }
 #if defined(SVR4) || defined(CSRG_BASED)
     sunNonBlockConsoleOff ();
 #else

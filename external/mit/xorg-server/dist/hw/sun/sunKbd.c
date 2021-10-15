@@ -669,7 +669,7 @@ sunKbdProc(DeviceIntPtr device, int what)
 	 * Set the keyboard into "direct" mode and turn on
 	 * event translation.
 	 */
-	if (sunChangeKbdTranslation(pPriv->fd,TRUE) == -1)
+	if (sunChangeKbdTranslation(pPriv->fd, TRUE) == -1)
 	    FatalError("Can't set keyboard translation\n");
 	SetNotifyFd(pPriv->fd, sunKbdHandlerNotify, X_NOTIFY_READ, NULL);
 	pKeyboard->on = TRUE;
@@ -687,13 +687,18 @@ sunKbdProc(DeviceIntPtr device, int what)
 	/*
 	 * Restore original keyboard directness and translation.
 	 */
-	if (sunChangeKbdTranslation(pPriv->fd,FALSE) == -1)
+	if (sunChangeKbdTranslation(pPriv->fd, FALSE) == -1)
 	    FatalError("Can't reset keyboard translation\n");
 	RemoveNotifyFd(pPriv->fd);
 	pKeyboard->on = FALSE;
 	break;
 
     case DEVICE_ABORT:
+	/*
+	 * Restore original keyboard directness and translation.
+	 */
+	pPriv = (sunKbdPrivPtr)pKeyboard->devicePrivate;
+	(void)sunChangeKbdTranslation(pPriv->fd, FALSE);
 	break;
     }
     return Success;
