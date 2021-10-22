@@ -63,7 +63,7 @@ struct sbus_devtable sbusDeviceTable[] = {
     { SBUS_DEVICE_CG12, FBTYPE_SUNGP3, "cgtwelve", NULL, "Sun GS (cgtwelve)" },
     { SBUS_DEVICE_CG14, FBTYPE_MDICOLOR, "cgfourteen", "suncg14", "Sun SX" },
     { SBUS_DEVICE_GT, FBTYPE_SUNGT, "gt", NULL, "Sun Graphics Tower" },
-    { SBUS_DEVICE_MGX, -1, "mgx", NULL, "Quantum 3D MGXplus" },
+    { SBUS_DEVICE_MGX, FBTYPE_MGX, "mgx", "mgx", "Southland Media MGX" },
     { SBUS_DEVICE_LEO, FBTYPE_SUNLEO, "leo", "sunleo", "Sun ZX or Turbo ZX" },
     { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "suntcx", "Sun TCX or S24" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "sunffb", "Sun FFB" },
