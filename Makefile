@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.44 2005/03/18 15:56:09 tron Exp $
+#	$NetBSD: Makefile,v 1.45 2021/11/02 22:09:17 abs Exp $
 #
 # Targets & Variables
 #
 # build: Clean out xsrc, and build and install everything that goes
-#	under /usr/X11R6.
+#	under /usr/X11R7.
 #
 #  DESTDIR -- Set to an alternative directory to install under.
 #  UPDATE --  If set, don't make clean first, plus attempt to make
