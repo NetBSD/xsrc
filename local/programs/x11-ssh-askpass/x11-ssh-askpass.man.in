@@ -1,4 +1,4 @@
-.\" $NetBSD: x11-ssh-askpass.man.in,v 1.2 2011/04/03 13:42:33 wiz Exp $
+.\" $NetBSD: x11-ssh-askpass.man.in,v 1.3 2021/11/02 22:07:43 abs Exp $
 .\"
 .\" x11-ssh-askpass.man
 .\" Created by Matthieu Herrb <matthieu@laas.fr> for OpenBSD
@@ -45,7 +45,7 @@ are as follows:
 .Bl -dash -offset indent
 .It
 Configurable via the standard X resource mechanisms
-.Pa /usr/X11R6/lib/X11/app-defaults ,
+.Pa /usr/X11R7/lib/X11/app-defaults ,
 .Pa ~/.Xdefaults ,
 .Xr xrdb 1 ,
 etc.
@@ -285,8 +285,8 @@ the string to display on the button.
 the font to use for this button label.
 .El
 .Sh FILES
-.Bl -tag -width "/usr/X11R6/lib/X11/app-defaults/SshAskpass" -compact
-.It Pa /usr/X11R6/lib/X11/app-defaults/SshAskpass
+.Bl -tag -width "/usr/X11R7/lib/X11/app-defaults/SshAskpass" -compact
+.It Pa /usr/X11R7/lib/X11/app-defaults/SshAskpass
 .El
 .Sh SEE ALSO
 .Xr ssh 1 ,
