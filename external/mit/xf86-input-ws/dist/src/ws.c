@@ -705,8 +705,7 @@ wsReadInput(InputInfoPtr pInfo)
 				break;
 			ax = event->value;
 			if (priv->translateAbs)
-				ax = wsTranslate(pInfo,
-				    priv->lastScreenWidth,
+				ax = wsTranslate(pInfo, priv->lastScreenWidth,
 				    priv->min_x, priv->max_x, ax);
 			if (priv->inv_x)
 				ax = priv->max_x - ax + priv->min_x;
@@ -715,7 +714,7 @@ wsReadInput(InputInfoPtr pInfo)
 			DBG(4, ErrorF("Absolute Y %d\n", event->value));
 			ay = event->value;
 			if (priv->translateAbs)
-				ay = wsTranslate(pInfo, priv->lastScreenWidth,
+				ay = wsTranslate(pInfo, priv->lastScreenHeight,
 				    priv->min_y, priv->max_y, ay);
 			if (priv->inv_y)
 				ay = priv->max_y - ay + priv->min_y;
