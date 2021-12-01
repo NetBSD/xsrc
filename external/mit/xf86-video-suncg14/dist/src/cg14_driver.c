@@ -347,8 +347,6 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
 
     pCg14->memsize = 4 * 1024 * 1024;	/* always safe */
-    if ((psdp->height * psdp->width * 4) > 0x00400000)
-    	 pCg14->memsize = 0x00800000;
     len = 24;
     prom = sparcPromInit();
     if ((ptr = sparcPromGetProperty(&psdp->node, "reg", &len))) {
