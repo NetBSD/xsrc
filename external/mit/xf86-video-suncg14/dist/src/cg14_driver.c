@@ -370,6 +370,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     switch (pScrn->depth) {
 	case 32:
 	case 24:
+	case 8:
 	    /* OK */
 	    break;
 	default:
@@ -593,9 +594,11 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
      */
     miClearVisualTypes();
 
-    /* Setup the visuals we support. */
+    /* Set the bits per RGB for 8bpp mode */
+    pScrn->rgbBits = 8;
 
-    if (!miSetVisualTypes(pScrn->depth, TrueColorMask,
+    /* Setup the visuals we support. */
+    if (!miSetVisualTypes(pScrn->depth, miGetDefaultVisualMask(pScrn->depth),
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
@@ -617,6 +620,7 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
      */
 
     CG14InitCplane24(pScrn);
+
     ret = fbScreenInit(pScreen, pCg14->use_shadow ? pCg14->shadow : pCg14->fb,
     		       pScrn->virtualX,
 		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
@@ -681,6 +685,9 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
+	return FALSE;
+
+    if(!xf86SbusHandleColormaps(pScreen, pCg14->psdp))
 	return FALSE;
 
     pCg14->CloseScreen = pScreen->CloseScreen;
@@ -774,8 +781,7 @@ CG14CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
     pScrn->vtSema = FALSE;
     CG14ExitCplane24 (pScrn);
-    xf86UnmapSbusMem(pCg14->psdp, pCg14->fb,
-		     (pCg14->psdp->width * pCg14->psdp->height * 4));
+    xf86UnmapSbusMem(pCg14->psdp, pCg14->fb, pCg14->memsize);
     xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
 		     (pCg14->psdp->width * pCg14->psdp->height));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->xlut, 4096);
@@ -864,9 +870,12 @@ CG14InitCplane24(ScrnInfoPtr pScrn)
   int size, bpp;
               
   size = pScrn->virtualX * pScrn->virtualY;
-  bpp = 32;
+  if (pScrn->bitsPerPixel > 8) {
+  	bpp = 32;
+  } else
+  	bpp = 8;
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-  memset (pCg14->fb, 0, size * 4);
+  memset (pCg14->fb, 0, size * (bpp >> 3));
   memset (pCg14->x32, 0, size);
   memset (pCg14->xlut, 0, 0x200);
 }                                                  
