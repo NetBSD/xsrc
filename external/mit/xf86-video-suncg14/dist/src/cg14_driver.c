@@ -797,9 +797,10 @@ CG14WindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    int shift = (pScrn->bitsPerPixel > 8) ? 2 : 0;
 
-    *size = pCg14->width << 2;
-    return (CARD8 *)pCg14->fb + row * (pCg14->width << 2) + offset;
+    *size = pCg14->width << shift;
+    return (CARD8 *)pCg14->fb + row * (pCg14->width << shift) + offset;
 }
 
 /* Free up any per-generation data structures */
