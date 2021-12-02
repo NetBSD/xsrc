@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.15 2019/07/24 16:07:59 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.16 2021/12/02 22:35:26 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -42,7 +42,7 @@
 
 #include "cg14.h"
 
-/*#define SX_DEBUG*/
+//#define SX_DEBUG
 
 #ifdef SX_DEBUG
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
@@ -492,8 +492,14 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	DPRINTF(X_ERROR, "bits per pixel: %d\n",
-	    pPixmap->drawable.bitsPerPixel);
+	DPRINTF(X_ERROR, "bits per pixel: %d %08x\n",
+	    pPixmap->drawable.bitsPerPixel, fg);
+
+	/* repeat the colour in every sub byte if we're in 8 bit */
+	if (pPixmap->drawable.bitsPerPixel == 8) {
+		fg |= fg << 8;
+		fg |= fg << 16;
+	}
 	write_sx_reg(p, SX_QUEUED(8), fg);
 	write_sx_reg(p, SX_QUEUED(9), fg);
 	if (planemask != p->last_mask) {
@@ -507,6 +513,7 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 		write_sx_reg(p, SX_ROP_CONTROL, alu);
 		p->last_rop = alu;
 	}
+	if (0) return FALSE;
 	DPRINTF(X_ERROR, "%s: %x\n", __func__, alu);
 	return TRUE;
 }
@@ -575,24 +582,36 @@ CG14Solid32(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 static void
 CG14Solid8(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 {
-	int line, x, num, off;
+	int line, x, num, off, pre, cnt;
 	uint32_t ptr;
 
 	ENTER;
-	off = start & 7;
-	start &= ~7;
+	pre = start & 3;
+	if (pre != 0) pre = 4 - pre;
 
 	if (p->last_rop == 0xcc) {
 		/* simple fill */
 		for (line = 0; line < h; line++) {
-			x = 0;
-			while (x < w) {
-				ptr = start + x;
-				num = min(32, w - x);
-				write_sx_io(p, ptr,
-				    SX_STBS(8, num - 1, off));
-				x += 32;
+			ptr = start;
+			cnt = w;
+			if (pre) {
+				write_sx_io(p, ptr & ~7, SX_STBS(8, pre - 1, ptr & 7));
+				ptr += pre;
+				cnt -= pre;
 			}
+			/* now do the aligned pixels in 32bit chunks */
+			if (ptr & 3) xf86Msg(X_ERROR, "%s %x\n", __func__, ptr);
+			while(cnt > 3) {
+				num = min(32, cnt >> 2);
+				write_sx_io(p, ptr & ~7, SX_STS(8, num - 1, ptr & 7));
+				ptr += num << 2;
+				cnt -= num << 2;
+			}
+			if (cnt > 3) xf86Msg(X_ERROR, "%s cnt %d\n", __func__, cnt);
+			if (cnt > 0) {
+				write_sx_io(p, ptr & ~7, SX_STBS(8, cnt - 1, ptr & 7));
+			}
+			if ((ptr + cnt) != (start + w)) xf86Msg(X_ERROR, "%s %x vs %x\n", __func__, ptr + cnt, start + w);
 			start += pitch;
 		}
 	} else if (p->last_rop == 0xaa) {
@@ -600,6 +619,8 @@ CG14Solid8(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 		return;
 	} else {
 		/* alright, let's do actual ROP stuff */
+		off = start & 7;
+		start &= ~7;
 
 		/* first repeat the fill colour into 16 registers */
 		write_sx_reg(p, SX_INSTRUCTIONS,
@@ -1076,7 +1097,7 @@ CG14InitAccel(ScreenPtr pScreen)
 
 	pExa->memoryBase = p->fb;
 	pExa->memorySize = p->memsize;
-	pExa->offScreenBase = p->width * p->height * 4;
+	pExa->offScreenBase = p->width * p->height * (pScrn->depth >> 3);
 
 	/*
 	 * SX memory instructions are written to 64bit aligned addresses with
