@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.17 2021/12/03 06:10:07 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.18 2021/12/03 16:54:26 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -495,6 +495,20 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 	DPRINTF(X_ERROR, "bits per pixel: %d %08x\n",
 	    pPixmap->drawable.bitsPerPixel, fg);
 
+	/*
+	 * GXset and GXclear are really just specual cases of GXcopy with
+	 * fixed fill colour
+	 */
+	switch (alu) {
+		case GXclear:
+			alu = GXcopy;
+			fg = 0;
+			break;
+		case GXset:
+			alu = GXcopy;
+			fg = 0xffffffff;
+			break;
+	}
 	/* repeat the colour in every sub byte if we're in 8 bit */
 	if (pPixmap->drawable.bitsPerPixel == 8) {
 		fg |= fg << 8;
@@ -513,7 +527,7 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 		write_sx_reg(p, SX_ROP_CONTROL, alu);
 		p->last_rop = alu;
 	}
-	if (0) return FALSE;
+
 	DPRINTF(X_ERROR, "%s: %x\n", __func__, alu);
 	return TRUE;
 }
@@ -582,7 +596,7 @@ CG14Solid32(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 static void
 CG14Solid8(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 {
-	int line, x, num, off, pre, cnt;
+	int line, num, pre, cnt;
 	uint32_t ptr;
 
 	ENTER;
@@ -622,39 +636,49 @@ next:
 		return;
 	} else {
 		/* alright, let's do actual ROP stuff */
-		off = start & 7;
-		start &= ~7;
 
 		/* first repeat the fill colour into 16 registers */
 		write_sx_reg(p, SX_INSTRUCTIONS,
 		    SX_SELECT_S(8, 8, 10, 15));
 
 		for (line = 0; line < h; line++) {
-			x = 0;
-			while (x < w) {
-				ptr = start + x;
-				num = min(32, w - x);
-				/* now suck fb data into registers */
-				write_sx_io(p, ptr,
-				    SX_LDB(42, num - 1, off));
-				/*
-				 * ROP them with the fill data we left in 10
-				 * non-memory ops can only have counts up to 16
-				 */
+			ptr = start;
+			cnt = w;
+			pre = min(pre, cnt);
+			if (pre) {
+				write_sx_io(p, ptr & ~7, SX_LDB(26, pre - 1, ptr & 7));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(10, 26, 42, pre - 1));
+				write_sx_io(p, ptr & ~7, SX_STB(42, pre - 1, ptr & 7));
+				ptr += pre;
+				cnt -= pre;
+				if (cnt == 0) goto next2;
+			}
+			/* now do the aligned pixels in 32bit chunks */
+			if (ptr & 3) xf86Msg(X_ERROR, "%s %x\n", __func__, ptr);
+			while(cnt > 3) {
+				num = min(32, cnt >> 2);
+				write_sx_io(p, ptr & ~7, SX_LD(26, num - 1, ptr & 7));
 				if (num <= 16) {
 					write_sx_reg(p, SX_INSTRUCTIONS,
-					    SX_ROP(10, 42, 74, num - 1));
+					    SX_ROP(10, 26, 58, num - 1));
 				} else {
 					write_sx_reg(p, SX_INSTRUCTIONS,
-					    SX_ROP(10, 42, 74, 15));
+					    SX_ROP(10, 26, 58, 15));
 					write_sx_reg(p, SX_INSTRUCTIONS,
-					    SX_ROP(10, 58, 90, num - 17));
+					    SX_ROP(10, 42, 74, num - 17));
 				}
-				/* and write the result back into memory */
-				write_sx_io(p, ptr,
-				    SX_STB(74, num - 1, off));
-				x += 32;
+				write_sx_io(p, ptr & ~7, SX_ST(58, num - 1, ptr & 7));
+				ptr += num << 2;
+				cnt -= num << 2;
 			}
+			if (cnt > 3) xf86Msg(X_ERROR, "%s cnt %d\n", __func__, cnt);
+			if (cnt > 0) {
+				write_sx_io(p, ptr & ~7, SX_LDB(26, cnt - 1, ptr & 7));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(10, 26, 42, cnt - 1));
+				write_sx_io(p, ptr & ~7, SX_STB(42, cnt - 1, ptr & 7));
+			}
+			if ((ptr + cnt) != (start + w)) xf86Msg(X_ERROR, "%s %x vs %x\n", __func__, ptr + cnt, start + w);
+next2:
 			start += pitch;
 		}
 	}
