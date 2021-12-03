@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.18 2021/12/03 16:54:26 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.19 2021/12/03 19:43:22 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -98,8 +98,8 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	DPRINTF(X_ERROR, "bits per pixel: %d\n",
-	    pSrcPixmap->drawable.bitsPerPixel);
+	xf86Msg(X_ERROR, "bits per pixel: %d rop %x\n",
+	    pSrcPixmap->drawable.bitsPerPixel, alu);
 
 	if (planemask != p->last_mask) {
 		CG14Wait(p);
@@ -305,6 +305,106 @@ CG14Copy32(PixmapPtr pDstPixmap,
 	exaMarkSync(pDstPixmap->drawable.pScreen);
 }
 
+/*
+ * copy with same alignment, left to right, no ROP
+ */
+static void
+CG14Copy8_aligned_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int srcpitch, int dstpitch)
+{
+	int saddr, daddr, pre, cnt, wrds;
+
+	ENTER;
+	
+	pre = srcstart & 3;
+	if (pre != 0) pre = 4 - pre;
+	pre = min(pre, w);
+
+	while (h > 0) {
+		saddr = srcstart;
+		daddr = dststart;
+		cnt = w;
+		if (pre > 0) {
+			write_sx_io(p, saddr & ~7, SX_LDB(8, pre - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_STB(8, pre - 1, daddr & 7));
+			saddr += pre;
+			daddr += pre;
+			cnt -= pre;
+			if (cnt == 0) goto next;
+		}
+		while (cnt > 3) {
+			wrds = min(32, cnt >> 2);
+			write_sx_io(p, saddr & ~7, SX_LD(8, wrds - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_ST(8, wrds - 1, daddr & 7));
+			saddr += wrds << 2;
+			daddr += wrds << 2;
+			cnt -= wrds << 2;
+		}
+		if (cnt > 0) {
+			write_sx_io(p, saddr & ~7, SX_LDB(8, cnt - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_STB(8, cnt - 1, daddr & 7));
+		}
+next:
+		srcstart += srcpitch;
+		dststart += dstpitch;
+		h--;
+	}
+}
+
+/*
+ * copy with same alignment, left to right, ROP
+ */
+static void
+CG14Copy8_aligned_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int srcpitch, int dstpitch)
+{
+	int saddr, daddr, pre, cnt, wrds;
+
+	ENTER;
+	
+	pre = srcstart & 3;
+	if (pre != 0) pre = 4 - pre;
+	pre = min(pre, w);
+
+	while (h > 0) {
+		saddr = srcstart;
+		daddr = dststart;
+		cnt = w;
+		if (pre > 0) {
+			write_sx_io(p, saddr & ~7, SX_LDB(8, pre - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_LDB(40, pre - 1, daddr & 7));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(8, 40, 72, pre - 1));
+			write_sx_io(p, daddr & ~7, SX_STB(72, pre - 1, daddr & 7));
+			saddr += pre;
+			daddr += pre;
+			cnt -= pre;
+			if (cnt == 0) goto next;
+		}
+		while (cnt > 3) {
+			wrds = min(32, cnt >> 2);
+			write_sx_io(p, saddr & ~7, SX_LD(8, wrds - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_LD(40, wrds - 1, daddr & 7));
+			if (cnt > 16) {
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(8, 40, 72, 15));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(8, 56, 88, wrds - 17));
+			} else
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(8, 40, 72, wrds - 1));
+			write_sx_io(p, daddr & ~7, SX_ST(72, wrds - 1, daddr & 7));
+			saddr += wrds << 2;
+			daddr += wrds << 2;
+			cnt -= wrds << 2;
+		}
+		if (cnt > 0) {
+			write_sx_io(p, saddr & ~7, SX_LDB(8, cnt - 1, saddr & 7));
+			write_sx_io(p, daddr & ~7, SX_LDB(40, cnt - 1, daddr & 7));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ROP(8, 40, 72, cnt - 1));
+			write_sx_io(p, daddr & ~7, SX_STB(72, cnt - 1, daddr & 7));
+		}
+next:
+		srcstart += srcpitch;
+		dststart += dstpitch;
+		h--;
+	}
+}
+
 static void
 CG14Copy8(PixmapPtr pDstPixmap,
          int srcX, int srcY, int dstX, int dstY, int w, int h)
@@ -327,19 +427,13 @@ CG14Copy8(PixmapPtr pDstPixmap,
 	srcstart = srcX + (srcpitch * srcY) + srcoff;
 	dststart = dstX + (dstpitch * dstY) + dstoff;
 
-	/*
-	 * we always copy up to 32 pixels at a time so direction doesn't
-	 * matter if w<=32
-	 */
-	if (w > 32) {
-		if (p->xdir < 0) {
-			srcstart += (w - 32);
-			dststart += (w - 32);
-			xinc = -32;
-		} else
-			xinc = 32;
+	if ((p->xdir < 0) && (srcoff == dstoff) && (srcY == dstY)) {
+		srcstart += (w - 32);
+		dststart += (w - 32);
+		xinc = -32;
 	} else
 		xinc = 32;
+
 	if (p->ydir < 0) {
 		srcstart += (h - 1) * srcpitch;
 		dststart += (h - 1) * dstpitch;
@@ -348,6 +442,16 @@ CG14Copy8(PixmapPtr pDstPixmap,
 	} else {
 		srcinc = srcpitch;
 		dstinc = dstpitch;
+	}
+	if (((srcstart & 3) == (dststart & 3)) && (xinc > 0)) {
+		switch (p->last_rop) {
+			case 0xcc:
+				CG14Copy8_aligned_norop(p, srcstart, dststart, w, h, srcinc, dstinc);
+				break;
+			default:
+				CG14Copy8_aligned_rop(p, srcstart, dststart, w, h, srcinc, dstinc);
+		}
+		return;
 	}
 	if (p->last_rop == 0xcc) {
 		/* plain old copy */
