@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.19 2021/12/03 19:43:22 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.20 2021/12/03 19:53:23 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -98,7 +98,7 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	xf86Msg(X_ERROR, "bits per pixel: %d rop %x\n",
+	DPRINTF(X_ERROR, "%s bpp %d rop %x\n", __func__,
 	    pSrcPixmap->drawable.bitsPerPixel, alu);
 
 	if (planemask != p->last_mask) {
