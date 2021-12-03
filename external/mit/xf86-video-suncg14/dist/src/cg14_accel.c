@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.16 2021/12/02 22:35:26 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.17 2021/12/03 06:10:07 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -594,10 +594,12 @@ CG14Solid8(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 		for (line = 0; line < h; line++) {
 			ptr = start;
 			cnt = w;
+			pre = min(pre, cnt);
 			if (pre) {
 				write_sx_io(p, ptr & ~7, SX_STBS(8, pre - 1, ptr & 7));
 				ptr += pre;
 				cnt -= pre;
+				if (cnt == 0) goto next;
 			}
 			/* now do the aligned pixels in 32bit chunks */
 			if (ptr & 3) xf86Msg(X_ERROR, "%s %x\n", __func__, ptr);
@@ -612,6 +614,7 @@ CG14Solid8(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 				write_sx_io(p, ptr & ~7, SX_STBS(8, cnt - 1, ptr & 7));
 			}
 			if ((ptr + cnt) != (start + w)) xf86Msg(X_ERROR, "%s %x vs %x\n", __func__, ptr + cnt, start + w);
+next:
 			start += pitch;
 		}
 	} else if (p->last_rop == 0xaa) {
