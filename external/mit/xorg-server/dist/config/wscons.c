@@ -139,7 +139,7 @@ wscons_add_keyboard(void)
     input_options = input_option_new(input_options, "name", WSCONS_KBD_DEVICE);
     input_options = input_option_new(input_options, "driver", "kbd");
 
-    if (asprintf(&config_info, "wscons:%s", WSCONS_KBD_DEVICE) != -1)
+    if (asprintf(&config_info, "wscons:%s", WSCONS_KBD_DEVICE) == -1)
         goto unwind;
     if (KB_ENCODING(wsenc) == KB_USER) {
         /* Ignore wscons "user" layout */
