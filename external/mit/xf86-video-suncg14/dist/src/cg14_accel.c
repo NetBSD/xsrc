@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.20 2021/12/03 19:53:23 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.21 2021/12/09 17:29:14 christos Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -596,7 +596,7 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	DPRINTF(X_ERROR, "bits per pixel: %d %08x\n",
+	DPRINTF(X_ERROR, "bits per pixel: %d %08lx\n",
 	    pPixmap->drawable.bitsPerPixel, fg);
 
 	/*
