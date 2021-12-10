@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.22 2021/12/10 18:25:43 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.23 2021/12/10 19:09:56 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -410,6 +410,7 @@ static void
 CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int srcpitch, int dstpitch)
 {
 	int saddr, daddr, pre, dist, wrds, swrds, spre, sreg, restaddr, post;
+	int ssreg;
 #ifdef DEBUG
 	int taddr = 4 + dstpitch * 50;
 #endif
@@ -453,8 +454,6 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 	daddr = dststart & ~3;
 	
 	/* TODO:
-	 * - special case dist == 0 where we can skip the funnel shifter
-	 *   and only need to deal with leading / trailing garbage
 	 * - skip reading the fb where we can get away with it, for example
 	 *   GXcopy, where we only need to read the destination for partials,
 	 *   everything in between is straight copy
@@ -463,30 +462,35 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 		write_sx_io(p, daddr & ~7, SX_LD(80, wrds - 1, daddr & 7));
 		write_sx_io(p, saddr & ~7, SX_LD(sreg, swrds - 1, saddr & 7));
 		if (wrds > 15) {
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, 15));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(24, dist, 56, wrds - 16));
-			/* shifted source pixels are now at register 40+ */
+			if (dist != 0) {
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, 15));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(24, dist, 56, wrds - 16));
+				/* shifted source pixels are now at register 40+ */
+				ssreg = 40;
+			} else ssreg = 8;
 			if (pre != 0) {
 				/* mask out leading junk */
 				write_sx_reg(p, SX_QUEUED(R_MASK), lmask);
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(40, 80, 8, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, 8, 0));
 				write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(41, 81, 9, 14));	
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg + 1, 81, 9, 14));	
 			} else {
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(40, 80, 8, 15));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, 8, 15));
 			}
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(56, 96, 24, wrds - 16));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg + 16, 96, 24, wrds - 16));
 		} else {
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, wrds));
-
+			if (dist != 0) {
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, wrds));
+				ssreg = 40;
+			} else ssreg = 8;
 			if (pre != 0) {
 				/* mask out leading junk */
 				write_sx_reg(p, SX_QUEUED(R_MASK), lmask);
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(40, 80, 8, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, 8, 0));
 				write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(41, 81, 9, wrds));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg + 1, 81, 9, wrds));
 			} else {
-				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(40, 80, 8, wrds));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, 8, wrds));
 			}
 		}
 		if (post != 0) {
