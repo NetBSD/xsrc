@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.24 2021/12/10 19:42:07 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.25 2021/12/10 21:57:13 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -674,8 +674,6 @@ CG14Copy8(PixmapPtr pDstPixmap,
 	 * go backwards on SX so avoid as much as possible
 	 */
 	if ((p->xdir < 0) && (srcoff == dstoff) && (srcY == dstY)) {
-		srcstart += (w - 32);
-		dststart += (w - 32);
 		xinc = -32;
 	} else
 		xinc = 32;
@@ -695,6 +693,70 @@ CG14Copy8(PixmapPtr pDstPixmap,
 		return;
 	}
 
+	/*
+	 * if we make it here we either have something large and unaligned,
+	 * something we need to do right to left, or something tiny.
+	 * we handle the non-tiny cases by breaking them down into chunks that
+	 * Copy8_short_*() can handle, making sure the destinations are 32bit 
+	 * aligned whenever possible
+	 * since we copy by block, not by line we need to go backwards even if
+	 * we don't copy within the same line
+	 */
+	if (w > 8) {
+		int next, wi, end = dststart + w;
+		DPRINTF(X_ERROR, "%s %08x %08x %d\n", __func__, srcstart, dststart, w);
+		if ((p->xdir < 0) && (srcoff == dstoff)) {		
+			srcstart += w;
+			next = max((end - 120) & ~3, dststart);
+			wi = end - next;
+			srcstart -= wi;
+			while (wi > 0) {
+				DPRINTF(X_ERROR, "%s RL %08x %08x %d\n", __func__, srcstart, next, wi);
+				if (p->last_rop == 0xcc) {
+					CG14Copy8_short_norop(p, srcstart, next, wi, h, srcinc, dstinc);
+				} else
+					CG14Copy8_short_rop(p, srcstart, next, wi, h, srcinc, dstinc);
+				end = next;
+				/*
+				 * avoid extremely narrow copies so I don't
+				 * have to deal with dangling start and end
+				 * pixels in the same word
+				 */
+				if ((end - dststart) < 140) {
+					next = max((end - 80) & ~3, dststart);
+				} else {
+					next = max((end - 120) & ~3, dststart);
+				}
+				wi = end - next;
+				srcstart -= wi;
+			}
+		} else {
+			next = min(end, (dststart + 124) & ~3);
+			wi = next - dststart;
+			while (wi > 0) {
+				DPRINTF(X_ERROR, "%s LR %08x %08x %d\n", __func__, srcstart, next, wi);
+				if (p->last_rop == 0xcc) {
+					CG14Copy8_short_norop(p, srcstart, dststart, wi, h, srcinc, dstinc);
+				} else
+					CG14Copy8_short_rop(p, srcstart, dststart, wi, h, srcinc, dstinc);
+				srcstart += wi;
+				dststart = next;
+				if ((end - dststart) < 140) {
+					next = min(end, (dststart + 84) & ~3);
+				} else {
+					next = min(end, (dststart + 124) & ~3);
+				}
+				wi = next - dststart;
+			}
+		}
+		return;
+	}
+	if (xinc < 0) {
+		srcstart += (w - 32);
+		dststart += (w - 32);
+	}
+
+	DPRINTF(X_ERROR, "%s fallback to byte-wise %d %d\n", __func__, w, h);
 	if (p->last_rop == 0xcc) {
 		/* plain old copy */
 		if ( xinc > 0) {
