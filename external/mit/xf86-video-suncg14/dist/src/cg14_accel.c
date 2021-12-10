@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.23 2021/12/10 19:09:56 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.24 2021/12/10 19:42:07 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -439,25 +439,24 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 	 * mask out trailing pixels to avoid partial writes
 	 */
 	post = (dststart + w) & 3;
-	rmask = ~(0xffffffff >> (post * 8));
-	write_sx_reg(p, SX_QUEUED(7), rmask);	
-	write_sx_reg(p, SX_QUEUED(6), ~rmask);	
-	
+	if (post != 0) {
+		rmask = ~(0xffffffff >> (post * 8));
+		write_sx_reg(p, SX_QUEUED(7), rmask);	
+		write_sx_reg(p, SX_QUEUED(6), ~rmask);	
+	}
+
 	DPRINTF(X_ERROR, "%s %d %d, %d %d %08x %d %d %d %d %08x\n", __func__,
 	    w, h, spre, pre, lmask, dist, sreg, wrds, post, rmask);
 
 	/* mask out the leading pixels in dst by using a mask and ROP */
-	write_sx_reg(p, SX_ROP_CONTROL, (p->last_rop & 0xf0) | 0xa);
-	write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);	
+	if (pre != 0) {
+		write_sx_reg(p, SX_ROP_CONTROL, (p->last_rop & 0xf0) | 0xa);
+		write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);	
+	}
 
 	saddr = srcstart & ~3;
 	daddr = dststart & ~3;
-	
-	/* TODO:
-	 * - skip reading the fb where we can get away with it, for example
-	 *   GXcopy, where we only need to read the destination for partials,
-	 *   everything in between is straight copy
-	 */
+
 	while (h > 0) {
 		write_sx_io(p, daddr & ~7, SX_LD(80, wrds - 1, daddr & 7));
 		write_sx_io(p, saddr & ~7, SX_LD(sreg, swrds - 1, saddr & 7));
@@ -517,6 +516,111 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 	}
 }
 
+/* up to 124 pixels so direction doesn't matter, unaligned, straight copy */
+static void
+CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int srcpitch, int dstpitch)
+{
+	int saddr, daddr, pre, dist, wrds, swrds, spre, sreg, restaddr, post;
+	int ssreg;
+#ifdef DEBUG
+	int taddr = 4 + dstpitch * 50;
+#endif
+	uint32_t lmask, rmask;
+	ENTER;
+	
+	pre = dststart & 3;
+	lmask = 0xffffffff >> pre;
+	spre = srcstart & 3;
+	/*
+	 * make sure we count all the words needed to cover the destination 
+	 * line, covering potential partials on both ends
+	 */
+	wrds = (w + pre + 3) >> 2;
+	swrds = (w + spre + 3) >> 2;
+
+	if (spre < pre) {
+		dist = 32 - (pre - spre) * 8;
+		sreg = 9;
+	} else {
+		dist = (spre - pre) * 8;
+		sreg = 8;
+	}
+
+	/*
+	 * mask out trailing pixels to avoid partial writes
+	 */
+	post = (dststart + w) & 3;
+	if (post != 0) {
+		rmask = ~(0xffffffff >> (post * 8));
+		write_sx_reg(p, SX_QUEUED(7), rmask);	
+		write_sx_reg(p, SX_QUEUED(6), ~rmask);	
+	}
+
+	DPRINTF(X_ERROR, "%s %d %d, %d %d %08x %d %d %d %d %08x\n", __func__,
+	    w, h, spre, pre, lmask, dist, sreg, wrds, post, rmask);
+
+	/* mask out the leading pixels in dst by using a mask and ROP */
+	if (pre != 0) {
+		write_sx_reg(p, SX_ROP_CONTROL, 0xca);
+		write_sx_reg(p, SX_QUEUED(R_MASK), lmask);	
+	}
+
+	saddr = srcstart & ~3;
+	daddr = dststart & ~3;
+	
+	while (h > 0) {
+		write_sx_io(p, saddr & ~7, SX_LD(sreg, swrds - 1, saddr & 7));
+		if (wrds > 15) {
+			if (dist != 0) {
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, 15));
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(24, dist, 56, wrds - 16));
+				/* shifted source pixels are now at register 40+ */
+				ssreg = 40;
+			} else ssreg = 8;
+			if (pre != 0) {
+				/* read only the first word */
+				write_sx_io(p, daddr & ~7, SX_LD(80, 0, daddr & 7));
+				/* mask out leading junk */
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, ssreg, 0));
+			}
+		} else {
+			if (dist != 0) {
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_FUNNEL_I(8, dist, 40, wrds));
+				ssreg = 40;
+			} else ssreg = 8;
+			if (pre != 0) {
+				/* read only the first word */
+				write_sx_io(p, daddr & ~7, SX_LD(80, 0, daddr & 7));
+				/* mask out leading junk */
+				write_sx_reg(p, SX_INSTRUCTIONS, SX_ROPB(ssreg, 80, ssreg, 0));
+			}
+		}
+		if (post != 0) {
+			int laddr = daddr + ((wrds - 1) << 2);
+			/*
+			 * if the last word to be written out is a partial we 
+			 * mask out the leftovers and replace them with
+			 * background pixels
+			 * we could pull the same ROP * mask trick as we do on
+			 * the left end but it's less annoying this way and
+			 * the instruction count is the same
+			 */
+			write_sx_io(p, laddr & ~7, SX_LD(81, 0, laddr & 7));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ANDS(ssreg + wrds - 1, 7, 5, 0));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ANDS(81, 6, 4, 0));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(5, 4, ssreg + wrds - 1, 0));
+		}
+#ifdef DEBUG
+		write_sx_io(p, taddr & ~7, SX_ST(40, wrds - 1, taddr & 7));
+		taddr += dstpitch;
+#endif
+		write_sx_io(p, daddr & ~7, SX_ST(ssreg, wrds - 1, daddr & 7));
+		saddr += srcpitch;
+		daddr += dstpitch;
+		h--;
+	}
+}
+
 static void
 CG14Copy8(PixmapPtr pDstPixmap,
          int srcX, int srcY, int dstX, int dstY, int w, int h)
@@ -555,7 +659,13 @@ CG14Copy8(PixmapPtr pDstPixmap,
 	 * uses all 32bit accesses and funnel shifter for unaligned copies
 	 */
 	if ((w < 125) && (w > 8)) {
-		CG14Copy8_short_rop(p, srcstart, dststart, w, h, srcinc, dstinc);
+		switch (p->last_rop) {
+			case 0xcc:
+				CG14Copy8_short_norop(p, srcstart, dststart, w, h, srcinc, dstinc);
+				break;
+			default:
+				CG14Copy8_short_rop(p, srcstart, dststart, w, h, srcinc, dstinc);
+		}
 		return;
 	}
 
