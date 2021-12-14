@@ -114,7 +114,10 @@ enum amdgpu_sw_info {
  * "initialize" function and should be pass as the first
  * parameter to any API call
  */
+#ifndef AMDGPU_DEVICE_TYPEDEF
+#define AMDGPU_DEVICE_TYPEDEF
 typedef struct amdgpu_device *amdgpu_device_handle;
+#endif
 
 /**
  * Define GPU Context type as pointer to opaque structure

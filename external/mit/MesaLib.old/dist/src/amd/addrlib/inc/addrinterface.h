@@ -45,7 +45,10 @@ extern "C"
 #define ADDRLIB_VERSION ((ADDRLIB_VERSION_MAJOR << 16) | ADDRLIB_VERSION_MINOR)
 
 /// Virtually all interface functions need ADDR_HANDLE as first parameter
+#ifndef ADDR_HANDLE_TYPEDEF
+#define ADDR_HANDLE_TYPEDEF
 typedef VOID*   ADDR_HANDLE;
+#endif
 
 /// Client handle used in callbacks
 typedef VOID*   ADDR_CLIENT_HANDLE;

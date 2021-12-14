@@ -67,7 +67,7 @@ typedef int            INT;
 ****************************************************************************************************
 */
 #ifndef ADDR_CDECL
-    #if defined(__GNUC__)
+    #if defined(__GNUC__) || defined(__lint__)
         #define ADDR_CDECL __attribute__((cdecl))
     #else
         #define ADDR_CDECL __cdecl
@@ -75,7 +75,7 @@ typedef int            INT;
 #endif
 
 #ifndef ADDR_STDCALL
-    #if defined(__GNUC__)
+    #if defined(__GNUC__) || defined(__lint__)
         #if defined(__amd64__) || defined(__x86_64__)
             #define ADDR_STDCALL
         #else
@@ -89,13 +89,13 @@ typedef int            INT;
 #ifndef ADDR_FASTCALL
     #if defined(BRAHMA_ARM)
         #define ADDR_FASTCALL
-    #elif defined(__GNUC__)
+    #elif defined(__GNUC__) || defined(__lint__)
         #if defined(__i386__)
             #define ADDR_FASTCALL __attribute__((regparm(0)))
         #else
             #define ADDR_FASTCALL
         #endif
-    #else
+    #elif
         #define ADDR_FASTCALL __fastcall
     #endif
 #endif
@@ -112,7 +112,7 @@ typedef int            INT;
     #define GC_FASTCALL  ADDR_FASTCALL
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__lint__)
     #define ADDR_INLINE static inline   // inline needs to be static to link
 #else
     // win32, win64, other platforms
@@ -656,7 +656,7 @@ typedef enum _AddrTileType
 //
 //  64-bit integer types depend on the compiler
 //
-#if defined( __GNUC__ ) || defined( __WATCOMC__ )
+#if defined( __GNUC__ ) || defined( __WATCOMC__ ) || defined(__lint__)
 #define INT_64   long long
 #define UINT_64  unsigned long long
 
@@ -689,7 +689,7 @@ typedef enum _AddrTileType
 
 //  ADDR64X is used to print addresses in hex form on both Windows and Linux
 //
-#if defined( __GNUC__ ) || defined( __WATCOMC__ )
+#if defined( __GNUC__ ) || defined( __WATCOMC__ ) || defined(__lint__)
 #define ADDR64X "llx"
 #define ADDR64D "lld"
 

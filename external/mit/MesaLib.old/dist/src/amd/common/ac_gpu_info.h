@@ -36,7 +36,10 @@ extern "C" {
 #endif
 
 /* Prior to C11 the following may trigger a typedef redeclaration warning */
+#ifndef AMDGPU_DEVICE_TYPEDEF
+#define AMDGPU_DEVICE_TYPEDEF
 typedef struct amdgpu_device *amdgpu_device_handle;
+#endif
 struct amdgpu_gpu_info;
 
 struct radeon_info {

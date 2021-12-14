@@ -36,7 +36,10 @@ extern "C" {
 #endif
 
 /* Forward declarations. */
+#ifndef ADDR_HANDLE_TYPEDEF
+#define ADDR_HANDLE_TYPEDEF
 typedef void* ADDR_HANDLE;
+#endif
 
 struct amdgpu_gpu_info;
 struct radeon_info;
