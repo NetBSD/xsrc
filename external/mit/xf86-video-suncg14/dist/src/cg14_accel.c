@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.25 2021/12/10 21:57:13 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.26 2021/12/19 04:50:27 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -450,6 +450,7 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 
 	/* mask out the leading pixels in dst by using a mask and ROP */
 	if (pre != 0) {
+		CG14Wait(p);
 		write_sx_reg(p, SX_ROP_CONTROL, (p->last_rop & 0xf0) | 0xa);
 		write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);	
 	}
@@ -561,6 +562,7 @@ CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int s
 
 	/* mask out the leading pixels in dst by using a mask and ROP */
 	if (pre != 0) {
+		CG14Wait(p);
 		write_sx_reg(p, SX_ROP_CONTROL, 0xca);
 		write_sx_reg(p, SX_QUEUED(R_MASK), lmask);	
 	}
