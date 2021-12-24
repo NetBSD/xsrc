@@ -135,9 +135,21 @@ write_sx_io(Cg14Ptr p, int reg, uint32_t val)
 	p->queuecount++;
 }
 
+/* convenience macros to hide the complexity involved with talking to SX */
+
+/* 
+ * issue ALU instruction:
+ * sxi(OPCODE, srcA, srcB, dest, count)
+ */
 #define sxi(inst, a, b, d, cnt) write_sx_reg(p, SX_INSTRUCTIONS, inst((a), (b), (d), (cnt)))
+
+/*
+ * issue memory referencing instruction:
+ * sxm(OPCODE, address, start register, count)
+ */
 #define sxm(inst, addr, reg, count) write_sx_io(p, (addr) & ~7, inst((reg), (count), (addr) & 7))
 
+/* hw setup stuff */
 Bool CG14SetupCursor(ScreenPtr);
 Bool CG14InitAccel(ScreenPtr);
 
