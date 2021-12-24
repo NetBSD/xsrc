@@ -135,6 +135,9 @@ write_sx_io(Cg14Ptr p, int reg, uint32_t val)
 	p->queuecount++;
 }
 
+#define sxi(inst) write_sx_reg(p, SX_INSTRUCTIONS, (inst))
+#define sxm(inst, addr, reg, count) write_sx_io(p, (addr) & ~7, inst((reg), (count), (addr) & 7))
+
 Bool CG14SetupCursor(ScreenPtr);
 Bool CG14InitAccel(ScreenPtr);
 
