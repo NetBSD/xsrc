@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.27 2021/12/24 04:41:40 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.28 2021/12/24 05:22:54 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -231,10 +231,10 @@ CG14Copy32(PixmapPtr pDstPixmap,
 					sxm(SX_LD, s, 10, num - 1);
 					sxm(SX_LD, d, 42, num - 1);
 					if (num > 16) {
-						sxi(SX_ROP(10, 42, 74, 15));
-						sxi(SX_ROP(26, 58, 90, num - 17));
+						sxi(SX_ROP, 10, 42, 74, 15);
+						sxi(SX_ROP, 26, 58, 90, num - 17);
 					} else {
-						sxi(SX_ROP(10, 42, 74, num - 1));
+						sxi(SX_ROP, 10, 42, 74, num - 1);
 					}
 					sxm(SX_STM, d, 74, num - 1);
 					s += xinc;
@@ -254,8 +254,8 @@ CG14Copy32(PixmapPtr pDstPixmap,
 				for (i = 0; i < chunks; i++) {
 					sxm(SX_LD, s, 10, 31);
 					sxm(SX_LD, d, 42, 31);
-					sxi(SX_ROP(10, 42, 74, 15));
-					sxi(SX_ROP(26, 58, 90, 15));
+					sxi(SX_ROP, 10, 42, 74, 15);
+					sxi(SX_ROP, 26, 58, 90, 15);
 					sxm(SX_STM, d, 74, 31);
 					s -= 128;
 					d -= 128;
@@ -268,10 +268,10 @@ CG14Copy32(PixmapPtr pDstPixmap,
 					sxm(SX_LD, s, 10, count - 1);
 					sxm(SX_LD, d, 42, count - 1);
 					if (count > 16) {
-						sxi(SX_ROP(10, 42, 74, 15));
-						sxi(SX_ROP(26, 58, 90, count - 17));
+						sxi(SX_ROP, 10, 42, 74, 15);
+						sxi(SX_ROP, 26, 58, 90, count - 17);
 					} else {
-						sxi(SX_ROP(10, 42, 74, count - 1));
+						sxi(SX_ROP, 10, 42, 74, count - 1);
 					}
 					sxm(SX_STM, d, 74, count - 1);
 				}
@@ -351,7 +351,7 @@ CG14Copy8_aligned_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 		if (pre > 0) {
 			sxm(SX_LDB, saddr, 8, pre - 1);
 			sxm(SX_LDB, daddr, 40, pre - 1);
-			sxi(SX_ROP(8, 40, 72, pre - 1));
+			sxi(SX_ROP, 8, 40, 72, pre - 1);
 			sxm(SX_STB, daddr, 72, pre - 1);
 			saddr += pre;
 			daddr += pre;
@@ -363,10 +363,10 @@ CG14Copy8_aligned_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 			sxm(SX_LD, saddr, 8, wrds - 1);
 			sxm(SX_LD, daddr, 40, wrds - 1);
 			if (cnt > 16) {
-				sxi(SX_ROP(8, 40, 72, 15));
-				sxi(SX_ROP(8, 56, 88, wrds - 17));
+				sxi(SX_ROP, 8, 40, 72, 15);
+				sxi(SX_ROP, 8, 56, 88, wrds - 17);
 			} else
-				sxi(SX_ROP(8, 40, 72, wrds - 1));
+				sxi(SX_ROP, 8, 40, 72, wrds - 1);
 			sxm(SX_ST, daddr, 72, wrds - 1);
 			saddr += wrds << 2;
 			daddr += wrds << 2;
@@ -375,7 +375,7 @@ CG14Copy8_aligned_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 		if (cnt > 0) {
 			sxm(SX_LDB, saddr, 8, cnt - 1);
 			sxm(SX_LDB, daddr, 40, cnt - 1);
-			sxi(SX_ROP(8, 40, 72, cnt - 1));
+			sxi(SX_ROP, 8, 40, 72, cnt - 1);
 			sxm(SX_STB, daddr, 72, cnt - 1);
 		}
 next:
@@ -443,34 +443,34 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 		sxm(SX_LD, saddr, sreg, swrds - 1);
 		if (wrds > 15) {
 			if (dist != 0) {
-				sxi(SX_FUNNEL_I(8, dist, 40, 15));
-				sxi(SX_FUNNEL_I(24, dist, 56, wrds - 16));
+				sxi(SX_FUNNEL_I, 8, dist, 40, 15);
+				sxi(SX_FUNNEL_I, 24, dist, 56, wrds - 16);
 				/* shifted source pixels are now at register 40+ */
 				ssreg = 40;
 			} else ssreg = 8;
 			if (pre != 0) {
 				/* mask out leading junk */
 				write_sx_reg(p, SX_QUEUED(R_MASK), lmask);
-				sxi(SX_ROPB(ssreg, 80, 8, 0));
+				sxi(SX_ROPB, ssreg, 80, 8, 0);
 				write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);
-				sxi(SX_ROPB(ssreg + 1, 81, 9, 14));	
+				sxi(SX_ROPB, ssreg + 1, 81, 9, 14);	
 			} else {
-				sxi(SX_ROPB(ssreg, 80, 8, 15));
+				sxi(SX_ROPB, ssreg, 80, 8, 15);
 			}
-			sxi(SX_ROPB(ssreg + 16, 96, 24, wrds - 16));
+			sxi(SX_ROPB, ssreg + 16, 96, 24, wrds - 16);
 		} else {
 			if (dist != 0) {
-				sxi(SX_FUNNEL_I(8, dist, 40, wrds));
+				sxi(SX_FUNNEL_I, 8, dist, 40, wrds);
 				ssreg = 40;
 			} else ssreg = 8;
 			if (pre != 0) {
 				/* mask out leading junk */
 				write_sx_reg(p, SX_QUEUED(R_MASK), lmask);
-				sxi(SX_ROPB(ssreg, 80, 8, 0));
+				sxi(SX_ROPB, ssreg, 80, 8, 0);
 				write_sx_reg(p, SX_QUEUED(R_MASK), 0xffffffff);
-				sxi(SX_ROPB(ssreg + 1, 81, 9, wrds));
+				sxi(SX_ROPB, ssreg + 1, 81, 9, wrds);
 			} else {
-				sxi(SX_ROPB(ssreg, 80, 8, wrds));
+				sxi(SX_ROPB, ssreg, 80, 8, wrds);
 			}
 		}
 		if (post != 0) {
@@ -482,9 +482,9 @@ CG14Copy8_short_rop(Cg14Ptr p, int srcstart, int dststart, int w, int h, int src
 			 * the left end but it's less annoying this way and
 			 * the instruction count is the same
 			 */
-			sxi(SX_ANDS(7 + wrds, 7, 5, 0));
-			sxi(SX_ANDS(79 + wrds, 6, 4, 0));
-			sxi(SX_ORS(5, 4, 7 + wrds, 0));
+			sxi(SX_ANDS, 7 + wrds, 7, 5, 0);
+			sxi(SX_ANDS, 79 + wrds, 6, 4, 0);
+			sxi(SX_ORS, 5, 4, 7 + wrds, 0);
 		}
 #ifdef DEBUG
 		sxm(SX_ST, taddr, 40, wrds - 1);
@@ -555,8 +555,8 @@ CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 		sxm(SX_LD, saddr, sreg, swrds - 1);
 		if (wrds > 15) {
 			if (dist != 0) {
-				sxi(SX_FUNNEL_I(8, dist, 40, 15));
-				sxi(SX_FUNNEL_I(24, dist, 56, wrds - 16));
+				sxi(SX_FUNNEL_I, 8, dist, 40, 15);
+				sxi(SX_FUNNEL_I, 24, dist, 56, wrds - 16);
 				/* shifted source pixels are now at reg 40+ */
 				ssreg = 40;
 			} else ssreg = 8;
@@ -564,18 +564,18 @@ CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 				/* read only the first word */
 				sxm(SX_LD, daddr, 80, 0);
 				/* mask out leading junk */
-				sxi(SX_ROPB(ssreg, 80, ssreg, 0));
+				sxi(SX_ROPB, ssreg, 80, ssreg, 0);
 			}
 		} else {
 			if (dist != 0) {
-				sxi(SX_FUNNEL_I(8, dist, 40, wrds));
+				sxi(SX_FUNNEL_I, 8, dist, 40, wrds);
 				ssreg = 40;
 			} else ssreg = 8;
 			if (pre != 0) {
 				/* read only the first word */
 				sxm(SX_LD, daddr, 80, 0);
 				/* mask out leading junk */
-				sxi(SX_ROPB(ssreg, 80, ssreg, 0));
+				sxi(SX_ROPB, ssreg, 80, ssreg, 0);
 			}
 		}
 		if (post != 0) {
@@ -589,9 +589,9 @@ CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 			 * the instruction count is the same
 			 */
 			sxm(SX_LD, laddr, 81, 0);
-			sxi(SX_ANDS(ssreg + wrds - 1, 7, 5, 0));
-			sxi(SX_ANDS(81, 6, 4, 0));
-			sxi(SX_ORS(5, 4, ssreg + wrds - 1, 0));
+			sxi(SX_ANDS, ssreg + wrds - 1, 7, 5, 0);
+			sxi(SX_ANDS, 81, 6, 4, 0);
+			sxi(SX_ORS, 5, 4, ssreg + wrds - 1, 0);
 		}
 #ifdef DEBUG
 		sxm(SX_ST, taddr, 40, wrds - 1);
@@ -810,10 +810,10 @@ CG14Copy8(PixmapPtr pDstPixmap,
 					sxm(SX_LDB, s, 10, num - 1);
 					sxm(SX_LDB, d, 42, num - 1);
 					if (num > 16) {
-						sxi(SX_ROP(10, 42, 74, 15));
-						sxi(SX_ROP(26, 58, 90, num - 17));
+						sxi(SX_ROP, 10, 42, 74, 15);
+						sxi(SX_ROP, 26, 58, 90, num - 17);
 					} else {
-						sxi(SX_ROP(10, 42, 74, num - 1));
+						sxi(SX_ROP, 10, 42, 74, num - 1);
 					}
 					sxm(SX_STBM, d, 74, num - 1);
 					s += xinc;
@@ -833,8 +833,8 @@ CG14Copy8(PixmapPtr pDstPixmap,
 				for (i = 0; i < chunks; i++) {
 					sxm(SX_LDB, s, 10, 31);
 					sxm(SX_LDB, d, 42, 31);
-					sxi(SX_ROP(10, 42, 74, 15));
-					sxi(SX_ROP(26, 58, 90, 15));
+					sxi(SX_ROP, 10, 42, 74, 15);
+					sxi(SX_ROP, 26, 58, 90, 15);
 					sxm(SX_STBM, d, 74, 31);
 					s -= 128;
 					d -= 128;
@@ -847,10 +847,10 @@ CG14Copy8(PixmapPtr pDstPixmap,
 					sxm(SX_LDB, s, 10, count - 1);
 					sxm(SX_LDB, d, 42, count - 1);
 					if (count > 16) {
-						sxi(SX_ROP(10, 42, 74, 15));
-						sxi(SX_ROP(26, 58, 90, count - 17));
+						sxi(SX_ROP, 10, 42, 74, 15);
+						sxi(SX_ROP, 26, 58, 90, count - 17);
 					} else {
-						sxi(SX_ROP(10, 42, 74, count - 1));
+						sxi(SX_ROP, 10, 42, 74, count - 1);
 					}
 					sxm(SX_STBM, d, 74, count - 1);
 				}
@@ -940,7 +940,7 @@ CG14Solid32(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 		/* alright, let's do actual ROP stuff */
 
 		/* first repeat the fill colour into 16 registers */
-		sxi(SX_SELECT_S(8, 8, 10, 15));
+		sxi(SX_SELECT_S, 8, 8, 10, 15);
 
 		for (line = 0; line < h; line++) {
 			x = 0;
@@ -954,10 +954,10 @@ CG14Solid32(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 				 * non-memory ops can only have counts up to 16
 				 */
 				if (num <= 16) {
-					sxi(SX_ROP(10, 42, 74, num - 1));
+					sxi(SX_ROP, 10, 42, 74, num - 1);
 				} else {
-					sxi(SX_ROP(10, 42, 74, 15));
-					sxi(SX_ROP(10, 58, 90, num - 17));
+					sxi(SX_ROP, 10, 42, 74, 15);
+					sxi(SX_ROP, 10, 58, 90, num - 17);
 				}
 				/* and write the result back into memory */
 				sxm(SX_ST, ptr, 74, num - 1);
@@ -1013,7 +1013,7 @@ next:
 		/* alright, let's do actual ROP stuff */
 
 		/* first repeat the fill colour into 16 registers */
-		sxi(SX_SELECT_S(8, 8, 10, 15));
+		sxi(SX_SELECT_S, 8, 8, 10, 15);
 
 		for (line = 0; line < h; line++) {
 			ptr = start;
@@ -1021,7 +1021,7 @@ next:
 			pre = min(pre, cnt);
 			if (pre) {
 				sxm(SX_LDB, ptr, 26, pre - 1);
-				sxi(SX_ROP(10, 26, 42, pre - 1));
+				sxi(SX_ROP, 10, 26, 42, pre - 1);
 				sxm(SX_STB, ptr, 42, pre - 1);
 				ptr += pre;
 				cnt -= pre;
@@ -1033,10 +1033,10 @@ next:
 				num = min(32, cnt >> 2);
 				sxm(SX_LD, ptr, 26, num - 1);
 				if (num <= 16) {
-					sxi(SX_ROP(10, 26, 58, num - 1));
+					sxi(SX_ROP, 10, 26, 58, num - 1);
 				} else {
-					sxi(SX_ROP(10, 26, 58, 15));
-					sxi(SX_ROP(10, 42, 74, num - 17));
+					sxi(SX_ROP, 10, 26, 58, 15);
+					sxi(SX_ROP, 10, 42, 74, num - 17);
 				}
 				sxm(SX_ST, ptr, 58, num - 1);
 				ptr += num << 2;
@@ -1045,7 +1045,7 @@ next:
 			if (cnt > 3) xf86Msg(X_ERROR, "%s cnt %d\n", __func__, cnt);
 			if (cnt > 0) {
 				sxm(SX_LDB, ptr, 26, cnt - 1);
-				sxi(SX_ROP(10, 26, 42, cnt - 1));
+				sxi(SX_ROP, 10, 26, 42, cnt - 1);
 				sxm(SX_STB, ptr, 42, cnt - 1);
 			}
 			if ((ptr + cnt) != (start + w)) xf86Msg(X_ERROR, "%s %x vs %x\n", __func__, ptr + cnt, start + w);
