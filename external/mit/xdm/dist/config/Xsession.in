@@ -64,6 +64,9 @@ if [ -s "$startup" ]; then
 		exec /bin/sh "$startup"
 	fi
 else
+	if [ -f $HOME/.profile ]; then
+		. $HOME/.profile
+	fi
 	if [ -r "$resources" ]; then
 		BINDIR/xrdb -load "$resources"
 	else
