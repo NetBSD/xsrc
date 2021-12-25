@@ -42,9 +42,9 @@ else
     XRDB -merge - <<EOF
 #if COLOR
 *customization: -color
+#endif
 *VT100.foreground: grey90
 *VT100.background: black
-#endif
 *VT100.allowBoldFonts:  false
 *VT100.font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 *VT100.utf8Fonts.font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
