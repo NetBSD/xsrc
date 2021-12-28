@@ -40,9 +40,7 @@ if [ -f "$userresources" ]; then
 #endif
 else
     XRDB -merge - <<EOF
-#if COLOR
 *customization: -color
-#endif
 *VT100.foreground: grey90
 *VT100.background: black
 *VT100.allowBoldFonts:  false
