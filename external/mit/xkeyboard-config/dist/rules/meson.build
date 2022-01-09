@@ -105,7 +105,6 @@ if get_option('compat-rules')
 endif # compat-rules
 
 merge_py = find_program('merge.py')
-perl = find_program('perl')
 xml2lst = find_program('xml2lst.pl')
 foreach ruleset: ['base', 'evdev']
     # generate the "evdev" and "base" rules files

@@ -1444,6 +1444,12 @@
         </variant>
         <variant>
           <configItem>
+            <name>dvorak-mac</name>
+            <description>English (Dvorak, Macintosh)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
             <name>symbolic</name>
             <description>English (US, Symbolic)</description>
           </configItem>
@@ -5496,6 +5502,12 @@
           <configItem>
             <name>otk</name>
             <description>Old Turkic</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>otkf</name>
+            <description>Old Turkic (F)</description>
           </configItem>
         </variant>
       </variantList>
