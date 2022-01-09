@@ -1,5 +1,5 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.220 2020/10/05 22:42:06 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.223 2021/08/22 20:00:07 tom Exp $ */
 
 /*
  * Copyright 1997-2019,2020 by Thomas E. Dickey
@@ -89,6 +89,7 @@
 /* #undef HAVE_NCURSES_TERM_H */	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #define HAVE_PATHS_H 1		/* CF_LASTLOG */
 /* #undef HAVE_PCRE2POSIX_H */	/* CF_WITH_PCRE2 */
+/* #undef HAVE_PCRE2REGCOMP */	/* CF_WITH_PCRE2 */
 /* #undef HAVE_PCREPOSIX_H */		/* CF_WITH_PCRE */
 #define HAVE_POSIX_OPENPT 1	/* CF_FUNC_GRANTPT */
 #define HAVE_POSIX_SAVED_IDS 1	/* CF_POSIX_SAVED_IDS */
@@ -167,7 +168,6 @@
 #define OPT_DIRECT_COLOR 1		/* CF_ARG_ENABLE(direct-color) */
 /* #undef OPT_DOUBLE_BUFFER */	/* CF_ARG_ENABLE(double-buffer) */
 /* #undef OPT_EXEC_XTERM */		/* CF_ARG_ENABLE(exec-xterm) */
-#define OPT_FIFO_LINES 1		/* CF_ARG_ENABLE(fifo-lines) */
 #define OPT_GRAPHICS 1		/* CF_ARG_ENABLE(graphics) */
 /* #undef OPT_HIGHLIGHT_COLOR */	/* CF_ARG_DISABLE(highlighting) */
 /* #undef OPT_HP_FUNC_KEYS */		/* CF_ARG_ENABLE(hp-fkeys) */

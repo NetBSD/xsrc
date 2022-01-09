@@ -1,4 +1,4 @@
-/* $XTermId: xterm.h,v 1.893 2021/06/06 23:14:40 Stelios.Bounanos Exp $ */
+/* $XTermId: xterm.h,v 1.902 2021/09/19 18:27:35 tom Exp $ */
 
 /*
  * Copyright 1999-2020,2021 by Thomas E. Dickey
@@ -963,10 +963,12 @@ extern void report_char_class(XtermWidget);
 #define WideCells(n) (((IChar)(n) >= first_widechar) ? my_wcwidth((wchar_t) (n)) : 1)
 #define isWideFrg(n) (((n) == HIDDEN_CHAR) || (WideCells((n)) == 2))
 #define isWide(n)    (((IChar)(n) >= first_widechar) && isWideFrg(n))
-#define CharWidth(n) (((n) < 256) ? (IsLatin1(n) ? 1 : 0) : my_wcwidth((wchar_t) (n)))
+#define CharWidth(screen, n) ((!((screen)->utf8_mode) && ((n) < 256)) \
+			      ? (IsLatin1(n) ? 1 : 0) \
+			      : my_wcwidth((wchar_t) (n)))
 #else
 #define WideCells(n) 1
-#define CharWidth(n) (IsLatin1(n) ? 1 : 0)
+#define CharWidth(screen, n) (IsLatin1(n) ? 1 : 0)
 #endif
 
 /* cachedCgs.c */
@@ -1165,6 +1167,7 @@ extern Window WMFrameWindow (XtermWidget /* xw */);
 extern XtInputMask xtermAppPending (void);
 extern XrmOptionDescRec * sortedOptDescs (XrmOptionDescRec *, Cardinal);
 extern XtermWidget getXtermWidget (Widget /* w */);
+extern XVisualInfo *getVisualInfo (XtermWidget /* xw */);
 extern char *udk_lookup (XtermWidget /* xw */, int /* keycode */, int * /* len */);
 extern char *xtermEnvEncoding (void);
 extern char *xtermFindShell (char * /* leaf */, Bool /* warning */);
@@ -1175,7 +1178,6 @@ extern int ResetAnsiColorRequest (XtermWidget, char *, int);
 extern int XStrCmp (char * /* s1 */, char * /* s2 */);
 extern int creat_as (uid_t /* uid */, gid_t /* gid */, Bool /* append */, char * /* pathname */, unsigned /* mode */);
 extern int getVisualDepth (XtermWidget /* xw */);
-extern int getVisualInfo (XtermWidget /* xw */);
 extern int ignore_x11_error(Display * /* dpy */, XErrorEvent * /* event */);
 extern int open_userfile (uid_t /* uid */, gid_t /* gid */, char * /* path */, Bool /* append */);
 extern int update_winsize(int /* fd */, int /* rows */, int /* cols */, int /* height */, int /* width */);
@@ -1261,6 +1263,14 @@ extern void xtermTimedDbe(XtermWidget /* xw */);
 extern char *ProcGetCWD(pid_t /* pid */);
 #else
 #define ProcGetCWD(pid) NULL
+#endif
+
+#if OPT_ISO_COLORS
+extern Boolean AllocOneColor(XtermWidget /* xw */, XColor * /* def */);
+extern Boolean QueryOneColor(XtermWidget /* xw */, XColor * /* def */);
+#else
+#define AllocOneColor(xw, def) ((def)->pixel = 0)
+#define QueryOneColor(xw, def) ((def)->red = (def)->green = (def)->blue = 0)
 #endif
 
 #if OPT_MAXIMIZE
@@ -1562,7 +1572,7 @@ extern void ChangeColors (XtermWidget  /* xw */, ScrnColors * /* pNew */);
 extern void ClearRight (XtermWidget /* xw */, int /* n */);
 extern void ClearScreen (XtermWidget /* xw */);
 extern void DeleteChar (XtermWidget /* xw */, unsigned /* n */);
-extern void DeleteLine (XtermWidget /* xw */, int /* n */);
+extern void DeleteLine (XtermWidget /* xw */, int /* n */, Bool /* canSave */);
 extern void FlushScroll (XtermWidget /* xw */);
 extern void GetColors (XtermWidget  /* xw */, ScrnColors * /* pColors */);
 extern void InsertChar (XtermWidget /* xw */, unsigned /* n */);
@@ -1572,7 +1582,7 @@ extern void ReverseVideo (XtermWidget /* xw */);
 extern void WriteText (XtermWidget /* xw */, IChar * /* str */, Cardinal /* len */);
 extern void decode_keyboard_type (XtermWidget /* xw */, struct XTERM_RESOURCE * /* rp */);
 extern void decode_wcwidth (XtermWidget  /* xw */);
-extern void do_cd_xtra_scroll (XtermWidget /* xw */);
+extern void do_cd_xtra_scroll (XtermWidget /* xw */, int /* param */);
 extern void do_erase_display (XtermWidget /* xw */, int  /* param */, int  /* mode */);
 extern void do_erase_char (XtermWidget /* xw */, int  /* param */, int  /* mode */);
 extern void do_erase_line (XtermWidget /* xw */, int  /* param */, int  /* mode */);
@@ -1615,18 +1625,11 @@ extern void ClearCurBackground (XtermWidget /* xw */, int  /* top */, int  /* le
 
 #define xtermColorPair(xw) makeColorPair(xw)
 
-#if OPT_COLOR_RES
 #define GET_COLOR_RES(xw, res) xtermGetColorRes(xw, &(res))
 #define SET_COLOR_RES(res,color) (res)->value = color
 #define EQL_COLOR_RES(res,color) (res)->value == color
 #define T_COLOR(v,n) (v)->Tcolors[n].value
 extern Pixel xtermGetColorRes(XtermWidget /* xw */, ColorRes * /* res */);
-#else
-#define GET_COLOR_RES(xw, res) res
-#define SET_COLOR_RES(res,color) *res = color
-#define EQL_COLOR_RES(res,color) *res == color
-#define T_COLOR(v,n) (v)->Tcolors[n]
-#endif
 
 #define ExtractForeground(color) (unsigned) GetCellColorFG(color)
 #define ExtractBackground(color) (unsigned) GetCellColorBG(color)
@@ -1693,7 +1696,7 @@ extern void discardRenderDraw(TScreen * /* screen */);
 #define extract_bg(xw, color, flags) (unsigned) (xw)->cur_background
 
 		/* FIXME: Reverse-Video? */
-#define T_COLOR(v,n) (v)->Tcolors[n]
+#define T_COLOR(v,n) (v)->Tcolors[n].value
 #define xtermColorPair(xw) 0
 
 #define checkVeryBoldColors(flags, fg) /* nothing */
