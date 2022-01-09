@@ -35,7 +35,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>			/* for NULL */
 #include <ctype.h>			/* for isascii() and isdigit() */
 #include <X11/Xos.h>			/* for strchr() and string routines */
-#include <X11/Xlib.h>			/* for Family contants */
+#include <X11/Xlib.h>			/* for Family constants */
 #ifdef hpux
 #include <sys/utsname.h>		/* for struct utsname */
 #endif
@@ -172,7 +172,7 @@ parse_displayname (const char *displayname,
 #ifdef HAVE_STRLCPY
         strlcpy(path, displayname, sizeof(path));
 #else
-        strncpy(path, displayname, sizeof(path));
+        strncpy(path, displayname, sizeof(path) - 1);
         path[sizeof(path) - 1] = '\0';
 #endif
         if (0 == stat(path, &sbuf)) {

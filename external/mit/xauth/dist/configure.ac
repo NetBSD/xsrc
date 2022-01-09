@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
 AC_INIT([xauth],
-	[1.1],
+	[1.1.1],
 	[https://gitlab.freedesktop.org/xorg/app/xauth/issues],
 	[xauth])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
@@ -42,7 +42,7 @@ XORG_DEFAULT_OPTIONS
 
 AC_CHECK_HEADERS([net/errno.h])
 
-AC_CHECK_FUNCS([strlcpy])
+AC_CHECK_FUNCS([reallocarray strlcpy])
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XAUTH, x11 xau xext xmuu xproto >= 7.0.17)
