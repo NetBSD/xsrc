@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: print-vt-chars.pl,v 1.1.1.1 2021/02/11 12:19:55 mrg Exp $
+# $XTermId: print-vt-chars.pl,v 1.23 2020/12/13 15:05:06 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
