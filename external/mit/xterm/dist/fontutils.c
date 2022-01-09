@@ -1,4 +1,4 @@
-/* $XTermId: fontutils.c,v 1.705 2021/06/02 23:49:10 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.709 2021/11/10 00:36:27 Rajeev.V.Pillai Exp $ */
 
 /*
  * Copyright 1998-2020,2021 by Thomas E. Dickey
@@ -180,7 +180,7 @@ set_font_width(TScreen *screen, VTwin *win, int width)
     SetFontWidth(screen, win, width);
     TRACE(("SetFontWidth  %d\n", win->f_width));
 #undef  SetFontWidth
-#define SetFontWidth(screen, win, height) set_font_width(screen, win, height)
+#define SetFontWidth(screen, win, width) set_font_width(screen, win, width)
 }
 #endif
 
@@ -1282,11 +1282,15 @@ xtermUpdateFontGCs(XtermWidget xw, MyGetFont myfunc)
 unsigned
 xtermUpdateItalics(XtermWidget xw, unsigned new_attrs, unsigned old_attrs)
 {
-    if ((new_attrs & ATR_ITALIC) && !(old_attrs & ATR_ITALIC)) {
-	xtermLoadItalics(xw);
-	xtermUpdateFontGCs(xw, getItalicFont);
-    } else if (!(new_attrs & ATR_ITALIC) && (old_attrs & ATR_ITALIC)) {
-	xtermUpdateFontGCs(xw, getNormalFont);
+    TScreen *screen = TScreenOf(xw);
+
+    if (UseItalicFont(screen)) {
+	if ((new_attrs & ATR_ITALIC) && !(old_attrs & ATR_ITALIC)) {
+	    xtermLoadItalics(xw);
+	    xtermUpdateFontGCs(xw, getItalicFont);
+	} else if (!(new_attrs & ATR_ITALIC) && (old_attrs & ATR_ITALIC)) {
+	    xtermUpdateFontGCs(xw, getNormalFont);
+	}
     }
     return new_attrs;
 }
@@ -1448,6 +1452,15 @@ loadWideFP(XtermWidget xw,
 	}
     } else {
 	xtermCopyFontInfo(infoOut, infoRef);
+    }
+#define MinWidthOf(fs) fs->min_bounds.width
+#define MaxWidthOf(fs) fs->max_bounds.width
+    xw->work.force_wideFont = False;
+    if (MaxWidthOf(infoOut->fs) != (2 * MaxWidthOf(infoRef->fs))) {
+	TRACE(("...reference width %d\n", MaxWidthOf(infoRef->fs)));
+	TRACE(("...?? double-width %d\n", 2 * MaxWidthOf(infoRef->fs)));
+	TRACE(("...actual width    %d\n", MaxWidthOf(infoOut->fs)));
+	xw->work.force_wideFont = True;
     }
     return status;
 }
@@ -1842,7 +1855,7 @@ xtermLoadItalics(XtermWidget xw)
 {
     TScreen *screen = TScreenOf(xw);
 
-    if (!screen->ifnts_ok) {
+    if (UseItalicFont(screen) && !screen->ifnts_ok) {
 	int n;
 	FontNameProperties *fp;
 	XTermFonts *data;
@@ -2442,7 +2455,7 @@ dumpXft(XtermWidget xw, XTermXftFonts *data)
 #endif
     for (c = first; c <= last; ++c) {
 	if (FcCharSetHasChar(xft->charset, c)) {
-	    int width = CharWidth(c);
+	    int width = CharWidth(screen, c);
 	    XGlyphInfo extents;
 	    Boolean big_x;
 	    Boolean big_y;
@@ -2610,7 +2623,7 @@ checkXftWidth(XtermWidget xw, XTermXftFonts *target, XTermXftFonts *source)
      * Ignore control characters - their extent information is misleading.
      */
     for (c = 32; c < 256; ++c) {
-	if (CharWidth(c) <= 0)
+	if (CharWidth(TScreenOf(xw), c) <= 0)
 	    continue;
 	if (FcCharSetHasChar(source->font->charset, c)) {
 	    (void) checkedXftWidth(XtDisplay(xw),
@@ -3626,8 +3639,7 @@ xtermMissingChar(unsigned ch, XTermFonts * font)
 #endif
 
     if (pc == 0 || CI_NONEXISTCHAR(pc)) {
-	TRACE2(("xtermMissingChar %#04x (!exists), %d cells\n",
-		ch, CharWidth(ch)));
+	TRACE2(("xtermMissingChar %#04x (!exists)\n", ch));
 	result = True;
     }
     if (ch < KNOWN_MISSING) {
@@ -4054,7 +4066,7 @@ foundXftGlyph(XtermWidget xw, XftFont *font, unsigned wc)
     if (font != 0 && XftGlyphExists(screen->display, font, wc)) {
 	int expect;
 
-	if ((expect = CharWidth(wc)) > 0) {
+	if ((expect = CharWidth(screen, wc)) > 0) {
 	    XGlyphInfo gi;
 	    int actual;
 

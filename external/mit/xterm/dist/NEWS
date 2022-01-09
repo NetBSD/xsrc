@@ -1,15 +1,40 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #368 - 2021/06/07
+                            Patch #370 - 2021/11/13
 
-     * add  DefaultOff  option  to  RenderFont  resource,  as  part of the
-       session-management feature.
-     * add auto-scroll-lock feature (patch by add Stelios Bounanos).
-     * update  the  window-size  information  returned via TIOCGWINSZ when
-       rows/columns  are  unchanged  but  the font-size changes (report by
-       Nick Black).
-     * improve  session-management  feature  by  saving/restoring the font
-       settings.
-     * update config.guess, config.sub
+     * add  -a,  -c  and -d options to query-status.pl to improve test for
+       DECRQSS.
+     * expanded  discussion  of  maximum  graphics  geometry in ctlseqs.ms
+       (suggested by Bon Wong).
+     * corrected parameter symbol for DECCARA and DECRARA in ctlseqs.ms to
+       indicate  that  multiple  parameters  may be used (report by Thomas
+       Wolff).
+     * add several test/demo scripts.
+     * improve DECCOLM, DECLRMM and DECALN referring to pseudo-code in DEC
+       070.
+     * amend a change in patch #348 which caused left/right margin mode to
+       be  reset  when  resizing  the terminal window (report by Valentine
+       Barshak).
+     * fix a misnamed macro-parameter (patch by Rajeev V. Pillai).
+     * fix spacing of wideFont when its width is not exactly twice as wide
+       as the normal font (report by Rajeev V. Pillai).
+     * suppress loading of italic font in a few places when colorITmode is
+       enabled (report/analysis by Rajeev V. Pillai).
+     * modify XTSMGRAPHICS to return failure status if the terminal is not
+       configured  to  support  the  corresponding  ReGIS or SIXEL feature
+       (report by Nick Black, notcurses #2252, notcurses #2257).
+     * modify  DECERA  and  DECFRA  to  erase  corresponding area in SIXEL
+       graphics  (patch  by  Nick  Black, notcurses #1740, vt340test #16).
+       Also modify DECSERA.
+     * equate  visuals  for  TrueColor  and  DirectColor  (patch  by Denis
+       Kaganovich).
+     * correct  computation  for  pixel  value  of rgb when using depth 16
+       (report by Denis Kaganovich).
+     * correct   wrapping  of  VT100-style  double-sized  characters  when
+       configured  for  Unicode  wide-characters  (report  by  Luis Javier
+       Merino).
+     * updated default value for sixelScrolling resource to match expected
+       behavior  versus  DECSDM  change  in  patch  #369  (report by Grant
+       Taylor).
 
