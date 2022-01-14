@@ -333,6 +333,7 @@ pci_device_netbsd_probe(struct pci_device *device)
 	err = pci_read(domain, bus, dev, func, PCI_COMMAND_STATUS_REG, &reg);
 	if (err)
 		return err;
+#ifndef AVOID_DEVICE_ENABLE
 	if ((reg & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) !=
 	    (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) {
 		reg |= PCI_COMMAND_IO_ENABLE |
@@ -343,7 +344,7 @@ pci_device_netbsd_probe(struct pci_device *device)
 		if (err)
 			return err;
 	}
-
+#endif
 	err = pci_read(domain, bus, dev, func, PCI_BHLC_REG, &reg);
 	if (err)
 		return err;
