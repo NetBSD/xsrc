@@ -1,4 +1,4 @@
-/* $NetBSD: xsetwallpaper.c,v 1.3 2020/02/08 20:29:30 jmcneill Exp $ */
+/* $NetBSD: xsetwallpaper.c,v 1.4 2022/02/11 14:43:27 wiz Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsetwallpaper.c,v 1.3 2020/02/08 20:29:30 jmcneill Exp $");
+__RCSID("$NetBSD: xsetwallpaper.c,v 1.4 2022/02/11 14:43:27 wiz Exp $");
 
 #include <sys/endian.h>
 
@@ -46,7 +46,7 @@ static uint8_t *	resize_nn(const uint8_t *, int, int, int, int);
 static void
 usage(const char *pn)
 {
-	fprintf(stderr, "usage: %s [-f fillcolor] [-s] filename\n", pn);
+	fprintf(stderr, "usage: %s [-s] [-f fillcolor] filename\n", pn);
 	exit(EXIT_FAILURE);
 }
 
