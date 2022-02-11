@@ -1,4 +1,4 @@
-.\"	$NetBSD: xsetwallpaper.1,v 1.1 2022/02/11 02:16:40 uwe Exp $
+.\"	$NetBSD: xsetwallpaper.1,v 1.2 2022/02/11 14:43:01 wiz Exp $
 .\"
 .\" Copyright (c) 2022 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -31,8 +31,8 @@
 .Nd draw an image on the root window
 .Sh SYNOPSIS
 .Nm
-.Op Fl f Ar color
 .Op Fl s
+.Op Fl f Ar color
 .Ar file
 .Sh DESCRIPTION
 The
@@ -51,7 +51,8 @@ Scale the image instead of centering it.
 .El
 .Pp
 Image formats are those supported by the STB image library.
-See http://nothings.org/stb
+See
+.Lk http://nothings.org/stb
 .Sh SEE ALSO
 .Xr xsetroot 1
 .Sh HISTORY
