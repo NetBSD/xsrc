@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.28 2021/12/24 05:22:54 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.29 2022/03/04 05:56:55 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -1495,7 +1495,7 @@ CG14InitAccel(ScreenPtr pScreen)
 
 	pExa->memoryBase = p->fb;
 	pExa->memorySize = p->memsize;
-	pExa->offScreenBase = p->width * p->height * (pScrn->depth >> 3);
+	pExa->offScreenBase = p->width * p->height * (pScrn->bitsPerPixel >> 3);
 
 	/*
 	 * SX memory instructions are written to 64bit aligned addresses with
