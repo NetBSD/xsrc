@@ -442,7 +442,8 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     Cg6Ptr pCg6;
     sbusDevicePtr psdp;
-    int ret;
+    int ret, prom, len, vmsize;
+    char *b;
 
     pCg6 = GET_CG6_FROM_SCRN(pScrn);
     psdp = pCg6->psdp;
@@ -457,6 +458,17 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
      * usable VRAM ONLY. Works with NetBSD, may crash and burn on other OSes.
      */
     pCg6->vidmem = 2 * 1024 * 1024;
+
+    prom = sparcPromInit();
+    b = sparcPromGetProperty(&psdp->node, "vmsize", &len);
+    if (len == 4 && b != NULL) {
+    	memcpy(&vmsize, b, 4);
+	pCg6->vidmem = vmsize * 1024 * 1024; 	
+    }
+
+    if (prom)
+    	sparcPromClose();
+
     pCg6->fb = xf86MapSbusMem(psdp, CG6_RAM_VOFF, pCg6->vidmem);
     
     if (pCg6->fb == NULL) {
