@@ -3,6 +3,6 @@
 # Identity of this package.
 PACKAGE_NAME='libdrm'
 PACKAGE_TARNAME='libdrm'
-PACKAGE_VERSION='2.4.102'
-PACKAGE_STRING='libdrm 2.4.102'
+PACKAGE_VERSION='2.4.109'
+PACKAGE_STRING='libdrm 2.4.109'
 PACKAGE_URL=''
