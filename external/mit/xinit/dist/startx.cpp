@@ -282,7 +282,7 @@ if [ x"$enable_xauth" = x1 ] ; then
 
     XCOMM create a file with auth information for the server. ':0' is a dummy.
     xserverauthfile=$HOME/.serverauth.$$
-    trap "rm -f '$xserverauthfile'" HUP INT QUIT ILL TRAP KILL BUS TERM
+    trap "rm -f '$xserverauthfile'" HUP INT QUIT ILL TRAP BUS TERM
     xauth -q -f "$xserverauthfile" << EOF
 add :$dummy . $mcookie
 EOF
