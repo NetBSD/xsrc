@@ -143,4 +143,4 @@ DIAGNOSTICS
 SEE ALSO
 --------
 
-   XSetDeviceButtonMapping(libmansuffix), XSetDeviceModifierMapping(__libmansuffix_)
+   XSetDeviceButtonMapping(libmansuffix), XSetDeviceModifierMapping(libmansuffix)

@@ -354,7 +354,7 @@ BadAlloc
 .RS 4
 .\}
 .nf
-XSetDeviceButtonMapping(libmansuffix), XSetDeviceModifierMapping(__libmansuffix_)
+XSetDeviceButtonMapping(libmansuffix), XSetDeviceModifierMapping(libmansuffix)
 .fi
 .if n \{\
 .RE
