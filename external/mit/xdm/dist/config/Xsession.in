@@ -1,5 +1,6 @@
 XCOMM!SHELL_CMD
 XCOMM
+XHASH $NetBSD: Xsession.in,v 1.11 2022/05/08 08:17:06 nia Exp $
 
 XCOMM redirect errors to a file in user's home directory if we can
 
@@ -93,10 +94,17 @@ Xgc*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmag*font:      -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmessage*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontNormal:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontBold:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontItalic:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*directoryFontNormal:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 	fi
 	BINDIR/xsetroot -cursor_name left_ptr
 	BINDIR/xsetroot -solid 'rgb:00/22/44'
 	BINDIR/uxterm &
+	BINDIR/xclock -digital -strftime '%a %Y-%m-%d %H:%M' \
+		-face "spleen:pixelsize=$fontsize" -g +0+0 &
 	exec BINDIR/ctwm -W
 fi

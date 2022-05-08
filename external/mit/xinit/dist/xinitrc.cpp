@@ -1,4 +1,5 @@
 XCOMM!SHELL_CMD
+XHASH $NetBSD: xinitrc.cpp,v 1.14 2022/05/08 08:17:06 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -62,6 +63,11 @@ Xgc*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmag*font:      -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmessage*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontNormal:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontBold:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*manualFontItalic:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+Xman*directoryFontNormal:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 fi
 
@@ -80,5 +86,7 @@ fi
 
 XSETROOT -cursor_name left_ptr
 XSETROOT -solid 'rgb:00/22/44'
+XCLOCK -digital -strftime '%a %Y-%m-%d %H:%M' \
+	-face "spleen:pixelsize=$fontsize" -g +0+0 &
 UXTERM &
 exec CTWM -W
