@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.14 2022/05/08 08:17:06 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.15 2022/05/08 09:09:58 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -48,7 +48,25 @@ XHASH endif
 *VT100.background: black
 *VT100.allowBoldFonts:  false
 *VT100.font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+*VT100.fontdefault:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 *VT100.utf8Fonts.font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+*VT100.utf8Fonts.fontdefault:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+*VT100.font1:	-*-spleen-medium-r-*-*-6-*-*-*-*-*-*-*
+*VT100.font2:	-*-spleen-medium-r-*-*-8-*-*-*-*-*-*-*
+*VT100.font3:	-*-spleen-medium-r-*-*-12-*-*-*-*-*-*-*
+*VT100.font4:	-*-spleen-medium-r-*-*-16-*-*-*-*-*-*-*
+*VT100.font5:	-*-spleen-medium-r-*-*-24-*-*-*-*-*-*-*
+*VT100.font6:	-*-spleen-medium-r-*-*-32-*-*-*-*-*-*-*
+*VT100.font7:	-*-spleen-medium-r-*-*-64-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font1:	-*-spleen-medium-r-*-*-6-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font2:	-*-spleen-medium-r-*-*-8-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font3:	-*-spleen-medium-r-*-*-12-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font4:	-*-spleen-medium-r-*-*-16-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font5:	-*-spleen-medium-r-*-*-24-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font6:	-*-spleen-medium-r-*-*-32-*-*-*-*-*-*-*
+*VT100.utf8Fonts.font7:	-*-spleen-medium-r-*-*-64-*-*-*-*-*-*-*
+*SimpleMenu*font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
+*SimpleMenu*menuLabel.font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Bitmap*font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Editres*font:   -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Viewres*font:   -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
