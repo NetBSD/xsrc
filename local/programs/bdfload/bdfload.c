@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.1 2019/01/02 22:05:24 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.2 2022/05/09 15:47:27 uwe Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -89,7 +89,7 @@ interpret(FILE *foo)
 				printf("failed to allocate %dKB for glyphs\n",
 				    buflen);
 				exit(1);
-			} 
+			}
 		} else if (strcmp(line, "CHARS") == 0) {
 			if (sscanf(arg, "%d", &num) == 1)
 				printf("number of characters: %d\n", num);
@@ -139,7 +139,7 @@ interpret(FILE *foo)
 				} else {
 					*bptr16 = htobe16(l);
 					bptr16++;
-				}			
+				}
 			}
 		}
 	}
@@ -158,7 +158,7 @@ interpret(FILE *foo)
 	f.data = &buffer[first * charsize];
 
 	fdev = open("/dev/wsfont", O_RDWR, 0);
-	if (fdev < 0) errx(1, "unable to open /dev/wsfont");	
+	if (fdev < 0) errx(1, "unable to open /dev/wsfont");
 	ioctl(fdev, WSDISPLAYIO_LDFONT, &f);
 	close(fdev);
 }
