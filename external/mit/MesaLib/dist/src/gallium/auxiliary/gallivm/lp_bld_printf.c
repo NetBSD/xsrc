@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "util/compiler.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -48,8 +49,6 @@ lp_build_print_args(struct gallivm_state* gallivm,
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMContextRef context = gallivm->context;
-   LLVMValueRef func_printf;
-   LLVMTypeRef printf_type;
    int i;
 
    assert(args);
@@ -64,11 +63,11 @@ lp_build_print_args(struct gallivm_state* gallivm,
          args[i] = LLVMBuildFPExt(builder, args[i], LLVMDoubleTypeInContext(context), "");
    }
 
-   printf_type = LLVMFunctionType(LLVMInt32TypeInContext(context), NULL, 0, 1);
-   func_printf = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)debug_printf));
-   func_printf = LLVMBuildBitCast(builder, func_printf, LLVMPointerType(printf_type, 0), "debug_printf");
-
-   return LLVMBuildCall(builder, func_printf, args, argcount, "");
+   if (!gallivm->debug_printf_hook) {
+      LLVMTypeRef printf_type = LLVMFunctionType(LLVMInt32TypeInContext(context), NULL, 0, 1);
+      gallivm->debug_printf_hook = LLVMAddFunction(gallivm->module, "debug_printf", printf_type);
+   }
+   return LLVMBuildCall(builder, gallivm->debug_printf_hook, args, argcount, "");
 }
 
 
@@ -108,7 +107,7 @@ lp_build_print_value(struct gallivm_state *gallivm,
       type_fmt[5] = '\0';
    } else if (type_kind == LLVMIntegerTypeKind) {
       if (LLVMGetIntTypeWidth(type_ref) == 64) {
-         util_snprintf(type_fmt + 2, 3, "%s", PRId64);
+         snprintf(type_fmt + 2, 3, "%s", PRId64);
       } else if (LLVMGetIntTypeWidth(type_ref) == 8) {
          type_fmt[2] = 'u';
       } else {
@@ -126,12 +125,12 @@ lp_build_print_value(struct gallivm_state *gallivm,
 
    params[1] = lp_build_const_string(gallivm, msg);
    if (length == 1) {
-      util_strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
+      strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
       params[2] = value;
    } else {
       for (i = 0; i < length; ++i) {
          LLVMValueRef param;
-         util_strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
+         strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
          param = LLVMBuildExtractElement(builder, value, lp_build_const_int32(gallivm, i), "");
          if (type_kind == LLVMIntegerTypeKind &&
              LLVMGetIntTypeWidth(type_ref) < sizeof(int) * 8) {
@@ -146,7 +145,7 @@ lp_build_print_value(struct gallivm_state *gallivm,
       }
    }
 
-   util_strncat(format, "\n", sizeof(format) - strlen(format) - 1);
+   strncat(format, "\n", sizeof(format) - strlen(format) - 1);
 
    params[0] = lp_build_const_string(gallivm, format);
    return lp_build_print_args(gallivm, 2 + length, params);
@@ -175,7 +174,7 @@ lp_get_printf_arg_count(const char *fmt)
           p += 3;
                continue;
        }
-       /* fallthrough */
+       FALLTHROUGH;
     default:
        count ++;
       }

@@ -53,9 +53,9 @@
       &glsl_type::_struct_##NAME##_type;
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   glsl_struct_field(glsl_type::float_type, "near"),
-   glsl_struct_field(glsl_type::float_type, "far"),
-   glsl_struct_field(glsl_type::float_type, "diff"),
+   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "near"),
+   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "far"),
+   glsl_struct_field(glsl_type::float_type, GLSL_PRECISION_HIGH, "diff"),
 };
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
@@ -83,12 +83,12 @@ static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
    glsl_struct_field(glsl_type::vec4_type, "position"),
    glsl_struct_field(glsl_type::vec4_type, "halfVector"),
    glsl_struct_field(glsl_type::vec3_type, "spotDirection"),
-   glsl_struct_field(glsl_type::float_type, "spotExponent"),
-   glsl_struct_field(glsl_type::float_type, "spotCutoff"),
    glsl_struct_field(glsl_type::float_type, "spotCosCutoff"),
    glsl_struct_field(glsl_type::float_type, "constantAttenuation"),
    glsl_struct_field(glsl_type::float_type, "linearAttenuation"),
    glsl_struct_field(glsl_type::float_type, "quadraticAttenuation"),
+   glsl_struct_field(glsl_type::float_type, "spotExponent"),
+   glsl_struct_field(glsl_type::float_type, "spotCutoff"),
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {

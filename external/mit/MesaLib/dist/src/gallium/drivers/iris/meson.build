@@ -34,65 +34,64 @@ files_libiris = files(
   'iris_draw.c',
   'iris_fence.c',
   'iris_fence.h',
+  'iris_fine_fence.c',
+  'iris_fine_fence.h',
   'iris_formats.c',
+  'iris_genx_macros.h',
+  'iris_genx_protos.h',
+  'iris_measure.c',
+  'iris_measure.h',
+  'iris_monitor.c',
+  'iris_perf.h',
+  'iris_perf.c',
+  'iris_performance_query.c',
   'iris_pipe.h',
   'iris_pipe_control.c',
   'iris_program.c',
   'iris_program_cache.c',
-  'iris_query.c',
   'iris_resolve.c',
   'iris_resource.c',
   'iris_resource.h',
   'iris_screen.c',
   'iris_screen.h',
+  'iris_disk_cache.c',
 )
 
-iris_driinfo_h = custom_target(
-  'iris_driinfo.h',
-  input : files(
-    '../../../util/merge_driinfo.py',
-    '../../auxiliary/pipe-loader/driinfo_gallium.h', 'driinfo_iris.h'
-  ),
-  output : 'iris_driinfo.h',
-  command : [prog_python, '@INPUT@'],
-  capture : true,
-)
-
-iris_gen_libs = []
-foreach v : ['80', '90', '100', '110']
-  iris_gen_libs += static_library(
-    'libiris_gen@0@'.format(v),
-    ['iris_blorp.c', 'iris_state.c', gen_xml_pack],
-    include_directories : [inc_common, inc_intel, inc_nir],
+iris_per_hw_ver_libs = []
+foreach v : ['80', '90', '110', '120', '125']
+  iris_per_hw_ver_libs += static_library(
+    'iris_per_hw_ver@0@'.format(v),
+    ['iris_blorp.c', 'iris_query.c', 'iris_state.c', gen_xml_pack],
+    include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_intel],
     c_args : [
-      c_vis_args, no_override_init_args, c_sse2_args,
-      '-DGEN_VERSIONx10=@0@'.format(v),
+      no_override_init_args, c_sse2_args,
+      '-DGFX_VERx10=@0@'.format(v),
     ],
-    dependencies : [dep_libdrm, dep_valgrind],
+    gnu_symbol_visibility : 'hidden',
+    dependencies : [dep_libdrm, dep_valgrind, idep_genxml, idep_nir_headers],
   )
 endforeach
 
 libiris = static_library(
   'iris',
-  [files_libiris, gen_xml_pack, nir_opcodes_h, nir_builder_opcodes_h,
-   iris_driinfo_h],
+  [files_libiris, gen_xml_pack],
   include_directories : [
-    inc_src, inc_include, inc_gallium, inc_gallium_aux, inc_intel, inc_nir,
+    inc_src, inc_include, inc_gallium, inc_gallium_aux, inc_intel,
     inc_gallium_drivers,
     # these should not be necessary, but main/macros.h...
     inc_mesa, inc_mapi
   ],
-  c_args : [c_vis_args, c_sse2_args],
-  cpp_args : [cpp_vis_args, c_sse2_args],
-  dependencies : [dep_libdrm, dep_valgrind, idep_genxml],
+  c_args : [c_sse2_args],
+  cpp_args : [c_sse2_args],
+  gnu_symbol_visibility : 'hidden',
+  dependencies : [dep_libdrm, dep_valgrind, idep_genxml, idep_libintel_common, idep_nir_headers],
   link_with : [
-    iris_gen_libs, libintel_common, libintel_compiler, libintel_dev, libisl,
-    libblorp
+    iris_per_hw_ver_libs, libintel_compiler, libintel_dev, libisl,
+    libblorp, libintel_perf
   ],
 )
 
 driver_iris = declare_dependency(
   compile_args : '-DGALLIUM_IRIS',
-  sources : iris_driinfo_h,
   link_with : [libiris, libiriswinsys],
 )

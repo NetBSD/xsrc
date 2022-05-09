@@ -108,8 +108,7 @@ nir_instr_worklist_create() {
    if (!wl)
       return NULL;
 
-   if (!u_vector_init(&wl->instr_vec, sizeof(struct nir_instr *),
-                      sizeof(struct nir_instr *) * 8)) {
+   if (!u_vector_init_pow2(&wl->instr_vec, 8, sizeof(struct nir_instr *))) {
       free(wl);
       return NULL;
    }
@@ -124,7 +123,7 @@ nir_instr_worklist_length(nir_instr_worklist *wl)
 }
 
 static inline bool
-nir_instr_worklist_empty(nir_instr_worklist *wl)
+nir_instr_worklist_is_empty(nir_instr_worklist *wl)
 {
    return nir_instr_worklist_length(wl) == 0;
 }
@@ -153,6 +152,9 @@ nir_instr_worklist_pop_head(nir_instr_worklist *wl)
 
    return *vec_instr;
 }
+
+void
+nir_instr_worklist_add_ssa_srcs(nir_instr_worklist *wl, nir_instr *instr);
 
 #define nir_foreach_instr_in_worklist(instr, wl) \
    for (nir_instr *instr; (instr = nir_instr_worklist_pop_head(wl));)

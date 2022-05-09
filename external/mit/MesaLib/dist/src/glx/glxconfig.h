@@ -33,14 +33,12 @@
 struct glx_config {
     struct glx_config * next;
 
-    GLboolean rgbMode;
-    GLboolean floatMode;
-    GLboolean colorIndexMode;
     GLuint doubleBufferMode;
     GLuint stereoMode;
 
     GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
     GLuint redMask, greenMask, blueMask, alphaMask;
+    GLuint redShift, greenShift, blueShift, alphaShift;
     GLint rgbBits;		/* total bits for rgb */
     GLint indexBits;		/* total bits for colorindex */
 
@@ -51,8 +49,6 @@ struct glx_config {
     GLint numAuxBuffers;
 
     GLint level;
-
-    GLint pixmapMode;
 
     /* GLX */
     GLint visualID;
@@ -104,20 +100,6 @@ struct glx_config {
     /* EXT_framebuffer_sRGB */
     GLint sRGBCapable;
 };
-
-#define __GLX_MIN_CONFIG_PROPS	18
-#define __GLX_MAX_CONFIG_PROPS	500
-#define __GLX_EXT_CONFIG_PROPS	10
-
-/*
-** Since we send all non-core visual properties as token, value pairs,
-** we require 2 words across the wire. In order to maintain backwards
-** compatibility, we need to send the total number of words that the
-** VisualConfigs are sent back in so old libraries can simply "ignore"
-** the new properties.
-*/
-#define __GLX_TOTAL_CONFIG \
-   (__GLX_MIN_CONFIG_PROPS + 2 * __GLX_EXT_CONFIG_PROPS)
 
 extern GLint _gl_convert_from_x_visual_type(int visualType);
 

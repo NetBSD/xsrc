@@ -40,10 +40,13 @@
 
 #include <libsync.h> /* Requires Android or libdrm-2.4.72 */
 
-#include "main/imports.h"
+#include "util/os_file.h"
+#include "util/u_memory.h"
+#include <xf86drm.h>
 
 #include "brw_context.h"
-#include "intel_batchbuffer.h"
+#include "brw_batch.h"
+#include "mesa/main/externalobjects.h"
 
 struct brw_fence {
    struct brw_context *brw;
@@ -71,6 +74,90 @@ struct brw_gl_sync {
    struct gl_sync_object gl;
    struct brw_fence fence;
 };
+
+struct intel_semaphore_object {
+   struct gl_semaphore_object Base;
+   struct drm_syncobj_handle *syncobj;
+};
+
+static inline struct intel_semaphore_object *
+intel_semaphore_object(struct gl_semaphore_object *sem_obj) {
+   return (struct intel_semaphore_object*) sem_obj;
+}
+
+static struct gl_semaphore_object *
+intel_semaphoreobj_alloc(struct gl_context *ctx, GLuint name)
+{
+   struct intel_semaphore_object *is_obj = CALLOC_STRUCT(intel_semaphore_object);
+   if (!is_obj)
+      return NULL;
+
+   _mesa_initialize_semaphore_object(ctx, &is_obj->Base, name);
+   return &is_obj->Base;
+}
+
+static void
+intel_semaphoreobj_free(struct gl_context *ctx,
+                     struct gl_semaphore_object *semObj)
+{
+   _mesa_delete_semaphore_object(ctx, semObj);
+}
+
+static void
+intel_semaphoreobj_import(struct gl_context *ctx,
+                                struct gl_semaphore_object *semObj,
+                                int fd)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_screen *screen = brw->screen;
+   struct intel_semaphore_object *iSemObj = intel_semaphore_object(semObj);
+   iSemObj->syncobj = CALLOC_STRUCT(drm_syncobj_handle);
+   iSemObj->syncobj->fd = fd;
+
+   if (drmIoctl(screen->fd, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, iSemObj->syncobj) < 0) {
+      fprintf(stderr, "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE failed: %s\n",
+              strerror(errno));
+      free(iSemObj->syncobj);
+   }
+}
+
+static void
+intel_semaphoreobj_signal(struct gl_context *ctx,
+                                       struct gl_semaphore_object *semObj,
+                                       GLuint numBufferBarriers,
+                                       struct gl_buffer_object **bufObjs,
+                                       GLuint numTextureBarriers,
+                                       struct gl_texture_object **texObjs,
+                                       const GLenum *dstLayouts)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_semaphore_object *iSemObj = intel_semaphore_object(semObj);
+   struct drm_i915_gem_exec_fence *fence =
+      util_dynarray_grow(&brw->batch.exec_fences, struct drm_i915_gem_exec_fence *, 1);
+   fence->flags = I915_EXEC_FENCE_SIGNAL;
+   fence->handle = iSemObj->syncobj->handle;
+   brw->batch.contains_fence_signal = true;
+}
+
+static void
+intel_semaphoreobj_wait(struct gl_context *ctx,
+                                     struct gl_semaphore_object *semObj,
+                                     GLuint numBufferBarriers,
+                                     struct gl_buffer_object **bufObjs,
+                                     GLuint numTextureBarriers,
+                                     struct gl_texture_object **texObjs,
+                                     const GLenum *srcLayouts)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_screen *screen = brw->screen;
+   struct intel_semaphore_object *iSemObj = intel_semaphore_object(semObj);
+   struct drm_syncobj_wait args = {
+      .handles = (uintptr_t)&iSemObj->syncobj->handle,
+      .count_handles = 1,
+   };
+
+   drmIoctl(screen->fd, DRM_IOCTL_SYNCOBJ_WAIT, &args);
+}
 
 static void
 brw_fence_init(struct brw_context *brw, struct brw_fence *fence,
@@ -138,7 +225,7 @@ brw_fence_insert_locked(struct brw_context *brw, struct brw_fence *fence)
     * compositor may read the incomplete framebuffer instead.
     */
    if (driDrawable)
-      intel_resolve_for_dri2_flush(brw, driDrawable);
+      brw_resolve_for_dri2_flush(brw, driDrawable);
    brw_emit_mi_flush(brw);
 
    switch (fence->type) {
@@ -149,7 +236,7 @@ brw_fence_insert_locked(struct brw_context *brw, struct brw_fence *fence)
       fence->batch_bo = brw->batch.batch.bo;
       brw_bo_reference(fence->batch_bo);
 
-      if (intel_batchbuffer_flush(brw) < 0) {
+      if (brw_batch_flush(brw) < 0) {
          brw_bo_unreference(fence->batch_bo);
          fence->batch_bo = NULL;
          return false;
@@ -162,19 +249,19 @@ brw_fence_insert_locked(struct brw_context *brw, struct brw_fence *fence)
          /* Create an out-fence that signals after all pending commands
           * complete.
           */
-         if (intel_batchbuffer_flush_fence(brw, -1, &fence->sync_fd) < 0)
+         if (brw_batch_flush_fence(brw, -1, &fence->sync_fd) < 0)
             return false;
          assert(fence->sync_fd != -1);
       } else {
          /* Wait on the in-fence before executing any subsequently submitted
           * commands.
           */
-         if (intel_batchbuffer_flush(brw) < 0)
+         if (brw_batch_flush(brw) < 0)
             return false;
 
          /* Emit a dummy batch just for the fence. */
          brw_emit_mi_flush(brw);
-         if (intel_batchbuffer_flush_fence(brw, fence->sync_fd, NULL) < 0)
+         if (brw_batch_flush_fence(brw, fence->sync_fd, NULL) < 0)
             return false;
       }
       break;
@@ -204,7 +291,7 @@ brw_fence_has_completed_locked(struct brw_fence *fence)
    switch (fence->type) {
    case BRW_FENCE_TYPE_BO_WAIT:
       if (!fence->batch_bo) {
-         /* There may be no batch if intel_batchbuffer_flush() failed. */
+         /* There may be no batch if brw_batch_flush() failed. */
          return false;
       }
 
@@ -255,7 +342,7 @@ brw_fence_client_wait_locked(struct brw_context *brw, struct brw_fence *fence,
    switch (fence->type) {
    case BRW_FENCE_TYPE_BO_WAIT:
       if (!fence->batch_bo) {
-         /* There may be no batch if intel_batchbuffer_flush() failed. */
+         /* There may be no batch if brw_batch_flush() failed. */
          return false;
       }
 
@@ -354,6 +441,7 @@ brw_gl_delete_sync(struct gl_context *ctx, struct gl_sync_object *_sync)
    struct brw_gl_sync *sync = (struct brw_gl_sync *) _sync;
 
    brw_fence_finish(&sync->fence);
+   free(sync->gl.Label);
    free(sync);
 }
 
@@ -415,6 +503,11 @@ brw_init_syncobj_functions(struct dd_function_table *functions)
    functions->CheckSync = brw_gl_check_sync;
    functions->ClientWaitSync = brw_gl_client_wait_sync;
    functions->ServerWaitSync = brw_gl_server_wait_sync;
+   functions->NewSemaphoreObject = intel_semaphoreobj_alloc;
+   functions->DeleteSemaphoreObject = intel_semaphoreobj_free;
+   functions->ImportSemaphoreFd = intel_semaphoreobj_import;
+   functions->ServerSignalSemaphoreObject = intel_semaphoreobj_signal;
+   functions->ServerWaitSemaphoreObject = intel_semaphoreobj_wait;
 }
 
 static void *
@@ -473,7 +566,7 @@ brw_dri_server_wait_sync(__DRIcontext *ctx, void *_fence, unsigned flags)
 static unsigned
 brw_dri_get_capabilities(__DRIscreen *dri_screen)
 {
-   struct intel_screen *screen = dri_screen->driverPrivate;
+   struct brw_screen *screen = dri_screen->driverPrivate;
    unsigned caps = 0;
 
    if (screen->has_exec_fence)
@@ -502,7 +595,7 @@ brw_dri_create_fence_fd(__DRIcontext *dri_ctx, int fd)
          goto fail;
    } else {
       /* Import the sync fd as an in-fence. */
-      fence->sync_fd = dup(fd);
+      fence->sync_fd = os_dupfd_cloexec(fd);
    }
 
    assert(fence->sync_fd != -1);
@@ -519,7 +612,7 @@ static int
 brw_dri_get_fence_fd_locked(struct brw_fence *fence)
 {
    assert(fence->type == BRW_FENCE_TYPE_SYNC_FD);
-   return dup(fence->sync_fd);
+   return os_dupfd_cloexec(fence->sync_fd);
 }
 
 static int
@@ -535,7 +628,7 @@ brw_dri_get_fence_fd(__DRIscreen *dri_screen, void *_fence)
    return fd;
 }
 
-const __DRI2fenceExtension intelFenceExtension = {
+const __DRI2fenceExtension brwFenceExtension = {
    .base = { __DRI2_FENCE, 2 },
 
    .create_fence = brw_dri_create_fence,

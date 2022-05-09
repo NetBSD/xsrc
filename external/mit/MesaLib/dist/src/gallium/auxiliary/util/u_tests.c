@@ -28,7 +28,7 @@
 #include "util/u_tests.h"
 
 #include "util/u_draw_quad.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
@@ -38,6 +38,7 @@
 #include "tgsi/tgsi_strings.h"
 #include "tgsi/tgsi_text.h"
 #include "cso_cache/cso_context.h"
+#include "frontend/winsys_handle.h"
 #include <stdio.h>
 
 #define TOLERANCE 0.01
@@ -47,7 +48,7 @@ util_create_texture2d(struct pipe_screen *screen, unsigned width,
                       unsigned height, enum pipe_format format,
                       unsigned num_samples)
 {
-   struct pipe_resource templ = {{0}};
+   struct pipe_resource templ = {0};
 
    templ.target = PIPE_TEXTURE_2D;
    templ.width0 = width;
@@ -96,7 +97,7 @@ util_set_blend_normal(struct cso_context *cso)
 static void
 util_set_dsa_disable(struct cso_context *cso)
 {
-   struct pipe_depth_stencil_alpha_state dsa = {{0}};
+   struct pipe_depth_stencil_alpha_state dsa = {{{0}}};
 
    cso_set_depth_stencil_alpha(cso, &dsa);
 }
@@ -125,6 +126,10 @@ util_set_max_viewport(struct cso_context *cso, struct pipe_resource *tex)
    viewport.translate[0] = 0.5f * tex->width0;
    viewport.translate[1] = 0.5f * tex->height0;
    viewport.translate[2] = 0.0f;
+   viewport.swizzle_x = PIPE_VIEWPORT_SWIZZLE_POSITIVE_X;
+   viewport.swizzle_y = PIPE_VIEWPORT_SWIZZLE_POSITIVE_Y;
+   viewport.swizzle_z = PIPE_VIEWPORT_SWIZZLE_POSITIVE_Z;
+   viewport.swizzle_w = PIPE_VIEWPORT_SWIZZLE_POSITIVE_W;
 
    cso_set_viewport(cso, &viewport);
 }
@@ -133,17 +138,17 @@ static void
 util_set_interleaved_vertex_elements(struct cso_context *cso,
                                      unsigned num_elements)
 {
+   struct cso_velems_state velem;
    unsigned i;
-   struct pipe_vertex_element *velem =
-      calloc(1, num_elements * sizeof(struct pipe_vertex_element));
 
+   memset(&velem, 0, sizeof(velem));
+   velem.count = num_elements;
    for (i = 0; i < num_elements; i++) {
-      velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velem[i].src_offset = i * 16;
+      velem.velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem.velems[i].src_offset = i * 16;
    }
 
-   cso_set_vertex_elements(cso, num_elements, velem);
-   free(velem);
+   cso_set_vertex_elements(cso, &velem);
 }
 
 static void *
@@ -176,7 +181,7 @@ util_set_common_states_and_clear(struct cso_context *cso, struct pipe_context *c
    util_set_rasterizer_normal(cso);
    util_set_max_viewport(cso, cb);
 
-   ctx->clear(ctx, PIPE_CLEAR_COLOR0, (void*)clear_color, 0, 0);
+   ctx->clear(ctx, PIPE_CLEAR_COLOR0, NULL, (void*)clear_color, 0, 0);
 }
 
 static void
@@ -226,10 +231,10 @@ util_probe_rect_rgba_multi(struct pipe_context *ctx, struct pipe_resource *tex,
    unsigned x,y,e,c;
    bool pass = true;
 
-   map = pipe_transfer_map(ctx, tex, 0, 0, PIPE_TRANSFER_READ,
+   map = pipe_texture_map(ctx, tex, 0, 0, PIPE_MAP_READ,
                            offx, offy, w, h, &transfer);
-   pipe_get_tile_rgba(transfer, map, 0, 0, w, h, pixels);
-   pipe_transfer_unmap(ctx, transfer);
+   pipe_get_tile_rgba(transfer, map, 0, 0, w, h, tex->format, pixels);
+   pipe_texture_unmap(ctx, transfer);
 
    for (e = 0; e < num_expected_colors; e++) {
       for (y = 0; y < h; y++) {
@@ -284,7 +289,7 @@ util_report_result_helper(int status, const char *name, ...)
    va_list ap;
 
    va_start(ap, name);
-   util_vsnprintf(buf, sizeof(buf), name, ap);
+   vsnprintf(buf, sizeof(buf), name, ap);
    va_end(ap);
 
    printf("Test(%s) = %s\n", buf,
@@ -387,7 +392,7 @@ null_sampler_view(struct pipe_context *ctx, unsigned tgsi_tex_target)
                               PIPE_FORMAT_R8G8B8A8_UNORM, 0);
    util_set_common_states_and_clear(cso, ctx, cb);
 
-   ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 1, NULL);
+   ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 0, 1, false, NULL);
 
    /* Fragment shader. */
    fs = util_make_fragment_tex_shader(ctx, tgsi_tex_target,
@@ -442,7 +447,7 @@ util_test_constant_buffer(struct pipe_context *ctx,
             "MOV OUT[0], CONST[0][0]\n"
             "END\n";
       struct tgsi_token tokens[1000];
-      struct pipe_shader_state state;
+      struct pipe_shader_state state = {0};
 
       if (!tgsi_text_translate(text, tokens, ARRAY_SIZE(tokens))) {
          puts("Can't compile a fragment shader.");
@@ -472,7 +477,7 @@ util_test_constant_buffer(struct pipe_context *ctx,
 }
 
 static void
-null_fragment_shader(struct pipe_context *ctx)
+disabled_fragment_shader(struct pipe_context *ctx)
 {
    struct cso_context *cso;
    struct pipe_resource *cb;
@@ -492,6 +497,9 @@ null_fragment_shader(struct pipe_context *ctx)
 
    vs = util_set_passthrough_vertex_shader(cso, ctx, false);
 
+   void *fs = util_make_empty_fragment_shader(ctx);
+   cso_set_fragment_shader_handle(cso, fs);
+
    query = ctx->create_query(ctx, PIPE_QUERY_PRIMITIVES_GENERATED, 0);
    ctx->begin_query(ctx, query);
    util_draw_fullscreen_quad(cso);
@@ -501,6 +509,7 @@ null_fragment_shader(struct pipe_context *ctx)
    /* Cleanup. */
    cso_destroy_context(cso);
    ctx->delete_vs_state(ctx, vs);
+   ctx->delete_fs_state(ctx, fs);
    ctx->destroy_query(ctx, query);
    pipe_resource_reference(&cb, NULL);
 
@@ -623,15 +632,15 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
 
    assert(num_samples >= 1 && num_samples <= 8);
 
-   util_snprintf(name, sizeof(name), "%s: %s, %u samples", __func__,
-                 use_fbfetch ? "FBFETCH" : "sampler", MAX2(num_samples, 1));
+   snprintf(name, sizeof(name), "%s: %s, %u samples", __func__,
+            use_fbfetch ? "FBFETCH" : "sampler", MAX2(num_samples, 1));
 
    if (!ctx->screen->get_param(ctx->screen, PIPE_CAP_TEXTURE_BARRIER)) {
       util_report_result_helper(SKIP, name);
       return;
    }
    if (use_fbfetch &&
-       !ctx->screen->get_param(ctx->screen, PIPE_CAP_TGSI_FS_FBFETCH)) {
+       !ctx->screen->get_param(ctx->screen, PIPE_CAP_FBFETCH)) {
       util_report_result_helper(SKIP, name);
       return;
    }
@@ -689,7 +698,7 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
              "ADD OUT[0], TEMP[0], IMM[0]\n"
              "END\n";
    } else {
-      struct pipe_sampler_view templ = {{0}};
+      struct pipe_sampler_view templ = {0};
       templ.format = cb->format;
       templ.target = cb->target;
       templ.swizzle_r = PIPE_SWIZZLE_X;
@@ -697,7 +706,7 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
       templ.swizzle_b = PIPE_SWIZZLE_Z;
       templ.swizzle_a = PIPE_SWIZZLE_W;
       view = ctx->create_sampler_view(ctx, cb, &templ);
-      ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &view);
+      ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 1, 0, false, &view);
 
       /* Fragment shader. */
       if (num_samples > 1) {
@@ -734,7 +743,7 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
    }
 
    struct tgsi_token tokens[1000];
-   struct pipe_shader_state state;
+   struct pipe_shader_state state = {0};
 
    if (!tgsi_text_translate(text, tokens, ARRAY_SIZE(tokens))) {
       assert(0);
@@ -833,7 +842,7 @@ test_compute_clear_image(struct pipe_context *ctx)
    image.shader_access = image.access = PIPE_IMAGE_ACCESS_READ_WRITE;
    image.format = cb->format;
 
-   ctx->set_shader_images(ctx, PIPE_SHADER_COMPUTE, 0, 1, &image);
+   ctx->set_shader_images(ctx, PIPE_SHADER_COMPUTE, 0, 1, 0, &image);
 
    /* Dispatch compute. */
    struct pipe_grid_info info = {0};
@@ -858,6 +867,162 @@ test_compute_clear_image(struct pipe_context *ctx)
    util_report_result(pass);
 }
 
+#define NV12_WIDTH   2560
+#define NV12_HEIGHT  1440
+
+static bool
+nv12_validate_resource_fields(struct pipe_resource *tex)
+{
+   return tex->format == util_format_get_plane_format(PIPE_FORMAT_NV12, 0) &&
+         tex->width0 == NV12_WIDTH &&
+         tex->height0 == NV12_HEIGHT &&
+         tex->last_level == 0 &&
+         tex->usage == PIPE_USAGE_DEFAULT &&
+         tex->next &&
+         tex->next->format == util_format_get_plane_format(PIPE_FORMAT_NV12, 1) &&
+         tex->next->width0 == tex->width0 / 2 &&
+         tex->next->height0 == tex->height0 / 2 &&
+         tex->next->usage == tex->usage;
+}
+
+/* This test enforces the behavior of NV12 allocation and exports. */
+static void
+test_nv12(struct pipe_screen *screen)
+{
+   struct pipe_resource *tex = util_create_texture2d(screen, NV12_WIDTH, NV12_HEIGHT,
+                                                     PIPE_FORMAT_NV12, 1);
+
+   if (!tex) {
+      printf("resource_create failed\n");
+      util_report_result(false);
+      return;
+   }
+
+   if (!nv12_validate_resource_fields(tex)) {
+      printf("incorrect pipe_resource fields\n");
+      util_report_result(false);
+      return;
+   }
+
+   /* resource_get_param */
+   if (screen->resource_get_param) {
+      struct {
+         uint64_t handle, dmabuf, offset, stride, planes;
+      } handle[3];
+
+      /* Export */
+      for (unsigned i = 0; i < 3; i++) {
+         struct pipe_resource *res = i == 2 ? tex->next : tex;
+         unsigned plane = i == 2 ? 0 : i;
+
+         if (!screen->resource_get_param(screen, NULL, res, plane, 0, 0,
+                                         PIPE_RESOURCE_PARAM_HANDLE_TYPE_KMS,
+                                         0, &handle[i].handle)) {
+            printf("resource_get_param failed\n");
+            util_report_result(false);
+            goto cleanup;
+         }
+
+         if (!screen->resource_get_param(screen, NULL, res, plane, 0, 0,
+                                         PIPE_RESOURCE_PARAM_HANDLE_TYPE_FD,
+                                         0, &handle[i].dmabuf)) {
+            printf("resource_get_param failed\n");
+            util_report_result(false);
+            goto cleanup;
+         }
+
+         if (!screen->resource_get_param(screen, NULL, res, plane, 0, 0,
+                                         PIPE_RESOURCE_PARAM_OFFSET,
+                                         0, &handle[i].offset)) {
+            printf("resource_get_param failed\n");
+            util_report_result(false);
+            goto cleanup;
+         }
+
+         if (!screen->resource_get_param(screen, NULL, res, plane, 0, 0,
+                                         PIPE_RESOURCE_PARAM_STRIDE,
+                                         0, &handle[i].stride)) {
+            printf("resource_get_param failed\n");
+            util_report_result(false);
+            goto cleanup;
+         }
+
+         if (!screen->resource_get_param(screen, NULL, res, plane, 0, 0,
+                                         PIPE_RESOURCE_PARAM_NPLANES,
+                                         0, &handle[i].planes)) {
+            printf("resource_get_param failed\n");
+            util_report_result(false);
+            goto cleanup;
+         }
+      }
+
+      /* Validate export.  */
+      bool get_param_pass = /* Sanity checking */
+                            handle[0].handle && handle[1].handle && handle[2].handle &&
+                            handle[0].dmabuf && handle[1].dmabuf && handle[2].dmabuf &&
+                            handle[0].stride && handle[1].stride && handle[2].stride &&
+                            handle[0].planes == 2 &&
+                            handle[1].planes == 2 &&
+                            handle[2].planes == 2 &&
+                            /* Different planes */
+                            handle[0].handle == handle[1].handle &&
+                            handle[0].offset != handle[1].offset &&
+                            /* Same planes. */
+                            handle[1].handle == handle[2].handle &&
+                            handle[1].stride == handle[2].stride &&
+                            handle[1].offset == handle[2].offset;
+
+      if (!get_param_pass) {
+         printf("resource_get_param returned incorrect values\n");
+         util_report_result(false);
+         goto cleanup;
+      }
+   }
+
+   /* resource_get_handle */
+   struct winsys_handle handle[4] = {{0}};
+
+   /* Export */
+   for (unsigned i = 0; i < 4; i++) {
+      handle[i].type = i < 2 ? WINSYS_HANDLE_TYPE_KMS : WINSYS_HANDLE_TYPE_FD;
+      handle[i].plane = i % 2;
+
+      if (!screen->resource_get_handle(screen, NULL, tex, &handle[i], 0)) {
+         printf("resource_get_handle failed\n");
+         util_report_result(false);
+         goto cleanup;
+      }
+   }
+
+   /* Validate export. */
+   bool get_handle_pass = /* Sanity checking */
+                          handle[0].handle && handle[1].handle &&
+                          handle[0].stride && handle[1].stride &&
+                          handle[2].handle && handle[3].handle &&
+                          handle[2].stride && handle[3].stride &&
+                          /* KMS - different planes */
+                          handle[0].handle == handle[1].handle &&
+                          handle[0].offset != handle[1].offset &&
+                          /* DMABUF - different planes */
+                          handle[2].offset != handle[3].offset &&
+                          /* KMS and DMABUF equivalence */
+                          handle[0].offset == handle[2].offset &&
+                          handle[1].offset == handle[3].offset &&
+                          handle[0].stride == handle[2].stride &&
+                          handle[1].stride == handle[3].stride;
+
+   if (!get_handle_pass) {
+      printf("resource_get_handle returned incorrect values\n");
+      util_report_result(false);
+      goto cleanup;
+   }
+
+   util_report_result(true);
+
+cleanup:
+   pipe_resource_reference(&tex, NULL);
+}
+
 /**
  * Run all tests. This should be run with a clean context after
  * context_create.
@@ -867,7 +1032,7 @@ util_run_tests(struct pipe_screen *screen)
 {
    struct pipe_context *ctx = screen->context_create(screen, NULL, 0);
 
-   null_fragment_shader(ctx);
+   disabled_fragment_shader(ctx);
    tgsi_vs_window_space_position(ctx);
    null_sampler_view(ctx, TGSI_TEXTURE_2D);
    null_sampler_view(ctx, TGSI_TEXTURE_BUFFER);
@@ -883,6 +1048,8 @@ util_run_tests(struct pipe_screen *screen)
    ctx = screen->context_create(screen, NULL, PIPE_CONTEXT_COMPUTE_ONLY);
    test_compute_clear_image(ctx);
    ctx->destroy(ctx);
+
+   test_nv12(screen);
 
    puts("Done. Exiting..");
    exit(0);

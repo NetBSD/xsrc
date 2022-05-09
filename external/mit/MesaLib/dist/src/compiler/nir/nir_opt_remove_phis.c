@@ -35,7 +35,7 @@ get_parent_mov(nir_ssa_def *ssa)
       return NULL;
 
    nir_alu_instr *alu = nir_instr_as_alu(ssa->parent_instr);
-   return (alu->op == nir_op_imov || alu->op == nir_op_fmov) ? alu : NULL;
+   return (alu->op == nir_op_mov) ? alu : NULL;
 }
 
 static bool
@@ -52,7 +52,7 @@ matching_mov(nir_alu_instr *mov1, nir_ssa_def *ssa)
  * This is a pass for removing phi nodes that look like:
  * a = phi(b, b, b, ...)
  *
- * Note that we can't ignore undef sources here, or else we may create a
+ * Note that we can't always ignore undef sources here, or else we may create a
  * situation where the definition of b isn't dominated by its uses. We're
  * allowed to do this since the definition of b must dominate all of the
  * phi node's predecessors, which means it must dominate the phi node as well
@@ -98,6 +98,9 @@ remove_phis_block(nir_block *block, nir_builder *b)
          if (def == NULL) {
             def  = src->src.ssa;
             mov = get_parent_mov(def);
+         } else if (nir_src_is_undef(src->src) &&
+                    nir_block_dominates(def->parent_instr->block, src->pred)) {
+            /* Ignore this undef source. */
          } else {
             if (src->src.ssa != def && !matching_mov(mov, src->src.ssa)) {
                srcs_same = false;
@@ -109,12 +112,13 @@ remove_phis_block(nir_block *block, nir_builder *b)
       if (!srcs_same)
          continue;
 
-      /* We must have found at least one definition, since there must be at
-       * least one forward edge.
-       */
-      assert(def != NULL);
+      if (!def) {
+         /* In this case, the phi had no sources. So turn it into an undef. */
 
-      if (mov) {
+         b->cursor = nir_after_phis(block);
+         def = nir_ssa_undef(b, phi->dest.ssa.num_components,
+                             phi->dest.ssa.bit_size);
+      } else if (mov) {
          /* If the sources were all movs from the same source with the same
           * swizzle, then we can't just pick a random move because it may not
           * dominate the phi node. Instead, we need to emit our own move after
@@ -124,13 +128,11 @@ remove_phis_block(nir_block *block, nir_builder *b)
           */
 
          b->cursor = nir_after_phis(block);
-         def = mov->op == nir_op_imov ?
-            nir_imov_alu(b, mov->src[0], def->num_components) :
-            nir_fmov_alu(b, mov->src[0], def->num_components);
+         def = nir_mov_alu(b, mov->src[0], def->num_components);
       }
 
       assert(phi->dest.is_ssa);
-      nir_ssa_def_rewrite_uses(&phi->dest.ssa, nir_src_for_ssa(def));
+      nir_ssa_def_rewrite_uses(&phi->dest.ssa, def);
       nir_instr_remove(instr);
 
       progress = true;
@@ -154,6 +156,8 @@ nir_opt_remove_phis_impl(nir_function_impl *impl)
    nir_builder bld;
    nir_builder_init(&bld, impl);
 
+   nir_metadata_require(impl, nir_metadata_dominance);
+
    nir_foreach_block(block, impl) {
       progress |= remove_phis_block(block, &bld);
    }
@@ -162,9 +166,7 @@ nir_opt_remove_phis_impl(nir_function_impl *impl)
       nir_metadata_preserve(impl, nir_metadata_block_index |
                                   nir_metadata_dominance);
    } else {
-#ifndef NDEBUG
-      impl->valid_metadata &= ~nir_metadata_not_properly_reset;
-#endif
+      nir_metadata_preserve(impl, nir_metadata_all);
    }
 
    return progress;

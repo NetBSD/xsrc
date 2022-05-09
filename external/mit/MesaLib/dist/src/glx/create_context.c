@@ -33,6 +33,14 @@
 #error This code requires sizeof(uint32_t) == sizeof(int).
 #endif
 
+/* An "Atrribs/Attribs" typo was fixed in glxproto.h in Nov 2014.
+ * This is in case we don't have the updated header.
+ */
+#if !defined(X_GLXCreateContextAttribsARB) && \
+     defined(X_GLXCreateContextAtrribsARB)
+#define X_GLXCreateContextAttribsARB X_GLXCreateContextAtrribsARB
+#endif
+
 _X_HIDDEN GLXContext
 glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 			   GLXContext share_context, Bool direct,
@@ -47,20 +55,11 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
    xcb_generic_error_t *err;
    xcb_void_cookie_t cookie;
    unsigned dummy_err = 0;
+   uint32_t xid, share_xid;
+   int screen = -1;
 
-
-   if (dpy == NULL || cfg == NULL)
+   if (dpy == NULL)
       return NULL;
-
-   /* This means that either the caller passed the wrong display pointer or
-    * one of the internal GLX data structures (probably the fbconfig) has an
-    * error.  There is nothing sensible to do, so return an error.
-    */
-   psc = GetGLXScreenConfigs(dpy, cfg->screen);
-   if (psc == NULL)
-      return NULL;
-
-   assert(cfg->screen == psc->scr);
 
    /* Count the number of attributes specified by the application.  All
     * attributes appear in pairs, except the terminating None.
@@ -69,6 +68,29 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
       for (/* empty */; attrib_list[num_attribs * 2] != 0; num_attribs++)
 	 /* empty */ ;
    }
+
+   if (cfg) {
+      screen = cfg->screen;
+   } else {
+      for (unsigned int i = 0; i < num_attribs; i++) {
+         if (attrib_list[i * 2] == GLX_SCREEN)
+            screen = attrib_list[i * 2 + 1];
+      }
+      if (screen == -1) {
+         __glXSendError(dpy, BadValue, 0, X_GLXCreateContextAttribsARB, True);
+         return NULL;
+      }
+   }
+
+   /* This means that either the caller passed the wrong display pointer or
+    * one of the internal GLX data structures (probably the fbconfig) has an
+    * error.  There is nothing sensible to do, so return an error.
+    */
+   psc = GetGLXScreenConfigs(dpy, screen);
+   if (psc == NULL)
+      return NULL;
+
+   assert(screen == psc->scr);
 
    if (direct && psc->vtable->create_context_attribs) {
       /* GLX drops the error returned by the driver.  The expectation is that
@@ -90,8 +112,8 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 #endif
    }
 
-   gc->xid = xcb_generate_id(c);
-   gc->share_xid = (share != NULL) ? share->xid : 0;
+   xid = xcb_generate_id(c);
+   share_xid = (share != NULL) ? share->xid : 0;
 
    /* The manual pages for glXCreateContext and glXCreateNewContext say:
     *
@@ -103,21 +125,34 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
     */
    cookie =
       xcb_glx_create_context_attribs_arb_checked(c,
-						 gc->xid,
-						 cfg->fbconfigID,
-						 cfg->screen,
-						 gc->share_xid,
-						 gc->isDirect,
+						 xid,
+						 cfg ? cfg->fbconfigID : 0,
+						 screen,
+						 share_xid,
+						 gc ? gc->isDirect : direct,
 						 num_attribs,
 						 (const uint32_t *)
 						 attrib_list);
    err = xcb_request_check(c, cookie);
    if (err != NULL) {
-      gc->vtable->destroy(gc);
+      if (gc)
+         gc->vtable->destroy(gc);
       gc = NULL;
 
       __glXSendErrorForXcb(dpy, err);
       free(err);
+   } else if (!gc) {
+      /* the server thought the context description was okay, but we failed
+       * somehow on the client side. clean up the server resource and panic.
+       */
+      xcb_glx_destroy_context(c, xid);
+      /* increment dpy->request in order to give a unique serial number to the
+       * error */
+      XNoOp(dpy);
+      __glXSendError(dpy, GLXBadFBConfig, xid, 0, False);
+   } else {
+      gc->xid = xid;
+      gc->share_xid = share_xid;
    }
 
    return (GLXContext) gc;

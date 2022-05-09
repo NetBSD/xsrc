@@ -21,8 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VC5_BUFMGR_H
-#define VC5_BUFMGR_H
+#ifndef V3D_BUFMGR_H
+#define V3D_BUFMGR_H
 
 #include <stdint.h>
 #include "util/u_hash_table.h"
@@ -96,7 +96,7 @@ v3d_bo_unreference(struct v3d_bo **bo)
                 mtx_lock(&screen->bo_handles_mutex);
 
                 if (pipe_reference(&(*bo)->reference, NULL)) {
-                        util_hash_table_remove(screen->bo_handles,
+                        _mesa_hash_table_remove_key(screen->bo_handles,
                                                (void *)(uintptr_t)(*bo)->handle);
                         v3d_bo_last_unreference(*bo);
                 }
@@ -134,5 +134,5 @@ v3d_wait_seqno(struct v3d_screen *screen, uint64_t seqno, uint64_t timeout_ns,
 void
 v3d_bufmgr_destroy(struct pipe_screen *pscreen);
 
-#endif /* VC5_BUFMGR_H */
+#endif /* V3D_BUFMGR_H */
 

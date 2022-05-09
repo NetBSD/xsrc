@@ -73,7 +73,8 @@ dot_d(ir_constant *op0, ir_constant *op1)
 static float
 bitcast_u2f(unsigned int u)
 {
-   assert(sizeof(float) == sizeof(unsigned int));
+   static_assert(sizeof(float) == sizeof(unsigned int),
+                 "float and unsigned int size mismatch");
    float f;
    memcpy(&f, &u, sizeof(f));
    return f;
@@ -82,7 +83,8 @@ bitcast_u2f(unsigned int u)
 static unsigned int
 bitcast_f2u(float f)
 {
-   assert(sizeof(float) == sizeof(unsigned int));
+   static_assert(sizeof(float) == sizeof(unsigned int),
+                 "float and unsigned int size mismatch");
    unsigned int u;
    memcpy(&u, &f, sizeof(f));
    return u;
@@ -91,7 +93,8 @@ bitcast_f2u(float f)
 static double
 bitcast_u642d(uint64_t u)
 {
-   assert(sizeof(double) == sizeof(uint64_t));
+   static_assert(sizeof(double) == sizeof(uint64_t),
+                 "double and uint64_t size mismatch");
    double d;
    memcpy(&d, &u, sizeof(d));
    return d;
@@ -100,25 +103,28 @@ bitcast_u642d(uint64_t u)
 static double
 bitcast_i642d(int64_t i)
 {
-   assert(sizeof(double) == sizeof(int64_t));
+   static_assert(sizeof(double) == sizeof(int64_t),
+                 "double and int64_t size mismatch");
    double d;
    memcpy(&d, &i, sizeof(d));
    return d;
 }
 
-static double
+static uint64_t
 bitcast_d2u64(double d)
 {
-   assert(sizeof(double) == sizeof(uint64_t));
+   static_assert(sizeof(double) == sizeof(uint64_t),
+                 "double and uint64_t size mismatch");
    uint64_t u;
    memcpy(&u, &d, sizeof(d));
    return u;
 }
 
-static double
+static int64_t
 bitcast_d2i64(double d)
 {
-   assert(sizeof(double) == sizeof(int64_t));
+   static_assert(sizeof(double) == sizeof(int64_t),
+                 "double and int64_t size mismatch");
    int64_t i;
    memcpy(&i, &d, sizeof(d));
    return i;
@@ -334,7 +340,7 @@ pack_unorm_1x8(float x)
      *
      *       packUnorm4x8: round(clamp(c, 0, +1) * 255.0)
      */
-   return (uint8_t) (int) _mesa_roundevenf(CLAMP(x, 0.0f, 1.0f) * 255.0f);
+   return (uint8_t) (int) _mesa_roundevenf(SATURATE(x) * 255.0f);
 }
 
 /**
@@ -353,7 +359,7 @@ pack_unorm_1x16(float x)
      *       packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
      */
    return (uint16_t) (int)
-          _mesa_roundevenf(CLAMP(x, 0.0f, 1.0f) * 65535.0f);
+          _mesa_roundevenf(SATURATE(x) * 65535.0f);
 }
 
 /**
@@ -410,6 +416,57 @@ unpack_half_1x16(uint16_t u)
    return _mesa_half_to_float(u);
 }
 
+static int32_t
+iadd_saturate(int32_t a, int32_t b)
+{
+   return CLAMP(int64_t(a) + int64_t(b), INT32_MIN, INT32_MAX);
+}
+
+static int64_t
+iadd64_saturate(int64_t a, int64_t b)
+{
+   if (a < 0 && b < INT64_MIN - a)
+      return INT64_MIN;
+
+   if (a > 0 && b > INT64_MAX - a)
+      return INT64_MAX;
+
+   return a + b;
+}
+
+static int32_t
+isub_saturate(int32_t a, int32_t b)
+{
+   return CLAMP(int64_t(a) - int64_t(b), INT32_MIN, INT32_MAX);
+}
+
+static int64_t
+isub64_saturate(int64_t a, int64_t b)
+{
+   if (b > 0 && a < INT64_MIN + b)
+      return INT64_MIN;
+
+   if (b < 0 && a > INT64_MAX + b)
+      return INT64_MAX;
+
+   return a - b;
+}
+
+static uint64_t
+pack_2x32(uint32_t a, uint32_t b)
+{
+   uint64_t v = a;
+   v |= (uint64_t)b << 32;
+   return v;
+}
+
+static void
+unpack_2x32(uint64_t p, uint32_t *a, uint32_t *b)
+{
+   *a = p & 0xffffffff;
+   *b = (p >> 32);
+}
+
 /**
  * Get the constant that is ultimately referenced by an r-value, in a constant
  * expression evaluation context.
@@ -435,7 +492,8 @@ constant_referenced(const ir_dereference *deref,
       ir_constant *const index_c =
          da->array_index->constant_expression_value(variable_context);
 
-      if (!index_c || !index_c->type->is_scalar() || !index_c->type->is_integer())
+      if (!index_c || !index_c->type->is_scalar() ||
+          !index_c->type->is_integer_32())
          break;
 
       const int index = index_c->type->base_type == GLSL_TYPE_INT ?
@@ -636,6 +694,7 @@ ir_expression::constant_expression_value(void *mem_ctx,
    if (this->type->is_error())
       return NULL;
 
+   const glsl_type *return_type = this->type;
    ir_constant *op[ARRAY_SIZE(this->operands)] = { NULL, };
    ir_constant_data data;
 
@@ -647,6 +706,86 @@ ir_expression::constant_expression_value(void *mem_ctx,
                                                             variable_context);
       if (!op[operand])
          return NULL;
+   }
+
+   for (unsigned operand = 0; operand < this->num_operands; operand++) {
+      switch (op[operand]->type->base_type) {
+      case GLSL_TYPE_FLOAT16: {
+         const struct glsl_type *float_type =
+               glsl_type::get_instance(GLSL_TYPE_FLOAT,
+                                       op[operand]->type->vector_elements,
+                                       op[operand]->type->matrix_columns,
+                                       op[operand]->type->explicit_stride,
+                                       op[operand]->type->interface_row_major);
+
+         ir_constant_data f;
+         for (unsigned i = 0; i < ARRAY_SIZE(f.f); i++)
+            f.f[i] = _mesa_half_to_float(op[operand]->value.f16[i]);
+
+         op[operand] = new(mem_ctx) ir_constant(float_type, &f);
+         break;
+      }
+      case GLSL_TYPE_INT16: {
+         const struct glsl_type *int_type =
+            glsl_type::get_instance(GLSL_TYPE_INT,
+                                    op[operand]->type->vector_elements,
+                                    op[operand]->type->matrix_columns,
+                                    op[operand]->type->explicit_stride,
+                                    op[operand]->type->interface_row_major);
+
+         ir_constant_data d;
+         for (unsigned i = 0; i < ARRAY_SIZE(d.i); i++)
+            d.i[i] = op[operand]->value.i16[i];
+
+         op[operand] = new(mem_ctx) ir_constant(int_type, &d);
+         break;
+      }
+      case GLSL_TYPE_UINT16: {
+         const struct glsl_type *uint_type =
+            glsl_type::get_instance(GLSL_TYPE_UINT,
+                                    op[operand]->type->vector_elements,
+                                    op[operand]->type->matrix_columns,
+                                    op[operand]->type->explicit_stride,
+                                    op[operand]->type->interface_row_major);
+
+         ir_constant_data d;
+         for (unsigned i = 0; i < ARRAY_SIZE(d.u); i++)
+            d.u[i] = op[operand]->value.u16[i];
+
+         op[operand] = new(mem_ctx) ir_constant(uint_type, &d);
+         break;
+      }
+      default:
+         /* nothing to do */
+         break;
+      }
+   }
+
+   switch (return_type->base_type) {
+   case GLSL_TYPE_FLOAT16:
+      return_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+                                            return_type->vector_elements,
+                                            return_type->matrix_columns,
+                                            return_type->explicit_stride,
+                                            return_type->interface_row_major);
+      break;
+   case GLSL_TYPE_INT16:
+      return_type = glsl_type::get_instance(GLSL_TYPE_INT,
+                                            return_type->vector_elements,
+                                            return_type->matrix_columns,
+                                            return_type->explicit_stride,
+                                            return_type->interface_row_major);
+      break;
+   case GLSL_TYPE_UINT16:
+      return_type = glsl_type::get_instance(GLSL_TYPE_UINT,
+                                            return_type->vector_elements,
+                                            return_type->matrix_columns,
+                                            return_type->explicit_stride,
+                                            return_type->interface_row_major);
+      break;
+   default:
+      /* nothing to do */
+      break;
    }
 
    if (op[1] != NULL)
@@ -697,7 +836,31 @@ ir_expression::constant_expression_value(void *mem_ctx,
 
 #include "ir_expression_operation_constant.h"
 
-   return new(mem_ctx) ir_constant(this->type, &data);
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT16: {
+      ir_constant_data f;
+      for (unsigned i = 0; i < ARRAY_SIZE(f.f16); i++)
+         f.f16[i] = _mesa_float_to_half(data.f[i]);
+
+      return new(mem_ctx) ir_constant(this->type, &f);
+   }
+   case GLSL_TYPE_INT16: {
+      ir_constant_data d;
+      for (unsigned i = 0; i < ARRAY_SIZE(d.i16); i++)
+         d.i16[i] = data.i[i];
+
+      return new(mem_ctx) ir_constant(this->type, &d);
+   }
+   case GLSL_TYPE_UINT16: {
+      ir_constant_data d;
+      for (unsigned i = 0; i < ARRAY_SIZE(d.u16); i++)
+         d.u16[i] = data.u[i];
+
+      return new(mem_ctx) ir_constant(this->type, &d);
+   }
+   default:
+      return new(mem_ctx) ir_constant(this->type, &data);
+   }
 }
 
 
@@ -727,9 +890,12 @@ ir_swizzle::constant_expression_value(void *mem_ctx,
 
       for (unsigned i = 0; i < this->mask.num_components; i++) {
          switch (v->type->base_type) {
+         case GLSL_TYPE_UINT16:
+         case GLSL_TYPE_INT16: data.u16[i] = v->value.u16[swiz_idx[i]]; break;
          case GLSL_TYPE_UINT:
          case GLSL_TYPE_INT:   data.u[i] = v->value.u[swiz_idx[i]]; break;
          case GLSL_TYPE_FLOAT: data.f[i] = v->value.f[swiz_idx[i]]; break;
+         case GLSL_TYPE_FLOAT16: data.f16[i] = v->value.f16[swiz_idx[i]]; break;
          case GLSL_TYPE_BOOL:  data.b[i] = v->value.b[swiz_idx[i]]; break;
          case GLSL_TYPE_DOUBLE:data.d[i] = v->value.d[swiz_idx[i]]; break;
          case GLSL_TYPE_UINT64:data.u64[i] = v->value.u64[swiz_idx[i]]; break;
@@ -789,6 +955,19 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
 
          const glsl_type *const column_type = array->type->column_type();
 
+         /* Section 5.11 (Out-of-Bounds Accesses) of the GLSL 4.60 spec says:
+          *
+          *    In the subsections described above for array, vector, matrix and
+          *    structure accesses, any out-of-bounds access produced undefined
+          *    behavior....Out-of-bounds reads return undefined values, which
+          *    include values from other variables of the active program or zero.
+          */
+         if (idx->value.i[0] < 0 || column >= array->type->matrix_columns) {
+            ir_constant_data data = { { 0 } };
+
+            return new(mem_ctx) ir_constant(column_type, &data);
+         }
+
          /* Offset in the constant matrix to the first element of the column
           * to be extracted.
           */
@@ -797,10 +976,9 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
          ir_constant_data data = { { 0 } };
 
          switch (column_type->base_type) {
-         case GLSL_TYPE_UINT:
-         case GLSL_TYPE_INT:
+         case GLSL_TYPE_FLOAT16:
             for (unsigned i = 0; i < column_type->vector_elements; i++)
-               data.u[i] = array->value.u[mat_idx + i];
+               data.f16[i] = array->value.f16[mat_idx + i];
 
             break;
 
@@ -817,8 +995,7 @@ ir_dereference_array::constant_expression_value(void *mem_ctx,
             break;
 
          default:
-            assert(!"Should not get here.");
-            break;
+            unreachable("Matrix types are either float or double.");
          }
 
          return new(mem_ctx) ir_constant(column_type, &data);
@@ -1013,10 +1190,16 @@ ir_function_signature::constant_expression_value(void *mem_ctx,
 
    /*
     * Of the builtin functions, only the texture lookups and the noise
-    * ones must not be used in constant expressions.  They all include
-    * specific opcodes so they don't need to be special-cased at this
-    * point.
+    * ones must not be used in constant expressions.  Texture instructions
+    * include special ir_texture opcodes which can't be constant-folded (see
+    * ir_texture::constant_expression_value).  Noise functions, however, we
+    * have to special case here.
     */
+   if (strcmp(this->function_name(), "noise1") == 0 ||
+       strcmp(this->function_name(), "noise2") == 0 ||
+       strcmp(this->function_name(), "noise3") == 0 ||
+       strcmp(this->function_name(), "noise4") == 0)
+      return NULL;
 
    /* Initialize the table of dereferencable names with the function
     * parameters.  Verify their const-ness on the way.

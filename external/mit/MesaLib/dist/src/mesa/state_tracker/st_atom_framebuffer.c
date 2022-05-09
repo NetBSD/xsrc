@@ -43,7 +43,7 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_framebuffer.h"
 #include "main/framebuffer.h"
 
@@ -73,7 +73,7 @@ update_framebuffer_size(struct pipe_framebuffer_state *framebuffer,
 static unsigned
 framebuffer_quantize_num_samples(struct st_context *st, unsigned num_samples)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_screen *screen = st->screen;
    int quantized_samples = 0;
    unsigned msaa_mode;
 
@@ -146,12 +146,15 @@ st_update_framebuffer_state( struct st_context *st )
 
       if (strb) {
          if (strb->is_rtt || (strb->texture &&
-             _mesa_get_format_color_encoding(strb->Base.Format) == GL_SRGB)) {
+             _mesa_is_format_srgb(strb->Base.Format))) {
             /* rendering to a GL texture, may have to update surface */
             st_update_renderbuffer_surface(st, strb);
          }
 
          if (strb->surface) {
+            if (strb->surface->context != st->pipe) {
+               st_regen_renderbuffer_surface(st, strb);
+            }
             framebuffer.cbufs[i] = strb->surface;
             update_framebuffer_size(&framebuffer, strb->surface);
          }
@@ -181,6 +184,9 @@ st_update_framebuffer_state( struct st_context *st )
          /* rendering to a GL texture, may have to update surface */
          st_update_renderbuffer_surface(st, strb);
       }
+      if (strb->surface && strb->surface->context != st->pipe) {
+         st_regen_renderbuffer_surface(st, strb);
+      }
       framebuffer.zsbuf = strb->surface;
       if (strb->surface)
          update_framebuffer_size(&framebuffer, strb->surface);
@@ -188,7 +194,7 @@ st_update_framebuffer_state( struct st_context *st )
    else
       framebuffer.zsbuf = NULL;
 
-#ifdef DEBUG
+#ifndef NDEBUG
    /* Make sure the resource binding flags were set properly */
    for (i = 0; i < framebuffer.nr_cbufs; i++) {
       assert(!framebuffer.cbufs[i] ||

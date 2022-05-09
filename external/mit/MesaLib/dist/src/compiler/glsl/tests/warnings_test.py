@@ -19,10 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import print_function
 import argparse
+import errno
 import os
 import subprocess
+import sys
+
+# The meson version handles windows paths better, but if it's not available
+# fall back to shlex
+try:
+    from meson.mesonlib import split_args
+except ImportError:
+    from shlex import split as split_args
 
 
 def arg_parser():
@@ -38,6 +46,14 @@ def arg_parser():
     return parser.parse_args()
 
 
+def get_test_runner(runner):
+    """Wrap the test runner in the exe wrapper if necessary."""
+    wrapper = os.environ.get('MESON_EXE_WRAPPER', None)
+    if wrapper is None:
+        return [runner]
+    return split_args(wrapper) + [runner]
+
+
 def main():
     args = arg_parser()
     files = [f for f in os.listdir(args.test_directory) if f.endswith('.vert')]
@@ -47,17 +63,27 @@ def main():
         print('Could not find any tests')
         exit(1)
 
+    runner = get_test_runner(args.glsl_compiler)
+
     print('====== Testing compilation output ======')
     for file in files:
         print('Testing {} ...'.format(file), end='')
         file = os.path.join(args.test_directory, file)
 
         with open('{}.expected'.format(file), 'rb') as f:
-            expected = f.read().strip()
+            expected = f.read().splitlines()
 
-        actual = subprocess.check_output(
-            [args.glsl_compiler, '--just-log', '--version', '150', file]
-        ).strip()
+        proc= subprocess.run(
+            runner + ['--just-log', '--version', '150', file],
+            stdout=subprocess.PIPE
+        )
+        if proc.returncode == 255:
+            print("Test returned general error, possibly missing linker")
+            sys.exit(77)
+        elif proc.returncode != 0:
+            print("Test returned error: {}, output:\n{}\n".format(proc.returncode, proc.stdout))
+
+        actual = proc.stdout.splitlines()
 
         if actual == expected:
             print('PASS')
@@ -70,4 +96,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except OSError as e:
+        if e.errno == errno.ENOEXEC:
+            print('Skipping due to inability to run host binaries', file=sys.stderr)
+            sys.exit(77)
+        raise

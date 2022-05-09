@@ -24,12 +24,16 @@
  **********************************************************/
 
 
+#include "util/u_draw.h"
+#include "util/format/u_format.h"
 #include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_prim_restart.h"
 
 #include "svga_context.h"
+#include "svga_draw_private.h"
+#include "svga_screen.h"
 #include "svga_draw.h"
 #include "svga_shader.h"
 #include "svga_surface.h"
@@ -37,69 +41,137 @@
 #include "svga_debug.h"
 #include "svga_resource_buffer.h"
 
-/* Returns TRUE if we are currently using flat shading.
- */
-static boolean
-is_using_flat_shading(const struct svga_context *svga)
-{
-   return
-      svga->state.hw_draw.fs ? svga->state.hw_draw.fs->uses_flat_interp : FALSE;
-}
-
 
 static enum pipe_error
 retry_draw_range_elements(struct svga_context *svga,
-                          struct pipe_resource *index_buffer,
-                          unsigned index_size,
-                          int index_bias,
-                          unsigned min_index,
-                          unsigned max_index,
-                          enum pipe_prim_type prim,
-                          unsigned start,
-                          unsigned count,
-                          unsigned start_instance,
-                          unsigned instance_count)
+                          const struct pipe_draw_info *info,
+                          const struct pipe_draw_start_count_bias *draw,
+                          unsigned count)
 {
-   enum pipe_error ret;
-
    SVGA_STATS_TIME_PUSH(svga_sws(svga), SVGA_STATS_TIME_DRAWELEMENTS);
 
-   for (unsigned try = 0; try < 2; try++) {
-      ret = svga_hwtnl_draw_range_elements(svga->hwtnl,
-                                           index_buffer, index_size,
-                                           index_bias,
-                                           min_index, max_index,
-                                           prim, start, count,
-                                           start_instance, instance_count);
-      if (ret == PIPE_OK)
-         break;
-      svga_context_flush(svga, NULL);
-   }
+   SVGA_RETRY(svga, svga_hwtnl_draw_range_elements(svga->hwtnl, info, draw, count));
 
    SVGA_STATS_TIME_POP(svga_sws(svga));
-   return ret;
+   return PIPE_OK;
 }
 
 
 static enum pipe_error
-retry_draw_arrays(struct svga_context *svga,
-                  enum pipe_prim_type prim, unsigned start, unsigned count,
-                  unsigned start_instance, unsigned instance_count)
+retry_draw_arrays( struct svga_context *svga,
+                   enum pipe_prim_type prim, unsigned start, unsigned count,
+                   unsigned start_instance, unsigned instance_count,
+                   ubyte vertices_per_patch)
 {
    enum pipe_error ret;
 
    SVGA_STATS_TIME_PUSH(svga_sws(svga), SVGA_STATS_TIME_DRAWARRAYS);
 
-   for (unsigned try = 0; try < 2; try++) {
-      ret = svga_hwtnl_draw_arrays(svga->hwtnl, prim, start, count,
-                                   start_instance, instance_count);
-      if (ret == PIPE_OK)
-         break;
-      svga_context_flush(svga, NULL);
-   }
-
+   SVGA_RETRY_OOM(svga, ret, svga_hwtnl_draw_arrays(svga->hwtnl, prim, start,
+                                                    count, start_instance,
+                                                    instance_count,
+                                                    vertices_per_patch));
    SVGA_STATS_TIME_POP(svga_sws(svga));
    return ret;
+}
+
+
+/**
+ * Auto draw (get vertex count from a transform feedback result).
+ */
+static enum pipe_error
+retry_draw_auto(struct svga_context *svga,
+                const struct pipe_draw_info *info,
+                const struct pipe_draw_indirect_info *indirect)
+{
+   assert(svga_have_sm5(svga));
+   assert(indirect->count_from_stream_output);
+   assert(info->instance_count == 1);
+   /* SO drawing implies core profile and none of these prim types */
+   assert(info->mode != PIPE_PRIM_QUADS &&
+          info->mode != PIPE_PRIM_QUAD_STRIP &&
+          info->mode != PIPE_PRIM_POLYGON);
+
+   if (info->mode == PIPE_PRIM_LINE_LOOP) {
+      /* XXX need to do a fallback */
+      assert(!"draw auto fallback not supported yet");
+      return PIPE_OK;
+   }
+   else {
+      SVGA3dPrimitiveRange range;
+      unsigned hw_count;
+
+      range.primType = svga_translate_prim(info->mode, 12, &hw_count,
+                                           svga->patch_vertices);
+      range.primitiveCount = 0;
+      range.indexArray.surfaceId = SVGA3D_INVALID_ID;
+      range.indexArray.offset = 0;
+      range.indexArray.stride = 0;
+      range.indexWidth = 0;
+      range.indexBias = 0;
+
+      SVGA_RETRY(svga, svga_hwtnl_prim
+                 (svga->hwtnl, &range,
+                  0,    /* vertex count comes from SO buffer */
+                  0,    /* don't know min index */
+                  ~0u,  /* don't know max index */
+                  NULL, /* no index buffer */
+                  0,    /* start instance */
+                  1,    /* only 1 instance supported */
+                  NULL, /* indirect drawing info */
+                  indirect->count_from_stream_output));
+
+      return PIPE_OK;
+   }
+}
+
+
+/**
+ * Indirect draw (get vertex count, start index, etc. from a buffer object.
+ */
+static enum pipe_error
+retry_draw_indirect(struct svga_context *svga,
+                    const struct pipe_draw_info *info,
+                    const struct pipe_draw_indirect_info *indirect)
+{
+   assert(svga_have_sm5(svga));
+   assert(indirect && indirect->buffer);
+   /* indirect drawing implies core profile and none of these prim types */
+   assert(info->mode != PIPE_PRIM_QUADS &&
+          info->mode != PIPE_PRIM_QUAD_STRIP &&
+          info->mode != PIPE_PRIM_POLYGON);
+
+   if (info->mode == PIPE_PRIM_LINE_LOOP) {
+      /* need to do a fallback */
+      util_draw_indirect(&svga->pipe, info, indirect);
+      return PIPE_OK;
+   }
+   else {
+      SVGA3dPrimitiveRange range;
+      unsigned hw_count;
+
+      range.primType = svga_translate_prim(info->mode, 12, &hw_count,
+                                           svga->patch_vertices);
+      range.primitiveCount = 0;  /* specified in indirect buffer */
+      range.indexArray.surfaceId = SVGA3D_INVALID_ID;
+      range.indexArray.offset = 0;
+      range.indexArray.stride = 0;
+      range.indexWidth = info->index_size;
+      range.indexBias = 0; /* specified in indirect buffer */
+
+      SVGA_RETRY(svga, svga_hwtnl_prim
+                 (svga->hwtnl, &range,
+                  0,   /* vertex count is in indirect buffer */
+                  0,   /* don't know min index */
+                  ~0u, /* don't know max index */
+                  info->index.resource,
+                  info->start_instance,
+                  0,   /* don't know instance count */
+                  indirect,
+                  NULL)); /* SO vertex count */
+
+      return PIPE_OK;
+   }
 }
 
 
@@ -129,16 +201,41 @@ need_fallback_prim_restart(const struct svga_context *svga,
 }
 
 
-static void
-svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+/**
+ * A helper function to return the vertex count from the primitive count
+ * returned from the stream output statistics query for the specified stream.
+ */
+static unsigned
+get_vcount_from_stream_output(struct svga_context *svga,
+                              const struct pipe_draw_info *info,
+                              unsigned stream)
 {
+   unsigned primcount;
+   primcount = svga_get_primcount_from_stream_output(svga, stream);
+   return u_vertices_for_prims(info->mode, primcount);
+}
+
+
+static void
+svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info,
+              unsigned drawid_offset,
+              const struct pipe_draw_indirect_info *indirect,
+              const struct pipe_draw_start_count_bias *draws,
+              unsigned num_draws)
+{
+   if (num_draws > 1) {
+      util_draw_multi(pipe, info, drawid_offset, indirect, draws, num_draws);
+      return;
+   }
+
+   if (!indirect && (!draws[0].count || !info->instance_count))
+      return;
+
    struct svga_context *svga = svga_context(pipe);
    enum pipe_prim_type reduced_prim = u_reduced_prim(info->mode);
-   unsigned count = info->count;
+   unsigned count = draws[0].count;
    enum pipe_error ret = 0;
    boolean needed_swtnl;
-   struct pipe_resource *indexbuf =
-      info->has_user_indices ? NULL : info->index.resource;
 
    SVGA_STATS_TIME_PUSH(svga_sws(svga), SVGA_STATS_TIME_DRAWVBO);
 
@@ -147,13 +244,6 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (u_reduced_prim(info->mode) == PIPE_PRIM_TRIANGLES &&
        svga->curr.rast->templ.cull_face == PIPE_FACE_FRONT_AND_BACK)
       goto done;
-
-   /* Upload a user index buffer. */
-   unsigned index_offset = 0;
-   if (info->index_size && info->has_user_indices &&
-       !util_upload_index_buffer(pipe, info, &indexbuf, &index_offset)) {
-      goto done;
-   }
 
    /*
     * Mark currently bound target surfaces as dirty
@@ -169,15 +259,37 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       svga->dirty |= SVGA_NEW_REDUCED_PRIMITIVE;
    }
 
+   /* We need to adjust the vertexID in the vertex shader since SV_VertexID
+    * always start from 0 for DrawArrays and does not include baseVertex for
+    * DrawIndexed.
+    */
+   unsigned index_bias = info->index_size ? draws->index_bias : 0;
+   if (svga->curr.vertex_id_bias != (draws[0].start + index_bias)) {
+      svga->curr.vertex_id_bias = draws[0].start + index_bias;
+      svga->dirty |= SVGA_NEW_VS_CONSTS;
+   }
+
+   if (svga->curr.vertices_per_patch != svga->patch_vertices) {
+      svga->curr.vertices_per_patch = svga->patch_vertices;
+
+      /* If input patch size changes, we need to notifiy the TCS
+       * code to reevaluate the shader variant since the
+       * vertices per patch count is a constant in the control
+       * point count declaration.
+       */
+      if (svga->curr.tcs || svga->curr.tes)
+         svga->dirty |= SVGA_NEW_TCS_PARAM;
+   }
+
    if (need_fallback_prim_restart(svga, info)) {
       enum pipe_error r;
-      r = util_draw_vbo_without_prim_restart(pipe, info);
+      r = util_draw_vbo_without_prim_restart(pipe, info, drawid_offset, indirect, &draws[0]);
       assert(r == PIPE_OK);
       (void) r;
       goto done;
    }
 
-   if (!u_trim_pipe_prim(info->mode, &count))
+   if (!indirect && !u_trim_pipe_prim(info->mode, &count))
       goto done;
 
    needed_swtnl = svga->state.sw.need_swtnl;
@@ -200,7 +312,7 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
       /* Avoid leaking the previous hwtnl bias to swtnl */
       svga_hwtnl_set_index_bias(svga->hwtnl, 0);
-      ret = svga_swtnl_draw_vbo(svga, info, indexbuf, index_offset);
+      ret = svga_swtnl_draw_vbo(svga, info, drawid_offset, indirect, &draws[0]);
    }
    else {
       if (!svga_update_state_retry(svga, SVGA_STATE_HW_DRAW)) {
@@ -209,38 +321,55 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          pipe_debug_message(&svga->debug.callback, INFO, "%s", msg);
          goto done;
       }
-
       svga_hwtnl_set_fillmode(svga->hwtnl, svga->curr.rast->hw_fillmode);
+
+      svga_update_state_retry(svga, SVGA_STATE_HW_DRAW);
 
       /** determine if flatshade is to be used after svga_update_state()
        *  in case the fragment shader is changed.
        */
       svga_hwtnl_set_flatshade(svga->hwtnl,
                                svga->curr.rast->templ.flatshade ||
-                               is_using_flat_shading(svga),
+                               svga_is_using_flat_shading(svga),
                                svga->curr.rast->templ.flatshade_first);
 
-      if (info->index_size && indexbuf) {
-         unsigned offset;
+      if (indirect && indirect->count_from_stream_output) {
+         unsigned stream = 0;
+         assert(count == 0);
 
-         assert(index_offset % info->index_size == 0);
-         offset = index_offset / info->index_size;
+         /* If the vertex count is from the stream output of a non-zero stream
+          * or the draw info specifies instancing, we will need a workaround
+          * since the draw_auto command does not support stream instancing.
+          * The workaround requires querying the vertex count from the
+          * stream output statistics query for the specified stream and then
+          * fallback to the regular draw function.
+          */
 
-         ret = retry_draw_range_elements(svga,
-                                         indexbuf,
-                                         info->index_size,
-                                         info->index_bias,
-                                         info->min_index,
-                                         info->max_index,
-                                         info->mode,
-                                         info->start + offset,
-                                         count,
-                                         info->start_instance,
-                                         info->instance_count);
+         /* Check the stream index of the specified stream output target */
+         for (unsigned i = 0; i < ARRAY_SIZE(svga->so_targets); i++) {
+            if (svga->vcount_so_targets[i] == indirect->count_from_stream_output) {
+               stream = (svga->vcount_buffer_stream >> (i * 4)) & 0xf;
+               break;
+            }
+         }
+         if (info->instance_count > 1 || stream > 0) {
+            count = get_vcount_from_stream_output(svga, info, stream);
+         }
+      }
+
+      if (indirect && indirect->count_from_stream_output && count == 0) {
+         ret = retry_draw_auto(svga, info, indirect);
+      }
+      else if (indirect && indirect->buffer) {
+         ret = retry_draw_indirect(svga, info, indirect);
+      }
+      else if (info->index_size) {
+         ret = retry_draw_range_elements(svga, info, &draws[0], count);
       }
       else {
-         ret = retry_draw_arrays(svga, info->mode, info->start, count,
-                                 info->start_instance, info->instance_count);
+         ret = retry_draw_arrays(svga, info->mode, draws[0].start, count,
+                                 info->start_instance, info->instance_count,
+                                 svga->patch_vertices);
       }
    }
 
@@ -253,8 +382,6 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
 done:
-   if (info->index_size && info->index.resource != indexbuf)
-      pipe_resource_reference(&indexbuf, NULL);
    SVGA_STATS_TIME_POP(svga_sws(svga));
 }
 

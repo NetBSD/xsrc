@@ -73,7 +73,7 @@ nvfx_fp_imm(struct nvfx_fpc *fpc, float a, float b, float c, float d)
    float v[4] = {a, b, c, d};
    int idx = fpc->imm_data.size >> 4;
 
-   memcpy(util_dynarray_grow(&fpc->imm_data, sizeof(float) * 4), v, 4 * sizeof(float));
+   memcpy(util_dynarray_grow(&fpc->imm_data, float, 4), v, 4 * sizeof(float));
    return nvfx_reg(NVFXSR_IMM, idx);
 }
 
@@ -100,7 +100,7 @@ emit_src(struct nvfx_fpc *fpc, int pos, struct nvfx_src src)
       break;
    case NVFXSR_OUTPUT:
       sr |= NVFX_FP_REG_SRC_HALF;
-      /* fall-through */
+      FALLTHROUGH;
    case NVFXSR_TEMP:
       sr |= (NVFX_FP_REG_TYPE_TEMP << NVFX_FP_REG_TYPE_SHIFT);
       sr |= (src.reg.index << NVFX_FP_REG_SRC_SHIFT);
@@ -173,7 +173,7 @@ emit_dst(struct nvfx_fpc *fpc, struct nvfx_reg dst)
          hw[0] |= NVFX_FP_OP_OUT_REG_HALF;
          dst.index <<= 1;
       }
-      /* fall-through */
+      FALLTHROUGH;
    case NVFXSR_TEMP:
       if (fpc->num_regs < (dst.index + 1))
          fpc->num_regs = dst.index + 1;

@@ -55,15 +55,18 @@ util_draw_arrays(struct pipe_context *pipe,
                  uint count)
 {
    struct pipe_draw_info info;
+   struct pipe_draw_start_count_bias draw;
 
    util_draw_init_info(&info);
    info.mode = mode;
-   info.start = start;
-   info.count = count;
    info.min_index = start;
    info.max_index = start + count - 1;
 
-   pipe->draw_vbo(pipe, &info);
+   draw.start = start;
+   draw.count = count;
+   draw.index_bias = 0;
+
+   pipe->draw_vbo(pipe, &info, 0, NULL, &draw, 1);
 }
 
 static inline void
@@ -75,17 +78,19 @@ util_draw_elements(struct pipe_context *pipe,
                    uint count)
 {
    struct pipe_draw_info info;
+   struct pipe_draw_start_count_bias draw;
 
    util_draw_init_info(&info);
    info.index.user = indices;
    info.has_user_indices = true;
    info.index_size = index_size;
    info.mode = mode;
-   info.start = start;
-   info.count = count;
-   info.index_bias = index_bias;
+   draw.index_bias = index_bias;
 
-   pipe->draw_vbo(pipe, &info);
+   draw.start = start;
+   draw.count = count;
+
+   pipe->draw_vbo(pipe, &info, 0, NULL, &draw, 1);
 }
 
 static inline void
@@ -97,17 +102,21 @@ util_draw_arrays_instanced(struct pipe_context *pipe,
                            uint instance_count)
 {
    struct pipe_draw_info info;
+   struct pipe_draw_start_count_bias draw;
 
    util_draw_init_info(&info);
    info.mode = mode;
-   info.start = start;
-   info.count = count;
    info.start_instance = start_instance;
    info.instance_count = instance_count;
+   info.index_bounds_valid = true;
    info.min_index = start;
    info.max_index = start + count - 1;
 
-   pipe->draw_vbo(pipe, &info);
+   draw.start = start;
+   draw.count = count;
+   draw.index_bias = 0;
+
+   pipe->draw_vbo(pipe, &info, 0, NULL, &draw, 1);
 }
 
 static inline void
@@ -122,29 +131,52 @@ util_draw_elements_instanced(struct pipe_context *pipe,
                              uint instance_count)
 {
    struct pipe_draw_info info;
+   struct pipe_draw_start_count_bias draw;
 
    util_draw_init_info(&info);
    info.index.user = indices;
    info.has_user_indices = true;
    info.index_size = index_size;
    info.mode = mode;
-   info.start = start;
-   info.count = count;
-   info.index_bias = index_bias;
+   draw.index_bias = index_bias;
    info.start_instance = start_instance;
    info.instance_count = instance_count;
 
-   pipe->draw_vbo(pipe, &info);
+   draw.start = start;
+   draw.count = count;
+
+   pipe->draw_vbo(pipe, &info, 0, NULL, &draw, 1);
 }
 
+struct u_indirect_params {
+   struct pipe_draw_info info;
+   struct pipe_draw_start_count_bias draw;
+};
+
+/* caller must free the return value */
+struct u_indirect_params *
+util_draw_indirect_read(struct pipe_context *pipe,
+                        const struct pipe_draw_info *info_in,
+                        const struct pipe_draw_indirect_info *indirect,
+                        unsigned *num_draws);
 
 /* This converts an indirect draw into a direct draw by mapping the indirect
  * buffer, extracting its arguments, and calling pipe->draw_vbo.
  */
 void
 util_draw_indirect(struct pipe_context *pipe,
-                   const struct pipe_draw_info *info);
+                   const struct pipe_draw_info *info,
+                   const struct pipe_draw_indirect_info *indirect);
 
+/* Helper to handle multi-draw by splitting into individual draws.  You
+ * don't want to call this if num_draws==1
+ */
+void
+util_draw_multi(struct pipe_context *pctx, const struct pipe_draw_info *info,
+                unsigned drawid_offset,
+                const struct pipe_draw_indirect_info *indirect,
+                const struct pipe_draw_start_count_bias *draws,
+                unsigned num_draws);
 
 unsigned
 util_draw_max_index(

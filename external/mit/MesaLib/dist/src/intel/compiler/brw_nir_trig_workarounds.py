@@ -31,14 +31,12 @@
 # amplitude slightly.  Apparently this also minimizes the error function,
 # reducing the maximum error from 0.00006 to about 0.00003.
 
-from __future__ import print_function
-
 import argparse
 import sys
 
 TRIG_WORKAROUNDS = [
-    (('fsin', 'x'), ('fmul', ('fsin', 'x'), 0.99997)),
-    (('fcos', 'x'), ('fmul', ('fcos', 'x'), 0.99997)),
+    (('fsin', 'x(is_not_const)'), ('fmul', ('fsin', 'x'), 0.99997)),
+    (('fcos', 'x(is_not_const)'), ('fmul', ('fcos', 'x'), 0.99997)),
 ]
 
 

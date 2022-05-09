@@ -25,8 +25,8 @@
 #include "r300_texture.h"
 #include "r300_reg.h"
 
-#include "util/u_format.h"
-#include "util/u_half.h"
+#include "util/format/u_format.h"
+#include "util/half_float.h"
 #include "util/u_pack_color.h"
 #include "util/u_surface.h"
 
@@ -202,6 +202,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(hyperz, "RADEON_HYPERZ", FALSE)
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
+                       const struct pipe_scissor_state *scissor_state,
                        const union pipe_color_union *color,
                        double depth,
                        unsigned stencil)
@@ -280,7 +281,7 @@ static void r300_clear(struct pipe_context* pipe,
             if (!r300->hyperz_enabled &&
                 (r300->screen->caps.is_r500 || debug_get_option_hyperz())) {
                 r300->hyperz_enabled =
-                    r300->rws->cs_request_feature(r300->cs,
+                    r300->rws->cs_request_feature(&r300->cs,
                                                 RADEON_FID_R300_HYPERZ_ACCESS,
                                                 TRUE);
                 if (r300->hyperz_enabled) {
@@ -318,7 +319,7 @@ static void r300_clear(struct pipe_context* pipe,
         /* Try to obtain the access to the CMASK if we don't have one. */
         if (!r300->cmask_access) {
             r300->cmask_access =
-                r300->rws->cs_request_feature(r300->cs,
+                r300->rws->cs_request_feature(&r300->cs,
                                               RADEON_FID_R300_CMASK_ACCESS,
                                               TRUE);
         }
@@ -366,7 +367,8 @@ static void r300_clear(struct pipe_context* pipe,
         /* Clear using the blitter. */
         r300_blitter_begin(r300, R300_CLEAR);
         util_blitter_clear(r300->blitter, width, height, 1,
-                           buffers, color, depth, stencil);
+                           buffers, color, depth, stencil,
+                           util_framebuffer_get_num_samples(fb) > 1);
         r300_blitter_end(r300);
     } else if (r300->zmask_clear.dirty ||
                r300->hiz_clear.dirty ||
@@ -382,7 +384,7 @@ static void r300_clear(struct pipe_context* pipe,
             r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
-        if (!r300->rws->cs_check_space(r300->cs, dwords)) {
+        if (!r300->rws->cs_check_space(&r300->cs, dwords, false)) {
             r300_flush(&r300->context, PIPE_FLUSH_ASYNC, NULL);
         }
 
@@ -674,7 +676,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     util_blitter_blit_generic(r300->blitter, dst_view, &dstbox,
                               src_view, src_box, src_width0, src_height0,
                               PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
-                              FALSE);
+                              FALSE, FALSE);
     r300_blitter_end(r300);
 
     pipe_surface_reference(&dst_view, NULL);

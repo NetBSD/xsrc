@@ -1,8 +1,5 @@
-#if !defined (__SI_GB_REG_H__)
-#define __SI_GB_REG_H__
-
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -27,13 +24,16 @@
  * of the Software.
  */
 
-#include "util/u_endian.h"
+#if !defined (__SI_GB_REG_H__)
+#define __SI_GB_REG_H__
 
-#if defined(PIPE_ARCH_LITTLE_ENDIAN)
-#define LITTLEENDIAN_CPU
-#elif defined(PIPE_ARCH_BIG_ENDIAN)
-#define BIGENDIAN_CPU
-#endif
+/*****************************************************************************************************************
+ *
+ *  si_gb_reg.h
+ *
+ *  Register Spec Release:  Chip Spec 0.28
+ *
+ *****************************************************************************************************************/
 
 //
 // Make sure the necessary endian defines are there.
@@ -112,7 +112,7 @@ typedef union {
           unsigned int num_banks                      : 2;
           unsigned int micro_tile_mode_new            : 3;
           unsigned int sample_split                   : 2;
-          unsigned int                                : 5;
+          unsigned int alt_pipe_config                : 5;
      } GB_TILE_MODE_T;
 
      typedef struct _GB_MACROTILE_MODE_T {
@@ -120,13 +120,16 @@ typedef union {
           unsigned int bank_height                    : 2;
           unsigned int macro_tile_aspect              : 2;
           unsigned int num_banks                      : 2;
-          unsigned int                                : 24;
+          unsigned int alt_bank_height                : 2;
+          unsigned int alt_macro_tile_aspect          : 2;
+          unsigned int alt_num_banks                  : 2;
+          unsigned int                                : 18;
      } GB_MACROTILE_MODE_T;
 
 #elif          defined(BIGENDIAN_CPU)
 
      typedef struct _GB_TILE_MODE_T {
-          unsigned int                                : 5;
+          unsigned int alt_pipe_config                : 5;
           unsigned int sample_split                   : 2;
           unsigned int micro_tile_mode_new            : 3;
           unsigned int num_banks                      : 2;
@@ -140,7 +143,10 @@ typedef union {
      } GB_TILE_MODE_T;
 
      typedef struct _GB_MACROTILE_MODE_T {
-          unsigned int                                : 24;
+          unsigned int                                : 18;
+          unsigned int alt_num_banks                  : 2;
+          unsigned int alt_macro_tile_aspect          : 2;
+          unsigned int alt_bank_height                : 2;
           unsigned int num_banks                      : 2;
           unsigned int macro_tile_aspect              : 2;
           unsigned int bank_height                    : 2;

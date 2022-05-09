@@ -3,6 +3,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_math.h"
+#include "util/format/u_format.h"
 
 static inline void
 u_box_1d(unsigned x, unsigned w, struct pipe_box *box)
@@ -119,6 +120,45 @@ u_box_volume_3d(const struct pipe_box *box)
    return (int64_t)box->width * box->height * box->depth;
 }
 
+/* Aliasing of @dst permitted. Supports empty width */
+static inline void
+u_box_union_1d(struct pipe_box *dst,
+               const struct pipe_box *a, const struct pipe_box *b)
+{
+   int x, width;
+
+   if (a->width == 0) {
+       x = b->x;
+       width = b->width;
+   } else if (b->width == 0) {
+       x = a->x;
+       width = a->width;
+   } else {
+       x = MIN2(a->x, b->x);
+       width = MAX2(a->x + a->width, b->x + b->width) - x;
+   }
+
+   dst->x = x;
+   dst->width = width;
+}
+
+/* Aliasing of @dst permitted. */
+static inline void
+u_box_intersect_1d(struct pipe_box *dst,
+               const struct pipe_box *a, const struct pipe_box *b)
+{
+   int x;
+
+   x = MAX2(a->x, b->x);
+
+   dst->width = MIN2(a->x + a->width, b->x + b->width) - x;
+   dst->x = x;
+   if (dst->width <= 0) {
+      dst->x = 0;
+      dst->width = 0;
+   }
+}
+
 /* Aliasing of @dst permitted. */
 static inline void
 u_box_union_2d(struct pipe_box *dst,
@@ -198,6 +238,24 @@ u_box_minify_3d(struct pipe_box *dst,
    dst->width = MAX2(src->width >> l, 1);
    dst->height = MAX2(src->height >> l, 1);
    dst->depth = MAX2(src->depth >> l, 1);
+}
+
+/* Converts a box specified in pixels to an equivalent box specified
+ * in blocks, where the boxes represent a region-of-interest of an image with
+ * the given format. This is trivial (a copy) for uncompressed formats.
+ */
+static inline void
+u_box_pixels_to_blocks(struct pipe_box *blocks,
+                       const struct pipe_box *pixels, enum pipe_format format)
+{
+   u_box_3d(
+         pixels->x / util_format_get_blockwidth(format),
+         pixels->y / util_format_get_blockheight(format),
+         pixels->z,
+         DIV_ROUND_UP(pixels->width, util_format_get_blockwidth(format)),
+         DIV_ROUND_UP(pixels->height, util_format_get_blockheight(format)),
+         pixels->depth,
+         blocks);
 }
 
 #endif

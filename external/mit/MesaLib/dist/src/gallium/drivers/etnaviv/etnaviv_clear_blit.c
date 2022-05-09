@@ -39,6 +39,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "util/compiler.h"
 #include "util/u_blitter.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
@@ -48,12 +49,14 @@
 void
 etna_blit_save_state(struct etna_context *ctx)
 {
+   util_blitter_save_fragment_constant_buffer_slot(ctx->blitter,
+                                                   ctx->constant_buffer[PIPE_SHADER_FRAGMENT].cb);
    util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vertex_buffer.vb);
    util_blitter_save_vertex_elements(ctx->blitter, ctx->vertex_elements);
    util_blitter_save_vertex_shader(ctx->blitter, ctx->shader.bind_vs);
    util_blitter_save_rasterizer(ctx->blitter, ctx->rasterizer);
    util_blitter_save_viewport(ctx->blitter, &ctx->viewport_s);
-   util_blitter_save_scissor(ctx->blitter, &ctx->scissor_s);
+   util_blitter_save_scissor(ctx->blitter, &ctx->scissor);
    util_blitter_save_fragment_shader(ctx->blitter, ctx->shader.bind_fs);
    util_blitter_save_blend(ctx->blitter, ctx->blend);
    util_blitter_save_depth_stencil_alpha(ctx->blitter, ctx->zsa);
@@ -66,15 +69,54 @@ etna_blit_save_state(struct etna_context *ctx)
          ctx->num_fragment_sampler_views, ctx->sampler_view);
 }
 
-uint32_t
-etna_clear_blit_pack_rgba(enum pipe_format format, const float *rgba)
+uint64_t
+etna_clear_blit_pack_rgba(enum pipe_format format, const union pipe_color_union *color)
 {
    union util_color uc;
-   util_pack_color(rgba, format, &uc);
-   if (util_format_get_blocksize(format) == 2)
-      return uc.ui[0] << 16 | (uc.ui[0] & 0xffff);
-   else
-      return uc.ui[0];
+
+   util_pack_color_union(format, &uc, color);
+
+   switch (util_format_get_blocksize(format)) {
+   case 1:
+      uc.ui[0] = uc.ui[0] << 8 | (uc.ui[0] & 0xff);
+      FALLTHROUGH;
+   case 2:
+      uc.ui[0] =  uc.ui[0] << 16 | (uc.ui[0] & 0xffff);
+      FALLTHROUGH;
+   case 4:
+      uc.ui[1] = uc.ui[0];
+      FALLTHROUGH;
+   default:
+      return (uint64_t) uc.ui[1] << 32 | uc.ui[0];
+   }
+}
+
+static void
+etna_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
+{
+   struct etna_context *ctx = etna_context(pctx);
+   struct pipe_blit_info info = *blit_info;
+
+   if (ctx->blit(pctx, &info))
+      return;
+
+   if (util_try_blit_via_copy_region(pctx, &info))
+      return;
+
+   if (info.mask & PIPE_MASK_S) {
+      DBG("cannot blit stencil, skipping");
+      info.mask &= ~PIPE_MASK_S;
+   }
+
+   if (!util_blitter_is_blit_supported(ctx->blitter, &info)) {
+      DBG("blit unsupported %s -> %s",
+          util_format_short_name(info.src.resource->format),
+          util_format_short_name(info.dst.resource->format));
+      return;
+   }
+
+   etna_blit_save_state(ctx);
+   util_blitter_blit(ctx->blitter, &info);
 }
 
 static void
@@ -114,19 +156,8 @@ etna_resource_copy_region(struct pipe_context *pctx, struct pipe_resource *dst,
 {
    struct etna_context *ctx = etna_context(pctx);
 
-   /* The resource must be of the same format. */
-   assert(src->format == dst->format);
-
-   /* XXX we can use the RS as a literal copy engine here
-    * the only complexity is tiling; the size of the boxes needs to be aligned
-    * to the tile size
-    * how to handle the case where a resource is copied from/to a non-aligned
-    * position?
-    * from non-aligned: can fall back to rendering-based copy?
-    * to non-aligned: can fall back to rendering-based copy?
-    * XXX this goes wrong when source surface is supertiled.
-    */
-   if (util_blitter_is_copy_supported(ctx->blitter, dst, src)) {
+   if (src->target != PIPE_BUFFER && dst->target != PIPE_BUFFER &&
+       util_blitter_is_copy_supported(ctx->blitter, dst, src)) {
       etna_blit_save_state(ctx);
       util_blitter_copy_texture(ctx->blitter, dst, dst_level, dstx, dsty, dstz,
                                 src, src_level, src_box);
@@ -141,10 +172,10 @@ etna_flush_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
 {
    struct etna_resource *rsc = etna_resource(prsc);
 
-   if (rsc->external) {
-      if (etna_resource_older(etna_resource(rsc->external), rsc)) {
-         etna_copy_resource(pctx, rsc->external, prsc, 0, 0);
-         etna_resource(rsc->external)->seqno = rsc->seqno;
+   if (rsc->render) {
+      if (etna_resource_older(rsc, etna_resource(rsc->render))) {
+         etna_copy_resource(pctx, prsc, rsc->render, 0, 0);
+         rsc->seqno = etna_resource(rsc->render)->seqno;
       }
    } else if (etna_resource_needs_flush(rsc)) {
       etna_copy_resource(pctx, prsc, prsc, 0, 0);
@@ -179,9 +210,14 @@ etna_copy_resource(struct pipe_context *pctx, struct pipe_resource *dst,
          MIN2(src_priv->levels[level].padded_width, dst_priv->levels[level].padded_width);
       blit.src.box.height = blit.dst.box.height =
          MIN2(src_priv->levels[level].padded_height, dst_priv->levels[level].padded_height);
+      unsigned depth = MIN2(src_priv->levels[level].depth, dst_priv->levels[level].depth);
+      if (dst->array_size > 1) {
+         assert(depth == 1); /* no array of 3d texture */
+         depth = dst->array_size;
+      }
 
-      for (int layer = 0; layer < dst->array_size; layer++) {
-         blit.src.box.z = blit.dst.box.z = layer;
+      for (int z = 0; z < depth; z++) {
+         blit.src.box.z = blit.dst.box.z = z;
          pctx->blit(pctx, &blit);
       }
    }
@@ -208,8 +244,8 @@ etna_copy_resource_box(struct pipe_context *pctx, struct pipe_resource *dst,
    blit.dst.box.depth = blit.src.box.depth = 1;
    blit.src.level = blit.dst.level = level;
 
-   for (int layer = 0; layer < dst->array_size; layer++) {
-      blit.src.box.z = blit.dst.box.z = layer;
+   for (int z = 0; z < box->depth; z++) {
+      blit.src.box.z = blit.dst.box.z = box->z + z;
       pctx->blit(pctx, &blit);
    }
 }
@@ -218,13 +254,15 @@ void
 etna_clear_blit_init(struct pipe_context *pctx)
 {
    struct etna_context *ctx = etna_context(pctx);
+   struct etna_screen *screen = ctx->screen;
 
+   pctx->blit = etna_blit;
    pctx->clear_render_target = etna_clear_render_target;
    pctx->clear_depth_stencil = etna_clear_depth_stencil;
    pctx->resource_copy_region = etna_resource_copy_region;
    pctx->flush_resource = etna_flush_resource;
 
-   if (ctx->specs.use_blt)
+   if (screen->specs.use_blt)
       etna_clear_blit_blt_init(pctx);
    else
       etna_clear_blit_rs_init(pctx);

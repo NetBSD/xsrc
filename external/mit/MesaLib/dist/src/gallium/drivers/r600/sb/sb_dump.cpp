@@ -367,7 +367,12 @@ void dump::dump_op(node &n, const char *name) {
 		sblog << ",       ";
 	}
 
-	dump_vec(n.src);
+   if (n.subtype == NST_FETCH_INST) {
+      fetch_node *f = static_cast<fetch_node*>(&n);
+      if (f->bc.indexed)
+         dump_vec(n.src);
+   } else
+      dump_vec(n.src);
 }
 
 void dump::dump_set(shader &sh, val_set& v) {
@@ -391,6 +396,8 @@ void dump::dump_flags(node &n) {
 		sblog << "CH_CONS  ";
 	if (n.flags & NF_ALU_4SLOT)
 		sblog << "4S  ";
+	if (n.flags & NF_ALU_2SLOT)
+		sblog << "2S  ";
 }
 
 void dump::dump_val(value* v) {

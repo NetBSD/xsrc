@@ -36,29 +36,6 @@
 #include "teximage.h"
 #include "enums.h"
 
-/*
- * Define endian-invariant aliases for some mesa formats that are
- * defined in terms of their channel layout from LSB to MSB in a
- * 32-bit word.  The actual byte offsets matter here because the user
- * is allowed to bit-cast one format into another and get predictable
- * results.
- */
-#ifdef MESA_BIG_ENDIAN
-# define MESA_FORMAT_RGBA_8 MESA_FORMAT_A8B8G8R8_UNORM
-# define MESA_FORMAT_RG_16 MESA_FORMAT_G16R16_UNORM
-# define MESA_FORMAT_RG_8 MESA_FORMAT_G8R8_UNORM
-# define MESA_FORMAT_SIGNED_RGBA_8 MESA_FORMAT_A8B8G8R8_SNORM
-# define MESA_FORMAT_SIGNED_RG_16 MESA_FORMAT_G16R16_SNORM
-# define MESA_FORMAT_SIGNED_RG_8 MESA_FORMAT_G8R8_SNORM
-#else
-# define MESA_FORMAT_RGBA_8 MESA_FORMAT_R8G8B8A8_UNORM
-# define MESA_FORMAT_RG_16 MESA_FORMAT_R16G16_UNORM
-# define MESA_FORMAT_RG_8 MESA_FORMAT_R8G8_UNORM
-# define MESA_FORMAT_SIGNED_RGBA_8 MESA_FORMAT_R8G8B8A8_SNORM
-# define MESA_FORMAT_SIGNED_RG_16 MESA_FORMAT_R16G16_SNORM
-# define MESA_FORMAT_SIGNED_RG_8 MESA_FORMAT_R8G8_SNORM
-#endif
-
 mesa_format
 _mesa_get_shader_image_format(GLenum format)
 {
@@ -148,13 +125,13 @@ _mesa_get_shader_image_format(GLenum format)
       return MESA_FORMAT_R10G10B10A2_UNORM;
 
    case GL_RGBA8:
-      return MESA_FORMAT_RGBA_8;
+      return MESA_FORMAT_RGBA_UNORM8;
 
    case GL_RG16:
-      return MESA_FORMAT_RG_16;
+      return MESA_FORMAT_RG_UNORM16;
 
    case GL_RG8:
-      return MESA_FORMAT_RG_8;
+      return MESA_FORMAT_RG_UNORM8;
 
    case GL_R16:
       return MESA_FORMAT_R_UNORM16;
@@ -166,13 +143,13 @@ _mesa_get_shader_image_format(GLenum format)
       return MESA_FORMAT_RGBA_SNORM16;
 
    case GL_RGBA8_SNORM:
-      return MESA_FORMAT_SIGNED_RGBA_8;
+      return MESA_FORMAT_RGBA_SNORM8;
 
    case GL_RG16_SNORM:
-      return MESA_FORMAT_SIGNED_RG_16;
+      return MESA_FORMAT_RG_SNORM16;
 
    case GL_RG8_SNORM:
-      return MESA_FORMAT_SIGNED_RG_8;
+      return MESA_FORMAT_RG_SNORM8;
 
    case GL_R16_SNORM:
       return MESA_FORMAT_R_SNORM16;
@@ -294,13 +271,13 @@ get_image_format_class(mesa_format format)
    case MESA_FORMAT_R10G10B10A2_UNORM:
       return IMAGE_FORMAT_CLASS_2_10_10_10;
 
-   case MESA_FORMAT_RGBA_8:
+   case MESA_FORMAT_RGBA_UNORM8:
       return IMAGE_FORMAT_CLASS_4X8;
 
-   case MESA_FORMAT_RG_16:
+   case MESA_FORMAT_RG_UNORM16:
       return IMAGE_FORMAT_CLASS_2X16;
 
-   case MESA_FORMAT_RG_8:
+   case MESA_FORMAT_RG_UNORM8:
       return IMAGE_FORMAT_CLASS_2X8;
 
    case MESA_FORMAT_R_UNORM16:
@@ -312,13 +289,13 @@ get_image_format_class(mesa_format format)
    case MESA_FORMAT_RGBA_SNORM16:
       return IMAGE_FORMAT_CLASS_4X16;
 
-   case MESA_FORMAT_SIGNED_RGBA_8:
+   case MESA_FORMAT_RGBA_SNORM8:
       return IMAGE_FORMAT_CLASS_4X8;
 
-   case MESA_FORMAT_SIGNED_RG_16:
+   case MESA_FORMAT_RG_SNORM16:
       return IMAGE_FORMAT_CLASS_2X16;
 
-   case MESA_FORMAT_SIGNED_RG_8:
+   case MESA_FORMAT_RG_SNORM8:
       return IMAGE_FORMAT_CLASS_2X8;
 
    case MESA_FORMAT_R_SNORM16:
@@ -491,10 +468,10 @@ _mesa_is_image_unit_valid(struct gl_context *ctx, struct gl_image_unit *u)
    if (!t->_BaseComplete && !t->_MipmapComplete)
        _mesa_test_texobj_completeness(ctx, t);
 
-   if (u->Level < t->BaseLevel ||
+   if (u->Level < t->Attrib.BaseLevel ||
        u->Level > t->_MaxLevel ||
-       (u->Level == t->BaseLevel && !t->_BaseComplete) ||
-       (u->Level != t->BaseLevel && !t->_MipmapComplete))
+       (u->Level == t->Attrib.BaseLevel && !t->_BaseComplete) ||
+       (u->Level != t->Attrib.BaseLevel && !t->_MipmapComplete))
       return GL_FALSE;
 
    if (_mesa_tex_target_is_layered(t->Target) &&
@@ -518,7 +495,7 @@ _mesa_is_image_unit_valid(struct gl_context *ctx, struct gl_image_unit *u)
    if (!tex_format)
       return GL_FALSE;
 
-   switch (t->ImageFormatCompatibilityType) {
+   switch (t->Attrib.ImageFormatCompatibilityType) {
    case GL_IMAGE_FORMAT_COMPATIBILITY_BY_SIZE:
       if (_mesa_get_format_bytes(tex_format) !=
           _mesa_get_format_bytes(u->_ActualFormat))
@@ -541,7 +518,7 @@ _mesa_is_image_unit_valid(struct gl_context *ctx, struct gl_image_unit *u)
 static GLboolean
 validate_bind_image_texture(struct gl_context *ctx, GLuint unit,
                             GLuint texture, GLint level, GLint layer,
-                            GLenum access, GLenum format)
+                            GLenum access, GLenum format, bool check_level_layer)
 {
    assert(ctx->Const.MaxImageUnits <= MAX_IMAGE_UNITS);
 
@@ -550,14 +527,19 @@ validate_bind_image_texture(struct gl_context *ctx, GLuint unit,
       return GL_FALSE;
    }
 
-   if (level < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindImageTexture(level)");
-      return GL_FALSE;
-   }
+   if (check_level_layer) {
+      /* EXT_shader_image_load_store doesn't throw an error if level or
+       * layer is negative.
+       */
+      if (level < 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glBindImageTexture(level)");
+         return GL_FALSE;
+      }
 
-   if (layer < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindImageTexture(layer)");
-      return GL_FALSE;
+         if (layer < 0) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glBindImageTexture(layer)");
+            return GL_FALSE;
+      }
    }
 
    if (access != GL_READ_ONLY &&
@@ -588,11 +570,11 @@ set_image_binding(struct gl_image_unit *u, struct gl_texture_object *texObj,
    if (texObj && _mesa_tex_target_is_layered(texObj->Target)) {
       u->Layered = layered;
       u->Layer = layer;
-      u->_Layer = (u->Layered ? 0 : u->Layer);
    } else {
       u->Layered = GL_FALSE;
       u->Layer = 0;
    }
+   u->_Layer = (u->Layered ? 0 : u->Layer);
 
    _mesa_reference_texobj(&u->TexObj, texObj);
 }
@@ -606,7 +588,7 @@ bind_image_texture(struct gl_context *ctx, struct gl_texture_object *texObj,
 
    u = &ctx->ImageUnits[unit];
 
-   FLUSH_VERTICES(ctx, 0);
+   FLUSH_VERTICES(ctx, 0, 0);
    ctx->NewDriverState |= ctx->DriverFlags.NewImageUnits;
 
    set_image_binding(u, texObj, level, layered, layer, access, format);
@@ -637,7 +619,7 @@ _mesa_BindImageTexture(GLuint unit, GLuint texture, GLint level,
    GET_CURRENT_CONTEXT(ctx);
 
    if (!validate_bind_image_texture(ctx, unit, texture, level, layer, access,
-                                    format))
+                                    format, true))
       return;
 
    if (texture) {
@@ -657,8 +639,11 @@ _mesa_BindImageTexture(GLuint unit, GLuint texture, GLint level,
        * However note that issue 7 of the GL_OES_texture_buffer spec
        * recognizes that there is no way to create immutable buffer textures,
        * so those are excluded from this requirement.
+       *
+       * Additionally, issue 10 of the OES_EGL_image_external_essl3 spec
+       * states that glBindImageTexture must accept external texture objects.
        */
-      if (_mesa_is_gles(ctx) && !texObj->Immutable &&
+      if (_mesa_is_gles(ctx) && !texObj->Immutable && !texObj->External &&
           texObj->Target != GL_TEXTURE_BUFFER) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBindImageTexture(!immutable)");
@@ -669,6 +654,31 @@ _mesa_BindImageTexture(GLuint unit, GLuint texture, GLint level,
    bind_image_texture(ctx, texObj, unit, level, layered, layer, access, format);
 }
 
+void GLAPIENTRY
+_mesa_BindImageTextureEXT(GLuint index, GLuint texture, GLint level,
+                          GLboolean layered, GLint layer, GLenum access,
+                          GLint format)
+{
+   struct gl_texture_object *texObj = NULL;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!validate_bind_image_texture(ctx, index, texture, level, layer, access,
+                                    format, false))
+      return;
+
+   if (texture) {
+      texObj = _mesa_lookup_texture(ctx, texture);
+
+      if (!texObj) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glBindImageTextureEXT(texture)");
+         return;
+      }
+   }
+
+   bind_image_texture(ctx, texObj, index, level, layered, layer, access, format);
+}
+
 static ALWAYS_INLINE void
 bind_image_textures(struct gl_context *ctx, GLuint first, GLuint count,
                     const GLuint *textures, bool no_error)
@@ -676,7 +686,7 @@ bind_image_textures(struct gl_context *ctx, GLuint first, GLuint count,
    int i;
 
    /* Assume that at least one binding will be changed */
-   FLUSH_VERTICES(ctx, 0);
+   FLUSH_VERTICES(ctx, 0, 0);
    ctx->NewDriverState |= ctx->DriverFlags.NewImageUnits;
 
    /* Note that the error semantics for multi-bind commands differ from

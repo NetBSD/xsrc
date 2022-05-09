@@ -69,9 +69,9 @@
 #include "main/context.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
-#include "main/imports.h"
 #include "main/macros.h"
 #include "main/renderbuffer.h"
+#include "main/state.h"
 #include "main/teximage.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
@@ -84,7 +84,7 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
-#include "util/u_math.h"
+#include "util/u_memory.h"
 
 /**
  * Global X driver lock
@@ -117,7 +117,7 @@ static int host_byte_order( void )
  */
 static int check_for_xshm( XMesaDisplay *display )
 {
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
    int ignore;
 
    if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
@@ -151,7 +151,7 @@ gamma_adjust( GLfloat gamma, GLint value, GLint max )
    }
    else {
       double x = (double) value / (double) max;
-      return IROUND_POS((GLfloat) max * pow(x, 1.0F/gamma));
+      return lroundf((GLfloat) max * pow(x, 1.0F/gamma));
    }
 }
 
@@ -328,7 +328,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->backxrb->Parent = b;
       /* determine back buffer implementation */
       b->db_mode = vis->ximage_flag ? BACK_XIMAGE : BACK_PIXMAP;
-      
+
       _mesa_attach_and_own_rb(&b->mesa_buffer, BUFFER_BACK_LEFT,
                               &b->backxrb->Base.Base);
    }
@@ -338,11 +338,10 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
     */
    _swrast_add_soft_renderbuffers(&b->mesa_buffer,
                                   GL_FALSE,  /* color */
-                                  vis->mesa_visual.haveDepthBuffer,
-                                  vis->mesa_visual.haveStencilBuffer,
-                                  vis->mesa_visual.haveAccumBuffer,
-                                  GL_FALSE,  /* software alpha buffer */
-                                  vis->mesa_visual.numAuxBuffers > 0 );
+                                  vis->mesa_visual.depthBits > 0,
+                                  vis->mesa_visual.stencilBits > 0,
+                                  vis->mesa_visual.accumRedBits > 0,
+                                  GL_FALSE  /* software alpha buffer */ );
 
    /* GLX_EXT_texture_from_pixmap */
    b->TextureTarget = 0;
@@ -582,7 +581,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       _mesa_warning(NULL, "XMesa: RGB mode rendering not supported in given visual.\n");
       return GL_FALSE;
    }
-   v->mesa_visual.indexBits = 0;
 
    if (getenv("MESA_NO_DITHER")) {
       v->dithered_pf = v->undithered_pf;
@@ -598,7 +596,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       printf("X/Mesa visual = %p\n", (void *) v);
       printf("X/Mesa dithered pf = %u\n", v->dithered_pf);
       printf("X/Mesa undithered pf = %u\n", v->undithered_pf);
-      printf("X/Mesa level = %d\n", v->mesa_visual.level);
       printf("X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
       printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
    }
@@ -663,13 +660,13 @@ xmesa_color_to_pixel(struct gl_context *ctx,
       case PF_8A8R8G8B:
          return PACK_8A8R8G8B( r, g, b, a );
       case PF_8R8G8B:
-         /* fall through */
+         FALLTHROUGH;
       case PF_8R8G8B24:
          return PACK_8R8G8B( r, g, b );
       case PF_5R6G5B:
          return PACK_5R6G5B( r, g, b );
       case PF_Dither_True:
-         /* fall through */
+         FALLTHROUGH;
       case PF_Dither_5R6G5B:
          {
             unsigned long p;
@@ -687,12 +684,12 @@ xmesa_color_to_pixel(struct gl_context *ctx,
 
 /**
  * Convert an X visual type to a GLX visual type.
- * 
+ *
  * \param visualType X visual type (i.e., \c TrueColor, \c StaticGray, etc.)
  *        to be converted.
  * \return If \c visualType is a valid X visual type, a GLX visual type will
  *         be returned.  Otherwise \c GLX_NONE will be returned.
- * 
+ *
  * \note
  * This code was lifted directly from lib/GL/glx/glcontextmodes.c in the
  * DRI CVS tree.
@@ -819,8 +816,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    v->visualType = xmesa_convert_from_x_visual_type(visinfo->c_class);
 #endif
 
-   v->mesa_visual.visualRating = visualCaveat;
-
    if (alpha_flag)
       v->mesa_visual.alphaBits = 8;
 
@@ -848,22 +843,16 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
       alpha_bits = v->mesa_visual.alphaBits;
    }
 
-   if (!_mesa_initialize_visual(&v->mesa_visual,
-                                db_flag, stereo_flag,
-                                red_bits, green_bits,
-                                blue_bits, alpha_bits,
-                                depth_size,
-                                stencil_size,
-                                accum_red_size, accum_green_size,
-                                accum_blue_size, accum_alpha_size,
-                                0)) {
-      free(v->visinfo);
-      free(v);
-      return NULL;
-   }
+   _mesa_initialize_visual(&v->mesa_visual,
+                           db_flag, stereo_flag,
+                           red_bits, green_bits,
+                           blue_bits, alpha_bits,
+                           depth_size,
+                           stencil_size,
+                           accum_red_size, accum_green_size,
+                           accum_blue_size, accum_alpha_size,
+                           0);
 
-   /* XXX minor hack */
-   v->mesa_visual.level = level;
    return v;
 }
 
@@ -922,6 +911,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (0) {
       mesaCtx->VertexProgram._MaintainTnlProgram = GL_TRUE;
       mesaCtx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+      _mesa_reset_vertex_processing_mode(mesaCtx);
    }
 
    _mesa_enable_sw_extensions(mesaCtx);
@@ -942,7 +932,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* Initialize the software rasterizer and helper modules.
     */
    if (!_swrast_CreateContext( mesaCtx ) ||
-       !_vbo_CreateContext( mesaCtx ) ||
+       !_vbo_CreateContext( mesaCtx, false ) ||
        !_tnl_CreateContext( mesaCtx ) ||
        !_swsetup_CreateContext( mesaCtx )) {
       _mesa_free_context_data(&c->mesa, true);
@@ -1310,6 +1300,26 @@ Display *XMesaGetCurrentDisplay(void)
 }
 
 
+/**
+ * Swap buffers notification callback.
+ *
+ * \param ctx GL context.
+ *
+ * Called by window system just before swapping buffers.
+ * We have to finish any pending rendering.
+ */
+static void
+XMesaNotifySwapBuffers(struct gl_context *ctx)
+{
+   if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
+      _mesa_debug(ctx, "SwapBuffers\n");
+
+   FLUSH_VERTICES(ctx, 0, 0);
+   if (ctx->Driver.Flush) {
+      ctx->Driver.Flush(ctx, 0);
+   }
+}
+
 
 /*
  * Copy the back buffer to the front buffer.  If there's no back buffer
@@ -1329,12 +1339,12 @@ void XMesaSwapBuffers( XMesaBuffer b )
     * we have to flush any pending rendering commands first.
     */
    if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
-      _mesa_notifySwapBuffers(ctx);
+      XMesaNotifySwapBuffers(ctx);
 
    if (b->db_mode) {
       if (b->backxrb->ximage) {
 	 /* Copy Ximage (back buf) from client memory to server window */
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
 	 if (b->shm) {
             /*mtx_lock(&_xmesa_lock);*/
 	    XShmPutImage( b->xm_visual->display, b->frontxrb->drawable,
@@ -1384,18 +1394,18 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
     * we have to flush any pending rendering commands first.
     */
    if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
-      _mesa_notifySwapBuffers(ctx);
+      XMesaNotifySwapBuffers(ctx);
 
    if (!b->backxrb) {
       /* single buffered */
-      return; 
+      return;
    }
 
    if (b->db_mode) {
       int yTop = b->mesa_buffer.Height - y - height;
       if (b->backxrb->ximage) {
          /* Copy Ximage from host's memory to server's window */
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
          if (b->shm) {
             /* XXX assuming width and height aren't too large! */
             XShmPutImage( b->xm_visual->display, b->frontxrb->drawable,
@@ -1586,7 +1596,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
       case PF_5R6G5B:
          return PACK_5R6G5B( r, g, b );
       case PF_Dither_5R6G5B:
-         /* fall through */
+         FALLTHROUGH;
       case PF_Dither_True:
          {
             unsigned long p;
@@ -1630,7 +1640,6 @@ xbuffer_to_renderbuffer(int buffer)
    case GLX_BACK_RIGHT_EXT:
       return BUFFER_BACK_RIGHT;
    case GLX_AUX0_EXT:
-      return BUFFER_AUX0;
    case GLX_AUX1_EXT:
    case GLX_AUX2_EXT:
    case GLX_AUX3_EXT:

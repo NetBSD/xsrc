@@ -101,13 +101,11 @@ _mesa_update_shader_textures_used(struct gl_shader_program *shProg,
                                   struct gl_program *prog)
 {
    GLbitfield mask = prog->SamplersUsed;
-   gl_shader_stage prog_stage =
+   ASSERTED gl_shader_stage prog_stage =
       _mesa_program_enum_to_shader_stage(prog->Target);
-   MAYBE_UNUSED struct gl_linked_shader *shader =
-      shProg->_LinkedShaders[prog_stage];
    GLuint s;
 
-   assert(shader);
+   assert(shProg->_LinkedShaders[prog_stage]);
 
    memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
 
@@ -998,16 +996,17 @@ _mesa_GetUniformui64vARB(GLuint program, GLint location, GLuint64 *params)
 }
 
 
-GLint GLAPIENTRY
-_mesa_GetUniformLocation(GLuint programObj, const GLcharARB *name)
+GLint
+_mesa_GetUniformLocation_impl(GLuint programObj, const GLcharARB *name,
+                              bool glthread)
 {
    struct gl_shader_program *shProg;
 
    GET_CURRENT_CONTEXT(ctx);
 
-   shProg = _mesa_lookup_shader_program_err(ctx, programObj,
-					    "glGetUniformLocation");
-   if (!shProg)
+   shProg = _mesa_lookup_shader_program_err_glthread(ctx, programObj, glthread,
+                                                     "glGetUniformLocation");
+   if (!shProg || !name)
       return -1;
 
    /* Page 80 (page 94 of the PDF) of the OpenGL 2.1 spec says:
@@ -1016,12 +1015,18 @@ _mesa_GetUniformLocation(GLuint programObj, const GLcharARB *name)
     *     INVALID_OPERATION is generated."
     */
    if (shProg->data->LinkStatus == LINKING_FAILURE) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-		  "glGetUniformLocation(program not linked)");
+      _mesa_error_glthread_safe(ctx, GL_INVALID_OPERATION, glthread,
+                                "glGetUniformLocation(program not linked)");
       return -1;
    }
 
    return _mesa_program_resource_location(shProg, GL_UNIFORM, name);
+}
+
+GLint GLAPIENTRY
+_mesa_GetUniformLocation(GLuint programObj, const GLcharARB *name)
+{
+   return _mesa_GetUniformLocation_impl(programObj, name, false);
 }
 
 GLint GLAPIENTRY
@@ -1102,7 +1107,7 @@ uniform_block_binding(struct gl_context *ctx, struct gl_shader_program *shProg,
    if (shProg->data->UniformBlocks[uniformBlockIndex].Binding !=
        uniformBlockBinding) {
 
-      FLUSH_VERTICES(ctx, 0);
+      FLUSH_VERTICES(ctx, 0, 0);
       ctx->NewDriverState |= ctx->DriverFlags.NewUniformBuffer;
 
       shProg->data->UniformBlocks[uniformBlockIndex].Binding =
@@ -1164,7 +1169,7 @@ shader_storage_block_binding(struct gl_context *ctx,
    if (shProg->data->ShaderStorageBlocks[shaderStorageBlockIndex].Binding !=
        shaderStorageBlockBinding) {
 
-      FLUSH_VERTICES(ctx, 0);
+      FLUSH_VERTICES(ctx, 0, 0);
       ctx->NewDriverState |= ctx->DriverFlags.NewShaderStorageBuffer;
 
       shProg->data->ShaderStorageBlocks[shaderStorageBlockIndex].Binding =
@@ -1242,65 +1247,65 @@ mesa_bufferiv(struct gl_shader_program *shProg, GLenum type,
    case GL_UNIFORM_BLOCK_BINDING:
    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
       _mesa_program_resource_prop(shProg, res, index, GL_BUFFER_BINDING,
-                                  params, caller);
+                                  params, false, caller);
       return;
    case GL_UNIFORM_BLOCK_DATA_SIZE:
    case GL_ATOMIC_COUNTER_BUFFER_DATA_SIZE:
       _mesa_program_resource_prop(shProg, res, index, GL_BUFFER_DATA_SIZE,
-                                  params, caller);
+                                  params, false, caller);
       return;
    case GL_UNIFORM_BLOCK_NAME_LENGTH:
       _mesa_program_resource_prop(shProg, res, index, GL_NAME_LENGTH,
-                                  params, caller);
+                                  params, false, caller);
       return;
    case GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
    case GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS:
       _mesa_program_resource_prop(shProg, res, index, GL_NUM_ACTIVE_VARIABLES,
-                                  params, caller);
+                                  params, false, caller);
       return;
    case GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES:
    case GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES:
       _mesa_program_resource_prop(shProg, res, index, GL_ACTIVE_VARIABLES,
-                                  params, caller);
+                                  params, false, caller);
       return;
    case GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_VERTEX_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
 
    case GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_TESS_CONTROL_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
 
    case GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_TESS_EVALUATION_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
 
    case GL_UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_GEOMETRY_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
    case GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_FRAGMENT_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
    case GL_UNIFORM_BLOCK_REFERENCED_BY_COMPUTE_SHADER:
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_COMPUTE_SHADER:
       _mesa_program_resource_prop(shProg, res, index,
                                   GL_REFERENCED_BY_COMPUTE_SHADER, params,
-                                  caller);
+                                  false, caller);
       return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1364,7 +1369,7 @@ _mesa_GetActiveUniformBlockName(GLuint program,
    if (uniformBlockName)
       _mesa_get_program_resource_name(shProg, GL_UNIFORM_BLOCK,
                                       uniformBlockIndex, bufSize, length,
-                                      uniformBlockName,
+                                      uniformBlockName, false,
                                       "glGetActiveUniformBlockName");
 }
 
@@ -1394,7 +1399,8 @@ _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
       return;
 
    _mesa_get_program_resource_name(shProg, GL_UNIFORM, uniformIndex, bufSize,
-                                   length, uniformName, "glGetActiveUniformName");
+                                   length, uniformName, false,
+                                   "glGetActiveUniformName");
 }
 
 void GLAPIENTRY

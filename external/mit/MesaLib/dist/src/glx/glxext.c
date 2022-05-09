@@ -39,6 +39,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
@@ -50,15 +51,50 @@
 #include "glxextensions.h"
 
 #include "util/debug.h"
+#ifndef GLX_USE_APPLEGL
+#include "dri_common.h"
+#endif
 
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
 
+#define __GLX_MIN_CONFIG_PROPS	18
+#define __GLX_EXT_CONFIG_PROPS	32
 
-#ifdef DEBUG
-void __glXDumpDrawBuffer(struct glx_context * ctx);
-#endif
+/*
+** Since we send all non-core visual properties as token, value pairs,
+** we require 2 words across the wire. In order to maintain backwards
+** compatibility, we need to send the total number of words that the
+** VisualConfigs are sent back in so old libraries can simply "ignore"
+** the new properties.
+*/
+#define __GLX_TOTAL_CONFIG \
+   (__GLX_MIN_CONFIG_PROPS + 2 * __GLX_EXT_CONFIG_PROPS)
+
+_X_HIDDEN void
+glx_message(int level, const char *f, ...)
+{
+   va_list args;
+   int threshold = _LOADER_WARNING;
+   const char *libgl_debug;
+
+   libgl_debug = getenv("LIBGL_DEBUG");
+   if (libgl_debug) {
+      if (strstr(libgl_debug, "quiet"))
+         threshold = _LOADER_FATAL;
+      else if (strstr(libgl_debug, "verbose"))
+         threshold = _LOADER_DEBUG;
+   }
+
+   /* Note that the _LOADER_* levels are lower numbers for more severe. */
+   if (level <= threshold) {
+      fprintf(stderr, "libGL%s: ", level <= _LOADER_WARNING ? " error" : "");
+      va_start(args, f);
+      vfprintf(stderr, f, args);
+      va_end(args);
+   }
+}
 
 /*
 ** You can set this cell to 1 to force the gl drawing stuff to be
@@ -69,7 +105,7 @@ _X_HIDDEN int __glXDebug = 0;
 /* Extension required boiler plate */
 
 static const char __glXExtensionName[] = GLX_EXTENSION_NAME;
-  static struct glx_display *glx_displays;
+static struct glx_display *glx_displays;
 
 static /* const */ char *error_list[] = {
    "GLXBadContext",
@@ -114,7 +150,7 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    if (glx_dpy == NULL)
       return False;
 
-   switch ((wire->u.u.type & 0x7f) - glx_dpy->codes->first_event) {
+   switch ((wire->u.u.type & 0x7f) - glx_dpy->codes.first_event) {
    case GLX_PbufferClobber:
    {
       GLXPbufferClobberEvent *aevent = (GLXPbufferClobberEvent *)event;
@@ -244,8 +280,6 @@ glx_display_free(struct glx_display *priv)
    }
 
    FreeScreenConfigs(priv);
-   free((char *) priv->serverGLXvendor);
-   free((char *) priv->serverGLXversion);
 
    __glxHashDestroy(priv->glXDrawHash);
 
@@ -258,10 +292,6 @@ glx_display_free(struct glx_display *priv)
    priv->driswDisplay = NULL;
 
 #if defined (GLX_USE_DRM)
-   if (priv->driDisplay)
-      (*priv->driDisplay->destroyDisplay) (priv->driDisplay);
-   priv->driDisplay = NULL;
-
    if (priv->dri2Display)
       (*priv->dri2Display->destroyDisplay) (priv->dri2Display);
    priv->dri2Display = NULL;
@@ -369,7 +399,6 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
                                     Bool fbconfig_style_tags)
 {
    int i;
-   GLint renderType = 0;
 
    if (!tagged_only) {
       /* Copy in the first set of properties */
@@ -377,7 +406,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
 
       config->visualType = convert_from_x_visual_type(*bp++);
 
-      config->rgbMode = *bp++;
+      config->renderType = *bp++ ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
 
       config->redBits = *bp++;
       config->greenBits = *bp++;
@@ -421,7 +450,10 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       
       switch (tag) {
       case GLX_RGBA:
-         FETCH_OR_SET(rgbMode);
+         if (fbconfig_style_tags)
+            config->renderType = *bp++ ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+         else
+            config->renderType = GLX_RGBA_BIT;
          break;
       case GLX_BUFFER_SIZE:
          config->rgbBits = *bp++;
@@ -503,7 +535,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
 #endif
          break;
       case GLX_RENDER_TYPE: /* fbconfig render type bits */
-         renderType = *bp++;
+         config->renderType = *bp++;
          break;
       case GLX_X_RENDERABLE:
          config->xRenderable = *bp++;
@@ -583,40 +615,14 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       case None:
          i = count;
          break;
-      default:
-         if(env_var_as_boolean("LIBGL_DIAGNOSTIC", false)) {
-             long int tagvalue = *bp++;
-             fprintf(stderr, "WARNING: unknown GLX tag from server: "
-                     "tag 0x%lx value 0x%lx\n", tag, tagvalue);
-         } else {
-             /* Ignore the unrecognized tag's value */
-             bp++;
+      default: {
+            long int tagvalue = *bp++;
+            DebugMessageF("WARNING: unknown fbconfig attribute from server: "
+                          "tag 0x%lx value 0x%lx\n", tag, tagvalue);
+            break;
          }
-         break;
       }
    }
-
-   if (renderType != 0 && renderType != GLX_DONT_CARE) {
-      config->renderType = renderType;
-      config->floatMode = (renderType &
-         (GLX_RGBA_FLOAT_BIT_ARB|GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT)) != 0;
-   } else {
-      /* If there wasn't GLX_RENDER_TYPE property, set it based on
-       * config->rgbMode.  The only way to communicate that the config is
-       * floating-point is via GLX_RENDER_TYPE, so this cannot be a float
-       * config.
-       */
-      config->renderType =
-         (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
-   }
-
-   /* The GLX_ARB_fbconfig_float spec says:
-    *
-    *     "Note that floating point rendering is only supported for
-    *     GLXPbuffer drawables."
-    */
-   if (config->floatMode)
-      config->drawableType &= GLX_PBUFFER_BIT;
 }
 
 static struct glx_config *
@@ -631,10 +637,8 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    if (nprops == 0)
       return NULL;
 
-   /* FIXME: Is the __GLX_MIN_CONFIG_PROPS test correct for FBconfigs? */
-
    /* Check number of properties */
-   if (nprops < __GLX_MIN_CONFIG_PROPS || nprops > __GLX_MAX_CONFIG_PROPS)
+   if (nprops < __GLX_MIN_CONFIG_PROPS)
       return NULL;
 
    /* Allocate memory for our config structure */
@@ -663,8 +667,6 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
        */
       m->drawableType = GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
 #endif
-      /* Older X servers don't send this so we default it here. */
-      m->sRGBCapable = GL_FALSE;
        __glXInitializeVisualConfigFromTags(m, nprops, props,
                                           tagged_only, GL_TRUE);
       m->screen = screen;
@@ -689,7 +691,7 @@ getVisualConfigs(struct glx_screen *psc,
 
    psc->visuals = NULL;
    GetReq(GLXGetVisualConfigs, req);
-   req->reqType = priv->majorOpcode;
+   req->reqType = priv->codes.major_opcode;
    req->glxCode = X_GLXGetVisualConfigs;
    req->screen = screen;
 
@@ -707,7 +709,7 @@ getVisualConfigs(struct glx_screen *psc,
 }
 
 static GLboolean
- getFBConfigs(struct glx_screen *psc, struct glx_display *priv, int screen)
+getFBConfigs(struct glx_screen *psc, struct glx_display *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
@@ -715,8 +717,7 @@ static GLboolean
    xGLXGetFBConfigsReply reply;
    Display *dpy = priv->dpy;
 
-   psc->serverGLXexts =
-      __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
+   psc->serverGLXexts = __glXQueryServerString(dpy, screen, GLX_EXTENSIONS);
 
    if (psc->serverGLXexts == NULL) {
       return GL_FALSE;
@@ -725,9 +726,9 @@ static GLboolean
    LockDisplay(dpy);
 
    psc->configs = NULL;
-   if (atof(priv->serverGLXversion) >= 1.3) {
+   if (priv->minorVersion >= 3) {
       GetReq(GLXGetFBConfigs, fb_req);
-      fb_req->reqType = priv->majorOpcode;
+      fb_req->reqType = priv->codes.major_opcode;
       fb_req->glxCode = X_GLXGetFBConfigs;
       fb_req->screen = screen;
    }
@@ -736,7 +737,7 @@ static GLboolean
                   sz_xGLXGetFBConfigsSGIXReq -
                   sz_xGLXVendorPrivateWithReplyReq, vpreq);
       sgi_req = (xGLXGetFBConfigsSGIXReq *) vpreq;
-      sgi_req->reqType = priv->majorOpcode;
+      sgi_req->reqType = priv->codes.major_opcode;
       sgi_req->glxCode = X_GLXVendorPrivateWithReply;
       sgi_req->vendorCode = X_GLXvop_GetFBConfigsSGIX;
       sgi_req->screen = screen;
@@ -789,6 +790,8 @@ glx_screen_cleanup(struct glx_screen *psc)
       psc->visuals = NULL;   /* NOTE: just for paranoia */
    }
    free((char *) psc->serverGLXexts);
+   free((char *) psc->serverGLXvendor);
+   free((char *) psc->serverGLXversion);
 }
 
 /*
@@ -809,13 +812,6 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
    if (!priv->screens)
       return GL_FALSE;
 
-   priv->serverGLXversion =
-      __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
-   if (priv->serverGLXversion == NULL) {
-      FreeScreenConfigs(priv);
-      return GL_FALSE;
-   }
-
    for (i = 0; i < screens; i++, psc++) {
       psc = NULL;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
@@ -826,8 +822,6 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 #endif /* HAVE_DRI3 */
       if (psc == NULL && priv->dri2Display)
 	 psc = (*priv->dri2Display->createScreen) (i, priv);
-      if (psc == NULL && priv->driDisplay)
-	 psc = (*priv->driDisplay->createScreen) (i, priv);
 #endif /* GLX_USE_DRM */
 
 #ifdef GLX_USE_WINDOWSGL
@@ -858,11 +852,12 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
  _X_HIDDEN struct glx_display *
 __glXInitialize(Display * dpy)
 {
+   XExtCodes *codes;
    struct glx_display *dpyPriv, *d;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    Bool glx_direct, glx_accel;
 #endif
-   int i;
+   int i, majorVersion = 0;
 
    _XLockMutex(_Xglobal_lock);
 
@@ -880,34 +875,33 @@ __glXInitialize(Display * dpy)
    if (!dpyPriv)
       return NULL;
 
-   dpyPriv->codes = XInitExtension(dpy, __glXExtensionName);
-   if (!dpyPriv->codes) {
+   codes = XInitExtension(dpy, __glXExtensionName);
+   if (!codes) {
       free(dpyPriv);
       return NULL;
    }
 
+   dpyPriv->codes = *codes;
    dpyPriv->dpy = dpy;
-   dpyPriv->majorOpcode = dpyPriv->codes->major_opcode;
-   dpyPriv->serverGLXvendor = 0x0;
-   dpyPriv->serverGLXversion = 0x0;
 
-   /* See if the versions are compatible.  This GLX implementation does not
-    * work with servers that only support GLX 1.0.
+   /* This GLX implementation requires X_GLXQueryExtensionsString
+    * and X_GLXQueryServerString, which are new in GLX 1.1.
     */
-   if (!QueryVersion(dpy, dpyPriv->majorOpcode,
-		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)
-       || (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion < 1)) {
+   if (!QueryVersion(dpy, dpyPriv->codes.major_opcode,
+		     &majorVersion, &dpyPriv->minorVersion)
+       || (majorVersion != 1)
+       || (majorVersion == 1 && dpyPriv->minorVersion < 1)) {
       free(dpyPriv);
       return NULL;
    }
 
    for (i = 0; i < __GLX_NUMBER_EVENTS; i++) {
-      XESetWireToEvent(dpy, dpyPriv->codes->first_event + i, __glXWireToEvent);
-      XESetEventToWire(dpy, dpyPriv->codes->first_event + i, __glXEventToWire);
+      XESetWireToEvent(dpy, dpyPriv->codes.first_event + i, __glXWireToEvent);
+      XESetEventToWire(dpy, dpyPriv->codes.first_event + i, __glXEventToWire);
    }
 
-   XESetCloseDisplay(dpy, dpyPriv->codes->extension, __glXCloseDisplay);
-   XESetErrorString (dpy, dpyPriv->codes->extension,__glXErrorString);
+   XESetCloseDisplay(dpy, dpyPriv->codes.extension, __glXCloseDisplay);
+   XESetErrorString (dpy, dpyPriv->codes.extension, __glXErrorString);
 
    dpyPriv->glXDrawHash = __glxHashCreate();
 
@@ -916,6 +910,11 @@ __glXInitialize(Display * dpy)
    glx_accel = !env_var_as_boolean("LIBGL_ALWAYS_SOFTWARE", false);
 
    dpyPriv->drawHash = __glxHashCreate();
+
+#ifndef GLX_USE_APPLEGL
+   /* Set the logger before the *CreateDisplay functions. */
+   loader_set_logger(glx_message);
+#endif
 
    /*
     ** Initialize the direct rendering per display data and functions.
@@ -928,8 +927,8 @@ __glXInitialize(Display * dpy)
       if (!env_var_as_boolean("LIBGL_DRI3_DISABLE", false))
          dpyPriv->dri3Display = dri3_create_display(dpy);
 #endif /* HAVE_DRI3 */
-      dpyPriv->dri2Display = dri2CreateDisplay(dpy);
-      dpyPriv->driDisplay = driCreateDisplay(dpy);
+      if (!env_var_as_boolean("LIBGL_DRI2_DISABLE", false))
+         dpyPriv->dri2Display = dri2CreateDisplay(dpy);
    }
 #endif /* GLX_USE_DRM */
    if (glx_direct)
@@ -1008,7 +1007,7 @@ __glXSetupForCommand(Display * dpy)
    if (!priv) {
       return 0;
    }
-   return priv->majorOpcode;
+   return priv->codes.major_opcode;
 }
 
 /**
@@ -1119,30 +1118,3 @@ __glXSendLargeCommand(struct glx_context * ctx,
    assert(dataLen <= maxSize);
    __glXSendLargeChunk(ctx, requestNumber, totalRequests, data, dataLen);
 }
-
-/************************************************************************/
-
-#ifdef DEBUG
-_X_HIDDEN void
-__glXDumpDrawBuffer(struct glx_context * ctx)
-{
-   GLubyte *p = ctx->buf;
-   GLubyte *end = ctx->pc;
-   GLushort opcode, length;
-
-   while (p < end) {
-      /* Fetch opcode */
-      opcode = *((GLushort *) p);
-      length = *((GLushort *) (p + 2));
-      printf("%2x: %5d: ", opcode, length);
-      length -= 4;
-      p += 4;
-      while (length > 0) {
-         printf("%08x ", *((unsigned *) p));
-         p += 4;
-         length -= 4;
-      }
-      printf("\n");
-   }
-}
-#endif

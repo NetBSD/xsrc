@@ -35,6 +35,7 @@ files_i915 = files(
   'i915_fpc.h',
   'i915_fpc_optimize.c',
   'i915_fpc_translate.c',
+  'i915_nir.c',
   'i915_prim_emit.c',
   'i915_prim_vbuf.c',
   'i915_public.h',
@@ -65,8 +66,9 @@ files_i915 = files(
 libi915 = static_library(
   'i915',
   files_i915,
-  c_args : [c_vis_args],
+  gnu_symbol_visibility : 'hidden',
   include_directories : [inc_include, inc_src, inc_gallium, inc_gallium_aux],
+  dependencies : idep_nir,
 )
 
 driver_i915 = declare_dependency(

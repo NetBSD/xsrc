@@ -69,6 +69,9 @@ extern void GLAPIENTRY
 _mesa_GetPointerv( GLenum pname, GLvoid **params );
 
 extern void GLAPIENTRY
+_mesa_GetPointerIndexedvEXT( GLenum pname, GLuint index, GLvoid **params );
+
+extern void GLAPIENTRY
 _mesa_GetFloati_v(GLenum target, GLuint index, GLfloat *data);
 
 extern void GLAPIENTRY
@@ -89,5 +92,11 @@ _mesa_GetError( void );
 /* GL_ARB_robustness */
 extern GLenum GLAPIENTRY
 _mesa_GetGraphicsResetStatusARB( void );
+
+struct gl_vertex_array_object;
+
+extern void
+_get_vao_pointerv(GLenum pname, struct gl_vertex_array_object* vao,
+                  GLvoid **params, const char* callerstr);
 
 #endif

@@ -29,13 +29,11 @@ namespace nv50_ir {
 class CodeEmitterGK110 : public CodeEmitter
 {
 public:
-   CodeEmitterGK110(const TargetNVC0 *);
+   CodeEmitterGK110(const TargetNVC0 *, Program::Type);
 
    virtual bool emitInstruction(Instruction *);
    virtual uint32_t getMinEncodingSize(const Instruction *) const;
    virtual void prepareEmission(Function *);
-
-   inline void setProgramType(Program::Type pType) { progType = pType; }
 
 private:
    const TargetNVC0 *targNVC0;
@@ -221,9 +219,9 @@ CodeEmitterGK110::emitRoundMode(RoundMode rnd, const int pos, const int rintPos)
    uint8_t n;
 
    switch (rnd) {
-   case ROUND_MI: rint = true; /* fall through */ case ROUND_M: n = 1; break;
-   case ROUND_PI: rint = true; /* fall through */ case ROUND_P: n = 2; break;
-   case ROUND_ZI: rint = true; /* fall through */ case ROUND_Z: n = 3; break;
+   case ROUND_MI: rint = true; FALLTHROUGH; case ROUND_M: n = 1; break;
+   case ROUND_PI: rint = true; FALLTHROUGH; case ROUND_P: n = 2; break;
+   case ROUND_ZI: rint = true; FALLTHROUGH; case ROUND_Z: n = 3; break;
    default:
       rint = rnd == ROUND_NI;
       n = 0;
@@ -1209,11 +1207,20 @@ CodeEmitterGK110::emitSLCT(const CmpInstruction *i)
    }
 }
 
-static void
-selpFlip(const FixupEntry *entry, uint32_t *code, const FixupData& data)
+void
+gk110_selpFlip(const FixupEntry *entry, uint32_t *code, const FixupData& data)
 {
    int loc = entry->loc;
-   if (data.force_persample_interp)
+   bool val = false;
+   switch (entry->ipa) {
+   case 0:
+      val = data.force_persample_interp;
+      break;
+   case 1:
+      val = data.msaa;
+      break;
+   }
+   if (val)
       code[loc + 1] |= 1 << 13;
    else
       code[loc + 1] &= ~(1 << 13);
@@ -1226,8 +1233,8 @@ void CodeEmitterGK110::emitSELP(const Instruction *i)
    if (i->src(2).mod & Modifier(NV50_IR_MOD_NOT))
       code[1] |= 1 << 13;
 
-   if (i->subOp == 1) {
-      addInterp(0, 0, selpFlip);
+   if (i->subOp >= 1) {
+      addInterp(i->subOp - 1, 0, gk110_selpFlip);
    }
 }
 
@@ -2042,8 +2049,8 @@ CodeEmitterGK110::emitInterpMode(const Instruction *i)
    code[1] |= (i->ipa & 0xc) << (19 - 2);
 }
 
-static void
-interpApply(const FixupEntry *entry, uint32_t *code, const FixupData& data)
+void
+gk110_interpApply(const struct FixupEntry *entry, uint32_t *code, const FixupData& data)
 {
    int ipa = entry->ipa;
    int reg = entry->reg;
@@ -2078,10 +2085,10 @@ CodeEmitterGK110::emitINTERP(const Instruction *i)
 
    if (i->op == OP_PINTERP) {
       srcId(i->src(1), 23);
-      addInterp(i->ipa, SDATA(i->src(1)).id, interpApply);
+      addInterp(i->ipa, SDATA(i->src(1)).id, gk110_interpApply);
    } else {
       code[0] |= 0xff << 23;
-      addInterp(i->ipa, 0xff, interpApply);
+      addInterp(i->ipa, 0xff, gk110_interpApply);
    }
 
    srcId(i->src(0).getIndirect(0), 10);
@@ -2784,9 +2791,10 @@ CodeEmitterGK110::prepareEmission(Function *func)
       calculateSchedDataNVC0(targ, func);
 }
 
-CodeEmitterGK110::CodeEmitterGK110(const TargetNVC0 *target)
+CodeEmitterGK110::CodeEmitterGK110(const TargetNVC0 *target, Program::Type type)
    : CodeEmitter(target),
      targNVC0(target),
+     progType(type),
      writeIssueDelays(target->hasSWSched)
 {
    code = NULL;
@@ -2797,8 +2805,7 @@ CodeEmitterGK110::CodeEmitterGK110(const TargetNVC0 *target)
 CodeEmitter *
 TargetNVC0::createCodeEmitterGK110(Program::Type type)
 {
-   CodeEmitterGK110 *emit = new CodeEmitterGK110(this);
-   emit->setProgramType(type);
+   CodeEmitterGK110 *emit = new CodeEmitterGK110(this, type);
    return emit;
 }
 

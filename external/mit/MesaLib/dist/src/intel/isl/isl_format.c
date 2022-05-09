@@ -25,7 +25,7 @@
 
 #include "isl.h"
 #include "isl_priv.h"
-#include "dev/gen_device_info.h"
+#include "dev/intel_device_info.h"
 
 #include "main/macros.h" /* Needed for MAX3 and MAX2 for format_rgb9e5 */
 #include "util/format_srgb.h"
@@ -69,9 +69,9 @@ struct surface_format_info {
  *
  * Y*: 45
  * Y+: 45 (g45/gm45)
- * Y~: 50 (gen5)
- * Y^: 60 (gen6)
- * Y#: 70 (gen7)
+ * Y~: 50 (gfx5)
+ * Y^: 60 (gfx6)
+ * Y#: 70 (gfx7)
  *
  * The abbreviations in the header below are:
  * smpl  - Sampling Engine
@@ -83,7 +83,9 @@ struct surface_format_info {
  * VB    - Input Vertex Buffer
  * SO    - Steamed Output Vertex Buffers (transform feedback)
  * color - Color Processing
- * ccs_e - Lossless Compression Support (gen9+ only)
+ * TW    - Typed Write
+ * TR    - Typed Read
+ * ccs_e - Lossless Compression Support (gfx9+ only)
  * sf    - Surface Format
  *
  * See page 88 of the Sandybridge PRM VOL4_Part1 PDF.
@@ -147,7 +149,7 @@ static const struct surface_format_info format_info[] = {
    SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x, 100,   B8G8R8A8_UNORM_SRGB)
 /*    smpl filt  shad  CK   RT   AB   VB   SO color TW   TR  ccs_e */
    SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,  60,  70,   x, 100,   R10G10B10A2_UNORM)
-   SF(  Y,   Y,   x,   x,   x,   x,   x,   x,  60,   x,   x,   x,   R10G10B10A2_UNORM_SRGB)
+   SF(  Y,   Y,   x,   x,   x,   x,   x,   x,  60,   x,   x, 120,   R10G10B10A2_UNORM_SRGB)
    SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,   x, 100,   R10G10B10A2_UINT)
    SF(  Y,   Y,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R10G10B10_SNORM_A2_UNORM)
    SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,  60,  70, 110,  90,   R8G8B8A8_UNORM)
@@ -163,10 +165,11 @@ static const struct surface_format_info format_info[] = {
    SF(  Y,   Y,   x,   x,   Y,   Y,  75,   x,  60,  70,   x, 100,   B10G10R10A2_UNORM)
    SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,  60,   x,   x, 100,   B10G10R10A2_UNORM_SRGB)
    SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,   x,  70,   x, 100,   R11G11B10_FLOAT)
+   SF(120, 120,   x,   x, 120, 120,   x,   x,   x,   x,   x, 120,   R10G10B10_FLOAT_A2_UNORM)
    SF(  Y,   x,   x,   x,   Y,   x,   Y,   Y,   x,  70,  70,  90,   R32_SINT)
    SF(  Y,   x,   x,   x,   Y,   x,   Y,   Y,   x,  70,  70,  90,   R32_UINT)
    SF(  Y,  50,   Y,   x,   Y,   Y,   Y,   Y,   x,  70,  70,  90,   R32_FLOAT)
-   SF(  Y,  50,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   R24_UNORM_X8_TYPELESS)
+   SF(  Y,  50,   Y,   x,   x,   x,   x,   x,   x,   x,   x, 120,   R24_UNORM_X8_TYPELESS)
    SF(  Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   X24_TYPELESS_G8_UINT)
    SF(  Y,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   L16A16_UNORM)
    SF(  Y,  50,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   I24X8_UNORM)
@@ -192,21 +195,21 @@ static const struct surface_format_info format_info[] = {
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R16G16_USCALED)
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R32_SSCALED)
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R32_USCALED)
-   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x,   x,   B5G6R5_UNORM)
-   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x,   x,   B5G6R5_UNORM_SRGB)
-   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x,   x,   B5G5R5A1_UNORM)
-   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x,   x,   B5G5R5A1_UNORM_SRGB)
-   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x,   x,   B4G4R4A4_UNORM)
-   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x,   x,   B4G4R4A4_UNORM_SRGB)
-   SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,   x,  70, 110,   x,   R8G8_UNORM)
-   SF(  Y,   Y,   x,   Y,   Y,  60,   Y,   x,   x,  70, 110,   x,   R8G8_SNORM)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90,   x,   R8G8_SINT)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75,   x,   R8G8_UINT)
-   SF(  Y,   Y,   Y,   x,   Y,  45,   Y,   x,  70,  70, 110,   x,   R16_UNORM)
-   SF(  Y,   Y,   x,   x,   Y,  60,   Y,   x,   x,  70, 110,   x,   R16_SNORM)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90,   x,   R16_SINT)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75,   x,   R16_UINT)
-   SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,   x,  70,  90,   x,   R16_FLOAT)
+   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x, 120,   B5G6R5_UNORM)
+   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x, 120,   B5G6R5_UNORM_SRGB)
+   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x, 120,   B5G5R5A1_UNORM)
+   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x, 120,   B5G5R5A1_UNORM_SRGB)
+   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70,   x, 120,   B4G4R4A4_UNORM)
+   SF(  Y,   Y,   x,   x,   Y,   Y,   x,   x,   x,   x,   x, 120,   B4G4R4A4_UNORM_SRGB)
+   SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,   x,  70, 110, 120,   R8G8_UNORM)
+   SF(  Y,   Y,   x,   Y,   Y,  60,   Y,   x,   x,  70, 110, 120,   R8G8_SNORM)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90, 120,   R8G8_SINT)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75, 120,   R8G8_UINT)
+   SF(  Y,   Y,   Y,   x,   Y,  45,   Y,   x,  70,  70, 110, 120,   R16_UNORM)
+   SF(  Y,   Y,   x,   x,   Y,  60,   Y,   x,   x,  70, 110, 120,   R16_SNORM)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90, 120,   R16_SINT)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75, 120,   R16_UINT)
+   SF(  Y,   Y,   x,   x,   Y,   Y,   Y,   x,   x,  70,  90, 120,   R16_FLOAT)
    SF( 50,  50,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   A8P8_UNORM_PALETTE0)
    SF( 50,  50,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   A8P8_UNORM_PALETTE1)
    SF(  Y,   Y,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   I16_UNORM)
@@ -218,8 +221,8 @@ static const struct surface_format_info format_info[] = {
    SF(  Y,   Y,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   A16_FLOAT)
    SF( 45,  45,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   L8A8_UNORM_SRGB)
    SF(  Y,   Y,   x,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   R5G5_SNORM_B6_UNORM)
-   SF(  x,   x,   x,   x,   Y,   Y,   x,   x,   x,  70,   x,   x,   B5G5R5X1_UNORM)
-   SF(  x,   x,   x,   x,   Y,   Y,   x,   x,   x,   x,   x,   x,   B5G5R5X1_UNORM_SRGB)
+   SF(  x,   x,   x,   x,   Y,   Y,   x,   x,   x,  70,   x, 120,   B5G5R5X1_UNORM)
+   SF(  x,   x,   x,   x,   Y,   Y,   x,   x,   x,   x,   x, 120,   B5G5R5X1_UNORM_SRGB)
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R8G8_SSCALED)
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R8G8_USCALED)
 /*    smpl filt  shad  CK   RT   AB   VB   SO color TW   TR  ccs_e */
@@ -227,19 +230,19 @@ static const struct surface_format_info format_info[] = {
    SF(  x,   x,   x,   x,   x,   x,   Y,   x,   x,   x,   x,   x,   R16_USCALED)
    SF( 50,  50,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   P8A8_UNORM_PALETTE0)
    SF( 50,  50,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   P8A8_UNORM_PALETTE1)
-   SF(  x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   A1B5G5R5_UNORM)
+   SF(120, 120,   x,   x, 120, 120,   x,   x,   x,   x,   x, 120,   A1B5G5R5_UNORM)
    /* According to the PRM, A4B4G4R4_UNORM isn't supported until Sky Lake
     * but empirical testing indicates that at least sampling works just fine
     * on Broadwell.
     */
-   SF( 80,  80,   x,   x,  90,   x,   x,   x,   x,   x,   x,   x,   A4B4G4R4_UNORM)
+   SF( 80,  80,   x,   x,  90, 120,   x,   x,   x,   x,   x, 120,   A4B4G4R4_UNORM)
    SF( 90,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   L8A8_UINT)
    SF( 90,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   L8A8_SINT)
-   SF(  Y,   Y,   x,  45,   Y,   Y,   Y,   x,   x,  70, 110,   x,   R8_UNORM)
-   SF(  Y,   Y,   x,   x,   Y,  60,   Y,   x,   x,  70, 110,   x,   R8_SNORM)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90,   x,   R8_SINT)
-   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75,   x,   R8_UINT)
-   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70, 110,   x,   A8_UNORM)
+   SF(  Y,   Y,   x,  45,   Y,   Y,   Y,   x,   x,  70, 110, 120,   R8_UNORM)
+   SF(  Y,   Y,   x,   x,   Y,  60,   Y,   x,   x,  70, 110, 120,   R8_SNORM)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  90, 120,   R8_SINT)
+   SF(  Y,   x,   x,   x,   Y,   x,   Y,   x,   x,  70,  75, 120,   R8_UINT)
+   SF(  Y,   Y,   x,   Y,   Y,   Y,   x,   x,   x,  70, 110, 120,   A8_UNORM)
    SF(  Y,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   I8_UNORM)
    SF(  Y,   Y,   x,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   L8_UNORM)
    SF(  Y,   Y,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   P4A4_UNORM_PALETTE0)
@@ -296,7 +299,7 @@ static const struct surface_format_info format_info[] = {
    SF(  x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   PLANAR_420_8)
    /* The format enum for R8G8B8_UNORM_SRGB first shows up in the HSW PRM but
     * empirical testing indicates that it doesn't actually sRGB decode and
-    * acts identical to R8G8B8_UNORM.  It does work on gen8+.
+    * acts identical to R8G8B8_UNORM.  It does work on gfx8+.
     */
    SF( 80,  80,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   R8G8B8_UNORM_SRGB)
    SF( 80,  80,   x,   x,   x,   x,   x,   x,   x,   x,   x,   x,   ETC1_RGB8)
@@ -372,10 +375,307 @@ static const struct surface_format_info format_info[] = {
 #undef x
 #undef Y
 
-static unsigned
-format_gen(const struct gen_device_info *devinfo)
+
+enum isl_format
+isl_format_for_pipe_format(enum pipe_format pf)
 {
-   return devinfo->gen * 10 + (devinfo->is_g4x || devinfo->is_haswell) * 5;
+   static const enum isl_format table[PIPE_FORMAT_COUNT] = {
+      [0 ... PIPE_FORMAT_COUNT-1] = ISL_FORMAT_UNSUPPORTED,
+
+      [PIPE_FORMAT_B8G8R8A8_UNORM]          = ISL_FORMAT_B8G8R8A8_UNORM,
+      [PIPE_FORMAT_B8G8R8X8_UNORM]          = ISL_FORMAT_B8G8R8X8_UNORM,
+      [PIPE_FORMAT_B5G5R5A1_UNORM]          = ISL_FORMAT_B5G5R5A1_UNORM,
+      [PIPE_FORMAT_B4G4R4A4_UNORM]          = ISL_FORMAT_B4G4R4A4_UNORM,
+      [PIPE_FORMAT_B5G6R5_UNORM]            = ISL_FORMAT_B5G6R5_UNORM,
+      [PIPE_FORMAT_R10G10B10A2_UNORM]       = ISL_FORMAT_R10G10B10A2_UNORM,
+
+      [PIPE_FORMAT_Z16_UNORM]               = ISL_FORMAT_R16_UNORM,
+      [PIPE_FORMAT_Z32_UNORM]               = ISL_FORMAT_R32_UNORM,
+      [PIPE_FORMAT_Z32_FLOAT]               = ISL_FORMAT_R32_FLOAT,
+
+      /* We translate the combined depth/stencil formats to depth only here */
+      [PIPE_FORMAT_Z24_UNORM_S8_UINT]       = ISL_FORMAT_R24_UNORM_X8_TYPELESS,
+      [PIPE_FORMAT_Z24X8_UNORM]             = ISL_FORMAT_R24_UNORM_X8_TYPELESS,
+      [PIPE_FORMAT_Z32_FLOAT_S8X24_UINT]    = ISL_FORMAT_R32_FLOAT,
+
+      [PIPE_FORMAT_S8_UINT]                 = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_X24S8_UINT]              = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_X32_S8X24_UINT]          = ISL_FORMAT_R8_UINT,
+
+      [PIPE_FORMAT_R64_FLOAT]               = ISL_FORMAT_R64_FLOAT,
+      [PIPE_FORMAT_R64G64_FLOAT]            = ISL_FORMAT_R64G64_FLOAT,
+      [PIPE_FORMAT_R64G64B64_FLOAT]         = ISL_FORMAT_R64G64B64_FLOAT,
+      [PIPE_FORMAT_R64G64B64A64_FLOAT]      = ISL_FORMAT_R64G64B64A64_FLOAT,
+      [PIPE_FORMAT_R32_FLOAT]               = ISL_FORMAT_R32_FLOAT,
+      [PIPE_FORMAT_R32G32_FLOAT]            = ISL_FORMAT_R32G32_FLOAT,
+      [PIPE_FORMAT_R32G32B32_FLOAT]         = ISL_FORMAT_R32G32B32_FLOAT,
+      [PIPE_FORMAT_R32G32B32A32_FLOAT]      = ISL_FORMAT_R32G32B32A32_FLOAT,
+      [PIPE_FORMAT_R32_UNORM]               = ISL_FORMAT_R32_UNORM,
+      [PIPE_FORMAT_R32G32_UNORM]            = ISL_FORMAT_R32G32_UNORM,
+      [PIPE_FORMAT_R32G32B32_UNORM]         = ISL_FORMAT_R32G32B32_UNORM,
+      [PIPE_FORMAT_R32G32B32A32_UNORM]      = ISL_FORMAT_R32G32B32A32_UNORM,
+      [PIPE_FORMAT_R32_USCALED]             = ISL_FORMAT_R32_USCALED,
+      [PIPE_FORMAT_R32G32_USCALED]          = ISL_FORMAT_R32G32_USCALED,
+      [PIPE_FORMAT_R32G32B32_USCALED]       = ISL_FORMAT_R32G32B32_USCALED,
+      [PIPE_FORMAT_R32G32B32A32_USCALED]    = ISL_FORMAT_R32G32B32A32_USCALED,
+      [PIPE_FORMAT_R32_SNORM]               = ISL_FORMAT_R32_SNORM,
+      [PIPE_FORMAT_R32G32_SNORM]            = ISL_FORMAT_R32G32_SNORM,
+      [PIPE_FORMAT_R32G32B32_SNORM]         = ISL_FORMAT_R32G32B32_SNORM,
+      [PIPE_FORMAT_R32G32B32A32_SNORM]      = ISL_FORMAT_R32G32B32A32_SNORM,
+      [PIPE_FORMAT_R32_SSCALED]             = ISL_FORMAT_R32_SSCALED,
+      [PIPE_FORMAT_R32G32_SSCALED]          = ISL_FORMAT_R32G32_SSCALED,
+      [PIPE_FORMAT_R32G32B32_SSCALED]       = ISL_FORMAT_R32G32B32_SSCALED,
+      [PIPE_FORMAT_R32G32B32A32_SSCALED]    = ISL_FORMAT_R32G32B32A32_SSCALED,
+      [PIPE_FORMAT_R16_UNORM]               = ISL_FORMAT_R16_UNORM,
+      [PIPE_FORMAT_R16G16_UNORM]            = ISL_FORMAT_R16G16_UNORM,
+      [PIPE_FORMAT_R16G16B16_UNORM]         = ISL_FORMAT_R16G16B16_UNORM,
+      [PIPE_FORMAT_R16G16B16A16_UNORM]      = ISL_FORMAT_R16G16B16A16_UNORM,
+      [PIPE_FORMAT_R16_USCALED]             = ISL_FORMAT_R16_USCALED,
+      [PIPE_FORMAT_R16G16_USCALED]          = ISL_FORMAT_R16G16_USCALED,
+      [PIPE_FORMAT_R16G16B16_USCALED]       = ISL_FORMAT_R16G16B16_USCALED,
+      [PIPE_FORMAT_R16G16B16A16_USCALED]    = ISL_FORMAT_R16G16B16A16_USCALED,
+      [PIPE_FORMAT_R16_SNORM]               = ISL_FORMAT_R16_SNORM,
+      [PIPE_FORMAT_R16G16_SNORM]            = ISL_FORMAT_R16G16_SNORM,
+      [PIPE_FORMAT_R16G16B16_SNORM]         = ISL_FORMAT_R16G16B16_SNORM,
+      [PIPE_FORMAT_R16G16B16A16_SNORM]      = ISL_FORMAT_R16G16B16A16_SNORM,
+      [PIPE_FORMAT_R16_SSCALED]             = ISL_FORMAT_R16_SSCALED,
+      [PIPE_FORMAT_R16G16_SSCALED]          = ISL_FORMAT_R16G16_SSCALED,
+      [PIPE_FORMAT_R16G16B16_SSCALED]       = ISL_FORMAT_R16G16B16_SSCALED,
+      [PIPE_FORMAT_R16G16B16A16_SSCALED]    = ISL_FORMAT_R16G16B16A16_SSCALED,
+      [PIPE_FORMAT_R8_UNORM]                = ISL_FORMAT_R8_UNORM,
+      [PIPE_FORMAT_R8G8_UNORM]              = ISL_FORMAT_R8G8_UNORM,
+      [PIPE_FORMAT_R8G8B8_UNORM]            = ISL_FORMAT_R8G8B8_UNORM,
+      [PIPE_FORMAT_R8G8B8A8_UNORM]          = ISL_FORMAT_R8G8B8A8_UNORM,
+      [PIPE_FORMAT_R8_USCALED]              = ISL_FORMAT_R8_USCALED,
+      [PIPE_FORMAT_R8G8_USCALED]            = ISL_FORMAT_R8G8_USCALED,
+      [PIPE_FORMAT_R8G8B8_USCALED]          = ISL_FORMAT_R8G8B8_USCALED,
+      [PIPE_FORMAT_R8G8B8A8_USCALED]        = ISL_FORMAT_R8G8B8A8_USCALED,
+      [PIPE_FORMAT_R8_SNORM]                = ISL_FORMAT_R8_SNORM,
+      [PIPE_FORMAT_R8G8_SNORM]              = ISL_FORMAT_R8G8_SNORM,
+      [PIPE_FORMAT_R8G8B8_SNORM]            = ISL_FORMAT_R8G8B8_SNORM,
+      [PIPE_FORMAT_R8G8B8A8_SNORM]          = ISL_FORMAT_R8G8B8A8_SNORM,
+      [PIPE_FORMAT_R8_SSCALED]              = ISL_FORMAT_R8_SSCALED,
+      [PIPE_FORMAT_R8G8_SSCALED]            = ISL_FORMAT_R8G8_SSCALED,
+      [PIPE_FORMAT_R8G8B8_SSCALED]          = ISL_FORMAT_R8G8B8_SSCALED,
+      [PIPE_FORMAT_R8G8B8A8_SSCALED]        = ISL_FORMAT_R8G8B8A8_SSCALED,
+      [PIPE_FORMAT_R32_FIXED]               = ISL_FORMAT_R32_SFIXED,
+      [PIPE_FORMAT_R32G32_FIXED]            = ISL_FORMAT_R32G32_SFIXED,
+      [PIPE_FORMAT_R32G32B32_FIXED]         = ISL_FORMAT_R32G32B32_SFIXED,
+      [PIPE_FORMAT_R32G32B32A32_FIXED]      = ISL_FORMAT_R32G32B32A32_SFIXED,
+      [PIPE_FORMAT_R16_FLOAT]               = ISL_FORMAT_R16_FLOAT,
+      [PIPE_FORMAT_R16G16_FLOAT]            = ISL_FORMAT_R16G16_FLOAT,
+      [PIPE_FORMAT_R16G16B16_FLOAT]         = ISL_FORMAT_R16G16B16_FLOAT,
+      [PIPE_FORMAT_R16G16B16A16_FLOAT]      = ISL_FORMAT_R16G16B16A16_FLOAT,
+
+      [PIPE_FORMAT_R8G8B8_SRGB]             = ISL_FORMAT_R8G8B8_UNORM_SRGB,
+      [PIPE_FORMAT_B8G8R8A8_SRGB]           = ISL_FORMAT_B8G8R8A8_UNORM_SRGB,
+      [PIPE_FORMAT_B8G8R8X8_SRGB]           = ISL_FORMAT_B8G8R8X8_UNORM_SRGB,
+      [PIPE_FORMAT_R8G8B8A8_SRGB]           = ISL_FORMAT_R8G8B8A8_UNORM_SRGB,
+
+      [PIPE_FORMAT_DXT1_RGB]                = ISL_FORMAT_BC1_UNORM,
+      [PIPE_FORMAT_DXT1_RGBA]               = ISL_FORMAT_BC1_UNORM,
+      [PIPE_FORMAT_DXT3_RGBA]               = ISL_FORMAT_BC2_UNORM,
+      [PIPE_FORMAT_DXT5_RGBA]               = ISL_FORMAT_BC3_UNORM,
+
+      [PIPE_FORMAT_DXT1_SRGB]               = ISL_FORMAT_BC1_UNORM_SRGB,
+      [PIPE_FORMAT_DXT1_SRGBA]              = ISL_FORMAT_BC1_UNORM_SRGB,
+      [PIPE_FORMAT_DXT3_SRGBA]              = ISL_FORMAT_BC2_UNORM_SRGB,
+      [PIPE_FORMAT_DXT5_SRGBA]              = ISL_FORMAT_BC3_UNORM_SRGB,
+
+      [PIPE_FORMAT_RGTC1_UNORM]             = ISL_FORMAT_BC4_UNORM,
+      [PIPE_FORMAT_RGTC1_SNORM]             = ISL_FORMAT_BC4_SNORM,
+      [PIPE_FORMAT_RGTC2_UNORM]             = ISL_FORMAT_BC5_UNORM,
+      [PIPE_FORMAT_RGTC2_SNORM]             = ISL_FORMAT_BC5_SNORM,
+
+      [PIPE_FORMAT_R10G10B10A2_USCALED]     = ISL_FORMAT_R10G10B10A2_USCALED,
+      [PIPE_FORMAT_R11G11B10_FLOAT]         = ISL_FORMAT_R11G11B10_FLOAT,
+      [PIPE_FORMAT_R9G9B9E5_FLOAT]          = ISL_FORMAT_R9G9B9E5_SHAREDEXP,
+      [PIPE_FORMAT_R1_UNORM]                = ISL_FORMAT_R1_UNORM,
+      [PIPE_FORMAT_R10G10B10X2_USCALED]     = ISL_FORMAT_R10G10B10X2_USCALED,
+      [PIPE_FORMAT_B10G10R10A2_UNORM]       = ISL_FORMAT_B10G10R10A2_UNORM,
+      [PIPE_FORMAT_R8G8B8X8_UNORM]          = ISL_FORMAT_R8G8B8X8_UNORM,
+
+      /* Just use red formats for these - they're actually renderable,
+       * and faster to sample than the legacy L/I/A/LA formats.
+       */
+      [PIPE_FORMAT_I8_UNORM]                = ISL_FORMAT_R8_UNORM,
+      [PIPE_FORMAT_I8_UINT]                 = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_I8_SINT]                 = ISL_FORMAT_R8_SINT,
+      [PIPE_FORMAT_I8_SNORM]                = ISL_FORMAT_R8_SNORM,
+      [PIPE_FORMAT_I16_UINT]                = ISL_FORMAT_R16_UINT,
+      [PIPE_FORMAT_I16_UNORM]               = ISL_FORMAT_R16_UNORM,
+      [PIPE_FORMAT_I16_SINT]                = ISL_FORMAT_R16_SINT,
+      [PIPE_FORMAT_I16_SNORM]               = ISL_FORMAT_R16_SNORM,
+      [PIPE_FORMAT_I16_FLOAT]               = ISL_FORMAT_R16_FLOAT,
+      [PIPE_FORMAT_I32_UINT]                = ISL_FORMAT_R32_UINT,
+      [PIPE_FORMAT_I32_SINT]                = ISL_FORMAT_R32_SINT,
+      [PIPE_FORMAT_I32_FLOAT]               = ISL_FORMAT_R32_FLOAT,
+
+      [PIPE_FORMAT_L8_UINT]                 = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_L8_UNORM]                = ISL_FORMAT_R8_UNORM,
+      [PIPE_FORMAT_L8_SINT]                 = ISL_FORMAT_R8_SINT,
+      [PIPE_FORMAT_L8_SNORM]                = ISL_FORMAT_R8_SNORM,
+      [PIPE_FORMAT_L16_UINT]                = ISL_FORMAT_R16_UINT,
+      [PIPE_FORMAT_L16_UNORM]               = ISL_FORMAT_R16_UNORM,
+      [PIPE_FORMAT_L16_SINT]                = ISL_FORMAT_R16_SINT,
+      [PIPE_FORMAT_L16_SNORM]               = ISL_FORMAT_R16_SNORM,
+      [PIPE_FORMAT_L16_FLOAT]               = ISL_FORMAT_R16_FLOAT,
+      [PIPE_FORMAT_L32_UINT]                = ISL_FORMAT_R32_UINT,
+      [PIPE_FORMAT_L32_SINT]                = ISL_FORMAT_R32_SINT,
+      [PIPE_FORMAT_L32_FLOAT]               = ISL_FORMAT_R32_FLOAT,
+
+      /* We also map alpha and luminance-alpha formats to red as well,
+       * though most of these (other than A8_UNORM) will be non-renderable.
+       */
+      [PIPE_FORMAT_A8_UINT]                 = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_A8_UNORM]                = ISL_FORMAT_R8_UNORM,
+      [PIPE_FORMAT_A8_SINT]                 = ISL_FORMAT_R8_SINT,
+      [PIPE_FORMAT_A8_SNORM]                = ISL_FORMAT_R8_SNORM,
+      [PIPE_FORMAT_A16_UINT]                = ISL_FORMAT_R16_UINT,
+      [PIPE_FORMAT_A16_UNORM]               = ISL_FORMAT_R16_UNORM,
+      [PIPE_FORMAT_A16_SINT]                = ISL_FORMAT_R16_SINT,
+      [PIPE_FORMAT_A16_SNORM]               = ISL_FORMAT_R16_SNORM,
+      [PIPE_FORMAT_A16_FLOAT]               = ISL_FORMAT_R16_FLOAT,
+      [PIPE_FORMAT_A32_UINT]                = ISL_FORMAT_R32_UINT,
+      [PIPE_FORMAT_A32_SINT]                = ISL_FORMAT_R32_SINT,
+      [PIPE_FORMAT_A32_FLOAT]               = ISL_FORMAT_R32_FLOAT,
+
+      [PIPE_FORMAT_L8A8_UINT]               = ISL_FORMAT_R8G8_UINT,
+      [PIPE_FORMAT_L8A8_UNORM]              = ISL_FORMAT_R8G8_UNORM,
+      [PIPE_FORMAT_L8A8_SINT]               = ISL_FORMAT_R8G8_SINT,
+      [PIPE_FORMAT_L8A8_SNORM]              = ISL_FORMAT_R8G8_SNORM,
+      [PIPE_FORMAT_L16A16_UINT]             = ISL_FORMAT_R16G16_UINT,
+      [PIPE_FORMAT_L16A16_UNORM]            = ISL_FORMAT_R16G16_UNORM,
+      [PIPE_FORMAT_L16A16_SINT]             = ISL_FORMAT_R16G16_SINT,
+      [PIPE_FORMAT_L16A16_SNORM]            = ISL_FORMAT_R16G16_SNORM,
+      [PIPE_FORMAT_L16A16_FLOAT]            = ISL_FORMAT_R16G16_FLOAT,
+      [PIPE_FORMAT_L32A32_UINT]             = ISL_FORMAT_R32G32_UINT,
+      [PIPE_FORMAT_L32A32_SINT]             = ISL_FORMAT_R32G32_SINT,
+      [PIPE_FORMAT_L32A32_FLOAT]            = ISL_FORMAT_R32G32_FLOAT,
+
+      /* Sadly, we have to use luminance[-alpha] formats for sRGB decoding. */
+      [PIPE_FORMAT_R8_SRGB]                 = ISL_FORMAT_L8_UNORM_SRGB,
+      [PIPE_FORMAT_L8_SRGB]                 = ISL_FORMAT_L8_UNORM_SRGB,
+      [PIPE_FORMAT_L8A8_SRGB]               = ISL_FORMAT_L8A8_UNORM_SRGB,
+
+      [PIPE_FORMAT_R10G10B10A2_SSCALED]     = ISL_FORMAT_R10G10B10A2_SSCALED,
+      [PIPE_FORMAT_R10G10B10A2_SNORM]       = ISL_FORMAT_R10G10B10A2_SNORM,
+
+      [PIPE_FORMAT_B10G10R10A2_USCALED]     = ISL_FORMAT_B10G10R10A2_USCALED,
+      [PIPE_FORMAT_B10G10R10A2_SSCALED]     = ISL_FORMAT_B10G10R10A2_SSCALED,
+      [PIPE_FORMAT_B10G10R10A2_SNORM]       = ISL_FORMAT_B10G10R10A2_SNORM,
+
+      [PIPE_FORMAT_R8_UINT]                 = ISL_FORMAT_R8_UINT,
+      [PIPE_FORMAT_R8G8_UINT]               = ISL_FORMAT_R8G8_UINT,
+      [PIPE_FORMAT_R8G8B8_UINT]             = ISL_FORMAT_R8G8B8_UINT,
+      [PIPE_FORMAT_R8G8B8A8_UINT]           = ISL_FORMAT_R8G8B8A8_UINT,
+
+      [PIPE_FORMAT_R8_SINT]                 = ISL_FORMAT_R8_SINT,
+      [PIPE_FORMAT_R8G8_SINT]               = ISL_FORMAT_R8G8_SINT,
+      [PIPE_FORMAT_R8G8B8_SINT]             = ISL_FORMAT_R8G8B8_SINT,
+      [PIPE_FORMAT_R8G8B8A8_SINT]           = ISL_FORMAT_R8G8B8A8_SINT,
+
+      [PIPE_FORMAT_R16_UINT]                = ISL_FORMAT_R16_UINT,
+      [PIPE_FORMAT_R16G16_UINT]             = ISL_FORMAT_R16G16_UINT,
+      [PIPE_FORMAT_R16G16B16_UINT]          = ISL_FORMAT_R16G16B16_UINT,
+      [PIPE_FORMAT_R16G16B16A16_UINT]       = ISL_FORMAT_R16G16B16A16_UINT,
+
+      [PIPE_FORMAT_R16_SINT]                = ISL_FORMAT_R16_SINT,
+      [PIPE_FORMAT_R16G16_SINT]             = ISL_FORMAT_R16G16_SINT,
+      [PIPE_FORMAT_R16G16B16_SINT]          = ISL_FORMAT_R16G16B16_SINT,
+      [PIPE_FORMAT_R16G16B16A16_SINT]       = ISL_FORMAT_R16G16B16A16_SINT,
+
+      [PIPE_FORMAT_R32_UINT]                = ISL_FORMAT_R32_UINT,
+      [PIPE_FORMAT_R32G32_UINT]             = ISL_FORMAT_R32G32_UINT,
+      [PIPE_FORMAT_R32G32B32_UINT]          = ISL_FORMAT_R32G32B32_UINT,
+      [PIPE_FORMAT_R32G32B32A32_UINT]       = ISL_FORMAT_R32G32B32A32_UINT,
+
+      [PIPE_FORMAT_R32_SINT]                = ISL_FORMAT_R32_SINT,
+      [PIPE_FORMAT_R32G32_SINT]             = ISL_FORMAT_R32G32_SINT,
+      [PIPE_FORMAT_R32G32B32_SINT]          = ISL_FORMAT_R32G32B32_SINT,
+      [PIPE_FORMAT_R32G32B32A32_SINT]       = ISL_FORMAT_R32G32B32A32_SINT,
+
+      [PIPE_FORMAT_B10G10R10A2_UINT]        = ISL_FORMAT_B10G10R10A2_UINT,
+
+      [PIPE_FORMAT_ETC1_RGB8]               = ISL_FORMAT_ETC1_RGB8,
+
+      /* The formats say YCrCb, but there's no colorspace conversion. */
+      [PIPE_FORMAT_R8G8_R8B8_UNORM]         = ISL_FORMAT_YCRCB_NORMAL,
+      [PIPE_FORMAT_G8R8_B8R8_UNORM]         = ISL_FORMAT_YCRCB_SWAPY,
+
+      [PIPE_FORMAT_R8G8B8X8_SRGB]           = ISL_FORMAT_R8G8B8X8_UNORM_SRGB,
+      [PIPE_FORMAT_B10G10R10X2_UNORM]       = ISL_FORMAT_B10G10R10X2_UNORM,
+      [PIPE_FORMAT_R16G16B16X16_UNORM]      = ISL_FORMAT_R16G16B16X16_UNORM,
+      [PIPE_FORMAT_R16G16B16X16_FLOAT]      = ISL_FORMAT_R16G16B16X16_FLOAT,
+      [PIPE_FORMAT_R32G32B32X32_FLOAT]      = ISL_FORMAT_R32G32B32X32_FLOAT,
+
+      [PIPE_FORMAT_R10G10B10A2_UINT]        = ISL_FORMAT_R10G10B10A2_UINT,
+
+      [PIPE_FORMAT_B5G6R5_SRGB]             = ISL_FORMAT_B5G6R5_UNORM_SRGB,
+
+      [PIPE_FORMAT_BPTC_RGBA_UNORM]         = ISL_FORMAT_BC7_UNORM,
+      [PIPE_FORMAT_BPTC_SRGBA]              = ISL_FORMAT_BC7_UNORM_SRGB,
+      [PIPE_FORMAT_BPTC_RGB_FLOAT]          = ISL_FORMAT_BC6H_SF16,
+      [PIPE_FORMAT_BPTC_RGB_UFLOAT]         = ISL_FORMAT_BC6H_UF16,
+
+      [PIPE_FORMAT_ETC2_RGB8]               = ISL_FORMAT_ETC2_RGB8,
+      [PIPE_FORMAT_ETC2_SRGB8]              = ISL_FORMAT_ETC2_SRGB8,
+      [PIPE_FORMAT_ETC2_RGB8A1]             = ISL_FORMAT_ETC2_RGB8_PTA,
+      [PIPE_FORMAT_ETC2_SRGB8A1]            = ISL_FORMAT_ETC2_SRGB8_PTA,
+      [PIPE_FORMAT_ETC2_RGBA8]              = ISL_FORMAT_ETC2_EAC_RGBA8,
+      [PIPE_FORMAT_ETC2_SRGBA8]             = ISL_FORMAT_ETC2_EAC_SRGB8_A8,
+      [PIPE_FORMAT_ETC2_R11_UNORM]          = ISL_FORMAT_EAC_R11,
+      [PIPE_FORMAT_ETC2_R11_SNORM]          = ISL_FORMAT_EAC_SIGNED_R11,
+      [PIPE_FORMAT_ETC2_RG11_UNORM]         = ISL_FORMAT_EAC_RG11,
+      [PIPE_FORMAT_ETC2_RG11_SNORM]         = ISL_FORMAT_EAC_SIGNED_RG11,
+
+      [PIPE_FORMAT_FXT1_RGB]                = ISL_FORMAT_FXT1,
+      [PIPE_FORMAT_FXT1_RGBA]               = ISL_FORMAT_FXT1,
+
+      [PIPE_FORMAT_ASTC_4x4]                = ISL_FORMAT_ASTC_LDR_2D_4X4_FLT16,
+      [PIPE_FORMAT_ASTC_5x4]                = ISL_FORMAT_ASTC_LDR_2D_5X4_FLT16,
+      [PIPE_FORMAT_ASTC_5x5]                = ISL_FORMAT_ASTC_LDR_2D_5X5_FLT16,
+      [PIPE_FORMAT_ASTC_6x5]                = ISL_FORMAT_ASTC_LDR_2D_6X5_FLT16,
+      [PIPE_FORMAT_ASTC_6x6]                = ISL_FORMAT_ASTC_LDR_2D_6X6_FLT16,
+      [PIPE_FORMAT_ASTC_8x5]                = ISL_FORMAT_ASTC_LDR_2D_8X5_FLT16,
+      [PIPE_FORMAT_ASTC_8x6]                = ISL_FORMAT_ASTC_LDR_2D_8X6_FLT16,
+      [PIPE_FORMAT_ASTC_8x8]                = ISL_FORMAT_ASTC_LDR_2D_8X8_FLT16,
+      [PIPE_FORMAT_ASTC_10x5]               = ISL_FORMAT_ASTC_LDR_2D_10X5_FLT16,
+      [PIPE_FORMAT_ASTC_10x6]               = ISL_FORMAT_ASTC_LDR_2D_10X6_FLT16,
+      [PIPE_FORMAT_ASTC_10x8]               = ISL_FORMAT_ASTC_LDR_2D_10X8_FLT16,
+      [PIPE_FORMAT_ASTC_10x10]              = ISL_FORMAT_ASTC_LDR_2D_10X10_FLT16,
+      [PIPE_FORMAT_ASTC_12x10]              = ISL_FORMAT_ASTC_LDR_2D_12X10_FLT16,
+      [PIPE_FORMAT_ASTC_12x12]              = ISL_FORMAT_ASTC_LDR_2D_12X12_FLT16,
+
+      [PIPE_FORMAT_ASTC_4x4_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_4X4_U8SRGB,
+      [PIPE_FORMAT_ASTC_5x4_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_5X4_U8SRGB,
+      [PIPE_FORMAT_ASTC_5x5_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_5X5_U8SRGB,
+      [PIPE_FORMAT_ASTC_6x5_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_6X5_U8SRGB,
+      [PIPE_FORMAT_ASTC_6x6_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_6X6_U8SRGB,
+      [PIPE_FORMAT_ASTC_8x5_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_8X5_U8SRGB,
+      [PIPE_FORMAT_ASTC_8x6_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_8X6_U8SRGB,
+      [PIPE_FORMAT_ASTC_8x8_SRGB]           = ISL_FORMAT_ASTC_LDR_2D_8X8_U8SRGB,
+      [PIPE_FORMAT_ASTC_10x5_SRGB]          = ISL_FORMAT_ASTC_LDR_2D_10X5_U8SRGB,
+      [PIPE_FORMAT_ASTC_10x6_SRGB]          = ISL_FORMAT_ASTC_LDR_2D_10X6_U8SRGB,
+      [PIPE_FORMAT_ASTC_10x8_SRGB]          = ISL_FORMAT_ASTC_LDR_2D_10X8_U8SRGB,
+      [PIPE_FORMAT_ASTC_10x10_SRGB]         = ISL_FORMAT_ASTC_LDR_2D_10X10_U8SRGB,
+      [PIPE_FORMAT_ASTC_12x10_SRGB]         = ISL_FORMAT_ASTC_LDR_2D_12X10_U8SRGB,
+      [PIPE_FORMAT_ASTC_12x12_SRGB]         = ISL_FORMAT_ASTC_LDR_2D_12X12_U8SRGB,
+
+      [PIPE_FORMAT_A1B5G5R5_UNORM]          = ISL_FORMAT_A1B5G5R5_UNORM,
+
+      /* We support these so that we know the API expects no alpha channel.
+       * Otherwise, the state tracker would just give us a format with alpha
+       * and we wouldn't know to override the swizzle to 1.
+       */
+      [PIPE_FORMAT_R16G16B16X16_UINT]       = ISL_FORMAT_R16G16B16A16_UINT,
+      [PIPE_FORMAT_R16G16B16X16_SINT]       = ISL_FORMAT_R16G16B16A16_SINT,
+      [PIPE_FORMAT_R32G32B32X32_UINT]       = ISL_FORMAT_R32G32B32A32_UINT,
+      [PIPE_FORMAT_R32G32B32X32_SINT]       = ISL_FORMAT_R32G32B32A32_SINT,
+      [PIPE_FORMAT_R10G10B10X2_SNORM]       = ISL_FORMAT_R10G10B10A2_SNORM,
+   };
+   assert(pf < PIPE_FORMAT_COUNT);
+   return table[pf];
 }
 
 static bool
@@ -387,27 +687,27 @@ format_info_exists(enum isl_format format)
 }
 
 bool
-isl_format_supports_rendering(const struct gen_device_info *devinfo,
+isl_format_supports_rendering(const struct intel_device_info *devinfo,
                               enum isl_format format)
 {
    if (!format_info_exists(format))
       return false;
 
-   return format_gen(devinfo) >= format_info[format].render_target;
+   return devinfo->verx10 >= format_info[format].render_target;
 }
 
 bool
-isl_format_supports_alpha_blending(const struct gen_device_info *devinfo,
+isl_format_supports_alpha_blending(const struct intel_device_info *devinfo,
                                    enum isl_format format)
 {
    if (!format_info_exists(format))
       return false;
 
-   return format_gen(devinfo) >= format_info[format].alpha_blend;
+   return devinfo->verx10 >= format_info[format].alpha_blend;
 }
 
 bool
-isl_format_supports_sampling(const struct gen_device_info *devinfo,
+isl_format_supports_sampling(const struct intel_device_info *devinfo,
                              enum isl_format format)
 {
    if (!format_info_exists(format))
@@ -421,59 +721,51 @@ isl_format_supports_sampling(const struct gen_device_info *devinfo,
       if (fmtl->txc == ISL_TXC_ETC1 || fmtl->txc == ISL_TXC_ETC2)
          return true;
    } else if (devinfo->is_cherryview) {
-      const struct isl_format_layout *fmtl = isl_format_get_layout(format);
-      /* Support for ASTC LDR exists on Cherry View even though big-core
-       * GPUs didn't get it until Skylake.
+      /* Support for ASTC LDR theoretically exists on Cherry View even though
+       * big-core GPUs didn't get it until Skylake.  However, it's fairly
+       * badly broken and requires some nasty workarounds which no Mesa driver
+       * has ever implemented.
        */
-      if (fmtl->txc == ISL_TXC_ASTC)
-         return format < ISL_FORMAT_ASTC_HDR_2D_4X4_FLT16;
-   } else if (gen_device_info_is_9lp(devinfo)) {
+   } else if (intel_device_info_is_9lp(devinfo)) {
       const struct isl_format_layout *fmtl = isl_format_get_layout(format);
       /* Support for ASTC HDR exists on Broxton even though big-core
        * GPUs didn't get it until Cannonlake.
        */
       if (fmtl->txc == ISL_TXC_ASTC)
          return true;
+   } else if (devinfo->verx10 >= 125) {
+      const struct isl_format_layout *fmtl = isl_format_get_layout(format);
+      /* ASTC & FXT1 support was removed from the hardware on Gfx12.5.
+       * Annoyingly, our format_info table doesn't have a concept of things
+       * being removed so we handle it as yet another special case.
+       *
+       * See HSD 1408144932 (ASTC), 1407633611 (FXT1)
+       *
+       */
+      if (fmtl->txc == ISL_TXC_ASTC || fmtl->txc == ISL_TXC_FXT1)
+         return false;
    }
 
-   return format_gen(devinfo) >= format_info[format].sampling;
+   return devinfo->verx10 >= format_info[format].sampling;
 }
 
 bool
-isl_format_supports_filtering(const struct gen_device_info *devinfo,
+isl_format_supports_filtering(const struct intel_device_info *devinfo,
                               enum isl_format format)
 {
    if (!format_info_exists(format))
       return false;
 
-   if (devinfo->is_baytrail) {
-      const struct isl_format_layout *fmtl = isl_format_get_layout(format);
-      /* Support for ETC1 and ETC2 exists on Bay Trail even though big-core
-       * GPUs didn't get it until Broadwell.
-       */
-      if (fmtl->txc == ISL_TXC_ETC1 || fmtl->txc == ISL_TXC_ETC2)
-         return true;
-   } else if (devinfo->is_cherryview) {
-      const struct isl_format_layout *fmtl = isl_format_get_layout(format);
-      /* Support for ASTC LDR exists on Cherry View even though big-core
-       * GPUs didn't get it until Skylake.
-       */
-      if (fmtl->txc == ISL_TXC_ASTC)
-         return format < ISL_FORMAT_ASTC_HDR_2D_4X4_FLT16;
-   } else if (gen_device_info_is_9lp(devinfo)) {
-      const struct isl_format_layout *fmtl = isl_format_get_layout(format);
-      /* Support for ASTC HDR exists on Broxton even though big-core
-       * GPUs didn't get it until Cannonlake.
-       */
-      if (fmtl->txc == ISL_TXC_ASTC)
-         return true;
+   if (isl_format_is_compressed(format)) {
+      assert(format_info[format].filtering == format_info[format].sampling);
+      return isl_format_supports_sampling(devinfo, format);
    }
 
-   return format_gen(devinfo) >= format_info[format].filtering;
+   return devinfo->verx10 >= format_info[format].filtering;
 }
 
 bool
-isl_format_supports_vertex_fetch(const struct gen_device_info *devinfo,
+isl_format_supports_vertex_fetch(const struct intel_device_info *devinfo,
                                  enum isl_format format)
 {
    if (!format_info_exists(format))
@@ -485,20 +777,20 @@ isl_format_supports_vertex_fetch(const struct gen_device_info *devinfo,
    if (devinfo->is_baytrail)
       return 75 >= format_info[format].input_vb;
 
-   return format_gen(devinfo) >= format_info[format].input_vb;
+   return devinfo->verx10 >= format_info[format].input_vb;
 }
 
 /**
  * Returns true if the given format can support typed writes.
  */
 bool
-isl_format_supports_typed_writes(const struct gen_device_info *devinfo,
+isl_format_supports_typed_writes(const struct intel_device_info *devinfo,
                                  enum isl_format format)
 {
    if (!format_info_exists(format))
       return false;
 
-   return format_gen(devinfo) >= format_info[format].typed_write;
+   return devinfo->verx10 >= format_info[format].typed_write;
 }
 
 
@@ -513,13 +805,13 @@ isl_format_supports_typed_writes(const struct gen_device_info *devinfo,
  * occurrences.
  */
 bool
-isl_format_supports_typed_reads(const struct gen_device_info *devinfo,
+isl_format_supports_typed_reads(const struct intel_device_info *devinfo,
                                 enum isl_format format)
 {
    if (!format_info_exists(format))
       return false;
 
-   return format_gen(devinfo) >= format_info[format].typed_read;
+   return devinfo->verx10 >= format_info[format].typed_read;
 }
 
 /**
@@ -529,11 +821,13 @@ isl_format_supports_typed_reads(const struct gen_device_info *devinfo,
  * and sample count.  See isl_surf_get_ccs_surf for details.
  */
 bool
-isl_format_supports_ccs_d(const struct gen_device_info *devinfo,
+isl_format_supports_ccs_d(const struct intel_device_info *devinfo,
                           enum isl_format format)
 {
-   /* Fast clears were first added on Ivy Bridge */
-   if (devinfo->gen < 7)
+   /* Clear-only compression was first added on Ivy Bridge and was last
+    * implemented on Ice lake (see BSpec: 43862).
+    */
+   if (devinfo->ver < 7 || devinfo->ver > 11)
       return false;
 
    if (!isl_format_supports_rendering(devinfo, format))
@@ -551,30 +845,30 @@ isl_format_supports_ccs_d(const struct gen_device_info *devinfo,
  * such as tiling and sample count.  See isl_surf_get_ccs_surf for details.
  */
 bool
-isl_format_supports_ccs_e(const struct gen_device_info *devinfo,
+isl_format_supports_ccs_e(const struct intel_device_info *devinfo,
                           enum isl_format format)
 {
+   /* Wa_22011186057: Disable compression on ADL-P A0 */
+   if (devinfo->is_alderlake && devinfo->gt == 2 && devinfo->revision == 0)
+      return false;
+
    if (!format_info_exists(format))
       return false;
 
    /* For simplicity, only report that a format supports CCS_E if blorp can
     * perform bit-for-bit copies with an image of that format while compressed.
-    * This allows ISL users to avoid having to resolve the image before
-    * performing such a copy. We may want to change this behavior in the
-    * future.
-    *
-    * R11G11B10_FLOAT has no equivalent UINT format. Given how blorp_copy
-    * currently works, bit-for-bit copy operations are not possible without an
-    * intermediate resolve.
+    * Unfortunately, R11G11B10_FLOAT is in a compression class of its own and
+    * there is no way to copy to/from it which doesn't potentially loose data
+    * if one of the bit patterns being copied isn't valid finite floats.
     */
    if (format == ISL_FORMAT_R11G11B10_FLOAT)
       return false;
 
-   return format_gen(devinfo) >= format_info[format].ccs_e;
+   return devinfo->verx10 >= format_info[format].ccs_e;
 }
 
 bool
-isl_format_supports_multisampling(const struct gen_device_info *devinfo,
+isl_format_supports_multisampling(const struct intel_device_info *devinfo,
                                   enum isl_format format)
 {
    /* From the Sandybridge PRM, Volume 4 Part 1 p72, SURFACE_STATE, Surface
@@ -599,8 +893,8 @@ isl_format_supports_multisampling(const struct gen_device_info *devinfo,
       /* On SKL+, HiZ is always single-sampled even when the primary surface
        * is multisampled.  See also isl_surf_get_hiz_surf().
        */
-      return devinfo->gen <= 8;
-   } else if (devinfo->gen < 7 && isl_format_get_layout(format)->bpb > 64) {
+      return devinfo->ver <= 8;
+   } else if (devinfo->ver < 7 && isl_format_get_layout(format)->bpb > 64) {
       return false;
    } else if (isl_format_is_compressed(format)) {
       return false;
@@ -621,7 +915,7 @@ isl_format_supports_multisampling(const struct gen_device_info *devinfo,
  * format-dependent.
  */
 bool
-isl_formats_are_ccs_e_compatible(const struct gen_device_info *devinfo,
+isl_formats_are_ccs_e_compatible(const struct intel_device_info *devinfo,
                                  enum isl_format format1,
                                  enum isl_format format2)
 {
@@ -629,6 +923,15 @@ isl_formats_are_ccs_e_compatible(const struct gen_device_info *devinfo,
    if (!isl_format_supports_ccs_e(devinfo, format1) ||
        !isl_format_supports_ccs_e(devinfo, format2))
       return false;
+
+   /* Gfx12 added CCS_E support for A8_UNORM, A8_UNORM and R8_UNORM share the
+    * same aux map format encoding so they are definitely compatible.
+    */
+   if (format1 == ISL_FORMAT_A8_UNORM)
+      format1 = ISL_FORMAT_R8_UNORM;
+
+   if (format2 == ISL_FORMAT_A8_UNORM)
+      format2 = ISL_FORMAT_R8_UNORM;
 
    const struct isl_format_layout *fmtl1 = isl_format_get_layout(format1);
    const struct isl_format_layout *fmtl2 = isl_format_get_layout(format2);
@@ -877,11 +1180,11 @@ pack_channel(const union isl_color_value *value, unsigned i,
       }
       break;
    case ISL_UINT:
-      packed = MIN(value->u32[i], MAX_UINT(layout->bits));
+      packed = MIN(value->u32[i], u_uintN_max(layout->bits));
       break;
    case ISL_SINT:
-      packed = MIN(MAX(value->u32[i], MIN_INT(layout->bits)),
-                   MAX_INT(layout->bits));
+      packed = CLAMP(value->u32[i], u_intN_min(layout->bits),
+                     u_intN_max(layout->bits));
       break;
 
    default:
@@ -891,7 +1194,7 @@ pack_channel(const union isl_color_value *value, unsigned i,
    unsigned dword = layout->start_bit / 32;
    unsigned bit = layout->start_bit % 32;
    assert(bit + layout->bits <= 32);
-   data_out[dword] |= (packed & MAX_UINT(layout->bits)) << bit;
+   data_out[dword] |= (packed & u_uintN_max(layout->bits)) << bit;
 }
 
 /**
@@ -953,7 +1256,7 @@ unpack_channel(union isl_color_value *value,
    unsigned dword = layout->start_bit / 32;
    unsigned bit = layout->start_bit % 32;
    assert(bit + layout->bits <= 32);
-   uint32_t packed = (data_in[dword] >> bit) & MAX_UINT(layout->bits);
+   uint32_t packed = (data_in[dword] >> bit) & u_uintN_max(layout->bits);
 
    union {
       uint32_t u32;
@@ -965,7 +1268,6 @@ unpack_channel(union isl_color_value *value,
 
    switch (layout->type) {
    case ISL_UNORM:
-      unpacked.f32 = _mesa_unorm_to_float(packed, layout->bits);
       if (colorspace == ISL_COLORSPACE_SRGB) {
          if (layout->bits == 8) {
             unpacked.f32 = util_format_srgb_8unorm_to_linear_float(packed);
@@ -1012,7 +1314,7 @@ unpack_channel(union isl_color_value *value,
 void
 isl_color_value_unpack(union isl_color_value *value,
                        enum isl_format format,
-                       const uint32_t data_in[4])
+                       const uint32_t *data_in)
 {
    const struct isl_format_layout *fmtl = isl_format_get_layout(format);
    assert(fmtl->colorspace == ISL_COLORSPACE_LINEAR ||

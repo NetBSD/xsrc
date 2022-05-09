@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "util/compiler.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
@@ -307,6 +308,12 @@ analyse_instruction(struct analysis_context *ctx,
          max_regs = ARRAY_SIZE(info->output);
       } else if (dst->File == TGSI_FILE_ADDRESS) {
          continue;
+      } else if (dst->File == TGSI_FILE_BUFFER) {
+         continue;
+      } else if (dst->File == TGSI_FILE_IMAGE) {
+         continue;
+      } else if (dst->File == TGSI_FILE_MEMORY) {
+         continue;
       } else {
          assert(0);
          continue;
@@ -452,6 +459,7 @@ analyse_instruction(struct analysis_context *ctx,
       /* XXX: Are there more cases? */
       memset(&ctx->temp, 0, sizeof ctx->temp);
       memset(&info->output, 0, sizeof info->output);
+      FALLTHROUGH;
    default:
       break;
    }
@@ -608,7 +616,7 @@ finished:
     */
 
    for (index = 0; index < PIPE_MAX_COLOR_BUFS; ++index) {
-      const struct lp_tgsi_channel_info null_output[4];
+      static const struct lp_tgsi_channel_info null_output[4];
       info->cbuf[index] = null_output;
    }
 

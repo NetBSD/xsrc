@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2010 LunarG Inc.
 # (C) Copyright 2015, NVIDIA CORPORATION.
@@ -33,7 +33,7 @@ Generates the glapi_mapi_tmp.h header file from Khronos's XML file.
 """
 
 import sys
-import xml.etree.cElementTree as etree
+import xml.etree.ElementTree as etree
 
 import genCommon
 

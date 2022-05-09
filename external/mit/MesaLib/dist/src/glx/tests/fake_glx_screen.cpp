@@ -44,8 +44,6 @@ const struct glx_context_vtable fake_glx_context::vt = {
    NULL,
    NULL,
    NULL,
-   NULL,
-   NULL,
 };
 
 int fake_glx_context::contexts_allocated = 0;
@@ -102,7 +100,7 @@ struct glx_context dummyContext = {
 };
 __thread void *__glX_tls_Context = &dummyContext;
 
-#if !defined(GLX_USE_TLS)
+#if !defined(USE_ELF_TLS)
 extern "C" struct glx_context *
 __glXGetCurrentContext()
 {

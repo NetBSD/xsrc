@@ -92,7 +92,7 @@ extern "C" void
 brw_vec4_alloc_reg_set(struct brw_compiler *compiler)
 {
    int base_reg_count =
-      compiler->devinfo->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+      compiler->devinfo->ver >= 7 ? GFX7_MRF_HACK_START : BRW_MAX_GRF;
 
    /* After running split_virtual_grfs(), almost all VGRFs will be of size 1.
     * SEND-from-GRF sources cannot be split, so we also need classes for each
@@ -104,65 +104,27 @@ brw_vec4_alloc_reg_set(struct brw_compiler *compiler)
    for (int i = 0; i < class_count; i++)
       class_sizes[i] = i + 1;
 
-   /* Compute the total number of registers across all classes. */
-   int ra_reg_count = 0;
-   for (int i = 0; i < class_count; i++) {
-      ra_reg_count += base_reg_count - (class_sizes[i] - 1);
-   }
 
-   ralloc_free(compiler->vec4_reg_set.ra_reg_to_grf);
-   compiler->vec4_reg_set.ra_reg_to_grf = ralloc_array(compiler, uint8_t, ra_reg_count);
    ralloc_free(compiler->vec4_reg_set.regs);
-   compiler->vec4_reg_set.regs = ra_alloc_reg_set(compiler, ra_reg_count, false);
-   if (compiler->devinfo->gen >= 6)
+   compiler->vec4_reg_set.regs = ra_alloc_reg_set(compiler, base_reg_count, false);
+   if (compiler->devinfo->ver >= 6)
       ra_set_allocate_round_robin(compiler->vec4_reg_set.regs);
    ralloc_free(compiler->vec4_reg_set.classes);
-   compiler->vec4_reg_set.classes = ralloc_array(compiler, int, class_count);
+   compiler->vec4_reg_set.classes = ralloc_array(compiler, struct ra_class *, class_count);
 
    /* Now, add the registers to their classes, and add the conflicts
     * between them and the base GRF registers (and also each other).
     */
-   int reg = 0;
-   unsigned *q_values[MAX_VGRF_SIZE];
    for (int i = 0; i < class_count; i++) {
       int class_reg_count = base_reg_count - (class_sizes[i] - 1);
-      compiler->vec4_reg_set.classes[i] = ra_alloc_reg_class(compiler->vec4_reg_set.regs);
+      compiler->vec4_reg_set.classes[i] =
+         ra_alloc_contig_reg_class(compiler->vec4_reg_set.regs, class_sizes[i]);
 
-      q_values[i] = new unsigned[MAX_VGRF_SIZE];
-
-      for (int j = 0; j < class_reg_count; j++) {
-	 ra_class_add_reg(compiler->vec4_reg_set.regs, compiler->vec4_reg_set.classes[i], reg);
-
-	 compiler->vec4_reg_set.ra_reg_to_grf[reg] = j;
-
-	 for (int base_reg = j;
-	      base_reg < j + class_sizes[i];
-	      base_reg++) {
-	    ra_add_reg_conflict(compiler->vec4_reg_set.regs, base_reg, reg);
-	 }
-
-	 reg++;
-      }
-
-      for (int j = 0; j < class_count; j++) {
-         /* Calculate the q values manually because the algorithm used by
-          * ra_set_finalize() to do it has higher complexity affecting the
-          * start-up time of some applications.  q(i, j) is just the maximum
-          * number of registers from class i a register from class j can
-          * conflict with.
-          */
-         q_values[i][j] = class_sizes[i] + class_sizes[j] - 1;
-      }
+      for (int j = 0; j < class_reg_count; j++)
+         ra_class_add_reg(compiler->vec4_reg_set.classes[i], j);
    }
-   assert(reg == ra_reg_count);
 
-   for (int reg = 0; reg < base_reg_count; reg++)
-      ra_make_reg_conflicts_transitive(compiler->vec4_reg_set.regs, reg);
-
-   ra_set_finalize(compiler->vec4_reg_set.regs, q_values);
-
-   for (int i = 0; i < MAX_VGRF_SIZE; i++)
-      delete[] q_values[i];
+   ra_set_finalize(compiler->vec4_reg_set.regs, NULL);
 }
 
 void
@@ -201,8 +163,7 @@ vec4_visitor::reg_allocate()
    if (0)
       return reg_allocate_trivial();
 
-   calculate_live_intervals();
-
+   const vec4_live_variables &live = live_analysis.require();
    int node_count = alloc.count;
    int first_payload_node = node_count;
    node_count += payload_reg_count;
@@ -215,7 +176,7 @@ vec4_visitor::reg_allocate()
       ra_set_node_class(g, i, compiler->vec4_reg_set.classes[size - 1]);
 
       for (unsigned j = 0; j < i; j++) {
-	 if (virtual_grf_interferes(i, j)) {
+	 if (live.vgrfs_interfere(i, j)) {
 	    ra_add_node_interference(g, i, j);
 	 }
       }
@@ -259,9 +220,7 @@ vec4_visitor::reg_allocate()
     */
    prog_data->total_grf = payload_reg_count;
    for (unsigned i = 0; i < alloc.count; i++) {
-      int reg = ra_get_node_reg(g, i);
-
-      hw_reg_mapping[i] = compiler->vec4_reg_set.ra_reg_to_grf[reg];
+      hw_reg_mapping[i] = ra_get_node_reg(g, i);
       prog_data->total_grf = MAX2(prog_data->total_grf,
 				  hw_reg_mapping[i] + alloc.sizes[i]);
    }
@@ -331,8 +290,8 @@ can_use_scratch_for_source(const vec4_instruction *inst, unsigned i,
        * other registers (that won't read/write scratch_reg) do not stop us from
        * reusing scratch_reg for this instruction.
        */
-      if (prev_inst->opcode == SHADER_OPCODE_GEN4_SCRATCH_WRITE ||
-          prev_inst->opcode == SHADER_OPCODE_GEN4_SCRATCH_READ)
+      if (prev_inst->opcode == SHADER_OPCODE_GFX4_SCRATCH_WRITE ||
+          prev_inst->opcode == SHADER_OPCODE_GFX4_SCRATCH_READ)
          continue;
 
       /* If the previous instruction does not write to scratch_reg, then check
@@ -467,8 +426,9 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
          loop_scale /= 10;
          break;
 
-      case SHADER_OPCODE_GEN4_SCRATCH_READ:
-      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
+      case SHADER_OPCODE_GFX4_SCRATCH_READ:
+      case SHADER_OPCODE_GFX4_SCRATCH_WRITE:
+      case VEC4_OPCODE_MOV_FOR_SCRATCH:
          for (int i = 0; i < 3; i++) {
             if (inst->src[i].file == VGRF)
                no_spill[inst->src[i].nr] = true;
@@ -540,7 +500,7 @@ vec4_visitor::spill_reg(unsigned spill_reg_nr)
       }
    }
 
-   invalidate_live_intervals();
+   invalidate_analysis(DEPENDENCY_INSTRUCTIONS | DEPENDENCY_VARIABLES);
 }
 
 } /* namespace brw */

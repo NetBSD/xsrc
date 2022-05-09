@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -37,7 +37,7 @@
  *   Brian Paul
  */
 
-#include "main/imports.h"
+
 #include "main/context.h"
 #include "main/feedback.h"
 #include "main/varray.h"
@@ -84,9 +84,10 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
                 const struct vertex_header *v)
 {
    const struct st_context *st = st_context(ctx);
+   struct st_vertex_program *stvp = (struct st_vertex_program *)st->vp;
    GLfloat win[4];
    const GLfloat *color, *texcoord;
-   GLuint slot;
+   ubyte slot;
 
    win[0] = v->data[0][0];
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
@@ -101,14 +102,14 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
     * color and texcoord attribs to use here.
     */
 
-   slot = st->vp->result_to_output[VARYING_SLOT_COL0];
-   if (slot != ~0U)
+   slot = stvp->result_to_output[VARYING_SLOT_COL0];
+   if (slot != 0xff)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-   slot = st->vp->result_to_output[VARYING_SLOT_TEX0];
-   if (slot != ~0U)
+   slot = stvp->result_to_output[VARYING_SLOT_TEX0];
+   if (slot != 0xff)
       texcoord = v->data[slot];
    else
       texcoord = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -175,7 +176,7 @@ feedback_reset_stipple_counter( struct draw_stage *stage )
 static void
 feedback_destroy( struct draw_stage *stage )
 {
-   /* no-op */
+   free(stage);
 }
 
 /**
@@ -247,7 +248,7 @@ select_reset_stipple_counter( struct draw_stage *stage )
 static void
 select_destroy( struct draw_stage *stage )
 {
-   /* no-op */
+   free(stage);
 }
 
 
@@ -284,7 +285,7 @@ st_RenderMode(struct gl_context *ctx, GLenum newMode )
 
    if (newMode == GL_RENDER) {
       /* restore normal VBO draw function */
-      st_init_draw_functions(&ctx->Driver);
+      st_init_draw_functions(st->screen, &ctx->Driver);
    }
    else if (newMode == GL_SELECT) {
       if (!st->selection_stage)
@@ -292,6 +293,8 @@ st_RenderMode(struct gl_context *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->selection_stage);
       /* Plug in new vbo draw function */
       ctx->Driver.Draw = st_feedback_draw_vbo;
+      ctx->Driver.DrawGallium = _mesa_draw_gallium_fallback;
+      ctx->Driver.DrawGalliumMultiMode = _mesa_draw_gallium_multimode_fallback;
    }
    else {
       struct gl_program *vp = st->ctx->VertexProgram._Current;
@@ -301,9 +304,11 @@ st_RenderMode(struct gl_context *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->feedback_stage);
       /* Plug in new vbo draw function */
       ctx->Driver.Draw = st_feedback_draw_vbo;
+      ctx->Driver.DrawGallium = _mesa_draw_gallium_fallback;
+      ctx->Driver.DrawGalliumMultiMode = _mesa_draw_gallium_multimode_fallback;
       /* need to generate/use a vertex program that emits pos/color/tex */
       if (vp)
-         st->dirty |= ST_NEW_VERTEX_PROGRAM(st, st_vertex_program(vp));
+         st->dirty |= ST_NEW_VERTEX_PROGRAM(st, st_program(vp));
    }
 }
 

@@ -47,9 +47,6 @@ struct svga_context;
 struct svga_winsys_buffer;
 struct svga_winsys_surface;
 
-
-extern struct u_resource_vtbl svga_buffer_vtbl;
-
 struct svga_buffer_range
 {
    unsigned start;
@@ -75,7 +72,7 @@ struct svga_buffer_surface
  */
 struct svga_buffer
 {
-   struct u_resource b;
+   struct pipe_resource b;
 
    /** This is a superset of b.b.bind */
    unsigned bind_flags;
@@ -92,6 +89,11 @@ struct svga_buffer
     * Whether swbuf was created by the user or not.
     */
    boolean user;
+
+   /**
+    * Whether swbuf is used for this buffer.
+    */
+   boolean use_swbuf;
 
    /**
     * Creation key for the host surface handle.
@@ -228,7 +230,7 @@ static inline struct svga_buffer *
 svga_buffer(struct pipe_resource *resource)
 {
    struct svga_buffer *buf = (struct svga_buffer *) resource;
-   assert(buf == NULL || buf->b.vtbl == &svga_buffer_vtbl);
+   assert(buf == NULL || buf->b.target == PIPE_BUFFER);
    return buf;
 }
 
@@ -254,7 +256,7 @@ svga_buffer_is_user_buffer(struct pipe_resource *buffer)
 static inline struct svga_winsys_screen *
 svga_buffer_winsys_screen(struct svga_buffer *sbuf)
 {
-   return svga_screen(sbuf->b.b.screen)->sws;
+   return svga_screen(sbuf->b.screen)->sws;
 }
 
 
@@ -273,7 +275,7 @@ svga_buffer_has_hw_storage(struct svga_buffer *sbuf)
 
 /**
  * Map the hardware storage of a buffer.
- * \param flags  bitmask of PIPE_TRANSFER_* flags
+ * \param flags  bitmask of PIPE_MAP_* flags
  */
 static inline void *
 svga_buffer_hw_storage_map(struct svga_context *svga,
@@ -285,7 +287,26 @@ svga_buffer_hw_storage_map(struct svga_context *svga,
    svga->hud.num_buffers_mapped++;
 
    if (sws->have_gb_objects) {
-      return svga->swc->surface_map(svga->swc, sbuf->handle, flags, retry);
+      struct svga_winsys_context *swc = svga->swc;
+      boolean rebind;
+      void *map;
+
+      if (swc->force_coherent) {
+         flags |= PIPE_MAP_PERSISTENT | PIPE_MAP_COHERENT;
+      }
+      map = swc->surface_map(swc, sbuf->handle, flags, retry, &rebind);
+      if (map && rebind) {
+         enum pipe_error ret;
+
+         ret = SVGA3D_BindGBSurface(swc, sbuf->handle);
+         if (ret != PIPE_OK) {
+            svga_context_flush(svga, NULL);
+            ret = SVGA3D_BindGBSurface(swc, sbuf->handle);
+            assert(ret == PIPE_OK);
+         }
+         svga_context_flush(svga, NULL);
+      }
+      return map;
    } else {
       *retry = FALSE;
       return sws->buffer_map(sws, sbuf->hwbuf, flags);
@@ -304,16 +325,10 @@ svga_buffer_hw_storage_unmap(struct svga_context *svga,
    if (sws->have_gb_objects) {
       struct svga_winsys_context *swc = svga->swc;
       boolean rebind;
+
       swc->surface_unmap(swc, sbuf->handle, &rebind);
       if (rebind) {
-         enum pipe_error ret;
-         ret = SVGA3D_BindGBSurface(swc, sbuf->handle);
-         if (ret != PIPE_OK) {
-            /* flush and retry */
-            svga_context_flush(svga, NULL);
-            ret = SVGA3D_BindGBSurface(swc, sbuf->handle);
-            assert(ret == PIPE_OK);
-         }
+         SVGA_RETRY(svga, SVGA3D_BindGBSurface(swc, sbuf->handle));
       }
    } else
       sws->buffer_unmap(sws, sbuf->hwbuf);
@@ -354,5 +369,26 @@ svga_winsys_buffer_create(struct svga_context *svga,
                           unsigned alignment,
                           unsigned usage,
                           unsigned size);
+
+void
+svga_buffer_transfer_flush_region(struct pipe_context *pipe,
+                                  struct pipe_transfer *transfer,
+                                  const struct pipe_box *box);
+
+void
+svga_resource_destroy(struct pipe_screen *screen,
+                      struct pipe_resource *buf);
+
+void *
+svga_buffer_transfer_map(struct pipe_context *pipe,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,
+                         const struct pipe_box *box,
+                         struct pipe_transfer **ptransfer);
+
+void
+svga_buffer_transfer_unmap(struct pipe_context *pipe,
+                           struct pipe_transfer *transfer);
 
 #endif /* SVGA_BUFFER_H */

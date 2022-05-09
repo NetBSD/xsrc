@@ -27,9 +27,11 @@ files_pipe_loader = files(
 )
 
 libpipe_loader_defines = []
+libpipe_loader_links = []
 
 if dep_libdrm.found()
   files_pipe_loader += files('pipe_loader_drm.c')
+  libpipe_loader_links += libloader
 endif
 if with_dri
   libpipe_loader_defines += '-DHAVE_PIPE_LOADER_DRI'
@@ -40,31 +42,33 @@ endif
 
 libpipe_loader_static = static_library(
   'pipe_loader_static',
-  [files_pipe_loader, xmlpool_options_h],
+  files_pipe_loader,
   include_directories : [
     inc_util, inc_loader, inc_gallium, inc_include, inc_src, inc_gallium_aux,
     inc_gallium_winsys,
   ],
-  c_args : [c_vis_args, libpipe_loader_defines, '-DGALLIUM_STATIC_TARGETS=1'],
-  link_with : [libloader, libxmlconfig],
-  dependencies : [dep_libdrm],
+  c_args : [libpipe_loader_defines, '-DGALLIUM_STATIC_TARGETS=1'],
+  gnu_symbol_visibility : 'hidden',
+  link_with : [libpipe_loader_links],
+  dependencies : [dep_libdrm, idep_xmlconfig, idep_mesautil],
   build_by_default : false,
 )
 
 libpipe_loader_dynamic = static_library(
   'pipe_loader_dynamic',
-  [files_pipe_loader, xmlpool_options_h],
+  files_pipe_loader,
   include_directories : [
     inc_util, inc_loader, inc_gallium, inc_include, inc_src, inc_gallium_aux,
     inc_gallium_winsys,
   ],
   c_args : [
-    c_vis_args, libpipe_loader_defines,
+    libpipe_loader_defines,
     '-DPIPE_SEARCH_DIR="@0@"'.format(
       join_paths(get_option('prefix'), get_option('libdir'), 'gallium-pipe')
     )
   ],
-  link_with : [libloader, libxmlconfig],
-  dependencies : [dep_libdrm],
+  gnu_symbol_visibility : 'hidden',
+  link_with : [libpipe_loader_links],
+  dependencies : [dep_libdrm, idep_xmlconfig, idep_mesautil],
   build_by_default : false,
 )

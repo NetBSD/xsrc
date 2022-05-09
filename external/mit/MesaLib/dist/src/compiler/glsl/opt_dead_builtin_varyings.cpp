@@ -323,14 +323,14 @@ public:
 
          if (!(external_color_usage & (1 << i))) {
             if (info->color[i]) {
-               util_snprintf(name, 32, "gl_%s_FrontColor%i_dummy", mode_str, i);
+               snprintf(name, 32, "gl_%s_FrontColor%i_dummy", mode_str, i);
                this->new_color[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
                                         ir_var_temporary);
             }
 
             if (info->backcolor[i]) {
-               util_snprintf(name, 32, "gl_%s_BackColor%i_dummy", mode_str, i);
+               snprintf(name, 32, "gl_%s_BackColor%i_dummy", mode_str, i);
                this->new_backcolor[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
                                         ir_var_temporary);
@@ -342,7 +342,7 @@ public:
           info->fog) {
          char name[32];
 
-         util_snprintf(name, 32, "gl_%s_FogFragCoord_dummy", mode_str);
+         snprintf(name, 32, "gl_%s_FogFragCoord_dummy", mode_str);
          this->new_fog = new (ctx) ir_variable(glsl_type::float_type, name,
                                                ir_var_temporary);
       }
@@ -366,13 +366,13 @@ public:
             if (!(external_usage & (1 << i))) {
                /* This varying is unused in the next stage. Declare
                 * a temporary instead of an output. */
-               util_snprintf(name, 32, "gl_%s_%s%i_dummy", mode_str, var_name, i);
+               snprintf(name, 32, "gl_%s_%s%i_dummy", mode_str, var_name, i);
                new_var[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
                                         ir_var_temporary);
             }
             else {
-               util_snprintf(name, 32, "gl_%s_%s%i", mode_str, var_name, i);
+               snprintf(name, 32, "gl_%s_%s%i", mode_str, var_name, i);
                new_var[i] =
                   new(ctx) ir_variable(glsl_type::vec4_type, name,
                                        this->info->mode);
@@ -527,7 +527,7 @@ lower_fragdata_array(struct gl_linked_shader *shader)
    varying_info_visitor info(ir_var_shader_out, true);
    info.get(shader->ir, 0, NULL);
 
-   replace_varyings_visitor(shader, &info, 0, 0, 0);
+   replace_varyings_visitor(shader, &info, 0, 0, false);
 }
 
 
@@ -539,7 +539,8 @@ do_dead_builtin_varyings(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* Lower the gl_FragData array to separate variables. */
-   if (consumer && consumer->Stage == MESA_SHADER_FRAGMENT) {
+   if (consumer && consumer->Stage == MESA_SHADER_FRAGMENT &&
+       !ctx->Const.ShaderCompilerOptions[MESA_SHADER_FRAGMENT].NirOptions) {
       lower_fragdata_array(consumer);
    }
 

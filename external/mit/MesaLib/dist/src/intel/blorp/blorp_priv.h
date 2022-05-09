@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 
+#include "common/intel_measure.h"
 #include "compiler/nir/nir.h"
 #include "compiler/brw_compiler.h"
 
@@ -61,17 +62,17 @@ struct brw_blorp_surface_info
    struct isl_view view;
 
    /* Z offset into a 3-D texture or slice of a 2-D array texture. */
-   uint32_t z_offset;
+   float z_offset;
 
    uint32_t tile_x_sa, tile_y_sa;
 };
 
 void
-brw_blorp_surface_info_init(struct blorp_context *blorp,
+brw_blorp_surface_info_init(struct blorp_batch *batch,
                             struct brw_blorp_surface_info *info,
                             const struct blorp_surf *surf,
-                            unsigned int level, unsigned int layer,
-                            enum isl_format format, bool is_render_target);
+                            unsigned int level, float layer,
+                            enum isl_format format, bool is_dest);
 void
 blorp_surf_convert_to_single_slice(const struct isl_device *isl_dev,
                                    struct brw_blorp_surface_info *info);
@@ -83,6 +84,12 @@ blorp_surf_convert_to_uncompressed(const struct isl_device *isl_dev,
                                    struct brw_blorp_surface_info *info,
                                    uint32_t *x, uint32_t *y,
                                    uint32_t *width, uint32_t *height);
+void
+blorp_surf_fake_interleaved_msaa(const struct isl_device *isl_dev,
+                                 struct brw_blorp_surface_info *info);
+void
+blorp_surf_retile_w_to_y(const struct isl_device *isl_dev,
+                         struct brw_blorp_surface_info *info);
 
 
 struct brw_blorp_coord_transform
@@ -92,16 +99,16 @@ struct brw_blorp_coord_transform
 };
 
 /**
- * Bounding rectangle telling pixel discard which pixels are not to be
- * touched. This is needed in when surfaces are configured as something else
- * what they really are:
+ * Bounding rectangle telling pixel discard which pixels are to be touched.
+ * This is needed in when surfaces are configured as something else what they
+ * really are:
  *
  *    - writing W-tiled stencil as Y-tiled
  *    - writing interleaved multisampled as single sampled.
  *
- * See blorp_nir_discard_if_outside_rect().
+ * See blorp_check_in_bounds().
  */
-struct brw_blorp_discard_rect
+struct brw_blorp_bounds_rect
 {
    uint32_t x0;
    uint32_t x1;
@@ -129,7 +136,7 @@ struct brw_blorp_wm_inputs
 {
    uint32_t clear_color[4];
 
-   struct brw_blorp_discard_rect discard_rect;
+   struct brw_blorp_bounds_rect bounds_rect;
    struct brw_blorp_rect_grid rect_grid;
    struct brw_blorp_coord_transform coord_transform[2];
 
@@ -142,23 +149,39 @@ struct brw_blorp_wm_inputs
    /* Minimum layer setting works for all the textures types but texture_3d
     * for which the setting has no effect. Use the z-coordinate instead.
     */
-   uint32_t src_z;
+   float src_z;
 
-   /* Pad out to an integral number of registers */
-   uint32_t pad[1];
+   /* Note: Pad out to an integral number of registers when extending, but
+    * make sure subgroup_id is the last 32-bit item.
+    */
+   /* uint32_t pad[?]; */
+   uint32_t subgroup_id;
 };
 
-#define BLORP_CREATE_NIR_INPUT(shader, name, type) ({ \
-   nir_variable *input = nir_variable_create((shader), nir_var_shader_in, \
-                                             type, #name); \
-   if ((shader)->info.stage == MESA_SHADER_FRAGMENT) \
-      input->data.interpolation = INTERP_MODE_FLAT; \
-   input->data.location = VARYING_SLOT_VAR0 + \
-      offsetof(struct brw_blorp_wm_inputs, name) / (4 * sizeof(float)); \
-   input->data.location_frac = \
-      (offsetof(struct brw_blorp_wm_inputs, name) / sizeof(float)) % 4; \
-   input; \
-})
+static inline nir_variable *
+blorp_create_nir_input(struct nir_shader *nir,
+                       const char *name,
+                       const struct glsl_type *type,
+                       unsigned int offset)
+{
+   nir_variable *input;
+   if (nir->info.stage == MESA_SHADER_COMPUTE) {
+      input = nir_variable_create(nir, nir_var_uniform, type, name);
+      input->data.driver_location = offset;
+      input->data.location = offset;
+   } else {
+      input = nir_variable_create(nir, nir_var_shader_in, type, name);
+      input->data.location = VARYING_SLOT_VAR0 + offset / (4 * sizeof(float));
+      input->data.location_frac = (offset / sizeof(float)) % 4;
+   }
+   if (nir->info.stage == MESA_SHADER_FRAGMENT)
+      input->data.interpolation = INTERP_MODE_FLAT;
+   return input;
+}
+
+#define BLORP_CREATE_NIR_INPUT(shader, name, type) \
+   blorp_create_nir_input((shader), #name, (type), \
+                          offsetof(struct brw_blorp_wm_inputs, name))
 
 struct blorp_vs_inputs {
    uint32_t base_layer;
@@ -196,7 +219,7 @@ struct blorp_params
    enum isl_aux_op hiz_op;
    bool full_surface_hiz_op;
    enum isl_aux_op fast_clear_op;
-   bool color_write_disable[4];
+   uint8_t color_write_disable;
    struct brw_blorp_wm_inputs wm_inputs;
    struct blorp_vs_inputs vs_inputs;
    bool dst_clear_color_as_input;
@@ -209,24 +232,47 @@ struct blorp_params
    struct brw_sf_prog_data *sf_prog_data;
    uint32_t wm_prog_kernel;
    struct brw_wm_prog_data *wm_prog_data;
+   uint32_t cs_prog_kernel;
+   struct brw_cs_prog_data *cs_prog_data;
 
    bool use_pre_baked_binding_table;
    uint32_t pre_baked_binding_table_offset;
+   enum intel_measure_snapshot_type snapshot_type;
 };
 
 void blorp_params_init(struct blorp_params *params);
 
 enum blorp_shader_type {
+   BLORP_SHADER_TYPE_COPY,
    BLORP_SHADER_TYPE_BLIT,
    BLORP_SHADER_TYPE_CLEAR,
    BLORP_SHADER_TYPE_MCS_PARTIAL_RESOLVE,
    BLORP_SHADER_TYPE_LAYER_OFFSET_VS,
-   BLORP_SHADER_TYPE_GEN4_SF,
+   BLORP_SHADER_TYPE_GFX4_SF,
 };
+
+enum blorp_shader_pipeline {
+   BLORP_SHADER_PIPELINE_RENDER,
+   BLORP_SHADER_PIPELINE_COMPUTE,
+};
+
+struct brw_blorp_base_key
+{
+   char name[8];
+   enum blorp_shader_type shader_type;
+   enum blorp_shader_pipeline shader_pipeline;
+};
+
+#define BRW_BLORP_BASE_KEY_INIT(_type)                  \
+   (struct brw_blorp_base_key) {                        \
+      .name = "blorp",                                  \
+      .shader_type = _type,                             \
+      .shader_pipeline = BLORP_SHADER_PIPELINE_RENDER,  \
+   }
 
 struct brw_blorp_blit_prog_key
 {
-   enum blorp_shader_type shader_type; /* Must be BLORP_SHADER_TYPE_BLIT */
+   struct brw_blorp_base_key base;
 
    /* Number of samples per pixel that have been configured in the surface
     * state for texturing from.
@@ -284,6 +330,12 @@ struct brw_blorp_blit_prog_key
    /* Whether or not the format workarounds are a bitcast operation */
    bool format_bit_cast;
 
+   /** True if we need to perform SINT -> UINT clamping. */
+   bool sint32_to_uint;
+
+   /** True if we need to perform UINT -> SINT clamping. */
+   bool uint32_to_sint;
+
    /* Type of the data to be read from the texture (one of
     * nir_type_(int|uint|float)).
     */
@@ -306,6 +358,8 @@ struct brw_blorp_blit_prog_key
     * non-power-of-two formats.
     */
    bool dst_rgb;
+
+   isl_surf_usage_flags_t dst_usage;
 
    enum blorp_filter filter;
 
@@ -336,16 +390,23 @@ struct brw_blorp_blit_prog_key
     */
    float x_scale;
    float y_scale;
+
+   /* If a compute shader is used, this is the local size y dimension.
+    */
+   uint8_t local_y;
 };
 
 /**
  * \name BLORP internals
  * \{
  *
- * Used internally by gen6_blorp_exec() and gen7_blorp_exec().
+ * Used internally by gfx6_blorp_exec() and gfx7_blorp_exec().
  */
 
 void brw_blorp_init_wm_prog_key(struct brw_wm_prog_key *wm_key);
+void brw_blorp_init_cs_prog_key(struct brw_cs_prog_key *cs_key);
+
+const char *blorp_shader_type_to_name(enum blorp_shader_type type);
 
 const unsigned *
 blorp_compile_fs(struct blorp_context *blorp, void *mem_ctx,
@@ -362,6 +423,35 @@ blorp_compile_vs(struct blorp_context *blorp, void *mem_ctx,
 bool
 blorp_ensure_sf_program(struct blorp_batch *batch,
                         struct blorp_params *params);
+
+static inline uint8_t
+blorp_get_cs_local_y(struct blorp_params *params)
+{
+   uint32_t height = params->y1 - params->y0;
+   uint32_t or_ys = params->y0 | params->y1;
+   if (height > 32 || (or_ys & 3) == 0) {
+      return 4;
+   } else if ((or_ys & 1) == 0) {
+      return 2;
+   } else {
+      return 1;
+   }
+}
+
+static inline void
+blorp_set_cs_dims(struct nir_shader *nir, uint8_t local_y)
+{
+   assert(local_y != 0 && (16 % local_y == 0));
+   nir->info.workgroup_size[0] = 16 / local_y;
+   nir->info.workgroup_size[1] = local_y;
+   nir->info.workgroup_size[2] = 1;
+}
+
+const unsigned *
+blorp_compile_cs(struct blorp_context *blorp, void *mem_ctx,
+                 struct nir_shader *nir,
+                 struct brw_cs_prog_key *cs_key,
+                 struct brw_cs_prog_data *cs_prog_data);
 
 /** \} */
 

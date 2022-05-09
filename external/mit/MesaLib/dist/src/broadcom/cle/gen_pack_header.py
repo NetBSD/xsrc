@@ -22,15 +22,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
 import xml.parsers.expat
 import re
 import sys
 import copy
 
-license =  """/* Generated code, see packets.xml and gen_packet_header.py */
+license =  """/* Generated code, see v3d_packet_v21.xml, v3d_packet_v33.xml and gen_pack_header.py */
 """
 
 pack_header = """%(license)s
@@ -62,7 +59,6 @@ def to_alphanum(name):
         '=': '',
         '>': '',
         '#': '',
-        'α': 'alpha',
         '&': '',
         '*': '',
         '"': '',

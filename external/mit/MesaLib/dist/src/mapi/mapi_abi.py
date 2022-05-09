@@ -24,8 +24,6 @@
 # Authors:
 #    Chia-I Wu <olv@lunarg.com>
 
-from __future__ import print_function
-
 import sys
 # make it possible to import glapi
 import os
@@ -481,6 +479,10 @@ class ABIPrinter(object):
         print('#ifdef MAPI_TMP_DEFINES')
         print(self.c_public_includes())
         print()
+        print('#ifdef MemoryBarrier')
+        print('#undef MemoryBarrier')
+        print('#endif')
+        print()
         print(self.c_public_declarations(self.prefix_lib))
         print('#undef MAPI_TMP_DEFINES')
         print('#endif /* MAPI_TMP_DEFINES */')
@@ -603,13 +605,8 @@ class GLAPIPrinter(ABIPrinter):
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
 #define _GLAPI_TMP_H_
-#ifdef USE_MGL_NAMESPACE
-#define GLAPI_PREFIX(func)  mgl##func
-#define GLAPI_PREFIX_STR(func)  "mgl"#func
-#else
 #define GLAPI_PREFIX(func)  gl##func
 #define GLAPI_PREFIX_STR(func)  "gl"#func
-#endif /* USE_MGL_NAMESPACE */
 
 typedef int GLclampx;
 #endif /* _GLAPI_TMP_H_ */"""

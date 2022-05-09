@@ -37,7 +37,11 @@ files_addrlib = files(
   'src/core/coord.h',
   'src/gfx9/gfx9addrlib.cpp',
   'src/gfx9/gfx9addrlib.h',
+  'src/gfx10/gfx10addrlib.cpp',
+  'src/gfx10/gfx10addrlib.h',
+  'src/gfx10/gfx10SwizzlePattern.h',
   'src/amdgpu_asic_addr.h',
+  'src/chip/gfx10/gfx10_gb_reg.h',
   'src/chip/gfx9/gfx9_gb_reg.h',
   'src/chip/r800/si_gb_reg.h',
   'src/r800/ciaddrlib.cpp',
@@ -48,14 +52,32 @@ files_addrlib = files(
   'src/r800/siaddrlib.h',
 )
 
+# Skip the addrlib definition of ADDR_FASTCALL so as not to use regparm.
+cpp_args_addrlib = ['-DADDR_FASTCALL=']
+
+if host_machine.endian() == 'little'
+  cpp_args_addrlib += '-DLITTLEENDIAN_CPU'
+else
+  cpp_args_addrlib += '-DBIGENDIAN_CPU'
+endif
+
+foreach w : ['-Wno-unused-variable', '-Wno-unused-local-typedefs',
+             '-Wno-unused-but-set-variable', '-Wno-maybe-uninitialized']
+  if cpp.has_argument(w)
+    cpp_args_addrlib += w
+  endif
+endforeach
+
 libamdgpu_addrlib = static_library(
   'addrlib',
   files_addrlib,
   include_directories : [
     include_directories(
       'inc', 'src', 'src/core', 'src/chip/gfx9', 'src/chip/r800',
+      'src/chip/gfx10',
     ),
-    inc_amd_common, inc_common, inc_src,
+    inc_amd_common, inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux,
   ],
-  cpp_args : cpp_vis_args,
+  cpp_args : cpp_args_addrlib,
+  gnu_symbol_visibility : 'hidden',
 )

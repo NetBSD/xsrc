@@ -37,7 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -66,7 +66,7 @@ st_texture_create(struct st_context *st,
                   GLuint bind)
 {
    struct pipe_resource pt, *newtex;
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_screen *screen = st->screen;
 
    assert(target < PIPE_MAX_TEXTURE_TYPES);
    assert(width0 > 0);
@@ -184,7 +184,9 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       break;
    default:
       assert(0 && "Unexpected texture in st_gl_texture_dims_to_pipe_dims()");
-      /* fall-through */
+#if defined(NDEBUG) || defined(DEBUG)
+      FALLTHROUGH;
+#endif
    case GL_TEXTURE_3D:
    case GL_PROXY_TEXTURE_3D:
       *widthOut = widthIn;
@@ -241,13 +243,13 @@ st_texture_match_image(struct st_context *st,
  * Map a texture image and return the address for a particular 2D face/slice/
  * layer.  The stImage indicates the cube face and mipmap level.  The slice
  * of the 3D texture is passed in 'zoffset'.
- * \param usage  one of the PIPE_TRANSFER_x values
+ * \param usage  one of the PIPE_MAP_x values
  * \param x, y, w, h  the region of interest of the 2D image.
  * \return address of mapping or NULL if any error
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-                     enum pipe_transfer_usage usage,
+                     enum pipe_map_flags usage,
                      GLuint x, GLuint y, GLuint z,
                      GLuint w, GLuint h, GLuint d,
                      struct pipe_transfer **transfer)
@@ -268,15 +270,15 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
       level = stImage->base.Level;
 
    if (stObj->base.Immutable) {
-      level += stObj->base.MinLevel;
-      z += stObj->base.MinLayer;
+      level += stObj->base.Attrib.MinLevel;
+      z += stObj->base.Attrib.MinLayer;
       if (stObj->pt->array_size > 1)
-         d = MIN2(d, stObj->base.NumLayers);
+         d = MIN2(d, stObj->base.Attrib.NumLayers);
    }
 
    z += stImage->base.Face;
 
-   map = pipe_transfer_map_3d(st->pipe, stImage->pt, level, usage,
+   map = pipe_texture_map_3d(st->pipe, stImage->pt, level, usage,
                               x, y, z, w, h, d, transfer);
    if (map) {
       /* Enlarge the transfer array if it's not large enough. */
@@ -308,12 +310,12 @@ st_texture_image_unmap(struct st_context *st,
    struct pipe_transfer **transfer;
 
    if (stObj->base.Immutable)
-      slice += stObj->base.MinLayer;
+      slice += stObj->base.Attrib.MinLayer;
    transfer = &stImage->transfer[slice + stImage->base.Face].transfer;
 
    DBG("%s\n", __func__);
 
-   pipe_transfer_unmap(pipe, *transfer);
+   pipe_texture_unmap(pipe, *transfer);
    *transfer = NULL;
 }
 
@@ -335,11 +337,11 @@ print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
    region.height = 1;
    region.depth = 1;
 
-   map = pipe->transfer_map(pipe, src, 0, PIPE_TRANSFER_READ, &region, &xfer);
+   map = pipe->texture_map(pipe, src, 0, PIPE_MAP_READ, &region, &xfer);
 
    printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
 
-   pipe->transfer_unmap(pipe, xfer);
+   pipe->texture_unmap(pipe, xfer);
 }
 
 
@@ -416,7 +418,7 @@ st_create_color_map_texture(struct gl_context *ctx)
    /* find an RGBA texture format */
    format = st_choose_format(st, GL_RGBA, GL_NONE, GL_NONE,
                              PIPE_TEXTURE_2D, 0, 0, PIPE_BIND_SAMPLER_VIEW,
-                             FALSE);
+                             false, false);
 
    /* create texture for color map/table */
    pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
@@ -517,7 +519,8 @@ st_create_texture_handle_from_unit(struct st_context *st,
    struct pipe_sampler_state sampler = {0};
 
    /* TODO: Clarify the interaction of ARB_bindless_texture and EXT_texture_sRGB_decode */
-   st_update_single_texture(st, &view, texUnit, prog->sh.data->Version >= 130, true);
+   view = st_update_single_texture(st, texUnit, prog->sh.data->Version >= 130,
+                                   true, false);
    if (!view)
       return 0;
 

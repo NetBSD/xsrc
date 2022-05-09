@@ -22,6 +22,7 @@
  */
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "util/u_math.h"
 #include "util/vma.h"
@@ -38,12 +39,18 @@ struct util_vma_hole {
 #define util_vma_foreach_hole_safe(_hole, _heap) \
    list_for_each_entry_safe(struct util_vma_hole, _hole, &(_heap)->holes, link)
 
+#define util_vma_foreach_hole_safe_rev(_hole, _heap) \
+   list_for_each_entry_safe_rev(struct util_vma_hole, _hole, &(_heap)->holes, link)
+
 void
 util_vma_heap_init(struct util_vma_heap *heap,
                    uint64_t start, uint64_t size)
 {
    list_inithead(&heap->holes);
    util_vma_heap_free(heap, start, size);
+
+   /* Default to using high addresses */
+   heap->alloc_high = true;
 }
 
 void
@@ -84,6 +91,53 @@ util_vma_heap_validate(struct util_vma_heap *heap)
 #define util_vma_heap_validate(heap)
 #endif
 
+static void
+util_vma_hole_alloc(struct util_vma_hole *hole,
+                    uint64_t offset, uint64_t size)
+{
+   assert(hole->offset <= offset);
+   assert(hole->size >= offset - hole->offset + size);
+
+   if (offset == hole->offset && size == hole->size) {
+      /* Just get rid of the hole. */
+      list_del(&hole->link);
+      free(hole);
+      return;
+   }
+
+   assert(offset - hole->offset <= hole->size - size);
+   uint64_t waste = (hole->size - size) - (offset - hole->offset);
+   if (waste == 0) {
+      /* We allocated at the top.  Shrink the hole down. */
+      hole->size -= size;
+      return;
+   }
+
+   if (offset == hole->offset) {
+      /* We allocated at the bottom. Shrink the hole up. */
+      hole->offset += size;
+      hole->size -= size;
+      return;
+   }
+
+   /* We allocated in the middle.  We need to split the old hole into two
+    * holes, one high and one low.
+    */
+   struct util_vma_hole *high_hole = calloc(1, sizeof(*hole));
+   high_hole->offset = offset + size;
+   high_hole->size = waste;
+
+   /* Adjust the hole to be the amount of space left at he bottom of the
+    * original hole.
+    */
+   hole->size = offset - hole->offset;
+
+   /* Place the new hole before the old hole so that the list is in order
+    * from high to low.
+    */
+   list_addtail(&high_hole->link, &hole->link);
+}
+
 uint64_t
 util_vma_heap_alloc(struct util_vma_heap *heap,
                     uint64_t size, uint64_t alignment)
@@ -94,75 +148,94 @@ util_vma_heap_alloc(struct util_vma_heap *heap,
 
    util_vma_heap_validate(heap);
 
-   util_vma_foreach_hole_safe(hole, heap) {
-      if (size > hole->size)
-         continue;
+   if (heap->alloc_high) {
+      util_vma_foreach_hole_safe(hole, heap) {
+         if (size > hole->size)
+            continue;
 
-      /* Compute the offset as the highest address where a chunk of the given
-       * size can be without going over the top of the hole.
-       *
-       * This calculation is known to not overflow because we know that
-       * hole->size + hole->offset can only overflow to 0 and size > 0.
-       */
-      uint64_t offset = (hole->size - size) + hole->offset;
+         /* Compute the offset as the highest address where a chunk of the
+          * given size can be without going over the top of the hole.
+          *
+          * This calculation is known to not overflow because we know that
+          * hole->size + hole->offset can only overflow to 0 and size > 0.
+          */
+         uint64_t offset = (hole->size - size) + hole->offset;
 
-      /* Align the offset.  We align down and not up because we are allocating
-       * from the top of the hole and not the bottom.
-       */
-      offset = (offset / alignment) * alignment;
+         /* Align the offset.  We align down and not up because we are
+          * allocating from the top of the hole and not the bottom.
+          */
+         offset = (offset / alignment) * alignment;
 
-      if (offset < hole->offset)
-         continue;
+         if (offset < hole->offset)
+            continue;
 
-      if (offset == hole->offset && size == hole->size) {
-         /* Just get rid of the hole. */
-         list_del(&hole->link);
-         free(hole);
+         util_vma_hole_alloc(hole, offset, size);
          util_vma_heap_validate(heap);
          return offset;
       }
+   } else {
+      util_vma_foreach_hole_safe_rev(hole, heap) {
+         if (size > hole->size)
+            continue;
 
-      assert(offset - hole->offset <= hole->size - size);
-      uint64_t waste = (hole->size - size) - (offset - hole->offset);
-      if (waste == 0) {
-         /* We allocated at the top.  Shrink the hole down. */
-         hole->size -= size;
+         uint64_t offset = hole->offset;
+
+         /* Align the offset */
+         uint64_t misalign = offset % alignment;
+         if (misalign) {
+            uint64_t pad = alignment - misalign;
+            if (pad > hole->size - size)
+               continue;
+
+            offset += pad;
+         }
+
+         util_vma_hole_alloc(hole, offset, size);
          util_vma_heap_validate(heap);
          return offset;
       }
-
-      if (offset == hole->offset) {
-         /* We allocated at the bottom. Shrink the hole up. */
-         hole->offset += size;
-         hole->size -= size;
-         util_vma_heap_validate(heap);
-         return offset;
-      }
-
-      /* We allocated in the middle.  We need to split the old hole into two
-       * holes, one high and one low.
-       */
-      struct util_vma_hole *high_hole = calloc(1, sizeof(*hole));
-      high_hole->offset = offset + size;
-      high_hole->size = waste;
-
-      /* Adjust the hole to be the amount of space left at he bottom of the
-       * original hole.
-       */
-      hole->size = offset - hole->offset;
-
-      /* Place the new hole before the old hole so that the list is in order
-       * from high to low.
-       */
-      list_addtail(&high_hole->link, &hole->link);
-
-      util_vma_heap_validate(heap);
-
-      return offset;
    }
 
    /* Failed to allocate */
    return 0;
+}
+
+bool
+util_vma_heap_alloc_addr(struct util_vma_heap *heap,
+                         uint64_t offset, uint64_t size)
+{
+   /* An offset of 0 is reserved for allocation failure.  It is not a valid
+    * address and cannot be allocated.
+    */
+   assert(offset > 0);
+
+   /* Allocating something with a size of 0 is also not valid. */
+   assert(size > 0);
+
+   /* It's possible for offset + size to wrap around if we touch the top of
+    * the 64-bit address space, but we cannot go any higher than 2^64.
+    */
+   assert(offset + size == 0 || offset + size > offset);
+
+   /* Find the hole if one exists. */
+   util_vma_foreach_hole_safe(hole, heap) {
+      if (hole->offset > offset)
+         continue;
+
+      /* Holes are ordered high-to-low so the first hole we find with
+       * hole->offset <= is our hole.  If it's not big enough to contain the
+       * requested range, then the allocation fails.
+       */
+      assert(hole->offset <= offset);
+      if (hole->size < offset - hole->offset + size)
+         return false;
+
+      util_vma_hole_alloc(hole, offset, size);
+      return true;
+   }
+
+   /* We didn't find a suitable hole */
+   return false;
 }
 
 void
@@ -231,4 +304,23 @@ util_vma_heap_free(struct util_vma_heap *heap,
    }
 
    util_vma_heap_validate(heap);
+}
+
+void
+util_vma_heap_print(struct util_vma_heap *heap, FILE *fp,
+                    const char *tab, uint64_t total_size)
+{
+   fprintf(fp, "%sutil_vma_heap:\n", tab);
+
+   uint64_t total_free = 0;
+   util_vma_foreach_hole(hole, heap) {
+      fprintf(fp, "%s    hole: offset = %"PRIu64" (0x%"PRIx64", "
+              "size = %"PRIu64" (0x%"PRIx64")\n",
+              tab, hole->offset, hole->offset, hole->size, hole->size);
+      total_free += hole->size;
+   }
+   assert(total_free <= total_size);
+   fprintf(fp, "%s%"PRIu64"B (0x%"PRIx64") free (%.2f%% full)\n",
+           tab, total_free, total_free,
+           ((double)(total_size - total_free) / (double)total_size) * 100);
 }

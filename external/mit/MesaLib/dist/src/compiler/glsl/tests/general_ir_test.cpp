@@ -21,12 +21,30 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <gtest/gtest.h>
-#include "main/compiler.h"
+#include "util/compiler.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "ir.h"
 
-TEST(ir_variable_constructor, interface)
+class ir_variable_constructor : public ::testing::Test {
+public:
+   virtual void SetUp();
+   virtual void TearDown();
+};
+
+void
+ir_variable_constructor::SetUp()
+{
+   glsl_type_singleton_init_or_ref();
+}
+
+void
+ir_variable_constructor::TearDown()
+{
+   glsl_type_singleton_decref();
+}
+
+TEST_F(ir_variable_constructor, interface)
 {
    void *mem_ctx = ralloc_context(NULL);
 
@@ -50,9 +68,11 @@ TEST(ir_variable_constructor, interface)
    EXPECT_NE(name, v->name);
    EXPECT_EQ(iface, v->type);
    EXPECT_EQ(iface, v->get_interface_type());
+
+   ralloc_free(mem_ctx);
 }
 
-TEST(ir_variable_constructor, interface_array)
+TEST_F(ir_variable_constructor, interface_array)
 {
    void *mem_ctx = ralloc_context(NULL);
 
@@ -79,4 +99,6 @@ TEST(ir_variable_constructor, interface_array)
    EXPECT_NE(name, v->name);
    EXPECT_EQ(interface_array, v->type);
    EXPECT_EQ(iface, v->get_interface_type());
+
+   ralloc_free(mem_ctx);
 }

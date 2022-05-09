@@ -67,7 +67,7 @@ namespace ArchRast
             }
 
             // There could be multiple threads creating thread pools. We
-            // want to make sure they are uniquly identified by adding in
+            // want to make sure they are uniquely identified by adding in
             // the creator's thread id into the filename.
             std::stringstream fstr;
             fstr << outDir.str().c_str() << "\\ar_event" << std::this_thread::get_id();
@@ -75,7 +75,7 @@ namespace ArchRast
             mFilename = fstr.str();
 #else
             // There could be multiple threads creating thread pools. We
-            // want to make sure they are uniquly identified by adding in
+            // want to make sure they are uniquely identified by adding in
             // the creator's thread id into the filename.
             std::stringstream fstr;
             fstr << "/tmp/ar_event" << std::this_thread::get_id();
@@ -136,19 +136,24 @@ namespace ArchRast
             memcpy(&mBuffer[mBufOffset], pBlock, size);
             mBufOffset += size;
         }
-
-% for name in protos['event_names']:
+<%  sorted_groups = sorted(protos['events']['groups']) %>
+%   for group in sorted_groups:
+%       for event_key in protos['events']['groups'][group]:
+<%
+            event = protos['events']['defs'][event_key]
+%>
         //////////////////////////////////////////////////////////////////////////
-        /// @brief Handle ${name} event
-        virtual void Handle(const ${name}& event)
+        /// @brief Handle ${event_key} event
+        virtual void Handle(const ${event['name']}& event)
         {
-% if protos['events'][name]['num_fields'] == 0:
-            Write(${protos['events'][name]['event_id']}, (char*)&event.data, 0);
+% if event['num_fields'] == 0:
+            Write(event.eventId, (char*)&event.data, 0);
 % else:
-            Write(${protos['events'][name]['event_id']}, (char*)&event.data, sizeof(event.data));
-%endif
+            Write(event.eventId, (char*)&event.data, sizeof(event.data));
+% endif
         }
-% endfor
+%       endfor
+%   endfor
 
         //////////////////////////////////////////////////////////////////////////
         /// @brief Everything written to buffer this point is the header.

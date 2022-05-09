@@ -21,8 +21,11 @@ class GM107LegalizeSSA : public NVC0LegalizeSSA
 private:
    virtual bool visit(Instruction *);
 
+protected:
    void handlePFETCH(Instruction *);
    void handleLOAD(Instruction *);
+   void handleQUADON(Instruction *);
+   void handleQUADPOP(Instruction *);
 };
 
 } // namespace nv50_ir

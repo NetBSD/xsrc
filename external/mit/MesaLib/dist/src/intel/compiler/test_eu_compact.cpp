@@ -27,6 +27,32 @@
 #include "util/ralloc.h"
 #include "brw_eu.h"
 
+#include <gtest/gtest.h>
+
+struct CompactParams {
+   unsigned verx10;
+   unsigned align;
+};
+
+std::string
+get_compact_params_name(const testing::TestParamInfo<CompactParams> p)
+{
+   CompactParams params = p.param;
+   std::stringstream ss;
+   ss << params.verx10 << "_";
+   switch (params.align) {
+   case BRW_ALIGN_1:
+      ss << "Align_1";
+      break;
+   case BRW_ALIGN_16:
+      ss << "Align_16";
+      break;
+   default:
+      unreachable("invalid align");
+   }
+   return ss.str();
+}
+
 static bool
 test_compact_instruction(struct brw_codegen *p, brw_inst src)
 {
@@ -48,7 +74,7 @@ test_compact_instruction(struct brw_codegen *p, brw_inst src)
       if (memcmp(&unchanged, &dst, sizeof(dst))) {
 	 fprintf(stderr, "Failed to compact, but dst changed\n");
 	 fprintf(stderr, "  Instruction: ");
-	 brw_disassemble_inst(stderr, p->devinfo, &src, false);
+	 brw_disassemble_inst(stderr, p->devinfo, &src, false, 0, NULL);
 	 return false;
       }
    }
@@ -64,7 +90,7 @@ test_compact_instruction(struct brw_codegen *p, brw_inst src)
  * become meaningless once fuzzing twiddles a related bit.
  */
 static void
-clear_pad_bits(const struct gen_device_info *devinfo, brw_inst *inst)
+clear_pad_bits(const struct intel_device_info *devinfo, brw_inst *inst)
 {
    if (brw_inst_opcode(devinfo, inst) != BRW_OPCODE_SEND &&
        brw_inst_opcode(devinfo, inst) != BRW_OPCODE_SENDC &&
@@ -73,8 +99,8 @@ clear_pad_bits(const struct gen_device_info *devinfo, brw_inst *inst)
       brw_inst_set_bits(inst, 127, 111, 0);
    }
 
-   if (devinfo->gen == 8 && !devinfo->is_cherryview &&
-       is_3src(devinfo, (opcode)brw_inst_opcode(devinfo, inst))) {
+   if (devinfo->ver == 8 && !devinfo->is_cherryview &&
+       is_3src(devinfo, brw_inst_opcode(devinfo, inst))) {
       brw_inst_set_bits(inst, 105, 105, 0);
       brw_inst_set_bits(inst, 84, 84, 0);
       brw_inst_set_bits(inst, 36, 35, 0);
@@ -82,7 +108,7 @@ clear_pad_bits(const struct gen_device_info *devinfo, brw_inst *inst)
 }
 
 static bool
-skip_bit(const struct gen_device_info *devinfo, brw_inst *src, int bit)
+skip_bit(const struct intel_device_info *devinfo, brw_inst *src, int bit)
 {
    /* pad bit */
    if (bit == 7)
@@ -92,8 +118,8 @@ skip_bit(const struct gen_device_info *devinfo, brw_inst *src, int bit)
    if (bit == 29)
       return true;
 
-   if (is_3src(devinfo, (opcode)brw_inst_opcode(devinfo, src))) {
-      if (devinfo->gen >= 9 || devinfo->is_cherryview) {
+   if (is_3src(devinfo, brw_inst_opcode(devinfo, src))) {
+      if (devinfo->ver >= 9 || devinfo->is_cherryview) {
          if (bit == 127)
             return true;
       } else {
@@ -113,14 +139,14 @@ skip_bit(const struct gen_device_info *devinfo, brw_inst *src, int bit)
       if (bit == 47)
          return true;
 
-      if (devinfo->gen >= 8) {
+      if (devinfo->ver >= 8) {
          if (bit == 11)
             return true;
 
          if (bit == 95)
             return true;
       } else {
-         if (devinfo->gen < 7 && bit == 90)
+         if (devinfo->ver < 7 && bit == 90)
             return true;
 
          if (bit >= 91 && bit <= 95)
@@ -159,6 +185,9 @@ test_fuzz_compact_instruction(struct brw_codegen *p, brw_inst src)
 
          clear_pad_bits(p->devinfo, &instr);
 
+         if (!brw_validate_instruction(p->devinfo, &instr, 0, NULL))
+            continue;
+
 	 if (!test_compact_instruction(p, instr)) {
 	    printf("  twiddled bits for fuzzing %d, %d\n", bit0, bit1);
 	    return false;
@@ -169,8 +198,66 @@ test_fuzz_compact_instruction(struct brw_codegen *p, brw_inst src)
    return true;
 }
 
-static void
-gen_ADD_GRF_GRF_GRF(struct brw_codegen *p)
+class CompactTestFixture : public testing::TestWithParam<CompactParams> {
+protected:
+   virtual void SetUp() {
+      CompactParams params = GetParam();
+      mem_ctx = ralloc_context(NULL);
+      devinfo = rzalloc(mem_ctx, intel_device_info);
+      p = rzalloc(mem_ctx, brw_codegen);
+
+      devinfo->verx10 = params.verx10;
+      devinfo->ver = devinfo->verx10 / 10;
+
+      brw_init_codegen(devinfo, p, p);
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_set_default_access_mode(p, params.align);
+   };
+
+   virtual void TearDown() {
+      EXPECT_EQ(p->nr_insn, 1);
+      EXPECT_TRUE(test_compact_instruction(p, p->store[0]));
+      EXPECT_TRUE(test_fuzz_compact_instruction(p, p->store[0]));
+
+      ralloc_free(mem_ctx);
+   };
+
+   void *mem_ctx;
+   intel_device_info *devinfo;
+   brw_codegen *p;
+};
+
+class Instructions : public CompactTestFixture {};
+
+INSTANTIATE_TEST_CASE_P(
+   CompactTest,
+   Instructions,
+   testing::Values(
+      CompactParams{ 50,  BRW_ALIGN_1 }, CompactParams{ 50, BRW_ALIGN_16 },
+      CompactParams{ 60,  BRW_ALIGN_1 }, CompactParams{ 60, BRW_ALIGN_16 },
+      CompactParams{ 70,  BRW_ALIGN_1 }, CompactParams{ 70, BRW_ALIGN_16 },
+      CompactParams{ 75,  BRW_ALIGN_1 }, CompactParams{ 75, BRW_ALIGN_16 },
+      CompactParams{ 80,  BRW_ALIGN_1 }, CompactParams{ 80, BRW_ALIGN_16 },
+      CompactParams{ 90,  BRW_ALIGN_1 }, CompactParams{ 90, BRW_ALIGN_16 },
+      CompactParams{ 110, BRW_ALIGN_1 },
+      CompactParams{ 120, BRW_ALIGN_1 },
+      CompactParams{ 125, BRW_ALIGN_1 }
+   ),
+   get_compact_params_name);
+
+class InstructionsBeforeIvyBridge : public CompactTestFixture {};
+
+INSTANTIATE_TEST_CASE_P(
+   CompactTest,
+   InstructionsBeforeIvyBridge,
+   testing::Values(
+      CompactParams{ 50,  BRW_ALIGN_1 }, CompactParams{ 50, BRW_ALIGN_16 },
+      CompactParams{ 60,  BRW_ALIGN_1 }, CompactParams{ 60, BRW_ALIGN_16 }
+   ),
+   get_compact_params_name);
+
+
+TEST_P(Instructions, ADD_GRF_GRF_GRF)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
@@ -179,8 +266,7 @@ gen_ADD_GRF_GRF_GRF(struct brw_codegen *p)
    brw_ADD(p, g0, g2, g4);
 }
 
-static void
-gen_ADD_GRF_GRF_IMM(struct brw_codegen *p)
+TEST_P(Instructions, ADD_GRF_GRF_IMM)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
@@ -188,8 +274,7 @@ gen_ADD_GRF_GRF_IMM(struct brw_codegen *p)
    brw_ADD(p, g0, g2, brw_imm_f(1.0));
 }
 
-static void
-gen_ADD_GRF_GRF_IMM_d(struct brw_codegen *p)
+TEST_P(Instructions, ADD_GRF_GRF_IMM_d)
 {
    struct brw_reg g0 = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_D);
    struct brw_reg g2 = retype(brw_vec8_grf(2, 0), BRW_REGISTER_TYPE_D);
@@ -197,8 +282,7 @@ gen_ADD_GRF_GRF_IMM_d(struct brw_codegen *p)
    brw_ADD(p, g0, g2, brw_imm_d(1));
 }
 
-static void
-gen_MOV_GRF_GRF(struct brw_codegen *p)
+TEST_P(Instructions, MOV_GRF_GRF)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
@@ -206,8 +290,7 @@ gen_MOV_GRF_GRF(struct brw_codegen *p)
    brw_MOV(p, g0, g2);
 }
 
-static void
-gen_ADD_MRF_GRF_GRF(struct brw_codegen *p)
+TEST_P(InstructionsBeforeIvyBridge, ADD_MRF_GRF_GRF)
 {
    struct brw_reg m6 = brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE, 6, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
@@ -216,8 +299,7 @@ gen_ADD_MRF_GRF_GRF(struct brw_codegen *p)
    brw_ADD(p, m6, g2, g4);
 }
 
-static void
-gen_ADD_vec1_GRF_GRF_GRF(struct brw_codegen *p)
+TEST_P(Instructions, ADD_vec1_GRF_GRF_GRF)
 {
    struct brw_reg g0 = brw_vec1_grf(0, 0);
    struct brw_reg g2 = brw_vec1_grf(2, 0);
@@ -226,8 +308,7 @@ gen_ADD_vec1_GRF_GRF_GRF(struct brw_codegen *p)
    brw_ADD(p, g0, g2, g4);
 }
 
-static void
-gen_PLN_MRF_GRF_GRF(struct brw_codegen *p)
+TEST_P(InstructionsBeforeIvyBridge, PLN_MRF_GRF_GRF)
 {
    struct brw_reg m6 = brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE, 6, 0);
    struct brw_reg interp = brw_vec1_grf(2, 0);
@@ -236,95 +317,29 @@ gen_PLN_MRF_GRF_GRF(struct brw_codegen *p)
    brw_PLN(p, m6, interp, g4);
 }
 
-static void
-gen_f0_0_MOV_GRF_GRF(struct brw_codegen *p)
+TEST_P(Instructions, f0_0_MOV_GRF_GRF)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
 
    brw_push_insn_state(p);
-   brw_set_default_predicate_control(p, true);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
    brw_MOV(p, g0, g2);
    brw_pop_insn_state(p);
 }
 
-/* The handling of f0.1 vs f0.0 changes between gen6 and gen7.  Explicitly test
+/* The handling of f0.1 vs f0.0 changes between gfx6 and gfx7.  Explicitly test
  * it, so that we run the fuzzing can run over all the other bits that might
  * interact with it.
  */
-static void
-gen_f0_1_MOV_GRF_GRF(struct brw_codegen *p)
+TEST_P(Instructions, f0_1_MOV_GRF_GRF)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
 
    brw_push_insn_state(p);
-   brw_set_default_predicate_control(p, true);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
    brw_inst *mov = brw_MOV(p, g0, g2);
    brw_inst_set_flag_subreg_nr(p->devinfo, mov, 1);
    brw_pop_insn_state(p);
-}
-
-struct {
-   void (*func)(struct brw_codegen *p);
-} tests[] = {
-   { gen_MOV_GRF_GRF },
-   { gen_ADD_GRF_GRF_GRF },
-   { gen_ADD_GRF_GRF_IMM },
-   { gen_ADD_GRF_GRF_IMM_d },
-   { gen_ADD_MRF_GRF_GRF },
-   { gen_ADD_vec1_GRF_GRF_GRF },
-   { gen_PLN_MRF_GRF_GRF },
-   { gen_f0_0_MOV_GRF_GRF },
-   { gen_f0_1_MOV_GRF_GRF },
-};
-
-static bool
-run_tests(const struct gen_device_info *devinfo)
-{
-   brw_init_compaction_tables(devinfo);
-   bool fail = false;
-
-   for (unsigned i = 0; i < ARRAY_SIZE(tests); i++) {
-      for (int align_16 = 0; align_16 <= 1; align_16++) {
-	 struct brw_codegen *p = rzalloc(NULL, struct brw_codegen);
-	 brw_init_codegen(devinfo, p, p);
-
-	 brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
-	 if (align_16)
-	    brw_set_default_access_mode(p, BRW_ALIGN_16);
-	 else
-	    brw_set_default_access_mode(p, BRW_ALIGN_1);
-
-	 tests[i].func(p);
-	 assert(p->nr_insn == 1);
-
-	 if (!test_compact_instruction(p, p->store[0])) {
-	    fail = true;
-	    continue;
-	 }
-
-	 if (!test_fuzz_compact_instruction(p, p->store[0])) {
-	    fail = true;
-	    continue;
-	 }
-
-	 ralloc_free(p);
-      }
-   }
-
-   return fail;
-}
-
-int
-main(int argc, char **argv)
-{
-   struct gen_device_info *devinfo = (struct gen_device_info *)calloc(1, sizeof(*devinfo));
-   bool fail = false;
-
-   for (devinfo->gen = 5; devinfo->gen <= 9; devinfo->gen++) {
-      fail |= run_tests(devinfo);
-   }
-
-   return fail;
 }

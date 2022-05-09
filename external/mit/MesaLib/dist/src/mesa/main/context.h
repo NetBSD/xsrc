@@ -50,7 +50,7 @@
 
 
 #include "errors.h"
-#include "imports.h"
+
 #include "extensions.h"
 #include "mtypes.h"
 #include "vbo/vbo.h"
@@ -66,23 +66,8 @@ struct _glapi_table;
 
 /** \name Visual-related functions */
 /*@{*/
- 
-extern struct gl_config *
-_mesa_create_visual( GLboolean dbFlag,
-                     GLboolean stereoFlag,
-                     GLint redBits,
-                     GLint greenBits,
-                     GLint blueBits,
-                     GLint alphaBits,
-                     GLint depthBits,
-                     GLint stencilBits,
-                     GLint accumRedBits,
-                     GLint accumGreenBits,
-                     GLint accumBlueBits,
-                     GLint accumAlphaBits,
-                     GLuint numSamples );
 
-extern GLboolean
+extern void
 _mesa_initialize_visual( struct gl_config *v,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
@@ -98,14 +83,14 @@ _mesa_initialize_visual( struct gl_config *v,
                          GLint accumAlphaBits,
                          GLuint numSamples );
 
-extern void
-_mesa_destroy_visual( struct gl_config *vis );
-
 /*@}*/
 
 
 /** \name Context-related functions */
 /*@{*/
+
+extern void
+_mesa_initialize(void);
 
 extern GLboolean
 _mesa_initialize_context( struct gl_context *ctx,
@@ -115,11 +100,7 @@ _mesa_initialize_context( struct gl_context *ctx,
                           const struct dd_function_table *driverFunctions);
 
 extern void
-_mesa_free_context_data(struct gl_context *ctx, bool destroy_compiler_types);
-
-extern void
-_mesa_destroy_context( struct gl_context *ctx );
-
+_mesa_free_context_data(struct gl_context *ctx, bool destroy_debug_output);
 
 extern void
 _mesa_copy_context(const struct gl_context *src, struct gl_context *dst, GLuint mask);
@@ -138,10 +119,6 @@ _mesa_get_current_context(void);
 
 extern void
 _mesa_init_constants(struct gl_constants *consts, gl_api api);
-
-extern void
-_mesa_notifySwapBuffers(struct gl_context *gc);
-
 
 extern struct _glapi_table *
 _mesa_get_dispatch(struct gl_context *ctx);
@@ -204,13 +181,14 @@ _mesa_inside_dlist_begin_end(const struct gl_context *ctx)
  * and calls dd_function_table::FlushVertices if so. Marks
  * __struct gl_contextRec::NewState with \p newstate.
  */
-#define FLUSH_VERTICES(ctx, newstate)				\
+#define FLUSH_VERTICES(ctx, newstate, pop_attrib_mask)          \
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
       _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", __func__);	\
    if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
       vbo_exec_FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
    ctx->NewState |= newstate;					\
+   ctx->PopAttribState |= pop_attrib_mask;                      \
 } while (0)
 
 /**
@@ -244,14 +222,20 @@ do {								\
 do {                                                            \
    if (MESA_VERBOSE & VERBOSE_STATE)                            \
       _mesa_debug(ctx, "FLUSH_FOR_DRAW in %s\n", __func__);     \
-   if (ctx->Driver.NeedFlush)                                   \
-      vbo_exec_FlushVertices(ctx, ctx->Driver.NeedFlush);       \
+   if (ctx->Driver.NeedFlush) {                                 \
+      if (ctx->_AllowDrawOutOfOrder) {                          \
+          if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)     \
+             vbo_exec_FlushVertices(ctx, FLUSH_UPDATE_CURRENT); \
+      } else {                                                  \
+         vbo_exec_FlushVertices(ctx, ctx->Driver.NeedFlush);    \
+      }                                                         \
+   }                                                            \
 } while (0)
 
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair, with return value.
- * 
+ *
  * \param ctx GL context.
  * \param retval value to return in case the assertion fails.
  */
@@ -266,7 +250,7 @@ do {									\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair.
- * 
+ *
  * \param ctx GL context.
  */
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
@@ -347,7 +331,7 @@ static inline bool
 _mesa_has_half_float_textures(const struct gl_context *ctx)
 {
    return _mesa_has_ARB_texture_float(ctx) ||
-          _mesa_has_OES_texture_half_float(ctx) || _mesa_is_gles3(ctx);
+          _mesa_has_OES_texture_half_float(ctx);
 }
 
 static inline bool

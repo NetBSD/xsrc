@@ -25,8 +25,6 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-from __future__ import print_function
-
 import argparse
 
 import gl_XML
@@ -62,6 +60,10 @@ class PrintGlTable(gl_XML.gl_print_base):
         print('')
         print('#ifdef __cplusplus')
         print('extern "C" {')
+        print('#endif')
+        print('')
+        print('#ifdef MemoryBarrier')
+        print('#undef MemoryBarrier')
         print('#endif')
         print('')
         print('struct _glapi_table')
@@ -100,7 +102,10 @@ class PrintRemapTable(gl_XML.gl_print_base):
  * can SET_FuncName, are used to get and set the dispatch pointer for the
  * named function in the specified dispatch table.
  */
+
+#include "main/glheader.h"
 """)
+        print('#include "main/glheader.h"')
         return
 
 

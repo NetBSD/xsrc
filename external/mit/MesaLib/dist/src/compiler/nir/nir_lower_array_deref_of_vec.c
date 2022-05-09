@@ -80,11 +80,16 @@ nir_lower_array_deref_of_vec_impl(nir_function_impl *impl,
              intrin->intrinsic != nir_intrinsic_interp_deref_at_centroid &&
              intrin->intrinsic != nir_intrinsic_interp_deref_at_sample &&
              intrin->intrinsic != nir_intrinsic_interp_deref_at_offset &&
+             intrin->intrinsic != nir_intrinsic_interp_deref_at_vertex &&
              intrin->intrinsic != nir_intrinsic_store_deref)
             continue;
 
          nir_deref_instr *deref = nir_src_as_deref(intrin->src[0]);
-         if (!(deref->mode & modes))
+
+         /* We choose to be conservative here.  If the deref contains any
+          * modes which weren't specified, we bail and don't bother lowering.
+          */
+         if (!nir_deref_mode_must_be(deref, modes))
             continue;
 
          /* We only care about array derefs that act on vectors */
@@ -146,11 +151,11 @@ nir_lower_array_deref_of_vec_impl(nir_function_impl *impl,
                nir_vector_extract(&b, &intrin->dest.ssa, index);
             if (scalar->parent_instr->type == nir_instr_type_ssa_undef) {
                nir_ssa_def_rewrite_uses(&intrin->dest.ssa,
-                                        nir_src_for_ssa(scalar));
+                                        scalar);
                nir_instr_remove(&intrin->instr);
             } else {
                nir_ssa_def_rewrite_uses_after(&intrin->dest.ssa,
-                                              nir_src_for_ssa(scalar),
+                                              scalar,
                                               scalar->parent_instr);
             }
             progress = true;
@@ -161,6 +166,8 @@ nir_lower_array_deref_of_vec_impl(nir_function_impl *impl,
    if (progress) {
       nir_metadata_preserve(impl, nir_metadata_block_index |
                                   nir_metadata_dominance);
+   } else {
+      nir_metadata_preserve(impl, nir_metadata_all);
    }
 
    return progress;

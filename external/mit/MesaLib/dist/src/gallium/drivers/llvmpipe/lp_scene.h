@@ -54,13 +54,14 @@ struct lp_rast_state;
  */
 #define CMD_BLOCK_MAX 29
 
-/* Bytes per data block.
+/* Bytes per data block.  This effectively limits the maximum constant buffer
+ * size.
  */
 #define DATA_BLOCK_SIZE (64 * 1024)
 
 /* Scene temporary storage is clamped to this size:
  */
-#define LP_SCENE_MAX_SIZE (9*1024*1024)
+#define LP_SCENE_MAX_SIZE (36*1024*1024)
 
 /* The maximum amount of texture storage referenced by a scene is
  * clamped to this size:
@@ -117,6 +118,17 @@ struct data_block_list {
 
 struct resource_ref;
 
+struct shader_ref;
+
+struct lp_scene_surface {
+   uint8_t *map;
+   unsigned stride;
+   unsigned layer_stride;
+   unsigned format_bytes;
+   unsigned sample_stride;
+   unsigned nr_samples;
+};
+
 /**
  * All bins and bin data are contained here.
  * Per-bin data goes into the 'tile' bins.
@@ -138,21 +150,25 @@ struct lp_scene {
    /* Framebuffer mappings - valid only between begin_rasterization()
     * and end_rasterization().
     */
-   struct {
-      uint8_t *map;
-      unsigned stride;
-      unsigned layer_stride;
-      unsigned format_bytes;
-   } zsbuf, cbufs[PIPE_MAX_COLOR_BUFS];
+   struct lp_scene_surface zsbuf, cbufs[PIPE_MAX_COLOR_BUFS];
 
    /* The amount of layers in the fb (minimum of all attachments) */
    unsigned fb_max_layer;
+
+   /* fixed point sample positions. */
+   int32_t fixed_sample_pos[LP_MAX_SAMPLES][2];
+
+   /* max samples for bound framebuffer */
+   unsigned fb_max_samples;
 
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 
    /** list of resources referenced by the scene commands */
    struct resource_ref *resources;
+
+   /** list of frag shaders referenced by the scene commands */
+   struct shader_ref *frag_shaders;
 
    /** Total memory used by the scene (in bytes).  This sums all the
     * data blocks and counts all bins, state, resource references and
@@ -166,6 +182,8 @@ struct lp_scene {
    unsigned resource_reference_size;
 
    boolean alloc_failed;
+   boolean permit_linear_rasterizer;
+
    /**
     * Number of active tiles in each dimension.
     * This basically the framebuffer size divided by tile size
@@ -201,6 +219,10 @@ boolean lp_scene_add_resource_reference(struct lp_scene *scene,
 boolean lp_scene_is_resource_referenced(const struct lp_scene *scene,
                                         const struct pipe_resource *resource );
 
+boolean lp_scene_add_frag_shader_reference(struct lp_scene *scene,
+                                           struct lp_fragment_shader_variant *variant);
+
+
 
 /**
  * Allocate space for a command/data in the bin's data buffer.
@@ -217,7 +239,7 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
 
    if (LP_DEBUG & DEBUG_MEM)
       debug_printf("alloc %u block %u/%u tot %u/%u\n",
-		   size, block->used, DATA_BLOCK_SIZE,
+		   size, block->used, (unsigned)DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
 
    if (block->used + size > DATA_BLOCK_SIZE) {
@@ -251,7 +273,7 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
    if (LP_DEBUG & DEBUG_MEM)
       debug_printf("alloc %u block %u/%u tot %u/%u\n",
 		   size + alignment - 1,
-		   block->used, DATA_BLOCK_SIZE,
+		   block->used, (unsigned)DATA_BLOCK_SIZE,
 		   scene->scene_size, LP_SCENE_MAX_SIZE);
        
    if (block->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
@@ -266,17 +288,6 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
       block->used += offset + size;
       return data + offset;
    }
-}
-
-
-/* Put back data if we decide not to use it, eg. culled triangles.
- */
-static inline void
-lp_scene_putback_data( struct lp_scene *scene, unsigned size)
-{
-   struct data_block_list *list = &scene->data;
-   assert(list->head && list->head->used >= size);
-   list->head->used -= size;
 }
 
 

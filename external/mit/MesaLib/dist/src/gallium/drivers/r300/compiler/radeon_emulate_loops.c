@@ -341,7 +341,7 @@ static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
 	for(ptr = loop->BeginLoop->Next; !loop->EndLoop; ptr = ptr->Next) {
 
 		if (ptr == &c->Program.Instructions) {
-			rc_error(c, "%s: BGNLOOP without an ENDLOOOP.\n",
+			rc_error(c, "%s: BGNLOOP without an ENDLOOP.\n",
 								__FUNCTION__);
 			return 0;
 		}
@@ -362,7 +362,7 @@ static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
 				}
 			}
 			if (ptr == &c->Program.Instructions) {
-				rc_error(c, "%s: BGNLOOP without an ENDLOOOP\n",
+				rc_error(c, "%s: BGNLOOP without an ENDLOOP\n",
 								__FUNCTION__);
 					return 0;
 			}
@@ -495,22 +495,6 @@ void rc_transform_loops(struct radeon_compiler *c, void *user)
 					ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
 			if (!transform_loop(s, ptr))
 				return;
-		}
-	}
-}
-
-void rc_unroll_loops(struct radeon_compiler *c, void *user)
-{
-	struct rc_instruction * inst;
-	struct loop_info loop;
-
-	for(inst = c->Program.Instructions.Next;
-			inst != &c->Program.Instructions; inst = inst->Next) {
-
-		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP) {
-			if (build_loop_info(c, &loop, inst)) {
-				try_unroll_loop(c, &loop);
-			}
 		}
 	}
 }

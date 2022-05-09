@@ -32,7 +32,6 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
-#include "tgsi/tgsi_dump.h"
 
 #include "cso_cache/cso_cache.h"
 
@@ -42,68 +41,27 @@
 
 
 
-#ifdef DEBUG
 int ST_DEBUG = 0;
 
 static const struct debug_named_value st_debug_flags[] = {
    { "mesa",     DEBUG_MESA, NULL },
-   { "tgsi",     DEBUG_TGSI, NULL },
-   { "constants",DEBUG_CONSTANTS, NULL },
-   { "pipe",     DEBUG_PIPE, NULL },
-   { "tex",      DEBUG_TEX, NULL },
+   { "tgsi",     DEBUG_PRINT_IR, NULL },
+   { "nir",      DEBUG_PRINT_IR, NULL },
    { "fallback", DEBUG_FALLBACK, NULL },
-   { "screen",   DEBUG_SCREEN, NULL },
-   { "query",    DEBUG_QUERY, NULL },
-   { "draw",     DEBUG_DRAW, NULL },
    { "buffer",   DEBUG_BUFFER, NULL },
    { "wf",       DEBUG_WIREFRAME, NULL },
-   { "precompile",  DEBUG_PRECOMPILE, NULL },
    { "gremedy",  DEBUG_GREMEDY, "Enable GREMEDY debug extensions" },
    { "noreadpixcache", DEBUG_NOREADPIXCACHE, NULL },
    DEBUG_NAMED_VALUE_END
 };
 
 DEBUG_GET_ONCE_FLAGS_OPTION(st_debug, "ST_DEBUG", st_debug_flags, 0)
-#endif
 
 
 void
 st_debug_init(void)
 {
-#ifdef DEBUG
    ST_DEBUG = debug_get_option_st_debug();
-#endif
-}
-
-
-
-/**
- * Print current state.  May be called from inside gdb to see currently
- * bound vertex/fragment shaders and associated constants.
- */
-void
-st_print_current(void)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = st_context(ctx);
-
-#if 0
-   int i;
-
-   printf("Vertex Transform Inputs:\n");
-   for (i = 0; i < st->vp->state.num_inputs; i++) {
-      printf("  Slot %d:  VERT_ATTRIB_%d\n", i, st->vp->index_to_input[i]);
-   }
-#endif
-
-   if (st->vp->variants)
-      tgsi_dump( st->vp->variants[0].tgsi.tokens, 0 );
-   if (st->vp->Base.Parameters)
-      _mesa_print_parameter_list(st->vp->Base.Parameters);
-
-   tgsi_dump(st->fp->tgsi.tokens, 0);
-   if (st->fp->Base.Parameters)
-      _mesa_print_parameter_list(st->fp->Base.Parameters);
 }
 
 

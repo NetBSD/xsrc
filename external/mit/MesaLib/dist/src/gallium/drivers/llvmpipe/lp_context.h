@@ -40,6 +40,7 @@
 #include "lp_jit.h"
 #include "lp_setup.h"
 #include "lp_state_fs.h"
+#include "lp_state_cs.h"
 #include "lp_state_setup.h"
 
 
@@ -48,6 +49,7 @@ struct draw_context;
 struct draw_stage;
 struct draw_vertex_shader;
 struct lp_fragment_shader;
+struct lp_compute_shader;
 struct lp_blend_state;
 struct lp_setup_context;
 struct lp_setup_variant;
@@ -65,11 +67,15 @@ struct llvmpipe_context {
    struct lp_fragment_shader *fs;
    struct draw_vertex_shader *vs;
    const struct lp_geometry_shader *gs;
+   const struct lp_tess_ctrl_shader *tcs;
+   const struct lp_tess_eval_shader *tes;
+   struct lp_compute_shader *cs;
    const struct lp_velems_state *velems;
    const struct lp_so_state *so;
 
    /** Other rendering state */
    unsigned sample_mask;
+   unsigned min_samples;
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
@@ -82,27 +88,37 @@ struct llvmpipe_context {
    struct pipe_viewport_state viewports[PIPE_MAX_VIEWPORTS];
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 
+   struct pipe_shader_buffer ssbos[PIPE_SHADER_TYPES][LP_MAX_TGSI_SHADER_BUFFERS];
+   struct pipe_image_view images[PIPE_SHADER_TYPES][LP_MAX_TGSI_SHADER_IMAGES];
+
    unsigned num_samplers[PIPE_SHADER_TYPES];
    unsigned num_sampler_views[PIPE_SHADER_TYPES];
+   unsigned num_images[PIPE_SHADER_TYPES];
 
    unsigned num_vertex_buffers;
 
    struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
    int num_so_targets;
-   struct pipe_query_data_so_statistics so_stats;
+   struct pipe_query_data_so_statistics so_stats[PIPE_MAX_VERTEX_STREAMS];
 
    struct pipe_query_data_pipeline_statistics pipeline_statistics;
    unsigned active_statistics_queries;
 
    unsigned active_occlusion_queries;
 
-   unsigned dirty; /**< Mask of LP_NEW_x flags */
+   unsigned active_primgen_queries;
 
+   bool queries_disabled;
+
+   unsigned dirty; /**< Mask of LP_NEW_x flags */
+   unsigned cs_dirty; /**< Mask of LP_CSNEW_x flags */
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
    
    /** Vertex format */
    struct vertex_info vertex_info;
+
+   uint8_t patch_vertices;
    
    /** Which vertex shader output slot contains color */
    int8_t color_slot[2];
@@ -142,16 +158,33 @@ struct llvmpipe_context {
    unsigned nr_fs_variants;
    unsigned nr_fs_instrs;
 
+   boolean permit_linear_rasterizer;
+   boolean single_vp;
+
    struct lp_setup_variant_list_item setup_variants_list;
    unsigned nr_setup_variants;
+
+   /** List of all compute shader variants */
+   struct lp_cs_variant_list_item cs_variants_list;
+   unsigned nr_cs_variants;
+   unsigned nr_cs_instrs;
+   struct lp_cs_context *csctx;
 
    /** Conditional query object and mode */
    struct pipe_query *render_cond_query;
    enum pipe_render_cond_flag render_cond_mode;
    boolean render_cond_cond;
 
+   /** VK render cond */
+   struct llvmpipe_resource *render_cond_buffer;
+   unsigned render_cond_offset;
+
    /** The LLVMContext to use for LLVM related work */
    LLVMContextRef context;
+
+   int max_global_buffers;
+   struct pipe_resource **global_buffers;
+
 };
 
 

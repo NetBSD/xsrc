@@ -125,7 +125,7 @@ public:
 void
 flatten_named_interface_blocks_declarations::run(exec_list *instructions)
 {
-   interface_namespace = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
+   interface_namespace = _mesa_hash_table_create(NULL, _mesa_hash_string,
                                                  _mesa_key_string_equal);
 
    /* First pass: adjust instance block variables with an instance name
@@ -180,7 +180,12 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                                            (ir_variable_mode) var->data.mode);
             }
             new_var->data.location = iface_t->fields.structure[i].location;
+            new_var->data.location_frac =
+               iface_t->fields.structure[i].component >= 0 ?
+                  iface_t->fields.structure[i].component : 0;
             new_var->data.explicit_location = (new_var->data.location >= 0);
+            new_var->data.explicit_component =
+               (iface_t->fields.structure[i].component >= 0);
             new_var->data.offset = iface_t->fields.structure[i].offset;
             new_var->data.explicit_xfb_offset =
                (iface_t->fields.structure[i].offset >= 0);

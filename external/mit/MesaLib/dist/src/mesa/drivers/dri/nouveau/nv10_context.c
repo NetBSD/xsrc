@@ -26,6 +26,7 @@
 
 #include <stdbool.h>
 #include "main/state.h"
+#include "util/u_memory.h"
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
@@ -423,7 +424,7 @@ nv10_context_destroy(struct gl_context *ctx)
 	nouveau_object_del(&nctx->hw.eng3d);
 
 	nouveau_context_deinit(ctx);
-	free(ctx);
+	align_free(ctx);
 }
 
 static struct gl_context *
@@ -436,7 +437,7 @@ nv10_context_create(struct nouveau_screen *screen, gl_api api,
 	unsigned celsius_class;
 	int ret;
 
-	nctx = CALLOC_STRUCT(nouveau_context);
+	nctx = align_calloc(sizeof(struct nouveau_context), 16);
 	if (!nctx)
 		return NULL;
 
@@ -455,7 +456,7 @@ nv10_context_create(struct nouveau_screen *screen, gl_api api,
 	ctx->Extensions.ANGLE_texture_compression_dxt = true;
 
 	/* GL constants. */
-	ctx->Const.MaxTextureLevels = 12;
+	ctx->Const.MaxTextureSize = 2048;
 	ctx->Const.MaxTextureCoordUnits = NV10_TEXTURE_UNITS;
 	ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = NV10_TEXTURE_UNITS;
 	ctx->Const.MaxTextureUnits = NV10_TEXTURE_UNITS;

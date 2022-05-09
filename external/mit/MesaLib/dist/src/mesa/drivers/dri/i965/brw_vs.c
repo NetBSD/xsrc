@@ -30,7 +30,7 @@
   */
 
 
-#include "main/compiler.h"
+#include "util/compiler.h"
 #include "main/context.h"
 #include "brw_context.h"
 #include "brw_vs.h"
@@ -73,14 +73,10 @@ static GLbitfield64
 brw_vs_outputs_written(struct brw_context *brw, struct brw_vs_prog_key *key,
                        GLbitfield64 user_varyings)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    GLbitfield64 outputs_written = user_varyings;
 
-   if (key->copy_edgeflag) {
-      outputs_written |= BITFIELD64_BIT(VARYING_SLOT_EDGE);
-   }
-
-   if (devinfo->gen < 6) {
+   if (devinfo->ver < 6) {
       /* Put dummy slots into the VUE for the SF to put the replaced
        * point sprite coords in.  We shouldn't need these dummy slots,
        * which take up precious URB space, but it would mean that the SF
@@ -117,7 +113,7 @@ brw_codegen_vs_prog(struct brw_context *brw,
                     struct brw_vs_prog_key *key)
 {
    const struct brw_compiler *compiler = brw->screen->compiler;
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    const GLuint *program;
    struct brw_vs_prog_data prog_data;
    struct brw_stage_prog_data *stage_prog_data = &prog_data.base.base;
@@ -128,7 +124,7 @@ brw_codegen_vs_prog(struct brw_context *brw,
    memset(&prog_data, 0, sizeof(prog_data));
 
    /* Use ALT floating point mode for ARB programs so that 0^0 == 1. */
-   if (vp->program.is_arb_asm)
+   if (vp->program.info.is_arb_asm)
       stage_prog_data->use_alt_mode = true;
 
    mem_ctx = ralloc_context(NULL);
@@ -138,23 +134,33 @@ brw_codegen_vs_prog(struct brw_context *brw,
    brw_assign_common_binding_table_offsets(devinfo, &vp->program,
                                            &prog_data.base.base, 0);
 
-   if (!vp->program.is_arb_asm) {
+   if (!vp->program.info.is_arb_asm) {
       brw_nir_setup_glsl_uniforms(mem_ctx, nir, &vp->program,
                                   &prog_data.base.base,
                                   compiler->scalar_stage[MESA_SHADER_VERTEX]);
-      brw_nir_analyze_ubo_ranges(compiler, nir, key,
-                                 prog_data.base.base.ubo_ranges);
+      if (brw->can_push_ubos) {
+         brw_nir_analyze_ubo_ranges(compiler, nir, key,
+                                    prog_data.base.base.ubo_ranges);
+      }
    } else {
       brw_nir_setup_arb_uniforms(mem_ctx, nir, &vp->program,
                                  &prog_data.base.base);
    }
+
+   if (key->nr_userclip_plane_consts > 0) {
+      brw_nir_lower_legacy_clipping(nir, key->nr_userclip_plane_consts,
+                                    &prog_data.base.base);
+   }
+
+   if (key->copy_edgeflag)
+      nir_lower_passthrough_edgeflags(nir);
 
    uint64_t outputs_written =
       brw_vs_outputs_written(brw, key, nir->info.outputs_written);
 
    brw_compute_vue_map(devinfo,
                        &prog_data.base.vue_map, outputs_written,
-                       nir->info.separate_shader);
+                       nir->info.separate_shader, 1);
 
    if (0) {
       _mesa_fprint_program_opt(stderr, &vp->program, PROG_PRINT_DEBUG, true);
@@ -166,29 +172,36 @@ brw_codegen_vs_prog(struct brw_context *brw,
       start_time = get_time();
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      if (vp->program.is_arb_asm)
+   if (INTEL_DEBUG(DEBUG_VS)) {
+      if (vp->program.info.is_arb_asm)
          brw_dump_arb_asm("vertex", &vp->program);
    }
 
-   int st_index = -1;
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      st_index = brw_get_shader_time_index(brw, &vp->program, ST_VS,
-                                           !vp->program.is_arb_asm);
+
+   /* Emit GFX4 code.
+    */
+   struct brw_compile_vs_params params = {
+      .nir = nir,
+      .key = key,
+      .prog_data = &prog_data,
+      .log_data = brw,
+   };
+
+   if (INTEL_DEBUG(DEBUG_SHADER_TIME)) {
+      params.shader_time = true;
+      params.shader_time_index =
+         brw_get_shader_time_index(brw, &vp->program, ST_VS,
+                                   !vp->program.info.is_arb_asm);
    }
 
-   /* Emit GEN4 code.
-    */
-   char *error_str;
-   program = brw_compile_vs(compiler, brw, mem_ctx, key, &prog_data,
-                            nir, st_index, &error_str);
+   program = brw_compile_vs(compiler, mem_ctx, &params);
    if (program == NULL) {
-      if (!vp->program.is_arb_asm) {
+      if (!vp->program.info.is_arb_asm) {
          vp->program.sh.data->LinkStatus = LINKING_FAILURE;
-         ralloc_strcat(&vp->program.sh.data->InfoLog, error_str);
+         ralloc_strcat(&vp->program.sh.data->InfoLog, params.error_str);
       }
 
-      _mesa_problem(NULL, "Failed to compile vertex shader: %s\n", error_str);
+      _mesa_problem(NULL, "Failed to compile vertex shader: %s\n", params.error_str);
 
       ralloc_free(mem_ctx);
       return false;
@@ -197,7 +210,7 @@ brw_codegen_vs_prog(struct brw_context *brw,
    if (unlikely(brw->perf_debug)) {
       if (vp->compiled_once) {
          brw_debug_recompile(brw, MESA_SHADER_VERTEX, vp->program.Id,
-                             key->program_string_id, key);
+                             &key->base);
       }
       if (start_busy && !brw_bo_busy(brw->batch.last_bo)) {
          perf_debug("VS compile took %.03f ms and stalled the GPU\n",
@@ -245,23 +258,25 @@ brw_vs_populate_key(struct brw_context *brw,
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *prog = brw->programs[MESA_SHADER_VERTEX];
    struct brw_program *vp = (struct brw_program *) prog;
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
 
    memset(key, 0, sizeof(*key));
 
    /* Just upload the program verbatim for now.  Always send it all
     * the inputs it asks for, whether they are varying or not.
     */
-   key->program_string_id = vp->id;
+
+   /* _NEW_TEXTURE */
+   brw_populate_base_prog_key(ctx, vp, &key->base);
 
    if (ctx->Transform.ClipPlanesEnabled != 0 &&
        (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) &&
        vp->program.info.clip_distance_array_size == 0) {
       key->nr_userclip_plane_consts =
-         _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
+         util_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
    }
 
-   if (devinfo->gen < 6) {
+   if (devinfo->ver < 6) {
       /* _NEW_POLYGON */
       key->copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
                             ctx->Polygon.BackMode != GL_FILL);
@@ -279,11 +294,8 @@ brw_vs_populate_key(struct brw_context *brw,
       key->clamp_vertex_color = ctx->Light._ClampVertexColor;
    }
 
-   /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(ctx, prog, &key->tex);
-
    /* BRW_NEW_VS_ATTRIB_WORKAROUNDS */
-   if (devinfo->gen < 8 && !devinfo->is_haswell) {
+   if (devinfo->verx10 <= 70) {
       memcpy(key->gl_attrib_wa_flags, brw->vb.attrib_wa_flags,
              sizeof(brw->vb.attrib_wa_flags));
    }
@@ -311,23 +323,24 @@ brw_upload_vs_prog(struct brw_context *brw)
       return;
 
    vp = (struct brw_program *) brw->programs[MESA_SHADER_VERTEX];
-   vp->id = key.program_string_id;
+   vp->id = key.base.program_string_id;
 
-   MAYBE_UNUSED bool success = brw_codegen_vs_prog(brw, vp, &key);
+   ASSERTED bool success = brw_codegen_vs_prog(brw, vp, &key);
    assert(success);
 }
 
 void
-brw_vs_populate_default_key(const struct gen_device_info *devinfo,
+brw_vs_populate_default_key(const struct brw_compiler *compiler,
                             struct brw_vs_prog_key *key,
                             struct gl_program *prog)
 {
+   const struct intel_device_info *devinfo = compiler->devinfo;
    struct brw_program *bvp = brw_program(prog);
 
    memset(key, 0, sizeof(*key));
 
-   brw_setup_tex_for_precompile(devinfo, &key->tex, prog);
-   key->program_string_id = bvp->id;
+   brw_populate_default_base_prog_key(devinfo, bvp, &key->base);
+
    key->clamp_vertex_color =
       (prog->info.outputs_written &
        (VARYING_BIT_COL0 | VARYING_BIT_COL1 | VARYING_BIT_BFC0 |
@@ -345,7 +358,7 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_program *prog)
 
    struct brw_program *bvp = brw_program(prog);
 
-   brw_vs_populate_default_key(&brw->screen->devinfo, &key, prog);
+   brw_vs_populate_default_key(brw->screen->compiler, &key, prog);
 
    success = brw_codegen_vs_prog(brw, bvp, &key);
 

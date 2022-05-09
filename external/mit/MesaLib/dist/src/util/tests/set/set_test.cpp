@@ -51,6 +51,27 @@ TEST(set, basic)
    entry = _mesa_set_search(s, a);
    EXPECT_FALSE(entry);
 
+   _mesa_set_clear(s, NULL);
+   EXPECT_EQ(s->entries, 0);
+   EXPECT_EQ(s->deleted_entries, 0);
+   set_foreach(s, he) {
+      GTEST_FAIL();
+   }
+
+   _mesa_set_add(s, a);
+   _mesa_set_add(s, b);
+   EXPECT_EQ(s->entries, 2);
+   unsigned count = s->entries;
+   set_foreach_remove(s, he) {
+      EXPECT_TRUE(he->key == a || he->key == b);
+      EXPECT_EQ(s->entries, count--);
+      EXPECT_EQ(s->deleted_entries, 0);
+   }
+   EXPECT_EQ(s->entries, 0);
+   set_foreach(s, he) {
+      GTEST_FAIL();
+   }
+
    _mesa_set_destroy(s, NULL);
 }
 
@@ -110,6 +131,43 @@ TEST(set, remove_key)
    EXPECT_EQ(s->entries, 1);
    EXPECT_FALSE(_mesa_set_search(s, a));
    EXPECT_TRUE(_mesa_set_search(s, b));
+
+   _mesa_set_destroy(s, NULL);
+}
+
+static uint32_t hash_int(const void *p)
+{
+   int i = *(const int *)p;
+   return i;
+}
+
+static bool cmp_int(const void *p1, const void *p2)
+{
+   int i1 = *(const int *)p1, i2 = *(const int *)p2;
+   return i1 == i2;
+}
+
+TEST(set, search_or_add)
+{
+   struct set *s = _mesa_set_create(NULL, hash_int, cmp_int);
+
+   int a = 10, b = 20, c = 20, d = 30;
+
+   _mesa_set_add(s, &a);
+   _mesa_set_add(s, &b);
+   EXPECT_EQ(s->entries, 2);
+
+   bool found = false;
+   struct set_entry *entry = _mesa_set_search_or_add(s, &c, &found);
+   EXPECT_EQ(entry->key, (void *)&b);
+   EXPECT_EQ(found, true);
+   EXPECT_EQ(s->entries, 2);
+
+   found = false;
+   struct set_entry *entry3 = _mesa_set_search_or_add(s, &d, &found);
+   EXPECT_EQ(entry3->key, &d);
+   EXPECT_EQ(found, false);
+   EXPECT_EQ(s->entries, 3);
 
    _mesa_set_destroy(s, NULL);
 }

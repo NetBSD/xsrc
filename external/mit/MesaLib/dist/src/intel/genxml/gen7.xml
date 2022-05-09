@@ -473,15 +473,15 @@
       <value name="PROGRAMMED" value="0"/>
       <value name="OVERRIDE" value="1"/>
     </field>
-    <field name="Shadow Function" start="33" end="35" type="uint">
-      <value name="PREFILTEROP ALWAYS" value="0"/>
-      <value name="PREFILTEROP NEVER" value="1"/>
-      <value name="PREFILTEROP LESS" value="2"/>
-      <value name="PREFILTEROP EQUAL" value="3"/>
-      <value name="PREFILTEROP LEQUAL" value="4"/>
-      <value name="PREFILTEROP GREATER" value="5"/>
-      <value name="PREFILTEROP NOTEQUAL" value="6"/>
-      <value name="PREFILTEROP GEQUAL" value="7"/>
+    <field name="Shadow Function" start="33" end="35" type="uint" prefix="PREFILTEROP">
+      <value name="ALWAYS" value="0"/>
+      <value name="NEVER" value="1"/>
+      <value name="LESS" value="2"/>
+      <value name="EQUAL" value="3"/>
+      <value name="LEQUAL" value="4"/>
+      <value name="GREATER" value="5"/>
+      <value name="NOTEQUAL" value="6"/>
+      <value name="GEQUAL" value="7"/>
     </field>
     <field name="Max LOD" start="40" end="51" type="u4.8"/>
     <field name="Min LOD" start="52" end="63" type="u4.8"/>
@@ -563,7 +563,7 @@
   <struct name="SO_DECL" length="1">
     <field name="Component Mask" start="0" end="3" type="uint" default="0"/>
     <field name="Register Index" start="4" end="9" type="uint"/>
-    <field name="Hole Flag" start="11" end="11" type="uint"/>
+    <field name="Hole Flag" start="11" end="11" type="bool"/>
     <field name="Output Buffer Slot" start="12" end="13" type="uint"/>
   </struct>
 
@@ -1419,7 +1419,7 @@
       <value name="FRONT" value="2"/>
       <value name="BACK" value="3"/>
     </field>
-    <field name="Anti-Aliasing Enable" start="95" end="95" type="bool"/>
+    <field name="Antialiasing Enable" start="95" end="95" type="bool"/>
     <field name="Point Width" start="96" end="106" type="u8.3"/>
     <field name="Point Width Source" start="107" end="107" type="uint">
       <value name="Vertex" value="0"/>
@@ -1931,7 +1931,7 @@
     <field name="Command Type" start="29" end="31" type="uint" default="3"/>
     <field name="Per Thread Scratch Space" start="32" end="35" type="uint"/>
     <field name="Scratch Space Base Pointer" start="42" end="63" type="address"/>
-    <field name="GPGPU Mode" start="66" end="66" type="uint"/>
+    <field name="GPGPU Mode" start="66" end="66" type="bool"/>
     <field name="Gateway MMIO Access Control" start="67" end="68" type="uint">
       <value name="No MMIO read/write allowed" value="0"/>
       <value name="MMIO read/write to any address" value="2"/>
@@ -3336,7 +3336,7 @@
   </instruction>
 
   <instruction name="MI_FLUSH_DW" bias="2" length="4" engine="video">
-    <field name="DWord Length" start="0" end="5" type="uint"/>
+    <field name="DWord Length" start="0" end="5" type="uint" default="2"/>
     <field name="Video Pipeline Cache Invalidate" start="7" end="7" type="bool"/>
     <field name="Notify Enable" start="8" end="8" type="bool"/>
     <field name="Post-Sync Operation" start="14" end="15" type="uint"/>
@@ -3768,30 +3768,37 @@
   </register>
 
   <register name="L3CNTLREG2" length="1" num="0xb020">
-    <field name="SLM Enable" start="0" end="0" type="uint"/>
+    <field name="SLM Enable" start="0" end="0" type="bool"/>
     <field name="URB Allocation" start="1" end="6" type="uint"/>
-    <field name="URB Low Bandwidth" start="7" end="7" type="uint"/>
+    <field name="URB Low Bandwidth" start="7" end="7" type="bool"/>
     <field name="ALL Allocation" start="8" end="13" type="uint"/>
     <field name="RO Allocation" start="14" end="19" type="uint"/>
-    <field name="RO Low Bandwidth" start="20" end="20" type="uint"/>
+    <field name="RO Low Bandwidth" start="20" end="20" type="bool"/>
     <field name="DC Allocation" start="21" end="26" type="uint"/>
-    <field name="DC Low Bandwidth" start="27" end="27" type="uint"/>
+    <field name="DC Low Bandwidth" start="27" end="27" type="bool"/>
   </register>
 
   <register name="L3CNTLREG3" length="1" num="0xb024">
     <field name="IS Allocation" start="1" end="6" type="uint"/>
-    <field name="IS Low Bandwidth" start="7" end="7" type="uint"/>
+    <field name="IS Low Bandwidth" start="7" end="7" type="bool"/>
     <field name="C Allocation" start="8" end="13" type="uint"/>
-    <field name="C Low Bandwidth" start="14" end="14" type="uint"/>
+    <field name="C Low Bandwidth" start="14" end="14" type="bool"/>
     <field name="T Allocation" start="15" end="20" type="uint"/>
-    <field name="T Low Bandwidth" start="21" end="21" type="uint"/>
+    <field name="T Low Bandwidth" start="21" end="21" type="bool"/>
   </register>
 
   <register name="L3SQCREG1" length="1" num="0xb010">
-    <field name="Convert DC_UC" start="24" end="24" type="uint"/>
-    <field name="Convert IS_UC" start="25" end="25" type="uint"/>
-    <field name="Convert C_UC" start="26" end="26" type="uint"/>
-    <field name="Convert T_UC" start="27" end="27" type="uint"/>
+    <field name="L3SQ General Priority Credit Initialization" start="20" end="23" type="uint">
+      <value name="SQGPCI_DEFAULT" value="0x7"/>
+      <value name="BYT_SQGPCI_DEFAULT" value="0xd"/>
+    </field>
+    <field name="L3SQ High Priority Credit Initialization" start="16" end="19" type="uint">
+      <value name="SQHPCI_DEFAULT" value="0x3"/>
+    </field>
+    <field name="Convert DC_UC" start="24" end="24" type="bool"/>
+    <field name="Convert IS_UC" start="25" end="25" type="bool"/>
+    <field name="Convert C_UC" start="26" end="26" type="bool"/>
+    <field name="Convert T_UC" start="27" end="27" type="bool"/>
   </register>
 
   <register name="PS_INVOCATION_COUNT" length="2" num="0x2348">
@@ -3844,6 +3851,11 @@
     <field name="EU12 Done SS0" start="23" end="23" type="bool"/>
     <field name="EU13 Done SS0" start="24" end="24" type="bool"/>
     <field name="MA1 Done" start="25" end="25" type="bool"/>
+  </register>
+
+  <register name="RPSTAT1" length="1" num="0xa01c">
+    <field name="Previous GT Frequency" start="0" end="6" type="uint"/>
+    <field name="Current GT Frequency" start="7" end="14" type="uint"/>
   </register>
 
   <register name="SAMPLER_INSTDONE" length="1" num="0xe160">

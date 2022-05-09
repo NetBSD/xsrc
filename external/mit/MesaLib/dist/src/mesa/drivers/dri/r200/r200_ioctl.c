@@ -36,7 +36,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <errno.h>
 
 #include "main/glheader.h"
-#include "main/imports.h"
+
 #include "main/macros.h"
 #include "main/context.h"
 #include "swrast/swrast.h"
@@ -61,7 +61,7 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
                    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL |
                    BUFFER_BIT_COLOR0;
 
-   radeonFlush( ctx );
+   radeonFlush( ctx, 0 );
 
    hwmask = mask & hwbits;
    swmask = mask & ~hwbits;

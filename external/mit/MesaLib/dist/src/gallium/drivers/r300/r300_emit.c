@@ -23,7 +23,7 @@
 
 /* r300_emit: Functions for emitting state. */
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 
 #include "r300_context.h"
@@ -142,9 +142,9 @@ static void get_rc_constant_state(
         case RC_STATE_R300_TEXSCALE_FACTOR:
             tex = r300_resource(texstate->sampler_views[constant->u.State[1]]->base.texture);
             /* Add a small number to the texture size to work around rounding errors in hw. */
-            vec[0] = tex->b.b.width0  / (tex->tex.width0  + 0.001f);
-            vec[1] = tex->b.b.height0 / (tex->tex.height0 + 0.001f);
-            vec[2] = tex->b.b.depth0  / (tex->tex.depth0  + 0.001f);
+            vec[0] = tex->b.width0  / (tex->tex.width0  + 0.001f);
+            vec[1] = tex->b.height0 / (tex->tex.height0 + 0.001f);
+            vec[2] = tex->b.depth0  / (tex->tex.depth0  + 0.001f);
             vec[3] = 1;
             break;
 
@@ -686,11 +686,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
             OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 3) * 4);
             OUT_CS_RELOC(r300->query_current);
+            FALLTHROUGH;
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
             OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 2) * 4);
             OUT_CS_RELOC(r300->query_current);
+            FALLTHROUGH;
         case 2:
             /* pipe 1 only */
             /* As mentioned above, accommodate RV380 and older. */
@@ -698,6 +700,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 1) * 4);
             OUT_CS_RELOC(r300->query_current);
+            FALLTHROUGH;
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
@@ -1048,7 +1051,7 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
 
     assert(r300->vbo);
     OUT_CS(0xc0001000); /* PKT3_NOP */
-    OUT_CS(r300->rws->cs_lookup_buffer(r300->cs, r300->vbo) * 4);
+    OUT_CS(r300->rws->cs_lookup_buffer(&r300->cs, r300->vbo) * 4);
     END_CS;
 }
 
@@ -1319,10 +1322,10 @@ validate:
                 continue;
             tex = r300_resource(fb->cbufs[i]->texture);
             assert(tex && tex->buf && "cbuf is marked, but NULL!");
-            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+            r300->rws->cs_add_buffer(&r300->cs, tex->buf,
                                     RADEON_USAGE_READWRITE | RADEON_USAGE_SYNCHRONIZED,
                                     r300_surface(fb->cbufs[i])->domain,
-                                    tex->b.b.nr_samples > 1 ?
+                                    tex->b.nr_samples > 1 ?
                                     RADEON_PRIO_COLOR_BUFFER_MSAA :
                                     RADEON_PRIO_COLOR_BUFFER);
         }
@@ -1330,10 +1333,10 @@ validate:
         if (fb->zsbuf) {
             tex = r300_resource(fb->zsbuf->texture);
             assert(tex && tex->buf && "zsbuf is marked, but NULL!");
-            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+            r300->rws->cs_add_buffer(&r300->cs, tex->buf,
                                     RADEON_USAGE_READWRITE | RADEON_USAGE_SYNCHRONIZED,
                                     r300_surface(fb->zsbuf)->domain,
-                                    tex->b.b.nr_samples > 1 ?
+                                    tex->b.nr_samples > 1 ?
                                     RADEON_PRIO_DEPTH_BUFFER_MSAA :
                                     RADEON_PRIO_DEPTH_BUFFER);
         }
@@ -1341,7 +1344,7 @@ validate:
     /* The AA resolve buffer. */
     if (r300->aa_state.dirty) {
         if (aa->dest) {
-            r300->rws->cs_add_buffer(r300->cs, aa->dest->buf,
+            r300->rws->cs_add_buffer(&r300->cs, aa->dest->buf,
                                     RADEON_USAGE_WRITE | RADEON_USAGE_SYNCHRONIZED,
                                     aa->dest->domain,
                                     RADEON_PRIO_COLOR_BUFFER);
@@ -1350,25 +1353,25 @@ validate:
     if (r300->textures_state.dirty) {
         /* ...textures... */
         for (i = 0; i < texstate->count; i++) {
-            if (!(texstate->tx_enable & (1 << i))) {
+            if (!(texstate->tx_enable & (1U << i))) {
                 continue;
             }
 
             tex = r300_resource(texstate->sampler_views[i]->base.texture);
-            r300->rws->cs_add_buffer(r300->cs, tex->buf,
+            r300->rws->cs_add_buffer(&r300->cs, tex->buf,
                                      RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                     tex->domain, RADEON_PRIO_SAMPLER_TEXTURE);
         }
     }
     /* ...occlusion query buffer... */
     if (r300->query_current)
-        r300->rws->cs_add_buffer(r300->cs, r300->query_current->buf,
+        r300->rws->cs_add_buffer(&r300->cs, r300->query_current->buf,
                                  RADEON_USAGE_WRITE | RADEON_USAGE_SYNCHRONIZED,
                                  RADEON_DOMAIN_GTT,
                                 RADEON_PRIO_QUERY);
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo)
-        r300->rws->cs_add_buffer(r300->cs, r300->vbo,
+        r300->rws->cs_add_buffer(&r300->cs, r300->vbo,
                                  RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                  RADEON_DOMAIN_GTT,
                                 RADEON_PRIO_VERTEX_BUFFER);
@@ -1384,7 +1387,7 @@ validate:
             if (!buf)
                 continue;
 
-            r300->rws->cs_add_buffer(r300->cs, r300_resource(buf)->buf,
+            r300->rws->cs_add_buffer(&r300->cs, r300_resource(buf)->buf,
                                     RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                     r300_resource(buf)->domain,
                                     RADEON_PRIO_SAMPLER_BUFFER);
@@ -1392,13 +1395,13 @@ validate:
     }
     /* ...and index buffer for HWTCL path. */
     if (index_buffer)
-        r300->rws->cs_add_buffer(r300->cs, r300_resource(index_buffer)->buf,
+        r300->rws->cs_add_buffer(&r300->cs, r300_resource(index_buffer)->buf,
                                 RADEON_USAGE_READ | RADEON_USAGE_SYNCHRONIZED,
                                 r300_resource(index_buffer)->domain,
                                 RADEON_PRIO_INDEX_BUFFER);
 
     /* Now do the validation (flush is called inside cs_validate on failure). */
-    if (!r300->rws->cs_validate(r300->cs)) {
+    if (!r300->rws->cs_validate(&r300->cs)) {
         /* Ooops, an infinite loop, give up. */
         if (flushed)
             return FALSE;

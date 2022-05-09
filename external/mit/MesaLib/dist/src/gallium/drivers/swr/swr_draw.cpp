@@ -31,24 +31,45 @@
 #include "util/u_draw.h"
 #include "util/u_prim.h"
 
+#include <algorithm>
+#include <iostream>
 /*
  * Draw vertex arrays, with optional indexing, optional instancing.
  */
 static void
-swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info,
+             unsigned drawid_offset,
+             const struct pipe_draw_indirect_info *indirect,
+             const struct pipe_draw_start_count_bias *draws,
+             unsigned num_draws)
 {
+   if (num_draws > 1) {
+      struct pipe_draw_info tmp_info = *info;
+      unsigned drawid = drawid_offset;
+
+      for (unsigned i = 0; i < num_draws; i++) {
+         swr_draw_vbo(pipe, &tmp_info, drawid, indirect, &draws[i], 1);
+         if (tmp_info.increment_draw_id)
+            drawid++;
+      }
+      return;
+   }
+
+   if (!indirect && (!draws[0].count || !info->instance_count))
+      return;
+
    struct swr_context *ctx = swr_context(pipe);
 
-   if (!info->count_from_stream_output && !info->indirect &&
+   if (!indirect &&
        !info->primitive_restart &&
-       !u_trim_pipe_prim(info->mode, (unsigned*)&info->count))
+       !u_trim_pipe_prim((enum pipe_prim_type)info->mode, (unsigned*)&draws[0].count))
       return;
 
    if (!swr_check_render_cond(pipe))
       return;
 
-   if (info->indirect) {
-      util_draw_indirect(pipe, info);
+   if (indirect && indirect->buffer) {
+      util_draw_indirect(pipe, info, indirect);
       return;
    }
 
@@ -58,16 +79,30 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       ctx->dirty |= SWR_NEW_VERTEX;
 
    /* Update derived state, pass draw info to update function. */
-   swr_update_derived(pipe, info);
+   swr_update_derived(pipe, info, draws);
 
    swr_update_draw_context(ctx);
+
+   struct pipe_draw_info resolved_info;
+   struct pipe_draw_start_count_bias resolved_draw;
+   /* DrawTransformFeedback */
+   if (indirect && indirect->count_from_stream_output) {
+      // trick copied from softpipe to modify const struct *info
+      memcpy(&resolved_info, (void*)info, sizeof(struct pipe_draw_info));
+      resolved_draw.start = draws[0].start;
+      resolved_draw.count = ctx->so_primCounter * ctx->patch_vertices;
+      resolved_info.max_index = resolved_draw.count - 1;
+      info = &resolved_info;
+      indirect = NULL;
+      draws = &resolved_draw;
+   }
 
    if (ctx->vs->pipe.stream_output.num_outputs) {
       if (!ctx->vs->soFunc[info->mode]) {
          STREAMOUT_COMPILE_STATE state = {0};
          struct pipe_stream_output_info *so = &ctx->vs->pipe.stream_output;
 
-         state.numVertsPerPrim = u_vertices_per_prim(info->mode);
+         state.numVertsPerPrim = u_vertices_per_prim((enum pipe_prim_type)info->mode);
 
          uint32_t offsets[MAX_SO_STREAMS] = {0};
          uint32_t num = 0;
@@ -117,7 +152,7 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    else
       velems->fsState.cutIndex = 0;
    velems->fsState.bEnableCutIndex = info->primitive_restart;
-   velems->fsState.bPartialVertexBuffer = (info->min_index > 0);
+   velems->fsState.bPartialVertexBuffer = (info->index_bounds_valid && info->min_index > 0);
 
    swr_jit_fetch_key key;
    swr_generate_fetch_key(key, velems);
@@ -144,16 +179,22 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    // between all the shader stages, so it has to be large enough to
    // incorporate all interfaces between stages
 
-   // max of gs and vs num_outputs
+   // max of frontend shaders num_outputs
    feState.vsVertexSize = ctx->vs->info.base.num_outputs;
-   if (ctx->gs &&
-       ctx->gs->info.base.num_outputs > feState.vsVertexSize) {
-      feState.vsVertexSize = ctx->gs->info.base.num_outputs;
+   if (ctx->gs) {
+      feState.vsVertexSize = std::max(feState.vsVertexSize, (uint32_t)ctx->gs->info.base.num_outputs);
    }
+   if (ctx->tcs) {
+      feState.vsVertexSize = std::max(feState.vsVertexSize, (uint32_t)ctx->tcs->info.base.num_outputs);
+   }
+   if (ctx->tes) {
+      feState.vsVertexSize = std::max(feState.vsVertexSize, (uint32_t)ctx->tes->info.base.num_outputs);
+   }
+
 
    if (ctx->vs->info.base.num_outputs) {
       // gs does not adjust for position in SGV slot at input from vs
-      if (!ctx->gs)
+      if (!ctx->gs && !ctx->tcs && !ctx->tes)
          feState.vsVertexSize--;
    }
 
@@ -170,7 +211,6 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (ctx->rasterizer->sprite_coord_enable)
       feState.vsVertexSize++;
 
-
    if (ctx->rasterizer->flatshade_first) {
       feState.provokingVertex = {1, 0, 0};
    } else {
@@ -181,7 +221,7 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (ctx->gs)
       topology = (pipe_prim_type)ctx->gs->info.base.properties[TGSI_PROPERTY_GS_OUTPUT_PRIM];
    else
-      topology = info->mode;
+      topology = (enum pipe_prim_type)info->mode;
 
    switch (topology) {
    case PIPE_PRIM_TRIANGLE_FAN:
@@ -212,24 +252,24 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (info->index_size)
       ctx->api.pfnSwrDrawIndexedInstanced(ctx->swrContext,
-                                          swr_convert_prim_topology(info->mode),
-                                          info->count,
+                                          swr_convert_prim_topology(info->mode, ctx->patch_vertices),
+                                          draws[0].count,
                                           info->instance_count,
-                                          info->start,
-                                          info->index_bias,
+                                          draws[0].start,
+                                          draws->index_bias,
                                           info->start_instance);
    else
       ctx->api.pfnSwrDrawInstanced(ctx->swrContext,
-                                   swr_convert_prim_topology(info->mode),
-                                   info->count,
+                                   swr_convert_prim_topology(info->mode, ctx->patch_vertices),
+                                   draws[0].count,
                                    info->instance_count,
-                                   info->start,
+                                   draws[0].start,
                                    info->start_instance);
 
-   /* On large client-buffer draw, we used client buffer directly, without
+   /* On client-buffer draw, we used client buffer directly, without
     * copy.  Block until draw is finished.
     * VMD is an example application that benefits from this. */
-   if (ctx->dirty & SWR_LARGE_CLIENT_DRAW) {
+   if (ctx->dirty & SWR_BLOCK_CLIENT_DRAW) {
       struct swr_screen *screen = swr_screen(pipe->screen);
       swr_fence_submit(ctx, screen->flush_fence);
       swr_fence_finish(pipe->screen, NULL, screen->flush_fence, 0);

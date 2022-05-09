@@ -37,7 +37,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_inlines.h"
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -48,6 +48,8 @@
 #include "draw_private.h"
 #include "draw_pipe.h"
 
+#include "nir.h"
+#include "nir/nir_draw_helpers.h"
 
 /** Approx number of new tokens for instructions in aa_transform_inst() */
 #define NUM_NEW_TOKENS 53
@@ -306,18 +308,32 @@ generate_aaline_fs(struct aaline_stage *aaline)
 #endif
 
    aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
-   if (aaline->fs->aaline_fs == NULL)
-      goto fail;
+   if (aaline->fs->aaline_fs != NULL)
+      aaline->fs->generic_attrib = transform.maxGeneric + 1;
 
-   aaline->fs->generic_attrib = transform.maxGeneric + 1;
    FREE((void *)aaline_fs.tokens);
-   return TRUE;
-
-fail:
-   FREE((void *)aaline_fs.tokens);
-   return FALSE;
+   return aaline->fs->aaline_fs != NULL;
 }
 
+static boolean
+generate_aaline_fs_nir(struct aaline_stage *aaline)
+{
+   struct pipe_context *pipe = aaline->stage.draw->pipe;
+   const struct pipe_shader_state *orig_fs = &aaline->fs->state;
+   struct pipe_shader_state aaline_fs;
+
+   aaline_fs = *orig_fs; /* copy to init */
+   aaline_fs.ir.nir = nir_shader_clone(NULL, orig_fs->ir.nir);
+   if (!aaline_fs.ir.nir)
+      return FALSE;
+
+   nir_lower_aaline_fs(aaline_fs.ir.nir, &aaline->fs->generic_attrib);
+   aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
+   if (aaline->fs->aaline_fs == NULL)
+      return FALSE;
+
+   return TRUE;
+}
 
 /**
  * When we're about to draw our first AA line in a batch, this function is
@@ -329,8 +345,14 @@ bind_aaline_fragment_shader(struct aaline_stage *aaline)
    struct draw_context *draw = aaline->stage.draw;
    struct pipe_context *pipe = draw->pipe;
 
-   if (!aaline->fs->aaline_fs && !generate_aaline_fs(aaline))
-      return FALSE;
+   if (!aaline->fs->aaline_fs) {
+      if (aaline->fs->state.type == PIPE_SHADER_IR_NIR) {
+         if (!generate_aaline_fs_nir(aaline))
+            return FALSE;
+      } else
+         if (!generate_aaline_fs(aaline))
+            return FALSE;
+   }
 
    draw->suspend_flushing = TRUE;
    aaline->driver_bind_fs_state(pipe, aaline->fs->aaline_fs);
@@ -470,7 +492,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    const struct pipe_rasterizer_state *rast = draw->rasterizer;
    void *r;
 
-   assert(draw->rasterizer->line_smooth);
+   assert(draw->rasterizer->line_smooth && !draw->rasterizer->multisample);
 
    if (draw->rasterizer->line_width <= 1.0)
       aaline->half_line_width = 1.0;
@@ -497,7 +519,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    draw->suspend_flushing = TRUE;
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
-   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   r = draw_get_rasterizer_no_cull(draw, rast);
    pipe->bind_rasterizer_state(pipe, r);
 
    draw->suspend_flushing = FALSE;
@@ -574,15 +596,12 @@ draw_aaline_stage(struct draw_context *draw)
    aaline->stage.reset_stipple_counter = aaline_reset_stipple_counter;
    aaline->stage.destroy = aaline_destroy;
 
-   if (!draw_alloc_temp_verts(&aaline->stage, 8))
-      goto fail;
+   if (!draw_alloc_temp_verts(&aaline->stage, 8)) {
+      aaline->stage.destroy(&aaline->stage);
+      return NULL;
+   }
 
    return aaline;
-
- fail:
-   aaline->stage.destroy(&aaline->stage);
-
-   return NULL;
 }
 
 
@@ -601,7 +620,7 @@ aaline_stage_from_pipe(struct pipe_context *pipe)
 
 /**
  * This function overrides the driver's create_fs_state() function and
- * will typically be called by the state tracker.
+ * will typically be called by the gallium frontend.
  */
 static void *
 aaline_create_fs_state(struct pipe_context *pipe,
@@ -618,7 +637,11 @@ aaline_create_fs_state(struct pipe_context *pipe,
    if (!aafs)
       return NULL;
 
-   aafs->state.tokens = tgsi_dup_tokens(fs->tokens);
+   aafs->state.type = fs->type;
+   if (fs->type == PIPE_SHADER_IR_TGSI)
+      aafs->state.tokens = tgsi_dup_tokens(fs->tokens);
+   else
+      aafs->state.ir.nir = nir_shader_clone(NULL, fs->ir.nir);
 
    /* pass-through */
    aafs->driver_fs = aaline->driver_create_fs_state(pipe, fs);
@@ -662,7 +685,10 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
          aaline->driver_delete_fs_state(pipe, aafs->aaline_fs);
    }
 
-   FREE((void*)aafs->state.tokens);
+   if (aafs->state.type == PIPE_SHADER_IR_TGSI)
+      FREE((void*)aafs->state.tokens);
+   else
+      ralloc_free(aafs->state.ir.nir);
    FREE(aafs);
 }
 
@@ -677,13 +703,16 @@ draw_aaline_prepare_outputs(struct draw_context *draw,
    /* update vertex attrib info */
    aaline->pos_slot = draw_current_shader_position_output(draw);
 
-   if (!rast->line_smooth)
+   if (!rast->line_smooth || rast->multisample)
       return;
 
    /* allocate the extra post-transformed vertex attribute */
-   aaline->coord_slot = draw_alloc_extra_vertex_attrib(draw,
-                                                     TGSI_SEMANTIC_GENERIC,
-                                                     aaline->fs->generic_attrib);
+   if (aaline->fs && aaline->fs->aaline_fs)
+      aaline->coord_slot = draw_alloc_extra_vertex_attrib(draw,
+                                                          TGSI_SEMANTIC_GENERIC,
+                                                          aaline->fs->generic_attrib);
+   else
+      aaline->coord_slot = -1;
 }
 
 /**
@@ -703,7 +732,7 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
     */
    aaline = draw_aaline_stage(draw);
    if (!aaline)
-      goto fail;
+      return FALSE;
 
    /* save original driver functions */
    aaline->driver_create_fs_state = pipe->create_fs_state;
@@ -720,10 +749,4 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    draw->pipeline.aaline = &aaline->stage;
 
    return TRUE;
-
-fail:
-   if (aaline)
-      aaline->stage.destroy(&aaline->stage);
-
-   return FALSE;
 }

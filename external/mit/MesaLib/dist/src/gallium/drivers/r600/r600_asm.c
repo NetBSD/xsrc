@@ -54,11 +54,11 @@ static struct r600_bytecode_cf *r600_bytecode_cf(void)
 
 	if (!cf)
 		return NULL;
-	LIST_INITHEAD(&cf->list);
-	LIST_INITHEAD(&cf->alu);
-	LIST_INITHEAD(&cf->vtx);
-	LIST_INITHEAD(&cf->tex);
-	LIST_INITHEAD(&cf->gds);
+	list_inithead(&cf->list);
+	list_inithead(&cf->alu);
+	list_inithead(&cf->vtx);
+	list_inithead(&cf->tex);
+	list_inithead(&cf->gds);
 	return cf;
 }
 
@@ -68,7 +68,7 @@ static struct r600_bytecode_alu *r600_bytecode_alu(void)
 
 	if (!alu)
 		return NULL;
-	LIST_INITHEAD(&alu->list);
+	list_inithead(&alu->list);
 	return alu;
 }
 
@@ -78,7 +78,7 @@ static struct r600_bytecode_vtx *r600_bytecode_vtx(void)
 
 	if (!vtx)
 		return NULL;
-	LIST_INITHEAD(&vtx->list);
+	list_inithead(&vtx->list);
 	return vtx;
 }
 
@@ -88,7 +88,7 @@ static struct r600_bytecode_tex *r600_bytecode_tex(void)
 
 	if (!tex)
 		return NULL;
-	LIST_INITHEAD(&tex->list);
+	list_inithead(&tex->list);
 	return tex;
 }
 
@@ -98,7 +98,7 @@ static struct r600_bytecode_gds *r600_bytecode_gds(void)
 
 	if (gds == NULL)
 		return NULL;
-	LIST_INITHEAD(&gds->list);
+	list_inithead(&gds->list);
 	return gds;
 }
 
@@ -154,7 +154,7 @@ void r600_bytecode_init(struct r600_bytecode *bc,
 		bc->r6xx_nop_after_rel_dst = 0;
 	}
 
-	LIST_INITHEAD(&bc->cf);
+	list_inithead(&bc->cf);
 	bc->chip_class = chip_class;
 	bc->family = family;
 	bc->has_compressed_msaa_texturing = has_compressed_msaa_texturing;
@@ -167,7 +167,7 @@ int r600_bytecode_add_cf(struct r600_bytecode *bc)
 
 	if (!cf)
 		return -ENOMEM;
-	LIST_ADDTAIL(&cf->list, &bc->cf);
+	list_addtail(&cf->list, &bc->cf);
 	if (bc->cf_last) {
 		cf->id = bc->cf_last->id + 2;
 		if (bc->cf_last->eg_alu_extended) {
@@ -362,7 +362,7 @@ static int assign_alu_units(struct r600_bytecode *bc, struct r600_bytecode_alu *
 			}
 			assignment[4] = alu;
 		} else {
-			if (assignment[chan]) {
+			if (assignment[chan]) {                           
 				assert(0); /* ALU.chan has already been allocated. */
 				return -1;
 			}
@@ -686,7 +686,7 @@ static int replace_gpr_with_pv_ps(struct r600_bytecode *bc,
 	return 0;
 }
 
-void r600_bytecode_special_constants(uint32_t value, unsigned *sel, unsigned *neg, unsigned abs)
+void r600_bytecode_special_constants(uint32_t value, unsigned *sel)
 {
 	switch(value) {
 	case 0:
@@ -703,14 +703,6 @@ void r600_bytecode_special_constants(uint32_t value, unsigned *sel, unsigned *ne
 		break;
 	case 0x3F000000: /* 0.5f */
 		*sel = V_SQ_ALU_SRC_0_5;
-		break;
-	case 0xBF800000: /* -1.0f */
-		*sel = V_SQ_ALU_SRC_1;
-		*neg ^= !abs;
-		break;
-	case 0xBF000000: /* -0.5f */
-		*sel = V_SQ_ALU_SRC_0_5;
-		*neg ^= !abs;
 		break;
 	default:
 		*sel = V_SQ_ALU_SRC_LITERAL;
@@ -770,6 +762,8 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 	struct r600_bytecode_alu *prev[5];
 	struct r600_bytecode_alu *result[5] = { NULL };
 
+        uint8_t interp_xz = 0;
+
 	uint32_t literal[4], prev_literal[4];
 	unsigned nliteral = 0, prev_nliteral = 0;
 
@@ -788,13 +782,24 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 			      return 0;
 		      if (is_alu_once_inst(prev[i]))
 			      return 0;
+
+                      if (prev[i]->op == ALU_OP2_INTERP_X)
+                         interp_xz |= 1;
+                      if (prev[i]->op == ALU_OP2_INTERP_Z)
+                         interp_xz |= 2;
 		}
 		if (slots[i]) {
 			if (slots[i]->pred_sel)
 				return 0;
 			if (is_alu_once_inst(slots[i]))
 				return 0;
+                        if (slots[i]->op == ALU_OP2_INTERP_X)
+                           interp_xz |= 1;
+                        if (slots[i]->op == ALU_OP2_INTERP_Z)
+                           interp_xz |= 2;
 		}
+                if (interp_xz == 3)
+                   return 0;
 	}
 
 	for (i = 0; i < max_slots; ++i) {
@@ -928,9 +933,9 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 	for (i = 0; i < max_slots; ++i) {
 		slots[i] = result[i];
 		if (result[i]) {
-			LIST_DEL(&result[i]->list);
+			list_del(&result[i]->list);
 			result[i]->last = 0;
-			LIST_ADDTAIL(&result[i]->list, &bc->cf_last->alu);
+			list_addtail(&result[i]->list, &bc->cf_last->alu);
 		}
 	}
 
@@ -1232,7 +1237,7 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc,
 	/* Load index register if required */
 	if (bc->chip_class >= EVERGREEN) {
 		for (i = 0; i < 3; i++)
-			if (nalu->src[i].kc_bank && nalu->src[i].kc_rel)
+			if (nalu->src[i].kc_bank &&  nalu->src[i].kc_rel)
 				egcm_load_index_reg(bc, 0, true);
 	}
 
@@ -1261,12 +1266,12 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc,
 		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
 			r600_bytecode_special_constants(nalu->src[i].value,
-				&nalu->src[i].sel, &nalu->src[i].neg, nalu->src[i].abs);
+				&nalu->src[i].sel);
 	}
 	if (nalu->dst.sel >= bc->ngpr) {
 		bc->ngpr = nalu->dst.sel + 1;
 	}
-	LIST_ADDTAIL(&nalu->list, &bc->cf_last->alu);
+	list_addtail(&nalu->list, &bc->cf_last->alu);
 	/* each alu use 2 dwords */
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
@@ -1407,7 +1412,7 @@ static int r600_bytecode_add_vtx_internal(struct r600_bytecode *bc, const struct
 			return -EINVAL;
 		}
 	}
-	LIST_ADDTAIL(&nvtx->list, &bc->cf_last->vtx);
+	list_addtail(&nvtx->list, &bc->cf_last->vtx);
 	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
@@ -1450,7 +1455,9 @@ int r600_bytecode_add_tex(struct r600_bytecode *bc, const struct r600_bytecode_t
 		bc->cf_last->op == CF_OP_TEX) {
 		struct r600_bytecode_tex *ttex;
 		LIST_FOR_EACH_ENTRY(ttex, &bc->cf_last->tex, list) {
-			if (ttex->dst_gpr == ntex->src_gpr) {
+			if (ttex->dst_gpr == ntex->src_gpr &&
+                            (ttex->dst_sel_x < 4 || ttex->dst_sel_y < 4 ||
+                             ttex->dst_sel_z < 4 || ttex->dst_sel_w < 4)) {
 				bc->force_add_cf = 1;
 				break;
 			}
@@ -1477,7 +1484,7 @@ int r600_bytecode_add_tex(struct r600_bytecode *bc, const struct r600_bytecode_t
 	if (ntex->dst_gpr >= bc->ngpr) {
 		bc->ngpr = ntex->dst_gpr + 1;
 	}
-	LIST_ADDTAIL(&ntex->list, &bc->cf_last->tex);
+	list_addtail(&ntex->list, &bc->cf_last->tex);
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
@@ -1511,7 +1518,7 @@ int r600_bytecode_add_gds(struct r600_bytecode *bc, const struct r600_bytecode_g
 		bc->cf_last->op = CF_OP_GDS;
 	}
 
-	LIST_ADDTAIL(&ngds->list, &bc->cf_last->gds);
+	list_addtail(&ngds->list, &bc->cf_last->gds);
 	bc->cf_last->ndw += 4; /* each GDS uses 4 dwords */
 	if ((bc->cf_last->ndw / 4) >= r600_bytecode_num_tex_and_vtx_instructions(bc))
 		bc->force_add_cf = 1;
@@ -1867,30 +1874,30 @@ void r600_bytecode_clear(struct r600_bytecode *bc)
 			free(alu);
 		}
 
-		LIST_INITHEAD(&cf->alu);
+		list_inithead(&cf->alu);
 
 		LIST_FOR_EACH_ENTRY_SAFE(tex, next_tex, &cf->tex, list) {
 			free(tex);
 		}
 
-		LIST_INITHEAD(&cf->tex);
+		list_inithead(&cf->tex);
 
 		LIST_FOR_EACH_ENTRY_SAFE(vtx, next_vtx, &cf->vtx, list) {
 			free(vtx);
 		}
 
-		LIST_INITHEAD(&cf->vtx);
+		list_inithead(&cf->vtx);
 
 		LIST_FOR_EACH_ENTRY_SAFE(gds, next_gds, &cf->gds, list) {
 			free(gds);
 		}
 
-		LIST_INITHEAD(&cf->gds);
+		list_inithead(&cf->gds);
 
 		free(cf);
 	}
 
-	LIST_INITHEAD(&cf->list);
+	list_inithead(&cf->list);
 }
 
 static int print_swizzle(unsigned swz)
@@ -2638,7 +2645,8 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
 	struct r600_fetch_shader *shader;
-	unsigned no_sb = rctx->screen->b.debug_flags & DBG_NO_SB;
+	unsigned no_sb = rctx->screen->b.debug_flags & DBG_NO_SB ||
+                         (rctx->screen->b.debug_flags & DBG_NIR);
 	unsigned sb_disasm = !no_sb || (rctx->screen->b.debug_flags & DBG_SB_DISASM);
 
 	assert(count < 32);
@@ -2763,7 +2771,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	u_suballocator_alloc(rctx->allocator_fetch_shader, fs_size, 256,
+	u_suballocator_alloc(&rctx->allocator_fetch_shader, fs_size, 256,
 			     &shader->offset,
 			     (struct pipe_resource**)&shader->buffer);
 	if (!shader->buffer) {
@@ -2774,7 +2782,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	bytecode = r600_buffer_map_sync_with_rings
 		(&rctx->b, shader->buffer,
-		PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED | RADEON_TRANSFER_TEMPORARY);
+		PIPE_MAP_WRITE | PIPE_MAP_UNSYNCHRONIZED | RADEON_MAP_TEMPORARY);
 	bytecode += shader->offset / 4;
 
 	if (R600_BIG_ENDIAN) {
@@ -2784,7 +2792,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	} else {
 		memcpy(bytecode, bc.bytecode, fs_size);
 	}
-	rctx->b.ws->buffer_unmap(shader->buffer->buf);
+	rctx->b.ws->buffer_unmap(rctx->b.ws, shader->buffer->buf);
 
 	r600_bytecode_clear(&bc);
 	return shader;

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # (C) Copyright 2015, NVIDIA CORPORATION.
 # All Rights Reserved.
@@ -28,7 +28,7 @@
 import collections
 import re
 import sys
-import xml.etree.cElementTree as etree
+import xml.etree.ElementTree as etree
 
 import os
 GLAPI = os.path.join(os.path.dirname(__file__), "..", "glapi", "gen")

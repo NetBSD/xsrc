@@ -46,7 +46,7 @@ static unsigned int head = 0;
 static unsigned char *exec_mem = (unsigned char *)0;
 
 
-#if defined(__linux__) || defined(__OpenBSD__) || defined(_NetBSD__) || defined(__sun) || defined(__HAIKU__)
+#if defined(__linux__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__sun) || defined(__HAIKU__)
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -121,6 +121,10 @@ init_map(void)
 void *
 u_execmem_alloc(unsigned int size)
 {
+#ifndef MESA_EXECMEM
+   (void)size;
+   return NULL;
+#else
    void *addr = NULL;
 
    mtx_lock(&exec_mutex);
@@ -140,6 +144,7 @@ bail:
    mtx_unlock(&exec_mutex);
 
    return addr;
+#endif /* MESA_EXECMEM */
 }
 
 

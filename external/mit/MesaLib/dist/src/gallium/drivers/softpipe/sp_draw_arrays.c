@@ -59,8 +59,20 @@
  */
 void
 softpipe_draw_vbo(struct pipe_context *pipe,
-                  const struct pipe_draw_info *info)
+                  const struct pipe_draw_info *info,
+                  unsigned drawid_offset,
+                  const struct pipe_draw_indirect_info *indirect,
+                  const struct pipe_draw_start_count_bias *draws,
+                  unsigned num_draws)
 {
+   if (num_draws > 1) {
+      util_draw_multi(pipe, info, drawid_offset, indirect, draws, num_draws);
+      return;
+   }
+
+   if (!indirect && (!draws[0].count || !info->instance_count))
+      return;
+
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    const void *mapped_indices = NULL;
@@ -69,8 +81,8 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    if (!softpipe_check_render_cond(sp))
       return;
 
-   if (info->indirect) {
-      util_draw_indirect(pipe, info);
+   if (indirect && indirect->buffer) {
+      util_draw_indirect(pipe, info, indirect);
       return;
    }
 
@@ -109,18 +121,6 @@ softpipe_draw_vbo(struct pipe_context *pipe,
                        info->index_size, available_space);
    }
 
-
-   for (i = 0; i < sp->num_so_targets; i++) {
-      void *buf = 0;
-      if (sp->so_targets[i]) {
-         buf = softpipe_resource(sp->so_targets[i]->target.buffer)->data;
-         sp->so_targets[i]->mapping = buf;
-      }
-   }
-
-   draw_set_mapped_so_targets(draw, sp->num_so_targets,
-                              sp->so_targets);
-
    if (softpipe_screen(sp->pipe.screen)->use_llvm) {
       softpipe_prepare_vertex_sampling(sp,
                                        sp->num_sampler_views[PIPE_SHADER_VERTEX],
@@ -141,7 +141,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
                                     sp->active_statistics_queries > 0);
 
    /* draw! */
-   draw_vbo(draw, info);
+   draw_vbo(draw, info, drawid_offset, indirect, draws, num_draws, 0);
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
@@ -150,8 +150,6 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    if (mapped_indices) {
       draw_set_indexes(draw, NULL, 0, 0);
    }
-
-   draw_set_mapped_so_targets(draw, 0, NULL);
 
    if (softpipe_screen(sp->pipe.screen)->use_llvm) {
       softpipe_cleanup_vertex_sampling(sp);

@@ -35,6 +35,7 @@
 
 #include <string.h>
 
+#include "simple_mtx.h"
 #include "util/futex.h"
 #include "util/list.h"
 #include "util/macros.h"
@@ -49,8 +50,9 @@ extern "C" {
 #define UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY      (1 << 0)
 #define UTIL_QUEUE_INIT_RESIZE_IF_FULL            (1 << 1)
 #define UTIL_QUEUE_INIT_SET_FULL_THREAD_AFFINITY  (1 << 2)
+#define UTIL_QUEUE_INIT_SCALE_THREADS             (1 << 3)
 
-#if defined(__GNUC__) && defined(HAVE_LINUX_FUTEX_H)
+#if UTIL_FUTEX_SUPPORTED
 #define UTIL_QUEUE_FENCE_FUTEX
 #else
 #define UTIL_QUEUE_FENCE_STANDARD
@@ -78,7 +80,7 @@ util_queue_fence_init(struct util_queue_fence *fence)
 static inline void
 util_queue_fence_destroy(struct util_queue_fence *fence)
 {
-   assert(fence->val == 0);
+   assert(p_atomic_read_relaxed(&fence->val) == 0);
    /* no-op */
 }
 
@@ -113,7 +115,7 @@ util_queue_fence_reset(struct util_queue_fence *fence)
 static inline bool
 util_queue_fence_is_signalled(struct util_queue_fence *fence)
 {
-   return fence->val == 0;
+   return p_atomic_read_relaxed(&fence->val) == 0;
 }
 #endif
 
@@ -189,10 +191,12 @@ util_queue_fence_wait_timeout(struct util_queue_fence *fence,
    return _util_queue_fence_wait_timeout(fence, abs_timeout);
 }
 
-typedef void (*util_queue_execute_func)(void *job, int thread_index);
+typedef void (*util_queue_execute_func)(void *job, void *gdata, int thread_index);
 
 struct util_queue_job {
    void *job;
+   void *global_data;
+   size_t job_size;
    struct util_queue_fence *fence;
    util_queue_execute_func execute;
    util_queue_execute_func cleanup;
@@ -201,7 +205,7 @@ struct util_queue_job {
 /* Put this into your context. */
 struct util_queue {
    char name[14]; /* 13 characters = the thread name without the index */
-   mtx_t finish_lock; /* for util_queue_finish and protects threads/num_threads */
+   simple_mtx_t finish_lock; /* for util_queue_finish and protects threads/num_threads */
    mtx_t lock;
    cnd_t has_queued_cond;
    cnd_t has_space_cond;
@@ -212,7 +216,9 @@ struct util_queue {
    unsigned num_threads; /* decreasing this number will terminate threads */
    int max_jobs;
    int write_idx, read_idx; /* ring buffer pointers */
+   size_t total_jobs_size;  /* memory use of all jobs in the queue */
    struct util_queue_job *jobs;
+   void *global_data;
 
    /* for cleanup at exit(), protected by exit_mutex */
    struct list_head head;
@@ -222,7 +228,8 @@ bool util_queue_init(struct util_queue *queue,
                      const char *name,
                      unsigned max_jobs,
                      unsigned num_threads,
-                     unsigned flags);
+                     unsigned flags,
+                     void *global_data);
 void util_queue_destroy(struct util_queue *queue);
 
 /* optional cleanup callback is called after fence is signaled: */
@@ -230,7 +237,8 @@ void util_queue_add_job(struct util_queue *queue,
                         void *job,
                         struct util_queue_fence *fence,
                         util_queue_execute_func execute,
-                        util_queue_execute_func cleanup);
+                        util_queue_execute_func cleanup,
+                        const size_t job_size);
 void util_queue_drop_job(struct util_queue *queue,
                          struct util_queue_fence *fence);
 

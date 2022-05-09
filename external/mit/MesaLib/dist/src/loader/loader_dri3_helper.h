@@ -42,8 +42,14 @@ enum loader_dri3_buffer_type {
 
 struct loader_dri3_buffer {
    __DRIimage   *image;
-   __DRIimage   *linear_buffer;
    uint32_t     pixmap;
+
+   /* default case: linear buffer allocated in render gpu vram.
+    * p2p case: linear buffer allocated in display gpu vram and imported
+    *           to render gpu. p2p case is enabled when driver name matches
+    *           while creating screen in dri3_create_screen() function.
+    */
+   __DRIimage   *linear_buffer;
 
    /* Synchronization between the client and X server is done using an
     * xshmfence that is mapped into an X server SyncFence. This lets the
@@ -116,6 +122,7 @@ struct loader_dri3_drawable {
    __DRIdrawable *dri_drawable;
    xcb_drawable_t drawable;
    xcb_window_t window;
+   xcb_xfixes_region_t region;
    int width;
    int height;
    int depth;
@@ -127,6 +134,10 @@ struct loader_dri3_drawable {
    __DRIscreen *dri_screen;
    bool is_different_gpu;
    bool multiplanes_available;
+   bool prefer_back_buffer_reuse;
+
+   /* DRI screen created for display GPU in case of prime */
+   __DRIscreen *dri_screen_display_gpu;
 
    /* Present extension capabilities
     */
@@ -146,7 +157,8 @@ struct loader_dri3_drawable {
 
    struct loader_dri3_buffer *buffers[LOADER_DRI3_NUM_BUFFERS];
    int cur_back;
-   int num_back;
+   int cur_num_back;
+   int max_num_back;
    int cur_blit_source;
 
    uint32_t *stamp;
@@ -167,6 +179,8 @@ struct loader_dri3_drawable {
    unsigned int back_format;
    xcb_present_complete_mode_t last_present_mode;
 
+   bool is_protected_content;
+
    /* Currently protects the following fields:
     * event_cnd, has_event_waiter,
     * recv_sbc, ust, msc, recv_msc_serial,
@@ -174,6 +188,7 @@ struct loader_dri3_drawable {
     */
    mtx_t mtx;
    cnd_t event_cnd;
+   unsigned last_special_event_sequence;
    bool has_event_waiter;
 };
 
@@ -190,6 +205,7 @@ loader_dri3_drawable_init(xcb_connection_t *conn,
                           __DRIscreen *dri_screen,
                           bool is_different_gpu,
                           bool is_multiplanes_available,
+                          bool prefer_back_buffer_reuse,
                           const __DRIconfig *dri_config,
                           struct loader_dri3_extensions *ext,
                           const struct loader_dri3_vtable *vtable,
@@ -204,6 +220,7 @@ int64_t
 loader_dri3_swap_buffers_msc(struct loader_dri3_drawable *draw,
                              int64_t target_msc, int64_t divisor,
                              int64_t remainder, unsigned flush_flags,
+                             const int *rects, int n_rects,
                              bool force_copy);
 
 int

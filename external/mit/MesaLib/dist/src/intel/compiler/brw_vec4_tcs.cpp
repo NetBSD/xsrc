@@ -30,7 +30,7 @@
 #include "brw_nir.h"
 #include "brw_vec4_tcs.h"
 #include "brw_fs.h"
-#include "dev/gen_debug.h"
+#include "dev/intel_debug.h"
 
 namespace brw {
 
@@ -41,10 +41,10 @@ vec4_tcs_visitor::vec4_tcs_visitor(const struct brw_compiler *compiler,
                                    const nir_shader *nir,
                                    void *mem_ctx,
                                    int shader_time_index,
-                                   const struct brw_vue_map *input_vue_map)
-   : vec4_visitor(compiler, log_data, &key->tex, &prog_data->base,
-                  nir, mem_ctx, false, shader_time_index),
-     input_vue_map(input_vue_map), key(key)
+                                   bool debug_enabled)
+   : vec4_visitor(compiler, log_data, &key->base.tex, &prog_data->base,
+                  nir, mem_ctx, false, shader_time_index, debug_enabled),
+     key(key)
 {
 }
 
@@ -104,7 +104,7 @@ vec4_tcs_visitor::emit_thread_end()
       emit(BRW_OPCODE_ENDIF);
    }
 
-   if (devinfo->gen == 7) {
+   if (devinfo->ver == 7) {
       struct brw_tcs_prog_data *tcs_prog_data =
          (struct brw_tcs_prog_data *) prog_data;
 
@@ -143,7 +143,7 @@ vec4_tcs_visitor::emit_thread_end()
       emit(BRW_OPCODE_ENDIF);
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_SHADER_TIME))
+   if (INTEL_DEBUG(DEBUG_SHADER_TIME))
       emit_shader_time_end();
 
    inst = emit(TCS_OPCODE_THREAD_END);
@@ -257,6 +257,7 @@ vec4_tcs_visitor::nir_emit_intrinsic(nir_intrinsic_instr *instr)
                brw_imm_d(key->input_vertices)));
       break;
    case nir_intrinsic_load_per_vertex_input: {
+      assert(nir_dest_bit_size(instr->dest) == 32);
       src_reg indirect_offset = get_indirect_offset(instr);
       unsigned imm_offset = instr->const_index[0];
 
@@ -264,36 +265,10 @@ vec4_tcs_visitor::nir_emit_intrinsic(nir_intrinsic_instr *instr)
                                     BRW_REGISTER_TYPE_UD);
 
       unsigned first_component = nir_intrinsic_component(instr);
-      if (nir_dest_bit_size(instr->dest) == 64) {
-         /* We need to emit up to two 32-bit URB reads, then shuffle
-          * the result into a temporary, then move to the destination
-          * honoring the writemask
-          *
-          * We don't need to divide first_component by 2 because
-          * emit_input_urb_read takes a 32-bit type.
-          */
-         dst_reg tmp = dst_reg(this, glsl_type::dvec4_type);
-         dst_reg tmp_d = retype(tmp, BRW_REGISTER_TYPE_D);
-         emit_input_urb_read(tmp_d, vertex_index, imm_offset,
-                             first_component, indirect_offset);
-         if (instr->num_components > 2) {
-            emit_input_urb_read(byte_offset(tmp_d, REG_SIZE), vertex_index,
-                                imm_offset + 1, 0, indirect_offset);
-         }
-
-         src_reg tmp_src = retype(src_reg(tmp_d), BRW_REGISTER_TYPE_DF);
-         dst_reg shuffled = dst_reg(this, glsl_type::dvec4_type);
-         shuffle_64bit_data(shuffled, tmp_src, false);
-
-         dst_reg dst = get_nir_dest(instr->dest, BRW_REGISTER_TYPE_DF);
-         dst.writemask = brw_writemask_for_size(instr->num_components);
-         emit(MOV(dst, src_reg(shuffled)));
-      } else {
-         dst_reg dst = get_nir_dest(instr->dest, BRW_REGISTER_TYPE_D);
-         dst.writemask = brw_writemask_for_size(instr->num_components);
-         emit_input_urb_read(dst, vertex_index, imm_offset,
-                             first_component, indirect_offset);
-      }
+      dst_reg dst = get_nir_dest(instr->dest, BRW_REGISTER_TYPE_D);
+      dst.writemask = brw_writemask_for_size(instr->num_components);
+      emit_input_urb_read(dst, vertex_index, imm_offset,
+                          first_component, indirect_offset);
       break;
    }
    case nir_intrinsic_load_input:
@@ -313,6 +288,7 @@ vec4_tcs_visitor::nir_emit_intrinsic(nir_intrinsic_instr *instr)
    }
    case nir_intrinsic_store_output:
    case nir_intrinsic_store_per_vertex_output: {
+      assert(nir_src_bit_size(instr->src[0]) == 32);
       src_reg value = get_nir_src(instr->src[0]);
       unsigned mask = instr->const_index[1];
       unsigned swiz = BRW_SWIZZLE_XYZW;
@@ -322,55 +298,61 @@ vec4_tcs_visitor::nir_emit_intrinsic(nir_intrinsic_instr *instr)
 
       unsigned first_component = nir_intrinsic_component(instr);
       if (first_component) {
-         if (nir_src_bit_size(instr->src[0]) == 64)
-            first_component /= 2;
          assert(swiz == BRW_SWIZZLE_XYZW);
          swiz = BRW_SWZ_COMP_OUTPUT(first_component);
          mask = mask << first_component;
       }
 
-      if (nir_src_bit_size(instr->src[0]) == 64) {
-         /* For 64-bit data we need to shuffle the data before we write and
-          * emit two messages. Also, since each channel is twice as large we
-          * need to fix the writemask in each 32-bit message to account for it.
-          */
-         value = swizzle(retype(value, BRW_REGISTER_TYPE_DF), swiz);
-         dst_reg shuffled = dst_reg(this, glsl_type::dvec4_type);
-         shuffle_64bit_data(shuffled, value, true);
-         src_reg shuffled_float = src_reg(retype(shuffled, BRW_REGISTER_TYPE_F));
-
-         for (int n = 0; n < 2; n++) {
-            unsigned fixed_mask = 0;
-            if (mask & WRITEMASK_X)
-               fixed_mask |= WRITEMASK_XY;
-            if (mask & WRITEMASK_Y)
-               fixed_mask |= WRITEMASK_ZW;
-            emit_urb_write(shuffled_float, fixed_mask,
-                           imm_offset, indirect_offset);
-
-            shuffled_float = byte_offset(shuffled_float, REG_SIZE);
-            mask >>= 2;
-            imm_offset++;
-         }
-      } else {
-         emit_urb_write(swizzle(value, swiz), mask,
-                        imm_offset, indirect_offset);
-      }
+      emit_urb_write(swizzle(value, swiz), mask,
+                     imm_offset, indirect_offset);
       break;
    }
 
-   case nir_intrinsic_barrier: {
+   case nir_intrinsic_control_barrier: {
       dst_reg header = dst_reg(this, glsl_type::uvec4_type);
       emit(TCS_OPCODE_CREATE_BARRIER_HEADER, header);
       emit(SHADER_OPCODE_BARRIER, dst_null_ud(), src_reg(header));
       break;
    }
 
+   case nir_intrinsic_memory_barrier_tcs_patch:
+      break;
+
    default:
       vec4_visitor::nir_emit_intrinsic(instr);
    }
 }
 
+/**
+ * Return the number of patches to accumulate before an 8_PATCH mode thread is
+ * launched.  In cases with a large number of input control points and a large
+ * amount of VS outputs, the VS URB space needed to store an entire 8 patches
+ * worth of data can be prohibitive, so it can be beneficial to launch threads
+ * early.
+ *
+ * See the 3DSTATE_HS::Patch Count Threshold documentation for the recommended
+ * values.  Note that 0 means to "disable" early dispatch, meaning to wait for
+ * a full 8 patches as normal.
+ */
+static int
+get_patch_count_threshold(int input_control_points)
+{
+   if (input_control_points <= 4)
+      return 0;
+   else if (input_control_points <= 6)
+      return 5;
+   else if (input_control_points <= 8)
+      return 4;
+   else if (input_control_points <= 10)
+      return 3;
+   else if (input_control_points <= 14)
+      return 2;
+
+   /* Return patch count 1 for PATCHLIST_15 - PATCHLIST_32 */
+   return 1;
+}
+
+} /* namespace brw */
 
 extern "C" const unsigned *
 brw_compile_tcs(const struct brw_compiler *compiler,
@@ -380,36 +362,60 @@ brw_compile_tcs(const struct brw_compiler *compiler,
                 struct brw_tcs_prog_data *prog_data,
                 nir_shader *nir,
                 int shader_time_index,
+                struct brw_compile_stats *stats,
                 char **error_str)
 {
-   const struct gen_device_info *devinfo = compiler->devinfo;
+   const struct intel_device_info *devinfo = compiler->devinfo;
    struct brw_vue_prog_data *vue_prog_data = &prog_data->base;
    const bool is_scalar = compiler->scalar_stage[MESA_SHADER_TESS_CTRL];
+   const bool debug_enabled = INTEL_DEBUG(DEBUG_TCS);
    const unsigned *assembly;
+
+   vue_prog_data->base.stage = MESA_SHADER_TESS_CTRL;
 
    nir->info.outputs_written = key->outputs_written;
    nir->info.patch_outputs_written = key->patch_outputs_written;
 
    struct brw_vue_map input_vue_map;
    brw_compute_vue_map(devinfo, &input_vue_map, nir->info.inputs_read,
-                       nir->info.separate_shader);
+                       nir->info.separate_shader, 1);
    brw_compute_tess_vue_map(&vue_prog_data->vue_map,
                             nir->info.outputs_written,
                             nir->info.patch_outputs_written);
 
-   nir = brw_nir_apply_sampler_key(nir, compiler, &key->tex, is_scalar);
+   brw_nir_apply_key(nir, compiler, &key->base, 8, is_scalar);
    brw_nir_lower_vue_inputs(nir, &input_vue_map);
    brw_nir_lower_tcs_outputs(nir, &vue_prog_data->vue_map,
                              key->tes_primitive_mode);
    if (key->quads_workaround)
       brw_nir_apply_tcs_quads_workaround(nir);
 
-   nir = brw_postprocess_nir(nir, compiler, is_scalar);
+   brw_postprocess_nir(nir, compiler, is_scalar, debug_enabled,
+                       key->base.robust_buffer_access);
 
-   if (is_scalar)
-      prog_data->instances = DIV_ROUND_UP(nir->info.tess.tcs_vertices_out, 8);
-   else
-      prog_data->instances = DIV_ROUND_UP(nir->info.tess.tcs_vertices_out, 2);
+   bool has_primitive_id =
+      BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_PRIMITIVE_ID);
+
+   prog_data->patch_count_threshold = brw::get_patch_count_threshold(key->input_vertices);
+
+   if (compiler->use_tcs_8_patch &&
+       nir->info.tess.tcs_vertices_out <= (devinfo->ver >= 12 ? 32 : 16) &&
+       2 + has_primitive_id + key->input_vertices <= (devinfo->ver >= 12 ? 63 : 31)) {
+      /* 3DSTATE_HS imposes two constraints on using 8_PATCH mode. First, the
+       * "Instance" field limits the number of output vertices to [1, 16] on
+       * gfx11 and below, or [1, 32] on gfx12 and above. Secondly, the
+       * "Dispatch GRF Start Register for URB Data" field is limited to [0,
+       * 31] - which imposes a limit on the input vertices.
+       */
+      vue_prog_data->dispatch_mode = DISPATCH_MODE_TCS_8_PATCH;
+      prog_data->instances = nir->info.tess.tcs_vertices_out;
+      prog_data->include_primitive_id = has_primitive_id;
+   } else {
+      unsigned verts_per_thread = is_scalar ? 8 : 2;
+      vue_prog_data->dispatch_mode = DISPATCH_MODE_TCS_SINGLE_PATCH;
+      prog_data->instances =
+         DIV_ROUND_UP(nir->info.tess.tcs_vertices_out, verts_per_thread);
+   }
 
    /* Compute URB entry size.  The maximum allowed URB entry size is 32k.
     * That divides up as follows:
@@ -432,18 +438,11 @@ brw_compile_tcs(const struct brw_compiler *compiler,
                         num_per_vertex_slots * 16;
 
    assert(output_size_bytes >= 1);
-   if (output_size_bytes > GEN7_MAX_HS_URB_ENTRY_SIZE_BYTES)
+   if (output_size_bytes > GFX7_MAX_HS_URB_ENTRY_SIZE_BYTES)
       return NULL;
 
    /* URB entry sizes are stored as a multiple of 64 bytes. */
    vue_prog_data->urb_entry_size = ALIGN(output_size_bytes, 64) / 64;
-
-   /* On Cannonlake software shall not program an allocation size that
-    * specifies a size that is a multiple of 3 64B (512-bit) cachelines.
-    */
-   if (devinfo->gen == 10 &&
-       vue_prog_data->urb_entry_size % 3 == 0)
-      vue_prog_data->urb_entry_size++;
 
    /* HS does not use the usual payload pushing from URB to GRFs,
     * because we don't have enough registers for a full-size payload, and
@@ -451,30 +450,28 @@ brw_compile_tcs(const struct brw_compiler *compiler,
     */
    vue_prog_data->urb_read_length = 0;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_TCS)) {
+   if (unlikely(debug_enabled)) {
       fprintf(stderr, "TCS Input ");
-      brw_print_vue_map(stderr, &input_vue_map);
+      brw_print_vue_map(stderr, &input_vue_map, MESA_SHADER_TESS_CTRL);
       fprintf(stderr, "TCS Output ");
-      brw_print_vue_map(stderr, &vue_prog_data->vue_map);
+      brw_print_vue_map(stderr, &vue_prog_data->vue_map, MESA_SHADER_TESS_CTRL);
    }
 
    if (is_scalar) {
-      fs_visitor v(compiler, log_data, mem_ctx, (void *) key,
-                   &prog_data->base.base, NULL, nir, 8,
-                   shader_time_index, &input_vue_map);
-      if (!v.run_tcs_single_patch()) {
+      fs_visitor v(compiler, log_data, mem_ctx, &key->base,
+                   &prog_data->base.base, nir, 8,
+                   shader_time_index, debug_enabled);
+      if (!v.run_tcs()) {
          if (error_str)
             *error_str = ralloc_strdup(mem_ctx, v.fail_msg);
          return NULL;
       }
 
       prog_data->base.base.dispatch_grf_start_reg = v.payload.num_regs;
-      prog_data->base.dispatch_mode = DISPATCH_MODE_SIMD8;
 
       fs_generator g(compiler, log_data, mem_ctx,
-                     &prog_data->base.base, v.promoted_constants, false,
-                     MESA_SHADER_TESS_CTRL);
-      if (unlikely(INTEL_DEBUG & DEBUG_TCS)) {
+                     &prog_data->base.base, false, MESA_SHADER_TESS_CTRL);
+      if (unlikely(debug_enabled)) {
          g.enable_debug(ralloc_asprintf(mem_ctx,
                                         "%s tessellation control shader %s",
                                         nir->info.label ? nir->info.label
@@ -482,28 +479,31 @@ brw_compile_tcs(const struct brw_compiler *compiler,
                                         nir->info.name));
       }
 
-      g.generate_code(v.cfg, 8);
+      g.generate_code(v.cfg, 8, v.shader_stats,
+                      v.performance_analysis.require(), stats);
+
+      g.add_const_data(nir->constant_data, nir->constant_data_size);
 
       assembly = g.get_assembly();
    } else {
-      vec4_tcs_visitor v(compiler, log_data, key, prog_data,
-                         nir, mem_ctx, shader_time_index, &input_vue_map);
+      brw::vec4_tcs_visitor v(compiler, log_data, key, prog_data,
+                              nir, mem_ctx, shader_time_index,
+                              debug_enabled);
       if (!v.run()) {
          if (error_str)
             *error_str = ralloc_strdup(mem_ctx, v.fail_msg);
          return NULL;
       }
 
-      if (unlikely(INTEL_DEBUG & DEBUG_TCS))
+      if (INTEL_DEBUG(DEBUG_TCS))
          v.dump_instructions();
 
 
       assembly = brw_vec4_generate_assembly(compiler, log_data, mem_ctx, nir,
-                                            &prog_data->base, v.cfg);
+                                            &prog_data->base, v.cfg,
+                                            v.performance_analysis.require(),
+                                            stats, debug_enabled);
    }
 
    return assembly;
 }
-
-
-} /* namespace brw */

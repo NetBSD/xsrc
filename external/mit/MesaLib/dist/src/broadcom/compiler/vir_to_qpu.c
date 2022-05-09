@@ -45,12 +45,6 @@ qpu_magic(enum v3d_qpu_waddr waddr)
         return reg;
 }
 
-static inline struct qpu_reg
-qpu_acc(int acc)
-{
-        return qpu_magic(V3D_QPU_WADDR_R0 + acc);
-}
-
 struct v3d_qpu_instr
 v3d_qpu_nop(void)
 {
@@ -219,8 +213,13 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 src[i] = qpu_magic(qinst->src[i].index);
                                 break;
                         case QFILE_NULL:
+                                /* QFILE_NULL is an undef, so we can load
+                                 * anything. Using reg 0
+                                 */
+                                src[i] = qpu_reg(0);
+                                break;
                         case QFILE_LOAD_IMM:
-                                src[i] = qpu_acc(0);
+                                assert(!"not reached");
                                 break;
                         case QFILE_TEMP:
                                 src[i] = temp_registers[index];
@@ -238,7 +237,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 temp = new_qpu_nop_before(qinst);
                                 temp->qpu.sig.ldvpm = true;
 
-                                src[i] = qpu_acc(3);
+                                src[i] = qpu_magic(V3D_QPU_WADDR_R3);
                                 break;
                         }
                 }
@@ -272,7 +271,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                 }
 
                 if (qinst->qpu.type == V3D_QPU_INSTR_TYPE_ALU) {
-                        if (qinst->qpu.sig.ldunif) {
+                        if (qinst->qpu.sig.ldunif || qinst->qpu.sig.ldunifa) {
                                 assert(qinst->qpu.alu.add.op == V3D_QPU_A_NOP);
                                 assert(qinst->qpu.alu.mul.op == V3D_QPU_M_NOP);
 
@@ -280,8 +279,13 @@ v3d_generate_code_block(struct v3d_compile *c,
                                     dst.index != V3D_QPU_WADDR_R5) {
                                         assert(c->devinfo->ver >= 40);
 
-                                        qinst->qpu.sig.ldunif = false;
-                                        qinst->qpu.sig.ldunifrf = true;
+                                        if (qinst->qpu.sig.ldunif) {
+                                           qinst->qpu.sig.ldunif = false;
+                                           qinst->qpu.sig.ldunifrf = true;
+                                        } else {
+                                           qinst->qpu.sig.ldunifa = false;
+                                           qinst->qpu.sig.ldunifarf = true;
+                                        }
                                         qinst->qpu.sig_addr = dst.index;
                                         qinst->qpu.sig_magic = dst.magic;
                                 }
@@ -333,11 +337,12 @@ static bool
 reads_uniform(const struct v3d_device_info *devinfo, uint64_t instruction)
 {
         struct v3d_qpu_instr qpu;
-        MAYBE_UNUSED bool ok = v3d_qpu_instr_unpack(devinfo, instruction, &qpu);
+        ASSERTED bool ok = v3d_qpu_instr_unpack(devinfo, instruction, &qpu);
         assert(ok);
 
         if (qpu.sig.ldunif ||
             qpu.sig.ldunifrf ||
+            qpu.sig.ldtlbu ||
             qpu.sig.wrtmuc) {
                 return true;
         }
@@ -413,12 +418,15 @@ v3d_vir_to_qpu(struct v3d_compile *c, struct qpu_reg *temp_registers)
                 bool ok = v3d_qpu_instr_pack(c->devinfo, &inst->qpu,
                                              &c->qpu_insts[i++]);
                 if (!ok) {
-                        fprintf(stderr, "Failed to pack instruction:\n");
+                        fprintf(stderr, "Failed to pack instruction %d:\n", i);
                         vir_dump_inst(c, inst);
                         fprintf(stderr, "\n");
-                        c->failed = true;
+                        c->compilation_result = V3D_COMPILATION_FAILED;
                         return;
                 }
+
+                if (v3d_qpu_is_nop(&inst->qpu))
+                        c->nop_count++;
         }
         assert(i == c->qpu_inst_count);
 

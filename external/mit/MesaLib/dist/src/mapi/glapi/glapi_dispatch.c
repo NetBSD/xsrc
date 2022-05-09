@@ -51,11 +51,7 @@
 
 #define KEYWORD2 GLAPIENTRY
 
-#if defined(USE_MGL_NAMESPACE)
-#define NAME(func)  mgl##func
-#else
 #define NAME(func)  gl##func
-#endif
 
 #if 0  /* Use this to log GL calls to stdout (for DEBUG only!) */
 
@@ -107,7 +103,7 @@
 GL_API void GL_APIENTRY glClearDepthf (GLclampf depth);
 GL_API void GL_APIENTRY glClipPlanef (GLenum plane, const GLfloat *equation);
 GL_API void GL_APIENTRY glFrustumf (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
-GL_API void GL_APIENTRY glGetClipPlanef (GLenum pname, GLfloat eqn[4]);
+GL_API void GL_APIENTRY glGetClipPlanef (GLenum pname, GLfloat *equation);
 GL_API void GL_APIENTRY glOrthof (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 
 GL_API void GL_APIENTRY glAlphaFuncx (GLenum func, GLclampx ref);
@@ -119,7 +115,7 @@ GL_API void GL_APIENTRY glDepthRangex (GLclampx zNear, GLclampx zFar);
 GL_API void GL_APIENTRY glFogx (GLenum pname, GLfixed param);
 GL_API void GL_APIENTRY glFogxv (GLenum pname, const GLfixed *params);
 GL_API void GL_APIENTRY glFrustumx (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
-GL_API void GL_APIENTRY glGetClipPlanex (GLenum pname, GLfixed eqn[4]);
+GL_API void GL_APIENTRY glGetClipPlanex (GLenum pname, GLfixed *equation);
 GL_API void GL_APIENTRY glGetFixedv (GLenum pname, GLfixed *params);
 GL_API void GL_APIENTRY glGetLightxv (GLenum light, GLenum pname, GLfixed *params);
 GL_API void GL_APIENTRY glGetMaterialxv (GLenum face, GLenum pname, GLfixed *params);
@@ -175,6 +171,6 @@ GL_API void GL_APIENTRY glPrimitiveBoundingBox (GLfloat minX, GLfloat minY, GLfl
 #  endif
 #endif
 
-#include "glapi/glapitemp.h"
+#include "glapitemp.h"
 
 #endif /* USE_X86_ASM */

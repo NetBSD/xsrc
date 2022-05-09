@@ -69,6 +69,7 @@ struct svga_host_surface_cache_key
    uint32_t cachable:1;         /* False if this is a shared surface */
    uint32_t sampleCount:5;
    uint32_t scanout:1;
+   uint32_t coherent:1;
 };
 
 
@@ -157,6 +158,9 @@ svga_screen_surface_destroy(struct svga_screen *svgascreen,
 
 void
 svga_screen_cache_dump(const struct svga_screen *svgascreen);
+
+unsigned
+svga_surface_size(const struct svga_host_surface_cache_key *key);
 
 
 #endif /* SVGA_SCREEN_CACHE_H_ */

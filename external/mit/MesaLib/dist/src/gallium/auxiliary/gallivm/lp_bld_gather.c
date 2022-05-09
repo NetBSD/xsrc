@@ -141,7 +141,7 @@ lp_build_gather_elem(struct gallivm_state *gallivm,
    if (src_width < dst_width) {
       res = LLVMBuildZExt(gallivm->builder, res, dst_elem_type, "");
       if (vector_justify) {
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
          res = LLVMBuildShl(gallivm->builder, res,
                             LLVMConstInt(dst_elem_type, dst_width - src_width, 0), "");
 #endif
@@ -234,7 +234,7 @@ lp_build_gather_elem_vec(struct gallivm_state *gallivm,
           */
          res = LLVMBuildZExt(gallivm->builder, res, dst_elem_type, "");
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
          if (vector_justify) {
          res = LLVMBuildShl(gallivm->builder, res,
                             LLVMConstInt(dst_elem_type,
@@ -327,8 +327,8 @@ lp_build_gather_avx2(struct gallivm_state *gallivm,
       src_ptr = LLVMBuildGEP(builder, base_ptr, &offsets, 1, "vector-gep");
 
       char intrinsic[64];
-      util_snprintf(intrinsic, sizeof intrinsic, "llvm.masked.gather.v%u%s%u",
-                    length, dst_type.floating ? "f" : "i", src_width);
+      snprintf(intrinsic, sizeof intrinsic, "llvm.masked.gather.v%u%s%u",
+               length, dst_type.floating ? "f" : "i", src_width);
       LLVMValueRef alignment = LLVMConstInt(i32_type, src_width/8, 0);
       LLVMValueRef mask = LLVMConstAllOnes(i1_vec_type);
       LLVMValueRef passthru = LLVMGetUndef(src_vec_type);
@@ -488,7 +488,7 @@ lp_build_gather(struct gallivm_state *gallivm,
        * 32bit/64bit fetches you're doing it wrong (this is gather, not
        * conversion) and it would be awkward for floats.
        */
-   } else if (util_cpu_caps.has_avx2 && !need_expansion &&
+   } else if (util_get_cpu_caps()->has_avx2 && !need_expansion &&
               src_width == 32 && (length == 4 || length == 8)) {
       return lp_build_gather_avx2(gallivm, length, src_width, dst_type,
                                   base_ptr, offsets);
@@ -500,7 +500,7 @@ lp_build_gather(struct gallivm_state *gallivm,
     * (In general, should be more of a win if the fetch is 256bit wide -
     * this is true for the 32bit case above too.)
     */
-   } else if (0 && util_cpu_caps.has_avx2 && !need_expansion &&
+   } else if (0 && util_get_cpu_caps()->has_avx2 && !need_expansion &&
               src_width == 64 && (length == 2 || length == 4)) {
       return lp_build_gather_avx2(gallivm, length, src_width, dst_type,
                                   base_ptr, offsets);
@@ -553,7 +553,7 @@ lp_build_gather(struct gallivm_state *gallivm,
       if (vec_zext) {
          res = LLVMBuildZExt(gallivm->builder, res, res_t, "");
          if (vector_justify) {
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
             unsigned sv = dst_type.width - src_width;
             res = LLVMBuildShl(gallivm->builder, res,
                                lp_build_const_int_vec(gallivm, res_type, sv), "");

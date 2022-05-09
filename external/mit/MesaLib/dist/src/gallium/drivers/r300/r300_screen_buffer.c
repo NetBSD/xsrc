@@ -50,20 +50,35 @@ void r300_upload_index_buffer(struct r300_context *r300,
     *start = index_offset / index_size;
 }
 
-static void r300_buffer_destroy(struct pipe_screen *screen,
-				struct pipe_resource *buf)
+void r300_resource_destroy(struct pipe_screen *screen,
+                           struct pipe_resource *buf)
 {
-    struct r300_resource *rbuf = r300_resource(buf);
+   if (buf->target == PIPE_BUFFER) {
+      struct r300_resource *rbuf = r300_resource(buf);
 
-    align_free(rbuf->malloced_buffer);
+      align_free(rbuf->malloced_buffer);
 
-    if (rbuf->buf)
-        pb_reference(&rbuf->buf, NULL);
+      if (rbuf->buf)
+         pb_reference(&rbuf->buf, NULL);
 
-    FREE(rbuf);
+      FREE(rbuf);
+   } else {
+      struct r300_screen *rscreen = r300_screen(screen);
+      struct r300_resource* tex = (struct r300_resource*)buf;
+
+      if (tex->tex.cmask_dwords) {
+          mtx_lock(&rscreen->cmask_mutex);
+          if (buf == rscreen->cmask_resource) {
+              rscreen->cmask_resource = NULL;
+          }
+          mtx_unlock(&rscreen->cmask_mutex);
+      }
+      pb_reference(&tex->buf, NULL);
+      FREE(tex);
+   }
 }
 
-static void *
+void *
 r300_buffer_transfer_map( struct pipe_context *context,
                           struct pipe_resource *resource,
                           unsigned level,
@@ -90,18 +105,18 @@ r300_buffer_transfer_map( struct pipe_context *context,
         return rbuf->malloced_buffer + box->x;
     }
 
-    if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
-        !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
-        assert(usage & PIPE_TRANSFER_WRITE);
+    if (usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE &&
+        !(usage & PIPE_MAP_UNSYNCHRONIZED)) {
+        assert(usage & PIPE_MAP_WRITE);
 
         /* Check if mapping this buffer would cause waiting for the GPU. */
-        if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->buf, RADEON_USAGE_READWRITE) ||
-            !r300->rws->buffer_wait(rbuf->buf, 0, RADEON_USAGE_READWRITE)) {
+        if (r300->rws->cs_is_buffer_referenced(&r300->cs, rbuf->buf, RADEON_USAGE_READWRITE) ||
+            !r300->rws->buffer_wait(r300->rws, rbuf->buf, 0, RADEON_USAGE_READWRITE)) {
             unsigned i;
             struct pb_buffer *new_buf;
 
             /* Create a new one in the same pipe_resource. */
-            new_buf = r300->rws->buffer_create(r300->rws, rbuf->b.b.width0,
+            new_buf = r300->rws->buffer_create(r300->rws, rbuf->b.width0,
                                                R300_BUFFER_ALIGNMENT,
                                                rbuf->domain,
                                                RADEON_FLAG_NO_INTERPROCESS_SHARING);
@@ -112,7 +127,7 @@ r300_buffer_transfer_map( struct pipe_context *context,
 
                 /* We changed the buffer, now we need to bind it where the old one was bound. */
                 for (i = 0; i < r300->nr_vertex_buffers; i++) {
-                    if (r300->vertex_buffer[i].buffer.resource == &rbuf->b.b) {
+                    if (r300->vertex_buffer[i].buffer.resource == &rbuf->b) {
                         r300->vertex_arrays_dirty = TRUE;
                         break;
                     }
@@ -123,11 +138,11 @@ r300_buffer_transfer_map( struct pipe_context *context,
 
     /* Buffers are never used for write, therefore mapping for read can be
      * unsynchronized. */
-    if (!(usage & PIPE_TRANSFER_WRITE)) {
-       usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+    if (!(usage & PIPE_MAP_WRITE)) {
+       usage |= PIPE_MAP_UNSYNCHRONIZED;
     }
 
-    map = rws->buffer_map(rbuf->buf, r300->cs, usage);
+    map = rws->buffer_map(rws, rbuf->buf, &r300->cs, usage);
 
     if (!map) {
         slab_free(&r300->pool_transfers, transfer);
@@ -138,22 +153,13 @@ r300_buffer_transfer_map( struct pipe_context *context,
     return map + box->x;
 }
 
-static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
-                                        struct pipe_transfer *transfer )
+void r300_buffer_transfer_unmap( struct pipe_context *pipe,
+                                 struct pipe_transfer *transfer )
 {
     struct r300_context *r300 = r300_context(pipe);
 
     slab_free(&r300->pool_transfers, transfer);
 }
-
-static const struct u_resource_vtbl r300_buffer_vtbl =
-{
-   NULL,                               /* get_handle */
-   r300_buffer_destroy,                /* resource_destroy */
-   r300_buffer_transfer_map,           /* transfer_map */
-   NULL,                               /* transfer_flush_region */
-   r300_buffer_transfer_unmap,         /* transfer_unmap */
-};
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
@@ -163,10 +169,9 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf = MALLOC_STRUCT(r300_resource);
 
-    rbuf->b.b = *templ;
-    rbuf->b.vtbl = &r300_buffer_vtbl;
-    pipe_reference_init(&rbuf->b.b.reference, 1);
-    rbuf->b.b.screen = screen;
+    rbuf->b = *templ;
+    pipe_reference_init(&rbuf->b.reference, 1);
+    rbuf->b.screen = screen;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->malloced_buffer = NULL;
@@ -178,11 +183,11 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER ||
         (!r300screen->caps.has_tcl && !(templ->bind & PIPE_BIND_CUSTOM))) {
         rbuf->malloced_buffer = align_malloc(templ->width0, 64);
-        return &rbuf->b.b;
+        return &rbuf->b;
     }
 
     rbuf->buf =
-        r300screen->rws->buffer_create(r300screen->rws, rbuf->b.b.width0,
+        r300screen->rws->buffer_create(r300screen->rws, rbuf->b.width0,
                                        R300_BUFFER_ALIGNMENT,
                                        rbuf->domain,
                                        RADEON_FLAG_NO_INTERPROCESS_SHARING);
@@ -190,5 +195,5 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
         FREE(rbuf);
         return NULL;
     }
-    return &rbuf->b.b;
+    return &rbuf->b;
 }

@@ -35,7 +35,7 @@
 static unsigned
 get_io_offset(nir_builder *b, nir_deref_instr *deref, nir_variable *var,
               unsigned *element_index, unsigned *xfb_offset,
-              nir_ssa_def **vertex_index)
+              nir_ssa_def **array_index)
 {
    nir_deref_path path;
    nir_deref_path_init(&path, deref, NULL);
@@ -43,11 +43,11 @@ get_io_offset(nir_builder *b, nir_deref_instr *deref, nir_variable *var,
    assert(path.path[0]->deref_type == nir_deref_type_var);
    nir_deref_instr **p = &path.path[1];
 
-   /* For per-vertex input arrays (i.e. geometry shader inputs), skip the
-    * outermost array index.  Process the rest normally.
+   /* For arrayed I/O (e.g., per-vertex input arrays in geometry shader
+    * inputs), skip the outermost array index.  Process the rest normally.
     */
-   if (nir_is_per_vertex_io(var, b->shader->info.stage)) {
-      *vertex_index = nir_ssa_for_src(b, (*p)->arr.index, 1);
+   if (nir_is_arrayed_io(var, b->shader->info.stage)) {
+      *array_index = nir_ssa_for_src(b, (*p)->arr.index, 1);
       p++;
    }
 
@@ -61,7 +61,7 @@ get_io_offset(nir_builder *b, nir_deref_instr *deref, nir_variable *var,
          unsigned size = glsl_count_attribute_slots((*p)->type, false);
          offset += size * index;
 
-         xfb_offset += index * glsl_get_component_slots((*p)->type) * 4;
+         *xfb_offset += index * glsl_get_component_slots((*p)->type) * 4;
 
          unsigned num_elements = glsl_type_is_array((*p)->type) ?
             glsl_get_aoa_size((*p)->type) : 1;
@@ -89,7 +89,7 @@ get_array_elements(struct hash_table *ht, nir_variable *var,
    struct hash_entry *entry = _mesa_hash_table_search(ht, var);
    if (!entry) {
       const struct glsl_type *type = var->type;
-      if (nir_is_per_vertex_io(var, stage)) {
+      if (nir_is_arrayed_io(var, stage)) {
          assert(glsl_type_is_array(type));
          type = glsl_get_array_element(type);
       }
@@ -115,15 +115,27 @@ lower_array(nir_builder *b, nir_intrinsic_instr *intr, nir_variable *var,
 {
    b->cursor = nir_before_instr(&intr->instr);
 
+   if (nir_deref_instr_is_known_out_of_bounds(nir_src_as_deref(intr->src[0]))) {
+      /* See Section 5.11 (Out-of-Bounds Accesses) of the GLSL 4.60 */
+      if (intr->intrinsic != nir_intrinsic_store_deref) {
+         nir_ssa_def *zero = nir_imm_zero(b, intr->dest.ssa.num_components,
+                                          intr->dest.ssa.bit_size);
+         nir_ssa_def_rewrite_uses(&intr->dest.ssa,
+                                  zero);
+      }
+      nir_instr_remove(&intr->instr);
+      return;
+   }
+
    nir_variable **elements =
       get_array_elements(varyings, var, b->shader->info.stage);
 
-   nir_ssa_def *vertex_index = NULL;
+   nir_ssa_def *array_index = NULL;
    unsigned elements_index = 0;
    unsigned xfb_offset = 0;
    unsigned io_offset = get_io_offset(b, nir_src_as_deref(intr->src[0]),
                                       var, &elements_index, &xfb_offset,
-                                      &vertex_index);
+                                      &array_index);
 
    nir_variable *element = elements[elements_index];
    if (!element) {
@@ -139,7 +151,7 @@ lower_array(nir_builder *b, nir_intrinsic_instr *intr, nir_variable *var,
          if (glsl_type_is_matrix(type))
             type = glsl_get_column_type(type);
 
-         if (nir_is_per_vertex_io(var, b->shader->info.stage)) {
+         if (nir_is_arrayed_io(var, b->shader->info.stage)) {
             type = glsl_array_type(type, glsl_get_length(element->type),
                                    glsl_get_explicit_stride(element->type));
          }
@@ -152,9 +164,9 @@ lower_array(nir_builder *b, nir_intrinsic_instr *intr, nir_variable *var,
 
    nir_deref_instr *element_deref = nir_build_deref_var(b, element);
 
-   if (nir_is_per_vertex_io(var, b->shader->info.stage)) {
-      assert(vertex_index);
-      element_deref = nir_build_deref_array(b, element_deref, vertex_index);
+   if (nir_is_arrayed_io(var, b->shader->info.stage)) {
+      assert(array_index);
+      element_deref = nir_build_deref_array(b, element_deref, array_index);
    }
 
    nir_intrinsic_instr *element_intr =
@@ -167,18 +179,17 @@ lower_array(nir_builder *b, nir_intrinsic_instr *intr, nir_variable *var,
                         intr->num_components, intr->dest.ssa.bit_size, NULL);
 
       if (intr->intrinsic == nir_intrinsic_interp_deref_at_offset ||
-          intr->intrinsic == nir_intrinsic_interp_deref_at_sample) {
-         nir_src_copy(&element_intr->src[1], &intr->src[1],
-                      &element_intr->instr);
+          intr->intrinsic == nir_intrinsic_interp_deref_at_sample ||
+          intr->intrinsic == nir_intrinsic_interp_deref_at_vertex) {
+         nir_src_copy(&element_intr->src[1], &intr->src[1]);
       }
 
       nir_ssa_def_rewrite_uses(&intr->dest.ssa,
-                               nir_src_for_ssa(&element_intr->dest.ssa));
+                               &element_intr->dest.ssa);
    } else {
       nir_intrinsic_set_write_mask(element_intr,
                                    nir_intrinsic_write_mask(intr));
-      nir_src_copy(&element_intr->src[1], &intr->src[1],
-                   &element_intr->instr);
+      nir_src_copy(&element_intr->src[1], &intr->src[1]);
    }
 
    nir_builder_instr_insert(b, &element_intr->instr);
@@ -193,7 +204,7 @@ deref_has_indirect(nir_builder *b, nir_variable *var, nir_deref_path *path)
    assert(path->path[0]->deref_type == nir_deref_type_var);
    nir_deref_instr **p = &path->path[1];
 
-   if (nir_is_per_vertex_io(var, b->shader->info.stage)) {
+   if (nir_is_arrayed_io(var, b->shader->info.stage)) {
       p++;
    }
 
@@ -212,8 +223,8 @@ deref_has_indirect(nir_builder *b, nir_variable *var, nir_deref_path *path)
  * indirect indexing.
  */
 static void
-create_indirects_mask(nir_shader *shader, uint64_t *indirects,
-                      uint64_t *patch_indirects, nir_variable_mode mode)
+create_indirects_mask(nir_shader *shader,
+                      BITSET_WORD *indirects, nir_variable_mode mode)
 {
    nir_foreach_function(function, shader) {
       if (function->impl) {
@@ -232,11 +243,12 @@ create_indirects_mask(nir_shader *shader, uint64_t *indirects,
                    intr->intrinsic != nir_intrinsic_store_deref &&
                    intr->intrinsic != nir_intrinsic_interp_deref_at_centroid &&
                    intr->intrinsic != nir_intrinsic_interp_deref_at_sample &&
-                   intr->intrinsic != nir_intrinsic_interp_deref_at_offset)
+                   intr->intrinsic != nir_intrinsic_interp_deref_at_offset &&
+                   intr->intrinsic != nir_intrinsic_interp_deref_at_vertex)
                   continue;
 
                nir_deref_instr *deref = nir_src_as_deref(intr->src[0]);
-               if (deref->mode != mode)
+               if (!nir_deref_mode_is(deref, mode))
                   continue;
 
                nir_variable *var = nir_deref_instr_get_variable(deref);
@@ -244,14 +256,9 @@ create_indirects_mask(nir_shader *shader, uint64_t *indirects,
                nir_deref_path path;
                nir_deref_path_init(&path, deref, NULL);
 
-               uint64_t loc_mask = ((uint64_t)1) << var->data.location;
-               if (var->data.patch) {
-                  if (deref_has_indirect(&b, var, &path))
-                     patch_indirects[var->data.location_frac] |= loc_mask;
-               } else {
-                  if (deref_has_indirect(&b, var, &path))
-                     indirects[var->data.location_frac] |= loc_mask;
-               }
+               int loc = var->data.location * 4 + var->data.location_frac;
+               if (deref_has_indirect(&b, var, &path))
+                  BITSET_SET(indirects, loc);
 
                nir_deref_path_finish(&path);
             }
@@ -262,7 +269,7 @@ create_indirects_mask(nir_shader *shader, uint64_t *indirects,
 
 static void
 lower_io_arrays_to_elements(nir_shader *shader, nir_variable_mode mask,
-                            uint64_t *indirects, uint64_t *patch_indirects,
+                            BITSET_WORD *indirects,
                             struct hash_table *varyings,
                             bool after_cross_stage_opts)
 {
@@ -282,11 +289,12 @@ lower_io_arrays_to_elements(nir_shader *shader, nir_variable_mode mask,
                    intr->intrinsic != nir_intrinsic_store_deref &&
                    intr->intrinsic != nir_intrinsic_interp_deref_at_centroid &&
                    intr->intrinsic != nir_intrinsic_interp_deref_at_sample &&
-                   intr->intrinsic != nir_intrinsic_interp_deref_at_offset)
+                   intr->intrinsic != nir_intrinsic_interp_deref_at_offset &&
+                   intr->intrinsic != nir_intrinsic_interp_deref_at_vertex)
                   continue;
 
                nir_deref_instr *deref = nir_src_as_deref(intr->src[0]);
-               if (!(deref->mode & mask))
+               if (!nir_deref_mode_is_one_of(deref, mask))
                   continue;
 
                nir_variable *var = nir_deref_instr_get_variable(deref);
@@ -295,20 +303,19 @@ lower_io_arrays_to_elements(nir_shader *shader, nir_variable_mode mask,
                if (var->data.compact)
                   continue;
 
+               /* Per-view variables are expected to remain arrays. */
+               if (var->data.per_view)
+                  continue;
+
                /* Skip indirects */
-               uint64_t loc_mask = ((uint64_t)1) << var->data.location;
-               if (var->data.patch) {
-                  if (patch_indirects[var->data.location_frac] & loc_mask)
-                     continue;
-               } else {
-                  if (indirects[var->data.location_frac] & loc_mask)
-                     continue;
-               }
+               int loc = var->data.location * 4 + var->data.location_frac;
+               if (BITSET_TEST(indirects, loc))
+                  continue;
 
                nir_variable_mode mode = var->data.mode;
 
                const struct glsl_type *type = var->type;
-               if (nir_is_per_vertex_io(var, b.shader->info.stage)) {
+               if (nir_is_arrayed_io(var, b.shader->info.stage)) {
                   assert(glsl_type_is_array(type));
                   type = glsl_get_array_element(type);
                }
@@ -337,6 +344,7 @@ lower_io_arrays_to_elements(nir_shader *shader, nir_variable_mode mask,
                case nir_intrinsic_interp_deref_at_centroid:
                case nir_intrinsic_interp_deref_at_sample:
                case nir_intrinsic_interp_deref_at_offset:
+               case nir_intrinsic_interp_deref_at_vertex:
                case nir_intrinsic_load_deref:
                case nir_intrinsic_store_deref:
                   if ((mask & nir_var_shader_in && mode == nir_var_shader_in) ||
@@ -359,14 +367,14 @@ nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
    struct hash_table *split_inputs = _mesa_pointer_hash_table_create(NULL);
    struct hash_table *split_outputs = _mesa_pointer_hash_table_create(NULL);
 
-   uint64_t indirects[4] = {0}, patch_indirects[4] = {0};
+   BITSET_DECLARE(indirects, 4 * VARYING_SLOT_TESS_MAX) = {0};
 
-   lower_io_arrays_to_elements(shader, nir_var_shader_out, indirects,
-                               patch_indirects, split_outputs, true);
+   lower_io_arrays_to_elements(shader, nir_var_shader_out,
+                               indirects, split_outputs, true);
 
    if (!outputs_only) {
-      lower_io_arrays_to_elements(shader, nir_var_shader_in, indirects,
-                                  patch_indirects, split_inputs, true);
+      lower_io_arrays_to_elements(shader, nir_var_shader_in,
+                                  indirects, split_inputs, true);
 
       /* Remove old input from the shaders inputs list */
       hash_table_foreach(split_inputs, entry) {
@@ -397,17 +405,16 @@ nir_lower_io_arrays_to_elements(nir_shader *producer, nir_shader *consumer)
    struct hash_table *split_inputs = _mesa_pointer_hash_table_create(NULL);
    struct hash_table *split_outputs = _mesa_pointer_hash_table_create(NULL);
 
-   uint64_t indirects[4] = {0}, patch_indirects[4] = {0};
-   create_indirects_mask(producer, indirects, patch_indirects,
-                         nir_var_shader_out);
-   create_indirects_mask(consumer, indirects, patch_indirects,
-                         nir_var_shader_in);
+   BITSET_DECLARE(indirects, 4 * VARYING_SLOT_TESS_MAX) = {0};
 
-   lower_io_arrays_to_elements(producer, nir_var_shader_out, indirects,
-                               patch_indirects, split_outputs, false);
+   create_indirects_mask(producer, indirects, nir_var_shader_out);
+   create_indirects_mask(consumer, indirects, nir_var_shader_in);
 
-   lower_io_arrays_to_elements(consumer, nir_var_shader_in, indirects,
-                               patch_indirects, split_inputs, false);
+   lower_io_arrays_to_elements(producer, nir_var_shader_out,
+                               indirects, split_outputs, false);
+
+   lower_io_arrays_to_elements(consumer, nir_var_shader_in,
+                               indirects, split_inputs, false);
 
    /* Remove old input from the shaders inputs list */
    hash_table_foreach(split_inputs, entry) {

@@ -222,6 +222,8 @@ void GLAPIENTRY
 _mesa_GetnUniformdvARB(GLuint, GLint, GLsizei, GLdouble *);
 void GLAPIENTRY
 _mesa_GetUniformdv(GLuint, GLint, GLdouble *);
+GLint
+_mesa_GetUniformLocation_impl(GLuint, const GLcharARB *, bool glthread);
 GLint GLAPIENTRY
 _mesa_GetUniformLocation(GLuint, const GLcharARB *);
 GLint GLAPIENTRY
@@ -271,6 +273,10 @@ void GLAPIENTRY
 _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
 			   GLsizei bufSize, GLsizei *length,
 			   GLchar *uniformName);
+void
+_mesa_GetActiveUniform_impl(GLuint, GLuint, GLsizei, GLsizei *,
+                            GLint *, GLenum *, GLcharARB *,
+                            bool glthread);
 void GLAPIENTRY
 _mesa_GetActiveUniform(GLuint, GLuint, GLsizei, GLsizei *,
                        GLint *, GLenum *, GLcharARB *);

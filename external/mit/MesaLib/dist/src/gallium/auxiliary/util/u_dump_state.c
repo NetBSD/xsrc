@@ -29,7 +29,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "tgsi/tgsi_dump.h"
 
 #include <inttypes.h>
@@ -48,7 +48,7 @@ util_stream_writef(FILE *stream, const char *format, ...)
    unsigned len;
    va_list ap;
    va_start(ap, format);
-   len = util_vsnprintf(buf, sizeof(buf), format, ap);
+   len = vsnprintf(buf, sizeof(buf), format, ap);
    va_end(ap);
    fwrite(buf, len, 1, stream);
 }
@@ -521,15 +521,11 @@ util_dump_depth_stencil_alpha_state(FILE *stream, const struct pipe_depth_stenci
 
    util_dump_struct_begin(stream, "pipe_depth_stencil_alpha_state");
 
-   util_dump_member_begin(stream, "depth");
-   util_dump_struct_begin(stream, "pipe_depth_state");
-   util_dump_member(stream, bool, &state->depth, enabled);
-   if (state->depth.enabled) {
-      util_dump_member(stream, bool, &state->depth, writemask);
-      util_dump_member(stream, enum_func, &state->depth, func);
+   util_dump_member(stream, bool, state, depth_enabled);
+   if (state->depth_enabled) {
+      util_dump_member(stream, bool, state, depth_writemask);
+      util_dump_member(stream, enum_func, state, depth_func);
    }
-   util_dump_struct_end(stream);
-   util_dump_member_end(stream);
 
    util_dump_member_begin(stream, "stencil");
    util_dump_array_begin(stream);
@@ -554,15 +550,11 @@ util_dump_depth_stencil_alpha_state(FILE *stream, const struct pipe_depth_stenci
    util_dump_array_end(stream);
    util_dump_member_end(stream);
 
-   util_dump_member_begin(stream, "alpha");
-   util_dump_struct_begin(stream, "pipe_alpha_state");
-   util_dump_member(stream, bool, &state->alpha, enabled);
-   if (state->alpha.enabled) {
-      util_dump_member(stream, enum_func, &state->alpha, func);
-      util_dump_member(stream, float, &state->alpha, ref_value);
+   util_dump_member(stream, bool, state, alpha_enabled);
+   if (state->alpha_enabled) {
+      util_dump_member(stream, enum_func, state, alpha_func);
+      util_dump_member(stream, float, state, alpha_ref_value);
    }
-   util_dump_struct_end(stream);
-   util_dump_member_end(stream);
 
    util_dump_struct_end(stream);
 }
@@ -603,6 +595,7 @@ util_dump_blend_state(FILE *stream, const struct pipe_blend_state *state)
    util_dump_member(stream, bool, state, dither);
    util_dump_member(stream, bool, state, alpha_to_coverage);
    util_dump_member(stream, bool, state, alpha_to_one);
+   util_dump_member(stream, uint, state, max_rt);
 
    util_dump_member(stream, bool, state, logicop_enable);
    if (state->logicop_enable) {
@@ -613,7 +606,7 @@ util_dump_blend_state(FILE *stream, const struct pipe_blend_state *state)
 
       util_dump_member_begin(stream, "rt");
       if (state->independent_blend_enable)
-         valid_entries = PIPE_MAX_COLOR_BUFS;
+         valid_entries = state->max_rt + 1;
       util_dump_struct_array(stream, rt_blend_state, state->rt, valid_entries);
       util_dump_member_end(stream);
    }
@@ -916,17 +909,10 @@ util_dump_draw_info(FILE *stream, const struct pipe_draw_info *state)
    util_dump_member(stream, uint, state, has_user_indices);
 
    util_dump_member(stream, enum_prim_mode, state, mode);
-   util_dump_member(stream, uint, state, start);
-   util_dump_member(stream, uint, state, count);
 
    util_dump_member(stream, uint, state, start_instance);
    util_dump_member(stream, uint, state, instance_count);
 
-   util_dump_member(stream, uint, state, drawid);
-
-   util_dump_member(stream, uint, state, vertices_per_patch);
-
-   util_dump_member(stream, int,  state, index_bias);
    util_dump_member(stream, uint, state, min_index);
    util_dump_member(stream, uint, state, max_index);
 
@@ -940,19 +926,36 @@ util_dump_draw_info(FILE *stream, const struct pipe_draw_info *state)
       else
          util_dump_member(stream, ptr, state, index.resource);
    }
-   util_dump_member(stream, ptr, state, count_from_stream_output);
+   util_dump_struct_end(stream);
+}
 
-   if (!state->indirect) {
-      util_dump_member(stream, ptr, state, indirect);
-   } else {
-      util_dump_member(stream, uint, state, indirect->offset);
-      util_dump_member(stream, uint, state, indirect->stride);
-      util_dump_member(stream, uint, state, indirect->draw_count);
-      util_dump_member(stream, uint, state, indirect->indirect_draw_count_offset);
-      util_dump_member(stream, ptr, state, indirect->buffer);
-      util_dump_member(stream, ptr, state, indirect->indirect_draw_count);
+void
+util_dump_draw_start_count_bias(FILE *stream, const struct pipe_draw_start_count_bias *state)
+{
+   util_dump_struct_begin(stream, "pipe_draw_start_count_bias");
+   util_dump_member(stream, uint, state, start);
+   util_dump_member(stream, uint, state, count);
+   util_dump_member(stream, int,  state, index_bias);
+   util_dump_struct_end(stream);
+}
+
+void
+util_dump_draw_indirect_info(FILE *stream,
+                             const struct pipe_draw_indirect_info *state)
+{
+   if (!state) {
+      util_dump_null(stream);
+      return;
    }
 
+   util_dump_struct_begin(stream, "pipe_draw_indirect_info");
+   util_dump_member(stream, uint, state, offset);
+   util_dump_member(stream, uint, state, stride);
+   util_dump_member(stream, uint, state, draw_count);
+   util_dump_member(stream, uint, state, indirect_draw_count_offset);
+   util_dump_member(stream, ptr, state, buffer);
+   util_dump_member(stream, ptr, state, indirect_draw_count);
+   util_dump_member(stream, ptr, state, count_from_stream_output);
    util_dump_struct_end(stream);
 }
 

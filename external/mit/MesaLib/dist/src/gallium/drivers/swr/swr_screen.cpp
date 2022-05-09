@@ -31,14 +31,14 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_cpu_detect.h"
-#include "util/u_format_s3tc.h"
+#include "util/format/u_format_s3tc.h"
 #include "util/u_string.h"
 #include "util/u_screen.h"
 
-#include "state_tracker/sw_winsys.h"
+#include "frontend/sw_winsys.h"
 
 #include "jit_api.h"
 
@@ -52,7 +52,9 @@
  * XXX Check max texture size values against core and sampler.
  */
 #define SWR_MAX_TEXTURE_SIZE (2 * 1024 * 1024 * 1024ULL) /* 2GB */
-#define SWR_MAX_TEXTURE_2D_LEVELS 14  /* 8K x 8K for now */
+/* Not all texture formats can fit into 2GB limit, but we have to
+   live with that. See lp_limits.h for more details */
+#define SWR_MAX_TEXTURE_2D_SIZE 16384
 #define SWR_MAX_TEXTURE_3D_LEVELS 12  /* 2K x 2K x 2K for now */
 #define SWR_MAX_TEXTURE_CUBE_LEVELS 14  /* 8K x 8K for now */
 #define SWR_MAX_TEXTURE_ARRAY_LAYERS 512 /* 8K x 512 / 8K x 8K x 512 */
@@ -69,9 +71,8 @@ static const char *
 swr_get_name(struct pipe_screen *screen)
 {
    static char buf[100];
-   util_snprintf(buf, sizeof(buf), "SWR (LLVM %u.%u, %u bits)",
-                 HAVE_LLVM >> 8, HAVE_LLVM & 0xff,
-                 lp_native_vector_width );
+   snprintf(buf, sizeof(buf), "SWR (LLVM " MESA_LLVM_VERSION_STRING ", %u bits)",
+            lp_native_vector_width);
    return buf;
 }
 
@@ -81,7 +82,7 @@ swr_get_vendor(struct pipe_screen *screen)
    return "Intel Corporation";
 }
 
-static boolean
+static bool
 swr_is_format_supported(struct pipe_screen *_screen,
                         enum pipe_format format,
                         enum pipe_texture_target target,
@@ -107,49 +108,71 @@ swr_is_format_supported(struct pipe_screen *_screen,
 
    format_desc = util_format_description(format);
    if (!format_desc)
-      return FALSE;
+      return false;
 
    if ((sample_count > screen->msaa_max_count)
       || !util_is_power_of_two_or_zero(sample_count))
-      return FALSE;
+      return false;
 
    if (bind & PIPE_BIND_DISPLAY_TARGET) {
       if (!winsys->is_displaytarget_format_supported(winsys, bind, format))
-         return FALSE;
+         return false;
    }
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
       if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
-         return FALSE;
+         return false;
 
       if (mesa_to_swr_format(format) == (SWR_FORMAT)-1)
-         return FALSE;
+         return false;
 
       /*
        * Although possible, it is unnatural to render into compressed or YUV
        * surfaces. So disable these here to avoid going into weird paths
-       * inside the state trackers.
+       * inside gallium frontends.
        */
       if (format_desc->block.width != 1 || format_desc->block.height != 1)
-         return FALSE;
+         return false;
    }
 
    if (bind & PIPE_BIND_DEPTH_STENCIL) {
       if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-         return FALSE;
+         return false;
 
       if (mesa_to_swr_format(format) == (SWR_FORMAT)-1)
-         return FALSE;
+         return false;
    }
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_BPTC ||
-       format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC) {
-      return FALSE;
+   if (bind & PIPE_BIND_VERTEX_BUFFER) {
+      if (mesa_to_swr_format(format) == (SWR_FORMAT)-1) {
+         return false;
+      }
+   }
+
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC ||
+       format_desc->layout == UTIL_FORMAT_LAYOUT_FXT1)
+   {
+      return false;
    }
 
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_ETC &&
        format != PIPE_FORMAT_ETC1_RGB8) {
-      return FALSE;
+      return false;
+   }
+
+   if ((bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW)) &&
+       ((bind & PIPE_BIND_DISPLAY_TARGET) == 0)) {
+      /* Disable all 3-channel formats, where channel size != 32 bits.
+       * In some cases we run into crashes (in generate_unswizzled_blend()),
+       * for 3-channel RGB16 variants, there was an apparent LLVM bug.
+       * In any case, disabling the shallower 3-channel formats avoids a
+       * number of issues with GL_ARB_copy_image support.
+       */
+      if (format_desc->is_array &&
+          format_desc->nr_channels == 3 &&
+          format_desc->block.bits != 96) {
+         return false;
+      }
    }
 
    return TRUE;
@@ -162,8 +185,8 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
       /* limits */
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return PIPE_MAX_COLOR_BUFS;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return SWR_MAX_TEXTURE_2D_LEVELS;
+   case PIPE_CAP_MAX_TEXTURE_2D_SIZE:
+      return SWR_MAX_TEXTURE_2D_SIZE;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return SWR_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
@@ -177,15 +200,19 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
       return 1024;
    case PIPE_CAP_MAX_VERTEX_STREAMS:
-      return 1;
+      return 4;
    case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
       return 2048;
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
       return SWR_MAX_TEXTURE_ARRAY_LAYERS;
+   case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MIN_TEXEL_OFFSET:
       return -8;
+   case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
       return 7;
+   case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
+      return 4;
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return 330;
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
@@ -197,21 +224,19 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
       return 65536;
    case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
-      return 0;
-   case PIPE_CAP_MAX_VIEWPORTS:
       return 1;
+   case PIPE_CAP_MAX_VIEWPORTS:
+      return KNOB_NUM_VIEWPORTS_SCISSORS;
    case PIPE_CAP_ENDIANNESS:
       return PIPE_ENDIAN_NATIVE;
-   case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
-   case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
-   case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
-      return 0;
 
       /* supported features */
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
    case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
-   case PIPE_CAP_SM3:
+   case PIPE_CAP_FRAGMENT_SHADER_TEXTURE_LOD:
+   case PIPE_CAP_FRAGMENT_SHADER_DERIVATIVES:
+   case PIPE_CAP_VERTEX_SHADER_SATURATE:
    case PIPE_CAP_POINT_SPRITE:
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
    case PIPE_CAP_OCCLUSION_QUERY:
@@ -228,6 +253,7 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
    case PIPE_CAP_PRIMITIVE_RESTART:
+   case PIPE_CAP_PRIMITIVE_RESTART_FIXED_INDEX:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_START_INSTANCE:
@@ -254,7 +280,15 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_CULL_DISTANCE:
    case PIPE_CAP_CUBE_MAP_ARRAY:
    case PIPE_CAP_DOUBLES:
+   case PIPE_CAP_TEXTURE_QUERY_LOD:
+   case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
+   case PIPE_CAP_TGSI_TG4_COMPONENT_IN_SWIZZLE:
+   case PIPE_CAP_QUERY_SO_OVERFLOW:
+   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
       return 1;
+
+   case PIPE_CAP_SHAREABLE_SHADERS:
+      return 0;
 
    /* MSAA support
     * If user has explicitly set max_sample_count = 1 (via SWR_MSAA_MAX_COUNT)
@@ -272,100 +306,12 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
 
       /* unsupported features */
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-   case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
-   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
-   case PIPE_CAP_SHADER_STENCIL_EXPORT:
-   case PIPE_CAP_TEXTURE_BARRIER:
-   case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
-   case PIPE_CAP_VERTEX_COLOR_CLAMPED:
-   case PIPE_CAP_COMPUTE:
-   case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
-   case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
-   case PIPE_CAP_TGSI_TEXCOORD:
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
-   case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
-   case PIPE_CAP_TEXTURE_GATHER_SM5:
-   case PIPE_CAP_TEXTURE_QUERY_LOD:
-   case PIPE_CAP_SAMPLE_SHADING:
-   case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
-   case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
-   case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
-   case PIPE_CAP_SAMPLER_VIEW_TARGET:
-   case PIPE_CAP_VERTEXID_NOBASE:
-   case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
-   case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
-   case PIPE_CAP_MAX_SHADER_PATCH_VARYINGS:
-   case PIPE_CAP_TGSI_TXQS:
-   case PIPE_CAP_FORCE_PERSAMPLE_INTERP:
-   case PIPE_CAP_SHAREABLE_SHADERS:
-   case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
-   case PIPE_CAP_DRAW_PARAMETERS:
-   case PIPE_CAP_TGSI_PACK_HALF_FLOAT:
-   case PIPE_CAP_MULTI_DRAW_INDIRECT:
-   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
-   case PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL:
-   case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
-   case PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT:
-   case PIPE_CAP_INVALIDATE_BUFFER:
-   case PIPE_CAP_GENERATE_MIPMAP:
-   case PIPE_CAP_STRING_MARKER:
-   case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
-   case PIPE_CAP_SURFACE_REINTERPRET_BLOCKS:
-   case PIPE_CAP_QUERY_BUFFER_OBJECT:
-   case PIPE_CAP_QUERY_MEMORY_INFO:
-   case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
    case PIPE_CAP_PCI_GROUP:
    case PIPE_CAP_PCI_BUS:
    case PIPE_CAP_PCI_DEVICE:
    case PIPE_CAP_PCI_FUNCTION:
-   case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
-   case PIPE_CAP_PRIMITIVE_RESTART_FOR_PATCHES:
-   case PIPE_CAP_TGSI_VOTE:
-   case PIPE_CAP_MAX_WINDOW_RECTANGLES:
-   case PIPE_CAP_POLYGON_OFFSET_UNITS_UNSCALED:
-   case PIPE_CAP_VIEWPORT_SUBPIXEL_BITS:
-   case PIPE_CAP_TGSI_ARRAY_COMPONENTS:
-   case PIPE_CAP_TGSI_CAN_READ_OUTPUTS:
-   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-   case PIPE_CAP_NATIVE_FENCE_FD:
    case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
-   case PIPE_CAP_TGSI_FS_FBFETCH:
-   case PIPE_CAP_TGSI_MUL_ZERO_WINS:
-   case PIPE_CAP_INT64:
-   case PIPE_CAP_INT64_DIVMOD:
-   case PIPE_CAP_TGSI_TEX_TXF_LZ:
-   case PIPE_CAP_TGSI_CLOCK:
-   case PIPE_CAP_POLYGON_MODE_FILL_RECTANGLE:
-   case PIPE_CAP_SPARSE_BUFFER_PAGE_SIZE:
-   case PIPE_CAP_TGSI_BALLOT:
-   case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
-   case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
-   case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
-   case PIPE_CAP_POST_DEPTH_COVERAGE:
-   case PIPE_CAP_BINDLESS_TEXTURE:
-   case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
-   case PIPE_CAP_QUERY_SO_OVERFLOW:
-   case PIPE_CAP_MEMOBJ:
-   case PIPE_CAP_LOAD_CONSTBUF:
-   case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
-   case PIPE_CAP_TILE_RASTER_ORDER:
-   case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
-   case PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS:
-   case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
-   case PIPE_CAP_CONTEXT_PRIORITY_MASK:
-   case PIPE_CAP_FENCE_SIGNAL:
-   case PIPE_CAP_CONSTBUF0_FLAGS:
-   case PIPE_CAP_PACKED_UNIFORMS:
-   case PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_TRIANGLES:
-   case PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_POINTS_LINES:
-   case PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_TRIANGLES:
-   case PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_POINTS_LINES:
-   case PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE:
-   case PIPE_CAP_MAX_CONSERVATIVE_RASTER_SUBPIXEL_PRECISION_BIAS:
-   case PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS:
-   case PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET:
-   case PIPE_CAP_IMAGE_LOAD_FORMATTED:
       return 0;
    case PIPE_CAP_MAX_GS_INVOCATIONS:
       return 32;
@@ -399,13 +345,19 @@ swr_get_shader_param(struct pipe_screen *screen,
                      enum pipe_shader_type shader,
                      enum pipe_shader_cap param)
 {
-   if (shader == PIPE_SHADER_VERTEX ||
-       shader == PIPE_SHADER_FRAGMENT ||
-       shader == PIPE_SHADER_GEOMETRY)
-      return gallivm_get_shader_param(param);
+   if (shader != PIPE_SHADER_VERTEX &&
+       shader != PIPE_SHADER_FRAGMENT &&
+       shader != PIPE_SHADER_GEOMETRY &&
+       shader != PIPE_SHADER_TESS_CTRL &&
+       shader != PIPE_SHADER_TESS_EVAL)
+      return 0;
 
-   // Todo: tesselation, compute
-   return 0;
+   if (param == PIPE_SHADER_CAP_MAX_SHADER_BUFFERS ||
+       param == PIPE_SHADER_CAP_MAX_SHADER_IMAGES) {
+      return 0;
+   }
+
+   return gallivm_get_shader_param(param);
 }
 
 
@@ -653,7 +605,7 @@ mesa_to_swr_format(enum pipe_format format)
       return it->second;
 }
 
-static boolean
+static bool
 swr_displaytarget_layout(struct swr_screen *screen, struct swr_resource *res)
 {
    struct sw_winsys *winsys = screen->winsys;
@@ -671,7 +623,7 @@ swr_displaytarget_layout(struct swr_screen *screen, struct swr_resource *res)
                                      &stride);
 
    if (dt == NULL)
-      return FALSE;
+      return false;
 
    void *map = winsys->displaytarget_map(winsys, dt, 0);
 
@@ -684,13 +636,13 @@ swr_displaytarget_layout(struct swr_screen *screen, struct swr_resource *res)
 
    winsys->displaytarget_unmap(winsys, dt);
 
-   return TRUE;
+   return true;
 }
 
 static bool
 swr_texture_layout(struct swr_screen *screen,
                    struct swr_resource *res,
-                   boolean allocate)
+                   bool allocate)
 {
    struct pipe_resource *pt = &res->base;
 
@@ -763,7 +715,7 @@ swr_texture_layout(struct swr_screen *screen,
        * surface sample count. */
       if (screen->msaa_force_enable) {
          res->swr.numSamples = screen->msaa_max_count;
-         fprintf(stderr,"swr_texture_layout: forcing sample count: %d\n",
+         swr_print_info("swr_texture_layout: forcing sample count: %d\n",
                  res->swr.numSamples);
       }
    } else {
@@ -880,7 +832,7 @@ swr_texture_layout(struct swr_screen *screen,
    return true;
 }
 
-static boolean
+static bool
 swr_can_create_resource(struct pipe_screen *screen,
                         const struct pipe_resource *templat)
 {
@@ -892,7 +844,7 @@ swr_can_create_resource(struct pipe_screen *screen,
 
 /* Helper function that conditionally creates a single-sample resolve resource
  * and attaches it to main multisample resource. */
-static boolean
+static bool
 swr_create_resolve_resource(struct pipe_screen *_screen,
                             struct swr_resource *msaa_res)
 {
@@ -1041,6 +993,7 @@ swr_resource_destroy(struct pipe_screen *p_screen, struct pipe_resource *pt)
 
 static void
 swr_flush_frontbuffer(struct pipe_screen *p_screen,
+                      struct pipe_context *pipe,
                       struct pipe_resource *resource,
                       unsigned level,
                       unsigned layer,
@@ -1050,7 +1003,6 @@ swr_flush_frontbuffer(struct pipe_screen *p_screen,
    struct swr_screen *screen = swr_screen(p_screen);
    struct sw_winsys *winsys = screen->winsys;
    struct swr_resource *spr = swr_resource(resource);
-   struct pipe_context *pipe = screen->pipe;
    struct swr_context *ctx = swr_context(pipe);
 
    if (pipe) {
@@ -1067,7 +1019,7 @@ swr_flush_frontbuffer(struct pipe_screen *p_screen,
       SWR_SURFACE_STATE *resolve = &swr_resource(resolve_target)->swr;
 
       void *map = winsys->displaytarget_map(winsys, spr->display_target,
-                                            PIPE_TRANSFER_WRITE);
+                                            PIPE_MAP_WRITE);
       memcpy(map, (void*)(resolve->xpBaseAddress), resolve->pitch * resolve->height);
       winsys->displaytarget_unmap(winsys, spr->display_target);
    }
@@ -1103,7 +1055,7 @@ swr_destroy_screen(struct pipe_screen *p_screen)
    struct swr_screen *screen = swr_screen(p_screen);
    struct sw_winsys *winsys = screen->winsys;
 
-   fprintf(stderr, "SWR destroy screen!\n");
+   swr_print_info("SWR destroy screen!\n");
 
    if (winsys->destroy)
       winsys->destroy(winsys);
@@ -1137,12 +1089,11 @@ swr_validate_env_options(struct swr_screen *screen)
          fprintf(stderr, "must be power of 2 between 1 and %d" \
                          " (or 1 to disable msaa)\n",
                SWR_MAX_NUM_MULTISAMPLES);
+         fprintf(stderr, "(msaa disabled)\n");
          msaa_max_count = 1;
       }
 
-      fprintf(stderr, "SWR_MSAA_MAX_COUNT: %d\n", msaa_max_count);
-      if (msaa_max_count == 1)
-         fprintf(stderr, "(msaa disabled)\n");
+      swr_print_info("SWR_MSAA_MAX_COUNT: %d\n", msaa_max_count);
 
       screen->msaa_max_count = msaa_max_count;
    }
@@ -1150,7 +1101,7 @@ swr_validate_env_options(struct swr_screen *screen)
    screen->msaa_force_enable = debug_get_bool_option(
          "SWR_MSAA_FORCE_ENABLE", false);
    if (screen->msaa_force_enable)
-      fprintf(stderr, "SWR_MSAA_FORCE_ENABLE: true\n");
+      swr_print_info("SWR_MSAA_FORCE_ENABLE: true\n");
 }
 
 
@@ -1193,4 +1144,3 @@ swr_create_screen_internal(struct sw_winsys *winsys)
 
    return &screen->base;
 }
-

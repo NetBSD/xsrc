@@ -88,9 +88,8 @@ init_perf_monitor(struct gl_context *ctx, struct gl_perf_monitor_object *m)
    for (gid = 0; gid < ctx->PerfMonitor.NumGroups; gid++) {
       const struct gl_perf_monitor_group *g = &ctx->PerfMonitor.Groups[gid];
       const struct st_perf_monitor_group *stg = &st->perfmon[gid];
-      BITSET_WORD tmp;
 
-      BITSET_FOREACH_SET(cid, tmp, m->ActiveCounters[gid], g->NumCounters) {
+      BITSET_FOREACH_SET(cid, m->ActiveCounters[gid], g->NumCounters) {
          const struct st_perf_monitor_counter *stc = &stg->counters[cid];
          struct st_perf_counter_object *cntr =
             &stm->active_counters[stm->num_active_counters];
@@ -332,7 +331,7 @@ st_GetPerfMonitorResult(struct gl_context *ctx,
 bool
 st_have_perfmon(struct st_context *st)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_screen *screen = st->screen;
 
    if (!screen->get_driver_query_info || !screen->get_driver_query_group_info)
       return false;
@@ -344,8 +343,8 @@ static void
 st_InitPerfMonitorGroups(struct gl_context *ctx)
 {
    struct st_context *st = st_context(ctx);
-   struct gl_perf_monitor_state *perfmon = &st->ctx->PerfMonitor;
-   struct pipe_screen *screen = st->pipe->screen;
+   struct gl_perf_monitor_state *perfmon = &ctx->PerfMonitor;
+   struct pipe_screen *screen = st->screen;
    struct gl_perf_monitor_group *groups = NULL;
    struct st_perf_monitor_group *stgroups = NULL;
    int num_counters, num_groups;
@@ -405,17 +404,17 @@ st_InitPerfMonitorGroups(struct gl_context *ctx)
             case PIPE_DRIVER_QUERY_TYPE_MICROSECONDS:
             case PIPE_DRIVER_QUERY_TYPE_HZ:
                c->Minimum.u64 = 0;
-               c->Maximum.u64 = info.max_value.u64 ? info.max_value.u64 : -1;
+               c->Maximum.u64 = info.max_value.u64 ? info.max_value.u64 : UINT64_MAX;
                c->Type = GL_UNSIGNED_INT64_AMD;
                break;
             case PIPE_DRIVER_QUERY_TYPE_UINT:
                c->Minimum.u32 = 0;
-               c->Maximum.u32 = info.max_value.u32 ? info.max_value.u32 : -1;
+               c->Maximum.u32 = info.max_value.u32 ? info.max_value.u32 : UINT32_MAX;
                c->Type = GL_UNSIGNED_INT;
                break;
             case PIPE_DRIVER_QUERY_TYPE_FLOAT:
                c->Minimum.f = 0.0;
-               c->Maximum.f = info.max_value.f ? info.max_value.f : -1;
+               c->Maximum.f = info.max_value.f ? info.max_value.f : FLT_MAX;
                c->Type = GL_FLOAT;
                break;
             case PIPE_DRIVER_QUERY_TYPE_PERCENTAGE:

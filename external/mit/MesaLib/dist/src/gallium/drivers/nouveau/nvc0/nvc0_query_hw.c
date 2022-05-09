@@ -138,7 +138,7 @@ nvc0_hw_query_write_compute_invocations(struct nvc0_context *nvc0,
    PUSH_DATA (push, hq->bo->offset + hq->offset + offset);
 }
 
-static boolean
+static bool
 nvc0_hw_begin_query(struct nvc0_context *nvc0, struct nvc0_query *q)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
@@ -149,7 +149,7 @@ nvc0_hw_begin_query(struct nvc0_context *nvc0, struct nvc0_query *q)
       return hq->funcs->begin_query(nvc0, hq);
 
    /* For occlusion queries we have to change the storage, because a previous
-    * query might set the initial render conition to false even *after* we re-
+    * query might set the initial render condition to false even *after* we re-
     * initialized it to true.
     */
    if (hq->rotate) {
@@ -304,9 +304,9 @@ nvc0_hw_end_query(struct nvc0_context *nvc0, struct nvc0_query *q)
       nouveau_fence_ref(nvc0->screen->base.fence.current, &hq->fence);
 }
 
-static boolean
+static bool
 nvc0_hw_get_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
-                         boolean wait, union pipe_query_result *result)
+                         bool wait, union pipe_query_result *result)
 {
    struct nvc0_hw_query *hq = nvc0_hw_query(q);
    uint64_t *res64 = (uint64_t*)result;
@@ -387,7 +387,7 @@ nvc0_hw_get_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
 static void
 nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
                                   struct nvc0_query *q,
-                                  boolean wait,
+                                  bool wait,
                                   enum pipe_query_value_type result_type,
                                   int index,
                                   struct pipe_resource *resource,
@@ -409,7 +409,7 @@ nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
                          result_type >= PIPE_QUERY_TYPE_I64 ? 2 : 1,
                          ready);
 
-      util_range_add(&buf->valid_buffer_range, offset,
+      util_range_add(&buf->base, &buf->valid_buffer_range, offset,
                      offset + (result_type >= PIPE_QUERY_TYPE_I64 ? 8 : 4));
 
       nvc0_resource_validate(buf, NOUVEAU_BO_WR);
@@ -435,7 +435,7 @@ nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
    if (wait && hq->state != NVC0_HW_QUERY_STATE_READY)
       nvc0_hw_query_fifo_wait(nvc0, q);
 
-   nouveau_pushbuf_space(push, 32, 2, 0);
+   nouveau_pushbuf_space(push, 32, 2, 3);
    PUSH_REFN (push, hq->bo, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
    PUSH_REFN (push, buf->bo, buf->domain | NOUVEAU_BO_WR);
    BEGIN_1IC0(push, NVC0_3D(MACRO_QUERY_BUFFER_WRITE), 9);
@@ -466,7 +466,7 @@ nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
    case PIPE_QUERY_TIME_ELAPSED:
    case PIPE_QUERY_TIMESTAMP:
       qoffset = 8;
-      /* fallthrough */
+      FALLTHROUGH;
    default:
       assert(index == 0);
       stride = 1;
@@ -508,7 +508,7 @@ nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
    PUSH_DATAh(push, buf->address + offset);
    PUSH_DATA (push, buf->address + offset);
 
-   util_range_add(&buf->valid_buffer_range, offset,
+   util_range_add(&buf->base, &buf->valid_buffer_range, offset,
                   offset + (result_type >= PIPE_QUERY_TYPE_I64 ? 8 : 4));
 
    nvc0_resource_validate(buf, NOUVEAU_BO_WR);

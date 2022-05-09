@@ -30,7 +30,7 @@ Target *getTargetNVC0(unsigned int chipset)
 }
 
 TargetNVC0::TargetNVC0(unsigned int card) :
-   Target(card < 0x110, false, card >= 0xe4)
+   Target(card < 0x110, false, card >= 0xe4 && card < 0x140)
 {
    chipset = card;
    initOpInfo();
@@ -54,7 +54,7 @@ TargetNVC0::getBuiltinCode(const uint32_t **code, uint32_t *size) const
          *size = sizeof(gk104_builtin_code);
          break;
       }
-      /* fall-through for GK20A */
+      FALLTHROUGH; /* for GK20A */
    case 0xf0:
    case 0x100:
       *code = (const uint32_t *)&gk110_builtin_code[0];
@@ -76,7 +76,7 @@ TargetNVC0::getBuiltinOffset(int builtin) const
    case 0xe0:
       if (chipset < NVISA_GK20A_CHIPSET)
          return gk104_builtin_offsets[builtin];
-      /* fall-through for GK20A */
+      FALLTHROUGH; /* for GK20A */
    case 0xf0:
    case 0x100:
       return gk110_builtin_offsets[builtin];
@@ -85,7 +85,7 @@ TargetNVC0::getBuiltinOffset(int builtin) const
    }
 }
 
-struct opProperties
+struct nvc0_opProperties
 {
    operation op;
    unsigned int mNeg   : 4;
@@ -96,7 +96,7 @@ struct opProperties
    unsigned int fImmd  : 4; // last bit indicates if full immediate is suppoted
 };
 
-static const struct opProperties _initProps[] =
+static const struct nvc0_opProperties _initProps[] =
 {
    //           neg  abs  not  sat  c[]  imm
    { OP_ADD,    0x3, 0x3, 0x0, 0x8, 0x2, 0x2 | 0x8 },
@@ -146,7 +146,7 @@ static const struct opProperties _initProps[] =
    { OP_PINTERP, 0x0, 0x0, 0x0, 0x8, 0x0, 0x0 },
 };
 
-static const struct opProperties _initPropsNVE4[] = {
+static const struct nvc0_opProperties _initPropsNVE4[] = {
    { OP_SULDB,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
    { OP_SUSTB,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
    { OP_SUSTP,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
@@ -155,7 +155,7 @@ static const struct opProperties _initPropsNVE4[] = {
    { OP_SUEAU,   0x0, 0x0, 0x0, 0x0, 0x6, 0x2 }
 };
 
-static const struct opProperties _initPropsGM107[] = {
+static const struct nvc0_opProperties _initPropsGM107[] = {
    { OP_SULDB,   0x0, 0x0, 0x0, 0x0, 0x0, 0x2 },
    { OP_SULDP,   0x0, 0x0, 0x0, 0x0, 0x0, 0x2 },
    { OP_SUSTB,   0x0, 0x0, 0x0, 0x0, 0x0, 0x4 },
@@ -165,10 +165,10 @@ static const struct opProperties _initPropsGM107[] = {
    { OP_XMAD,    0x0, 0x0, 0x0, 0x0, 0x6, 0x2 },
 };
 
-void TargetNVC0::initProps(const struct opProperties *props, int size)
+void TargetNVC0::initProps(const struct nvc0_opProperties *props, int size)
 {
    for (int i = 0; i < size; ++i) {
-      const struct opProperties *prop = &props[i];
+      const struct nvc0_opProperties *prop = &props[i];
 
       for (int s = 0; s < 3; ++s) {
          if (prop->mNeg & (1 << s))
@@ -267,12 +267,14 @@ TargetNVC0::getFileSize(DataFile file) const
 {
    const unsigned int gprs = (chipset >= NVISA_GK20A_CHIPSET) ? 255 : 63;
    const unsigned int smregs = (chipset >= NVISA_GK104_CHIPSET) ? 65536 : 32768;
+   const unsigned int bs = (chipset >= NVISA_GV100_CHIPSET) ? 16 : 0;
    switch (file) {
    case FILE_NULL:          return 0;
    case FILE_GPR:           return MIN2(gprs, smregs / threads);
    case FILE_PREDICATE:     return 7;
    case FILE_FLAGS:         return 1;
    case FILE_ADDRESS:       return 0;
+   case FILE_BARRIER:       return bs;
    case FILE_IMMEDIATE:     return 0;
    case FILE_MEMORY_CONST:  return 65536;
    case FILE_SHADER_INPUT:  return 0x400;
@@ -282,6 +284,7 @@ TargetNVC0::getFileSize(DataFile file) const
    case FILE_MEMORY_SHARED: return 16 << 10;
    case FILE_MEMORY_LOCAL:  return 48 << 10;
    case FILE_SYSTEM_VALUE:  return 32;
+   case FILE_THREAD_STATE:  return bs;
    default:
       assert(!"invalid file");
       return 0;
@@ -291,7 +294,8 @@ TargetNVC0::getFileSize(DataFile file) const
 unsigned int
 TargetNVC0::getFileUnit(DataFile file) const
 {
-   if (file == FILE_GPR || file == FILE_ADDRESS || file == FILE_SYSTEM_VALUE)
+   if (file == FILE_GPR || file == FILE_ADDRESS || file == FILE_SYSTEM_VALUE ||
+       file == FILE_BARRIER || file == FILE_THREAD_STATE)
       return 2;
    return 0;
 }
@@ -386,6 +390,12 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
          return false;
       }
    }
+
+   // only loads can do sub 4 byte addressing
+   if (sf == FILE_MEMORY_CONST &&
+       (ld->getSrc(0)->reg.data.offset & 0x3)
+       && i->op != OP_LOAD)
+      return false;
 
    // not all instructions support full 32 bit immediates
    if (sf == FILE_IMMEDIATE) {
@@ -573,7 +583,7 @@ int TargetNVC0::getLatency(const Instruction *i) const
       case OP_LOAD:
          if (i->src(0).getFile() == FILE_MEMORY_CONST)
             return 9;
-         // fall through
+         FALLTHROUGH;
       case OP_VFETCH:
          return 24;
       default:

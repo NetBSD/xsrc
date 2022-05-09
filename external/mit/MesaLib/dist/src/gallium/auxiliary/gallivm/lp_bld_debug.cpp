@@ -30,6 +30,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include <llvm/Config/llvm-config.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Disassembler.h>
 #include <llvm/Support/raw_ostream.h>
@@ -71,20 +72,11 @@ lp_check_alignment(const void *ptr, unsigned alignment)
 extern "C" void
 lp_debug_dump_value(LLVMValueRef value)
 {
-#if HAVE_LLVM >= 0x0304
    char *str = LLVMPrintValueToString(value);
    if (str) {
       os_log_message(str);
       LLVMDisposeMessage(str);
    }
-#elif defined(PIPE_OS_WINDOWS) || defined(PIPE_OS_EMBEDDED)
-   std::string str;
-   llvm::raw_string_ostream os(str);
-   llvm::unwrap(value)->print(os);
-   os_log_message(str.c_str());
-#else
-   LLVMDumpValue(value);
-#endif
 }
 
 
@@ -241,9 +233,9 @@ lp_profile(LLVMValueRef func, const void *code)
       if (getenv("PERF_BUILDID_DIR")) {
          pid_t pid = getpid();
          char filename[256];
-         util_snprintf(filename, sizeof filename, "/tmp/perf-%llu.map", (unsigned long long)pid);
+         snprintf(filename, sizeof filename, "/tmp/perf-%llu.map", (unsigned long long)pid);
          perf_map_file = fopen(filename, "wt");
-         util_snprintf(filename, sizeof filename, "/tmp/perf-%llu.map.asm", (unsigned long long)pid);
+         snprintf(filename, sizeof filename, "/tmp/perf-%llu.map.asm", (unsigned long long)pid);
          perf_asm_file.open(filename);
       }
       first_time = FALSE;

@@ -24,18 +24,21 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "util/os_file.h"
+
 #include "v3d_drm_public.h"
 
 #include "v3d/v3d_screen.h"
 
 struct pipe_screen *
-v3d_drm_screen_create(int fd)
+v3d_drm_screen_create(int fd, const struct pipe_screen_config *config)
 {
-	return v3d_screen_create(fcntl(fd, F_DUPFD_CLOEXEC, 3), NULL);
+   return v3d_screen_create(os_dupfd_cloexec(fd), config, NULL);
 }
 
 struct pipe_screen *
-v3d_drm_screen_create_renderonly(struct renderonly *ro)
+v3d_drm_screen_create_renderonly(struct renderonly *ro,
+                                 const struct pipe_screen_config *config)
 {
-	return v3d_screen_create(ro->gpu_fd, ro);
+   return v3d_screen_create(ro->gpu_fd, config, ro);
 }

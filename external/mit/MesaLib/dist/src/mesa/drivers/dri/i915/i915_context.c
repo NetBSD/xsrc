@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,15 +22,15 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "i915_context.h"
 #include "main/api_exec.h"
 #include "main/framebuffer.h"
 #include "main/extensions.h"
-#include "main/imports.h"
 #include "main/macros.h"
+#include "main/state.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
 #include "intel_chipset.h"
@@ -38,6 +38,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
+#include "util/u_memory.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -118,7 +119,7 @@ intel_init_texture_formats(struct gl_context *ctx)
    if (intel->gen == 3)
       ctx->TextureFormatSupported[MESA_FORMAT_A_UNORM8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_I_UNORM8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_L8A8_UNORM] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_LA_UNORM8] = true;
 
    /* Depth and stencil */
    if (intel->gen == 3) {
@@ -165,7 +166,7 @@ i915CreateContext(int api,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   struct i915_context *i915 = rzalloc(NULL, struct i915_context);
+   struct i915_context *i915 = align_calloc(sizeof(struct i915_context), 16);
    struct intel_context *intel = &i915->intel;
    struct gl_context *ctx = &intel->ctx;
 
@@ -182,7 +183,7 @@ i915CreateContext(int api,
                          mesaVis, driContextPriv,
                          sharedContextPrivate, &functions,
                          error)) {
-      ralloc_free(i915);
+      align_free(i915);
       return false;
    }
 
@@ -214,7 +215,7 @@ i915CreateContext(int api,
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:
     */
-   ctx->Const.MaxTextureLevels = 12;
+   ctx->Const.MaxTextureSize = 2048;
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
    ctx->Const.MaxTextureRectSize = (1 << 11);
@@ -256,6 +257,7 @@ i915CreateContext(int api,
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumInt;
 
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
+   _mesa_reset_vertex_processing_mode(ctx);
 
    /* FINISHME: Are there other options that should be enabled for software
     * FINISHME: vertex shaders?

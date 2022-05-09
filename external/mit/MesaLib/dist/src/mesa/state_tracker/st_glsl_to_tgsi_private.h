@@ -65,7 +65,7 @@ public:
    unsigned abs:1;
    enum glsl_base_type type:6; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
    unsigned has_index2:1;
-   gl_register_file file:5; /**< PROGRAM_* from Mesa */
+   gl_register_file file:6; /**< PROGRAM_* from Mesa */
    /*
     * Is this the second half of a double register pair?
     * currently used for input mapping only.
@@ -105,7 +105,7 @@ public:
 
    int32_t index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
    int16_t index2D;
-   gl_register_file file:5; /**< PROGRAM_* from Mesa */
+   gl_register_file file:6; /**< PROGRAM_* from Mesa */
    unsigned writemask:4; /**< Bitfield of WRITEMASK_[XYZW] */
    enum glsl_base_type type:6; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
    unsigned has_index2:1;
@@ -147,6 +147,7 @@ public:
    unsigned dead_mask:4; /**< Used in dead code elimination */
    unsigned buffer_access:3; /**< bitmask of TGSI_MEMORY_x bits */
    unsigned read_only:1;
+   unsigned gather_component:2; /* 0, 1, 2, 3 */
 
    const struct tgsi_opcode_info *info;
 
@@ -182,6 +183,8 @@ is_resource_instruction(unsigned opcode)
    case TGSI_OPCODE_ATOMIMIN:
    case TGSI_OPCODE_ATOMIMAX:
    case TGSI_OPCODE_ATOMFADD:
+   case TGSI_OPCODE_ATOMINC_WRAP:
+   case TGSI_OPCODE_ATOMDEC_WRAP:
    case TGSI_OPCODE_IMG2HND:
       return true;
    default:

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -49,6 +49,10 @@ typedef void           VOID;
 typedef float          FLOAT;
 #endif
 
+#if !defined(DOUBLE)
+typedef double         DOUBLE;
+#endif
+
 #if !defined(CHAR)
 typedef char           CHAR;
 #endif
@@ -68,7 +72,11 @@ typedef int            INT;
 */
 #ifndef ADDR_CDECL
     #if defined(__GNUC__)
-        #define ADDR_CDECL __attribute__((cdecl))
+        #if defined(__i386__)
+            #define ADDR_CDECL __attribute__((cdecl))
+        #else
+            #define ADDR_CDECL
+        #endif
     #else
         #define ADDR_CDECL __cdecl
     #endif
@@ -76,10 +84,10 @@ typedef int            INT;
 
 #ifndef ADDR_STDCALL
     #if defined(__GNUC__)
-        #if defined(__amd64__) || defined(__x86_64__)
-            #define ADDR_STDCALL
-        #else
+        #if defined(__i386__)
             #define ADDR_STDCALL __attribute__((stdcall))
+        #else
+            #define ADDR_STDCALL
         #endif
     #else
         #define ADDR_STDCALL __stdcall
@@ -87,10 +95,8 @@ typedef int            INT;
 #endif
 
 #ifndef ADDR_FASTCALL
-    #if defined(BRAHMA_ARM)
-        #define ADDR_FASTCALL
-    #elif defined(__GNUC__)
-        #if defined(__i386__)
+    #if defined(__GNUC__)
+        #if defined(__i386__) || defined(__amd64__) || defined(__x86_64__)
             #define ADDR_FASTCALL __attribute__((regparm(0)))
         #else
             #define ADDR_FASTCALL
@@ -111,6 +117,7 @@ typedef int            INT;
 #ifndef GC_FASTCALL
     #define GC_FASTCALL  ADDR_FASTCALL
 #endif
+
 
 #if defined(__GNUC__)
     #define ADDR_INLINE static inline   // inline needs to be static to link
@@ -203,22 +210,33 @@ typedef enum _AddrTileMode
 /**
 ****************************************************************************************************
 * @brief
-*   Neutral enums that define swizzle modes for Gfx9 ASIC
+*   Neutral enums that define swizzle modes for Gfx9+ ASIC
 * @note
 *
-*   ADDR_SW_LINEAR linear aligned addressing mode, for 1D/2D/3D resouce
-*   ADDR_SW_256B_* addressing block aligned size is 256B, for 2D/3D resouce
-*   ADDR_SW_4KB_*  addressing block aligned size is 4KB, for 2D/3D resouce
-*   ADDR_SW_64KB_* addressing block aligned size is 64KB, for 2D/3D resouce
-*   ADDR_SW_VAR_*  addressing block aligned size is ASIC specific, for 2D/3D resouce
+*   ADDR_SW_LINEAR linear aligned addressing mode, for 1D/2D/3D resource
+*   ADDR_SW_256B_* addressing block aligned size is 256B, for 2D resource
+*   ADDR_SW_4KB_*  addressing block aligned size is 4KB, for 2D/3D resource
+*   ADDR_SW_64KB_* addressing block aligned size is 64KB, for 1D/2D/3D resource
+*   ADDR_SW_VAR_*  addressing block aligned size is ASIC specific
 *
-*   ADDR_SW_*_Z    For 2D resouce, represents Z-order swizzle mode for depth/stencil/FMask
-                   For 3D resouce, represents a swizzle mode similar to legacy thick tile mode
-*   ADDR_SW_*_S    represents standard swizzle mode defined by MS
-*   ADDR_SW_*_D    For 2D resouce, represents a swizzle mode for displayable resource
-*                  For 3D resouce, represents a swizzle mode which places each slice in order & pixel
+*   ADDR_SW_*_Z    For GFX9:
+                   - for 2D resource, represents Z-order swizzle mode for depth/stencil/FMask
+                   - for 3D resource, represents a swizzle mode similar to legacy thick tile mode
+                   For GFX10:
+                   - represents Z-order swizzle mode for depth/stencil/FMask
+*   ADDR_SW_*_S    For GFX9+:
+                   - represents standard swizzle mode defined by MS
+*   ADDR_SW_*_D    For GFX9:
+                   - for 2D resource, represents a swizzle mode for displayable resource
+*                  - for 3D resource, represents a swizzle mode which places each slice in order & pixel
+                   For GFX10:
+                   - for 2D resource, represents a swizzle mode for displayable resource
+                   - for 3D resource, represents a swizzle mode similar to legacy thick tile mode
                    within slice is placed as 2D ADDR_SW_*_S. Don't use this combination if possible!
-*   ADDR_SW_*_R    For 2D resouce only, represents a swizzle mode for rotated displayable resource
+*   ADDR_SW_*_R    For GFX9:
+                   - 2D resource only, represents a swizzle mode for rotated displayable resource
+                   For GFX10:
+                   - represents a swizzle mode for render target resource
 *
 ****************************************************************************************************
 */
@@ -236,10 +254,10 @@ typedef enum _AddrSwizzleMode
     ADDR_SW_64KB_S          = 9,
     ADDR_SW_64KB_D          = 10,
     ADDR_SW_64KB_R          = 11,
-    ADDR_SW_VAR_Z           = 12,
-    ADDR_SW_VAR_S           = 13,
-    ADDR_SW_VAR_D           = 14,
-    ADDR_SW_VAR_R           = 15,
+    ADDR_SW_MISCDEF12       = 12,
+    ADDR_SW_MISCDEF13       = 13,
+    ADDR_SW_MISCDEF14       = 14,
+    ADDR_SW_MISCDEF15       = 15,
     ADDR_SW_64KB_Z_T        = 16,
     ADDR_SW_64KB_S_T        = 17,
     ADDR_SW_64KB_D_T        = 18,
@@ -252,18 +270,23 @@ typedef enum _AddrSwizzleMode
     ADDR_SW_64KB_S_X        = 25,
     ADDR_SW_64KB_D_X        = 26,
     ADDR_SW_64KB_R_X        = 27,
-    ADDR_SW_VAR_Z_X         = 28,
-    ADDR_SW_VAR_S_X         = 29,
-    ADDR_SW_VAR_D_X         = 30,
-    ADDR_SW_VAR_R_X         = 31,
+    ADDR_SW_MISCDEF28       = 28,
+    ADDR_SW_MISCDEF29       = 29,
+    ADDR_SW_MISCDEF30       = 30,
+    ADDR_SW_MISCDEF31       = 31,
     ADDR_SW_LINEAR_GENERAL  = 32,
     ADDR_SW_MAX_TYPE        = 33,
 
-    // Used for represent block with identical size
-    ADDR_SW_256B            = ADDR_SW_256B_S,
-    ADDR_SW_4KB             = ADDR_SW_4KB_S_X,
-    ADDR_SW_64KB            = ADDR_SW_64KB_S_X,
-    ADDR_SW_VAR             = ADDR_SW_VAR_S_X,
+    ADDR_SW_RESERVED0       = ADDR_SW_MISCDEF12,
+    ADDR_SW_RESERVED1       = ADDR_SW_MISCDEF13,
+    ADDR_SW_RESERVED2       = ADDR_SW_MISCDEF14,
+    ADDR_SW_RESERVED3       = ADDR_SW_MISCDEF15,
+    ADDR_SW_RESERVED4       = ADDR_SW_MISCDEF29,
+    ADDR_SW_RESERVED5       = ADDR_SW_MISCDEF30,
+
+    ADDR_SW_VAR_Z_X         = ADDR_SW_MISCDEF28,
+    ADDR_SW_VAR_R_X         = ADDR_SW_MISCDEF31,
+
 } AddrSwizzleMode;
 
 /**
@@ -316,7 +339,9 @@ typedef enum _AddrSwType
     ADDR_SW_Z  = 0,   // Resource basic swizzle mode is ZOrder
     ADDR_SW_S  = 1,   // Resource basic swizzle mode is Standard
     ADDR_SW_D  = 2,   // Resource basic swizzle mode is Display
-    ADDR_SW_R  = 3,   // Resource basic swizzle mode is Rotated
+    ADDR_SW_R  = 3,   // Resource basic swizzle mode is Rotated/Render optimized
+    ADDR_SW_L  = 4,   // Resource basic swizzle mode is Linear
+    ADDR_SW_MAX_SWTYPE
 } AddrSwType;
 
 /**
@@ -549,6 +574,7 @@ typedef enum _AddrHtileBlockSize
     ADDR_HTILE_BLOCKSIZE_8 = 8,
 } AddrHtileBlockSize;
 
+
 /**
 ****************************************************************************************************
 *   AddrPipeCfg
@@ -567,23 +593,23 @@ typedef enum _AddrHtileBlockSize
 */
 typedef enum _AddrPipeCfg
 {
-    ADDR_PIPECFG_INVALID         = 0,
-    ADDR_PIPECFG_P2              = 1, /// 2 pipes,
-    ADDR_PIPECFG_P4_8x16         = 5, /// 4 pipes,
-    ADDR_PIPECFG_P4_16x16        = 6,
-    ADDR_PIPECFG_P4_16x32        = 7,
-    ADDR_PIPECFG_P4_32x32        = 8,
-    ADDR_PIPECFG_P8_16x16_8x16   = 9, /// 8 pipes
-    ADDR_PIPECFG_P8_16x32_8x16   = 10,
-    ADDR_PIPECFG_P8_32x32_8x16   = 11,
-    ADDR_PIPECFG_P8_16x32_16x16  = 12,
-    ADDR_PIPECFG_P8_32x32_16x16  = 13,
-    ADDR_PIPECFG_P8_32x32_16x32  = 14,
-    ADDR_PIPECFG_P8_32x64_32x32  = 15,
-    ADDR_PIPECFG_P16_32x32_8x16  = 17, /// 16 pipes
-    ADDR_PIPECFG_P16_32x32_16x16 = 18,
-    ADDR_PIPECFG_RESERVED        = 19, /// reserved for internal use
-    ADDR_PIPECFG_MAX             = 20,
+    ADDR_PIPECFG_INVALID              = 0,
+    ADDR_PIPECFG_P2                   = 1, /// 2 pipes,
+    ADDR_PIPECFG_P4_8x16              = 5, /// 4 pipes,
+    ADDR_PIPECFG_P4_16x16             = 6,
+    ADDR_PIPECFG_P4_16x32             = 7,
+    ADDR_PIPECFG_P4_32x32             = 8,
+    ADDR_PIPECFG_P8_16x16_8x16        = 9, /// 8 pipes
+    ADDR_PIPECFG_P8_16x32_8x16        = 10,
+    ADDR_PIPECFG_P8_32x32_8x16        = 11,
+    ADDR_PIPECFG_P8_16x32_16x16       = 12,
+    ADDR_PIPECFG_P8_32x32_16x16       = 13,
+    ADDR_PIPECFG_P8_32x32_16x32       = 14,
+    ADDR_PIPECFG_P8_32x64_32x32       = 15,
+    ADDR_PIPECFG_P16_32x32_8x16       = 17, /// 16 pipes
+    ADDR_PIPECFG_P16_32x32_16x16      = 18,
+    ADDR_PIPECFG_UNUSED               = 19,
+    ADDR_PIPECFG_MAX                  = 20,
 } AddrPipeCfg;
 
 /**
@@ -634,7 +660,7 @@ typedef enum _AddrTileType
 #endif
 
 #ifndef INT_8
-#define INT_8   char
+#define INT_8   signed char // signed must be used because of aarch64
 #endif
 
 #ifndef UINT_8
@@ -711,6 +737,7 @@ typedef enum _AddrTileType
 #define ADDR64D "lld" OR "I64d"
 #endif
 
+
 /// @brief Union for storing a 32-bit float or 32-bit integer
 /// @ingroup type
 ///
@@ -725,6 +752,7 @@ typedef union {
     UINT_32  u;
     float    f;
 } ADDR_FLT_32;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //

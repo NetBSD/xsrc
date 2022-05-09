@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -282,9 +282,9 @@ public:
 
     BOOL_32 GetExportNorm(const ELEM_GETEXPORTNORM_INPUT* pIn) const;
 
-    ADDR_E_RETURNCODE GetMaxAlignments(ADDR_GET_MAX_ALINGMENTS_OUTPUT* pOut) const;
+    ADDR_E_RETURNCODE GetMaxAlignments(ADDR_GET_MAX_ALIGNMENTS_OUTPUT* pOut) const;
 
-    ADDR_E_RETURNCODE GetMaxMetaAlignments(ADDR_GET_MAX_ALINGMENTS_OUTPUT* pOut) const;
+    ADDR_E_RETURNCODE GetMaxMetaAlignments(ADDR_GET_MAX_ALIGNMENTS_OUTPUT* pOut) const;
 
     UINT_32 GetBpe(AddrFormat format) const;
 
@@ -370,8 +370,6 @@ private:
     VOID SetMaxAlignments();
 
 protected:
-    LibClass    m_class;        ///< Store class type (HWL type)
-
     ChipFamily  m_chipFamily;   ///< Chip family translated from the one in atiid.h
 
     UINT_32     m_chipRevision; ///< Revision id from xxx_id.h
@@ -409,7 +407,7 @@ private:
 Lib* SiHwlInit   (const Client* pClient);
 Lib* CiHwlInit   (const Client* pClient);
 Lib* Gfx9HwlInit (const Client* pClient);
-
+Lib* Gfx10HwlInit(const Client* pClient);
 } // Addr
 
 #endif

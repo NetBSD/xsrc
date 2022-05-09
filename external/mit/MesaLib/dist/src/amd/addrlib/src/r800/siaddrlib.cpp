@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -112,7 +112,6 @@ SiLib::SiLib(const Client* pClient)
     m_noOfEntries(0),
     m_numEquations(0)
 {
-    m_class = SI_ADDRLIB;
     memset(&m_settings, 0, sizeof(m_settings));
 }
 
@@ -1603,8 +1602,9 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
             {
                 macroOffset |= (pipebit1<<1);
             }
-            if((pTileInfo->pipeConfig == ADDR_PIPECFG_P16_32x32_8x16) ||
-               (pTileInfo->pipeConfig == ADDR_PIPECFG_P16_32x32_16x16))
+            if ((pTileInfo->pipeConfig == ADDR_PIPECFG_P16_32x32_8x16) ||
+                (pTileInfo->pipeConfig == ADDR_PIPECFG_P16_32x32_16x16)
+               )
             {
                 macroOffset |= (pipebit3<<1);
             }
@@ -1929,7 +1929,7 @@ ChipFamily SiLib::HwlConvertChipFamily(
             m_settings.isHainan     = ASICREV_IS_HAINAN_V(uChipRevision);
             break;
         default:
-            ADDR_ASSERT(!"This should be a Fusion");
+            ADDR_ASSERT(!"No Chip found");
             break;
     }
 

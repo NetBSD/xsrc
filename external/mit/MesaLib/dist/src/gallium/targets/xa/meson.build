@@ -34,21 +34,21 @@ _xa_version = '.'.join(xa_version)
 
 libxatracker = shared_library(
   'xatracker',
-  ['target.c', xmlpool_options_h],
-  c_args : c_vis_args,
-  cpp_args : cpp_vis_args,
+  'target.c',
+  gnu_symbol_visibility : 'hidden',
   link_args : [xa_link_args, ld_args_gc_sections],
   include_directories : [
-    inc_common, inc_util, inc_gallium_winsys, inc_gallium_drivers,
+    inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_util, inc_gallium_winsys, inc_gallium_drivers,
   ],
   link_whole : [libxa_st],
   link_with : [
-    libgalliumvl_stub, libgallium, libmesa_util, libpipe_loader_static,
+    libgalliumvl_stub, libgallium, libpipe_loader_static,
     libws_null, libwsw, libswdri, libswkmsdri,
   ],
   link_depends : xa_link_depends,
   dependencies : [
-    dep_thread, driver_nouveau, driver_i915, driver_svga, driver_freedreno,
+    idep_mesautil,
+    driver_nouveau, driver_i915, driver_svga, driver_freedreno,
   ],
   version : _xa_version,
   install : true,

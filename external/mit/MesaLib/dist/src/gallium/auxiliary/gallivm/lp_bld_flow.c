@@ -200,6 +200,16 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
    LLVMBuildStore(mask->skip.gallivm->builder, value, mask->var);
 }
 
+/*
+ * Update boolean mask with given value.
+ * Used for per-sample shading to force per-sample execution masks.
+ */
+void
+lp_build_mask_force(struct lp_build_mask_context *mask,
+                    LLVMValueRef value)
+{
+   LLVMBuildStore(mask->skip.gallivm->builder, value, mask->var);
+}
 
 /**
  * End section of code which is predicated on a mask.
@@ -265,6 +275,20 @@ lp_build_loop_end_cond(struct lp_build_loop_state *state,
    state->counter = LLVMBuildLoad(builder, state->counter_var, "");
 }
 
+void
+lp_build_loop_force_set_counter(struct lp_build_loop_state *state,
+                          LLVMValueRef end)
+{
+   LLVMBuilderRef builder = state->gallivm->builder;
+   LLVMBuildStore(builder, end, state->counter_var);
+}
+
+void
+lp_build_loop_force_reload_counter(struct lp_build_loop_state *state)
+{
+   LLVMBuilderRef builder = state->gallivm->builder;
+   state->counter = LLVMBuildLoad(builder, state->counter_var, "");
+}
 
 void
 lp_build_loop_end(struct lp_build_loop_state *state,

@@ -54,7 +54,7 @@ enum ConversionType
 //////////////////////////////////////////////////////////////////////////
 struct FetchJit : public BuilderGfxMem
 {
-    FetchJit(JitManager* pJitMgr) : BuilderGfxMem(pJitMgr) {}
+    FetchJit(JitManager* pJitMgr) : BuilderGfxMem(pJitMgr), mpFetchInfo(NULL) {}
 
     Function* Create(const FETCH_COMPILE_STATE& fetchState);
 
@@ -113,7 +113,6 @@ struct FetchJit : public BuilderGfxMem
         SWR_FORMAT format, Value* pMask, Value* pBase, Value* offsets, Value* result[4]);
     void ConvertFormat(SWR_FORMAT format, Value* texels[4]);
 
-    Value* mpWorkerData;
     Value* mpFetchInfo;
 };
 
@@ -141,6 +140,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
     mpWorkerData = &*argitr;
     ++argitr;
     mpWorkerData->setName("pWorkerData");
+
     mpFetchInfo = &*argitr;
     ++argitr;
     mpFetchInfo->setName("fetchInfo");
@@ -178,7 +178,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
         if (fetchState.bDisableIndexOOBCheck)
         {
             vIndices = LOAD(
-                BITCAST(indices, PointerType::get(VectorType::get(mInt8Ty, mpJitMgr->mVWidth), 0)),
+                BITCAST(indices, PointerType::get(getVectorType(mInt8Ty, mpJitMgr->mVWidth), 0)),
                 {(uint32_t)0});
             vIndices = Z_EXT(vIndices, mSimdInt32Ty);
         }
@@ -191,7 +191,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
         if (fetchState.bDisableIndexOOBCheck)
         {
             vIndices = LOAD(
-                BITCAST(indices, PointerType::get(VectorType::get(mInt16Ty, mpJitMgr->mVWidth), 0)),
+                BITCAST(indices, PointerType::get(getVectorType(mInt16Ty, mpJitMgr->mVWidth), 0)),
                 {(uint32_t)0});
             vIndices = Z_EXT(vIndices, mSimdInt32Ty);
         }
@@ -202,12 +202,15 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
         break;
     case R32_UINT:
         (fetchState.bDisableIndexOOBCheck)
-            ? vIndices = LOAD(indices, "", PointerType::get(mSimdInt32Ty, 0), JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH)
+            ? vIndices = LOAD(indices,
+                              "",
+                              PointerType::get(mSimdInt32Ty, 0),
+                              MEM_CLIENT::GFX_MEM_CLIENT_FETCH)
             : vIndices = GetSimdValid32bitIndices(indices, pLastIndex);
         break; // incoming type is already 32bit int
     default:
-        SWR_INVALID("Unsupported index type");
         vIndices = nullptr;
+        assert(false && "Unsupported index type");
         break;
     }
 
@@ -294,7 +297,9 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
     optPasses.add(createCFGSimplificationPass());
     optPasses.add(createEarlyCSEPass());
     optPasses.add(createInstructionCombiningPass());
+#if LLVM_VERSION_MAJOR <= 11
     optPasses.add(createConstantPropagationPass());
+#endif
     optPasses.add(createSCCPPass());
     optPasses.add(createAggressiveDCEPass());
 
@@ -378,7 +383,8 @@ void FetchJit::CreateGatherOddFormats(
     Value* pGather;
     if (info.bpp == 32)
     {
-        pGather = GATHERDD(VIMMED1(0), xpBase, pOffsets, pMask, 1, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+        pGather =
+            GATHERDD(VIMMED1(0), xpBase, pOffsets, pMask, 1, MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
     }
     else
     {
@@ -399,7 +405,8 @@ void FetchJit::CreateGatherOddFormats(
             BasicBlock* pCurrentBB = IRB()->GetInsertBlock();
             BasicBlock* pMaskedLoadBlock =
                 BasicBlock::Create(JM()->mContext, "MaskedLaneLoad", pCurrentBB->getParent());
-            BasicBlock* pEndLoadBB = BasicBlock::Create(JM()->mContext, "AfterMaskedLoad", pCurrentBB->getParent());
+            BasicBlock* pEndLoadBB =
+                BasicBlock::Create(JM()->mContext, "AfterMaskedLoad", pCurrentBB->getParent());
 
             COND_BR(mask, pMaskedLoadBlock, pEndLoadBB);
 
@@ -409,17 +416,17 @@ void FetchJit::CreateGatherOddFormats(
             {
             case 8:
             {
-                Value* pDst = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt8Ty, 0));
+                Value* pDst  = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt8Ty, 0));
                 Value* xpSrc = ADD(xpBase, Z_EXT(index, xpBase->getType()));
-                STORE(LOAD(xpSrc, "", mInt8PtrTy, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
+                STORE(LOAD(xpSrc, "", mInt8PtrTy, MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
                 break;
             }
 
             case 16:
             {
-                Value* pDst = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt16Ty, 0));
+                Value* pDst  = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt16Ty, 0));
                 Value* xpSrc = ADD(xpBase, Z_EXT(index, xpBase->getType()));
-                STORE(LOAD(xpSrc, "", mInt16PtrTy, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
+                STORE(LOAD(xpSrc, "", mInt16PtrTy, MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
                 break;
             }
             break;
@@ -427,14 +434,14 @@ void FetchJit::CreateGatherOddFormats(
             case 24:
             {
                 // First 16-bits of data
-                Value* pDst = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt16Ty, 0));
+                Value* pDst  = BITCAST(GEP(pDstMem, C(lane)), PointerType::get(mInt16Ty, 0));
                 Value* xpSrc = ADD(xpBase, Z_EXT(index, xpBase->getType()));
-                STORE(LOAD(xpSrc, "", mInt16PtrTy, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
+                STORE(LOAD(xpSrc, "", mInt16PtrTy, MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
 
                 // Last 8-bits of data
-                pDst = BITCAST(GEP(pDst, C(1)), PointerType::get(mInt8Ty, 0));
-                xpSrc = ADD(xpSrc, C(2));
-                STORE(LOAD(xpSrc, "", mInt8PtrTy, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
+                pDst  = BITCAST(GEP(pDst, C(1)), PointerType::get(mInt8Ty, 0));
+                xpSrc = ADD(xpSrc, C((int64_t)2));
+                STORE(LOAD(xpSrc, "", mInt8PtrTy, MEM_CLIENT::GFX_MEM_CLIENT_FETCH), pDst);
                 break;
             }
 
@@ -694,8 +701,8 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
         vOffsets        = ADD(vOffsets, vAlignmentOffsets);
 
         // if instance stride enable is:
-        //  true  - add product of the instanceID and advancement state to the offst into the VB
-        //  false - value of vInstanceStride has been initialialized to zero
+        //  true  - add product of the instanceID and advancement state to the offset into the VB
+        //  false - value of vInstanceStride has been initialized to zero
         vOffsets = ADD(vOffsets, vInstanceStride);
 
         // Packing and component control
@@ -745,7 +752,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                 // if we have at least one component out of x or y to fetch
                 if (isComponentEnabled(compMask, 0) || isComponentEnabled(compMask, 1))
                 {
-                    vGatherResult[0] = GATHERPS(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask);
+                    vGatherResult[0] = GATHERPS(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                     // e.g. result of first 8x32bit integer gather for 16bit components
                     // 256i - 0    1    2    3    4    5    6    7
                     //        xyxy xyxy xyxy xyxy xyxy xyxy xyxy xyxy
@@ -758,7 +765,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                     // offset base to the next components(zw) in the vertex to gather
                     pStreamBaseGFX = ADD(pStreamBaseGFX, C((int64_t)4));
 
-                    vGatherResult[1] = GATHERPS(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask);
+                    vGatherResult[1] = GATHERPS(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                     // e.g. result of second 8x32bit integer gather for 16bit components
                     // 256i - 0    1    2    3    4    5    6    7
                     //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
@@ -806,7 +813,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                                          vNewOffsets,
                                          vGatherMask,
                                          1,
-                                         JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                                         MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                         }
                         else
                         {
@@ -869,10 +876,8 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                             Value* pGatherHi =
                                 GATHERPD(vZeroDouble, pStreamBaseGFX, vOffsetsHi, vMaskHi);
 
-                            pGatherLo = VCVTPD2PS(pGatherLo);
-                            pGatherHi = VCVTPD2PS(pGatherHi);
-
                             Value* pGather = VSHUFFLE(pGatherLo, pGatherHi, vShufAll);
+                            pGather        = FP_TRUNC(pGather, mSimdFP32Ty);
 
                             vVertexElements[currentVertexElement++] = pGather;
                         }
@@ -947,8 +952,12 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                 // if we have at least one component to fetch
                 if (compMask)
                 {
-                    Value* vGatherResult = GATHERDD(
-                        gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                    Value* vGatherResult = GATHERDD(gatherSrc,
+                                                    pStreamBaseGFX,
+                                                    vOffsets,
+                                                    vGatherMask,
+                                                    1,
+                                                    MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                     // e.g. result of an 8x32bit integer gather for 8bit components
                     // 256i - 0    1    2    3    4    5    6    7
                     //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
@@ -977,7 +986,12 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                 // if we have at least one component out of x or y to fetch
                 if (isComponentEnabled(compMask, 0) || isComponentEnabled(compMask, 1))
                 {
-                    vGatherResult[0] = GATHERDD(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                    vGatherResult[0] = GATHERDD(gatherSrc,
+                                                pStreamBaseGFX,
+                                                vOffsets,
+                                                vGatherMask,
+                                                1,
+                                                MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                     // e.g. result of first 8x32bit integer gather for 16bit components
                     // 256i - 0    1    2    3    4    5    6    7
                     //        xyxy xyxy xyxy xyxy xyxy xyxy xyxy xyxy
@@ -990,7 +1004,12 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                     // offset base to the next components(zw) in the vertex to gather
                     pStreamBaseGFX = ADD(pStreamBaseGFX, C((int64_t)4));
 
-                    vGatherResult[1] = GATHERDD(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                    vGatherResult[1] = GATHERDD(gatherSrc,
+                                                pStreamBaseGFX,
+                                                vOffsets,
+                                                vGatherMask,
+                                                1,
+                                                MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
                     // e.g. result of second 8x32bit integer gather for 16bit components
                     // 256i - 0    1    2    3    4    5    6    7
                     //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
@@ -1026,8 +1045,12 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
                         // if we need to gather the component
                         if (compCtrl[i] == StoreSrc)
                         {
-                            Value* pGather =
-                                GATHERDD(gatherSrc, pStreamBaseGFX, vOffsets, vGatherMask, 1, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                            Value* pGather = GATHERDD(gatherSrc,
+                                                      pStreamBaseGFX,
+                                                      vOffsets,
+                                                      vGatherMask,
+                                                      1,
+                                                      MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
 
                             if (conversionType == CONVERT_USCALED)
                             {
@@ -1080,6 +1103,63 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE& fetchState,
     }
 }
 
+
+typedef void* (*PFN_TRANSLATEGFXADDRESS_FUNC)(void* pdc, gfxptr_t va, bool* out_pbNullTileAccessed, void* pWorkerData);
+
+template <typename T>
+void GetSimdValidIndicesGfx(gfxptr_t                     indices,
+                            gfxptr_t                     lastIndex,
+                            uint32_t                     vWidth,
+                            PFN_TRANSLATEGFXADDRESS_FUNC pfnTranslate,
+                            void*                        pdc,
+                            uint32_t*                    outIndices,
+                            void*                        pWorkerData)
+{
+    SWR_ASSERT(outIndices != nullptr);
+
+    gfxptr_t indexPtr = indices;
+    for (int64_t lane = 0; lane < vWidth; lane++)
+    {
+        uint32_t index = 0;
+
+        if (indexPtr < lastIndex)
+        {
+            // translate indexPtr and load from it
+            T* addr = (T*)pfnTranslate(pdc, indexPtr, nullptr, pWorkerData);
+            SWR_ASSERT(addr != nullptr);
+            index = *addr;
+        }
+
+        // index to 32 bits and insert into the correct simd lane
+        outIndices[lane] = index;
+
+        indexPtr += sizeof(T);
+    }
+}
+
+void GetSimdValid8bitIndicesGfx(gfxptr_t                     indices,
+                                gfxptr_t                     lastIndex,
+                                uint32_t                     vWidth,
+                                PFN_TRANSLATEGFXADDRESS_FUNC pfnTranslate,
+                                void*                        pdc,
+                                uint32_t*                    outIndices,
+                                void*                        pWorkerData)
+{
+    GetSimdValidIndicesGfx<uint8_t>(indices, lastIndex, vWidth, pfnTranslate, pdc, outIndices, pWorkerData);
+}
+
+void GetSimdValid16bitIndicesGfx(gfxptr_t                     indices,
+                                 gfxptr_t                     lastIndex,
+                                 uint32_t                     vWidth,
+                                 PFN_TRANSLATEGFXADDRESS_FUNC pfnTranslate,
+                                 void*                        pdc,
+                                 uint32_t*                    outIndices,
+                                 void*                        pWorkerData)
+{
+    GetSimdValidIndicesGfx<uint16_t>(indices, lastIndex, vWidth, pfnTranslate, pdc, outIndices, pWorkerData);
+}
+
+
 template <typename T>
 Value* FetchJit::GetSimdValidIndicesHelper(Value* pIndices, Value* pLastIndex)
 {
@@ -1124,7 +1204,7 @@ Value* FetchJit::GetSimdValidIndicesHelper(Value* pIndices, Value* pLastIndex)
 
             // if valid, load the index. if not, load 0 from the stack
             Value* pValid = SELECT(mask, pIndex, pZeroIndex);
-            Value* index  = LOAD(pValid, "valid index", Ty, JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+            Value* index  = LOAD(pValid, "valid index", Ty, MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
 
             // zero extended index to 32 bits and insert into the correct simd lane
             index    = Z_EXT(index, mInt32Ty);
@@ -1199,7 +1279,7 @@ Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
                        VIMMED1(0),
                        "vIndices",
                        PointerType::get(mSimdInt32Ty, 0),
-                       JIT_MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
+                       MEM_CLIENT::GFX_MEM_CLIENT_FETCH);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1232,14 +1312,14 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs& args)
     const uint32_t(&swizzle)[4]                     = std::get<9>(args);
 
     // cast types
-    Type* vGatherTy = VectorType::get(mInt32Ty, 8);
-    Type* v32x8Ty   = VectorType::get(mInt8Ty, 32);
+    Type* vGatherTy = getVectorType(mInt32Ty, 8);
+    Type* v32x8Ty   = getVectorType(mInt8Ty, 32);
 
     // have to do extra work for sign extending
     if ((extendType == Instruction::CastOps::SExt) || (extendType == Instruction::CastOps::SIToFP))
     {
-        Type* v16x8Ty = VectorType::get(mInt8Ty, 16); // 8x16bit ints in a 128bit lane
-        Type* v128Ty  = VectorType::get(IntegerType::getIntNTy(JM()->mContext, 128), 2);
+        Type* v16x8Ty = getVectorType(mInt8Ty, 16); // 8x16bit ints in a 128bit lane
+        Type* v128Ty  = getVectorType(IntegerType::getIntNTy(JM()->mContext, 128), 2);
 
         // shuffle mask, including any swizzling
         const char x          = (char)swizzle[0];
@@ -1254,7 +1334,7 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs& args)
              char(z),     char(z + 4),  char(z + 8), char(z + 12), char(w),     char(w + 4),
              char(w + 8), char(w + 12)});
 
-        // SIMD16 PSHUFB isnt part of AVX-512F, so split into SIMD8 for the sake of KNL, for now..
+        // SIMD16 PSHUFB isn't part of AVX-512F, so split into SIMD8 for the sake of KNL, for now..
 
         Value* vGatherResult_lo = EXTRACT_16(vGatherResult, 0);
         Value* vGatherResult_hi = EXTRACT_16(vGatherResult, 1);
@@ -1312,11 +1392,11 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs& args)
             conversionFactor = VIMMED1((float)(1.0));
             break;
         case CONVERT_USCALED:
-            SWR_INVALID("Type should not be sign extended!");
+            assert(false && "Type should not be sign extended!");
             conversionFactor = nullptr;
             break;
         default:
-            SWR_ASSERT(conversionType == CONVERT_NONE);
+            assert(conversionType == CONVERT_NONE);
             conversionFactor = nullptr;
             break;
         }
@@ -1386,11 +1466,11 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs& args)
             conversionFactor = VIMMED1((float)(1.0));
             break;
         case CONVERT_SSCALED:
-            SWR_INVALID("Type should not be zero extended!");
+            assert(false && "Type should not be zero extended!");
             conversionFactor = nullptr;
             break;
         default:
-            SWR_ASSERT(conversionType == CONVERT_NONE);
+            assert(conversionType == CONVERT_NONE);
             conversionFactor = nullptr;
             break;
         }
@@ -1431,6 +1511,7 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs& args)
                                      3, -1, -1, -1, 7, -1, -1, -1, 11, -1, -1, -1, 15, -1, -1, -1});
                         break;
                     default:
+                        assert(false && "Invalid component");
                         vConstMask = nullptr;
                         break;
                     }
@@ -1494,7 +1575,7 @@ void FetchJit::Shuffle8bpcGatherd(Shuffle8bpcArgs& args)
     const uint32_t(&swizzle)[4]                     = std::get<9>(args);
 
     // cast types
-    Type* v32x8Ty = VectorType::get(mInt8Ty, mVWidth * 4); // vwidth is units of 32 bits
+    Type* v32x8Ty = getVectorType(mInt8Ty, mVWidth * 4); // vwidth is units of 32 bits
 
     for (uint32_t i = 0; i < 4; i++)
     {
@@ -1503,7 +1584,12 @@ void FetchJit::Shuffle8bpcGatherd(Shuffle8bpcArgs& args)
 
         if (compCtrl[i] == ComponentControl::StoreSrc)
         {
-            std::vector<uint32_t> vShuffleMasks[4] = {
+#if LLVM_VERSION_MAJOR >= 11
+            using MaskType = int32_t;
+#else
+            using MaskType = uint32_t;
+#endif
+            std::vector<MaskType> vShuffleMasks[4] = {
                 {0, 4, 8, 12, 16, 20, 24, 28},  // x
                 {1, 5, 9, 13, 17, 21, 25, 29},  // y
                 {2, 6, 10, 14, 18, 22, 26, 30}, // z
@@ -1603,8 +1689,8 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs& args)
     Value*(&vVertexElements)[4]                     = std::get<8>(args);
 
     // cast types
-    Type* vGatherTy = VectorType::get(mInt32Ty, 8);
-    Type* v32x8Ty   = VectorType::get(mInt8Ty, 32);
+    Type* vGatherTy = getVectorType(mInt32Ty, 8);
+    Type* v32x8Ty   = getVectorType(mInt8Ty, 32);
 
     // have to do extra work for sign extending
     if ((extendType == Instruction::CastOps::SExt) ||
@@ -1613,8 +1699,8 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs& args)
         // is this PP float?
         bool bFP = (extendType == Instruction::CastOps::FPExt) ? true : false;
 
-        Type* v8x16Ty   = VectorType::get(mInt16Ty, 8); // 8x16bit in a 128bit lane
-        Type* v128bitTy = VectorType::get(IntegerType::getIntNTy(JM()->mContext, 128), 2);
+        Type* v8x16Ty   = getVectorType(mInt16Ty, 8); // 8x16bit in a 128bit lane
+        Type* v128bitTy = getVectorType(IntegerType::getIntNTy(JM()->mContext, 128), 2);
 
         // shuffle mask
         Value* vConstMask = C<uint8_t>({0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15,
@@ -1623,7 +1709,7 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs& args)
         Value* vi128XY_hi = nullptr;
         if (isComponentEnabled(compMask, 0) || isComponentEnabled(compMask, 1))
         {
-            // SIMD16 PSHUFB isnt part of AVX-512F, so split into SIMD8 for the sake of KNL, for
+            // SIMD16 PSHUFB isn't part of AVX-512F, so split into SIMD8 for the sake of KNL, for
             // now..
 
             Value* vGatherResult_lo = BITCAST(EXTRACT_16(vGatherResult[0], 0), v32x8Ty);
@@ -1682,11 +1768,11 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs& args)
             conversionFactor = VIMMED1((float)(1.0));
             break;
         case CONVERT_USCALED:
-            SWR_INVALID("Type should not be sign extended!");
+            assert(false && "Type should not be sign extended!");
             conversionFactor = nullptr;
             break;
         default:
-            SWR_ASSERT(conversionType == CONVERT_NONE);
+            assert(conversionType == CONVERT_NONE);
             conversionFactor = nullptr;
             break;
         }
@@ -1809,7 +1895,7 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs& args)
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     uint32_t selectedGather = (i < 2) ? 0 : 1;
 
-                    // SIMD16 PSHUFB isnt part of AVX-512F, so split into SIMD8 for the sake of KNL,
+                    // SIMD16 PSHUFB isn't part of AVX-512F, so split into SIMD8 for the sake of KNL,
                     // for now..
 
                     Value* vGatherResult_lo = EXTRACT_16(vGatherResult[selectedGather], 0);
@@ -1872,8 +1958,8 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs& args)
     Value*(&vVertexElements)[4]                     = std::get<8>(args);
 
     // cast types
-    Type* vGatherTy = VectorType::get(IntegerType::getInt32Ty(JM()->mContext), mVWidth);
-    Type* v32x8Ty   = VectorType::get(mInt8Ty, mVWidth * 4); // vwidth is units of 32 bits
+    Type* vGatherTy = getVectorType(IntegerType::getInt32Ty(JM()->mContext), mVWidth);
+    Type* v32x8Ty   = getVectorType(mInt8Ty, mVWidth * 4); // vwidth is units of 32 bits
 
     // have to do extra work for sign extending
     if ((extendType == Instruction::CastOps::SExt) ||
@@ -1882,8 +1968,8 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs& args)
         // is this PP float?
         bool bFP = (extendType == Instruction::CastOps::FPExt) ? true : false;
 
-        Type* v8x16Ty   = VectorType::get(mInt16Ty, 8); // 8x16bit in a 128bit lane
-        Type* v128bitTy = VectorType::get(IntegerType::getIntNTy(JM()->mContext, 128),
+        Type* v8x16Ty   = getVectorType(mInt16Ty, 8); // 8x16bit in a 128bit lane
+        Type* v128bitTy = getVectorType(IntegerType::getIntNTy(JM()->mContext, 128),
                                           mVWidth / 4); // vwidth is units of 32 bits
 
         // shuffle mask
@@ -2139,7 +2225,7 @@ Value* FetchJit::GenerateCompCtrlVector(const ComponentControl ctrl)
     {
         if (mVWidth == 16)
         {
-            Type*  pSimd8FPTy = VectorType::get(mFP32Ty, 8);
+            Type*  pSimd8FPTy = getVectorType(mFP32Ty, 8);
             Value* pIdLo =
                 BITCAST(LOAD(GEP(mpFetchInfo, {0, SWR_FETCH_CONTEXT_VertexID})), pSimd8FPTy);
             Value* pIdHi =

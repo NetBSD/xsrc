@@ -60,10 +60,10 @@ fs_visitor::emit_mcs_fetch(const fs_reg &coordinate, unsigned components,
 }
 
 /**
- * Apply workarounds for Gen6 gather with UINT/SINT
+ * Apply workarounds for Gfx6 gather with UINT/SINT
  */
 void
-fs_visitor::emit_gen6_gather_wa(uint8_t wa, fs_reg dst)
+fs_visitor::emit_gfx6_gather_wa(uint8_t wa, fs_reg dst)
 {
    if (!wa)
       return;
@@ -106,7 +106,7 @@ fs_visitor::emit_dummy_fs()
    write = bld.emit(FS_OPCODE_FB_WRITE);
    write->eot = true;
    write->last_rt = true;
-   if (devinfo->gen >= 6) {
+   if (devinfo->ver >= 6) {
       write->base_mrf = 2;
       write->mlen = 4 * reg_width;
    } else {
@@ -115,13 +115,14 @@ fs_visitor::emit_dummy_fs()
       write->mlen = 2 + 4 * reg_width;
    }
 
-   /* Tell the SF we don't have any inputs.  Gen4-5 require at least one
+   /* Tell the SF we don't have any inputs.  Gfx4-5 require at least one
     * varying to avoid GPU hangs, so set that.
     */
    struct brw_wm_prog_data *wm_prog_data = brw_wm_prog_data(this->prog_data);
-   wm_prog_data->num_varying_inputs = devinfo->gen < 6 ? 1 : 0;
+   wm_prog_data->num_varying_inputs = devinfo->ver < 6 ? 1 : 0;
    memset(wm_prog_data->urb_setup, -1,
           sizeof(wm_prog_data->urb_setup[0]) * VARYING_SLOT_MAX);
+   brw_compute_urb_setup_index(wm_prog_data);
 
    /* We don't have any uniforms. */
    stage_prog_data->nr_params = 0;
@@ -130,7 +131,7 @@ fs_visitor::emit_dummy_fs()
    stage_prog_data->dispatch_grf_start_reg = 2;
    wm_prog_data->dispatch_grf_start_reg_16 = 2;
    wm_prog_data->dispatch_grf_start_reg_32 = 2;
-   grf_used = 1; /* Gen4-5 don't allow zero GRF blocks */
+   grf_used = 1; /* Gfx4-5 don't allow zero GRF blocks */
 
    calculate_cfg();
 }
@@ -152,7 +153,7 @@ fs_visitor::interp_reg(int location, int channel)
 
 /** Emits the interpolation for the varying inputs. */
 void
-fs_visitor::emit_interpolation_setup_gen4()
+fs_visitor::emit_interpolation_setup_gfx4()
 {
    struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
 
@@ -176,17 +177,26 @@ fs_visitor::emit_interpolation_setup_gen4()
    const fs_reg xstart(negate(brw_vec1_grf(1, 0)));
    const fs_reg ystart(negate(brw_vec1_grf(1, 1)));
 
-   if (devinfo->has_pln && dispatch_width == 16) {
-      for (unsigned i = 0; i < 2; i++) {
-         abld.half(i).ADD(half(offset(delta_xy, abld, i), 0),
-                          half(this->pixel_x, i), xstart);
-         abld.half(i).ADD(half(offset(delta_xy, abld, i), 1),
-                          half(this->pixel_y, i), ystart);
+   if (devinfo->has_pln) {
+      for (unsigned i = 0; i < dispatch_width / 8; i++) {
+         abld.quarter(i).ADD(quarter(offset(delta_xy, abld, 0), i),
+                             quarter(this->pixel_x, i), xstart);
+         abld.quarter(i).ADD(quarter(offset(delta_xy, abld, 1), i),
+                             quarter(this->pixel_y, i), ystart);
       }
    } else {
       abld.ADD(offset(delta_xy, abld, 0), this->pixel_x, xstart);
       abld.ADD(offset(delta_xy, abld, 1), this->pixel_y, ystart);
    }
+
+   this->pixel_z = fetch_payload_reg(bld, payload.source_depth_reg);
+
+   /* The SF program automatically handles doing the perspective correction or
+    * not based on wm_prog_data::interp_mode[] so we can use the same pixel
+    * offsets for both perspective and non-perspective.
+    */
+   this->delta_xy[BRW_BARYCENTRIC_NONPERSPECTIVE_PIXEL] =
+      this->delta_xy[BRW_BARYCENTRIC_PERSPECTIVE_PIXEL];
 
    abld = bld.annotate("compute pos.w and 1/pos.w");
    /* Compute wpos.w.  It's always in our setup, since it's needed to
@@ -200,20 +210,202 @@ fs_visitor::emit_interpolation_setup_gen4()
    abld.emit(SHADER_OPCODE_RCP, this->pixel_w, wpos_w);
 }
 
+static unsigned
+brw_rnd_mode_from_nir(unsigned mode, unsigned *mask)
+{
+   unsigned brw_mode = 0;
+   *mask = 0;
+
+   if ((FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP16 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP32 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP64) &
+       mode) {
+      brw_mode |= BRW_RND_MODE_RTZ << BRW_CR0_RND_MODE_SHIFT;
+      *mask |= BRW_CR0_RND_MODE_MASK;
+   }
+   if ((FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP16 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP32 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP64) &
+       mode) {
+      brw_mode |= BRW_RND_MODE_RTNE << BRW_CR0_RND_MODE_SHIFT;
+      *mask |= BRW_CR0_RND_MODE_MASK;
+   }
+   if (mode & FLOAT_CONTROLS_DENORM_PRESERVE_FP16) {
+      brw_mode |= BRW_CR0_FP16_DENORM_PRESERVE;
+      *mask |= BRW_CR0_FP16_DENORM_PRESERVE;
+   }
+   if (mode & FLOAT_CONTROLS_DENORM_PRESERVE_FP32) {
+      brw_mode |= BRW_CR0_FP32_DENORM_PRESERVE;
+      *mask |= BRW_CR0_FP32_DENORM_PRESERVE;
+   }
+   if (mode & FLOAT_CONTROLS_DENORM_PRESERVE_FP64) {
+      brw_mode |= BRW_CR0_FP64_DENORM_PRESERVE;
+      *mask |= BRW_CR0_FP64_DENORM_PRESERVE;
+   }
+   if (mode & FLOAT_CONTROLS_DENORM_FLUSH_TO_ZERO_FP16)
+      *mask |= BRW_CR0_FP16_DENORM_PRESERVE;
+   if (mode & FLOAT_CONTROLS_DENORM_FLUSH_TO_ZERO_FP32)
+      *mask |= BRW_CR0_FP32_DENORM_PRESERVE;
+   if (mode & FLOAT_CONTROLS_DENORM_FLUSH_TO_ZERO_FP64)
+      *mask |= BRW_CR0_FP64_DENORM_PRESERVE;
+   if (mode == FLOAT_CONTROLS_DEFAULT_FLOAT_CONTROL_MODE)
+      *mask |= BRW_CR0_FP_MODE_MASK;
+
+   if (*mask != 0)
+      assert((*mask & brw_mode) == brw_mode);
+
+   return brw_mode;
+}
+
+void
+fs_visitor::emit_shader_float_controls_execution_mode()
+{
+   unsigned execution_mode = this->nir->info.float_controls_execution_mode;
+   if (execution_mode == FLOAT_CONTROLS_DEFAULT_FLOAT_CONTROL_MODE)
+      return;
+
+   fs_builder abld = bld.annotate("shader floats control execution mode");
+   unsigned mask, mode = brw_rnd_mode_from_nir(execution_mode, &mask);
+
+   if (mask == 0)
+      return;
+
+   abld.emit(SHADER_OPCODE_FLOAT_CONTROL_MODE, bld.null_reg_ud(),
+             brw_imm_d(mode), brw_imm_d(mask));
+}
+
 /** Emits the interpolation for the varying inputs. */
 void
-fs_visitor::emit_interpolation_setup_gen6()
+fs_visitor::emit_interpolation_setup_gfx6()
 {
    fs_builder abld = bld.annotate("compute pixel centers");
 
    this->pixel_x = vgrf(glsl_type::float_type);
    this->pixel_y = vgrf(glsl_type::float_type);
 
+   struct brw_wm_prog_data *wm_prog_data = brw_wm_prog_data(prog_data);
+
+   fs_reg int_pixel_offset_x, int_pixel_offset_y; /* Used on Gen12HP+ */
+   fs_reg int_pixel_offset_xy; /* Used on Gen8+ */
+   fs_reg half_int_pixel_offset_x, half_int_pixel_offset_y;
+   if (!wm_prog_data->per_coarse_pixel_dispatch) {
+      /* The thread payload only delivers subspan locations (ss0, ss1,
+       * ss2, ...). Since subspans covers 2x2 pixels blocks, we need to
+       * generate 4 pixel coordinates out of each subspan location. We do this
+       * by replicating a subspan coordinate 4 times and adding an offset of 1
+       * in each direction from the initial top left (tl) location to generate
+       * top right (tr = +1 in x), bottom left (bl = +1 in y) and bottom right
+       * (br = +1 in x, +1 in y).
+       *
+       * The locations we build look like this in SIMD8 :
+       *
+       *    ss0.tl ss0.tr ss0.bl ss0.br ss1.tl ss1.tr ss1.bl ss1.br
+       *
+       * The value 0x11001010 is a vector of 8 half byte vector. It adds
+       * following to generate the 4 pixels coordinates out of the subspan0:
+       *
+       *  0x
+       *    1 : ss0.y + 1 -> ss0.br.y
+       *    1 : ss0.y + 1 -> ss0.bl.y
+       *    0 : ss0.y + 0 -> ss0.tr.y
+       *    0 : ss0.y + 0 -> ss0.tl.y
+       *    1 : ss0.x + 1 -> ss0.br.x
+       *    0 : ss0.x + 0 -> ss0.bl.x
+       *    1 : ss0.x + 1 -> ss0.tr.x
+       *    0 : ss0.x + 0 -> ss0.tl.x
+       *
+       * By doing a SIMD16 add in a SIMD8 shader, we can generate the 8 pixels
+       * coordinates out of 2 subspans coordinates in a single ADD instruction
+       * (twice the operation above).
+       */
+      int_pixel_offset_xy = fs_reg(brw_imm_v(0x11001010));
+      half_int_pixel_offset_x = fs_reg(brw_imm_uw(0));
+      half_int_pixel_offset_y = fs_reg(brw_imm_uw(0));
+      /* On Gfx12.5, because of regioning restrictions, the interpolation code
+       * is slightly different and works off X & Y only inputs. The ordering
+       * of the half bytes here is a bit odd, with each subspan replicated
+       * twice and every other element is discarded :
+       *
+       *             ss0.tl ss0.tl ss0.tr ss0.tr ss0.bl ss0.bl ss0.br ss0.br
+       *  X offset:    0      0      1      0      0      0      1      0
+       *  Y offset:    0      0      0      0      1      0      1      0
+       */
+      int_pixel_offset_x = fs_reg(brw_imm_v(0x01000100));
+      int_pixel_offset_y = fs_reg(brw_imm_v(0x01010000));
+   } else {
+      /* In coarse pixel dispatch we have to do the same ADD instruction that
+       * we do in normal per pixel dispatch, except this time we're not adding
+       * 1 in each direction, but instead the coarse pixel size.
+       *
+       * The coarse pixel size is delivered as 2 u8 in r1.0
+       */
+      struct brw_reg r1_0 = retype(brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0), BRW_REGISTER_TYPE_UB);
+
+      const fs_builder dbld =
+         abld.exec_all().group(MIN2(16, dispatch_width) * 2, 0);
+
+      if (devinfo->verx10 >= 125) {
+         /* To build the array of half bytes we do and AND operation with the
+          * right mask in X.
+          */
+         int_pixel_offset_x = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         dbld.AND(int_pixel_offset_x, byte_offset(r1_0, 0), brw_imm_v(0x0f000f00));
+
+         /* And the right mask in Y. */
+         int_pixel_offset_y = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         dbld.AND(int_pixel_offset_y, byte_offset(r1_0, 1), brw_imm_v(0x0f0f0000));
+      } else {
+         /* To build the array of half bytes we do and AND operation with the
+          * right mask in X.
+          */
+         int_pixel_offset_x = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         dbld.AND(int_pixel_offset_x, byte_offset(r1_0, 0), brw_imm_v(0x0000f0f0));
+
+         /* And the right mask in Y. */
+         int_pixel_offset_y = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         dbld.AND(int_pixel_offset_y, byte_offset(r1_0, 1), brw_imm_v(0xff000000));
+
+         /* Finally OR the 2 registers. */
+         int_pixel_offset_xy = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         dbld.OR(int_pixel_offset_xy, int_pixel_offset_x, int_pixel_offset_y);
+      }
+
+      /* Also compute the half pixel size used to center pixels. */
+      half_int_pixel_offset_x = bld.vgrf(BRW_REGISTER_TYPE_UW);
+      half_int_pixel_offset_y = bld.vgrf(BRW_REGISTER_TYPE_UW);
+
+      bld.SHR(half_int_pixel_offset_x, suboffset(r1_0, 0), brw_imm_ud(1));
+      bld.SHR(half_int_pixel_offset_y, suboffset(r1_0, 1), brw_imm_ud(1));
+   }
+
    for (unsigned i = 0; i < DIV_ROUND_UP(dispatch_width, 16); i++) {
       const fs_builder hbld = abld.group(MIN2(16, dispatch_width), i);
       struct brw_reg gi_uw = retype(brw_vec1_grf(1 + i, 0), BRW_REGISTER_TYPE_UW);
 
-      if (devinfo->gen >= 8 || dispatch_width == 8) {
+      if (devinfo->verx10 >= 125) {
+         const fs_builder dbld =
+            abld.exec_all().group(hbld.dispatch_width() * 2, 0);
+         const fs_reg int_pixel_x = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+         const fs_reg int_pixel_y = dbld.vgrf(BRW_REGISTER_TYPE_UW);
+
+         dbld.ADD(int_pixel_x,
+                  fs_reg(stride(suboffset(gi_uw, 4), 2, 8, 0)),
+                  int_pixel_offset_x);
+         dbld.ADD(int_pixel_y,
+                  fs_reg(stride(suboffset(gi_uw, 5), 2, 8, 0)),
+                  int_pixel_offset_y);
+
+         if (wm_prog_data->per_coarse_pixel_dispatch) {
+            dbld.ADD(int_pixel_x, int_pixel_x,
+                     horiz_stride(half_int_pixel_offset_x, 0));
+            dbld.ADD(int_pixel_y, int_pixel_y,
+                     horiz_stride(half_int_pixel_offset_y, 0));
+         }
+
+         hbld.MOV(offset(pixel_x, hbld, i), horiz_stride(int_pixel_x, 2));
+         hbld.MOV(offset(pixel_y, hbld, i), horiz_stride(int_pixel_y, 2));
+
+      } else if (devinfo->ver >= 8 || dispatch_width == 8) {
          /* The "Register Region Restrictions" page says for BDW (and newer,
           * presumably):
           *
@@ -230,10 +422,12 @@ fs_visitor::emit_interpolation_setup_gen6()
 
          dbld.ADD(int_pixel_xy,
                   fs_reg(stride(suboffset(gi_uw, 4), 1, 4, 0)),
-                  fs_reg(brw_imm_v(0x11001010)));
+                  int_pixel_offset_xy);
 
-         hbld.emit(FS_OPCODE_PIXEL_X, offset(pixel_x, hbld, i), int_pixel_xy);
-         hbld.emit(FS_OPCODE_PIXEL_Y, offset(pixel_y, hbld, i), int_pixel_xy);
+         hbld.emit(FS_OPCODE_PIXEL_X, offset(pixel_x, hbld, i), int_pixel_xy,
+                                      horiz_stride(half_int_pixel_offset_x, 0));
+         hbld.emit(FS_OPCODE_PIXEL_Y, offset(pixel_y, hbld, i), int_pixel_xy,
+                                      horiz_stride(half_int_pixel_offset_y, 0));
       } else {
          /* The "Register Region Restrictions" page says for SNB, IVB, HSW:
           *
@@ -253,7 +447,7 @@ fs_visitor::emit_interpolation_setup_gen6()
                   fs_reg(stride(suboffset(gi_uw, 5), 2, 4, 0)),
                   fs_reg(brw_imm_v(0x11001100)));
 
-         /* As of gen6, we can no longer mix float and int sources.  We have
+         /* As of gfx6, we can no longer mix float and int sources.  We have
           * to turn the integer pixel centers into floats for their actual
           * use.
           */
@@ -262,16 +456,65 @@ fs_visitor::emit_interpolation_setup_gen6()
       }
    }
 
-   abld = bld.annotate("compute pos.w");
-   this->pixel_w = fetch_payload_reg(abld, payload.source_w_reg);
-   this->wpos_w = vgrf(glsl_type::float_type);
-   abld.emit(SHADER_OPCODE_RCP, this->wpos_w, this->pixel_w);
+   abld = bld.annotate("compute pos.z");
+   if (wm_prog_data->uses_depth_w_coefficients) {
+      assert(!wm_prog_data->uses_src_depth);
+      /* In coarse pixel mode, the HW doesn't interpolate Z coordinate
+       * properly. In the same way we have to add the coarse pixel size to
+       * pixels locations, here we recompute the Z value with 2 coefficients
+       * in X & Y axis.
+       */
+      fs_reg coef_payload = fetch_payload_reg(abld, payload.depth_w_coef_reg, BRW_REGISTER_TYPE_F);
+      const fs_reg x_start = brw_vec1_grf(coef_payload.nr, 2);
+      const fs_reg y_start = brw_vec1_grf(coef_payload.nr, 6);
+      const fs_reg z_cx    = brw_vec1_grf(coef_payload.nr, 1);
+      const fs_reg z_cy    = brw_vec1_grf(coef_payload.nr, 0);
+      const fs_reg z_c0    = brw_vec1_grf(coef_payload.nr, 3);
 
-   struct brw_wm_prog_data *wm_prog_data = brw_wm_prog_data(prog_data);
+      const fs_reg float_pixel_x = abld.vgrf(BRW_REGISTER_TYPE_F);
+      const fs_reg float_pixel_y = abld.vgrf(BRW_REGISTER_TYPE_F);
+
+      abld.ADD(float_pixel_x, this->pixel_x, negate(x_start));
+      abld.ADD(float_pixel_y, this->pixel_y, negate(y_start));
+
+      /* r1.0 - 0:7 ActualCoarsePixelShadingSize.X */
+      const fs_reg u8_cps_width = fs_reg(retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UB));
+      /* r1.0 - 15:8 ActualCoarsePixelShadingSize.Y */
+      const fs_reg u8_cps_height = byte_offset(u8_cps_width, 1);
+      const fs_reg u32_cps_width = abld.vgrf(BRW_REGISTER_TYPE_UD);
+      const fs_reg u32_cps_height = abld.vgrf(BRW_REGISTER_TYPE_UD);
+      abld.MOV(u32_cps_width, u8_cps_width);
+      abld.MOV(u32_cps_height, u8_cps_height);
+
+      const fs_reg f_cps_width = abld.vgrf(BRW_REGISTER_TYPE_F);
+      const fs_reg f_cps_height = abld.vgrf(BRW_REGISTER_TYPE_F);
+      abld.MOV(f_cps_width, u32_cps_width);
+      abld.MOV(f_cps_height, u32_cps_height);
+
+      /* Center in the middle of the coarse pixel. */
+      abld.MAD(float_pixel_x, float_pixel_x, brw_imm_f(0.5f), f_cps_width);
+      abld.MAD(float_pixel_y, float_pixel_y, brw_imm_f(0.5f), f_cps_height);
+
+      this->pixel_z = abld.vgrf(BRW_REGISTER_TYPE_F);
+      abld.MAD(this->pixel_z, z_c0, z_cx, float_pixel_x);
+      abld.MAD(this->pixel_z, this->pixel_z, z_cy, float_pixel_y);
+   }
+
+   if (wm_prog_data->uses_src_depth) {
+      assert(!wm_prog_data->uses_depth_w_coefficients);
+      this->pixel_z = fetch_payload_reg(bld, payload.source_depth_reg);
+   }
+
+   if (wm_prog_data->uses_src_w) {
+      abld = bld.annotate("compute pos.w");
+      this->pixel_w = fetch_payload_reg(abld, payload.source_w_reg);
+      this->wpos_w = vgrf(glsl_type::float_type);
+      abld.emit(SHADER_OPCODE_RCP, this->wpos_w, this->pixel_w);
+   }
 
    for (int i = 0; i < BRW_BARYCENTRIC_MODE_COUNT; ++i) {
-      this->delta_xy[i] = fetch_payload_reg(
-         bld, payload.barycentric_coord_reg[i], BRW_REGISTER_TYPE_F, 2);
+      this->delta_xy[i] = fetch_barycentric_reg(
+         bld, payload.barycentric_coord_reg[i]);
    }
 
    uint32_t centroid_modes = wm_prog_data->barycentric_interp_modes &
@@ -293,15 +536,18 @@ fs_visitor::emit_interpolation_setup_gen6()
          if (!(centroid_modes & (1 << i)))
             continue;
 
+         const fs_reg centroid_delta_xy = delta_xy[i];
          const fs_reg &pixel_delta_xy = delta_xy[i - 1];
 
-         for (unsigned q = 0; q < dispatch_width / 8; q++) {
-            for (unsigned c = 0; c < 2; c++) {
-               const unsigned idx = c + (q & 2) + (q & 1) * dispatch_width / 8;
-               set_predicate_inv(
-                  BRW_PREDICATE_NORMAL, true,
-                  bld.half(q).MOV(horiz_offset(delta_xy[i], idx * 8),
-                                  horiz_offset(pixel_delta_xy, idx * 8)));
+         delta_xy[i] = bld.vgrf(BRW_REGISTER_TYPE_F, 2);
+
+         for (unsigned c = 0; c < 2; c++) {
+            for (unsigned q = 0; q < dispatch_width / 8; q++) {
+               set_predicate(BRW_PREDICATE_NORMAL,
+                  bld.quarter(q).SEL(
+                     quarter(offset(delta_xy[i], bld, c), q),
+                     quarter(offset(centroid_delta_xy, bld, c), q),
+                     quarter(offset(pixel_delta_xy, bld, c), q)));
             }
          }
       }
@@ -374,11 +620,18 @@ fs_visitor::emit_single_fb_write(const fs_builder &bld,
    const fs_reg dst_depth = fetch_payload_reg(bld, payload.dest_depth_reg);
    fs_reg src_depth, src_stencil;
 
-   if (source_depth_to_render_target) {
-      if (nir->info.outputs_written & BITFIELD64_BIT(FRAG_RESULT_DEPTH))
-         src_depth = frag_depth;
-      else
-         src_depth = fetch_payload_reg(bld, payload.source_depth_reg);
+   if (nir->info.outputs_written & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+      src_depth = frag_depth;
+   } else if (source_depth_to_render_target) {
+      /* If we got here, we're in one of those strange Gen4-5 cases where
+       * we're forced to pass the source depth, unmodified, to the FB write.
+       * In this case, we don't want to use pixel_z because we may not have
+       * set up interpolation.  It's also perfectly safe because it only
+       * happens on old hardware (no coarse interpolation) and this is
+       * explicitly the pass-through case.
+       */
+      assert(devinfo->ver <= 5);
+      src_depth = fetch_payload_reg(bld, payload.source_depth_reg);
    }
 
    if (nir->info.outputs_written & BITFIELD64_BIT(FRAG_RESULT_STENCIL))
@@ -395,86 +648,10 @@ fs_visitor::emit_single_fb_write(const fs_builder &bld,
 
    if (prog_data->uses_kill) {
       write->predicate = BRW_PREDICATE_NORMAL;
-      write->flag_subreg = 1;
+      write->flag_subreg = sample_mask_flag_subreg(this);
    }
 
    return write;
-}
-
-void
-fs_visitor::emit_alpha_to_coverage_workaround(const fs_reg &src0_alpha)
-{
-   /* We need to compute alpha to coverage dithering manually in shader
-    * and replace sample mask store with the bitwise-AND of sample mask and
-    * alpha to coverage dithering.
-    *
-    * The following formula is used to compute final sample mask:
-    *  m = int(16.0 * clamp(src0_alpha, 0.0, 1.0))
-    *  dither_mask = 0x1111 * ((0xfea80 >> (m & ~3)) & 0xf) |
-    *     0x0808 * (m & 2) | 0x0100 * (m & 1)
-    *  sample_mask = sample_mask & dither_mask
-    *
-    * It gives a number of ones proportional to the alpha for 2, 4, 8 or 16
-    * least significant bits of the result:
-    *  0.0000 0000000000000000
-    *  0.0625 0000000100000000
-    *  0.1250 0001000000010000
-    *  0.1875 0001000100010000
-    *  0.2500 1000100010001000
-    *  0.3125 1000100110001000
-    *  0.3750 1001100010011000
-    *  0.4375 1001100110011000
-    *  0.5000 1010101010101010
-    *  0.5625 1010101110101010
-    *  0.6250 1011101010111010
-    *  0.6875 1011101110111010
-    *  0.7500 1110111011101110
-    *  0.8125 1110111111101110
-    *  0.8750 1111111011111110
-    *  0.9375 1111111111111110
-    *  1.0000 1111111111111111
-    */
-   const fs_builder abld = bld.annotate("compute alpha_to_coverage & "
-      "sample_mask");
-
-   /* clamp(src0_alpha, 0.f, 1.f) */
-   const fs_reg float_tmp = abld.vgrf(BRW_REGISTER_TYPE_F);
-   set_saturate(true, abld.MOV(float_tmp, src0_alpha));
-
-   /* 16.0 * clamp(src0_alpha, 0.0, 1.0) */
-   abld.MUL(float_tmp, float_tmp, brw_imm_f(16.0));
-
-   /* m = int(16.0 * clamp(src0_alpha, 0.0, 1.0)) */
-   const fs_reg m = abld.vgrf(BRW_REGISTER_TYPE_UW);
-   abld.MOV(m, float_tmp);
-
-   /* 0x1111 * ((0xfea80 >> (m & ~3)) & 0xf) */
-   const fs_reg int_tmp_1 = abld.vgrf(BRW_REGISTER_TYPE_UW);
-   const fs_reg shift_const = abld.vgrf(BRW_REGISTER_TYPE_UD);
-   abld.MOV(shift_const, brw_imm_d(0xfea80));
-   abld.AND(int_tmp_1, m, brw_imm_uw(~3));
-   abld.SHR(int_tmp_1, shift_const, int_tmp_1);
-   abld.AND(int_tmp_1, int_tmp_1, brw_imm_uw(0xf));
-   abld.MUL(int_tmp_1, int_tmp_1, brw_imm_uw(0x1111));
-
-   /* 0x0808 * (m & 2) */
-   const fs_reg int_tmp_2 = abld.vgrf(BRW_REGISTER_TYPE_UW);
-   abld.AND(int_tmp_2, m, brw_imm_uw(2));
-   abld.MUL(int_tmp_2, int_tmp_2, brw_imm_uw(0x0808));
-
-   abld.OR(int_tmp_1, int_tmp_1, int_tmp_2);
-
-   /* 0x0100 * (m & 1) */
-   const fs_reg int_tmp_3 = abld.vgrf(BRW_REGISTER_TYPE_UW);
-   abld.AND(int_tmp_3, m, brw_imm_uw(1));
-   abld.MUL(int_tmp_3, int_tmp_3, brw_imm_uw(0x0100));
-
-   abld.OR(int_tmp_1, int_tmp_1, int_tmp_3);
-
-   /* sample_mask = sample_mask & dither_mask */
-   const fs_reg mask = abld.vgrf(BRW_REGISTER_TYPE_UD);
-   abld.AND(mask, sample_mask, int_tmp_1);
-   sample_mask = mask;
 }
 
 void
@@ -486,8 +663,8 @@ fs_visitor::emit_fb_writes()
 
    fs_inst *inst = NULL;
 
-   if (source_depth_to_render_target && devinfo->gen == 6) {
-      /* For outputting oDepth on gen6, SIMD8 writes have to be used.  This
+   if (source_depth_to_render_target && devinfo->ver == 6) {
+      /* For outputting oDepth on gfx6, SIMD8 writes have to be used.  This
        * would require SIMD8 moves of each half to message regs, e.g. by using
        * the SIMD lowering pass.  Unfortunately this is more difficult than it
        * sounds because the SIMD8 single-source message lacks channel selects
@@ -509,17 +686,9 @@ fs_visitor::emit_fb_writes()
     * so we compute if we need replicate alpha and emit alpha to coverage
     * workaround here.
     */
-   prog_data->replicate_alpha = key->alpha_test_replicate_alpha ||
+   const bool replicate_alpha = key->alpha_test_replicate_alpha ||
       (key->nr_color_regions > 1 && key->alpha_to_coverage &&
-       (sample_mask.file == BAD_FILE || devinfo->gen == 6));
-
-   /* From the SKL PRM, Volume 7, "Alpha Coverage":
-    *  "If Pixel Shader outputs oMask, AlphaToCoverage is disabled in
-    *   hardware, regardless of the state setting for this feature."
-    */
-   if (devinfo->gen > 6 && key->alpha_to_coverage &&
-       sample_mask.file != BAD_FILE && this->outputs[0].file != BAD_FILE)
-      emit_alpha_to_coverage_workaround(offset(this->outputs[0], bld, 3));
+       (sample_mask.file == BAD_FILE || devinfo->ver == 6));
 
    for (int target = 0; target < key->nr_color_regions; target++) {
       /* Skip over outputs that weren't written. */
@@ -530,7 +699,7 @@ fs_visitor::emit_fb_writes()
          ralloc_asprintf(this->mem_ctx, "FB write target %d", target));
 
       fs_reg src0_alpha;
-      if (devinfo->gen >= 6 && prog_data->replicate_alpha && target != 0)
+      if (devinfo->ver >= 6 && replicate_alpha && target != 0)
          src0_alpha = offset(outputs[0], bld, 3);
 
       inst = emit_single_fb_write(abld, this->outputs[target],
@@ -561,86 +730,22 @@ fs_visitor::emit_fb_writes()
 
    inst->last_rt = true;
    inst->eot = true;
-}
 
-void
-fs_visitor::setup_uniform_clipplane_values()
-{
-   const struct brw_vs_prog_key *key =
-      (const struct brw_vs_prog_key *) this->key;
-
-   if (key->nr_userclip_plane_consts == 0)
-      return;
-
-   assert(stage_prog_data->nr_params == uniforms);
-   brw_stage_prog_data_add_params(stage_prog_data,
-                                  key->nr_userclip_plane_consts * 4);
-
-   for (int i = 0; i < key->nr_userclip_plane_consts; i++) {
-      this->userplane[i] = fs_reg(UNIFORM, uniforms);
-      for (int j = 0; j < 4; ++j) {
-         stage_prog_data->param[uniforms + j] =
-            BRW_PARAM_BUILTIN_CLIP_PLANE(i, j);
-      }
-      uniforms += 4;
-   }
-}
-
-/**
- * Lower legacy fixed-function and gl_ClipVertex clipping to clip distances.
- *
- * This does nothing if the shader uses gl_ClipDistance or user clipping is
- * disabled altogether.
- */
-void fs_visitor::compute_clip_distance()
-{
-   struct brw_vue_prog_data *vue_prog_data = brw_vue_prog_data(prog_data);
-   const struct brw_vs_prog_key *key =
-      (const struct brw_vs_prog_key *) this->key;
-
-   /* Bail unless some sort of legacy clipping is enabled */
-   if (key->nr_userclip_plane_consts == 0)
-      return;
-
-   /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special Variables):
-    *
-    *     "If a linked set of shaders forming the vertex stage contains no
-    *     static write to gl_ClipVertex or gl_ClipDistance, but the
-    *     application has requested clipping against user clip planes through
-    *     the API, then the coordinate written to gl_Position is used for
-    *     comparison against the user clip planes."
-    *
-    * This function is only called if the shader didn't write to
-    * gl_ClipDistance.  Accordingly, we use gl_ClipVertex to perform clipping
-    * if the user wrote to it; otherwise we use gl_Position.
-    */
-
-   gl_varying_slot clip_vertex = VARYING_SLOT_CLIP_VERTEX;
-   if (!(vue_prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX))
-      clip_vertex = VARYING_SLOT_POS;
-
-   /* If the clip vertex isn't written, skip this.  Typically this means
-    * the GS will set up clipping. */
-   if (outputs[clip_vertex].file == BAD_FILE)
-      return;
-
-   setup_uniform_clipplane_values();
-
-   const fs_builder abld = bld.annotate("user clip distances");
-
-   this->outputs[VARYING_SLOT_CLIP_DIST0] = vgrf(glsl_type::vec4_type);
-   this->outputs[VARYING_SLOT_CLIP_DIST1] = vgrf(glsl_type::vec4_type);
-
-   for (int i = 0; i < key->nr_userclip_plane_consts; i++) {
-      fs_reg u = userplane[i];
-      const fs_reg output = offset(outputs[VARYING_SLOT_CLIP_DIST0 + i / 4],
-                                   bld, i & 3);
-
-      abld.MUL(output, outputs[clip_vertex], u);
-      for (int j = 1; j < 4; j++) {
-         u.nr = userplane[i].nr + j;
-         abld.MAD(output, output, offset(outputs[clip_vertex], bld, j), u);
-      }
+   if (devinfo->ver >= 11 && devinfo->ver <= 12 &&
+       prog_data->dual_src_blend) {
+      /* The dual-source RT write messages fail to release the thread
+       * dependency on ICL and TGL with SIMD32 dispatch, leading to hangs.
+       *
+       * XXX - Emit an extra single-source NULL RT-write marked LastRT in
+       *       order to release the thread dependency without disabling
+       *       SIMD32.
+       *
+       * The dual-source RT write messages may lead to hangs with SIMD16
+       * dispatch on ICL due some unknown reasons, see
+       * https://gitlab.freedesktop.org/mesa/mesa/-/issues/2183
+       */
+      limit_dispatch_width(8, "Dual source blending unsupported "
+                           "in SIMD16 and SIMD32 modes.\n");
    }
 }
 
@@ -790,8 +895,18 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
                sources[length++] = reg;
             }
          } else {
-            for (unsigned i = 0; i < 4; i++)
-               sources[length++] = offset(this->outputs[varying], bld, i);
+            int slot_offset = 0;
+
+            /* When using Primitive Replication, there may be multiple slots
+             * assigned to POS.
+             */
+            if (varying == VARYING_SLOT_POS)
+               slot_offset = slot - vue_map->varying_to_slot[VARYING_SLOT_POS];
+
+            for (unsigned i = 0; i < 4; i++) {
+               sources[length++] = offset(this->outputs[varying], bld,
+                                          i + (slot_offset * 4));
+            }
          }
          break;
       }
@@ -823,7 +938,7 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
          fs_inst *inst = abld.emit(opcode, reg_undef, payload);
 
          /* For ICL WA 1805992985 one needs additional write in the end. */
-         if (devinfo->gen == 11 && stage == MESA_SHADER_TESS_EVAL)
+         if (devinfo->ver == 11 && stage == MESA_SHADER_TESS_EVAL)
             inst->eot = false;
          else
             inst->eot = slot == last_slot && stage != MESA_SHADER_GEOMETRY;
@@ -871,7 +986,7 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
     * send cycle, which is a urb write with an eot must be 4 phases long and
     * all 8 lanes must valid.
     */
-   if (devinfo->gen == 11 && stage == MESA_SHADER_TESS_EVAL) {
+   if (devinfo->ver == 11 && stage == MESA_SHADER_TESS_EVAL) {
       fs_reg payload = fs_reg(VGRF, alloc.allocate(6), BRW_REGISTER_TYPE_UD);
 
       /* Workaround requires all 8 channels (lanes) to be valid. This is
@@ -912,10 +1027,7 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
 void
 fs_visitor::emit_cs_terminate()
 {
-   assert(devinfo->gen >= 7);
-
-   /* We are getting the thread ID from the compute shader header */
-   assert(stage == MESA_SHADER_COMPUTE);
+   assert(devinfo->ver >= 7);
 
    /* We can't directly send from g0, since sends with EOT have to use
     * g112-127. So, copy it to a virtual register, The register allocator will
@@ -934,32 +1046,41 @@ fs_visitor::emit_cs_terminate()
 void
 fs_visitor::emit_barrier()
 {
-   uint32_t barrier_id_mask;
-   switch (devinfo->gen) {
-   case 7:
-   case 8:
-      barrier_id_mask = 0x0f000000u; break;
-   case 9:
-   case 10:
-      barrier_id_mask = 0x8f000000u; break;
-   case 11:
-      barrier_id_mask = 0x7f000000u; break;
-   default:
-      unreachable("barrier is only available on gen >= 7");
-   }
-
    /* We are getting the barrier ID from the compute shader header */
-   assert(stage == MESA_SHADER_COMPUTE);
+   assert(stage == MESA_SHADER_COMPUTE || stage == MESA_SHADER_KERNEL);
 
    fs_reg payload = fs_reg(VGRF, alloc.allocate(1), BRW_REGISTER_TYPE_UD);
 
    /* Clear the message payload */
    bld.exec_all().group(8, 0).MOV(payload, brw_imm_ud(0u));
 
-   /* Copy the barrier id from r0.2 to the message payload reg.2 */
-   fs_reg r0_2 = fs_reg(retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD));
-   bld.exec_all().group(1, 0).AND(component(payload, 2), r0_2,
-                                  brw_imm_ud(barrier_id_mask));
+   if (devinfo->verx10 >= 125) {
+      /* mov r0.2[31:24] into m0.2[31:24] and m0.2[23:16] */
+      fs_reg m0_10ub = component(retype(payload, BRW_REGISTER_TYPE_UB), 10);
+      fs_reg r0_11ub =
+         stride(suboffset(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UB), 11),
+                0, 1, 0);
+      bld.exec_all().group(2, 0).MOV(m0_10ub, r0_11ub);
+   } else {
+      uint32_t barrier_id_mask;
+      switch (devinfo->ver) {
+      case 7:
+      case 8:
+         barrier_id_mask = 0x0f000000u; break;
+      case 9:
+         barrier_id_mask = 0x8f000000u; break;
+      case 11:
+      case 12:
+         barrier_id_mask = 0x7f000000u; break;
+      default:
+         unreachable("barrier is only available on gen >= 7");
+      }
+
+      /* Copy the barrier id from r0.2 to the message payload reg.2 */
+      fs_reg r0_2 = fs_reg(retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD));
+      bld.exec_all().group(1, 0).AND(component(payload, 2), r0_2,
+                                     brw_imm_ud(barrier_id_mask));
+   }
 
    /* Emit a gateway "barrier" message using the payload we set up, followed
     * by a wait instruction.
@@ -969,16 +1090,17 @@ fs_visitor::emit_barrier()
 
 fs_visitor::fs_visitor(const struct brw_compiler *compiler, void *log_data,
                        void *mem_ctx,
-                       const void *key,
+                       const brw_base_prog_key *key,
                        struct brw_stage_prog_data *prog_data,
-                       struct gl_program *prog,
                        const nir_shader *shader,
                        unsigned dispatch_width,
                        int shader_time_index,
-                       const struct brw_vue_map *input_vue_map)
-   : backend_shader(compiler, log_data, mem_ctx, shader, prog_data),
-     key(key), gs_compile(NULL), prog_data(prog_data), prog(prog),
-     input_vue_map(input_vue_map),
+                       bool debug_enabled)
+   : backend_shader(compiler, log_data, mem_ctx, shader, prog_data,
+                    debug_enabled),
+     key(key), gs_compile(NULL), prog_data(prog_data),
+     live_analysis(this), regpressure_analysis(this),
+     performance_analysis(this),
      dispatch_width(dispatch_width),
      shader_time_index(shader_time_index),
      bld(fs_builder(this, dispatch_width).at_end())
@@ -991,11 +1113,14 @@ fs_visitor::fs_visitor(const struct brw_compiler *compiler, void *log_data,
                        struct brw_gs_compile *c,
                        struct brw_gs_prog_data *prog_data,
                        const nir_shader *shader,
-                       int shader_time_index)
+                       int shader_time_index,
+                       bool debug_enabled)
    : backend_shader(compiler, log_data, mem_ctx, shader,
-                    &prog_data->base.base),
-     key(&c->key), gs_compile(c),
-     prog_data(&prog_data->base.base), prog(NULL),
+                    &prog_data->base.base, debug_enabled),
+     key(&c->key.base), gs_compile(c),
+     prog_data(&prog_data->base.base),
+     live_analysis(this), regpressure_analysis(this),
+     performance_analysis(this),
      dispatch_width(8),
      shader_time_index(shader_time_index),
      bld(fs_builder(this, dispatch_width).at_end())
@@ -1007,54 +1132,34 @@ fs_visitor::fs_visitor(const struct brw_compiler *compiler, void *log_data,
 void
 fs_visitor::init()
 {
-   switch (stage) {
-   case MESA_SHADER_FRAGMENT:
-      key_tex = &((const brw_wm_prog_key *) key)->tex;
-      break;
-   case MESA_SHADER_VERTEX:
-      key_tex = &((const brw_vs_prog_key *) key)->tex;
-      break;
-   case MESA_SHADER_TESS_CTRL:
-      key_tex = &((const brw_tcs_prog_key *) key)->tex;
-      break;
-   case MESA_SHADER_TESS_EVAL:
-      key_tex = &((const brw_tes_prog_key *) key)->tex;
-      break;
-   case MESA_SHADER_GEOMETRY:
-      key_tex = &((const brw_gs_prog_key *) key)->tex;
-      break;
-   case MESA_SHADER_COMPUTE:
-      key_tex = &((const brw_cs_prog_key*) key)->tex;
-      break;
-   default:
-      unreachable("unhandled shader stage");
-   }
+   if (key)
+      this->key_tex = &key->tex;
+   else
+      this->key_tex = NULL;
 
    this->max_dispatch_width = 32;
    this->prog_data = this->stage_prog_data;
 
    this->failed = false;
+   this->fail_msg = NULL;
 
    this->nir_locals = NULL;
    this->nir_ssa_values = NULL;
+   this->nir_system_values = NULL;
 
    memset(&this->payload, 0, sizeof(this->payload));
    this->source_depth_to_render_target = false;
    this->runtime_check_aads_emit = false;
    this->first_non_payload_grf = 0;
-   this->max_grf = devinfo->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
-
-   this->virtual_grf_start = NULL;
-   this->virtual_grf_end = NULL;
-   this->live_intervals = NULL;
-   this->regs_live_at_ip = NULL;
+   this->max_grf = devinfo->ver >= 7 ? GFX7_MRF_HACK_START : BRW_MAX_GRF;
 
    this->uniforms = 0;
    this->last_scratch = 0;
    this->pull_constant_loc = NULL;
    this->push_constant_loc = NULL;
 
-   this->promoted_constants = 0,
+   this->shader_stats.scheduler_mode = NULL;
+   this->shader_stats.promoted_constants = 0,
 
    this->grf_used = 0;
    this->spilled_any_registers = false;

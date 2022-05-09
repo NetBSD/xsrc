@@ -281,20 +281,22 @@ public:
 
    enum brw_urb_write_flags urb_write_flags;
 
-   unsigned sol_binding; /**< gen6: SOL binding table index */
-   bool sol_final_write; /**< gen6: send commit message */
-   unsigned sol_vertex; /**< gen6: used for setting dst index in SVB header */
+   unsigned sol_binding; /**< gfx6: SOL binding table index */
+   bool sol_final_write; /**< gfx6: send commit message */
+   unsigned sol_vertex; /**< gfx6: used for setting dst index in SVB header */
 
-   bool is_send_from_grf();
+   bool is_send_from_grf() const;
    unsigned size_read(unsigned arg) const;
-   bool can_reswizzle(const struct gen_device_info *devinfo, int dst_writemask,
+   bool can_reswizzle(const struct intel_device_info *devinfo,
+                      int dst_writemask,
                       int swizzle, int swizzle_mask);
    void reswizzle(int dst_writemask, int swizzle);
-   bool can_do_source_mods(const struct gen_device_info *devinfo);
+   bool can_do_source_mods(const struct intel_device_info *devinfo);
    bool can_do_cmod();
-   bool can_do_writemask(const struct gen_device_info *devinfo);
+   bool can_do_writemask(const struct intel_device_info *devinfo);
    bool can_change_types() const;
    bool has_source_and_destination_hazard() const;
+   unsigned implied_mrf_writes() const;
 
    bool is_align1_partial_write()
    {
@@ -302,7 +304,7 @@ public:
              opcode == VEC4_OPCODE_SET_HIGH_32BIT;
    }
 
-   bool reads_flag()
+   bool reads_flag() const
    {
       return predicate || opcode == VS_OPCODE_UNPACK_FLAGS_SIMD4X2;
    }
@@ -328,9 +330,9 @@ public:
       }
    }
 
-   bool writes_flag()
+   bool writes_flag(const intel_device_info *devinfo) const
    {
-      return (conditional_mod && (opcode != BRW_OPCODE_SEL &&
+      return (conditional_mod && ((opcode != BRW_OPCODE_SEL || devinfo->ver <= 5) &&
                                   opcode != BRW_OPCODE_CSEL &&
                                   opcode != BRW_OPCODE_IF &&
                                   opcode != BRW_OPCODE_WHILE));
@@ -353,8 +355,8 @@ public:
       case VS_OPCODE_PULL_CONSTANT_LOAD:
       case GS_OPCODE_SET_PRIMITIVE_ID:
       case GS_OPCODE_GET_INSTANCE_ID:
-      case SHADER_OPCODE_GEN4_SCRATCH_READ:
-      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
+      case SHADER_OPCODE_GFX4_SCRATCH_READ:
+      case SHADER_OPCODE_GFX4_SCRATCH_WRITE:
          return true;
       default:
          return false;

@@ -24,7 +24,7 @@
  */
 
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "nv_object.xml.h"
 #include "nv30/nv30-40_3d.xml.h"
@@ -240,6 +240,7 @@ nv30_sampler_view_create(struct pipe_context *pipe, struct pipe_resource *pt,
       break;
    case PIPE_TEXTURE_CUBE:
       so->fmt |= NV30_3D_TEX_FORMAT_CUBIC;
+      FALLTHROUGH;
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
       so->fmt |= NV30_3D_TEX_FORMAT_DIMS_2D;

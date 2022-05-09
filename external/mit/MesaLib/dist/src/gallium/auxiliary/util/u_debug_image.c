@@ -25,7 +25,7 @@
 
 
 #include "util/u_debug_image.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -57,7 +57,7 @@ debug_dump_image(const char *prefix,
    unsigned char *rgb8;
    FILE *f;
 
-   util_snprintf(filename, sizeof(filename), "%s.ppm", prefix);
+   snprintf(filename, sizeof(filename), "%s.ppm", prefix);
 
    rgb8 = MALLOC(height * width * 3);
    if (!rgb8) {
@@ -113,10 +113,10 @@ debug_dump_surface(struct pipe_context *pipe,
     */
    texture = surface->texture;
 
-   data = pipe_transfer_map(pipe, texture, surface->u.tex.level,
-                            surface->u.tex.first_layer,
-                            PIPE_TRANSFER_READ,
-                            0, 0, surface->width, surface->height, &transfer);
+   data = pipe_texture_map(pipe, texture, surface->u.tex.level,
+                           surface->u.tex.first_layer,
+                           PIPE_MAP_READ,
+                           0, 0, surface->width, surface->height, &transfer);
    if (!data)
       return;
 
@@ -128,7 +128,7 @@ debug_dump_surface(struct pipe_context *pipe,
                     transfer->stride,
                     data);
 
-   pipe->transfer_unmap(pipe, transfer);
+   pipe->texture_unmap(pipe, transfer);
 }
 
 
@@ -192,13 +192,13 @@ debug_dump_surface_bmp(struct pipe_context *pipe,
    struct pipe_resource *texture = surface->texture;
    void *ptr;
 
-   ptr = pipe_transfer_map(pipe, texture, surface->u.tex.level,
-                           surface->u.tex.first_layer, PIPE_TRANSFER_READ,
-                           0, 0, surface->width, surface->height, &transfer);
+   ptr = pipe_texture_map(pipe, texture, surface->u.tex.level,
+                          surface->u.tex.first_layer, PIPE_MAP_READ,
+                          0, 0, surface->width, surface->height, &transfer);
 
    debug_dump_transfer_bmp(pipe, filename, transfer, ptr);
 
-   pipe->transfer_unmap(pipe, transfer);
+   pipe->texture_unmap(pipe, transfer);
 }
 
 void
@@ -220,6 +220,7 @@ debug_dump_transfer_bmp(UNUSED struct pipe_context *pipe,
 
    pipe_get_tile_rgba(transfer, ptr, 0, 0,
                       transfer->box.width, transfer->box.height,
+                      transfer->resource->format,
                       rgba);
 
    debug_dump_float_rgba_bmp(filename,

@@ -34,7 +34,7 @@
 #include "etnaviv_emit.h"
 #include "etnaviv_fence.h"
 #include "etnaviv_query.h"
-#include "etnaviv_query_hw.h"
+#include "etnaviv_query_acc.h"
 #include "etnaviv_rasterizer.h"
 #include "etnaviv_resource.h"
 #include "etnaviv_screen.h"
@@ -48,7 +48,9 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "util/hash_table.h"
 #include "util/u_blitter.h"
+#include "util/u_draw.h"
 #include "util/u_helpers.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
@@ -56,18 +58,89 @@
 
 #include "hw/common.xml.h"
 
+static inline void
+etna_emit_nop_with_data(struct etna_cmd_stream *stream, uint32_t value)
+{
+   etna_cmd_stream_emit(stream, VIV_FE_NOP_HEADER_OP_NOP);
+   etna_cmd_stream_emit(stream, value);
+}
+
+static void
+etna_emit_string_marker(struct pipe_context *pctx, const char *string, int len)
+{
+   struct etna_context *ctx = etna_context(pctx);
+   struct etna_cmd_stream *stream = ctx->stream;
+   const uint32_t *buf = (const void *)string;
+
+   etna_cmd_stream_reserve(stream, len * 2);
+
+   while (len >= 4) {
+      etna_emit_nop_with_data(stream, *buf);
+      buf++;
+      len -= 4;
+   }
+
+   /* copy remainder bytes without reading past end of input string */
+   if (len > 0) {
+      uint32_t w = 0;
+      memcpy(&w, buf, len);
+      etna_emit_nop_with_data(stream, w);
+   }
+}
+
 static void
 etna_context_destroy(struct pipe_context *pctx)
 {
    struct etna_context *ctx = etna_context(pctx);
 
+   mtx_lock(&ctx->lock);
+
+   if (ctx->used_resources_read) {
+
+      /*
+       * There should be no resources tracked in the context when it's being
+       * destroyed. Be sure there are none to avoid memory leaks on buggy
+       * programs.
+       */
+      set_foreach(ctx->used_resources_read, entry) {
+         struct etna_resource *rsc = (struct etna_resource *)entry->key;
+
+         mtx_lock(&rsc->lock);
+         _mesa_set_remove_key(rsc->pending_ctx, ctx);
+         mtx_unlock(&rsc->lock);
+      }
+      _mesa_set_destroy(ctx->used_resources_read, NULL);
+
+   }
+   if (ctx->used_resources_write) {
+
+      /*
+       * There should be no resources tracked in the context when it's being
+       * destroyed. Be sure there are none to avoid memory leaks on buggy
+       * programs.
+       */
+      set_foreach(ctx->used_resources_write, entry) {
+         struct etna_resource *rsc = (struct etna_resource *)entry->key;
+
+         mtx_lock(&rsc->lock);
+         _mesa_set_remove_key(rsc->pending_ctx, ctx);
+         mtx_unlock(&rsc->lock);
+      }
+      _mesa_set_destroy(ctx->used_resources_write, NULL);
+
+   }
+   if (ctx->flush_resources)
+      _mesa_set_destroy(ctx->flush_resources, NULL);
+
+   mtx_unlock(&ctx->lock);
+
+   if (ctx->dummy_desc_bo)
+      etna_bo_del(ctx->dummy_desc_bo);
+
    if (ctx->dummy_rt)
       etna_bo_del(ctx->dummy_rt);
 
    util_copy_framebuffer_state(&ctx->framebuffer_s, NULL);
-
-   if (ctx->primconvert)
-      util_primconvert_destroy(ctx->primconvert);
 
    if (ctx->blitter)
       util_blitter_destroy(ctx->blitter);
@@ -82,6 +155,8 @@ etna_context_destroy(struct pipe_context *pctx)
 
    if (ctx->in_fence_fd != -1)
       close(ctx->in_fence_fd);
+
+   mtx_destroy(&ctx->lock);
 
    FREE(pctx);
 }
@@ -149,29 +224,35 @@ etna_get_fs(struct etna_context *ctx, struct etna_shader_key key)
 }
 
 static void
-etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
+etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info,
+              unsigned drawid_offset,
+              const struct pipe_draw_indirect_info *indirect,
+              const struct pipe_draw_start_count_bias *draws,
+              unsigned num_draws)
 {
+   if (num_draws > 1) {
+      util_draw_multi(pctx, info, drawid_offset, indirect, draws, num_draws);
+      return;
+   }
+
+   if (!indirect && (!draws[0].count || !info->instance_count))
+      return;
+
    struct etna_context *ctx = etna_context(pctx);
+   struct etna_screen *screen = ctx->screen;
    struct pipe_framebuffer_state *pfb = &ctx->framebuffer_s;
    uint32_t draw_mode;
    unsigned i;
 
-   if (!info->count_from_stream_output && !info->indirect &&
+   if (!indirect &&
        !info->primitive_restart &&
-       !u_trim_pipe_prim(info->mode, (unsigned*)&info->count))
+       !u_trim_pipe_prim(info->mode, (unsigned*)&draws[0].count))
       return;
 
    if (ctx->vertex_elements == NULL || ctx->vertex_elements->num_elements == 0)
       return; /* Nothing to do */
 
-   if (!(ctx->prim_hwsupport & (1 << info->mode))) {
-      struct primconvert_context *primconvert = ctx->primconvert;
-      util_primconvert_save_rasterizer_state(primconvert, ctx->rasterizer);
-      util_primconvert_draw_vbo(primconvert, info);
-      return;
-   }
-
-   int prims = u_decomposed_prims_for_vertices(info->mode, info->count);
+   int prims = u_decomposed_prims_for_vertices(info->mode, draws[0].count);
    if (unlikely(prims <= 0)) {
       DBG("Invalid draw primitive mode=%i or no primitives to be drawn", info->mode);
       return;
@@ -190,12 +271,12 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    if (info->index_size) {
       indexbuf = info->has_user_indices ? NULL : info->index.resource;
       if (info->has_user_indices &&
-          !util_upload_index_buffer(pctx, info, &indexbuf, &index_offset)) {
+          !util_upload_index_buffer(pctx, info, &draws[0], &indexbuf, &index_offset, 4)) {
          BUG("Index buffer upload failed.");
          return;
       }
       /* Add start to index offset, when rendering indexed */
-      index_offset += info->start * info->index_size;
+      index_offset += draws[0].start * info->index_size;
 
       ctx->index_buffer.FE_INDEX_STREAM_BASE_ADDR.bo = etna_resource(indexbuf)->bo;
       ctx->index_buffer.FE_INDEX_STREAM_BASE_ADDR.offset = index_offset;
@@ -214,9 +295,14 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    }
    ctx->dirty |= ETNA_DIRTY_INDEX_BUFFER;
 
-   struct etna_shader_key key = {};
+   struct etna_shader_key key = {
+      .front_ccw = ctx->rasterizer->front_ccw,
+      .sprite_coord_enable = ctx->rasterizer->sprite_coord_enable,
+      .sprite_coord_yinvert = !!ctx->rasterizer->sprite_coord_mode,
+   };
+
    if (pfb->cbufs[0])
-      key.frag_rb_swap = !!translate_rs_format_rb_swap(pfb->cbufs[0]->format);
+      key.frag_rb_swap = !!translate_pe_format_rb_swap(pfb->cbufs[0]->format);
 
    if (!etna_get_vs(ctx, key) || !etna_get_fs(ctx, key)) {
       BUG("compiled shaders are not okay");
@@ -226,6 +312,8 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    /* Update any derived state */
    if (!etna_state_update(ctx))
       return;
+
+   mtx_lock(&ctx->lock);
 
    /*
     * Figure out the buffers/features we need:
@@ -247,11 +335,14 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    }
 
    /* Mark constant buffers as being read */
-   resource_read(ctx, ctx->constant_buffer[PIPE_SHADER_VERTEX].buffer);
-   resource_read(ctx, ctx->constant_buffer[PIPE_SHADER_FRAGMENT].buffer);
+   u_foreach_bit(i, ctx->constant_buffer[PIPE_SHADER_VERTEX].enabled_mask)
+      resource_read(ctx, ctx->constant_buffer[PIPE_SHADER_VERTEX].cb[i].buffer);
+
+   u_foreach_bit(i, ctx->constant_buffer[PIPE_SHADER_FRAGMENT].enabled_mask)
+      resource_read(ctx, ctx->constant_buffer[PIPE_SHADER_FRAGMENT].cb[i].buffer);
 
    /* Mark VBOs as being read */
-   for (i = 0; i < ctx->vertex_buffer.count; i++) {
+   u_foreach_bit(i, ctx->vertex_buffer.enabled_mask) {
       assert(!ctx->vertex_buffer.vb[i].is_user_buffer);
       resource_read(ctx, ctx->vertex_buffer.vb[i].buffer.resource);
    }
@@ -260,14 +351,19 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    resource_read(ctx, indexbuf);
 
    /* Mark textures as being read */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      if (ctx->sampler_view[i])
-         resource_read(ctx, ctx->sampler_view[i]->texture);
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      if (ctx->sampler_view[i]) {
+          resource_read(ctx, ctx->sampler_view[i]->texture);
 
-   list_for_each_entry(struct etna_hw_query, hq, &ctx->active_hw_queries, node)
-      resource_written(ctx, hq->prsc);
+         /* if texture was modified since the last update,
+          * we need to clear the texture cache and possibly
+          * resolve/update ts
+          */
+         etna_update_sampler_source(ctx->sampler_view[i], i);
+      }
+   }
 
-   ctx->stats.prims_emitted += u_reduced_prims_for_vertices(info->mode, info->count);
+   ctx->stats.prims_generated += u_reduced_prims_for_vertices(info->mode, draws[0].count);
    ctx->stats.draw_calls++;
 
    /* Update state for this draw operation */
@@ -276,15 +372,15 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    /* First, sync state, then emit DRAW_PRIMITIVES or DRAW_INDEXED_PRIMITIVES */
    etna_emit_state(ctx);
 
-   if (ctx->specs.halti >= 2) {
+   if (screen->specs.halti >= 2) {
       /* On HALTI2+ (GC3000 and higher) only use instanced drawing commands, as the blob does */
-      etna_draw_instanced(ctx->stream, info->index_size, draw_mode, 1,
-         info->count, info->index_size ? info->index_bias : info->start);
+      etna_draw_instanced(ctx->stream, info->index_size, draw_mode, info->instance_count,
+         draws[0].count, info->index_size ? draws->index_bias : draws[0].start);
    } else {
       if (info->index_size)
-         etna_draw_indexed_primitives(ctx->stream, draw_mode, 0, prims, info->index_bias);
+         etna_draw_indexed_primitives(ctx->stream, draw_mode, 0, prims, draws->index_bias);
       else
-         etna_draw_primitives(ctx->stream, draw_mode, info->start, prims);
+         etna_draw_primitives(ctx->stream, draw_mode, draws[0].start, prims);
    }
 
    if (DBG_ENABLED(ETNA_DBG_DRAW_STALL)) {
@@ -293,6 +389,7 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
        * draw op has caused the hang. */
       etna_stall(ctx->stream, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
    }
+   mtx_unlock(&ctx->lock);
 
    if (DBG_ENABLED(ETNA_DBG_FLUSH_ALL))
       pctx->flush(pctx, NULL, 0);
@@ -306,97 +403,167 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 }
 
 static void
+etna_reset_gpu_state(struct etna_context *ctx)
+{
+   struct etna_cmd_stream *stream = ctx->stream;
+   struct etna_screen *screen = ctx->screen;
+   uint32_t dummy_attribs[VIVS_NFE_GENERIC_ATTRIB__LEN] = { 0 };
+
+   etna_set_state(stream, VIVS_GL_API_MODE, VIVS_GL_API_MODE_OPENGL);
+   etna_set_state(stream, VIVS_GL_VERTEX_ELEMENT_CONFIG, 0x00000001);
+   etna_set_state(stream, VIVS_PA_W_CLIP_LIMIT, 0x34000001);
+   etna_set_state(stream, VIVS_PA_FLAGS, 0x00000000); /* blob sets ZCONVERT_BYPASS on GC3000+, this messes up z for us */
+   etna_set_state(stream, VIVS_PA_VIEWPORT_UNK00A80, 0x38a01404);
+   etna_set_state(stream, VIVS_PA_VIEWPORT_UNK00A84, fui(8192.0));
+   etna_set_state(stream, VIVS_PA_ZFARCLIPPING, 0x00000000);
+   etna_set_state(stream, VIVS_RA_HDEPTH_CONTROL, 0x00007000);
+   etna_set_state(stream, VIVS_PS_CONTROL_EXT, 0x00000000);
+
+   /* There is no HALTI0 specific state */
+   if (screen->specs.halti >= 1) { /* Only on HALTI1+ */
+      etna_set_state(stream, VIVS_VS_HALTI1_UNK00884, 0x00000808);
+   }
+   if (screen->specs.halti >= 2) { /* Only on HALTI2+ */
+      etna_set_state(stream, VIVS_RA_UNK00E0C, 0x00000000);
+   }
+   if (screen->specs.halti >= 3) { /* Only on HALTI3+ */
+      etna_set_state(stream, VIVS_PS_HALTI3_UNK0103C, 0x76543210);
+   }
+   if (screen->specs.halti >= 4) { /* Only on HALTI4+ */
+      etna_set_state(stream, VIVS_PS_MSAA_CONFIG, 0x6fffffff & 0xf70fffff & 0xfff6ffff &
+                                                  0xffff6fff & 0xfffff6ff & 0xffffff7f);
+      etna_set_state(stream, VIVS_PE_HALTI4_UNK014C0, 0x00000000);
+   }
+   if (screen->specs.halti >= 5) { /* Only on HALTI5+ */
+      etna_set_state(stream, VIVS_NTE_DESCRIPTOR_UNK14C40, 0x00000001);
+      etna_set_state(stream, VIVS_FE_HALTI5_UNK007D8, 0x00000002);
+      etna_set_state(stream, VIVS_PS_SAMPLER_BASE, 0x00000000);
+      etna_set_state(stream, VIVS_VS_SAMPLER_BASE, 0x00000020);
+      etna_set_state(stream, VIVS_SH_CONFIG, VIVS_SH_CONFIG_RTNE_ROUNDING);
+   } else { /* Only on pre-HALTI5 */
+      etna_set_state(stream, VIVS_GL_UNK03838, 0x00000000);
+      etna_set_state(stream, VIVS_GL_UNK03854, 0x00000000);
+   }
+
+   if (!screen->specs.use_blt) {
+      /* Enable SINGLE_BUFFER for resolve, if supported */
+      etna_set_state(stream, VIVS_RS_SINGLE_BUFFER, COND(screen->specs.single_buffer, VIVS_RS_SINGLE_BUFFER_ENABLE));
+   }
+
+   if (screen->specs.halti >= 5) {
+      /* TXDESC cache flush - do this once at the beginning, as texture
+       * descriptors are only written by the CPU once, then patched by the kernel
+       * before command stream submission. It does not need flushing if the
+       * referenced image data changes.
+       */
+      etna_set_state(stream, VIVS_NTE_DESCRIPTOR_FLUSH, 0);
+      etna_set_state(stream, VIVS_GL_FLUSH_CACHE,
+            VIVS_GL_FLUSH_CACHE_DESCRIPTOR_UNK12 |
+            VIVS_GL_FLUSH_CACHE_DESCRIPTOR_UNK13);
+
+      /* Icache invalidate (should do this on shader change?) */
+      etna_set_state(stream, VIVS_VS_ICACHE_INVALIDATE,
+            VIVS_VS_ICACHE_INVALIDATE_UNK0 | VIVS_VS_ICACHE_INVALIDATE_UNK1 |
+            VIVS_VS_ICACHE_INVALIDATE_UNK2 | VIVS_VS_ICACHE_INVALIDATE_UNK3 |
+            VIVS_VS_ICACHE_INVALIDATE_UNK4);
+   }
+
+   /* It seems that some GPUs (at least some GC400 have shown this behavior)
+    * come out of reset with random vertex attributes enabled and also don't
+    * disable them on the write to the first config register as normal. Enabling
+    * all attributes seems to provide the GPU with the required edge to actually
+    * disable the unused attributes on the next draw.
+    */
+   if (screen->specs.halti >= 5) {
+      etna_set_state_multi(stream, VIVS_NFE_GENERIC_ATTRIB_CONFIG0(0),
+                           VIVS_NFE_GENERIC_ATTRIB__LEN, dummy_attribs);
+   } else {
+      etna_set_state_multi(stream, VIVS_FE_VERTEX_ELEMENT_CONFIG(0),
+                           screen->specs.halti >= 0 ? 16 : 12, dummy_attribs);
+   }
+
+   ctx->dirty = ~0L;
+   ctx->dirty_sampler_views = ~0L;
+}
+
+static void
 etna_flush(struct pipe_context *pctx, struct pipe_fence_handle **fence,
            enum pipe_flush_flags flags)
 {
    struct etna_context *ctx = etna_context(pctx);
    int out_fence_fd = -1;
 
-   list_for_each_entry(struct etna_hw_query, hq, &ctx->active_hw_queries, node)
-      etna_hw_query_suspend(hq, ctx);
+   mtx_lock(&ctx->lock);
 
-   etna_cmd_stream_flush2(ctx->stream, ctx->in_fence_fd,
-			  (flags & PIPE_FLUSH_FENCE_FD) ? &out_fence_fd :
-			  NULL);
+   list_for_each_entry(struct etna_acc_query, aq, &ctx->active_acc_queries, node)
+      etna_acc_query_suspend(aq, ctx);
 
-   list_for_each_entry(struct etna_hw_query, hq, &ctx->active_hw_queries, node)
-      etna_hw_query_resume(hq, ctx);
+   /* flush all resources that need an implicit flush */
+   set_foreach(ctx->flush_resources, entry) {
+      struct pipe_resource *prsc = (struct pipe_resource *)entry->key;
+
+      pctx->flush_resource(pctx, prsc);
+   }
+   _mesa_set_clear(ctx->flush_resources, NULL);
+
+   etna_cmd_stream_flush(ctx->stream, ctx->in_fence_fd,
+                          (flags & PIPE_FLUSH_FENCE_FD) ? &out_fence_fd : NULL);
+
+   list_for_each_entry(struct etna_acc_query, aq, &ctx->active_acc_queries, node)
+      etna_acc_query_resume(aq, ctx);
 
    if (fence)
       *fence = etna_fence_create(pctx, out_fence_fd);
+
+   /*
+   * Go through all _resources_ pending in this _context_ and mark them as
+   * not pending in this _context_ anymore, since they were just flushed.
+   */
+   set_foreach(ctx->used_resources_read, entry) {
+      struct etna_resource *rsc = (struct etna_resource *)entry->key;
+      struct pipe_resource *referenced = &rsc->base;
+
+      mtx_lock(&rsc->lock);
+
+      _mesa_set_remove_key(rsc->pending_ctx, ctx);
+
+      /* if resource has no pending ctx's reset its status */
+      if (_mesa_set_next_entry(rsc->pending_ctx, NULL) == NULL)
+         rsc->status &= ~ETNA_PENDING_READ;
+
+      mtx_unlock(&rsc->lock);
+
+      pipe_resource_reference(&referenced, NULL);
+   }
+   _mesa_set_clear(ctx->used_resources_read, NULL);
+
+   set_foreach(ctx->used_resources_write, entry) {
+      struct etna_resource *rsc = (struct etna_resource *)entry->key;
+      struct pipe_resource *referenced = &rsc->base;
+
+      mtx_lock(&rsc->lock);
+      _mesa_set_remove_key(rsc->pending_ctx, ctx);
+
+      /* if resource has no pending ctx's reset its status */
+      if (_mesa_set_next_entry(rsc->pending_ctx, NULL) == NULL)
+         rsc->status &= ~ETNA_PENDING_WRITE;
+      mtx_unlock(&rsc->lock);
+
+      pipe_resource_reference(&referenced, NULL);
+   }
+   _mesa_set_clear(ctx->used_resources_write, NULL);
+
+   etna_reset_gpu_state(ctx);
+   mtx_unlock(&ctx->lock);
 }
 
 static void
-etna_cmd_stream_reset_notify(struct etna_cmd_stream *stream, void *priv)
+etna_context_force_flush(struct etna_cmd_stream *stream, void *priv)
 {
-   struct etna_context *ctx = priv;
-   struct etna_screen *screen = ctx->screen;
+   struct pipe_context *pctx = priv;
 
-   etna_set_state(stream, VIVS_GL_API_MODE, VIVS_GL_API_MODE_OPENGL);
-   etna_set_state(stream, VIVS_GL_VERTEX_ELEMENT_CONFIG, 0x00000001);
-   /* blob sets this to 0x40000031 on GC7000, seems to make no difference,
-    * but keep it in mind if depth behaves strangely. */
-   etna_set_state(stream, VIVS_RA_EARLY_DEPTH, 0x00000031);
-   etna_set_state(stream, VIVS_PA_W_CLIP_LIMIT, 0x34000001);
-   etna_set_state(stream, VIVS_PA_FLAGS, 0x00000000); /* blob sets ZCONVERT_BYPASS on GC3000+, this messes up z for us */
-   etna_set_state(stream, VIVS_PA_VIEWPORT_UNK00A80, 0x38a01404);
-   etna_set_state(stream, VIVS_PA_VIEWPORT_UNK00A84, fui(8192.0));
-   etna_set_state(stream, VIVS_PA_ZFARCLIPPING, 0x00000000);
-   etna_set_state(stream, VIVS_PE_ALPHA_COLOR_EXT0, 0x00000000);
-   etna_set_state(stream, VIVS_PE_ALPHA_COLOR_EXT1, 0x00000000);
-   etna_set_state(stream, VIVS_RA_HDEPTH_CONTROL, 0x00007000);
-   etna_set_state(stream, VIVS_PE_STENCIL_CONFIG_EXT2, 0x00000000);
-   etna_set_state(stream, VIVS_PS_CONTROL_EXT, 0x00000000);
+   pctx->flush(pctx, NULL, 0);
 
-   /* There is no HALTI0 specific state */
-   if (ctx->specs.halti >= 1) { /* Only on HALTI1+ */
-      etna_set_state(stream, VIVS_VS_HALTI1_UNK00884, 0x00000808);
-   }
-   if (ctx->specs.halti >= 2) { /* Only on HALTI2+ */
-      etna_set_state(stream, VIVS_RA_UNK00E0C, 0x00000000);
-   }
-   if (ctx->specs.halti >= 3) { /* Only on HALTI3+ */
-      etna_set_state(stream, VIVS_PE_MEM_CONFIG, 0x00000000); /* TODO: cache modes */
-      etna_set_state(stream, VIVS_PS_HALTI3_UNK0103C, 0x76543210);
-   }
-   if (ctx->specs.halti >= 4) { /* Only on HALTI4+ */
-      etna_set_state(stream, VIVS_PS_MSAA_CONFIG, 0x6fffffff & 0xf70fffff & 0xfff6ffff &
-                                                  0xffff6fff & 0xfffff6ff & 0xffffff7f);
-      etna_set_state(stream, VIVS_PE_HALTI4_UNK014C0, 0x00000000);
-   }
-   if (ctx->specs.halti >= 5) { /* Only on HALTI5+ */
-      etna_set_state(stream, VIVS_NTE_DESCRIPTOR_UNK14C40, 0x00000001);
-      etna_set_state(stream, VIVS_FE_HALTI5_UNK007D8, 0x00000002);
-      etna_set_state(stream, VIVS_FE_HALTI5_UNK007C4, 0x00000000);
-      etna_set_state(stream, VIVS_PS_SAMPLER_BASE, 0x00000000);
-      etna_set_state(stream, VIVS_VS_SAMPLER_BASE, 0x00000020);
-      etna_set_state(stream, VIVS_SH_CONFIG, VIVS_SH_CONFIG_RTNE_ROUNDING);
-   } else { /* Only on pre-HALTI5 */
-      etna_set_state(stream, VIVS_GL_UNK03834, 0x00000000);
-      etna_set_state(stream, VIVS_GL_UNK03838, 0x00000000);
-      etna_set_state(stream, VIVS_GL_UNK03854, 0x00000000);
-   }
-
-   if (!ctx->specs.use_blt) {
-      /* Enable SINGLE_BUFFER for resolve, if supported */
-      etna_set_state(stream, VIVS_RS_SINGLE_BUFFER, COND(ctx->specs.single_buffer, VIVS_RS_SINGLE_BUFFER_ENABLE));
-   }
-
-   ctx->dirty = ~0L;
-   ctx->dirty_sampler_views = ~0L;
-
-   /*
-    * Go through all _resources_ associated with this _screen_, pending
-    * in this _context_ and mark them as not pending in this _context_
-    * anymore, since they were just flushed.
-    */
-   mtx_lock(&screen->lock);
-   set_foreach(screen->used_resources, entry) {
-      struct etna_resource *rsc = (struct etna_resource *)entry->key;
-
-      _mesa_set_remove_key(rsc->pending_ctx, ctx);
-   }
-   mtx_unlock(&screen->lock);
 }
 
 static void
@@ -430,18 +597,35 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    pctx->const_uploader = pctx->stream_uploader;
 
    screen = etna_screen(pscreen);
-   ctx->stream = etna_cmd_stream_new(screen->pipe, 0x2000, &etna_cmd_stream_reset_notify, ctx);
+   ctx->stream = etna_cmd_stream_new(screen->pipe, 0x2000,
+                                     &etna_context_force_flush, pctx);
    if (ctx->stream == NULL)
       goto fail;
 
+   ctx->used_resources_read = _mesa_set_create(NULL, _mesa_hash_pointer,
+                                          _mesa_key_pointer_equal);
+   if (!ctx->used_resources_read)
+      goto fail;
+
+   ctx->used_resources_write = _mesa_set_create(NULL, _mesa_hash_pointer,
+                                          _mesa_key_pointer_equal);
+   if (!ctx->used_resources_write)
+      goto fail;
+
+   ctx->flush_resources = _mesa_set_create(NULL, _mesa_hash_pointer,
+                                           _mesa_key_pointer_equal);
+   if (!ctx->flush_resources)
+      goto fail;
+
+   mtx_init(&ctx->lock, mtx_recursive);
+
    /* context ctxate setup */
-   ctx->specs = screen->specs;
    ctx->screen = screen;
-   /* need some sane default in case state tracker doesn't set some state: */
+   /* need some sane default in case gallium frontends don't set some state: */
    ctx->sample_mask = 0xffff;
 
    /*  Set sensible defaults for state */
-   etna_cmd_stream_reset_notify(ctx->stream, ctx);
+   etna_reset_gpu_state(ctx);
 
    ctx->in_fence_fd = -1;
 
@@ -451,6 +635,7 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    pctx->set_debug_callback = etna_set_debug_callback;
    pctx->create_fence_fd = etna_create_fence_fd;
    pctx->fence_server_sync = etna_fence_server_sync;
+   pctx->emit_string_marker = etna_emit_string_marker;
 
    /* creation of compile states */
    pctx->create_blend_state = etna_blend_state_create;
@@ -469,23 +654,8 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    if (!ctx->blitter)
       goto fail;
 
-   /* Generate the bitmask of supported draw primitives. */
-   ctx->prim_hwsupport = 1 << PIPE_PRIM_POINTS |
-                         1 << PIPE_PRIM_LINES |
-                         1 << PIPE_PRIM_LINE_STRIP |
-                         1 << PIPE_PRIM_TRIANGLES |
-                         1 << PIPE_PRIM_TRIANGLE_STRIP |
-                         1 << PIPE_PRIM_TRIANGLE_FAN;
-
-   if (VIV_FEATURE(ctx->screen, chipMinorFeatures2, LINE_LOOP))
-      ctx->prim_hwsupport |= 1 << PIPE_PRIM_LINE_LOOP;
-
-   ctx->primconvert = util_primconvert_create(pctx, ctx->prim_hwsupport);
-   if (!ctx->primconvert)
-      goto fail;
-
    slab_create_child(&ctx->transfer_pool, &screen->transfer_pool);
-   list_inithead(&ctx->active_hw_queries);
+   list_inithead(&ctx->active_acc_queries);
 
    /* create dummy RT buffer, used when rendering with no color buffer */
    ctx->dummy_rt = etna_bo_new(ctx->screen->dev, 64 * 64 * 4,
@@ -496,6 +666,20 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    ctx->dummy_rt_reloc.bo = ctx->dummy_rt;
    ctx->dummy_rt_reloc.offset = 0;
    ctx->dummy_rt_reloc.flags = ETNA_RELOC_READ | ETNA_RELOC_WRITE;
+
+   if (screen->specs.halti >= 5) {
+      /* Create an empty dummy texture descriptor */
+      ctx->dummy_desc_bo = etna_bo_new(ctx->screen->dev, 0x100, DRM_ETNA_GEM_CACHE_WC);
+      if (!ctx->dummy_desc_bo)
+         goto fail;
+      uint32_t *buf = etna_bo_map(ctx->dummy_desc_bo);
+      etna_bo_cpu_prep(ctx->dummy_desc_bo, DRM_ETNA_PREP_WRITE);
+      memset(buf, 0, 0x100);
+      etna_bo_cpu_fini(ctx->dummy_desc_bo);
+      ctx->DUMMY_DESC_ADDR.bo = ctx->dummy_desc_bo;
+      ctx->DUMMY_DESC_ADDR.offset = 0;
+      ctx->DUMMY_DESC_ADDR.flags = ETNA_RELOC_READ;
+   }
 
    return pctx;
 

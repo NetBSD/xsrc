@@ -59,7 +59,7 @@ glx_config_get(struct glx_config * mode, int attribute, int *value_return)
       *value_return = mode->rgbBits;
       return 0;
    case GLX_RGBA:
-      *value_return = mode->rgbMode;
+      *value_return = !(mode->renderType & GLX_COLOR_INDEX_BIT);
       return 0;
    case GLX_RED_SIZE:
       *value_return = mode->redBits;
@@ -212,10 +212,6 @@ glx_config_get(struct glx_config * mode, int attribute, int *value_return)
  * values from the extension specification.
  * 
  * \param count         Number of structures to allocate.
- * \param minimum_size  Minimum size of a structure to allocate.  This allows
- *                      for differences in the version of the
- *                      \c struct glx_config stucture used in libGL and in a
- *                      DRI-based driver.
  * \returns A pointer to the first element in a linked list of \c count
  *          stuctures on success, or \c NULL on failure.
  */
@@ -229,14 +225,13 @@ glx_config_create_list(unsigned count)
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = malloc(size);
+      *next = calloc(1, size);
       if (*next == NULL) {
 	 glx_config_destroy_list(base);
 	 base = NULL;
 	 break;
       }
 
-      (void) memset(*next, 0, size);
       (*next)->visualID = GLX_DONT_CARE;
       (*next)->visualType = GLX_DONT_CARE;
       (*next)->visualRating = GLX_NONE;
@@ -254,7 +249,7 @@ glx_config_create_list(unsigned count)
       (*next)->bindToMipmapTexture = GLX_DONT_CARE;
       (*next)->bindToTextureTargets = GLX_DONT_CARE;
       (*next)->yInverted = GLX_DONT_CARE;
-      (*next)->sRGBCapable = GLX_DONT_CARE;
+      (*next)->sRGBCapable = GL_FALSE;
 
       next = &((*next)->next);
    }

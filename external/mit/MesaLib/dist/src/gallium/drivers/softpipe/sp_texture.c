@@ -33,7 +33,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_transfer.h"
@@ -44,7 +44,7 @@
 #include "sp_texture.h"
 #include "sp_screen.h"
 
-#include "state_tracker/sw_winsys.h"
+#include "frontend/sw_winsys.h"
 
 
 /**
@@ -112,7 +112,7 @@ softpipe_resource_layout(struct pipe_screen *screen,
  * Check the size of the texture specified by 'res'.
  * \return TRUE if OK, FALSE if too large.
  */
-static boolean
+static bool
 softpipe_can_create_resource(struct pipe_screen *screen,
                              const struct pipe_resource *res)
 {
@@ -250,7 +250,7 @@ softpipe_resource_from_handle(struct pipe_screen *screen,
 }
 
 
-static boolean
+static bool
 softpipe_resource_get_handle(struct pipe_screen *screen,
                              struct pipe_context *ctx,
                              struct pipe_resource *pt,
@@ -262,7 +262,7 @@ softpipe_resource_get_handle(struct pipe_screen *screen,
 
    assert(spr->dt);
    if (!spr->dt)
-      return FALSE;
+      return false;
 
    return winsys->displaytarget_get_handle(winsys, spr->dt, whandle);
 }
@@ -348,7 +348,7 @@ softpipe_surface_destroy(struct pipe_context *pipe,
  * \param pipe  rendering context
  * \param resource  the resource to transfer in/out of
  * \param level  which mipmap level
- * \param usage  bitmask of PIPE_TRANSFER_x flags
+ * \param usage  bitmask of PIPE_MAP_x flags
  * \param box  the 1D/2D/3D region of interest
  */
 static void *
@@ -394,9 +394,9 @@ softpipe_transfer_map(struct pipe_context *pipe,
     * Transfers, like other pipe operations, must happen in order, so flush the
     * context if necessary.
     */
-   if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
-      boolean read_only = !(usage & PIPE_TRANSFER_WRITE);
-      boolean do_not_block = !!(usage & PIPE_TRANSFER_DONTBLOCK);
+   if (!(usage & PIPE_MAP_UNSYNCHRONIZED)) {
+      boolean read_only = !(usage & PIPE_MAP_WRITE);
+      boolean do_not_block = !!(usage & PIPE_MAP_DONTBLOCK);
       if (!softpipe_flush_resource(pipe, resource,
                                    level, box->depth > 1 ? -1 : box->z,
                                    0, /* flush_flags */
@@ -468,7 +468,7 @@ softpipe_transfer_unmap(struct pipe_context *pipe,
       winsys->displaytarget_unmap(winsys, spr->dt);
    }
 
-   if (transfer->usage & PIPE_TRANSFER_WRITE) {
+   if (transfer->usage & PIPE_MAP_WRITE) {
       /* Mark the texture as dirty to expire the tile caches. */
       spr->timestamp++;
    }
@@ -512,8 +512,10 @@ softpipe_user_buffer_create(struct pipe_screen *screen,
 void
 softpipe_init_texture_funcs(struct pipe_context *pipe)
 {
-   pipe->transfer_map = softpipe_transfer_map;
-   pipe->transfer_unmap = softpipe_transfer_unmap;
+   pipe->buffer_map = softpipe_transfer_map;
+   pipe->buffer_unmap = softpipe_transfer_unmap;
+   pipe->texture_map = softpipe_transfer_map;
+   pipe->texture_unmap = softpipe_transfer_unmap;
 
    pipe->transfer_flush_region = u_default_transfer_flush_region;
    pipe->buffer_subdata = u_default_buffer_subdata;

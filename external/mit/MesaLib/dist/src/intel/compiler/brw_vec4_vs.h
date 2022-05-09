@@ -37,7 +37,8 @@ public:
                    struct brw_vs_prog_data *vs_prog_data,
                    const nir_shader *shader,
                    void *mem_ctx,
-                   int shader_time_index);
+                   int shader_time_index,
+                   bool debug_enabled);
 
 protected:
    virtual void setup_payload();
@@ -49,8 +50,6 @@ protected:
 
 private:
    int setup_attributes(int payload_reg);
-   void setup_uniform_clipplane_values();
-   void emit_clip_distances(dst_reg reg, int offset);
 
    const struct brw_vs_prog_key *const key;
    struct brw_vs_prog_data * const vs_prog_data;

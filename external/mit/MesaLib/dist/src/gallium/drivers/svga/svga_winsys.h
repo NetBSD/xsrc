@@ -81,8 +81,9 @@ struct winsys_handle;
 #define SVGA_FENCE_FLAG_EXEC      (1 << 0)
 #define SVGA_FENCE_FLAG_QUERY     (1 << 1)
 
-#define SVGA_SURFACE_USAGE_SHARED  (1 << 0)
-#define SVGA_SURFACE_USAGE_SCANOUT (1 << 1)
+#define SVGA_SURFACE_USAGE_SHARED   (1 << 0)
+#define SVGA_SURFACE_USAGE_SCANOUT  (1 << 1)
+#define SVGA_SURFACE_USAGE_COHERENT (1 << 2)
 
 #define SVGA_QUERY_FLAG_SET        (1 << 0)
 #define SVGA_QUERY_FLAG_REF        (1 << 1)
@@ -98,6 +99,9 @@ struct svga_winsys_stats_timeframe {
    uint64 startTime;
    uint64 adjustedStartTime;
    struct svga_winsys_stats_timeframe *enclosing;
+
+   struct svga_winsys_screen *sws;
+   int32 slot;
 };
 
 enum svga_stats_count {
@@ -131,6 +135,8 @@ enum svga_stats_time {
    SVGA_STATS_TIME_CREATEGS,
    SVGA_STATS_TIME_CREATESURFACE,
    SVGA_STATS_TIME_CREATESURFACEVIEW,
+   SVGA_STATS_TIME_CREATETCS,
+   SVGA_STATS_TIME_CREATETES,
    SVGA_STATS_TIME_CREATETEXTURE,
    SVGA_STATS_TIME_CREATEVS,
    SVGA_STATS_TIME_DEFINESHADER,
@@ -140,6 +146,8 @@ enum svga_stats_time {
    SVGA_STATS_TIME_DRAWELEMENTS,
    SVGA_STATS_TIME_EMITFS,
    SVGA_STATS_TIME_EMITGS,
+   SVGA_STATS_TIME_EMITTCS,
+   SVGA_STATS_TIME_EMITTES,
    SVGA_STATS_TIME_EMITVS,
    SVGA_STATS_TIME_EMULATESURFACEVIEW,
    SVGA_STATS_TIME_FENCEFINISH,
@@ -200,6 +208,8 @@ enum svga_stats_time {
    SVGA_STATS_PREFIX "CreateGS",                    \
    SVGA_STATS_PREFIX "CreateSurface",               \
    SVGA_STATS_PREFIX "CreateSurfaceView",           \
+   SVGA_STATS_PREFIX "CreateTCS",                   \
+   SVGA_STATS_PREFIX "CreateTES",                   \
    SVGA_STATS_PREFIX "CreateTexture",               \
    SVGA_STATS_PREFIX "CreateVS",                    \
    SVGA_STATS_PREFIX "DefineShader",                \
@@ -209,6 +219,8 @@ enum svga_stats_time {
    SVGA_STATS_PREFIX "DrawElements",                \
    SVGA_STATS_PREFIX "EmitFS",                      \
    SVGA_STATS_PREFIX "EmitGS",                      \
+   SVGA_STATS_PREFIX "EmitTCS",                     \
+   SVGA_STATS_PREFIX "EmitTES",                     \
    SVGA_STATS_PREFIX "EmitVS",                      \
    SVGA_STATS_PREFIX "EmulateSurfaceView",          \
    SVGA_STATS_PREFIX "FenceFinish",                 \
@@ -385,21 +397,27 @@ struct svga_winsys_context
     **/
 
    boolean have_gb_objects;
+   boolean force_coherent;
 
    /**
     * Map a guest-backed surface.
-    * \param flags  bitmaks of PIPE_TRANSFER_x flags
+    * \param swc The winsys context
+    * \param surface The surface to map
+    * \param flags  bitmask of PIPE_MAP_x flags
+    * \param retry Whether to flush and retry the map
+    * \param rebind Whether to issue an immediate rebind and flush.
     *
     * The surface_map() member is allowed to fail due to a
     * shortage of command buffer space, if the
-    * PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE bit is set in flags.
+    * PIPE_MAP_DISCARD_WHOLE_RESOURCE bit is set in flags.
     * In that case, the caller must flush the current command
     * buffer and reissue the map.
     */
    void *
    (*surface_map)(struct svga_winsys_context *swc,
                   struct svga_winsys_surface *surface,
-                  unsigned flags, boolean *retry);
+                  unsigned flags, boolean *retry,
+                  boolean *rebind);
 
    /**
     * Unmap a guest-backed surface.
@@ -412,13 +430,6 @@ struct svga_winsys_context
                     boolean *rebind);
 
    /**
-    * Invalidate the content of this surface
-    */
-   enum pipe_error
-   (*surface_invalidate)(struct svga_winsys_context *swc,
-                         struct svga_winsys_surface *surface);
-
-   /**
     * Create and define a DX GB shader that resides in the device COTable.
     * Caller of this function will issue the DXDefineShader command.
     */
@@ -427,7 +438,9 @@ struct svga_winsys_context
                     uint32 shaderId,
                     SVGA3dShaderType shaderType,
                     const uint32 *bytecode,
-                    uint32 bytecodeLen);
+                    uint32 bytecodeLen,
+                    const SVGA3dDXShaderSignatureHeader *sgnInfo,
+                    uint32 sgnLen);
 
    /**
     * Destroy a DX GB shader.
@@ -449,7 +462,7 @@ struct svga_winsys_context
                       struct svga_winsys_gb_shader *shader,
                       unsigned flags);
 
-   /** To report perf/conformance/etc issues to the state tracker */
+   /** To report perf/conformance/etc issues to the gallium frontend */
    struct pipe_debug_callback *debug_callback;
 
    /** The more recent command issued to command buffer */
@@ -457,7 +470,13 @@ struct svga_winsys_context
 
    /** For HUD queries */
    uint64_t num_commands;
+   uint64_t num_command_buffers;
    uint64_t num_draw_commands;
+   uint64_t num_shader_reloc;
+   uint64_t num_surf_reloc;
+
+   /* Whether we are in retry processing */
+   unsigned int in_retry;
 };
 
 
@@ -586,6 +605,11 @@ struct svga_winsys_screen
                          uint32 numMipLevels,
                          uint32 numSamples);
 
+   void
+   (*surface_init)(struct svga_winsys_screen *sws,
+                   struct svga_winsys_surface *surface,
+                   unsigned surf_size, SVGA3dSurfaceAllFlags flags);
+
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
@@ -602,7 +626,7 @@ struct svga_winsys_screen
 
    /**
     * Map the entire data store of a buffer object into the client's address.
-    * usage is a bitmask of PIPE_TRANSFER_*
+    * usage is a bitmask of PIPE_MAP_*
     */
    void *
    (*buffer_map)( struct svga_winsys_screen *sws,
@@ -683,6 +707,8 @@ struct svga_winsys_screen
    /** Can we do DMA with guest-backed objects enabled? */
    bool have_gb_dma;
 
+   /** Do we support coherent surface memory? */
+   bool have_coherent;
    /**
     * Create and define a GB shader.
     */
@@ -739,19 +765,19 @@ struct svga_winsys_screen
     * Increment a statistic counter
     */
    void
-   (*stats_inc)(enum svga_stats_count);
+   (*stats_inc)(struct svga_winsys_screen *, enum svga_stats_count);
 
    /**
     * Push a time frame onto the stack
     */
    void
-   (*stats_time_push)(enum svga_stats_time, struct svga_winsys_stats_timeframe *);
+   (*stats_time_push)(struct svga_winsys_screen *, enum svga_stats_time, struct svga_winsys_stats_timeframe *);
 
    /**
     * Pop a time frame.
     */
    void
-   (*stats_time_pop)();
+   (*stats_time_pop)(struct svga_winsys_screen *);
 
    /**
     * Send a host log message
@@ -765,7 +791,10 @@ struct svga_winsys_screen
    /** Have SM4_1 hardware? */
    boolean have_sm4_1;
 
-   /** To rebind resources at the beginnning of a new command buffer */
+   /** Have SM5 hardware? */
+   boolean have_sm5;
+
+   /** To rebind resources at the beginning of a new command buffer */
    boolean need_to_rebind_resources;
 
    boolean have_generate_mipmap_cmd;
@@ -773,6 +802,7 @@ struct svga_winsys_screen
    boolean have_transfer_from_buffer_cmd;
    boolean have_fence_fd;
    boolean have_intra_surface_copy;
+   boolean have_constant_buffer_offset_cmd;
 };
 
 

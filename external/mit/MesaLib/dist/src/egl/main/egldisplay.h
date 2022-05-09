@@ -45,11 +45,14 @@ extern "C" {
 
 enum _egl_platform_type {
    _EGL_PLATFORM_X11,
+   _EGL_PLATFORM_XCB,
    _EGL_PLATFORM_WAYLAND,
    _EGL_PLATFORM_DRM,
    _EGL_PLATFORM_ANDROID,
    _EGL_PLATFORM_HAIKU,
    _EGL_PLATFORM_SURFACELESS,
+   _EGL_PLATFORM_DEVICE,
+   _EGL_PLATFORM_WINDOWS,
 
    _EGL_NUM_PLATFORMS,
    _EGL_INVALID_PLATFORM = -1
@@ -105,6 +108,8 @@ struct _egl_extensions
    EGLBoolean EXT_image_dma_buf_import;
    EGLBoolean EXT_image_dma_buf_import_modifiers;
    EGLBoolean EXT_pixel_format_float;
+   EGLBoolean EXT_protected_surface;
+   EGLBoolean EXT_present_opaque;
    EGLBoolean EXT_surface_CTA861_3_metadata;
    EGLBoolean EXT_surface_SMPTE2086_metadata;
    EGLBoolean EXT_swap_buffers_with_damage;
@@ -149,7 +154,6 @@ struct _egl_extensions
    EGLBoolean WL_create_wayland_buffer_from_image;
 };
 
-
 struct _egl_display
 {
    /* used to link displays */
@@ -161,13 +165,14 @@ struct _egl_display
    void *PlatformDisplay;     /**< A pointer to the platform display */
 
    _EGLDevice *Device;        /**< Device backing the display */
-   _EGLDriver *Driver;        /**< Matched driver of the display */
+   const _EGLDriver *Driver;  /**< Matched driver of the display */
    EGLBoolean Initialized;    /**< True if the display is initialized */
 
    /* options that affect how the driver initializes the display */
    struct {
       EGLBoolean ForceSoftware; /**< Use software path only */
-      void *Platform;         /**< Platform-specific options */
+      EGLAttrib *Attribs;     /**< Platform-specific options */
+      int fd; /**< plaform device specific, local fd */
    } Options;
 
    /* these fields are set by the driver during init */
@@ -202,11 +207,11 @@ _eglFiniDisplay(void);
 
 
 extern _EGLDisplay *
-_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy);
+_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy, const EGLAttrib *attr);
 
 
 extern void
-_eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *disp);
+_eglReleaseDisplayResources(_EGLDisplay *disp);
 
 
 extern void
@@ -274,9 +279,28 @@ _eglIsResourceLinked(_EGLResource *res)
    return res->IsLinked;
 }
 
+static inline size_t
+_eglNumAttribs(const EGLAttrib *attribs)
+{
+   size_t len = 0;
+
+   if (attribs) {
+      while (attribs[len] != EGL_NONE)
+         len += 2;
+      len++;
+   }
+   return len;
+}
+
 #ifdef HAVE_X11_PLATFORM
 _EGLDisplay*
 _eglGetX11Display(Display *native_display, const EGLAttrib *attrib_list);
+#endif
+
+#ifdef HAVE_XCB_PLATFORM
+typedef struct xcb_connection_t xcb_connection_t;
+_EGLDisplay*
+_eglGetXcbDisplay(xcb_connection_t *native_display, const EGLAttrib *attrib_list);
 #endif
 
 #ifdef HAVE_DRM_PLATFORM
@@ -295,11 +319,19 @@ _eglGetWaylandDisplay(struct wl_display *native_display,
                       const EGLAttrib *attrib_list);
 #endif
 
-#ifdef HAVE_SURFACELESS_PLATFORM
 _EGLDisplay*
 _eglGetSurfacelessDisplay(void *native_display,
                           const EGLAttrib *attrib_list);
+
+#ifdef HAVE_ANDROID_PLATFORM
+_EGLDisplay*
+_eglGetAndroidDisplay(void *native_display,
+                         const EGLAttrib *attrib_list);
 #endif
+
+_EGLDisplay*
+_eglGetDeviceDisplay(void *native_display,
+                     const EGLAttrib *attrib_list);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 
-#include "state_tracker/sw_winsys.h"
+#include "frontend/sw_winsys.h"
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
@@ -84,7 +84,7 @@ wrapper_sw_displaytarget(struct sw_displaytarget *dt)
  */
 
 
-static boolean
+static bool
 wsw_is_dt_format_supported(struct sw_winsys *ws,
                            unsigned tex_usage,
                            enum pipe_format format)
@@ -97,7 +97,7 @@ wsw_is_dt_format_supported(struct sw_winsys *ws,
                                            PIPE_BIND_DISPLAY_TARGET);
 }
 
-static boolean
+static bool
 wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
 {
    struct pipe_context *pipe = wdt->winsys->pipe;
@@ -105,18 +105,18 @@ wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
    struct pipe_transfer *tr;
    void *map;
 
-   map = pipe_transfer_map(pipe, tex, 0, 0,
-                           PIPE_TRANSFER_READ_WRITE,
+   map = pipe_texture_map(pipe, tex, 0, 0,
+                           PIPE_MAP_READ_WRITE,
                            0, 0, wdt->tex->width0, wdt->tex->height0, &tr);
    if (!map)
-      return FALSE;
+      return false;
 
    *stride = tr->stride;
    wdt->stride = tr->stride;
 
-   pipe->transfer_unmap(pipe, tr);
+   pipe->texture_unmap(pipe, tr);
 
-   return TRUE;
+   return true;
 }
 
 static struct sw_displaytarget *
@@ -193,7 +193,7 @@ wsw_dt_from_handle(struct sw_winsys *ws,
    return wsw_dt_wrap_texture(wsw, tex, stride);
 }
 
-static boolean
+static bool
 wsw_dt_get_handle(struct sw_winsys *ws,
                   struct sw_displaytarget *dt,
                   struct winsys_handle *whandle)
@@ -221,8 +221,8 @@ wsw_dt_map(struct sw_winsys *ws,
 
       assert(!wdt->transfer);
 
-      ptr = pipe_transfer_map(pipe, tex, 0, 0,
-                              PIPE_TRANSFER_READ_WRITE,
+      ptr = pipe_texture_map(pipe, tex, 0, 0,
+                              PIPE_MAP_READ_WRITE,
                               0, 0, wdt->tex->width0, wdt->tex->height0, &tr);
       if (!ptr)
         goto err;
@@ -239,7 +239,7 @@ wsw_dt_map(struct sw_winsys *ws,
    return wdt->ptr;
 
 err:
-   pipe->transfer_unmap(pipe, tr);
+   pipe->texture_unmap(pipe, tr);
    return NULL;
 }
 
@@ -257,7 +257,7 @@ wsw_dt_unmap(struct sw_winsys *ws,
    if (wdt->map_count)
       return;
 
-   pipe->transfer_unmap(pipe, wdt->transfer);
+   pipe->texture_unmap(pipe, wdt->transfer);
    pipe->flush(pipe, NULL, 0);
    wdt->transfer = NULL;
 }

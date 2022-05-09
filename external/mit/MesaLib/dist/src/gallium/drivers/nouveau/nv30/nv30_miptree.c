@@ -23,7 +23,7 @@
  *
  */
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_surface.h"
 
@@ -46,11 +46,16 @@ layer_offset(struct pipe_resource *pt, unsigned level, unsigned layer)
    return lvl->offset + (layer * lvl->zslice_size);
 }
 
-static boolean
+bool
 nv30_miptree_get_handle(struct pipe_screen *pscreen,
+                        struct pipe_context *context,
                         struct pipe_resource *pt,
-                        struct winsys_handle *handle)
+                        struct winsys_handle *handle,
+                        unsigned usage)
 {
+   if (pt->target == PIPE_BUFFER)
+      return false;
+
    struct nv30_miptree *mt = nv30_miptree(pt);
    unsigned stride;
 
@@ -62,7 +67,7 @@ nv30_miptree_get_handle(struct pipe_screen *pscreen,
    return nouveau_screen_bo_get_handle(pscreen, mt->base.bo, stride, handle);
 }
 
-static void
+void
 nv30_miptree_destroy(struct pipe_screen *pscreen, struct pipe_resource *pt)
 {
    struct nv30_miptree *mt = nv30_miptree(pt);
@@ -271,7 +276,7 @@ nv30_flush_resource(struct pipe_context *pipe,
 {
 }
 
-static void *
+void *
 nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
                           unsigned level, unsigned usage,
                           const struct pipe_box *box,
@@ -324,7 +329,7 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
    tx->tmp.y1     = tx->tmp.h;
    tx->tmp.z      = 0;
 
-   if (usage & PIPE_TRANSFER_READ) {
+   if (usage & PIPE_MAP_READ) {
       bool is_3d = mt->base.base.target == PIPE_TEXTURE_3D;
       unsigned offset = tx->img.offset;
       unsigned z = tx->img.z;
@@ -349,9 +354,9 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
       return tx->tmp.bo->map;
    }
 
-   if (usage & PIPE_TRANSFER_READ)
+   if (usage & PIPE_MAP_READ)
       access |= NOUVEAU_BO_RD;
-   if (usage & PIPE_TRANSFER_WRITE)
+   if (usage & PIPE_MAP_WRITE)
       access |= NOUVEAU_BO_WR;
 
    ret = nouveau_bo_map(tx->tmp.bo, access, nv30->base.client);
@@ -365,7 +370,7 @@ nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
    return tx->tmp.bo->map;
 }
 
-static void
+void
 nv30_miptree_transfer_unmap(struct pipe_context *pipe,
                             struct pipe_transfer *ptx)
 {
@@ -374,7 +379,7 @@ nv30_miptree_transfer_unmap(struct pipe_context *pipe,
    struct nv30_miptree *mt = nv30_miptree(tx->base.resource);
    unsigned i;
 
-   if (ptx->usage & PIPE_TRANSFER_WRITE) {
+   if (ptx->usage & PIPE_MAP_WRITE) {
       bool is_3d = mt->base.base.target == PIPE_TEXTURE_3D;
       for (i = 0; i < tx->base.box.depth; ++i) {
          nv30_transfer_rect(nv30, NEAREST, &tx->tmp, &tx->img);
@@ -396,14 +401,6 @@ nv30_miptree_transfer_unmap(struct pipe_context *pipe,
    pipe_resource_reference(&ptx->resource, NULL);
    FREE(tx);
 }
-
-const struct u_resource_vtbl nv30_miptree_vtbl = {
-   nv30_miptree_get_handle,
-   nv30_miptree_destroy,
-   nv30_miptree_transfer_map,
-   u_default_transfer_flush_region,
-   nv30_miptree_transfer_unmap,
-};
 
 struct pipe_resource *
 nv30_miptree_create(struct pipe_screen *pscreen,
@@ -434,7 +431,6 @@ nv30_miptree_create(struct pipe_screen *pscreen,
       break;
    }
 
-   mt->base.vtbl = &nv30_miptree_vtbl;
    *pt = *tmpl;
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
@@ -534,7 +530,6 @@ nv30_miptree_from_handle(struct pipe_screen *pscreen,
    }
 
    mt->base.base = *tmpl;
-   mt->base.vtbl = &nv30_miptree_vtbl;
    pipe_reference_init(&mt->base.base.reference, 1);
    mt->base.base.screen = pscreen;
    mt->uniform_pitch = stride;

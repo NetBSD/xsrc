@@ -25,256 +25,285 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#include "fd6_resource.h"
+#include "drm-uapi/drm_fourcc.h"
+
 #include "fd6_format.h"
+#include "fd6_resource.h"
 
 #include "a6xx.xml.h"
-
-/* indexed by cpp, including msaa 2x and 4x: */
-static const struct {
-	unsigned pitchalign;
-	unsigned heightalign;
-} tile_alignment[] = {
-	[1]  = { 128, 32 },
-	[2]  = {  64, 32 },
-	[3]  = {  64, 32 },
-	[4]  = {  64, 16 },
-	[6]  = {  64, 16 },
-	[8]  = {  64, 16 },
-	[12] = {  64, 16 },
-	[16] = {  64, 16 },
-	[24] = {  64, 16 },
-	[32] = {  64, 16 },
-	[48] = {  64, 16 },
-	[64] = {  64, 16 },
-
-	/* special cases for r16: */
-	[0]  = { 128, 16 },
-};
-
-/* NOTE: good way to test this is:  (for example)
- *  piglit/bin/texelFetch fs sampler3D 100x100x8
- */
-static uint32_t
-setup_slices(struct fd_resource *rsc, uint32_t alignment, enum pipe_format format)
-{
-	struct pipe_resource *prsc = &rsc->base;
-	struct fd_screen *screen = fd_screen(prsc->screen);
-	enum util_format_layout layout = util_format_description(format)->layout;
-	uint32_t pitchalign = screen->gmem_alignw;
-	uint32_t level, size = 0;
-	uint32_t depth = prsc->depth0;
-	/* linear dimensions: */
-	uint32_t lwidth = prsc->width0;
-	uint32_t lheight = prsc->height0;
-	/* tile_mode dimensions: */
-	uint32_t twidth = util_next_power_of_two(lwidth);
-	uint32_t theight = util_next_power_of_two(lheight);
-	/* in layer_first layout, the level (slice) contains just one
-	 * layer (since in fact the layer contains the slices)
-	 */
-	uint32_t layers_in_level = rsc->layer_first ? 1 : prsc->array_size;
-	int ta = rsc->cpp;
-
-	/* The z16/r16 formats seem to not play by the normal tiling rules: */
-	if ((rsc->cpp == 2) && (util_format_get_nr_components(format) == 1))
-		ta = 0;
-
-	debug_assert(ta < ARRAY_SIZE(tile_alignment));
-	debug_assert(tile_alignment[ta].pitchalign);
-
-	for (level = 0; level <= prsc->last_level; level++) {
-		struct fd_resource_slice *slice = fd_resource_slice(rsc, level);
-		bool linear_level = fd_resource_level_linear(prsc, level);
-		uint32_t width, height;
-
-		/* tiled levels of 3D textures are rounded up to PoT dimensions: */
-		if ((prsc->target == PIPE_TEXTURE_3D) && rsc->tile_mode && !linear_level) {
-			width = twidth;
-			height = theight;
-		} else {
-			width = lwidth;
-			height = lheight;
-		}
-		uint32_t aligned_height = height;
-		uint32_t blocks;
-
-		if (rsc->tile_mode && !linear_level) {
-			pitchalign = tile_alignment[ta].pitchalign;
-			aligned_height = align(aligned_height,
-					tile_alignment[ta].heightalign);
-		} else {
-			pitchalign = 64;
-		}
-
-		/* The blits used for mem<->gmem work at a granularity of
-		 * 32x32, which can cause faults due to over-fetch on the
-		 * last level.  The simple solution is to over-allocate a
-		 * bit the last level to ensure any over-fetch is harmless.
-		 * The pitch is already sufficiently aligned, but height
-		 * may not be:
-		 */
-		if ((level == prsc->last_level) && (prsc->target != PIPE_BUFFER))
-			aligned_height = align(aligned_height, 32);
-
-		if (layout == UTIL_FORMAT_LAYOUT_ASTC)
-			slice->pitch =
-				util_align_npot(width, pitchalign * util_format_get_blockwidth(format));
-		else
-			slice->pitch = align(width, pitchalign);
-
-		slice->offset = size;
-		blocks = util_format_get_nblocks(format, slice->pitch, aligned_height);
-
-		/* 1d array and 2d array textures must all have the same layer size
-		 * for each miplevel on a6xx. 3d textures can have different layer
-		 * sizes for high levels, but the hw auto-sizer is buggy (or at least
-		 * different than what this code does), so as soon as the layer size
-		 * range gets into range, we stop reducing it.
-		 */
-		if (prsc->target == PIPE_TEXTURE_3D) {
-			if (level <= 1 || (rsc->slices[level - 1].size0 > 0xf000)) {
-				slice->size0 = align(blocks * rsc->cpp, alignment);
-			} else {
-				slice->size0 = rsc->slices[level - 1].size0;
-			}
-		} else {
-			slice->size0 = align(blocks * rsc->cpp, alignment);
-		}
-
-		size += slice->size0 * depth * layers_in_level;
-
-#if 0
-		debug_printf("%s: %ux%ux%u@%u:\t%2u: stride=%4u, size=%6u,%7u, aligned_height=%3u, blocks=%u\n",
-				util_format_name(prsc->format),
-				width, height, depth, rsc->cpp,
-				level, slice->pitch * rsc->cpp,
-				slice->size0, size, aligned_height, blocks);
-#endif
-
-		depth = u_minify(depth, 1);
-		lwidth = u_minify(lwidth, 1);
-		lheight = u_minify(lheight, 1);
-		twidth = u_minify(twidth, 1);
-		theight = u_minify(theight, 1);
-	}
-
-	return size;
-}
 
 /* A subset of the valid tiled formats can be compressed.  We do
  * already require tiled in order to be compressed, but just because
  * it can be tiled doesn't mean it can be compressed.
  */
 static bool
-ok_ubwc_format(enum a6xx_color_fmt fmt)
+ok_ubwc_format(struct pipe_screen *pscreen, enum pipe_format pfmt)
 {
-	switch (fmt) {
-	case RB6_R10G10B10A2_UINT:
-	case RB6_R10G10B10A2_UNORM:
-	case RB6_R11G11B10_FLOAT:
-	case RB6_R16_FLOAT:
-	case RB6_R16G16B16A16_FLOAT:
-	case RB6_R16G16B16A16_SINT:
-	case RB6_R16G16B16A16_UINT:
-	case RB6_R16G16_FLOAT:
-	case RB6_R16G16_SINT:
-	case RB6_R16G16_UINT:
-	case RB6_R16_SINT:
-	case RB6_R16_UINT:
-	case RB6_R32G32B32A32_SINT:
-	case RB6_R32G32B32A32_UINT:
-	case RB6_R32G32_SINT:
-	case RB6_R32G32_UINT:
-	case RB6_R32_SINT:
-	case RB6_R32_UINT:
-	case RB6_R5G6B5_UNORM:
-	case RB6_R8G8B8A8_SINT:
-	case RB6_R8G8B8A8_UINT:
-	case RB6_R8G8B8A8_UNORM:
-	case RB6_R8G8B8_UNORM:
-	case RB6_R8G8_SINT:
-	case RB6_R8G8_UINT:
-	case RB6_R8G8_UNORM:
-	case RB6_X8Z24_UNORM:
-		return true;
-	default:
-		return false;
-	}
+   const struct fd_dev_info *info = fd_screen(pscreen)->info;
+
+   switch (pfmt) {
+   case PIPE_FORMAT_X24S8_UINT:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      /* We can't sample stencil with UBWC on a630, and we may need to be able
+       * to sample stencil at some point.  We can't just use
+       * fd_resource_uncompress() at the point of stencil sampling because
+       * that itself uses stencil sampling in the fd_blitter_blit path.
+       */
+      return info->a6xx.has_z24uint_s8uint;
+
+   case PIPE_FORMAT_R8_G8B8_420_UNORM:
+      return true;
+
+   default:
+      break;
+   }
+
+   switch (fd6_color_format(pfmt, TILE6_LINEAR)) {
+   case FMT6_10_10_10_2_UINT:
+   case FMT6_10_10_10_2_UNORM_DEST:
+   case FMT6_11_11_10_FLOAT:
+   case FMT6_16_FLOAT:
+   case FMT6_16_16_16_16_FLOAT:
+   case FMT6_16_16_16_16_SINT:
+   case FMT6_16_16_16_16_UINT:
+   case FMT6_16_16_FLOAT:
+   case FMT6_16_16_SINT:
+   case FMT6_16_16_UINT:
+   case FMT6_16_SINT:
+   case FMT6_16_UINT:
+   case FMT6_32_32_32_32_SINT:
+   case FMT6_32_32_32_32_UINT:
+   case FMT6_32_32_SINT:
+   case FMT6_32_32_UINT:
+   case FMT6_5_6_5_UNORM:
+   case FMT6_5_5_5_1_UNORM:
+   case FMT6_8_8_8_8_SINT:
+   case FMT6_8_8_8_8_UINT:
+   case FMT6_8_8_8_8_UNORM:
+   case FMT6_8_8_8_X8_UNORM:
+   case FMT6_8_8_SINT:
+   case FMT6_8_8_UINT:
+   case FMT6_8_8_UNORM:
+   case FMT6_Z24_UNORM_S8_UINT:
+   case FMT6_Z24_UNORM_S8_UINT_AS_R8G8B8A8:
+      return true;
+   case FMT6_8_UNORM:
+      return info->a6xx.has_8bpp_ubwc;
+   default:
+      return false;
+   }
 }
 
-uint32_t
-fd6_fill_ubwc_buffer_sizes(struct fd_resource *rsc)
+static bool
+can_do_ubwc(struct pipe_resource *prsc)
 {
-#define RBG_TILE_WIDTH_ALIGNMENT 64
-#define RGB_TILE_HEIGHT_ALIGNMENT 16
-#define UBWC_PLANE_SIZE_ALIGNMENT 4096
-
-	struct pipe_resource *prsc = &rsc->base;
-	uint32_t width = prsc->width0;
-	uint32_t height = prsc->height0;
-
-	if (!ok_ubwc_format(fd6_pipe2color(prsc->format)))
-		return 0;
-
-	/* limit things to simple single level 2d for now: */
-	if ((prsc->depth0 != 1) || (prsc->array_size != 1) || (prsc->last_level != 0))
-		return 0;
-
-	uint32_t block_width, block_height;
-	switch (rsc->cpp) {
-	case 2:
-	case 4:
-		block_width = 16;
-		block_height = 4;
-		break;
-	case 8:
-		block_width = 8;
-		block_height = 4;
-		break;
-	case 16:
-		block_width = 4;
-		block_height = 4;
-		break;
-	default:
-		return 0;
-	}
-
-	uint32_t meta_stride =
-		ALIGN_POT(DIV_ROUND_UP(width, block_width), RBG_TILE_WIDTH_ALIGNMENT);
-	uint32_t meta_height =
-		ALIGN_POT(DIV_ROUND_UP(height, block_height), RGB_TILE_HEIGHT_ALIGNMENT);
-	uint32_t meta_size =
-		ALIGN_POT(meta_stride * meta_height, UBWC_PLANE_SIZE_ALIGNMENT);
-
-	/* UBWC goes first, then color data.. this constraint is mainly only
-	 * because it is what the kernel expects for scanout.  For non-2D we
-	 * could just use a separate UBWC buffer..
-	 */
-	rsc->ubwc_offset = 0;
-	rsc->offset = meta_size;
-	rsc->ubwc_pitch = meta_stride;
-	rsc->ubwc_size = meta_size >> 2;   /* in dwords??? */
-	rsc->tile_mode = TILE6_3;
-
-	return meta_size;
+   /* limit things to simple single level 2d for now: */
+   if ((prsc->depth0 != 1) || (prsc->array_size != 1) ||
+       (prsc->last_level != 0))
+      return false;
+   if (prsc->target != PIPE_TEXTURE_2D)
+      return false;
+   if (!ok_ubwc_format(prsc->screen, prsc->format))
+      return false;
+   return true;
 }
 
-uint32_t
+static bool
+is_norm(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   return desc->is_snorm || desc->is_unorm;
+}
+
+static bool
+valid_format_cast(struct fd_resource *rsc, enum pipe_format format)
+{
+   /* Special case "casting" format in hw: */
+   if (format == PIPE_FORMAT_Z24_UNORM_S8_UINT_AS_R8G8B8A8)
+      return true;
+
+   /* For some color values (just "solid white") compression metadata maps to
+    * different pixel values for uint/sint vs unorm/snorm, so we can't reliably
+    * "cast" u/snorm to u/sint and visa versa:
+    */
+   if (is_norm(format) != is_norm(rsc->b.b.format))
+      return false;
+
+   /* The UBWC formats can be re-interpreted so long as the components
+    * have the same # of bits
+    */
+   for (unsigned i = 0; i < 4; i++) {
+      unsigned sb, db;
+
+      sb = util_format_get_component_bits(rsc->b.b.format, UTIL_FORMAT_COLORSPACE_RGB, i);
+      db = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, i);
+
+      if (sb != db)
+         return false;
+   }
+
+   return true;
+}
+
+/**
+ * R8G8 have a different block width/height and height alignment from other
+ * formats that would normally be compatible (like R16), and so if we are
+ * trying to, for example, sample R16 as R8G8 we need to demote to linear.
+ */
+static bool
+is_r8g8(enum pipe_format format)
+{
+   return (util_format_get_blocksize(format) == 2) &&
+         (util_format_get_nr_components(format) == 2);
+}
+
+/**
+ * Ensure the rsc is in an ok state to be used with the specified format.
+ * This handles the case of UBWC buffers used with non-UBWC compatible
+ * formats, by triggering an uncompress.
+ */
+void
+fd6_validate_format(struct fd_context *ctx, struct fd_resource *rsc,
+                    enum pipe_format format)
+{
+   enum pipe_format orig_format = rsc->b.b.format;
+
+   tc_assert_driver_thread(ctx->tc);
+
+   if (orig_format == format)
+      return;
+
+   if (rsc->layout.tile_mode && (is_r8g8(orig_format) != is_r8g8(format))) {
+      perf_debug_ctx(ctx,
+                     "%" PRSC_FMT ": demoted to linear+uncompressed due to use as %s",
+                     PRSC_ARGS(&rsc->b.b), util_format_short_name(format));
+
+      fd_resource_uncompress(ctx, rsc, true);
+      return;
+   }
+
+   if (!rsc->layout.ubwc)
+      return;
+
+   if (ok_ubwc_format(rsc->b.b.screen, format) && valid_format_cast(rsc, format))
+      return;
+
+   perf_debug_ctx(ctx,
+                  "%" PRSC_FMT ": demoted to uncompressed due to use as %s",
+                  PRSC_ARGS(&rsc->b.b), util_format_short_name(format));
+
+   fd_resource_uncompress(ctx, rsc, false);
+}
+
+static void
+setup_lrz(struct fd_resource *rsc)
+{
+   struct fd_screen *screen = fd_screen(rsc->b.b.screen);
+   unsigned width0 = rsc->b.b.width0;
+   unsigned height0 = rsc->b.b.height0;
+
+   /* LRZ buffer is super-sampled: */
+   switch (rsc->b.b.nr_samples) {
+   case 4:
+      width0 *= 2;
+      FALLTHROUGH;
+   case 2:
+      height0 *= 2;
+   }
+
+   unsigned lrz_pitch = align(DIV_ROUND_UP(width0, 8), 32);
+   unsigned lrz_height = align(DIV_ROUND_UP(height0, 8), 16);
+
+   unsigned size = lrz_pitch * lrz_height * 2;
+
+   rsc->lrz_height = lrz_height;
+   rsc->lrz_width = lrz_pitch;
+   rsc->lrz_pitch = lrz_pitch;
+   rsc->lrz = fd_bo_new(screen->dev, size, 0, "lrz");
+}
+
+static uint32_t
 fd6_setup_slices(struct fd_resource *rsc)
 {
-	uint32_t alignment;
+   struct pipe_resource *prsc = &rsc->b.b;
 
-	switch (rsc->base.target) {
-	case PIPE_TEXTURE_3D:
-		rsc->layer_first = false;
-		alignment = 4096;
-		break;
-	default:
-		rsc->layer_first = true;
-		alignment = 1;
-		break;
-	}
+   if (!FD_DBG(NOLRZ) && has_depth(rsc->b.b.format))
+      setup_lrz(rsc);
 
-	return setup_slices(rsc, alignment, rsc->base.format);
+   if (rsc->layout.ubwc && !ok_ubwc_format(rsc->b.b.screen, rsc->b.b.format))
+      rsc->layout.ubwc = false;
+
+   fdl6_layout(&rsc->layout, prsc->format, fd_resource_nr_samples(prsc),
+               prsc->width0, prsc->height0, prsc->depth0, prsc->last_level + 1,
+               prsc->array_size, prsc->target == PIPE_TEXTURE_3D, NULL);
+
+   return rsc->layout.size;
+}
+
+static int
+fill_ubwc_buffer_sizes(struct fd_resource *rsc)
+{
+   struct pipe_resource *prsc = &rsc->b.b;
+   struct fdl_explicit_layout explicit = {
+      .offset = rsc->layout.slices[0].offset,
+      .pitch = rsc->layout.pitch0,
+   };
+
+   if (!can_do_ubwc(prsc))
+      return -1;
+
+   rsc->layout.ubwc = true;
+   rsc->layout.tile_mode = TILE6_3;
+
+   if (!fdl6_layout(&rsc->layout, prsc->format, fd_resource_nr_samples(prsc),
+                    prsc->width0, prsc->height0, prsc->depth0,
+                    prsc->last_level + 1, prsc->array_size, false, &explicit))
+      return -1;
+
+   if (rsc->layout.size > fd_bo_size(rsc->bo))
+      return -1;
+
+   return 0;
+}
+
+static int
+fd6_layout_resource_for_modifier(struct fd_resource *rsc, uint64_t modifier)
+{
+   switch (modifier) {
+   case DRM_FORMAT_MOD_QCOM_COMPRESSED:
+      return fill_ubwc_buffer_sizes(rsc);
+   case DRM_FORMAT_MOD_LINEAR:
+      if (can_do_ubwc(&rsc->b.b)) {
+         perf_debug("%" PRSC_FMT
+                    ": not UBWC: imported with DRM_FORMAT_MOD_LINEAR!",
+                    PRSC_ARGS(&rsc->b.b));
+      }
+      return 0;
+   case DRM_FORMAT_MOD_INVALID:
+      if (can_do_ubwc(&rsc->b.b)) {
+         perf_debug("%" PRSC_FMT
+                    ": not UBWC: imported with DRM_FORMAT_MOD_INVALID!",
+                    PRSC_ARGS(&rsc->b.b));
+      }
+      return 0;
+   default:
+      return -1;
+   }
+}
+
+static const uint64_t supported_modifiers[] = {
+   DRM_FORMAT_MOD_LINEAR,
+   DRM_FORMAT_MOD_QCOM_COMPRESSED,
+};
+
+void
+fd6_resource_screen_init(struct pipe_screen *pscreen)
+{
+   struct fd_screen *screen = fd_screen(pscreen);
+
+   screen->setup_slices = fd6_setup_slices;
+   screen->layout_resource_for_modifier = fd6_layout_resource_for_modifier;
+   screen->supported_modifiers = supported_modifiers;
+   screen->num_supported_modifiers = ARRAY_SIZE(supported_modifiers);
 }

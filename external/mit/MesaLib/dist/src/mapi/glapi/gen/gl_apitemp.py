@@ -24,8 +24,6 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-from __future__ import print_function
-
 import argparse
 
 import gl_XML, glX_XML
@@ -164,6 +162,10 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 #ifndef RETURN_DISPATCH
 #error RETURN_DISPATCH must be defined
+#endif
+
+#ifdef MemoryBarrier
+#undef MemoryBarrier
 #endif
 
 """)

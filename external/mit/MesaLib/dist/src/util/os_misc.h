@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 Vmware, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -34,11 +34,13 @@
 #ifndef _OS_MISC_H_
 #define _OS_MISC_H_
 
+#include <stdint.h>
+#include <stdbool.h>
 
-#include "pipe/p_compiler.h"
+#include "detect_os.h"
 
 
-#if defined(PIPE_OS_UNIX)
+#if DETECT_OS_UNIX
 #  include <signal.h> /* for kill() */
 #  include <unistd.h> /* getpid() */
 #endif
@@ -56,7 +58,7 @@ extern "C" {
 #  define os_break() __asm("int3")
 #elif defined(PIPE_CC_MSVC)
 #  define os_break()  __debugbreak()
-#elif defined(PIPE_OS_UNIX)
+#elif DETECT_OS_UNIX
 #  define os_break() kill(getpid(), SIGTRAP)
 #else
 #  define os_break() abort()
@@ -92,6 +94,18 @@ os_get_option(const char *name);
  */
 bool
 os_get_total_physical_memory(uint64_t *size);
+
+/*
+ * Amount of physical memory available to a process
+ */
+bool
+os_get_available_system_memory(uint64_t *size);
+
+/*
+ * Size of a page
+ */
+bool
+os_get_page_size(uint64_t *size);
 
 
 #ifdef	__cplusplus

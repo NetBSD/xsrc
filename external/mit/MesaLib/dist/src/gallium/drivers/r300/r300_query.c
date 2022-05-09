@@ -87,8 +87,8 @@ void r300_resume_query(struct r300_context *r300,
     r300_mark_atom_dirty(r300, &r300->query_start);
 }
 
-static boolean r300_begin_query(struct pipe_context* pipe,
-                                struct pipe_query* query)
+static bool r300_begin_query(struct pipe_context* pipe,
+                             struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = r300_query(query);
@@ -138,10 +138,10 @@ static bool r300_end_query(struct pipe_context* pipe,
     return true;
 }
 
-static boolean r300_get_query_result(struct pipe_context* pipe,
-                                     struct pipe_query* query,
-                                     boolean wait,
-                                     union pipe_query_result *vresult)
+static bool r300_get_query_result(struct pipe_context* pipe,
+                                  struct pipe_query* query,
+                                  bool wait,
+                                  union pipe_query_result *vresult)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query *q = r300_query(query);
@@ -150,18 +150,18 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
     if (q->type == PIPE_QUERY_GPU_FINISHED) {
         if (wait) {
-            r300->rws->buffer_wait(q->buf, PIPE_TIMEOUT_INFINITE,
+            r300->rws->buffer_wait(r300->rws, q->buf, PIPE_TIMEOUT_INFINITE,
                                    RADEON_USAGE_READWRITE);
             vresult->b = TRUE;
         } else {
-            vresult->b = r300->rws->buffer_wait(q->buf, 0, RADEON_USAGE_READWRITE);
+            vresult->b = r300->rws->buffer_wait(r300->rws, q->buf, 0, RADEON_USAGE_READWRITE);
         }
         return vresult->b;
     }
 
-    map = r300->rws->buffer_map(q->buf, r300->cs,
-                                PIPE_TRANSFER_READ |
-                                (!wait ? PIPE_TRANSFER_DONTBLOCK : 0));
+    map = r300->rws->buffer_map(r300->rws, q->buf, &r300->cs,
+                                PIPE_MAP_READ |
+                                (!wait ? PIPE_MAP_DONTBLOCK : 0));
     if (!map)
         return FALSE;
 
@@ -184,12 +184,12 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
 static void r300_render_condition(struct pipe_context *pipe,
                                   struct pipe_query *query,
-                                  boolean condition,
+                                  bool condition,
                                   enum pipe_render_cond_flag mode)
 {
     struct r300_context *r300 = r300_context(pipe);
     union pipe_query_result result;
-    boolean wait;
+    bool wait;
 
     r300->skip_rendering = FALSE;
 
@@ -209,7 +209,7 @@ static void r300_render_condition(struct pipe_context *pipe,
 }
 
 static void
-r300_set_active_query_state(struct pipe_context *pipe, boolean enable)
+r300_set_active_query_state(struct pipe_context *pipe, bool enable)
 {
 }
 

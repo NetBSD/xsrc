@@ -24,7 +24,7 @@
 #include "compute_memory_pool.h"
 #include "evergreen_compute.h"
 #include "util/u_surface.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "evergreend.h"
 
 enum r600_blitter_op /* bitmask */
@@ -463,6 +463,7 @@ static bool r600_decompress_subresource(struct pipe_context *ctx,
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
+		       const struct pipe_scissor_state *scissor_state,
 		       const union pipe_color_union *color,
 		       double depth, unsigned stencil)
 {
@@ -522,7 +523,8 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	r600_blitter_begin(ctx, R600_CLEAR);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 			   util_framebuffer_get_num_layers(fb),
-			   buffers, color, depth, stencil);
+			   buffers, color, depth, stencil,
+			   util_framebuffer_get_num_samples(fb) > 1);
 	r600_blitter_end(ctx);
 
 	/* disable fast clear */
@@ -659,7 +661,7 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 		r600_blitter_end(ctx);
 	} else {
 		uint32_t *map = r600_buffer_map_sync_with_rings(&rctx->b, r600_resource(dst),
-								 PIPE_TRANSFER_WRITE);
+								 PIPE_MAP_WRITE);
 		map += offset / 4;
 		size /= 4;
 		for (unsigned i = 0; i < size; i++)
@@ -811,7 +813,7 @@ void r600_resource_copy_region(struct pipe_context *ctx,
 	util_blitter_blit_generic(rctx->blitter, dst_view, &dstbox,
 				  src_view, src_box, src_width0, src_height0,
 				  PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
-				  FALSE);
+				  FALSE, FALSE);
 	r600_blitter_end(ctx);
 
 	pipe_surface_reference(&dst_view, NULL);

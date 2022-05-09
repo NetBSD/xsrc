@@ -26,8 +26,9 @@
 
 #include <sys/stat.h>
 
+#include "util/os_file.h"
 #include "util/u_hash_table.h"
-#include "util/u_memory.h"
+#include "util/u_pointer.h"
 
 #include "etnaviv/etnaviv_screen.h"
 #include "etnaviv/hw/common.xml.h"
@@ -35,15 +36,73 @@
 
 #include <stdio.h>
 
+static uint32_t hash_file_description(const void *key)
+{
+   int fd = pointer_to_intptr(key);
+   struct stat stat;
+
+   // File descriptions can't be hashed, but it should be safe to assume
+   // that the same file description will always refer to he same file
+   if(fstat(fd, &stat) == -1)
+      return ~0; // Make sure fstat failing won't result in a random hash
+
+   return stat.st_dev ^ stat.st_ino ^ stat.st_rdev;
+}
+
+
+static bool equal_file_description(const void *key1, const void *key2)
+{
+   int ret;
+   int fd1 = pointer_to_intptr(key1);
+   int fd2 = pointer_to_intptr(key2);
+   struct stat stat1, stat2;
+
+   // If the file descriptors are the same, the file description will be too
+   // This will also catch sentinels, such as -1
+   if (fd1 == fd2)
+      return true;
+
+   ret = os_same_file_description(fd1, fd2);
+   if (ret >= 0)
+      return (ret == 0);
+
+   {
+      static bool has_warned;
+      if (!has_warned)
+         fprintf(stderr, "os_same_file_description couldn't determine if "
+                 "two DRM fds reference the same file description. (%s)\n"
+                 "Let's just assume that file descriptors for the same file probably"
+                 "share the file description instead. This may cause problems when"
+                 "that isn't the case.\n", strerror(errno));
+      has_warned = true;
+   }
+
+   // Let's at least check that it's the same file, different files can't
+   // have the same file descriptions
+   fstat(fd1, &stat1);
+   fstat(fd2, &stat2);
+
+   return stat1.st_dev == stat2.st_dev &&
+          stat1.st_ino == stat2.st_ino &&
+          stat1.st_rdev == stat2.st_rdev;
+}
+
+
+static struct hash_table *
+hash_table_create_file_description_keys(void)
+{
+   return _mesa_hash_table_create(NULL, hash_file_description, equal_file_description);
+}
+
 static struct pipe_screen *
-screen_create(struct renderonly *ro)
+screen_create(int gpu_fd, struct renderonly *ro)
 {
    struct etna_device *dev;
    struct etna_gpu *gpu;
    uint64_t val;
    int i;
 
-   dev = etna_device_new_dup(ro->gpu_fd);
+   dev = etna_device_new_dup(gpu_fd);
    if (!dev) {
       fprintf(stderr, "Error creating device\n");
       return NULL;
@@ -67,7 +126,7 @@ screen_create(struct renderonly *ro)
    return etna_screen_create(dev, gpu, ro);
 }
 
-static struct util_hash_table *etna_tab = NULL;
+static struct hash_table *fd_tab = NULL;
 
 static mtx_t etna_screen_mutex = _MTX_INITIALIZER_NP;
 
@@ -81,7 +140,12 @@ etna_drm_screen_destroy(struct pipe_screen *pscreen)
    destroy = --screen->refcnt == 0;
    if (destroy) {
       int fd = etna_device_fd(screen->dev);
-      util_hash_table_remove(etna_tab, intptr_to_pointer(fd));
+      _mesa_hash_table_remove_key(fd_tab, intptr_to_pointer(fd));
+
+      if (!fd_tab->entries) {
+         _mesa_hash_table_destroy(fd_tab, NULL);
+         fd_tab = NULL;
+      }
    }
    mtx_unlock(&etna_screen_mutex);
 
@@ -91,56 +155,32 @@ etna_drm_screen_destroy(struct pipe_screen *pscreen)
    }
 }
 
-static unsigned hash_fd(void *key)
-{
-   int fd = pointer_to_intptr(key);
-   struct stat stat;
-
-   fstat(fd, &stat);
-
-   return stat.st_dev ^ stat.st_ino ^ stat.st_rdev;
-}
-
-static int compare_fd(void *key1, void *key2)
-{
-   int fd1 = pointer_to_intptr(key1);
-   int fd2 = pointer_to_intptr(key2);
-   struct stat stat1, stat2;
-
-   fstat(fd1, &stat1);
-   fstat(fd2, &stat2);
-
-   return stat1.st_dev != stat2.st_dev ||
-          stat1.st_ino != stat2.st_ino ||
-          stat1.st_rdev != stat2.st_rdev;
-}
-
-struct pipe_screen *
-etna_drm_screen_create_renderonly(struct renderonly *ro)
+static struct pipe_screen *
+etna_lookup_or_create_screen(int gpu_fd, struct renderonly *ro)
 {
    struct pipe_screen *pscreen = NULL;
 
    mtx_lock(&etna_screen_mutex);
-   if (!etna_tab) {
-      etna_tab = util_hash_table_create(hash_fd, compare_fd);
-      if (!etna_tab)
+   if (!fd_tab) {
+      fd_tab = hash_table_create_file_description_keys();
+      if (!fd_tab)
          goto unlock;
    }
 
-   pscreen = util_hash_table_get(etna_tab, intptr_to_pointer(ro->gpu_fd));
+   pscreen = util_hash_table_get(fd_tab, intptr_to_pointer(gpu_fd));
    if (pscreen) {
       etna_screen(pscreen)->refcnt++;
    } else {
-      pscreen = screen_create(ro);
+      pscreen = screen_create(gpu_fd, ro);
       if (pscreen) {
          int fd = etna_device_fd(etna_screen(pscreen)->dev);
-         util_hash_table_set(etna_tab, intptr_to_pointer(fd), pscreen);
+         _mesa_hash_table_insert(fd_tab, intptr_to_pointer(fd), pscreen);
 
          /* Bit of a hack, to avoid circular linkage dependency,
          * ie. pipe driver having to call in to winsys, we
          * override the pipe drivers screen->destroy() */
          etna_screen(pscreen)->winsys_priv = pscreen->destroy;
-      pscreen->destroy = etna_drm_screen_destroy;
+         pscreen->destroy = etna_drm_screen_destroy;
       }
    }
 
@@ -150,13 +190,13 @@ unlock:
 }
 
 struct pipe_screen *
+etna_drm_screen_create_renderonly(struct renderonly *ro)
+{
+   return etna_lookup_or_create_screen(ro->gpu_fd, ro);
+}
+
+struct pipe_screen *
 etna_drm_screen_create(int fd)
 {
-   struct renderonly ro = {
-      .create_for_resource = renderonly_create_gpu_import_for_resource,
-      .kms_fd = -1,
-      .gpu_fd = fd
-   };
-
-   return etna_drm_screen_create_renderonly(&ro);
+   return etna_lookup_or_create_screen(fd, NULL);
 }

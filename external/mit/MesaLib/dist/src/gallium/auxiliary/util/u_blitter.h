@@ -154,6 +154,10 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe);
 void util_blitter_destroy(struct blitter_context *blitter);
 
 void util_blitter_cache_all_shaders(struct blitter_context *blitter);
+void *util_blitter_get_noop_blend_state(struct blitter_context *blitter);
+void *util_blitter_get_noop_dsa_state(struct blitter_context *blitter);
+void *util_blitter_get_discard_rasterizer_state(struct blitter_context *blitter);
+
 
 /**
  * Return the pipe context associated with a blitter context.
@@ -204,7 +208,8 @@ void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height, unsigned num_layers,
                         unsigned clear_buffers,
                         const union pipe_color_union *color,
-                        double depth, unsigned stencil);
+                        double depth, unsigned stencil,
+                        bool msaa);
 
 /**
  * Check if the blitter (with the help of the driver) can blit between
@@ -265,7 +270,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                                unsigned src_width0, unsigned src_height0,
                                unsigned mask, unsigned filter,
                                const struct pipe_scissor_state *scissor,
-                               bool alpha_blend);
+                               bool alpha_blend, bool sample0_only);
 
 void util_blitter_blit(struct blitter_context *blitter,
 		       const struct pipe_blit_info *info);
@@ -394,6 +399,16 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
 void util_blitter_custom_shader(struct blitter_context *blitter,
                                 struct pipe_surface *dstsurf,
                                 void *custom_vs, void *custom_fs);
+
+/* Used by D3D12 for non-MSAA -> MSAA stencil blits */
+void util_blitter_stencil_fallback(struct blitter_context *blitter,
+                                   struct pipe_resource *dst,
+                                   unsigned dst_level,
+                                   const struct pipe_box *dstbox,
+                                   struct pipe_resource *src,
+                                   unsigned src_level,
+                                   const struct pipe_box *srcbox,
+                                   const struct pipe_scissor_state *scissor);
 
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
@@ -596,6 +611,36 @@ void util_blitter_restore_render_cond(struct blitter_context *blitter);
 void util_blitter_restore_fb_state(struct blitter_context *blitter);
 void util_blitter_restore_textures(struct blitter_context *blitter);
 void util_blitter_restore_constant_buffer_state(struct blitter_context *blitter);
+
+/* These are supported combinations of blits from ZS to color and vice versa.
+ * The blitter will do the packing/unpacking of depth and stencil
+ * in the fragment shader.
+ */
+static inline enum pipe_format
+util_blitter_get_color_format_for_zs(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z16_UNORM:
+      return PIPE_FORMAT_R16_UNORM;
+
+   case PIPE_FORMAT_Z32_FLOAT:
+      return PIPE_FORMAT_R32_FLOAT;
+
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+      return PIPE_FORMAT_R32_UINT;
+
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      return PIPE_FORMAT_R32G32_UINT;
+
+   case PIPE_FORMAT_Z32_UNORM:
+   default:
+      assert(0);
+   }
+   return PIPE_FORMAT_NONE;
+}
 
 #ifdef __cplusplus
 }

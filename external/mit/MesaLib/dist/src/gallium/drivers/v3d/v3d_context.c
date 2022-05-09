@@ -31,7 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_blitter.h"
 #include "util/u_upload_mgr.h"
-#include "indices/u_primconvert.h"
+#include "util/u_prim.h"
 #include "pipe/p_screen.h"
 
 #include "v3d_screen.h"
@@ -71,7 +71,13 @@ v3d_memory_barrier(struct pipe_context *pctx, unsigned int flags)
 {
         struct v3d_context *v3d = v3d_context(pctx);
 
-	if (!(flags & ~PIPE_BARRIER_UPDATE))
+        /* We only need to flush for SSBOs and images, because for everything
+         * else we flush the job automatically when we needed.
+         */
+        const unsigned int flush_flags = PIPE_BARRIER_SHADER_BUFFER |
+                                         PIPE_BARRIER_IMAGE;
+
+	if (!(flags & flush_flags))
 		return;
 
         /* We only need to flush jobs writing to SSBOs/images. */
@@ -109,6 +115,176 @@ v3d_invalidate_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
                 job->store &= ~(PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL);
 }
 
+/**
+ * Flushes the current job to get up-to-date primitive counts written to the
+ * primitive counts BO, then accumulates the transform feedback primitive count
+ * in the context and the corresponding vertex counts in the bound stream
+ * output targets.
+ */
+void
+v3d_update_primitive_counters(struct v3d_context *v3d)
+{
+        struct v3d_job *job = v3d_get_job_for_fbo(v3d);
+        if (job->draw_calls_queued == 0)
+                return;
+
+        /* In order to get up-to-date primitive counts we need to submit
+         * the job for execution so we get the counts written to memory.
+         * Notice that this will require a sync wait for the buffer write.
+         */
+        uint32_t prims_before = v3d->tf_prims_generated;
+        v3d_job_submit(v3d, job);
+        uint32_t prims_after = v3d->tf_prims_generated;
+        if (prims_before == prims_after)
+                return;
+
+        enum pipe_prim_type prim_type = u_base_prim_type(v3d->prim_mode);
+        uint32_t num_verts = u_vertices_for_prims(prim_type,
+                                                  prims_after - prims_before);
+        for (int i = 0; i < v3d->streamout.num_targets; i++) {
+                struct v3d_stream_output_target *so =
+                        v3d_stream_output_target(v3d->streamout.targets[i]);
+                so->recorded_vertex_count += num_verts;
+        }
+}
+
+bool
+v3d_line_smoothing_enabled(struct v3d_context *v3d)
+{
+        if (!v3d->rasterizer->base.line_smooth)
+                return false;
+
+        /* According to the OpenGL docs, line smoothing shouldn’t be applied
+         * when multisampling
+         */
+        if (v3d->job->msaa || v3d->rasterizer->base.multisample)
+                return false;
+
+        if (v3d->framebuffer.nr_cbufs <= 0)
+                return false;
+
+        struct pipe_surface *cbuf = v3d->framebuffer.cbufs[0];
+        if (!cbuf)
+                return false;
+
+        /* Modifying the alpha for pure integer formats probably
+         * doesn’t make sense because we don’t know how the application
+         * uses the alpha value.
+         */
+        if (util_format_is_pure_integer(cbuf->format))
+                return false;
+
+        return true;
+}
+
+float
+v3d_get_real_line_width(struct v3d_context *v3d)
+{
+        float width = v3d->rasterizer->base.line_width;
+
+        if (v3d_line_smoothing_enabled(v3d)) {
+                /* If line smoothing is enabled then we want to add some extra
+                 * pixels to the width in order to have some semi-transparent
+                 * edges.
+                 */
+                width = floorf(M_SQRT2 * width) + 3;
+        }
+
+        return width;
+}
+
+void
+v3d_ensure_prim_counts_allocated(struct v3d_context *ctx)
+{
+        if (ctx->prim_counts)
+                return;
+
+        /* Init all 7 counters and 1 padding to 0 */
+        uint32_t zeroes[8] = { 0 };
+        u_upload_data(ctx->uploader,
+                      0, sizeof(zeroes), 32, zeroes,
+                      &ctx->prim_counts_offset,
+                      &ctx->prim_counts);
+}
+
+void
+v3d_flag_dirty_sampler_state(struct v3d_context *v3d,
+                             enum pipe_shader_type shader)
+{
+        switch (shader) {
+        case PIPE_SHADER_VERTEX:
+                v3d->dirty |= V3D_DIRTY_VERTTEX;
+                break;
+        case PIPE_SHADER_GEOMETRY:
+                v3d->dirty |= V3D_DIRTY_GEOMTEX;
+                break;
+        case PIPE_SHADER_FRAGMENT:
+                v3d->dirty |= V3D_DIRTY_FRAGTEX;
+                break;
+        case PIPE_SHADER_COMPUTE:
+                v3d->dirty |= V3D_DIRTY_COMPTEX;
+                break;
+        default:
+                unreachable("Unsupported shader stage");
+        }
+}
+
+void
+v3d_create_texture_shader_state_bo(struct v3d_context *v3d,
+                                   struct v3d_sampler_view *so)
+{
+        if (v3d->screen->devinfo.ver >= 41)
+                v3d41_create_texture_shader_state_bo(v3d, so);
+        else
+                v3d33_create_texture_shader_state_bo(v3d, so);
+}
+
+void
+v3d_get_tile_buffer_size(bool is_msaa,
+                         uint32_t nr_cbufs,
+                         struct pipe_surface **cbufs,
+                         struct pipe_surface *bbuf,
+                         uint32_t *tile_width,
+                         uint32_t *tile_height,
+                         uint32_t *max_bpp)
+{
+        static const uint8_t tile_sizes[] = {
+                64, 64,
+                64, 32,
+                32, 32,
+                32, 16,
+                16, 16,
+        };
+        int tile_size_index = 0;
+        if (is_msaa)
+                tile_size_index += 2;
+
+        if (cbufs[3] || cbufs[2])
+                tile_size_index += 2;
+        else if (cbufs[1])
+                tile_size_index++;
+
+        *max_bpp = 0;
+        for (int i = 0; i < nr_cbufs; i++) {
+                if (cbufs[i]) {
+                        struct v3d_surface *surf = v3d_surface(cbufs[i]);
+                        *max_bpp = MAX2(*max_bpp, surf->internal_bpp);
+                }
+        }
+
+        if (bbuf) {
+                struct v3d_surface *bsurf = v3d_surface(bbuf);
+                assert(bbuf->texture->nr_samples <= 1 || is_msaa);
+                *max_bpp = MAX2(*max_bpp, bsurf->internal_bpp);
+        }
+
+        tile_size_index += *max_bpp;
+
+        assert(tile_size_index < ARRAY_SIZE(tile_sizes));
+        *tile_width = tile_sizes[tile_size_index * 2 + 0];
+        *tile_height = tile_sizes[tile_size_index * 2 + 1];
+}
+
 static void
 v3d_context_destroy(struct pipe_context *pctx)
 {
@@ -119,18 +295,25 @@ v3d_context_destroy(struct pipe_context *pctx)
         if (v3d->blitter)
                 util_blitter_destroy(v3d->blitter);
 
-        if (v3d->primconvert)
-                util_primconvert_destroy(v3d->primconvert);
-
         if (v3d->uploader)
                 u_upload_destroy(v3d->uploader);
         if (v3d->state_uploader)
                 u_upload_destroy(v3d->state_uploader);
 
+        if (v3d->prim_counts)
+                pipe_resource_reference(&v3d->prim_counts, NULL);
+
         slab_destroy_child(&v3d->transfer_pool);
 
         pipe_surface_reference(&v3d->framebuffer.cbufs[0], NULL);
         pipe_surface_reference(&v3d->framebuffer.zsbuf, NULL);
+
+        if (v3d->sand8_blit_vs)
+                pctx->delete_vs_state(pctx, v3d->sand8_blit_vs);
+        if (v3d->sand8_blit_fs_luma)
+                pctx->delete_fs_state(pctx, v3d->sand8_blit_fs_luma);
+        if (v3d->sand8_blit_fs_chroma)
+                pctx->delete_fs_state(pctx, v3d->sand8_blit_fs_chroma);
 
         v3d_program_fini(pctx);
 
@@ -220,11 +403,6 @@ v3d_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
         if (!v3d->blitter)
                 goto fail;
         v3d->blitter->use_index_buffer = true;
-
-        v3d->primconvert = util_primconvert_create(pctx,
-                                                   (1 << PIPE_PRIM_QUADS) - 1);
-        if (!v3d->primconvert)
-                goto fail;
 
         V3D_DEBUG |= saved_shaderdb_flag;
 

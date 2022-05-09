@@ -52,7 +52,7 @@ clif_dump_add_address_to_worklist(struct clif_dump *clif,
 
 struct clif_dump *
 clif_dump_init(const struct v3d_device_info *devinfo,
-               FILE *out, bool pretty)
+               FILE *out, bool pretty, bool nobin)
 {
         struct clif_dump *clif = rzalloc(NULL, struct clif_dump);
 
@@ -60,6 +60,7 @@ clif_dump_init(const struct v3d_device_info *devinfo,
         clif->out = out;
         clif->spec = v3d_spec_load(devinfo);
         clif->pretty = pretty;
+        clif->nobin = nobin;
 
         list_inithead(&clif->worklist);
 
@@ -105,7 +106,9 @@ static bool
 clif_dump_packet(struct clif_dump *clif, uint32_t offset, const uint8_t *cl,
                  uint32_t *size, bool reloc_mode)
 {
-        if (clif->devinfo->ver >= 41)
+        if (clif->devinfo->ver >= 42)
+                return v3d42_clif_dump_packet(clif, offset, cl, size, reloc_mode);
+        else if (clif->devinfo->ver >= 41)
                 return v3d41_clif_dump_packet(clif, offset, cl, size, reloc_mode);
         else
                 return v3d33_clif_dump_packet(clif, offset, cl, size, reloc_mode);
@@ -236,6 +239,9 @@ static void
 clif_dump_binary(struct clif_dump *clif, struct clif_bo *bo,
                  uint32_t start, uint32_t end)
 {
+        if (clif->pretty && clif->nobin)
+                return;
+
         if (start == end)
                 return;
 

@@ -24,7 +24,10 @@
 #include "util/u_math.h"
 #include "util/ralloc.h"
 #include "v3d_context.h"
-/* The branching packets are the same across V3D versions. */
+/* We don't expect that the packets we use in this file change across across
+ * hw versions, so we just explicitly set the V3D_VERSION and include
+ * v3dx_pack here
+ */
 #define V3D_VERSION 33
 #include "broadcom/common/v3d_macros.h"
 #include "broadcom/cle/v3dx_pack.h"
@@ -63,7 +66,7 @@ v3d_cl_ensure_space_with_branch(struct v3d_cl *cl, uint32_t space)
         if (cl_offset(cl) + space + cl_packet_length(BRANCH) <= cl->size)
                 return;
 
-        struct v3d_bo *new_bo = v3d_bo_alloc(cl->job->v3d->screen, 4096, "CL");
+        struct v3d_bo *new_bo = v3d_bo_alloc(cl->job->v3d->screen, space, "CL");
         assert(space <= new_bo->size);
 
         /* Chain to the new BO from the old one. */
@@ -74,7 +77,7 @@ v3d_cl_ensure_space_with_branch(struct v3d_cl *cl, uint32_t space)
                 v3d_bo_unreference(&cl->bo);
         } else {
                 /* Root the first RCL/BCL BO in the job. */
-                v3d_job_add_bo(cl->job, cl->bo);
+                v3d_job_add_bo(cl->job, new_bo);
         }
 
         cl->bo = new_bo;

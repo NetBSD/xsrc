@@ -21,13 +21,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VC5_CL_H
-#define VC5_CL_H
+#ifndef V3D_CL_H
+#define V3D_CL_H
 
 #include <stdint.h>
 
 #include "util/u_math.h"
 #include "util/macros.h"
+#include "broadcom/cle/v3d_packet_helpers.h"
 
 struct v3d_bo;
 struct v3d_job;
@@ -52,6 +53,15 @@ static inline void cl_pack_emit_reloc(struct v3d_cl *cl, const struct v3d_cl_rel
 #define __gen_address_offset(reloc) (((reloc)->bo ? (reloc)->bo->offset : 0) + \
                                      (reloc)->offset)
 #define __gen_emit_reloc cl_pack_emit_reloc
+#define __gen_unpack_address(cl, s, e) __unpack_address(cl, s, e)
+
+static inline struct v3d_cl_reloc
+__unpack_address(const uint8_t *cl, uint32_t s, uint32_t e)
+{
+    struct v3d_cl_reloc reloc =
+            { NULL, __gen_unpack_uint(cl, s, e) << (31 - (e - s)) };
+    return reloc;
+}
 
 struct v3d_cl {
         void *base;
@@ -268,7 +278,7 @@ cl_get_emit_space(struct v3d_cl_out **cl, size_t size)
  * Helper function called by the XML-generated pack functions for filling in
  * an address field in shader records.
  *
- * Since we have a private address space as of VC5, our BOs can have lifelong
+ * Since we have a private address space as of V3D, our BOs can have lifelong
  * offsets, and all the kernel needs to know is which BOs need to be paged in
  * for this exec.
  */
@@ -279,4 +289,4 @@ cl_pack_emit_reloc(struct v3d_cl *cl, const struct v3d_cl_reloc *reloc)
                 v3d_job_add_bo(cl->job, reloc->bo);
 }
 
-#endif /* VC5_CL_H */
+#endif /* V3D_CL_H */

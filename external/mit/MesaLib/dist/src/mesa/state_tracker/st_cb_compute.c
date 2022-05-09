@@ -53,12 +53,13 @@ static void st_dispatch_compute_common(struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if ((st->dirty | ctx->NewDriverState) & ST_PIPELINE_COMPUTE_STATE_MASK ||
+   if ((st->dirty | ctx->NewDriverState) & st->active_states &
+       ST_PIPELINE_COMPUTE_STATE_MASK ||
        st->compute_shader_may_be_dirty)
       st_validate_state(st, ST_PIPELINE_COMPUTE);
 
    for (unsigned i = 0; i < 3; i++) {
-      info.block[i] = group_size ? group_size[i] : prog->info.cs.local_size[i];
+      info.block[i] = group_size ? group_size[i] : prog->info.workgroup_size[i];
       info.grid[i]  = num_groups ? num_groups[i] : 0;
    }
 

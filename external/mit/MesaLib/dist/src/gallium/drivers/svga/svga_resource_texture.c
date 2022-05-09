@@ -29,7 +29,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "os/os_thread.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -58,7 +58,6 @@ svga_transfer_dma_band(struct svga_context *svga,
 {
    struct svga_texture *texture = svga_texture(st->base.resource);
    SVGA3dCopyBox box;
-   enum pipe_error ret;
 
    assert(!st->use_direct_map);
 
@@ -83,16 +82,11 @@ svga_transfer_dma_band(struct svga_context *svga,
             x + w,
             y + h,
             z + 1,
-            util_format_get_blocksize(texture->b.b.format) * 8 /
-            (util_format_get_blockwidth(texture->b.b.format)
-             * util_format_get_blockheight(texture->b.b.format)));
+            util_format_get_blocksize(texture->b.format) * 8 /
+            (util_format_get_blockwidth(texture->b.format)
+             * util_format_get_blockheight(texture->b.format)));
 
-   ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1, flags);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1, flags);
-      assert(ret == PIPE_OK);
-   }
+   SVGA_RETRY(svga, SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1, flags));
 }
 
 
@@ -103,7 +97,7 @@ svga_transfer_dma(struct svga_context *svga,
                   SVGA3dSurfaceDMAFlags flags)
 {
    struct svga_texture *texture = svga_texture(st->base.resource);
-   struct svga_screen *screen = svga_screen(texture->b.b.screen);
+   struct svga_screen *screen = svga_screen(texture->b.screen);
    struct svga_winsys_screen *sws = screen->sws;
    struct pipe_fence_handle *fence = NULL;
 
@@ -157,13 +151,13 @@ svga_transfer_dma(struct svga_context *svga,
          sw = (uint8_t *) st->swbuf + offset;
 
          if (transfer == SVGA3D_WRITE_HOST_VRAM) {
-            unsigned usage = PIPE_TRANSFER_WRITE;
+            unsigned usage = PIPE_MAP_WRITE;
 
             /* Wait for the previous DMAs to complete */
             /* TODO: keep one DMA (at half the size) in the background */
             if (y) {
                svga_context_flush(svga, NULL);
-               usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+               usage |= PIPE_MAP_DISCARD_WHOLE_RESOURCE;
             }
 
             hw = sws->buffer_map(sws, st->hwbuf, usage);
@@ -189,7 +183,7 @@ svga_transfer_dma(struct svga_context *svga,
             svga_context_flush(svga, &fence);
             sws->fence_finish(sws, fence, PIPE_TIMEOUT_INFINITE, 0);
 
-            hw = sws->buffer_map(sws, st->hwbuf, PIPE_TRANSFER_READ);
+            hw = sws->buffer_map(sws, st->hwbuf, PIPE_MAP_READ);
             assert(hw);
             if (hw) {
                memcpy(sw, hw, length);
@@ -202,13 +196,18 @@ svga_transfer_dma(struct svga_context *svga,
 
 
 
-static boolean
-svga_texture_get_handle(struct pipe_screen *screen,
-                        struct pipe_resource *texture,
-                        struct winsys_handle *whandle)
+bool
+svga_resource_get_handle(struct pipe_screen *screen,
+                         struct pipe_context *context,
+                         struct pipe_resource *texture,
+                         struct winsys_handle *whandle,
+                         unsigned usage)
 {
    struct svga_winsys_screen *sws = svga_winsys_screen(texture->screen);
    unsigned stride;
+
+   if (texture->target == PIPE_BUFFER)
+      return false;
 
    assert(svga_texture(texture)->key.cachable == 0);
    svga_texture(texture)->key.cachable = 0;
@@ -221,51 +220,17 @@ svga_texture_get_handle(struct pipe_screen *screen,
 }
 
 
-static void
-svga_texture_destroy(struct pipe_screen *screen,
-                     struct pipe_resource *pt)
-{
-   struct svga_screen *ss = svga_screen(screen);
-   struct svga_texture *tex = svga_texture(pt);
-
-   ss->texture_timestamp++;
-
-   svga_sampler_view_reference(&tex->cached_view, NULL);
-
-   /*
-     DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
-   */
-   SVGA_DBG(DEBUG_DMA, "unref sid %p (texture)\n", tex->handle);
-   svga_screen_surface_destroy(ss, &tex->key, &tex->handle);
-
-   /* Destroy the backed surface handle if exists */
-   if (tex->backed_handle)
-      svga_screen_surface_destroy(ss, &tex->backed_key, &tex->backed_handle);
-
-   ss->hud.total_resource_bytes -= tex->size;
-
-   FREE(tex->defined);
-   FREE(tex->rendered_to);
-   FREE(tex->dirty);
-   FREE(tex);
-
-   assert(ss->hud.num_resources > 0);
-   if (ss->hud.num_resources > 0)
-      ss->hud.num_resources--;
-}
-
-
 /**
  * Determine if we need to read back a texture image before mapping it.
  */
 static inline boolean
 need_tex_readback(struct svga_transfer *st)
 {
-   if (st->base.usage & PIPE_TRANSFER_READ)
+   if (st->base.usage & PIPE_MAP_READ)
       return TRUE;
 
-   if ((st->base.usage & PIPE_TRANSFER_WRITE) &&
-       ((st->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) == 0)) {
+   if ((st->base.usage & PIPE_MAP_WRITE) &&
+       ((st->base.usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE) == 0)) {
       return svga_was_texture_rendered_to(svga_texture(st->base.resource),
                                           st->slice, st->base.level);
    }
@@ -274,40 +239,28 @@ need_tex_readback(struct svga_transfer *st)
 }
 
 
-static enum pipe_error
+static void
 readback_image_vgpu9(struct svga_context *svga,
                    struct svga_winsys_surface *surf,
                    unsigned slice,
                    unsigned level)
 {
-   enum pipe_error ret;
-
-   ret = SVGA3D_ReadbackGBImage(svga->swc, surf, slice, level);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_ReadbackGBImage(svga->swc, surf, slice, level);
-   }
-   return ret;
+   SVGA_RETRY(svga, SVGA3D_ReadbackGBImage(svga->swc, surf, slice, level));
 }
 
 
-static enum pipe_error
+static void
 readback_image_vgpu10(struct svga_context *svga,
                     struct svga_winsys_surface *surf,
                     unsigned slice,
                     unsigned level,
                     unsigned numMipLevels)
 {
-   enum pipe_error ret;
    unsigned subResource;
 
    subResource = slice * numMipLevels + level;
-   ret = SVGA3D_vgpu10_ReadbackSubResource(svga->swc, surf, subResource);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_vgpu10_ReadbackSubResource(svga->swc, surf, subResource);
-   }
-   return ret;
+   SVGA_RETRY(svga, SVGA3D_vgpu10_ReadbackSubResource(svga->swc, surf,
+                                                      subResource));
 }
 
 
@@ -365,7 +318,7 @@ svga_texture_transfer_map_dma(struct svga_context *svga,
       }
    }
 
-   if (usage & PIPE_TRANSFER_READ) {
+   if (usage & PIPE_MAP_READ) {
       SVGA3dSurfaceDMAFlags flags;
       memset(&flags, 0, sizeof flags);
       svga_transfer_dma(svga, st, SVGA3D_READ_HOST_VRAM, flags);
@@ -397,34 +350,31 @@ svga_texture_transfer_map_direct(struct svga_context *svga,
    unsigned usage = st->base.usage;
 
    if (need_tex_readback(st)) {
-      enum pipe_error ret;
-
       svga_surfaces_flush(svga);
 
-      for (i = 0; i < st->box.d; i++) {
-         if (svga_have_vgpu10(svga)) {
-            ret = readback_image_vgpu10(svga, surf, st->slice + i, level,
-                                        tex->b.b.last_level + 1);
-         } else {
-            ret = readback_image_vgpu9(svga, surf, st->slice + i, level);
+      if (!svga->swc->force_coherent || tex->imported) {
+         for (i = 0; i < st->box.d; i++) {
+            if (svga_have_vgpu10(svga)) {
+               readback_image_vgpu10(svga, surf, st->slice + i, level,
+                                     tex->b.last_level + 1);
+            } else {
+               readback_image_vgpu9(svga, surf, st->slice + i, level);
+            }
          }
+         svga->hud.num_readbacks++;
+         SVGA_STATS_COUNT_INC(sws, SVGA_STATS_COUNT_TEXREADBACK);
+
+         svga_context_flush(svga, NULL);
       }
-      svga->hud.num_readbacks++;
-      SVGA_STATS_COUNT_INC(sws, SVGA_STATS_COUNT_TEXREADBACK);
-
-      assert(ret == PIPE_OK);
-      (void) ret;
-
-      svga_context_flush(svga, NULL);
       /*
-       * Note: if PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE were specified
+       * Note: if PIPE_MAP_DISCARD_WHOLE_RESOURCE were specified
        * we could potentially clear the flag for all faces/layers/mips.
        */
       svga_clear_texture_rendered_to(tex, st->slice, level);
    }
    else {
-      assert(usage & PIPE_TRANSFER_WRITE);
-      if ((usage & PIPE_TRANSFER_UNSYNCHRONIZED) == 0) {
+      assert(usage & PIPE_MAP_WRITE);
+      if ((usage & PIPE_MAP_UNSYNCHRONIZED) == 0) {
          if (svga_is_texture_dirty(tex, st->slice, level)) {
             /*
              * do a surface flush if the subresource has been modified
@@ -455,18 +405,39 @@ svga_texture_transfer_map_direct(struct svga_context *svga,
    {
       SVGA3dSize baseLevelSize;
       uint8_t *map;
-      boolean retry;
+      boolean retry, rebind;
       unsigned offset, mip_width, mip_height;
+      struct svga_winsys_context *swc = svga->swc;
 
-      map = svga->swc->surface_map(svga->swc, surf, usage, &retry);
+      if (swc->force_coherent) {
+         usage |= PIPE_MAP_PERSISTENT | PIPE_MAP_COHERENT;
+      }
+
+      map = SVGA_TRY_MAP(svga->swc->surface_map
+                         (svga->swc, surf, usage, &retry, &rebind), retry);
+
       if (map == NULL && retry) {
          /*
           * At this point, the svga_surfaces_flush() should already have
           * called in svga_texture_get_transfer().
           */
          svga->hud.surface_write_flushes++;
+         svga_retry_enter(svga);
          svga_context_flush(svga, NULL);
-         map = svga->swc->surface_map(svga->swc, surf, usage, &retry);
+         map = svga->swc->surface_map(svga->swc, surf, usage, &retry, &rebind);
+         svga_retry_exit(svga);
+      }
+
+      if (map && rebind) {
+         enum pipe_error ret;
+
+         ret = SVGA3D_BindGBSurface(swc, surf);
+         if (ret != PIPE_OK) {
+            svga_context_flush(svga, NULL);
+            ret = SVGA3D_BindGBSurface(swc, surf);
+            assert(ret == PIPE_OK);
+         }
+         svga_context_flush(svga, NULL);
       }
 
       /*
@@ -479,27 +450,27 @@ svga_texture_transfer_map_direct(struct svga_context *svga,
       /**
        * Compute the offset to the specific texture slice in the buffer.
        */
-      baseLevelSize.width = tex->b.b.width0;
-      baseLevelSize.height = tex->b.b.height0;
-      baseLevelSize.depth = tex->b.b.depth0;
+      baseLevelSize.width = tex->b.width0;
+      baseLevelSize.height = tex->b.height0;
+      baseLevelSize.depth = tex->b.depth0;
 
-      if ((tex->b.b.target == PIPE_TEXTURE_1D_ARRAY) ||
-          (tex->b.b.target == PIPE_TEXTURE_2D_ARRAY) ||
-          (tex->b.b.target == PIPE_TEXTURE_CUBE_ARRAY)) {
+      if ((tex->b.target == PIPE_TEXTURE_1D_ARRAY) ||
+          (tex->b.target == PIPE_TEXTURE_2D_ARRAY) ||
+          (tex->b.target == PIPE_TEXTURE_CUBE_ARRAY)) {
          st->base.layer_stride =
             svga3dsurface_get_image_offset(tex->key.format, baseLevelSize,
-                                           tex->b.b.last_level + 1, 1, 0);
+                                           tex->b.last_level + 1, 1, 0);
       }
 
       offset = svga3dsurface_get_image_offset(tex->key.format, baseLevelSize,
-                                              tex->b.b.last_level + 1, /* numMips */
+                                              tex->b.last_level + 1, /* numMips */
                                               st->slice, level);
       if (level > 0) {
          assert(offset > 0);
       }
 
-      mip_width = u_minify(tex->b.b.width0, level);
-      mip_height = u_minify(tex->b.b.height0, level);
+      mip_width = u_minify(tex->b.width0, level);
+      mip_height = u_minify(tex->b.height0, level);
 
       offset += svga3dsurface_get_pixel_offset(tex->key.format,
                                                mip_width, mip_height,
@@ -515,7 +486,7 @@ svga_texture_transfer_map_direct(struct svga_context *svga,
 /**
  * Request a transfer map to the texture resource
  */
-static void *
+void *
 svga_texture_transfer_map(struct pipe_context *pipe,
                           struct pipe_resource *texture,
                           unsigned level,
@@ -529,7 +500,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    struct svga_transfer *st;
    struct svga_winsys_surface *surf = tex->handle;
    boolean use_direct_map = svga_have_gb_objects(svga) &&
-                            !svga_have_gb_dma(svga);
+       (!svga_have_gb_dma(svga) || (usage & PIPE_MAP_WRITE));
    void *map = NULL;
    int64_t begin = svga_get_time(svga);
 
@@ -539,7 +510,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
       goto done;
 
    /* We can't map texture storage directly unless we have GB objects */
-   if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+   if (usage & PIPE_MAP_DIRECTLY) {
       if (svga_have_gb_objects(svga))
          use_direct_map = TRUE;
       else
@@ -564,7 +535,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    st->box.h = box->height;
    st->box.d = box->depth;
 
-   switch (tex->b.b.target) {
+   switch (tex->b.target) {
    case PIPE_TEXTURE_CUBE:
       st->slice = st->base.box.z;
       st->box.z = 0;   /* so we don't apply double offsets below */
@@ -596,9 +567,12 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    pipe_resource_reference(&st->base.resource, texture);
 
    /* If this is the first time mapping to the surface in this
-    * command buffer, clear the dirty masks of this surface.
+    * command buffer and there is no pending primitives, clear
+    * the dirty masks of this surface.
     */
-   if (sws->surface_is_flushed(sws, surf)) {
+   if (sws->surface_is_flushed(sws, surf) &&
+       (svga_have_vgpu10(svga) ||
+        !svga_hwtnl_has_pending_prim(svga->hwtnl))) {
       svga_clear_texture_dirty(tex);
    }
 
@@ -608,7 +582,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    }
    else {
       boolean can_use_upload = tex->can_use_upload &&
-                               !(st->base.usage & PIPE_TRANSFER_READ);
+                               !(st->base.usage & PIPE_MAP_READ);
       boolean was_rendered_to =
          svga_was_texture_rendered_to(svga_texture(texture),
                                       st->slice, st->base.level);
@@ -627,7 +601,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
 
          /* First try directly map to the GB surface */
          if (can_use_upload)
-            st->base.usage |= PIPE_TRANSFER_DONTBLOCK;
+            st->base.usage |= PIPE_MAP_DONTBLOCK;
          map = svga_texture_transfer_map_direct(svga, st);
          st->base.usage = orig_usage;
 
@@ -653,7 +627,7 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    else {
       *ptransfer = &st->base;
       svga->hud.num_textures_mapped++;
-      if (usage & PIPE_TRANSFER_WRITE) {
+      if (usage & PIPE_MAP_WRITE) {
          /* record texture upload for HUD */
          svga->hud.num_bytes_uploaded +=
             st->base.layer_stride * st->box.d;
@@ -686,37 +660,23 @@ svga_texture_surface_unmap(struct svga_context *svga,
 
    swc->surface_unmap(swc, surf, &rebind);
    if (rebind) {
-      enum pipe_error ret;
-      ret = SVGA3D_BindGBSurface(swc, surf);
-      if (ret != PIPE_OK) {
-         /* flush and retry */
-         svga_context_flush(svga, NULL);
-         ret = SVGA3D_BindGBSurface(swc, surf);
-         assert(ret == PIPE_OK);
-      }
+      SVGA_RETRY(svga, SVGA3D_BindGBSurface(swc, surf));
    }
 }
 
 
-static enum pipe_error
+static void
 update_image_vgpu9(struct svga_context *svga,
                    struct svga_winsys_surface *surf,
                    const SVGA3dBox *box,
                    unsigned slice,
                    unsigned level)
 {
-   enum pipe_error ret;
-
-   ret = SVGA3D_UpdateGBImage(svga->swc, surf, box, slice, level);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_UpdateGBImage(svga->swc, surf, box, slice, level);
-   }
-   return ret;
+   SVGA_RETRY(svga, SVGA3D_UpdateGBImage(svga->swc, surf, box, slice, level));
 }
 
 
-static enum pipe_error
+static void
 update_image_vgpu10(struct svga_context *svga,
                     struct svga_winsys_surface *surf,
                     const SVGA3dBox *box,
@@ -724,17 +684,12 @@ update_image_vgpu10(struct svga_context *svga,
                     unsigned level,
                     unsigned numMipLevels)
 {
-   enum pipe_error ret;
    unsigned subResource;
 
    subResource = slice * numMipLevels + level;
 
-   ret = SVGA3D_vgpu10_UpdateSubResource(svga->swc, surf, box, subResource);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_vgpu10_UpdateSubResource(svga->swc, surf, box, subResource);
-   }
-   return ret;
+   SVGA_RETRY(svga, SVGA3D_vgpu10_UpdateSubResource(svga->swc, surf, box,
+                                                    subResource));
 }
 
 
@@ -747,22 +702,26 @@ svga_texture_transfer_unmap_dma(struct svga_context *svga,
 {
    struct svga_winsys_screen *sws = svga_screen(svga->pipe.screen)->sws;
 
-   if (st->hwbuf)
+   if (!st->swbuf)
       sws->buffer_unmap(sws, st->hwbuf);
 
-   if (st->base.usage & PIPE_TRANSFER_WRITE) {
+   if (st->base.usage & PIPE_MAP_WRITE) {
       /* Use DMA to transfer texture data */
       SVGA3dSurfaceDMAFlags flags;
+      struct pipe_resource *texture = st->base.resource;
+      struct svga_texture *tex = svga_texture(texture);
+
 
       memset(&flags, 0, sizeof flags);
-      if (st->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+      if (st->base.usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE) {
          flags.discard = TRUE;
       }
-      if (st->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+      if (st->base.usage & PIPE_MAP_UNSYNCHRONIZED) {
          flags.unsynchronized = TRUE;
       }
 
       svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM, flags);
+      svga_set_texture_rendered_to(tex, st->slice, st->base.level);
    }
 
    FREE(st->swbuf);
@@ -783,9 +742,8 @@ svga_texture_transfer_unmap_direct(struct svga_context *svga,
    svga_texture_surface_unmap(svga, transfer);
 
    /* Now send an update command to update the content in the backend. */
-   if (st->base.usage & PIPE_TRANSFER_WRITE) {
+   if (st->base.usage & PIPE_MAP_WRITE) {
       struct svga_winsys_surface *surf = tex->handle;
-      enum pipe_error ret;
 
       assert(svga_have_gb_objects(svga));
 
@@ -793,7 +751,7 @@ svga_texture_transfer_unmap_direct(struct svga_context *svga,
       SVGA3dBox box = st->box;
       unsigned nlayers;
 
-      switch (tex->b.b.target) {
+      switch (tex->b.target) {
       case PIPE_TEXTURE_2D_ARRAY:
       case PIPE_TEXTURE_CUBE_ARRAY:
       case PIPE_TEXTURE_1D_ARRAY:
@@ -812,26 +770,26 @@ svga_texture_transfer_unmap_direct(struct svga_context *svga,
                       box.x, box.y, box.z,
                       box.w, box.h, box.d);
 
-      if (svga_have_vgpu10(svga)) {
-         unsigned i;
+      if (!svga->swc->force_coherent || tex->imported) {
+         if (svga_have_vgpu10(svga)) {
+            unsigned i;
 
-         for (i = 0; i < nlayers; i++) {
-            ret = update_image_vgpu10(svga, surf, &box,
-                                      st->slice + i, transfer->level,
-                                      tex->b.b.last_level + 1);
-            assert(ret == PIPE_OK);
+            for (i = 0; i < nlayers; i++) {
+               update_image_vgpu10(svga, surf, &box,
+                                   st->slice + i, transfer->level,
+                                   tex->b.last_level + 1);
+            }
+         } else {
+            assert(nlayers == 1);
+            update_image_vgpu9(svga, surf, &box, st->slice,
+                               transfer->level);
          }
-      } else {
-         assert(nlayers == 1);
-         ret = update_image_vgpu9(svga, surf, &box, st->slice, transfer->level);
-         assert(ret == PIPE_OK);
       }
-      (void) ret;
    }
 }
 
 
-static void
+void
 svga_texture_transfer_unmap(struct pipe_context *pipe,
                             struct pipe_transfer *transfer)
 {
@@ -853,7 +811,7 @@ svga_texture_transfer_unmap(struct pipe_context *pipe,
       svga_texture_transfer_unmap_direct(svga, st);
    }
 
-   if (st->base.usage & PIPE_TRANSFER_WRITE) {
+   if (st->base.usage & PIPE_MAP_WRITE) {
       svga->hud.num_resource_updates++;
 
       /* Mark the texture level as dirty */
@@ -882,17 +840,6 @@ format_has_depth(enum pipe_format format)
    return util_format_has_depth(desc);
 }
 
-
-struct u_resource_vtbl svga_texture_vtbl =
-{
-   svga_texture_get_handle,	      /* get_handle */
-   svga_texture_destroy,	      /* resource_destroy */
-   svga_texture_transfer_map,	      /* transfer_map */
-   u_default_transfer_flush_region,   /* transfer_flush_region */
-   svga_texture_transfer_unmap,	      /* transfer_unmap */
-};
-
-
 struct pipe_resource *
 svga_texture_create(struct pipe_screen *screen,
                     const struct pipe_resource *template)
@@ -911,7 +858,7 @@ svga_texture_create(struct pipe_screen *screen,
 
    /* Verify the number of mipmap levels isn't impossibly large.  For example,
     * if the base 2D image is 16x16, we can't have 8 mipmap levels.
-    * The state tracker should never ask us to create a resource with invalid
+    * the gallium frontend should never ask us to create a resource with invalid
     * parameters.
     */
    {
@@ -966,10 +913,9 @@ svga_texture_create(struct pipe_screen *screen,
       goto fail;
    }
 
-   tex->b.b = *template;
-   tex->b.vtbl = &svga_texture_vtbl;
-   pipe_reference_init(&tex->b.b.reference, 1);
-   tex->b.b.screen = screen;
+   tex->b = *template;
+   pipe_reference_init(&tex->b.reference, 1);
+   tex->b.screen = screen;
 
    tex->key.flags = 0;
    tex->key.size.width = template->width0;
@@ -979,15 +925,15 @@ svga_texture_create(struct pipe_screen *screen,
    tex->key.numFaces = 1;
 
    /* nr_samples=1 must be treated as a non-multisample texture */
-   if (tex->b.b.nr_samples == 1) {
-      tex->b.b.nr_samples = 0;
+   if (tex->b.nr_samples == 1) {
+      tex->b.nr_samples = 0;
    }
-   else if (tex->b.b.nr_samples > 1) {
+   else if (tex->b.nr_samples > 1) {
       assert(svgascreen->sws->have_sm4_1);
       tex->key.flags |= SVGA3D_SURFACE_MULTISAMPLE;
    }
 
-   tex->key.sampleCount = tex->b.b.nr_samples;
+   tex->key.sampleCount = tex->b.nr_samples;
 
    if (svgascreen->sws->have_vgpu10) {
       switch (template->target) {
@@ -996,7 +942,7 @@ svga_texture_create(struct pipe_screen *screen,
          break;
       case PIPE_TEXTURE_1D_ARRAY:
          tex->key.flags |= SVGA3D_SURFACE_1D;
-         /* fall-through */
+         FALLTHROUGH;
       case PIPE_TEXTURE_2D_ARRAY:
          tex->key.flags |= SVGA3D_SURFACE_ARRAY;
          tex->key.arraySize = template->array_size;
@@ -1093,7 +1039,7 @@ svga_texture_create(struct pipe_screen *screen,
     * and it always requests PIPE_BIND_RENDER_TARGET, therefore
     * passing the SVGA3D_SURFACE_HINT_RENDERTARGET here defeats its purpose.
     *
-    * However, this was changed since other state trackers
+    * However, this was changed since other gallium frontends
     * (XA for example) uses it accurately and certain device versions
     * relies on it in certain situations to render correctly.
     */
@@ -1144,9 +1090,9 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.format = typeless;
    }
 
-   SVGA_DBG(DEBUG_DMA, "surface_create for texture\n", tex->handle);
+   SVGA_DBG(DEBUG_DMA, "surface_create for texture\n");
    tex->handle = svga_screen_surface_create(svgascreen, bindings,
-                                            tex->b.b.usage,
+                                            tex->b.usage,
                                             &tex->validated, &tex->key);
    if (!tex->handle) {
       goto fail;
@@ -1154,14 +1100,14 @@ svga_texture_create(struct pipe_screen *screen,
 
    SVGA_DBG(DEBUG_DMA, "  --> got sid %p (texture)\n", tex->handle);
 
-   debug_reference(&tex->b.b.reference,
+   debug_reference(&tex->b.reference,
                    (debug_reference_descriptor)debug_describe_resource, 0);
 
    tex->size = util_resource_size(template);
 
    /* Determine if texture upload buffer can be used to upload this texture */
    tex->can_use_upload = svga_texture_transfer_map_can_upload(svgascreen,
-                                                              &tex->b.b);
+                                                              &tex->b);
 
    /* Initialize the backing resource cache */
    tex->backed_handle = NULL;
@@ -1171,7 +1117,7 @@ svga_texture_create(struct pipe_screen *screen,
 
    SVGA_STATS_TIME_POP(svgascreen->sws);
 
-   return &tex->b.b;
+   return &tex->b;
 
 fail:
    if (tex->dirty)
@@ -1225,10 +1171,9 @@ svga_texture_from_handle(struct pipe_screen *screen,
    if (!tex->defined)
       goto out_no_defined;
 
-   tex->b.b = *template;
-   tex->b.vtbl = &svga_texture_vtbl;
-   pipe_reference_init(&tex->b.b.reference, 1);
-   tex->b.b.screen = screen;
+   tex->b = *template;
+   pipe_reference_init(&tex->b.reference, 1);
+   tex->b.screen = screen;
 
    SVGA_DBG(DEBUG_DMA, "wrap surface sid %p\n", srf);
 
@@ -1248,7 +1193,7 @@ svga_texture_from_handle(struct pipe_screen *screen,
 
    ss->hud.num_resources++;
 
-   return &tex->b.b;
+   return &tex->b;
 
 out_no_dirty:
    FREE(tex->rendered_to);
@@ -1261,7 +1206,7 @@ out_unref:
    return NULL;
 }
 
-boolean
+bool
 svga_texture_generate_mipmap(struct pipe_context *pipe,
                              struct pipe_resource *pt,
                              enum pipe_format format,
@@ -1274,25 +1219,24 @@ svga_texture_generate_mipmap(struct pipe_context *pipe,
    struct svga_pipe_sampler_view *sv;
    struct svga_context *svga = svga_context(pipe);
    struct svga_texture *tex = svga_texture(pt);
-   enum pipe_error ret;
 
    assert(svga_have_vgpu10(svga));
 
    /* Only support 2D texture for now */
    if (pt->target != PIPE_TEXTURE_2D)
-      return FALSE;
+      return false;
 
    /* Fallback to the mipmap generation utility for those formats that
     * do not support hw generate mipmap
     */
    if (!svga_format_support_gen_mips(format))
-      return FALSE;
+      return false;
 
    /* Make sure the texture surface was created with
     * SVGA3D_SURFACE_BIND_RENDER_TARGET
     */
    if (!tex->handle || !(tex->key.flags & SVGA3D_SURFACE_BIND_RENDER_TARGET))
-      return FALSE;
+      return false;
 
    templ.format = format;
    templ.u.tex.first_layer = first_layer;
@@ -1302,26 +1246,17 @@ svga_texture_generate_mipmap(struct pipe_context *pipe,
 
    psv = pipe->create_sampler_view(pipe, pt, &templ);
    if (psv == NULL)
-      return FALSE;
+      return false;
 
    sv = svga_pipe_sampler_view(psv);
-   ret = svga_validate_pipe_sampler_view(svga, sv);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = svga_validate_pipe_sampler_view(svga, sv);
-      assert(ret == PIPE_OK);
-   }
+   SVGA_RETRY(svga, svga_validate_pipe_sampler_view(svga, sv));
 
-   ret = SVGA3D_vgpu10_GenMips(svga->swc, sv->id, tex->handle);
-   if (ret != PIPE_OK) {
-      svga_context_flush(svga, NULL);
-      ret = SVGA3D_vgpu10_GenMips(svga->swc, sv->id, tex->handle);
-   }
+   SVGA_RETRY(svga, SVGA3D_vgpu10_GenMips(svga->swc, sv->id, tex->handle));
    pipe_sampler_view_reference(&psv, NULL);
 
    svga->hud.num_generate_mipmap++;
 
-   return TRUE;
+   return true;
 }
 
 
@@ -1336,6 +1271,9 @@ svga_texture_transfer_map_upload_create(struct svga_context *svga)
 {
    svga->tex_upload = u_upload_create(&svga->pipe, TEX_UPLOAD_DEFAULT_SIZE,
                                       PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING, 0);
+   if (svga->tex_upload)
+      u_upload_disable_persistent(svga->tex_upload);
+
    return svga->tex_upload != NULL;
 }
 
@@ -1481,7 +1419,6 @@ svga_texture_transfer_unmap_upload(struct svga_context *svga,
    struct svga_winsys_surface *dstsurf;
    struct pipe_resource *texture = st->base.resource;
    struct svga_texture *tex = svga_texture(texture);
-   enum pipe_error ret;
    unsigned subResource;
    unsigned numMipLevels;
    unsigned i, layer;
@@ -1505,22 +1442,12 @@ svga_texture_transfer_unmap_upload(struct svga_context *svga,
       /* send a transferFromBuffer command to update the host texture surface */
       assert((offset & 15) == 0);
 
-      ret = SVGA3D_vgpu10_TransferFromBuffer(svga->swc, srcsurf,
-                                             offset,
-                                             st->base.stride,
-                                             st->base.layer_stride,
-                                             dstsurf, subResource,
-                                             &st->upload.box);
-      if (ret != PIPE_OK) {
-         svga_context_flush(svga, NULL);
-         ret = SVGA3D_vgpu10_TransferFromBuffer(svga->swc, srcsurf,
-                                                offset,
-                                                st->base.stride,
-                                                st->base.layer_stride,
-                                                dstsurf, subResource,
-                                                &st->upload.box);
-         assert(ret == PIPE_OK);
-      }
+      SVGA_RETRY(svga, SVGA3D_vgpu10_TransferFromBuffer(svga->swc, srcsurf,
+                                                        offset,
+                                                        st->base.stride,
+                                                        st->base.layer_stride,
+                                                        dstsurf, subResource,
+                                                        &st->upload.box));
       offset += st->base.layer_stride;
 
       /* Set rendered-to flag */

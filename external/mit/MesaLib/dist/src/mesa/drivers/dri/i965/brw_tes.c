@@ -39,7 +39,7 @@ brw_codegen_tes_prog(struct brw_context *brw,
                      struct brw_tes_prog_key *key)
 {
    const struct brw_compiler *compiler = brw->screen->compiler;
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    struct brw_stage_state *stage_state = &brw->tes.base;
    struct brw_tes_prog_data prog_data;
    bool start_busy = false;
@@ -57,11 +57,13 @@ brw_codegen_tes_prog(struct brw_context *brw,
    brw_nir_setup_glsl_uniforms(mem_ctx, nir, &tep->program,
                                &prog_data.base.base,
                                compiler->scalar_stage[MESA_SHADER_TESS_EVAL]);
-   brw_nir_analyze_ubo_ranges(compiler, nir, NULL,
-                              prog_data.base.base.ubo_ranges);
+   if (brw->can_push_ubos) {
+      brw_nir_analyze_ubo_ranges(compiler, nir, NULL,
+                                 prog_data.base.base.ubo_ranges);
+   }
 
    int st_index = -1;
-   if (unlikely(INTEL_DEBUG & DEBUG_SHADER_TIME))
+   if (INTEL_DEBUG(DEBUG_SHADER_TIME))
       st_index = brw_get_shader_time_index(brw, &tep->program, ST_TES, true);
 
    if (unlikely(brw->perf_debug)) {
@@ -76,7 +78,7 @@ brw_codegen_tes_prog(struct brw_context *brw,
    char *error_str;
    const unsigned *program =
       brw_compile_tes(compiler, brw, mem_ctx, key, &input_vue_map, &prog_data,
-                      nir, &tep->program, st_index, &error_str);
+                      nir, st_index, NULL, &error_str);
    if (program == NULL) {
       tep->program.sh.data->LinkStatus = LINKING_FAILURE;
       ralloc_strcat(&tep->program.sh.data->InfoLog, error_str);
@@ -91,7 +93,7 @@ brw_codegen_tes_prog(struct brw_context *brw,
    if (unlikely(brw->perf_debug)) {
       if (tep->compiled_once) {
          brw_debug_recompile(brw, MESA_SHADER_TESS_EVAL, tep->program.Id,
-                             key->program_string_id, key);
+                             &key->base);
       }
       if (start_busy && !brw_bo_busy(brw->batch.last_bo)) {
          perf_debug("TES compile took %.03f ms and stalled the GPU\n",
@@ -132,7 +134,8 @@ brw_tes_populate_key(struct brw_context *brw,
 
    memset(key, 0, sizeof(*key));
 
-   key->program_string_id = tep->id;
+   /* _NEW_TEXTURE */
+   brw_populate_base_prog_key(&brw->ctx, tep, &key->base);
 
    /* The TCS may have additional outputs which aren't read by the
     * TES (possibly for cross-thread communication).  These need to
@@ -147,9 +150,6 @@ brw_tes_populate_key(struct brw_context *brw,
 
    key->inputs_read = per_vertex_slots;
    key->patch_inputs_read = per_patch_slots;
-
-   /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(&brw->ctx, prog, &key->tex);
 }
 
 void
@@ -177,23 +177,25 @@ brw_upload_tes_prog(struct brw_context *brw)
       return;
 
    tep = (struct brw_program *) brw->programs[MESA_SHADER_TESS_EVAL];
-   tep->id = key.program_string_id;
+   tep->id = key.base.program_string_id;
 
-   MAYBE_UNUSED bool success = brw_codegen_tes_prog(brw, tep, &key);
+   ASSERTED bool success = brw_codegen_tes_prog(brw, tep, &key);
    assert(success);
 }
 
 void
-brw_tes_populate_default_key(const struct gen_device_info *devinfo,
+brw_tes_populate_default_key(const struct brw_compiler *compiler,
                              struct brw_tes_prog_key *key,
                              struct gl_shader_program *sh_prog,
                              struct gl_program *prog)
 {
+   const struct intel_device_info *devinfo = compiler->devinfo;
    struct brw_program *btep = brw_program(prog);
 
    memset(key, 0, sizeof(*key));
 
-   key->program_string_id = btep->id;
+   brw_populate_default_base_prog_key(devinfo, btep, &key->base);
+
    key->inputs_read = prog->nir->info.inputs_read;
    key->patch_inputs_read = prog->nir->info.patch_inputs_read;
 
@@ -204,8 +206,6 @@ brw_tes_populate_default_key(const struct gen_device_info *devinfo,
          ~(VARYING_BIT_TESS_LEVEL_INNER | VARYING_BIT_TESS_LEVEL_OUTER);
       key->patch_inputs_read |= tcp->nir->info.patch_outputs_written;
    }
-
-   brw_setup_tex_for_precompile(devinfo, &key->tex, prog);
 }
 
 bool
@@ -214,6 +214,7 @@ brw_tes_precompile(struct gl_context *ctx,
                    struct gl_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
+   const struct brw_compiler *compiler = brw->screen->compiler;
    struct brw_tes_prog_key key;
    uint32_t old_prog_offset = brw->tes.base.prog_offset;
    struct brw_stage_prog_data *old_prog_data = brw->tes.base.prog_data;
@@ -221,7 +222,7 @@ brw_tes_precompile(struct gl_context *ctx,
 
    struct brw_program *btep = brw_program(prog);
 
-   brw_tes_populate_default_key(&brw->screen->devinfo, &key, shader_prog, prog);
+   brw_tes_populate_default_key(compiler, &key, shader_prog, prog);
 
    success = brw_codegen_tes_prog(brw, btep, &key);
 

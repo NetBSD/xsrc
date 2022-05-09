@@ -56,6 +56,9 @@ interstage_member_mismatch(struct gl_shader_program *prog,
       if (c->fields.structure[i].location !=
           p->fields.structure[i].location)
          return true;
+      if (c->fields.structure[i].component !=
+          p->fields.structure[i].component)
+         return true;
       if (c->fields.structure[i].patch !=
           p->fields.structure[i].patch)
          return true;
@@ -106,10 +109,22 @@ interstage_member_mismatch(struct gl_shader_program *prog,
 bool
 intrastage_match(ir_variable *a,
                  ir_variable *b,
-                 struct gl_shader_program *prog)
+                 struct gl_shader_program *prog,
+                 bool match_precision)
 {
+   /* From section 4.7 "Precision and Precision Qualifiers" in GLSL 4.50:
+    *
+    *    "For the purposes of determining if an output from one shader
+    *    stage matches an input of the next stage, the precision qualifier
+    *    need not match."
+    */
+   bool interface_type_match =
+      (prog->IsES ?
+       a->get_interface_type() == b->get_interface_type() :
+       a->get_interface_type()->compare_no_precision(b->get_interface_type()));
+
    /* Types must match. */
-   if (a->get_interface_type() != b->get_interface_type()) {
+   if (!interface_type_match) {
       /* Exception: if both the interface blocks are implicitly declared,
        * don't force their types to match.  They might mismatch due to the two
        * shaders using different GLSL versions, and that's ok.
@@ -136,12 +151,16 @@ intrastage_match(ir_variable *a,
       return false;
    }
 
+   bool type_match = (match_precision ?
+                      a->type == b->type :
+                      a->type->compare_no_precision(b->type));
+
    /* If a block is an array then it must match across the shader.
     * Unsized arrays are also processed and matched agaist sized arrays.
     */
-   if (b->type != a->type && (b->type->is_array() || a->type->is_array()) &&
+   if (!type_match && (b->type->is_array() || a->type->is_array()) &&
        (b->is_interface_instance() || a->is_interface_instance()) &&
-       !validate_intrastage_arrays(prog, b, a))
+       !validate_intrastage_arrays(prog, b, a, match_precision))
       return false;
 
    return true;
@@ -215,7 +234,7 @@ class interface_block_definitions
 public:
    interface_block_definitions()
       : mem_ctx(ralloc_context(NULL)),
-        ht(_mesa_hash_table_create(NULL, _mesa_key_hash_string,
+        ht(_mesa_hash_table_create(NULL, _mesa_hash_string,
                                    _mesa_key_string_equal))
    {
    }
@@ -234,7 +253,7 @@ public:
       if (var->data.explicit_location &&
           var->data.location >= VARYING_SLOT_VAR0) {
          char location_str[11];
-         util_snprintf(location_str, 11, "%d", var->data.location);
+         snprintf(location_str, 11, "%d", var->data.location);
 
          const struct hash_entry *entry =
             _mesa_hash_table_search(ht, location_str);
@@ -260,7 +279,7 @@ public:
           * unsigned location value which is overkill but future proof.
           */
          char location_str[11];
-         util_snprintf(location_str, 11, "%d", var->data.location);
+         snprintf(location_str, 11, "%d", var->data.location);
          _mesa_hash_table_insert(ht, ralloc_strdup(mem_ctx, location_str), var);
       } else {
          _mesa_hash_table_insert(ht,
@@ -337,7 +356,8 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
              * it into the appropriate data structure.
              */
             definitions->store(var);
-         } else if (!intrastage_match(prev_def, var, prog)) {
+         } else if (!intrastage_match(prev_def, var, prog,
+                                      true /* match_precision */)) {
             linker_error(prog, "definitions of interface block `%s' do not"
                          " match\n", iface_type->name);
             return;
@@ -395,11 +415,55 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
       return;
    }
 
+   /* Desktop OpenGL requires redeclaration of the built-in interfaces for
+    * SSO programs. Passes above implement following rules:
+    *
+    * From Section 7.4 (Program Pipeline Objects) of the OpenGL 4.6 Core
+    * spec:
+    *
+    *    "To use any built-in input or output in the gl_PerVertex and
+    *     gl_PerFragment blocks in separable program objects, shader code
+    *     must redeclare those blocks prior to use.  A separable program
+    *     will fail to link if:
+    *
+    *     it contains multiple shaders of a single type with different
+    *     redeclarations of these built-in input and output blocks; or
+    *
+    *     any shader uses a built-in block member not found in the
+    *     redeclaration of that block."
+    *
+    * ARB_separate_shader_objects issues section (issue #28) states that
+    * redeclaration is not required for GLSL shaders using #version 140 or
+    * earlier (since interface blocks are not possible with older versions).
+    *
+    * From Section 7.4.1 (Shader Interface Matching) of the OpenGL ES 3.1
+    * spec:
+    *
+    *    "Built-in inputs or outputs do not affect interface matching."
+    *
+    * GL_OES_shader_io_blocks adds following:
+    *
+    *    "When using any built-in input or output in the gl_PerVertex block
+    *     in separable program objects, shader code may redeclare that block
+    *     prior to use. If the shader does not redeclare the block, the
+    *     intrinsically declared definition of that block will be used."
+    */
+
    /* Add output interfaces from the producer to the symbol table. */
    foreach_in_list(ir_instruction, node, producer->ir) {
       ir_variable *var = node->as_variable();
       if (!var || !var->get_interface_type() || var->data.mode != ir_var_shader_out)
          continue;
+
+      /* Built-in interface redeclaration check. */
+      if (prog->SeparateShader && !prog->IsES && prog->data->Version >= 150 &&
+          var->data.how_declared == ir_var_declared_implicitly &&
+          var->data.used && !producer_iface) {
+         linker_error(prog, "missing output builtin block %s redeclaration "
+                      "in separable shader program",
+                      var->get_interface_type()->name);
+         return;
+      }
 
       definitions.store(var);
    }
@@ -411,6 +475,16 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
          continue;
 
       ir_variable *producer_def = definitions.lookup(var);
+
+      /* Built-in interface redeclaration check. */
+      if (prog->SeparateShader && !prog->IsES && prog->data->Version >= 150 &&
+          var->data.how_declared == ir_var_declared_implicitly &&
+          var->data.used && !producer_iface) {
+         linker_error(prog, "missing input builtin block %s redeclaration "
+                      "in separable shader program",
+                      var->get_interface_type()->name);
+         return;
+      }
 
       /* The producer doesn't generate this input: fail to link. Skip built-in
        * 'gl_in[]' since that may not be present if the producer does not
@@ -467,7 +541,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
              * uniform matchin rules (for uniforms, it is as though all
              * shaders are in the same shader stage).
              */
-            if (!intrastage_match(old_def, var, prog)) {
+            if (!intrastage_match(old_def, var, prog, false /* precision */)) {
                linker_error(prog, "definitions of uniform block `%s' do not "
                             "match\n", var->get_interface_type()->name);
                return;

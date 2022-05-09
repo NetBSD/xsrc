@@ -20,14 +20,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from __future__ import print_function
-
 import argparse
 import sys
 
 trig_workarounds = [
-   (('fsin', 'x'), ('fsin', ('fsub', ('fmul', 6.283185, ('ffract', ('fadd', ('fmul', 0.159155, 'x'), 0.5))), 3.141593))),
-   (('fcos', 'x'), ('fcos', ('fsub', ('fmul', 6.283185, ('ffract', ('fadd', ('fmul', 0.159155, 'x'), 0.5))), 3.141593))),
+   (('fsin', 'x@32'), ('fsin', ('!ffma', 6.2831853, ('ffract', ('!ffma', 0.15915494, 'x', 0.5)), -3.14159265))),
+   (('fcos', 'x@32'), ('fcos', ('!ffma', 6.2831853, ('ffract', ('!ffma', 0.15915494, 'x', 0.5)), -3.14159265))),
 ]
 
 

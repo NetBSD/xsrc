@@ -21,13 +21,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VC5_DRM_PUBLIC_H__
-#define __VC5_DRM_PUBLIC_H__
+#ifndef __V3D_DRM_PUBLIC_H__
+#define __V3D_DRM_PUBLIC_H__
 
 struct pipe_screen;
+struct pipe_screen_config;
 struct renderonly;
 
-struct pipe_screen *v3d_drm_screen_create(int drmFD);
-struct pipe_screen *v3d_drm_screen_create_renderonly(struct renderonly *ro);
+struct pipe_screen *v3d_drm_screen_create(int drmFD,
+                                          const struct pipe_screen_config *config);
+struct pipe_screen *v3d_drm_screen_create_renderonly(struct renderonly *ro,
+                                                     const struct pipe_screen_config *config);
 
-#endif /* __VC5_DRM_PUBLIC_H__ */
+#endif /* __V3D_DRM_PUBLIC_H__ */

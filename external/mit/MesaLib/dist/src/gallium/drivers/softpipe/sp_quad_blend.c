@@ -33,7 +33,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_dual_blend.h"
 #include "sp_context.h"
 #include "sp_state.h"
@@ -170,6 +170,8 @@ logicop_quad(struct quad_stage *qs,
       src[j][1] = float_to_ubyte(quadColor[j][1]); /* P1 */
       src[j][2] = float_to_ubyte(quadColor[j][2]); /* P2 */
       src[j][3] = float_to_ubyte(quadColor[j][3]); /* P3 */
+
+      res[j][0] = 0;
    }
 
    switch (softpipe->blend->logicop_func) {
@@ -451,7 +453,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_COPY(source[3], quadColor[3]); /* A */
       break;
    case PIPE_BLENDFACTOR_SRC_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_SRC_ALPHA:
       {
          const float *alpha = quadColor[3];
@@ -459,7 +461,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_DST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_DST_ALPHA:
       VEC4_MUL(source[3], quadColor[3], dest[3]); /* A */
       break;
@@ -468,7 +470,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_COPY(source[3], quadColor[3]); /* A */
       break;
    case PIPE_BLENDFACTOR_CONST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_CONST_ALPHA:
       {
          float comp[4];
@@ -480,7 +482,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_COPY(source[3], zero); /* A */
       break;
    case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       {
          float inv_alpha[4];
@@ -489,7 +491,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_INV_DST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
       {
          float inv_alpha[4];
@@ -498,7 +500,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       {
          float inv_comp[4];
@@ -508,7 +510,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_SRC1_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_SRC1_ALPHA:
       {
          const float *alpha = quadColor2[3];
@@ -516,7 +518,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
       {
          float inv_alpha[4];
@@ -703,12 +705,12 @@ blend_quad(struct quad_stage *qs,
       /* blend_dest = blend_dest * 1   NO-OP, leave blend_dest as-is */
       break;
    case PIPE_BLENDFACTOR_SRC_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_SRC_ALPHA:
       VEC4_MUL(blend_dest[3], blend_dest[3], quadColor[3]); /* A * A */
       break;
    case PIPE_BLENDFACTOR_DST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_DST_ALPHA:
       VEC4_MUL(blend_dest[3], blend_dest[3], blend_dest[3]); /* A */
       break;
@@ -716,7 +718,7 @@ blend_quad(struct quad_stage *qs,
       /* blend_dest = blend_dest * 1   NO-OP, leave blend_dest as-is */
       break;
    case PIPE_BLENDFACTOR_CONST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_CONST_ALPHA:
       {
          float comp[4];
@@ -728,7 +730,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_COPY(blend_dest[3], zero); /* A */
       break;
    case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       {
          float one_minus_alpha[TGSI_QUAD_SIZE];
@@ -737,7 +739,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_INV_DST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
       {
          float inv_comp[4];
@@ -746,7 +748,7 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       {
          float inv_comp[4];
@@ -755,12 +757,12 @@ blend_quad(struct quad_stage *qs,
       }
       break;
    case PIPE_BLENDFACTOR_SRC1_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_SRC1_ALPHA:
       VEC4_MUL(blend_dest[3], blend_dest[3], quadColor2[3]); /* A * A */
       break;
    case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-      /* fall-through */
+      FALLTHROUGH;
    case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
       {
          float one_minus_alpha[TGSI_QUAD_SIZE];
@@ -1003,7 +1005,7 @@ blend_fallback(struct quad_stage *qs,
             rebase_colors(bqs->base_format[cbuf], quadColor);
 
             if (blend->rt[blend_buf].colormask != 0xf)
-               colormask_quad( blend->rt[cbuf].colormask, quadColor, dest);
+               colormask_quad( blend->rt[blend_buf].colormask, quadColor, dest);
 
             /* Output color values
              */

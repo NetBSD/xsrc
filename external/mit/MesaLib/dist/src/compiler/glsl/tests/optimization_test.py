@@ -21,14 +21,22 @@
 
 """Script to generate and run glsl optimization tests."""
 
-from __future__ import print_function
 import argparse
 import difflib
+import errno
+import os
 import subprocess
 import sys
 
 import sexps
 import lower_jump_cases
+
+# The meson version handles windows paths better, but if it's not available
+# fall back to shlex
+try:
+    from meson.mesonlib import split_args
+except ImportError:
+    from shlex import split as split_args
 
 
 def arg_parser():
@@ -54,6 +62,14 @@ def compare(actual, expected):
     return difflib.unified_diff(expected.splitlines(), actual.splitlines())
 
 
+def get_test_runner(runner):
+    """Wrap the test runner in the exe wrapper if necessary."""
+    wrapper = os.environ.get('MESON_EXE_WRAPPER', None)
+    if wrapper is None:
+        return [runner]
+    return split_args(wrapper) + [runner]
+
+
 def main():
     """Generate each test and report pass or fail."""
     args = arg_parser()
@@ -61,18 +77,25 @@ def main():
     total = 0
     passes = 0
 
+    runner = get_test_runner(args.test_runner)
+
     for gen in lower_jump_cases.CASES:
         for name, opt, source, expected in gen():
             total += 1
             print('{}: '.format(name), end='')
             proc = subprocess.Popen(
-                [args.test_runner, 'optpass', '--quiet', '--input-ir', opt],
+                runner + ['optpass', '--quiet', '--input-ir', opt],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE)
             out, err = proc.communicate(source.encode('utf-8'))
             out = out.decode('utf-8')
             err = err.decode('utf-8')
+
+            if proc.returncode == 255:
+                print("Test returned general error, possibly missing linker")
+                sys.exit(77)
+
             if err:
                 print('FAIL')
                 print('Unexpected output on stderr: {}'.format(err),
@@ -93,4 +116,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except OSError as e:
+        if e.errno == errno.ENOEXEC:
+            print('Skipping due to inability to run host binaries', file=sys.stderr)
+            sys.exit(77)
+        raise

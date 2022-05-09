@@ -77,7 +77,7 @@ set_env_mode(struct gl_context *ctx,
    }
 
    if (legal) {
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
       texUnit->EnvMode = mode;
    }
    else {
@@ -93,7 +93,7 @@ set_env_color(struct gl_context *ctx,
 {
    if (TEST_EQ_4V(color, texUnit->EnvColorUnclamped))
       return;
-   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
    COPY_4FV(texUnit->EnvColorUnclamped, color);
    texUnit->EnvColor[0] = CLAMP(color[0], 0.0F, 1.0F);
    texUnit->EnvColor[1] = CLAMP(color[1], 0.0F, 1.0F);
@@ -151,14 +151,14 @@ set_combiner_mode(struct gl_context *ctx,
    case GL_COMBINE_RGB:
       if (texUnit->Combine.ModeRGB == mode)
          return true;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
       texUnit->Combine.ModeRGB = mode;
       break;
 
    case GL_COMBINE_ALPHA:
       if (texUnit->Combine.ModeA == mode)
          return true;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
       texUnit->Combine.ModeA = mode;
       break;
    default:
@@ -252,7 +252,7 @@ set_combiner_source(struct gl_context *ctx,
       return false;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
 
    if (alpha)
       texUnit->Combine.SourceA[term] = param;
@@ -336,7 +336,7 @@ set_combiner_operand(struct gl_context *ctx,
       return false;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
 
    if (alpha)
       texUnit->Combine.OperandA[term] = param;
@@ -373,13 +373,13 @@ set_combiner_scale(struct gl_context *ctx,
    case GL_RGB_SCALE:
       if (texUnit->Combine.ScaleShiftRGB == shift)
          return true;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
       texUnit->Combine.ScaleShiftRGB = shift;
       break;
    case GL_ALPHA_SCALE:
       if (texUnit->Combine.ScaleShiftA == shift)
          return true;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE);
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE_STATE, GL_TEXTURE_BIT);
       texUnit->Combine.ScaleShiftA = shift;
       break;
    default:
@@ -391,24 +391,23 @@ set_combiner_scale(struct gl_context *ctx,
 }
 
 
-
-void GLAPIENTRY
-_mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
+static void
+_mesa_texenvfv_indexed( struct gl_context* ctx, GLuint texunit, GLenum target,
+                        GLenum pname, const GLfloat *param )
 {
    const GLint iparam0 = (GLint) param[0];
    GLuint maxUnit;
-   GET_CURRENT_CONTEXT(ctx);
 
-   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+   maxUnit = (target == GL_POINT_SPRITE && pname == GL_COORD_REPLACE)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
-   if (ctx->Texture.CurrentUnit >= maxUnit) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexEnvfv(current unit)");
+   if (texunit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexEnvfv(texunit=%d)", texunit);
       return;
    }
 
    if (target == GL_TEXTURE_ENV) {
       struct gl_fixedfunc_texture_unit *texUnit =
-         _mesa_get_current_fixedfunc_tex_unit(ctx);
+         _mesa_get_fixedfunc_tex_unit(ctx, texunit);
 
       /* The GL spec says that we should report an error if the unit is greater
        * than GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, but in practice, only
@@ -465,43 +464,46 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
       struct gl_texture_unit *texUnit =
-         _mesa_get_current_tex_unit(ctx);
+         _mesa_get_tex_unit(ctx, texunit);
 
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
 	 if (texUnit->LodBias == param[0])
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_TEXTURE_OBJECT);
+	 FLUSH_VERTICES(ctx, _NEW_TEXTURE_OBJECT, GL_TEXTURE_BIT);
          texUnit->LodBias = param[0];
+         texUnit->LodBiasQuantized = util_quantize_lod_bias(param[0]);
       }
       else {
          TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	 return;
       }
    }
-   else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_ARB_point_sprite / GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite
-	  && !ctx->Extensions.ARB_point_sprite) {
+   else if (target == GL_POINT_SPRITE) {
+      /* GL_ARB_point_sprite */
+      if (!ctx->Extensions.ARB_point_sprite) {
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)", target );
 	 return;
       }
-      if (pname == GL_COORD_REPLACE_NV) {
+      if (pname == GL_COORD_REPLACE) {
          /* It's kind of weird to set point state via glTexEnv,
           * but that's what the spec calls for.
           */
          if (iparam0 == GL_TRUE) {
-            if (ctx->Point.CoordReplace & (1u << ctx->Texture.CurrentUnit))
+            if (ctx->Point.CoordReplace & (1u << texunit))
                return;
-            ctx->Point.CoordReplace |= (1u << ctx->Texture.CurrentUnit);
+            FLUSH_VERTICES(ctx, _NEW_POINT | _NEW_FF_VERT_PROGRAM,
+                           GL_POINT_BIT);
+            ctx->Point.CoordReplace |= (1u << texunit);
          } else if (iparam0 == GL_FALSE) {
-            if (~(ctx->Point.CoordReplace) & (1u << ctx->Texture.CurrentUnit))
+            if (~(ctx->Point.CoordReplace) & (1u << texunit))
                return;
-            ctx->Point.CoordReplace &= ~(1u << ctx->Texture.CurrentUnit);
+            FLUSH_VERTICES(ctx, _NEW_POINT | _NEW_FF_VERT_PROGRAM,
+                           GL_POINT_BIT);
+            ctx->Point.CoordReplace &= ~(1u << texunit);
          } else {
             _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", iparam0);
             return;
          }
-         FLUSH_VERTICES(ctx, _NEW_POINT);
       }
       else {
          _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
@@ -529,6 +531,14 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 
 
 void GLAPIENTRY
+_mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_texenvfv_indexed(ctx, ctx->Texture.CurrentUnit, target, pname, param);
+}
+
+
+void GLAPIENTRY
 _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param )
 {
    GLfloat p[4];
@@ -536,7 +546,6 @@ _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param )
    p[1] = p[2] = p[3] = 0.0;
    _mesa_TexEnvfv( target, pname, p );
 }
-
 
 
 void GLAPIENTRY
@@ -565,6 +574,59 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
    }
    _mesa_TexEnvfv( target, pname, p );
 }
+
+
+void GLAPIENTRY
+_mesa_MultiTexEnvfEXT( GLenum texunit, GLenum target,
+                       GLenum pname, GLfloat param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0;
+   _mesa_texenvfv_indexed(ctx, texunit - GL_TEXTURE0, target, pname, p);
+}
+
+void GLAPIENTRY
+_mesa_MultiTexEnvfvEXT( GLenum texunit, GLenum target,
+                        GLenum pname, const GLfloat *param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_texenvfv_indexed(ctx, texunit - GL_TEXTURE0, target, pname, param);
+}
+
+
+void GLAPIENTRY
+_mesa_MultiTexEnviEXT( GLenum texunit, GLenum target,
+                       GLenum pname, GLint param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat p[4];
+   p[0] = (GLfloat) param;
+   p[1] = p[2] = p[3] = 0.0;
+   _mesa_texenvfv_indexed( ctx, texunit - GL_TEXTURE0, target, pname, p );
+}
+
+
+void GLAPIENTRY
+_mesa_MultiTexEnvivEXT( GLenum texunit, GLenum target,
+                        GLenum pname, const GLint *param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat p[4];
+   if (pname == GL_TEXTURE_ENV_COLOR) {
+      p[0] = INT_TO_FLOAT( param[0] );
+      p[1] = INT_TO_FLOAT( param[1] );
+      p[2] = INT_TO_FLOAT( param[2] );
+      p[3] = INT_TO_FLOAT( param[3] );
+   }
+   else {
+      p[0] = (GLfloat) param[0];
+      p[1] = p[2] = p[3] = 0;  /* init to zero, just to be safe */
+   }
+   _mesa_texenvfv_indexed( ctx, texunit - GL_TEXTURE0, target, pname, p );
+}
+
 
 
 
@@ -654,23 +716,22 @@ get_texenvi(struct gl_context *ctx,
 }
 
 
-
-void GLAPIENTRY
-_mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
+static void
+_mesa_gettexenvfv_indexed( GLuint texunit, GLenum target, GLenum pname, GLfloat *params )
 {
    GLuint maxUnit;
    GET_CURRENT_CONTEXT(ctx);
 
-   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+   maxUnit = (target == GL_POINT_SPRITE && pname == GL_COORD_REPLACE)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
-   if (ctx->Texture.CurrentUnit >= maxUnit) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnvfv(current unit)");
+   if (texunit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnvfv(texunit=%d)", texunit);
       return;
    }
 
    if (target == GL_TEXTURE_ENV) {
       struct gl_fixedfunc_texture_unit *texUnit =
-         _mesa_get_current_fixedfunc_tex_unit(ctx);
+         _mesa_get_fixedfunc_tex_unit(ctx, texunit);
 
       /* The GL spec says that we should report an error if the unit is greater
        * than GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, but in practice, only
@@ -682,8 +743,6 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
          return;
 
       if (pname == GL_TEXTURE_ENV_COLOR) {
-         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
-            _mesa_update_state(ctx);
          if (_mesa_get_clamp_fragment_color(ctx, ctx->DrawBuffer))
             COPY_4FV( params, texUnit->EnvColor );
          else
@@ -697,7 +756,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
-      const struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
+      const struct gl_texture_unit *texUnit = _mesa_get_tex_unit(ctx, texunit);
 
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
          *params = texUnit->LodBias;
@@ -707,15 +766,14 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 	 return;
       }
    }
-   else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_ARB_point_sprite / GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite
-	  && !ctx->Extensions.ARB_point_sprite) {
+   else if (target == GL_POINT_SPRITE) {
+      /* GL_ARB_point_sprite */
+      if (!ctx->Extensions.ARB_point_sprite) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(target)" );
          return;
       }
-      if (pname == GL_COORD_REPLACE_NV) {
-         if (ctx->Point.CoordReplace & (1u << ctx->Texture.CurrentUnit))
+      if (pname == GL_COORD_REPLACE) {
+         if (ctx->Point.CoordReplace & (1u << texunit))
             *params = 1.0f;
          else
             *params = 0.0f;
@@ -732,22 +790,24 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 }
 
 
-void GLAPIENTRY
-_mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
+static void
+_mesa_gettexenviv_indexed( GLuint texunit, GLenum target,
+                           GLenum pname, GLint *params )
 {
    GLuint maxUnit;
    GET_CURRENT_CONTEXT(ctx);
 
-   maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
+   maxUnit = (target == GL_POINT_SPRITE && pname == GL_COORD_REPLACE)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
-   if (ctx->Texture.CurrentUnit >= maxUnit) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnviv(current unit)");
+   if (texunit >= maxUnit) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnviv(texunit=%d)",
+                  texunit);
       return;
    }
 
    if (target == GL_TEXTURE_ENV) {
       struct gl_fixedfunc_texture_unit *texUnit =
-         _mesa_get_current_fixedfunc_tex_unit(ctx);
+         _mesa_get_fixedfunc_tex_unit(ctx, texunit);
 
       /* The GL spec says that we should report an error if the unit is greater
        * than GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, but in practice, only
@@ -772,7 +832,7 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
-      const struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
+      const struct gl_texture_unit *texUnit = _mesa_get_tex_unit(ctx, texunit);
 
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
          *params = (GLint) texUnit->LodBias;
@@ -782,15 +842,14 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 	 return;
       }
    }
-   else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_ARB_point_sprite / GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite
-	  && !ctx->Extensions.ARB_point_sprite) {
+   else if (target == GL_POINT_SPRITE) {
+      /* GL_ARB_point_sprite */
+      if (!ctx->Extensions.ARB_point_sprite) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(target)" );
          return;
       }
-      if (pname == GL_COORD_REPLACE_NV) {
-         if (ctx->Point.CoordReplace & (1u << ctx->Texture.CurrentUnit))
+      if (pname == GL_COORD_REPLACE) {
+         if (ctx->Point.CoordReplace & (1u << texunit))
             *params = GL_TRUE;
          else
             *params = GL_FALSE;
@@ -806,3 +865,34 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
    }
 }
 
+
+void GLAPIENTRY
+_mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_gettexenvfv_indexed(ctx->Texture.CurrentUnit, target, pname, params);
+}
+
+
+void GLAPIENTRY
+_mesa_GetMultiTexEnvfvEXT( GLenum texunit, GLenum target,
+                           GLenum pname, GLfloat *params )
+{
+   _mesa_gettexenvfv_indexed(texunit - GL_TEXTURE0, target, pname, params);
+}
+
+
+void GLAPIENTRY
+_mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_gettexenviv_indexed(ctx->Texture.CurrentUnit, target, pname, params);
+}
+
+
+void GLAPIENTRY
+_mesa_GetMultiTexEnvivEXT( GLenum texunit, GLenum target,
+                           GLenum pname, GLint *params )
+{
+   _mesa_gettexenviv_indexed(texunit - GL_TEXTURE0, target, pname, params);
+}

@@ -29,12 +29,12 @@
  */
 
 
-#include "compiler/blob.h"
 #include "compiler/glsl/serialize.h"
 #include "main/errors.h"
 #include "main/mtypes.h"
 #include "main/shaderapi.h"
 #include "util/bitscan.h"
+#include "util/blob.h"
 #include "util/crc32.h"
 #include "program_binary.h"
 #include "program/prog_parameter.h"
@@ -300,6 +300,8 @@ _mesa_program_binary(struct gl_context *ctx, struct gl_shader_program *sh_prog,
       sh_prog->data->LinkStatus = LINKING_FAILURE;
       return;
    }
+
+   _mesa_create_program_resource_hash(sh_prog);
 
    /* From section 7.3 (Program Objects) of the OpenGL 4.5 spec:
     *

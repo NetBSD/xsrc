@@ -195,10 +195,10 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 			}
 		}
 
-		search_start = backslash + 1;
-
 		if (backslash == NULL)
 			break;
+
+		search_start = backslash + 1;
 
 		/* At each line continuation, (backslash followed by a
 		 * newline), copy all preceding text to the output, then
@@ -228,7 +228,7 @@ glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 {
 	int errors;
 	glcpp_parser_t *parser =
-		glcpp_parser_create(&gl_ctx->Extensions, extensions, state, gl_ctx->API);
+		glcpp_parser_create(gl_ctx, extensions, state);
 
 	if (! gl_ctx->Const.DisableGLSLLineContinuations)
 		*shader = remove_line_continuations(parser, *shader);

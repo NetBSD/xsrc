@@ -33,118 +33,36 @@
 #include "main/enums.h"
 #include "main/transformfeedback.h"
 
-#include "intel_batchbuffer.h"
+#include "brw_batch.h"
 
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_state.h"
 #include "brw_ff_gs.h"
-
 #include "util/ralloc.h"
 
-void
-brw_codegen_ff_gs_prog(struct brw_context *brw,
-                       struct brw_ff_gs_prog_key *key)
+static void
+compile_ff_gs_prog(struct brw_context *brw,
+		   struct brw_ff_gs_prog_key *key)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
-   struct brw_ff_gs_compile c;
    const GLuint *program;
    void *mem_ctx;
    GLuint program_size;
 
-   memset(&c, 0, sizeof(c));
-
-   c.key = *key;
-   c.vue_map = brw_vue_prog_data(brw->vs.base.prog_data)->vue_map;
-   c.nr_regs = (c.vue_map.num_slots + 1)/2;
-
    mem_ctx = ralloc_context(NULL);
 
-   /* Begin the compilation:
-    */
-   brw_init_codegen(&brw->screen->devinfo, &c.func, mem_ctx);
-
-   c.func.single_program_flow = 1;
-
-   /* For some reason the thread is spawned with only 4 channels
-    * unmasked.
-    */
-   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
-
-   if (devinfo->gen >= 6) {
-      unsigned num_verts;
-      bool check_edge_flag;
-      /* On Sandybridge, we use the GS for implementing transform feedback
-       * (called "Stream Out" in the PRM).
-       */
-      switch (key->primitive) {
-      case _3DPRIM_POINTLIST:
-         num_verts = 1;
-         check_edge_flag = false;
-	 break;
-      case _3DPRIM_LINELIST:
-      case _3DPRIM_LINESTRIP:
-      case _3DPRIM_LINELOOP:
-         num_verts = 2;
-         check_edge_flag = false;
-	 break;
-      case _3DPRIM_TRILIST:
-      case _3DPRIM_TRIFAN:
-      case _3DPRIM_TRISTRIP:
-      case _3DPRIM_RECTLIST:
-	 num_verts = 3;
-         check_edge_flag = false;
-         break;
-      case _3DPRIM_QUADLIST:
-      case _3DPRIM_QUADSTRIP:
-      case _3DPRIM_POLYGON:
-         num_verts = 3;
-         check_edge_flag = true;
-         break;
-      default:
-	 unreachable("Unexpected primitive type in Gen6 SOL program.");
-      }
-      gen6_sol_program(&c, key, num_verts, check_edge_flag);
-   } else {
-      /* On Gen4-5, we use the GS to decompose certain types of primitives.
-       * Note that primitives which don't require a GS program have already
-       * been weeded out by now.
-       */
-      switch (key->primitive) {
-      case _3DPRIM_QUADLIST:
-	 brw_ff_gs_quads( &c, key );
-	 break;
-      case _3DPRIM_QUADSTRIP:
-	 brw_ff_gs_quad_strip( &c, key );
-	 break;
-      case _3DPRIM_LINELOOP:
-	 brw_ff_gs_lines( &c );
-	 break;
-      default:
-	 ralloc_free(mem_ctx);
-	 return;
-      }
-   }
-
-   brw_compact_instructions(&c.func, 0, NULL);
-
-   /* get the program
-    */
-   program = brw_get_program(&c.func, &program_size);
-
-   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
-      fprintf(stderr, "gs:\n");
-      brw_disassemble(&brw->screen->devinfo, c.func.store,
-                      0, program_size, stderr);
-      fprintf(stderr, "\n");
-    }
+   struct brw_ff_gs_prog_data prog_data;
+   program = brw_compile_ff_gs_prog(brw->screen->compiler, mem_ctx, key,
+                                    &prog_data,
+                                    &brw_vue_prog_data(brw->vs.base.prog_data)->vue_map,
+                                    &program_size);
 
    brw_upload_cache(&brw->cache, BRW_CACHE_FF_GS_PROG,
-		    &c.key, sizeof(c.key),
-		    program, program_size,
-		    &c.prog_data, sizeof(c.prog_data),
-		    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data);
+                    key, sizeof(*key),
+                    program, program_size,
+                    &prog_data, sizeof(prog_data),
+                    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data);
    ralloc_free(mem_ctx);
 }
 
@@ -162,7 +80,7 @@ static void
 brw_ff_gs_populate_key(struct brw_context *brw,
                        struct brw_ff_gs_prog_key *key)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    static const unsigned swizzle_for_offset[4] = {
       BRW_SWIZZLE4(0, 1, 2, 3),
       BRW_SWIZZLE4(1, 2, 3, 3),
@@ -172,7 +90,7 @@ brw_ff_gs_populate_key(struct brw_context *brw,
 
    struct gl_context *ctx = &brw->ctx;
 
-   assert(devinfo->gen < 7);
+   assert(devinfo->ver < 7);
 
    memset(key, 0, sizeof(*key));
 
@@ -191,8 +109,8 @@ brw_ff_gs_populate_key(struct brw_context *brw,
       key->pv_first = true;
    }
 
-   if (devinfo->gen == 6) {
-      /* On Gen6, GS is used for transform feedback. */
+   if (devinfo->ver == 6) {
+      /* On Gfx6, GS is used for transform feedback. */
       /* BRW_NEW_TRANSFORM_FEEDBACK */
       if (_mesa_is_xfb_active_and_unpaused(ctx)) {
          const struct gl_program *prog =
@@ -222,7 +140,7 @@ brw_ff_gs_populate_key(struct brw_context *brw,
          }
       }
    } else {
-      /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
+      /* Pre-gfx6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
        * into simpler primitives.
        */
       key->need_gs_prog = (brw->primitive == _3DPRIM_QUADLIST ||
@@ -254,7 +172,7 @@ brw_upload_ff_gs_prog(struct brw_context *brw)
       if (!brw_search_cache(&brw->cache, BRW_CACHE_FF_GS_PROG, &key,
                             sizeof(key), &brw->ff_gs.prog_offset,
                             &brw->ff_gs.prog_data, true)) {
-         brw_codegen_ff_gs_prog(brw, &key);
+         compile_ff_gs_prog(brw, &key);
       }
    }
 }

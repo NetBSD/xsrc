@@ -35,4 +35,16 @@
 void fd6_blitter_init(struct pipe_context *pctx);
 unsigned fd6_tile_mode(const struct pipe_resource *tmpl);
 
+/*
+ * Blitter APIs used by gmem for cases that need CP_BLIT's (r2d)
+ * instead of CP_EVENT_WRITE::BLITs
+ */
+
+void fd6_clear_surface(struct fd_context *ctx, struct fd_ringbuffer *ring,
+                       struct pipe_surface *psurf, uint32_t width,
+                       uint32_t height,
+                       union pipe_color_union *color, uint32_t unknown_8c01) assert_dt;
+void fd6_resolve_tile(struct fd_batch *batch, struct fd_ringbuffer *ring,
+                      uint32_t base, struct pipe_surface *psurf, uint32_t unknown_8c01) assert_dt;
+
 #endif /* FD6_BLIT_H_ */

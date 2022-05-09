@@ -45,13 +45,13 @@
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/list.h"
 
-#include "state_tracker/sw_winsys.h"
-#include "state_tracker/drm_driver.h"
+#include "frontend/sw_winsys.h"
+#include "frontend/drm_driver.h"
 #include "kms_dri_sw_winsys.h"
 
 #ifdef DEBUG
@@ -114,13 +114,13 @@ kms_sw_winsys( struct sw_winsys *ws )
 }
 
 
-static boolean
+static bool
 kms_sw_is_displaytarget_format_supported( struct sw_winsys *ws,
                                           unsigned tex_usage,
                                           enum pipe_format format )
 {
    /* TODO: check visuals or other sensible thing here */
-   return TRUE;
+   return true;
 }
 
 static struct kms_sw_plane *get_plane(struct kms_sw_displaytarget *kms_sw_dt,
@@ -263,8 +263,8 @@ kms_sw_displaytarget_map(struct sw_winsys *ws,
    if (ret)
       return NULL;
 
-   prot = (flags == PIPE_TRANSFER_READ) ? PROT_READ : (PROT_READ | PROT_WRITE);
-   void **ptr = (flags == PIPE_TRANSFER_READ) ? &kms_sw_dt->ro_mapped : &kms_sw_dt->mapped;
+   prot = (flags == PIPE_MAP_READ) ? PROT_READ : (PROT_READ | PROT_WRITE);
+   void **ptr = (flags == PIPE_MAP_READ) ? &kms_sw_dt->ro_mapped : &kms_sw_dt->mapped;
    if (*ptr == MAP_FAILED) {
       void *tmp = mmap(0, kms_sw_dt->size, prot, MAP_SHARED,
                        kms_sw->fd, map_req.offset);
@@ -420,7 +420,7 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
          }
          kms_sw_dt->ref_count --;
       }
-      /* fallthrough */
+      FALLTHROUGH;
    default:
       break;
    }
@@ -429,7 +429,7 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
    return NULL;
 }
 
-static boolean
+static bool
 kms_sw_displaytarget_get_handle(struct sw_winsys *winsys,
                                 struct sw_displaytarget *dt,
                                 struct winsys_handle *whandle)
@@ -443,20 +443,20 @@ kms_sw_displaytarget_get_handle(struct sw_winsys *winsys,
       whandle->handle = kms_sw_dt->handle;
       whandle->stride = plane->stride;
       whandle->offset = plane->offset;
-      return TRUE;
+      return true;
    case WINSYS_HANDLE_TYPE_FD:
       if (!drmPrimeHandleToFD(kms_sw->fd, kms_sw_dt->handle,
                              DRM_CLOEXEC, (int*)&whandle->handle)) {
          whandle->stride = plane->stride;
          whandle->offset = plane->offset;
-         return TRUE;
+         return true;
       }
-      /* fallthrough */
+      FALLTHROUGH;
    default:
       whandle->handle = 0;
       whandle->stride = 0;
       whandle->offset = 0;
-      return FALSE;
+      return false;
    }
 }
 

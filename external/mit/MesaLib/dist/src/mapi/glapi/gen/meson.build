@@ -82,6 +82,7 @@ api_xml_files = files(
   'ARB_shader_subroutine.xml',
   'ARB_shader_storage_buffer_object.xml',
   'ARB_sparse_buffer.xml',
+  'ARB_spirv_extensions.xml',
   'ARB_sync.xml',
   'ARB_tessellation_shader.xml',
   'ARB_texture_barrier.xml',
@@ -109,6 +110,7 @@ api_xml_files = files(
   'ARB_vertex_type_2_10_10_10_rev.xml',
   'APPLE_object_purgeable.xml',
   'APPLE_vertex_array_object.xml',
+  'EXT_direct_state_access.xml',
   'EXT_draw_buffers2.xml',
   'EXT_external_objects.xml',
   'EXT_external_objects_fd.xml',
@@ -118,6 +120,7 @@ api_xml_files = files(
   'EXT_packed_depth_stencil.xml',
   'EXT_provoking_vertex.xml',
   'EXT_separate_shader_objects.xml',
+  'EXT_shader_image_load_store.xml',
   'EXT_texture_array.xml',
   'EXT_texture_integer.xml',
   'EXT_transform_feedback.xml',
@@ -130,10 +133,13 @@ api_xml_files = files(
   'KHR_robustness.xml',
   'KHR_robustness_es.xml',
   'KHR_texture_compression_astc.xml',
+  'NV_alpha_to_coverage_dither_control.xml',
+  'NV_copy_image.xml',
   'NV_conditional_render.xml',
   'NV_primitive_restart.xml',
   'NV_texture_barrier.xml',
   'NV_vdpau_interop.xml',
+  'NV_viewport_swizzle.xml',
   'OES_EGL_image.xml',
   'OES_fixed_point.xml',
   'OES_single_precision.xml',
@@ -218,14 +224,17 @@ main_api_exec_c = custom_target(
   capture : true,
 )
 
-main_marshal_generated_c = custom_target(
-  'marshal_generated.c',
-  input : ['gl_marshal.py', 'gl_and_es_API.xml'],
-  output : 'marshal_generated.c',
-  command : [prog_python, '@INPUT0@', '-f', '@INPUT1@'],
-  depend_files : files('marshal_XML.py') + glapi_gen_depends,
-  capture : true,
-)
+main_marshal_generated_c = []
+foreach x : ['0', '1', '2', '3', '4', '5', '6', '7']
+  main_marshal_generated_c += custom_target(
+    'marshal_generated' + x + '.c',
+    input : ['gl_marshal.py', 'gl_and_es_API.xml'],
+    output : 'marshal_generated' + x + '.c',
+    command : [prog_python, '@INPUT0@', '-f', '@INPUT1@', '-i', x, '-n', '8'],
+    depend_files : files('marshal_XML.py') + glapi_gen_depends,
+    capture : true,
+  )
+endforeach
 
 glx_generated = []
 

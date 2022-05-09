@@ -34,8 +34,6 @@
 
 #include <stdio.h>
 
-#include "amd/common/ac_binary.h"
-
 #include "radeon/radeon_winsys.h"
 
 #include "util/disk_cache.h"
@@ -47,8 +45,9 @@
 #include "util/u_transfer.h"
 #include "util/u_threaded_context.h"
 
-struct u_log_context;
+#include "compiler/nir/nir.h"
 
+struct u_log_context;
 #define ATI_VENDOR_ID 0x1002
 
 #define R600_RESOURCE_FLAG_TRANSFER		(PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
@@ -121,7 +120,7 @@ enum r600_coherency {
 	R600_COHERENCY_CB_META,
 };
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
 #define R600_BIG_ENDIAN 1
 #else
 #define R600_BIG_ENDIAN 0
@@ -131,9 +130,6 @@ struct r600_common_context;
 struct r600_perfcounters;
 struct tgsi_shader_info;
 struct r600_qbo_state;
-
-void radeon_shader_binary_init(struct ac_shader_binary *b);
-void radeon_shader_binary_clean(struct ac_shader_binary *b);
 
 /* Only 32-bit buffer allocations are supported, gallium doesn't support more
  * at the moment.
@@ -171,6 +167,7 @@ struct r600_resource {
 	/* Whether this resource is referenced by bindless handles. */
 	bool				texture_handle_allocated;
 	bool				image_handle_allocated;
+	bool                            compute_global_bo;
 
 	/*
 	 * EG/Cayman only - for RAT operations hw need an immediate buffer
@@ -182,7 +179,6 @@ struct r600_resource {
 struct r600_transfer {
 	struct threaded_transfer	b;
 	struct r600_resource		*staging;
-	unsigned			offset;
 };
 
 struct r600_fmask_info {
@@ -295,7 +291,7 @@ struct r600_mmio_counter {
 };
 
 union r600_mmio_counters {
-	struct {
+	struct r600_mmio_counters_named {
 		/* For global GPU load including SDMA. */
 		struct r600_mmio_counter gpu;
 
@@ -326,7 +322,7 @@ union r600_mmio_counters {
 		struct r600_mmio_counter cp_dma;
 		struct r600_mmio_counter scratch_ram;
 	} named;
-	unsigned array[0];
+	unsigned array[sizeof(struct r600_mmio_counters_named) / sizeof(unsigned)];
 };
 
 struct r600_memory_object {
@@ -411,13 +407,7 @@ struct r600_common_screen {
 		unsigned compute_to_L2;
 	} barrier_flags;
 
-	void (*query_opaque_metadata)(struct r600_common_screen *rscreen,
-				      struct r600_texture *rtex,
-				      struct radeon_bo_metadata *md);
-
-	void (*apply_opaque_metadata)(struct r600_common_screen *rscreen,
-				    struct r600_texture *rtex,
-				    struct radeon_bo_metadata *md);
+        struct nir_shader_compiler_options nir_options;
 };
 
 /* This encapsulates a state or an operation which can emitted into the GPU
@@ -488,7 +478,7 @@ struct r600_viewports {
 };
 
 struct r600_ring {
-	struct radeon_cmdbuf		*cs;
+	struct radeon_cmdbuf		cs;
 	void (*flush)(void *ctx, unsigned flags,
 		      struct pipe_fence_handle **fence);
 };
@@ -517,13 +507,12 @@ struct r600_common_context {
 	struct r600_resource		*eop_bug_scratch;
 	unsigned			num_gfx_cs_flushes;
 	unsigned			initial_gfx_cs_size;
-	unsigned			gpu_reset_counter;
 	unsigned			last_dirty_tex_counter;
 	unsigned			last_compressed_colortex_counter;
 	unsigned			last_num_draw_calls;
 
 	struct threaded_context		*tc;
-	struct u_suballocator		*allocator_zeroed_memory;
+	struct u_suballocator		allocator_zeroed_memory;
 	struct slab_child_pool		pool_transfers;
 	struct slab_child_pool		pool_transfers_unsync; /* for threaded_context */
 
@@ -652,6 +641,10 @@ void r600_init_resource_fields(struct r600_common_screen *rscreen,
 			       uint64_t size, unsigned alignment);
 bool r600_alloc_resource(struct r600_common_screen *rscreen,
 			 struct r600_resource *res);
+void r600_buffer_destroy(struct pipe_screen *screen, struct pipe_resource *buf);
+void r600_buffer_flush_region(struct pipe_context *ctx,
+			      struct pipe_transfer *transfer,
+			      const struct pipe_box *rel_box);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ,
 					 unsigned alignment);
@@ -670,6 +663,14 @@ r600_invalidate_resource(struct pipe_context *ctx,
 void r600_replace_buffer_storage(struct pipe_context *ctx,
 				 struct pipe_resource *dst,
 				 struct pipe_resource *src);
+void *r600_buffer_transfer_map(struct pipe_context *ctx,
+                               struct pipe_resource *resource,
+                               unsigned level,
+                               unsigned usage,
+                               const struct pipe_box *box,
+                               struct pipe_transfer **ptransfer);
+void r600_buffer_transfer_unmap(struct pipe_context *ctx,
+				struct pipe_transfer *transfer);
 
 /* r600_common_pipe.c */
 void r600_gfx_write_event_eop(struct r600_common_context *ctx,
@@ -751,6 +752,7 @@ bool r600_prepare_for_dma_blit(struct r600_common_context *rctx,
 				struct r600_texture *rsrc,
 				unsigned src_level,
 				const struct pipe_box *src_box);
+void r600_texture_destroy(struct pipe_screen *screen, struct pipe_resource *ptex);
 void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
 				 struct r600_texture *rtex,
 				 unsigned nr_samples,
@@ -781,6 +783,14 @@ void r600_init_context_texture_functions(struct r600_common_context *rctx);
 void eg_resource_alloc_immed(struct r600_common_screen *rscreen,
 			     struct r600_resource *res,
 			     unsigned immed_size);
+void *r600_texture_transfer_map(struct pipe_context *ctx,
+			       struct pipe_resource *texture,
+			       unsigned level,
+			       unsigned usage,
+			       const struct pipe_box *box,
+			       struct pipe_transfer **ptransfer);
+void r600_texture_transfer_unmap(struct pipe_context *ctx,
+				struct pipe_transfer* transfer);
 
 /* r600_viewport.c */
 void evergreen_apply_scissor_bug_workaround(struct r600_common_context *rctx,

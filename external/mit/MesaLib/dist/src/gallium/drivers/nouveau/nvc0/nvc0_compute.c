@@ -285,7 +285,7 @@ nvc0_compute_validate_buffers(struct nvc0_context *nvc0)
          PUSH_DATA (push, nvc0->buffers[s][i].buffer_size);
          PUSH_DATA (push, 0);
          BCTX_REFN(nvc0->bufctx_cp, CP_BUF, res, RDWR);
-         util_range_add(&res->valid_buffer_range,
+         util_range_add(&res->base, &res->valid_buffer_range,
                         nvc0->buffers[s][i].buffer_offset,
                         nvc0->buffers[s][i].buffer_offset +
                         nvc0->buffers[s][i].buffer_size);
@@ -437,7 +437,7 @@ nvc0_launch_grid(struct pipe_context *pipe, const struct pipe_grid_info *info)
    nvc0_compute_upload_input(nvc0, info);
 
    BEGIN_NVC0(push, NVC0_CP(CP_START_ID), 1);
-   PUSH_DATA (push, nvc0_program_symbol_offset(cp, info->pc));
+   PUSH_DATA (push, cp->code_base);
 
    BEGIN_NVC0(push, NVC0_CP(LOCAL_POS_ALLOC), 3);
    PUSH_DATA (push, (cp->hdr[1] & 0xfffff0) + align(cp->cp.lmem_size, 0x10));

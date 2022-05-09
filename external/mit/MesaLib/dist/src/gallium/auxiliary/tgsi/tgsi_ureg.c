@@ -31,6 +31,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_ureg.h"
 #include "tgsi/tgsi_build.h"
+#include "tgsi/tgsi_from_mesa.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_sanity.h"
@@ -39,6 +40,8 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_bitmask.h"
+#include "GL/gl.h"
+#include "compiler/shader_info.h"
 
 union tgsi_any_token {
    struct tgsi_header header;
@@ -111,11 +114,10 @@ struct ureg_program
    bool supports_any_inout_decl_range;
    int next_shader_processor;
 
-   struct {
+   struct ureg_input_decl {
       enum tgsi_semantic semantic_name;
       unsigned semantic_index;
       enum tgsi_interpolate_mode interp;
-      unsigned char cylindrical_wrap;
       unsigned char usage_mask;
       enum tgsi_interpolate_loc interp_location;
       unsigned first;
@@ -132,7 +134,7 @@ struct ureg_program
    } system_value[UREG_MAX_SYSTEM_VALUE];
    unsigned nr_system_values;
 
-   struct {
+   struct ureg_output_decl {
       enum tgsi_semantic semantic_name;
       unsigned semantic_index;
       unsigned streams;
@@ -281,11 +283,10 @@ ureg_property(struct ureg_program *ureg, unsigned name, unsigned value)
 }
 
 struct ureg_src
-ureg_DECL_fs_input_cyl_centroid_layout(struct ureg_program *ureg,
+ureg_DECL_fs_input_centroid_layout(struct ureg_program *ureg,
                        enum tgsi_semantic semantic_name,
                        unsigned semantic_index,
                        enum tgsi_interpolate_mode interp_mode,
-                       unsigned cylindrical_wrap,
                        enum tgsi_interpolate_loc interp_location,
                        unsigned index,
                        unsigned usage_mask,
@@ -301,7 +302,6 @@ ureg_DECL_fs_input_cyl_centroid_layout(struct ureg_program *ureg,
       if (ureg->input[i].semantic_name == semantic_name &&
           ureg->input[i].semantic_index == semantic_index) {
          assert(ureg->input[i].interp == interp_mode);
-         assert(ureg->input[i].cylindrical_wrap == cylindrical_wrap);
          assert(ureg->input[i].interp_location == interp_location);
          if (ureg->input[i].array_id == array_id) {
             ureg->input[i].usage_mask |= usage_mask;
@@ -316,7 +316,6 @@ ureg_DECL_fs_input_cyl_centroid_layout(struct ureg_program *ureg,
       ureg->input[i].semantic_name = semantic_name;
       ureg->input[i].semantic_index = semantic_index;
       ureg->input[i].interp = interp_mode;
-      ureg->input[i].cylindrical_wrap = cylindrical_wrap;
       ureg->input[i].interp_location = interp_location;
       ureg->input[i].first = index;
       ureg->input[i].last = index + array_size - 1;
@@ -334,18 +333,17 @@ out:
 }
 
 struct ureg_src
-ureg_DECL_fs_input_cyl_centroid(struct ureg_program *ureg,
+ureg_DECL_fs_input_centroid(struct ureg_program *ureg,
                        enum tgsi_semantic semantic_name,
                        unsigned semantic_index,
                        enum tgsi_interpolate_mode interp_mode,
-                       unsigned cylindrical_wrap,
                        enum tgsi_interpolate_loc interp_location,
                        unsigned array_id,
                        unsigned array_size)
 {
-   return ureg_DECL_fs_input_cyl_centroid_layout(ureg,
+   return ureg_DECL_fs_input_centroid_layout(ureg,
          semantic_name, semantic_index, interp_mode,
-         cylindrical_wrap, interp_location,
+         interp_location,
          ureg->nr_input_regs, TGSI_WRITEMASK_XYZW, array_id, array_size);
 }
 
@@ -371,9 +369,9 @@ ureg_DECL_input_layout(struct ureg_program *ureg,
                 unsigned array_id,
                 unsigned array_size)
 {
-   return ureg_DECL_fs_input_cyl_centroid_layout(ureg,
+   return ureg_DECL_fs_input_centroid_layout(ureg,
                semantic_name, semantic_index,
-               TGSI_INTERPOLATE_CONSTANT, 0, TGSI_INTERPOLATE_LOC_CENTER,
+               TGSI_INTERPOLATE_CONSTANT, TGSI_INTERPOLATE_LOC_CENTER,
                index, usage_mask, array_id, array_size);
 }
 
@@ -385,8 +383,8 @@ ureg_DECL_input(struct ureg_program *ureg,
                 unsigned array_id,
                 unsigned array_size)
 {
-   return ureg_DECL_fs_input_cyl_centroid(ureg, semantic_name, semantic_index,
-                                          TGSI_INTERPOLATE_CONSTANT, 0,
+   return ureg_DECL_fs_input_centroid(ureg, semantic_name, semantic_index,
+                                          TGSI_INTERPOLATE_CONSTANT,
                                           TGSI_INTERPOLATE_LOC_CENTER,
                                           array_id, array_size);
 }
@@ -1241,7 +1239,7 @@ static void validate( enum tgsi_opcode opcode,
                       unsigned nr_dst,
                       unsigned nr_src )
 {
-#ifdef DEBUG
+#ifndef NDEBUG
    const struct tgsi_opcode_info *info = tgsi_get_opcode_info( opcode );
    assert(info);
    if (info) {
@@ -1584,7 +1582,6 @@ emit_decl_fs(struct ureg_program *ureg,
              enum tgsi_semantic semantic_name,
              unsigned semantic_index,
              enum tgsi_interpolate_mode interpolate,
-             unsigned cylindrical_wrap,
              enum tgsi_interpolate_loc interpolate_location,
              unsigned array_id,
              unsigned usage_mask)
@@ -1607,7 +1604,6 @@ emit_decl_fs(struct ureg_program *ureg,
 
    out[2].value = 0;
    out[2].decl_interp.Interpolate = interpolate;
-   out[2].decl_interp.CylindricalWrap = cylindrical_wrap;
    out[2].decl_interp.Location = interpolate_location;
 
    out[3].value = 0;
@@ -1816,6 +1812,21 @@ emit_property(struct ureg_program *ureg,
    out[1].prop_data.Data = data;
 }
 
+static int
+input_sort(const void *in_a, const void *in_b)
+{
+   const struct ureg_input_decl *a = in_a, *b = in_b;
+
+   return a->first - b->first;
+}
+
+static int
+output_sort(const void *in_a, const void *in_b)
+{
+   const struct ureg_output_decl *a = in_a, *b = in_b;
+
+   return a->first - b->first;
+}
 
 static void emit_decls( struct ureg_program *ureg )
 {
@@ -1824,6 +1835,11 @@ static void emit_decls( struct ureg_program *ureg )
    for (i = 0; i < ARRAY_SIZE(ureg->properties); i++)
       if (ureg->properties[i] != ~0u)
          emit_property(ureg, i, ureg->properties[i]);
+
+   /* While not required by TGSI spec, virglrenderer has a dependency on the
+    * inputs being sorted.
+    */
+   qsort(ureg->input, ureg->nr_inputs, sizeof(ureg->input[0]), input_sort);
 
    if (ureg->processor == PIPE_SHADER_VERTEX) {
       for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
@@ -1841,7 +1857,6 @@ static void emit_decls( struct ureg_program *ureg )
                          ureg->input[i].semantic_name,
                          ureg->input[i].semantic_index,
                          ureg->input[i].interp,
-                         ureg->input[i].cylindrical_wrap,
                          ureg->input[i].interp_location,
                          ureg->input[i].array_id,
                          ureg->input[i].usage_mask);
@@ -1857,7 +1872,6 @@ static void emit_decls( struct ureg_program *ureg )
                             ureg->input[i].semantic_index +
                             (j - ureg->input[i].first),
                             ureg->input[i].interp,
-                            ureg->input[i].cylindrical_wrap,
                             ureg->input[i].interp_location, 0,
                             ureg->input[i].usage_mask);
             }
@@ -1904,6 +1918,11 @@ static void emit_decls( struct ureg_program *ureg )
                          0,
                          TGSI_WRITEMASK_XYZW, 0, FALSE);
    }
+
+   /* While not required by TGSI spec, virglrenderer has a dependency on the
+    * outputs being sorted.
+    */
+   qsort(ureg->output, ureg->nr_outputs, sizeof(ureg->output[0]), output_sort);
 
    if (ureg->supports_any_inout_decl_range) {
       for (i = 0; i < ureg->nr_outputs; i++) {
@@ -2133,7 +2152,7 @@ void *ureg_create_shader( struct ureg_program *ureg,
                           struct pipe_context *pipe,
                           const struct pipe_stream_output_info *so )
 {
-   struct pipe_shader_state state;
+   struct pipe_shader_state state = {0};
 
    pipe_shader_state_from_tgsi(&state, ureg_finalize(ureg));
    if(!state.tokens)
@@ -2250,6 +2269,155 @@ ureg_get_nr_outputs( const struct ureg_program *ureg )
    if (!ureg)
       return 0;
    return ureg->nr_outputs;
+}
+
+static void
+ureg_setup_clipdist_info(struct ureg_program *ureg,
+                         const struct shader_info *info)
+{
+   if (info->clip_distance_array_size)
+      ureg_property(ureg, TGSI_PROPERTY_NUM_CLIPDIST_ENABLED,
+                    info->clip_distance_array_size);
+   if (info->cull_distance_array_size)
+      ureg_property(ureg, TGSI_PROPERTY_NUM_CULLDIST_ENABLED,
+                    info->cull_distance_array_size);
+}
+
+static void
+ureg_setup_tess_ctrl_shader(struct ureg_program *ureg,
+                            const struct shader_info *info)
+{
+   ureg_property(ureg, TGSI_PROPERTY_TCS_VERTICES_OUT,
+                 info->tess.tcs_vertices_out);
+}
+
+static void
+ureg_setup_tess_eval_shader(struct ureg_program *ureg,
+                            const struct shader_info *info)
+{
+   if (info->tess.primitive_mode == GL_ISOLINES)
+      ureg_property(ureg, TGSI_PROPERTY_TES_PRIM_MODE, GL_LINES);
+   else
+      ureg_property(ureg, TGSI_PROPERTY_TES_PRIM_MODE,
+                    info->tess.primitive_mode);
+
+   STATIC_ASSERT((TESS_SPACING_EQUAL + 1) % 3 == PIPE_TESS_SPACING_EQUAL);
+   STATIC_ASSERT((TESS_SPACING_FRACTIONAL_ODD + 1) % 3 ==
+                 PIPE_TESS_SPACING_FRACTIONAL_ODD);
+   STATIC_ASSERT((TESS_SPACING_FRACTIONAL_EVEN + 1) % 3 ==
+                 PIPE_TESS_SPACING_FRACTIONAL_EVEN);
+
+   ureg_property(ureg, TGSI_PROPERTY_TES_SPACING,
+                 (info->tess.spacing + 1) % 3);
+
+   ureg_property(ureg, TGSI_PROPERTY_TES_VERTEX_ORDER_CW,
+                 !info->tess.ccw);
+   ureg_property(ureg, TGSI_PROPERTY_TES_POINT_MODE,
+                 info->tess.point_mode);
+}
+
+static void
+ureg_setup_geometry_shader(struct ureg_program *ureg,
+                           const struct shader_info *info)
+{
+   ureg_property(ureg, TGSI_PROPERTY_GS_INPUT_PRIM,
+                 info->gs.input_primitive);
+   ureg_property(ureg, TGSI_PROPERTY_GS_OUTPUT_PRIM,
+                 info->gs.output_primitive);
+   ureg_property(ureg, TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES,
+                 info->gs.vertices_out);
+   ureg_property(ureg, TGSI_PROPERTY_GS_INVOCATIONS,
+                 info->gs.invocations);
+}
+
+static void
+ureg_setup_fragment_shader(struct ureg_program *ureg,
+                           const struct shader_info *info)
+{
+   if (info->fs.early_fragment_tests || info->fs.post_depth_coverage) {
+      ureg_property(ureg, TGSI_PROPERTY_FS_EARLY_DEPTH_STENCIL, 1);
+
+      if (info->fs.post_depth_coverage)
+         ureg_property(ureg, TGSI_PROPERTY_FS_POST_DEPTH_COVERAGE, 1);
+   }
+
+   if (info->fs.depth_layout != FRAG_DEPTH_LAYOUT_NONE) {
+      switch (info->fs.depth_layout) {
+      case FRAG_DEPTH_LAYOUT_ANY:
+         ureg_property(ureg, TGSI_PROPERTY_FS_DEPTH_LAYOUT,
+                       TGSI_FS_DEPTH_LAYOUT_ANY);
+         break;
+      case FRAG_DEPTH_LAYOUT_GREATER:
+         ureg_property(ureg, TGSI_PROPERTY_FS_DEPTH_LAYOUT,
+                       TGSI_FS_DEPTH_LAYOUT_GREATER);
+         break;
+      case FRAG_DEPTH_LAYOUT_LESS:
+         ureg_property(ureg, TGSI_PROPERTY_FS_DEPTH_LAYOUT,
+                       TGSI_FS_DEPTH_LAYOUT_LESS);
+         break;
+      case FRAG_DEPTH_LAYOUT_UNCHANGED:
+         ureg_property(ureg, TGSI_PROPERTY_FS_DEPTH_LAYOUT,
+                       TGSI_FS_DEPTH_LAYOUT_UNCHANGED);
+         break;
+      default:
+         assert(0);
+      }
+   }
+
+   if (info->fs.advanced_blend_modes) {
+      ureg_property(ureg, TGSI_PROPERTY_FS_BLEND_EQUATION_ADVANCED,
+                    info->fs.advanced_blend_modes);
+   }
+}
+
+static void
+ureg_setup_compute_shader(struct ureg_program *ureg,
+                          const struct shader_info *info)
+{
+   ureg_property(ureg, TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH,
+                 info->workgroup_size[0]);
+   ureg_property(ureg, TGSI_PROPERTY_CS_FIXED_BLOCK_HEIGHT,
+                 info->workgroup_size[1]);
+   ureg_property(ureg, TGSI_PROPERTY_CS_FIXED_BLOCK_DEPTH,
+                 info->workgroup_size[2]);
+
+   if (info->shared_size)
+      ureg_DECL_memory(ureg, TGSI_MEMORY_TYPE_SHARED);
+}
+
+void
+ureg_setup_shader_info(struct ureg_program *ureg,
+                       const struct shader_info *info)
+{
+   if (info->layer_viewport_relative)
+      ureg_property(ureg, TGSI_PROPERTY_LAYER_VIEWPORT_RELATIVE, 1);
+
+   switch (info->stage) {
+   case MESA_SHADER_VERTEX:
+      ureg_setup_clipdist_info(ureg, info);
+      ureg_set_next_shader_processor(ureg, pipe_shader_type_from_mesa(info->next_stage));
+      break;
+   case MESA_SHADER_TESS_CTRL:
+      ureg_setup_tess_ctrl_shader(ureg, info);
+      break;
+   case MESA_SHADER_TESS_EVAL:
+      ureg_setup_tess_eval_shader(ureg, info);
+      ureg_setup_clipdist_info(ureg, info);
+      ureg_set_next_shader_processor(ureg, pipe_shader_type_from_mesa(info->next_stage));
+      break;
+   case MESA_SHADER_GEOMETRY:
+      ureg_setup_geometry_shader(ureg, info);
+      ureg_setup_clipdist_info(ureg, info);
+      break;
+   case MESA_SHADER_FRAGMENT:
+      ureg_setup_fragment_shader(ureg, info);
+      break;
+   case MESA_SHADER_COMPUTE:
+      ureg_setup_compute_shader(ureg, info);
+      break;
+   default:
+      break;
+   }
 }
 
 

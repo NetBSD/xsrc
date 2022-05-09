@@ -36,11 +36,12 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/compiler.h"
 #include "util/u_debug.h"
 #include "util/u_dump.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_cpu_detect.h"
 #include "util/format_rgb9e5.h"
 #include "lp_bld_debug.h"
@@ -61,6 +62,7 @@
 #include "lp_bld_quad.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_misc.h"
 
 
 /**
@@ -194,9 +196,17 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       for (chan = 0; chan < 4; chan++) {
          unsigned chan_s;
          /* reverse-map channel... */
-         for (chan_s = 0; chan_s < 4; chan_s++) {
-            if (chan_s == format_desc->swizzle[chan]) {
+         if (util_format_has_stencil(format_desc)) {
+            if (chan == 0)
+               chan_s = 0;
+            else
                break;
+         }
+         else {
+            for (chan_s = 0; chan_s < 4; chan_s++) {
+               if (chan_s == format_desc->swizzle[chan]) {
+                  break;
+               }
             }
          }
          if (chan_s <= 3) {
@@ -1020,7 +1030,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef flt_width_vec;
    LLVMValueRef flt_height_vec;
    LLVMValueRef flt_depth_vec;
-   LLVMValueRef fall_off[4], have_corners;
+   LLVMValueRef fall_off[4] = { 0 }, have_corners = NULL;
    LLVMValueRef z1 = NULL;
    LLVMValueRef z00 = NULL, z01 = NULL, z10 = NULL, z11 = NULL;
    LLVMValueRef x00 = NULL, x01 = NULL, x10 = NULL, x11 = NULL;
@@ -1032,11 +1042,27 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    boolean seamless_cube_filter, accurate_cube_corners;
    unsigned chan_swiz = bld->static_texture_state->swizzle_r;
 
+   if (is_gather) {
+      switch (bld->gather_comp) {
+      case 0: chan_swiz = bld->static_texture_state->swizzle_r; break;
+      case 1: chan_swiz = bld->static_texture_state->swizzle_g; break;
+      case 2: chan_swiz = bld->static_texture_state->swizzle_b; break;
+      case 3: chan_swiz = bld->static_texture_state->swizzle_a; break;
+      default:
+	 break;
+      }
+   }
+
    seamless_cube_filter = (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
                            bld->static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
                           bld->static_sampler_state->seamless_cube_map;
 
-   accurate_cube_corners = ACCURATE_CUBE_CORNERS && seamless_cube_filter;
+   /*
+    * Disable accurate cube corners for integer textures, which should only
+    * get here in the gather path.
+    */
+   accurate_cube_corners = ACCURATE_CUBE_CORNERS && seamless_cube_filter &&
+     !util_format_is_pure_integer(bld->static_texture_state->format);
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -1334,13 +1360,14 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    if (dims == 1) {
       assert(!is_gather);
       if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
-         /* Interpolate two samples from 1D image to produce one color */
-         for (chan = 0; chan < 4; chan++) {
-            colors_out[chan] = lp_build_lerp(texel_bld, s_fpart,
-                                             neighbors[0][0][chan],
-                                             neighbors[0][1][chan],
-                                             0);
-         }
+         lp_build_reduce_filter(texel_bld,
+                                bld->static_sampler_state->reduction_mode,
+                                0,
+                                4,
+                                s_fpart,
+                                neighbors[0][0],
+                                neighbors[0][1],
+                                colors_out);
       }
       else {
          LLVMValueRef cmpval0, cmpval1;
@@ -1355,7 +1382,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    else {
       /* 2D/3D texture */
       struct lp_build_if_state corner_if;
-      LLVMValueRef colors0[4], colorss[4];
+      LLVMValueRef colors0[4], colorss[4] = { 0 };
 
       /* get x0/x1 texels at y1 */
       lp_build_sample_texel_soa(bld,
@@ -1374,7 +1401,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
        * another branch (with corner condition though edge would work
        * as well) here.
        */
-      if (accurate_cube_corners) {
+      if (have_corners && accurate_cube_corners &&
+          bld->static_sampler_state->reduction_mode == PIPE_TEX_REDUCTION_WEIGHTED_AVERAGE) {
          LLVMValueRef c00, c01, c10, c11, c00f, c01f, c10f, c11f;
          LLVMValueRef have_corner, one_third;
 
@@ -1593,15 +1621,17 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          }
          else {
             /* Bilinear interpolate the four samples from the 2D image / 3D slice */
-            for (chan = 0; chan < 4; chan++) {
-               colors0[chan] = lp_build_lerp_2d(texel_bld,
-                                                s_fpart, t_fpart,
-                                                neighbors[0][0][chan],
-                                                neighbors[0][1][chan],
-                                                neighbors[1][0][chan],
-                                                neighbors[1][1][chan],
-                                                0);
-            }
+            lp_build_reduce_filter_2d(texel_bld,
+                                      bld->static_sampler_state->reduction_mode,
+                                      0,
+                                      4,
+                                      s_fpart,
+                                      t_fpart,
+                                      neighbors[0][0],
+                                      neighbors[0][1],
+                                      neighbors[1][0],
+                                      neighbors[1][1],
+                                      colors0);
          }
       }
       else {
@@ -1629,7 +1659,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          }
       }
 
-      if (accurate_cube_corners) {
+      if (have_corners && accurate_cube_corners &&
+          bld->static_sampler_state->reduction_mode == PIPE_TEX_REDUCTION_WEIGHTED_AVERAGE) {
          LLVMBuildStore(builder, colors0[0], colorss[0]);
          LLVMBuildStore(builder, colors0[1], colorss[1]);
          LLVMBuildStore(builder, colors0[2], colorss[2]);
@@ -1673,22 +1704,27 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
          if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
             /* Bilinear interpolate the four samples from the second Z slice */
-            for (chan = 0; chan < 4; chan++) {
-               colors1[chan] = lp_build_lerp_2d(texel_bld,
-                                                s_fpart, t_fpart,
-                                                neighbors1[0][0][chan],
-                                                neighbors1[0][1][chan],
-                                                neighbors1[1][0][chan],
-                                                neighbors1[1][1][chan],
-                                                0);
-            }
+            lp_build_reduce_filter_2d(texel_bld,
+                                      bld->static_sampler_state->reduction_mode,
+                                      0,
+                                      4,
+                                      s_fpart,
+                                      t_fpart,
+                                      neighbors1[0][0],
+                                      neighbors1[0][1],
+                                      neighbors1[1][0],
+                                      neighbors1[1][1],
+                                      colors1);
+
             /* Linearly interpolate the two samples from the two 3D slices */
-            for (chan = 0; chan < 4; chan++) {
-               colors_out[chan] = lp_build_lerp(texel_bld,
-                                                r_fpart,
-                                                colors0[chan], colors1[chan],
-                                                0);
-            }
+            lp_build_reduce_filter(texel_bld,
+                                   bld->static_sampler_state->reduction_mode,
+                                   0,
+                                   4,
+                                   r_fpart,
+                                   colors0,
+                                   colors1,
+                                   colors_out);
          }
          else {
             LLVMValueRef cmpval00, cmpval01, cmpval10, cmpval11;
@@ -2010,7 +2046,7 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
 
    num_layers = bld->dynamic_state->depth(bld->dynamic_state, bld->gallivm,
-                                          bld->context_ptr, texture_unit);
+                                          bld->context_ptr, texture_unit, NULL);
 
    if (out_of_bounds) {
       LLVMValueRef out1, out;
@@ -2031,6 +2067,429 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
    }
 }
 
+#define WEIGHT_LUT_SIZE 1024
+
+static void
+lp_build_sample_aniso(struct lp_build_sample_context *bld,
+                      unsigned img_filter,
+                      unsigned mip_filter,
+                      boolean is_gather,
+                      const LLVMValueRef *coords,
+                      const LLVMValueRef *offsets,
+                      LLVMValueRef ilevel0,
+                      LLVMValueRef ilevel1,
+                      LLVMValueRef lod_fpart,
+                      LLVMValueRef *colors_out)
+{
+   struct gallivm_state *gallivm = bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *float_size_bld = &bld->float_size_in_bld;
+   LLVMValueRef ddx_ddy = lp_build_packed_ddx_ddy_twocoord(&bld->coord_bld, coords[0], coords[1]);
+   LLVMValueRef float_size;
+   LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
+   LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
+   LLVMValueRef index1 = LLVMConstInt(i32t, 1, 0);
+   unsigned length = bld->coord_bld.type.length;
+   unsigned num_quads = length / 4;
+   unsigned i;
+   LLVMValueRef filter_table = bld->aniso_filter_table;
+   LLVMValueRef size0, row_stride0_vec, img_stride0_vec;
+   LLVMValueRef data_ptr0, mipoff0 = NULL;
+
+   lp_build_mipmap_level_sizes(bld, ilevel0,
+                               &size0,
+                               &row_stride0_vec, &img_stride0_vec);
+   if (bld->num_mips == 1) {
+      data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   }
+   else {
+      /* This path should work for num_lods 1 too but slightly less efficient */
+      data_ptr0 = bld->base_ptr;
+      mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
+   }
+
+   float_size = lp_build_int_to_float(&bld->float_size_in_bld, bld->int_size);
+
+   LLVMValueRef float_size_lvl = lp_build_int_to_float(&bld->float_size_bld, size0);
+   /* extract width and height into vectors for use later */
+   static const unsigned char swizzle15[] = { /* no-op swizzle */
+      1, 1, 1, 1, 5, 5, 5, 5
+   };
+   static const unsigned char swizzle04[] = { /* no-op swizzle */
+      0, 0, 0, 0, 4, 4, 4, 4
+   };
+   LLVMValueRef width_dim, height_dim;
+
+   width_dim = lp_build_swizzle_aos_n(gallivm, float_size_lvl, swizzle04, bld->float_size_bld.type.length, bld->coord_bld.type.length);
+   height_dim = lp_build_swizzle_aos_n(gallivm, float_size_lvl, swizzle15, bld->float_size_bld.type.length, bld->coord_bld.type.length);
+
+
+   /* shuffle width/height for ddx/ddy calculations. */
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH / 4];
+
+   for (i = 0; i < num_quads; i++) {
+      shuffles[i*4+0] = shuffles[i*4+1] = index0;
+      shuffles[i*4+2] = shuffles[i*4+3] = index1;
+   }
+
+   LLVMValueRef floatdim = LLVMBuildShuffleVector(builder, float_size, float_size,
+                                                  LLVMConstVector(shuffles, length), "");
+
+   ddx_ddy = lp_build_mul(coord_bld, ddx_ddy, floatdim);
+
+   LLVMValueRef scaling = lp_build_shl(&bld->leveli_bld, bld->leveli_bld.one, ilevel0);
+   scaling = lp_build_int_to_float(&bld->levelf_bld, scaling);
+   scaling = lp_build_rcp(&bld->levelf_bld, scaling);
+
+   if (bld->num_lods != length) {
+      if (bld->levelf_bld.type.length == 1)
+         scaling = lp_build_broadcast_scalar(coord_bld,
+                                             scaling);
+      else
+         scaling = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
+                                                         bld->levelf_bld.type,
+                                                         coord_bld->type,
+                                                         scaling);
+   }
+
+   ddx_ddy = lp_build_mul(coord_bld, ddx_ddy, scaling);
+
+   static const unsigned char swizzle01[] = { /* no-op swizzle */
+      0, 1, 0, 1,
+   };
+   static const unsigned char swizzle23[] = {
+      2, 3, 2, 3,
+   };
+
+   LLVMValueRef ddx_ddys, ddx_ddyt;
+   ddx_ddys = lp_build_swizzle_aos(coord_bld, ddx_ddy, swizzle01);
+   ddx_ddyt = lp_build_swizzle_aos(coord_bld, ddx_ddy, swizzle23);
+
+   /* compute ellipse coefficients */
+   /* * A*x*x + B*x*y + C*y*y = F.*/
+   /* float A = vx*vx+vy*vy+1; */
+   LLVMValueRef A = lp_build_mul(coord_bld, ddx_ddyt, ddx_ddyt);
+
+   LLVMValueRef Ay = lp_build_swizzle_aos(coord_bld, A, swizzle15);
+   A = lp_build_add(coord_bld, A, Ay);
+   A = lp_build_add(coord_bld, A, coord_bld->one);
+   A = lp_build_swizzle_aos(coord_bld, A, swizzle04);
+
+   /* float B = -2*(ux*vx+uy*vy); */
+   LLVMValueRef B = lp_build_mul(coord_bld, ddx_ddys, ddx_ddyt);
+   LLVMValueRef By = lp_build_swizzle_aos(coord_bld, B, swizzle15);
+   B = lp_build_add(coord_bld, B, By);
+   B = lp_build_mul_imm(coord_bld, B, -2);
+   B = lp_build_swizzle_aos(coord_bld, B, swizzle04);
+
+   /* float C = ux*ux+uy*uy+1; */
+   LLVMValueRef C = lp_build_mul(coord_bld, ddx_ddys, ddx_ddys);
+   LLVMValueRef Cy = lp_build_swizzle_aos(coord_bld, C, swizzle15);
+   C = lp_build_add(coord_bld, C, Cy);
+   C = lp_build_add(coord_bld, C, coord_bld->one);
+   C = lp_build_swizzle_aos(coord_bld, C, swizzle04);
+
+   /* float F = A*C-B*B/4.0f; */
+   LLVMValueRef F = lp_build_mul(coord_bld, B, B);
+   F = lp_build_div(coord_bld, F, lp_build_const_vec(gallivm, coord_bld->type, 4.0));
+   LLVMValueRef F_p2 = lp_build_mul(coord_bld, A, C);
+   F = lp_build_sub(coord_bld, F_p2, F);
+
+   /* compute ellipse bounding box in texture space */
+   /* const float d = -B*B+4.0f*C*A; */
+   LLVMValueRef d = lp_build_sub(coord_bld, coord_bld->zero, lp_build_mul(coord_bld, B, B));
+   LLVMValueRef d_p2 = lp_build_mul(coord_bld, A, C);
+   d_p2 = lp_build_mul_imm(coord_bld, d_p2, 4);
+   d = lp_build_add(coord_bld, d, d_p2);
+
+   /* const float box_u = 2.0f / d * sqrtf(d*C*F); */
+   /* box_u -> half of bbox with   */
+   LLVMValueRef temp;
+   temp = lp_build_mul(coord_bld, d, C);
+   temp = lp_build_mul(coord_bld, temp, F);
+   temp = lp_build_sqrt(coord_bld, temp);
+
+   LLVMValueRef box_u = lp_build_div(coord_bld, lp_build_const_vec(gallivm, coord_bld->type, 2.0), d);
+   box_u = lp_build_mul(coord_bld, box_u, temp);
+
+   /* const float box_v = 2.0f / d * sqrtf(A*d*F); */
+   /* box_v -> half of bbox height */
+   temp = lp_build_mul(coord_bld, A, d);
+   temp = lp_build_mul(coord_bld, temp, F);
+   temp = lp_build_sqrt(coord_bld, temp);
+
+   LLVMValueRef box_v = lp_build_div(coord_bld, lp_build_const_vec(gallivm, coord_bld->type, 2.0), d);
+   box_v = lp_build_mul(coord_bld, box_v, temp);
+
+   /* Scale ellipse formula to directly index the Filter Lookup Table.
+    * i.e. scale so that F = WEIGHT_LUT_SIZE-1
+    */
+   LLVMValueRef formScale = lp_build_div(coord_bld, lp_build_const_vec(gallivm, coord_bld->type, WEIGHT_LUT_SIZE - 1), F);
+
+   A = lp_build_mul(coord_bld, A, formScale);
+   B = lp_build_mul(coord_bld, B, formScale);
+   C = lp_build_mul(coord_bld, C, formScale);
+   /* F *= formScale; */ /* no need to scale F as we don't use it below here */
+
+   LLVMValueRef ddq = lp_build_mul_imm(coord_bld, A, 2);
+
+   /* Heckbert MS thesis, p. 59; scan over the bounding box of the ellipse
+    * and incrementally update the value of Ax^2+Bxy*Cy^2; when this
+    * value, q, is less than F, we're inside the ellipse
+    */
+
+   LLVMValueRef float_size0 = lp_build_int_to_float(float_size_bld, bld->int_size);
+   LLVMValueRef width0 = lp_build_extract_broadcast(gallivm,
+                                                    float_size_bld->type,
+                                                    coord_bld->type,
+                                                    float_size0, index0);
+   LLVMValueRef height0 = lp_build_extract_broadcast(gallivm,
+                                                     float_size_bld->type,
+                                                     coord_bld->type,
+                                                     float_size0, index1);
+
+   /* texture->width0 * scaling */
+   width0 = lp_build_mul(coord_bld, width0, scaling);
+   /* texture->height0 * scaling */
+   height0 = lp_build_mul(coord_bld, height0, scaling);
+
+   /* tex_u = -0.5f * s[j] * texture->width0 * scaling */
+   LLVMValueRef tex_u = lp_build_mul(coord_bld, coords[0], width0);
+   tex_u = lp_build_add(coord_bld, tex_u, lp_build_const_vec(gallivm, coord_bld->type, -0.5f));
+
+   /* tex_v = -0.5f * t[j] * texture->height0 * scaling */
+   LLVMValueRef tex_v = lp_build_mul(coord_bld, coords[1], height0);
+   tex_v = lp_build_add(coord_bld, tex_v, lp_build_const_vec(gallivm, coord_bld->type, -0.5f));
+
+   /* const int u0 = (int) floorf(tex_u - box_u); */
+   LLVMValueRef u0 = lp_build_itrunc(coord_bld, lp_build_floor(coord_bld, lp_build_sub(coord_bld, tex_u, box_u)));
+   /* const int u1 = (int) ceilf(tex_u + box_u); */
+   LLVMValueRef u1 = lp_build_itrunc(coord_bld, lp_build_ceil(coord_bld, lp_build_add(coord_bld, tex_u, box_u)));
+
+   /* const int v0 = (int) floorf(tex_v - box_v); */
+   LLVMValueRef v0 = lp_build_itrunc(coord_bld, lp_build_floor(coord_bld, lp_build_sub(coord_bld, tex_v, box_v)));
+   /* const int v1 = (int) ceilf(tex_v + box_v); */
+   LLVMValueRef v1 = lp_build_itrunc(coord_bld, lp_build_ceil(coord_bld, lp_build_add(coord_bld, tex_v, box_v)));
+
+   /* const float U = u0 - tex_u; */
+   LLVMValueRef U = lp_build_sub(coord_bld, lp_build_int_to_float(coord_bld, u0), tex_u);
+
+   /* A * (2 * U + 1) */
+   LLVMValueRef dq_base = lp_build_mul_imm(coord_bld, U, 2);
+   dq_base = lp_build_add(coord_bld, dq_base, coord_bld->one);
+   dq_base = lp_build_mul(coord_bld, dq_base, A);
+
+   /* A * U * U */
+   LLVMValueRef q_base = lp_build_mul(coord_bld, U, U);
+   q_base = lp_build_mul(coord_bld, q_base, A);
+
+   LLVMValueRef colors0[4];
+   LLVMValueRef den_store = lp_build_alloca(gallivm, bld->texel_bld.vec_type, "den");
+
+   unsigned chan;
+   for (chan = 0; chan < 4; chan++)
+      colors0[chan] = lp_build_alloca(gallivm, bld->texel_bld.vec_type, "colors");
+
+   LLVMValueRef q_store, dq_store;
+   q_store = lp_build_alloca(gallivm, bld->coord_bld.vec_type, "q");
+   dq_store = lp_build_alloca(gallivm, bld->coord_bld.vec_type, "dq");
+
+   LLVMValueRef v_limiter = lp_build_alloca(gallivm, bld->int_coord_bld.vec_type, "v_limiter");
+   LLVMValueRef u_limiter = lp_build_alloca(gallivm, bld->int_coord_bld.vec_type, "u_limiter");
+
+   LLVMBuildStore(builder, v0, v_limiter);
+
+   /* create an LLVM loop block for the V iterator */
+   LLVMBasicBlockRef v_loop_block = lp_build_insert_new_block(gallivm, "vloop");
+
+   LLVMBuildBr(builder, v_loop_block);
+   LLVMPositionBuilderAtEnd(builder, v_loop_block);
+
+   LLVMValueRef v_val = LLVMBuildLoad(builder, v_limiter, "");
+   LLVMValueRef v_mask = LLVMBuildICmp(builder,
+                                       LLVMIntSLE,
+                                       v_val,
+                                       v1, "");
+
+   /* loop over V values. */
+   {
+      /*  const float V = v - tex_v; */
+      LLVMValueRef V = lp_build_sub(coord_bld, lp_build_int_to_float(coord_bld, v_val), tex_v);
+
+      /* float dq = dq_base + B * V; */
+      LLVMValueRef dq = lp_build_mul(coord_bld, V, B);
+      dq = lp_build_add(coord_bld, dq, dq_base);
+
+      /* float q = (C * V + B * U) * V + q_base */
+      LLVMValueRef q = lp_build_mul(coord_bld, C, V);
+      q = lp_build_add(coord_bld, q, lp_build_mul(coord_bld, B, U));
+      q = lp_build_mul(coord_bld, q, V);
+      q = lp_build_add(coord_bld, q, q_base);
+
+      LLVMBuildStore(builder, q, q_store);
+      LLVMBuildStore(builder, dq, dq_store);
+
+      LLVMBuildStore(builder, u0, u_limiter);
+
+      /* create an LLVM loop block for the V iterator */
+      LLVMBasicBlockRef u_loop_block = lp_build_insert_new_block(gallivm, "uloop");
+
+      LLVMBuildBr(builder, u_loop_block);
+      LLVMPositionBuilderAtEnd(builder, u_loop_block);
+
+      LLVMValueRef u_val = LLVMBuildLoad(builder, u_limiter, "");
+      LLVMValueRef u_mask = LLVMBuildICmp(builder,
+                                          LLVMIntSLE,
+                                          u_val,
+                                          u1, "");
+
+      /* loop over U values */
+      {
+         /* q = (int)q */
+         q = lp_build_itrunc(coord_bld, LLVMBuildLoad(builder, q_store, ""));
+
+         /*
+          * avoid OOB access to filter table, generate a mask for q > 1024,
+          * then truncate it.
+          */
+         LLVMValueRef q_mask = LLVMBuildICmp(builder,
+                                             LLVMIntSLE,
+                                             q,
+                                             lp_build_const_int_vec(gallivm, bld->int_coord_bld.type, 0x3ff), "");
+         q_mask = LLVMBuildSExt(builder, q_mask, bld->int_coord_bld.vec_type, "");
+
+         q = lp_build_max(&bld->int_coord_bld, q, bld->int_coord_bld.zero);
+         q = lp_build_and(&bld->int_coord_bld, q, lp_build_const_int_vec(gallivm, bld->int_coord_bld.type, 0x3ff));
+
+         /* update the offsets to deal with float size. */
+         q = lp_build_mul_imm(&bld->int_coord_bld, q, 4);
+         filter_table = LLVMBuildBitCast(gallivm->builder, filter_table, LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0), "");
+
+         /* Lookup weights in filter table */
+         LLVMValueRef weights = lp_build_gather(gallivm, coord_bld->type.length,
+                                                coord_bld->type.width,
+                                                lp_elem_type(coord_bld->type),
+                                                TRUE, filter_table, q, TRUE);
+
+         /*
+          * Mask off the weights here which should ensure no-op for loops
+          * where some of the u/v values are not being calculated.
+          */
+         weights = LLVMBuildBitCast(builder, weights, bld->int_coord_bld.vec_type, "");
+         weights = lp_build_and(&bld->int_coord_bld, weights, LLVMBuildSExt(builder, u_mask, bld->int_coord_bld.vec_type, ""));
+         weights = lp_build_and(&bld->int_coord_bld, weights, LLVMBuildSExt(builder, v_mask, bld->int_coord_bld.vec_type, ""));
+         weights = lp_build_and(&bld->int_coord_bld, weights, q_mask);
+         weights = LLVMBuildBitCast(builder, weights, bld->coord_bld.vec_type, "");
+
+         /* if the weights are all 0 avoid doing the sampling at all. */
+         struct lp_build_if_state noloadw0;
+
+         LLVMValueRef wnz = LLVMBuildFCmp(gallivm->builder, LLVMRealUNE,
+                                          weights, bld->coord_bld.zero, "");
+         wnz = LLVMBuildSExt(builder, wnz, bld->int_coord_bld.vec_type, "");
+         wnz = lp_build_any_true_range(&bld->coord_bld, bld->coord_bld.type.length, wnz);
+         lp_build_if(&noloadw0, gallivm, wnz);
+         LLVMValueRef new_coords[3];
+         new_coords[0] = lp_build_div(coord_bld, lp_build_int_to_float(coord_bld, u_val), width_dim);
+         new_coords[1] = lp_build_div(coord_bld, lp_build_int_to_float(coord_bld, v_val), height_dim);
+         new_coords[2] = coords[2];
+
+         /* lookup q in filter table */
+         LLVMValueRef temp_colors[4];
+         lp_build_sample_image_nearest(bld, size0,
+                                       row_stride0_vec, img_stride0_vec,
+                                       data_ptr0, mipoff0, new_coords, offsets,
+                                       temp_colors);
+
+         for (chan = 0; chan < 4; chan++) {
+            LLVMValueRef tcolor = LLVMBuildLoad(builder, colors0[chan], "");
+
+            tcolor = lp_build_add(&bld->texel_bld, tcolor, lp_build_mul(&bld->texel_bld, temp_colors[chan], weights));
+            LLVMBuildStore(builder, tcolor, colors0[chan]);
+         }
+
+         /* multiple colors by weight and add in. */
+         /* den += weight; */
+         LLVMValueRef den = LLVMBuildLoad(builder, den_store, "");
+         den = lp_build_add(&bld->texel_bld, den, weights);
+         LLVMBuildStore(builder, den, den_store);
+
+         lp_build_endif(&noloadw0);
+         /* q += dq; */
+         /* dq += ddq; */
+         q = LLVMBuildLoad(builder, q_store, "");
+         dq = LLVMBuildLoad(builder, dq_store, "");
+         q = lp_build_add(coord_bld, q, dq);
+         dq = lp_build_add(coord_bld, dq, ddq);
+         LLVMBuildStore(builder, q, q_store);
+         LLVMBuildStore(builder, dq, dq_store);
+      }
+      /* u += 1 */
+      u_val = LLVMBuildLoad(builder, u_limiter, "");
+      u_val = lp_build_add(&bld->int_coord_bld, u_val, bld->int_coord_bld.one);
+      LLVMBuildStore(builder, u_val, u_limiter);
+
+      u_mask = LLVMBuildICmp(builder,
+                             LLVMIntSLE,
+                             u_val,
+                             u1, "");
+      LLVMValueRef u_end_cond = LLVMBuildSExt(builder, u_mask, bld->int_coord_bld.vec_type, "");
+      u_end_cond = lp_build_any_true_range(&bld->coord_bld, bld->coord_bld.type.length, u_end_cond);
+
+      LLVMBasicBlockRef u_end_loop = lp_build_insert_new_block(gallivm, "u_end_loop");
+
+      LLVMBuildCondBr(builder, u_end_cond,
+                      u_loop_block, u_end_loop);
+
+      LLVMPositionBuilderAtEnd(builder, u_end_loop);
+
+   }
+
+   /* v += 1 */
+   v_val = LLVMBuildLoad(builder, v_limiter, "");
+   v_val = lp_build_add(&bld->int_coord_bld, v_val, bld->int_coord_bld.one);
+   LLVMBuildStore(builder, v_val, v_limiter);
+
+   v_mask = LLVMBuildICmp(builder,
+                          LLVMIntSLE,
+                          v_val,
+                          v1, "");
+   LLVMValueRef v_end_cond = LLVMBuildSExt(builder, v_mask, bld->int_coord_bld.vec_type, "");
+   v_end_cond = lp_build_any_true_range(&bld->coord_bld, bld->coord_bld.type.length, v_end_cond);
+
+   LLVMBasicBlockRef v_end_loop = lp_build_insert_new_block(gallivm, "v_end_loop");
+
+   LLVMBuildCondBr(builder, v_end_cond,
+                   v_loop_block, v_end_loop);
+
+   LLVMPositionBuilderAtEnd(builder, v_end_loop);
+
+   LLVMValueRef den = LLVMBuildLoad(builder, den_store, "");
+
+   for (chan = 0; chan < 4; chan++)
+      colors0[chan] = lp_build_div(&bld->texel_bld, LLVMBuildLoad(builder, colors0[chan], ""), den);
+   LLVMValueRef den0 = lp_build_cmp(&bld->coord_bld, PIPE_FUNC_EQUAL, den, bld->coord_bld.zero);
+
+   LLVMValueRef den0_any = lp_build_any_true_range(&bld->coord_bld, bld->coord_bld.type.length, den0);
+
+   struct lp_build_if_state den0_fallback;
+   lp_build_if(&den0_fallback, gallivm, den0_any);
+
+   LLVMValueRef colors_den0[4];
+   lp_build_sample_image_linear(bld, false, size0, NULL,
+                                 row_stride0_vec, img_stride0_vec,
+                                 data_ptr0, mipoff0, coords, offsets,
+                                 colors_den0);
+   for (chan = 0; chan < 4; chan++) {
+      LLVMValueRef chan_val = lp_build_select(&bld->texel_bld, den0, colors_den0[chan], colors0[chan]);
+      LLVMBuildStore(builder, chan_val, colors_out[chan]);
+   }
+   lp_build_else(&den0_fallback);
+   for (chan = 0; chan < 4; chan++)
+      LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
+   lp_build_endif(&den0_fallback);
+}
 
 /**
  * Calculate cube face, lod, mip levels.
@@ -2054,6 +2513,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    const unsigned min_filter = bld->static_sampler_state->min_img_filter;
    const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
    const unsigned target = bld->static_texture_state->target;
+   const bool aniso = bld->static_sampler_state->aniso;
    LLVMValueRef first_level, cube_rho = NULL;
    LLVMValueRef lod_ipart = NULL;
    struct lp_derivatives cube_derivs;
@@ -2075,7 +2535,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                       !explicit_lod);
       lp_build_cube_lookup(bld, coords, derivs, &cube_rho, &cube_derivs, need_derivs);
       derivs = &cube_derivs;
-      if (target == PIPE_TEXTURE_CUBE_ARRAY) {
+      if (target == PIPE_TEXTURE_CUBE_ARRAY && !is_lodq) {
          /* calculate cube layer coord now */
          LLVMValueRef layer = lp_build_iround(&bld->coord_bld, coords[3]);
          LLVMValueRef six = lp_build_const_int_vec(bld->gallivm, bld->int_coord_type, 6);
@@ -2084,8 +2544,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
          /* because of seamless filtering can't add it to face (coords[2]) here. */
       }
    }
-   else if (target == PIPE_TEXTURE_1D_ARRAY ||
-            target == PIPE_TEXTURE_2D_ARRAY) {
+   else if ((target == PIPE_TEXTURE_1D_ARRAY ||
+             target == PIPE_TEXTURE_2D_ARRAY) && !is_lodq) {
       coords[2] = lp_build_iround(&bld->coord_bld, coords[2]);
       coords[2] = lp_build_layer_coord(bld, texture_index, FALSE, coords[2], NULL);
    }
@@ -2119,24 +2579,32 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
     */
    if (min_filter != mag_filter ||
        mip_filter != PIPE_TEX_MIPFILTER_NONE || is_lodq) {
+      LLVMValueRef max_aniso = NULL;
+
+      if (aniso)
+         max_aniso = bld->dynamic_state->max_aniso(bld->dynamic_state,
+                                                   bld->gallivm,
+                                                   bld->context_ptr,
+                                                   sampler_index);
+
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
       lp_build_lod_selector(bld, is_lodq, texture_index, sampler_index,
                             coords[0], coords[1], coords[2], cube_rho,
                             derivs, lod_bias, explicit_lod,
-                            mip_filter, lod,
+                            mip_filter, max_aniso, lod,
                             &lod_ipart, lod_fpart, lod_pos_or_zero);
       if (is_lodq) {
          LLVMValueRef last_level;
          last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                      bld->gallivm,
                                                      bld->context_ptr,
-                                                     texture_index);
+                                                     texture_index, NULL);
          first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                        bld->gallivm,
                                                        bld->context_ptr,
-                                                       texture_index);
+                                                       texture_index, NULL);
          last_level = lp_build_sub(&bld->int_bld, last_level, first_level);
          last_level = lp_build_int_to_float(&bld->float_bld, last_level);
          last_level = lp_build_broadcast_scalar(&bld->lodf_bld, last_level);
@@ -2147,7 +2615,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
             break;
          case PIPE_TEX_MIPFILTER_NEAREST:
              *lod_fpart = lp_build_round(&bld->lodf_bld, *lod_fpart);
-             /* fallthrough */
+             FALLTHROUGH;
          case PIPE_TEX_MIPFILTER_LINEAR:
             *lod_fpart = lp_build_clamp(&bld->lodf_bld, *lod_fpart,
                                         bld->lodf_bld.zero, last_level);
@@ -2161,7 +2629,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       *lod_pos_or_zero = bld->lodi_bld.zero;
    }
 
-   if (bld->num_lods != bld->num_mips) {
+   if ((bld->num_lods != bld->num_mips || bld->num_lods == 1) &&
+       bld->lodi_bld.type.length != 1) {
       /* only makes sense if there's just a single mip level */
       assert(bld->num_mips == 1);
       lod_ipart = lp_build_extract_range(bld->gallivm, lod_ipart, 0, 1);
@@ -2170,15 +2639,23 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    /*
     * Compute integer mipmap level(s) to fetch texels from: ilevel0, ilevel1
     */
+
+   if (aniso) {
+      lp_build_nearest_mip_level(bld, texture_index, lod_ipart, ilevel0, NULL);
+      return;
+   }
+
    switch (mip_filter) {
    default:
-      assert(0 && "bad mip_filter value in lp_build_sample_soa()");
-      /* fall-through */
+      debug_assert(0 && "bad mip_filter value in lp_build_sample_soa()");
+#if defined(NDEBUG) || defined(DEBUG)
+      FALLTHROUGH;
+#endif
    case PIPE_TEX_MIPFILTER_NONE:
       /* always use mip level 0 */
       first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                     bld->gallivm, bld->context_ptr,
-                                                    texture_index);
+                                                    texture_index, NULL);
       first_level = lp_build_broadcast_scalar(&bld->leveli_bld, first_level);
       *ilevel0 = first_level;
       break;
@@ -2340,13 +2817,16 @@ lp_build_clamp_border_color(struct lp_build_sample_context *bld,
          max_clamp = vec4_bld.one;
       }
       else if (format_desc->layout == UTIL_FORMAT_LAYOUT_RGTC ||
-               format_desc->layout == UTIL_FORMAT_LAYOUT_ETC) {
+               format_desc->layout == UTIL_FORMAT_LAYOUT_ETC ||
+               format_desc->layout == UTIL_FORMAT_LAYOUT_BPTC) {
          switch (format_desc->format) {
          case PIPE_FORMAT_RGTC1_UNORM:
          case PIPE_FORMAT_RGTC2_UNORM:
          case PIPE_FORMAT_LATC1_UNORM:
          case PIPE_FORMAT_LATC2_UNORM:
          case PIPE_FORMAT_ETC1_RGB8:
+         case PIPE_FORMAT_BPTC_RGBA_UNORM:
+         case PIPE_FORMAT_BPTC_SRGBA:
             min_clamp = vec4_bld.zero;
             max_clamp = vec4_bld.one;
             break;
@@ -2356,6 +2836,12 @@ lp_build_clamp_border_color(struct lp_build_sample_context *bld,
          case PIPE_FORMAT_LATC2_SNORM:
             min_clamp = lp_build_const_vec(gallivm, vec4_type, -1.0F);
             max_clamp = vec4_bld.one;
+            break;
+         case PIPE_FORMAT_BPTC_RGB_FLOAT:
+            /* not sure if we should clamp to max half float? */
+            break;
+         case PIPE_FORMAT_BPTC_RGB_UFLOAT:
+            min_clamp = vec4_bld.zero;
             break;
          default:
             assert(0);
@@ -2465,7 +2951,11 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
      lp_build_name(texels[chan], "sampler%u_texel_%c_var", sampler_unit, "xyzw"[chan]);
    }
 
-   if (min_filter == mag_filter) {
+   if (sampler_state->aniso) {
+      lp_build_sample_aniso(bld, PIPE_TEX_FILTER_NEAREST, mip_filter,
+                            false, coords, offsets, ilevel0,
+                            ilevel1, lod_fpart, texels);
+   } else if (min_filter == mag_filter) {
       /* no need to distinguish between minification and magnification */
       lp_build_sample_mipmap(bld, min_filter, mip_filter,
                              is_gather,
@@ -2582,6 +3072,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 static void
 lp_build_fetch_texel(struct lp_build_sample_context *bld,
                      unsigned texture_unit,
+                     LLVMValueRef ms_index,
                      const LLVMValueRef *coords,
                      LLVMValueRef explicit_lod,
                      const LLVMValueRef *offsets,
@@ -2615,7 +3106,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
       assert(bld->num_mips == 1);
       if (bld->static_texture_state->target != PIPE_BUFFER) {
          ilevel = bld->dynamic_state->first_level(bld->dynamic_state, bld->gallivm,
-                                                  bld->context_ptr, texture_unit);
+                                                  bld->context_ptr, texture_unit, NULL);
       }
       else {
          ilevel = lp_build_const_int32(bld->gallivm, 0);
@@ -2681,6 +3172,18 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                             lp_build_get_mip_offsets(bld, ilevel));
    }
 
+   if (bld->fetch_ms) {
+      LLVMValueRef num_samples;
+      num_samples = bld->dynamic_state->num_samples(bld->dynamic_state, bld->gallivm,
+                                                    bld->context_ptr, texture_unit, NULL);
+      out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, ms_index, int_coord_bld->zero);
+      out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+      out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, ms_index, lp_build_broadcast_scalar(int_coord_bld, num_samples));
+      out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+      offset = lp_build_add(int_coord_bld, offset,
+                            lp_build_mul(int_coord_bld, bld->sample_stride, ms_index));
+   }
+
    offset = lp_build_andnot(int_coord_bld, offset, out_of_bounds);
 
    lp_build_fetch_rgba_soa(bld->gallivm,
@@ -2723,6 +3226,29 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
    }  
 }
 
+static struct lp_type
+lp_build_texel_type(struct lp_type texel_type,
+                    const struct util_format_description *format_desc)
+{
+   /* always using the first channel hopefully should be safe,
+    * if not things WILL break in other places anyway.
+    */
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB &&
+       format_desc->channel[0].pure_integer) {
+      if (format_desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+         texel_type = lp_type_int_vec(texel_type.width, texel_type.width * texel_type.length);
+      } else if (format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED) {
+         texel_type = lp_type_uint_vec(texel_type.width, texel_type.width * texel_type.length);
+      }
+   }
+   else if (util_format_has_stencil(format_desc) &&
+       !util_format_has_depth(format_desc)) {
+      /* for stencil only formats, sample stencil (uint) */
+      texel_type = lp_type_uint_vec(texel_type.width, texel_type.width * texel_type.length);
+   }
+   return texel_type;
+}
+
 
 /**
  * Build the actual texture sampling code.
@@ -2747,6 +3273,8 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
                          const LLVMValueRef *offsets,
                          const struct lp_derivatives *derivs, /* optional */
                          LLVMValueRef lod, /* optional */
+                         LLVMValueRef ms_index, /* optional */
+                         LLVMValueRef aniso_filter_table,
                          LLVMValueRef texel_out[4])
 {
    unsigned target = static_texture_state->target;
@@ -2763,7 +3291,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    enum lp_sampler_op_type op_type;
    LLVMValueRef lod_bias = NULL;
    LLVMValueRef explicit_lod = NULL;
-   boolean op_is_tex, op_is_lodq, op_is_gather;
+   boolean op_is_tex, op_is_lodq, op_is_gather, fetch_ms;
 
    if (0) {
       enum pipe_format fmt = static_texture_state->format;
@@ -2776,6 +3304,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
                     LP_SAMPLER_LOD_CONTROL_SHIFT;
    op_type = (sample_key & LP_SAMPLER_OP_TYPE_MASK) >>
                  LP_SAMPLER_OP_TYPE_SHIFT;
+   fetch_ms = !!(sample_key & LP_SAMPLER_FETCH_MS);
 
    op_is_tex = op_type == LP_SAMPLER_OP_TEXTURE;
    op_is_lodq = op_type == LP_SAMPLER_OP_LODQ;
@@ -2819,6 +3348,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    memset(&bld, 0, sizeof bld);
    bld.gallivm = gallivm;
    bld.context_ptr = context_ptr;
+   bld.aniso_filter_table = aniso_filter_table;
    bld.static_sampler_state = &derived_sampler_state;
    bld.static_texture_state = static_texture_state;
    bld.dynamic_state = dynamic_state;
@@ -2828,10 +3358,10 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    if (gallivm_perf & GALLIVM_PERF_NO_QUAD_LOD || op_is_lodq) {
       bld.no_quad_lod = TRUE;
    }
-   if (gallivm_perf & GALLIVM_PERF_NO_RHO_APPROX || op_is_lodq) {
+   if (!(gallivm_perf & GALLIVM_PERF_RHO_APPROX) || op_is_lodq) {
       bld.no_rho_approx = TRUE;
    }
-   if (gallivm_perf & GALLIVM_PERF_NO_BRILINEAR || op_is_lodq) {
+   if (!(gallivm_perf & GALLIVM_PERF_BRILINEAR) || op_is_lodq || lod_bias || explicit_lod) {
       bld.no_brilinear = TRUE;
    }
 
@@ -2844,25 +3374,8 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    bld.float_size_in_type = lp_type_float(32);
    bld.float_size_in_type.length = dims > 1 ? 4 : 1;
    bld.int_size_in_type = lp_int_type(bld.float_size_in_type);
-   bld.texel_type = type;
 
-   /* always using the first channel hopefully should be safe,
-    * if not things WILL break in other places anyway.
-    */
-   if (bld.format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB &&
-       bld.format_desc->channel[0].pure_integer) {
-      if (bld.format_desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
-         bld.texel_type = lp_type_int_vec(type.width, type.width * type.length);
-      }
-      else if (bld.format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED) {
-         bld.texel_type = lp_type_uint_vec(type.width, type.width * type.length);
-      }
-   }
-   else if (util_format_has_stencil(bld.format_desc) &&
-       !util_format_has_depth(bld.format_desc)) {
-      /* for stencil only formats, sample stencil (uint) */
-      bld.texel_type = lp_type_int_vec(type.width, type.width * type.length);
-   }
+   bld.texel_type = lp_build_texel_type(type, bld.format_desc);
 
    if (!static_texture_state->level_zero_only ||
        !static_sampler_state->max_lod_pos || op_is_lodq) {
@@ -2972,7 +3485,9 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
       bld.num_lods = num_quads;
    }
 
-
+   bld.fetch_ms = fetch_ms;
+   if (op_is_gather)
+      bld.gather_comp = (sample_key & LP_SAMPLER_GATHER_COMP_MASK) >> LP_SAMPLER_GATHER_COMP_SHIFT;
    bld.lodf_type = type;
    /* we want native vector size to be able to use our intrinsics */
    if (bld.num_lods != type.length) {
@@ -3012,15 +3527,19 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
 
    /* Get the dynamic state */
    tex_width = dynamic_state->width(dynamic_state, gallivm,
-                                    context_ptr, texture_index);
+                                    context_ptr, texture_index, NULL);
    bld.row_stride_array = dynamic_state->row_stride(dynamic_state, gallivm,
-                                                    context_ptr, texture_index);
+                                                    context_ptr, texture_index, NULL);
    bld.img_stride_array = dynamic_state->img_stride(dynamic_state, gallivm,
-                                                    context_ptr, texture_index);
+                                                    context_ptr, texture_index, NULL);
    bld.base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm,
-                                          context_ptr, texture_index);
+                                          context_ptr, texture_index, NULL);
    bld.mip_offsets = dynamic_state->mip_offsets(dynamic_state, gallivm,
-                                                context_ptr, texture_index);
+                                                context_ptr, texture_index, NULL);
+
+   if (fetch_ms)
+      bld.sample_stride = lp_build_broadcast_scalar(&bld.int_coord_bld, dynamic_state->sample_stride(dynamic_state, gallivm,
+                                                                                                     context_ptr, texture_index, NULL));
    /* Note that mip_offsets is an array[level] of offsets to texture images */
 
    if (dynamic_state->cache_ptr && thread_data_ptr) {
@@ -3039,14 +3558,14 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
       if (dims >= 2) {
          LLVMValueRef tex_height =
             dynamic_state->height(dynamic_state, gallivm,
-                                  context_ptr, texture_index);
+                                  context_ptr, texture_index, NULL);
          bld.int_size = LLVMBuildInsertElement(builder, bld.int_size,
                                                tex_height,
                                                LLVMConstInt(i32t, 1, 0), "");
          if (dims >= 3) {
             LLVMValueRef tex_depth =
                dynamic_state->depth(dynamic_state, gallivm, context_ptr,
-                                    texture_index);
+                                    texture_index, NULL);
             bld.int_size = LLVMBuildInsertElement(builder, bld.int_size,
                                                   tex_depth,
                                                   LLVMConstInt(i32t, 2, 0), "");
@@ -3069,7 +3588,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
        * here which would say it's pure int despite such formats should sample
        * the depth component).
        * In GL such filters make the texture incomplete, this makes it robust
-       * against state trackers which set this up regardless (we'd crash in the
+       * against gallium frontends which set this up regardless (we'd crash in the
        * lerp later otherwise).
        * At least in some apis it may be legal to use such filters with lod
        * queries and/or gather (at least for gather d3d10 says only the wrap
@@ -3093,7 +3612,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    }
 
    else if (op_type == LP_SAMPLER_OP_FETCH) {
-      lp_build_fetch_texel(&bld, texture_index, newcoords,
+      lp_build_fetch_texel(&bld, texture_index, ms_index, newcoords,
                            lod, offsets,
                            texel_out);
    }
@@ -3107,6 +3626,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
                 op_is_tex &&
                 /* not sure this is strictly needed or simply impossible */
                 derived_sampler_state.compare_mode == PIPE_TEX_COMPARE_NONE &&
+                derived_sampler_state.aniso == 0 &&
                 lp_is_simple_wrap_mode(derived_sampler_state.wrap_s);
 
       use_aos &= bld.num_lods <= num_quads ||
@@ -3173,7 +3693,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
        * as it appears to be a loss with just AVX)
        */
       if (num_quads == 1 || !use_aos ||
-          (util_cpu_caps.has_avx2 &&
+          (util_get_cpu_caps()->has_avx2 &&
            (bld.num_lods == 1 ||
             derived_sampler_state.min_img_filter == derived_sampler_state.mag_img_filter))) {
          if (use_aos) {
@@ -3212,6 +3732,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
          bld4.no_brilinear = bld.no_brilinear;
          bld4.gallivm = bld.gallivm;
          bld4.context_ptr = bld.context_ptr;
+         bld4.aniso_filter_table = aniso_filter_table;
          bld4.static_texture_state = bld.static_texture_state;
          bld4.static_sampler_state = bld.static_sampler_state;
          bld4.dynamic_state = bld.dynamic_state;
@@ -3412,28 +3933,39 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
                          unsigned sampler_index,
                          LLVMValueRef function,
                          unsigned num_args,
-                         unsigned sample_key)
+                         unsigned sample_key,
+                         bool has_aniso_filter_table)
 {
    LLVMBuilderRef old_builder;
    LLVMBasicBlockRef block;
    LLVMValueRef coords[5];
    LLVMValueRef offsets[3] = { NULL };
    LLVMValueRef lod = NULL;
+   LLVMValueRef ms_index = NULL;
    LLVMValueRef context_ptr;
    LLVMValueRef thread_data_ptr = NULL;
+   LLVMValueRef aniso_filter_table = NULL;
    LLVMValueRef texel_out[4];
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
    unsigned num_param = 0;
    unsigned i, num_coords, num_derivs, num_offsets, layer;
    enum lp_sampler_lod_control lod_control;
+   enum lp_sampler_op_type op_type;
    boolean need_cache = FALSE;
 
    lod_control = (sample_key & LP_SAMPLER_LOD_CONTROL_MASK) >>
                     LP_SAMPLER_LOD_CONTROL_SHIFT;
 
+   op_type = (sample_key & LP_SAMPLER_OP_TYPE_MASK) >>
+                    LP_SAMPLER_OP_TYPE_SHIFT;
+
    get_target_info(static_texture_state->target,
                    &num_coords, &num_derivs, &num_offsets, &layer);
+
+   /* lod query doesn't take a layer */
+   if (layer && op_type == LP_SAMPLER_OP_LODQ)
+      layer = 0;
 
    if (dynamic_state->cache_ptr) {
       const struct util_format_description *format_desc;
@@ -3445,6 +3977,8 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
 
    /* "unpack" arguments */
    context_ptr = LLVMGetParam(function, num_param++);
+   if (has_aniso_filter_table)
+      aniso_filter_table = LLVMGetParam(function, num_param++);
    if (need_cache) {
       thread_data_ptr = LLVMGetParam(function, num_param++);
    }
@@ -3460,6 +3994,9 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
    }
    if (sample_key & LP_SAMPLER_SHADOW) {
       coords[4] = LLVMGetParam(function, num_param++);
+   }
+   if (sample_key & LP_SAMPLER_FETCH_MS) {
+      ms_index = LLVMGetParam(function, num_param++);
    }
    if (sample_key & LP_SAMPLER_OFFSETS) {
       for (i = 0; i < num_offsets; i++) {
@@ -3503,6 +4040,8 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
                             offsets,
                             deriv_ptr,
                             lod,
+                            ms_index,
+                            aniso_filter_table,
                             texel_out);
 
    LLVMBuildAggregateRet(gallivm->builder, texel_out, 4);
@@ -3523,7 +4062,9 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
                          const struct lp_static_texture_state *static_texture_state,
                          const struct lp_static_sampler_state *static_sampler_state,
                          struct lp_sampler_dynamic_state *dynamic_state,
-                         const struct lp_sampler_params *params)
+                         const struct lp_sampler_params *params,
+                         int texture_index, int sampler_index,
+                         LLVMValueRef *tex_ret)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(
@@ -3531,24 +4072,29 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
    LLVMValueRef function, inst;
    LLVMValueRef args[LP_MAX_TEX_FUNC_ARGS];
    LLVMBasicBlockRef bb;
-   LLVMValueRef tex_ret;
    unsigned num_args = 0;
    char func_name[64];
    unsigned i, num_coords, num_derivs, num_offsets, layer;
-   unsigned texture_index = params->texture_index;
-   unsigned sampler_index = params->sampler_index;
    unsigned sample_key = params->sample_key;
    const LLVMValueRef *coords = params->coords;
    const LLVMValueRef *offsets = params->offsets;
    const struct lp_derivatives *derivs = params->derivs;
    enum lp_sampler_lod_control lod_control;
+   enum lp_sampler_op_type op_type;
    boolean need_cache = FALSE;
 
    lod_control = (sample_key & LP_SAMPLER_LOD_CONTROL_MASK) >>
                     LP_SAMPLER_LOD_CONTROL_SHIFT;
 
+   op_type = (sample_key & LP_SAMPLER_OP_TYPE_MASK) >>
+                    LP_SAMPLER_OP_TYPE_SHIFT;
+
    get_target_info(static_texture_state->target,
                    &num_coords, &num_derivs, &num_offsets, &layer);
+
+   /* lod query doesn't take a layer */
+   if (layer && op_type == LP_SAMPLER_OP_LODQ)
+      layer = 0;
 
    if (dynamic_state->cache_ptr) {
       const struct util_format_description *format_desc;
@@ -3565,8 +4111,8 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
     * Additionally lod_property has to be included too.
     */
 
-   util_snprintf(func_name, sizeof(func_name), "texfunc_res_%d_sam_%d_%x",
-                 texture_index, sampler_index, sample_key);
+   snprintf(func_name, sizeof(func_name), "texfunc_res_%d_sam_%d_%x",
+            texture_index, sampler_index, sample_key);
 
    function = LLVMGetNamedFunction(module, func_name);
 
@@ -3582,6 +4128,8 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
        */
 
       arg_types[num_param++] = LLVMTypeOf(params->context_ptr);
+      if (params->aniso_filter_table)
+         arg_types[num_param++] = LLVMTypeOf(params->aniso_filter_table);
       if (need_cache) {
          arg_types[num_param++] = LLVMTypeOf(params->thread_data_ptr);
       }
@@ -3595,6 +4143,9 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
       }
       if (sample_key & LP_SAMPLER_SHADOW) {
          arg_types[num_param++] = LLVMTypeOf(coords[0]);
+      }
+      if (sample_key & LP_SAMPLER_FETCH_MS) {
+         arg_types[num_param++] = LLVMTypeOf(params->ms_index);
       }
       if (sample_key & LP_SAMPLER_OFFSETS) {
          for (i = 0; i < num_offsets; i++) {
@@ -3640,11 +4191,14 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
                                sampler_index,
                                function,
                                num_param,
-                               sample_key);
+                               sample_key,
+                               params->aniso_filter_table ? true : false);
    }
 
    num_args = 0;
    args[num_args++] = params->context_ptr;
+   if (params->aniso_filter_table)
+      args[num_args++] = params->aniso_filter_table;
    if (need_cache) {
       args[num_args++] = params->thread_data_ptr;
    }
@@ -3656,6 +4210,9 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
    }
    if (sample_key & LP_SAMPLER_SHADOW) {
       args[num_args++] = coords[4];
+   }
+   if (sample_key & LP_SAMPLER_FETCH_MS) {
+      args[num_args++] = params->ms_index;
    }
    if (sample_key & LP_SAMPLER_OFFSETS) {
       for (i = 0; i < num_offsets; i++) {
@@ -3675,14 +4232,11 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
 
    assert(num_args <= LP_MAX_TEX_FUNC_ARGS);
 
-   tex_ret = LLVMBuildCall(builder, function, args, num_args, "");
+   *tex_ret = LLVMBuildCall(builder, function, args, num_args, "");
    bb = LLVMGetInsertBlock(builder);
    inst = LLVMGetLastInstruction(bb);
    LLVMSetInstructionCallConv(inst, LLVMFastCallConv);
 
-   for (i = 0; i < 4; i++) {
-      params->texel[i] = LLVMBuildExtractValue(gallivm->builder, tex_ret, i, "");
-   }
 }
 
 
@@ -3736,11 +4290,16 @@ lp_build_sample_soa(const struct lp_static_texture_state *static_texture_state,
    }
 
    if (use_tex_func) {
+      LLVMValueRef tex_ret;
       lp_build_sample_soa_func(gallivm,
                                static_texture_state,
                                static_sampler_state,
                                dynamic_state,
-                               params);
+                               params, params->texture_index, params->sampler_index, &tex_ret);
+
+      for (unsigned i = 0; i < 4; i++) {
+         params->texel[i] = LLVMBuildExtractValue(gallivm->builder, tex_ret, i, "");
+      }
    }
    else {
       lp_build_sample_soa_code(gallivm,
@@ -3757,6 +4316,8 @@ lp_build_sample_soa(const struct lp_static_texture_state *static_texture_state,
                                params->offsets,
                                params->derivs,
                                params->lod,
+                               params->ms_index,
+                               params->aniso_filter_table,
                                params->texel);
    }
 }
@@ -3777,6 +4338,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    LLVMValueRef context_ptr = params->context_ptr;
    unsigned texture_unit = params->texture_unit;
    unsigned target = params->target;
+   LLVMValueRef texture_unit_offset = params->texture_unit_offset;
 
    if (static_state->format == PIPE_FORMAT_NONE) {
       /*
@@ -3820,27 +4382,25 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
 
    dims = texture_dims(target);
 
-   switch (target) {
-   case PIPE_TEXTURE_1D_ARRAY:
-   case PIPE_TEXTURE_2D_ARRAY:
-   case PIPE_TEXTURE_CUBE_ARRAY:
-      has_array = TRUE;
-      break;
-   default:
-      has_array = FALSE;
-      break;
-   }
+   has_array = has_layer_coord(target);
 
    assert(!params->int_type.floating);
 
    lp_build_context_init(&bld_int_vec4, gallivm, lp_type_int_vec(32, 128));
 
+   if (params->samples_only) {
+      params->sizes_out[0] = lp_build_broadcast(gallivm, lp_build_vec_type(gallivm, params->int_type),
+                                                dynamic_state->num_samples(dynamic_state, gallivm,
+                                                                           context_ptr, texture_unit,
+                                                                           texture_unit_offset));
+      return;
+   }
    if (params->explicit_lod) {
       /* FIXME: this needs to honor per-element lod */
       lod = LLVMBuildExtractElement(gallivm->builder, params->explicit_lod,
                                     lp_build_const_int32(gallivm, 0), "");
       first_level = dynamic_state->first_level(dynamic_state, gallivm,
-                                               context_ptr, texture_unit);
+                                               context_ptr, texture_unit, texture_unit_offset);
       level = LLVMBuildAdd(gallivm->builder, lod, first_level, "level");
       lod = lp_build_broadcast_scalar(&bld_int_vec4, level);
    } else {
@@ -3851,20 +4411,20 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
 
    size = LLVMBuildInsertElement(gallivm->builder, size,
                                  dynamic_state->width(dynamic_state, gallivm,
-                                                      context_ptr, texture_unit),
+                                                      context_ptr, texture_unit, texture_unit_offset),
                                  lp_build_const_int32(gallivm, 0), "");
 
    if (dims >= 2) {
       size = LLVMBuildInsertElement(gallivm->builder, size,
                                     dynamic_state->height(dynamic_state, gallivm,
-                                                          context_ptr, texture_unit),
+                                                          context_ptr, texture_unit, texture_unit_offset),
                                     lp_build_const_int32(gallivm, 1), "");
    }
 
    if (dims >= 3) {
       size = LLVMBuildInsertElement(gallivm->builder, size,
                                     dynamic_state->depth(dynamic_state, gallivm,
-                                                         context_ptr, texture_unit),
+                                                         context_ptr, texture_unit, texture_unit_offset),
                                     lp_build_const_int32(gallivm, 2), "");
    }
 
@@ -3872,7 +4432,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
 
    if (has_array) {
       LLVMValueRef layers = dynamic_state->depth(dynamic_state, gallivm,
-                                                 context_ptr, texture_unit);
+                                                 context_ptr, texture_unit, texture_unit_offset);
       if (target == PIPE_TEXTURE_CUBE_ARRAY) {
          /*
           * It looks like GL wants number of cubes, d3d10.1 has it undefined?
@@ -3898,7 +4458,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
       /* everything is scalar for now */
       lp_build_context_init(&leveli_bld, gallivm, lp_type_int_vec(32, 32));
       last_level = dynamic_state->last_level(dynamic_state, gallivm,
-                                             context_ptr, texture_unit);
+                                             context_ptr, texture_unit, texture_unit_offset);
 
       out = lp_build_cmp(&leveli_bld, PIPE_FUNC_LESS, level, first_level);
       out1 = lp_build_cmp(&leveli_bld, PIPE_FUNC_GREATER, level, last_level);
@@ -3939,11 +4499,376 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
          LLVMValueRef last_level;
 
          last_level = dynamic_state->last_level(dynamic_state, gallivm,
-                                                context_ptr, texture_unit);
+                                                context_ptr, texture_unit, texture_unit_offset);
          num_levels = lp_build_sub(&bld_int_scalar, last_level, first_level);
          num_levels = lp_build_add(&bld_int_scalar, num_levels, bld_int_scalar.one);
       }
       params->sizes_out[3] = lp_build_broadcast(gallivm, lp_build_vec_type(gallivm, params->int_type),
                                         num_levels);
+   }
+}
+
+static void
+lp_build_do_atomic_soa(struct gallivm_state *gallivm,
+                       const struct util_format_description *format_desc,
+                       struct lp_type type,
+                       LLVMValueRef exec_mask,
+                       LLVMValueRef base_ptr,
+                       LLVMValueRef offset,
+                       LLVMValueRef out_of_bounds,
+                       unsigned img_op,
+                       LLVMAtomicRMWBinOp op,
+                       const LLVMValueRef rgba_in[4],
+                       const LLVMValueRef rgba2_in[4],
+                       LLVMValueRef atomic_result[4])
+{
+   enum pipe_format format = format_desc->format;
+
+   if (format != PIPE_FORMAT_R32_UINT && format != PIPE_FORMAT_R32_SINT && format != PIPE_FORMAT_R32_FLOAT) {
+      atomic_result[0] = lp_build_zero(gallivm, type);
+      return;
+   }
+
+   LLVMValueRef atom_res = lp_build_alloca(gallivm,
+                                           LLVMVectorType(LLVMInt32TypeInContext(gallivm->context), type.length), "");
+
+   offset = LLVMBuildGEP(gallivm->builder, base_ptr, &offset, 1, "");
+   struct lp_build_loop_state loop_state;
+   lp_build_loop_begin(&loop_state, gallivm, lp_build_const_int32(gallivm, 0));
+   struct lp_build_if_state ifthen;
+   LLVMValueRef cond;
+   LLVMValueRef packed = rgba_in[0], packed2 = rgba2_in[0];
+
+   LLVMValueRef should_store_mask = LLVMBuildAnd(gallivm->builder, exec_mask, LLVMBuildNot(gallivm->builder, out_of_bounds, ""), "store_mask");
+   assert(exec_mask);
+
+   cond = LLVMBuildICmp(gallivm->builder, LLVMIntNE, should_store_mask, lp_build_const_int_vec(gallivm, type, 0), "");
+   cond = LLVMBuildExtractElement(gallivm->builder, cond, loop_state.counter, "");
+   lp_build_if(&ifthen, gallivm, cond);
+
+   LLVMValueRef data = LLVMBuildExtractElement(gallivm->builder, packed, loop_state.counter, "");
+   LLVMValueRef cast_base_ptr = LLVMBuildExtractElement(gallivm->builder, offset, loop_state.counter, "");
+   cast_base_ptr = LLVMBuildBitCast(gallivm->builder, cast_base_ptr, LLVMPointerType(LLVMInt32TypeInContext(gallivm->context), 0), "");
+   data = LLVMBuildBitCast(gallivm->builder, data, LLVMInt32TypeInContext(gallivm->context), "");
+
+   if (img_op == LP_IMG_ATOMIC_CAS) {
+      LLVMValueRef cas_src_ptr = LLVMBuildExtractElement(gallivm->builder, packed2, loop_state.counter, "");
+      LLVMValueRef cas_src = LLVMBuildBitCast(gallivm->builder, cas_src_ptr, LLVMInt32TypeInContext(gallivm->context), "");
+      data = LLVMBuildAtomicCmpXchg(gallivm->builder, cast_base_ptr, data,
+                                    cas_src,
+                                    LLVMAtomicOrderingSequentiallyConsistent,
+                                    LLVMAtomicOrderingSequentiallyConsistent,
+                                    false);
+      data = LLVMBuildExtractValue(gallivm->builder, data, 0, "");
+   } else {
+      data = LLVMBuildAtomicRMW(gallivm->builder, op,
+                                cast_base_ptr, data,
+                                LLVMAtomicOrderingSequentiallyConsistent,
+                                false);
+   }
+
+   LLVMValueRef temp_res = LLVMBuildLoad(gallivm->builder, atom_res, "");
+   temp_res = LLVMBuildInsertElement(gallivm->builder, temp_res, data, loop_state.counter, "");
+   LLVMBuildStore(gallivm->builder, temp_res, atom_res);
+
+   lp_build_endif(&ifthen);
+   lp_build_loop_end_cond(&loop_state, lp_build_const_int32(gallivm, type.length),
+                          NULL, LLVMIntUGE);
+   atomic_result[0] = LLVMBuildLoad(gallivm->builder, atom_res, "");
+}
+
+static void
+lp_build_img_op_no_format(struct gallivm_state *gallivm,
+                          const struct lp_img_params *params,
+                          LLVMValueRef outdata[4])
+{
+   /*
+    * If there's nothing bound, format is NONE, and we must return
+    * all zero as mandated by d3d10 in this case.
+       */
+   if (params->img_op != LP_IMG_STORE) {
+      LLVMValueRef zero = lp_build_zero(gallivm, params->type);
+      for (unsigned chan = 0; chan < (params->img_op == LP_IMG_LOAD ? 4 : 1); chan++) {
+         outdata[chan] = zero;
+      }
+   }
+}
+
+void
+lp_build_img_op_soa(const struct lp_static_texture_state *static_texture_state,
+                    struct lp_sampler_dynamic_state *dynamic_state,
+                    struct gallivm_state *gallivm,
+                    const struct lp_img_params *params,
+                    LLVMValueRef outdata[4])
+{
+   unsigned target = params->target;
+   unsigned dims = texture_dims(target);
+   /** regular scalar int type */
+   struct lp_type int_coord_type;
+   struct lp_build_context int_coord_bld;
+   const struct util_format_description *format_desc = util_format_description(static_texture_state->format);
+   LLVMValueRef x = params->coords[0], y = params->coords[1], z = params->coords[2];
+   LLVMValueRef ms_index = params->ms_index;
+   LLVMValueRef row_stride_vec = NULL, img_stride_vec = NULL;
+   int_coord_type = lp_uint_type(params->type);
+   lp_build_context_init(&int_coord_bld, gallivm, int_coord_type);
+
+   if (static_texture_state->format == PIPE_FORMAT_NONE) {
+      lp_build_img_op_no_format(gallivm, params, outdata);
+      return;
+   }
+   LLVMValueRef offset, i, j;
+
+   LLVMValueRef row_stride = dynamic_state->row_stride(dynamic_state, gallivm,
+                                                       params->context_ptr, params->image_index, NULL);
+   LLVMValueRef img_stride = dynamic_state->img_stride(dynamic_state, gallivm,
+                                                       params->context_ptr, params->image_index, NULL);
+   LLVMValueRef base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm,
+                                                   params->context_ptr, params->image_index, NULL);
+   LLVMValueRef width = dynamic_state->width(dynamic_state, gallivm,
+                                                params->context_ptr, params->image_index, NULL);
+   LLVMValueRef height = dynamic_state->height(dynamic_state, gallivm,
+                                               params->context_ptr, params->image_index, NULL);
+   LLVMValueRef depth = dynamic_state->depth(dynamic_state, gallivm,
+                                              params->context_ptr, params->image_index, NULL);
+   LLVMValueRef num_samples = NULL, sample_stride = NULL;
+   if (ms_index) {
+      num_samples = dynamic_state->num_samples(dynamic_state, gallivm,
+                                               params->context_ptr, params->image_index, NULL);
+      sample_stride = dynamic_state->sample_stride(dynamic_state, gallivm,
+                                                   params->context_ptr, params->image_index, NULL);
+   }
+
+   boolean layer_coord = has_layer_coord(target);
+
+   width = lp_build_broadcast_scalar(&int_coord_bld, width);
+   if (dims >= 2) {
+      height = lp_build_broadcast_scalar(&int_coord_bld, height);
+      row_stride_vec = lp_build_broadcast_scalar(&int_coord_bld, row_stride);
+   }
+   if (dims >= 3 || layer_coord) {
+      depth = lp_build_broadcast_scalar(&int_coord_bld, depth);
+      img_stride_vec = lp_build_broadcast_scalar(&int_coord_bld, img_stride);
+   }
+
+   LLVMValueRef out_of_bounds = int_coord_bld.zero;
+   LLVMValueRef out1;
+   out1 = lp_build_cmp(&int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
+   out_of_bounds = lp_build_or(&int_coord_bld, out_of_bounds, out1);
+
+   if (dims >= 2) {
+      out1 = lp_build_cmp(&int_coord_bld, PIPE_FUNC_GEQUAL, y, height);
+      out_of_bounds = lp_build_or(&int_coord_bld, out_of_bounds, out1);
+   }
+   if (dims >= 3) {
+      out1 = lp_build_cmp(&int_coord_bld, PIPE_FUNC_GEQUAL, z, depth);
+      out_of_bounds = lp_build_or(&int_coord_bld, out_of_bounds, out1);
+   }
+   lp_build_sample_offset(&int_coord_bld,
+                          format_desc,
+                          x, y, z, row_stride_vec, img_stride_vec,
+                          &offset, &i, &j);
+
+   if (ms_index) {
+      out1 = lp_build_cmp(&int_coord_bld, PIPE_FUNC_GEQUAL, ms_index, lp_build_broadcast_scalar(&int_coord_bld, num_samples));
+      out_of_bounds = lp_build_or(&int_coord_bld, out_of_bounds, out1);
+
+      offset = lp_build_add(&int_coord_bld, offset,
+                            lp_build_mul(&int_coord_bld, lp_build_broadcast_scalar(&int_coord_bld, sample_stride),
+                                         ms_index));
+   }
+   if (params->img_op == LP_IMG_LOAD) {
+      struct lp_type texel_type = lp_build_texel_type(params->type, format_desc);
+
+      offset = lp_build_andnot(&int_coord_bld, offset, out_of_bounds);
+      struct lp_build_context texel_bld;
+      lp_build_context_init(&texel_bld, gallivm, texel_type);
+      lp_build_fetch_rgba_soa(gallivm,
+                              format_desc,
+                              texel_type, TRUE,
+                              base_ptr, offset,
+                              i, j,
+                              NULL,
+                              outdata);
+
+      for (unsigned chan = 0; chan < 3; chan++) {
+         outdata[chan] = lp_build_select(&texel_bld, out_of_bounds,
+                                         texel_bld.zero, outdata[chan]);
+      }
+      if (format_desc->swizzle[3] == PIPE_SWIZZLE_1)
+         outdata[3] = lp_build_select(&texel_bld, out_of_bounds,
+                                      texel_bld.one, outdata[3]);
+      else
+         outdata[3] = lp_build_select(&texel_bld, out_of_bounds,
+                                      texel_bld.zero, outdata[3]);
+   } else if (params->img_op == LP_IMG_STORE) {
+      lp_build_store_rgba_soa(gallivm, format_desc, params->type, params->exec_mask, base_ptr, offset, out_of_bounds,
+                              params->indata);
+   } else {
+      lp_build_do_atomic_soa(gallivm, format_desc, params->type, params->exec_mask, base_ptr, offset, out_of_bounds,
+                             params->img_op, params->op, params->indata, params->indata2, outdata);
+   }
+}
+
+/*
+ * These functions are for indirect texture access suppoort.
+ *
+ * Indirect textures are implemented using a switch statement, that
+ * takes the texture index and jumps to the sampler functions for
+ * that texture unit.
+ */
+
+/*
+ * Initialise an indexed sampler switch block.
+ *
+ * This sets up the switch_info state and adds the LLVM flow control pieces.
+ */
+void
+lp_build_sample_array_init_soa(struct lp_build_sample_array_switch *switch_info,
+                           struct gallivm_state *gallivm,
+                           const struct lp_sampler_params *params,
+                           LLVMValueRef idx,
+                           unsigned base, unsigned range)
+{
+   switch_info->gallivm = gallivm;
+   switch_info->params = *params;
+   switch_info->base = base;
+   switch_info->range = range;
+
+   /* for generating the switch functions we don't want the texture index offset */
+   switch_info->params.texture_index_offset = 0;
+
+   LLVMBasicBlockRef initial_block = LLVMGetInsertBlock(gallivm->builder);
+   switch_info->merge_ref = lp_build_insert_new_block(gallivm, "texmerge");
+
+   switch_info->switch_ref = LLVMBuildSwitch(gallivm->builder, idx,
+                                             switch_info->merge_ref, range - base);
+
+   LLVMTypeRef val_type[4];
+   val_type[0] = val_type[1] = val_type[2] = val_type[3] =
+      lp_build_vec_type(gallivm, params->type);
+   LLVMTypeRef ret_type = LLVMStructTypeInContext(gallivm->context, val_type, 4, 0);
+
+   LLVMValueRef undef_val = LLVMGetUndef(ret_type);
+
+   LLVMPositionBuilderAtEnd(gallivm->builder, switch_info->merge_ref);
+
+   switch_info->phi = LLVMBuildPhi(gallivm->builder, ret_type, "");
+   LLVMAddIncoming(switch_info->phi, &undef_val, &initial_block, 1);
+}
+
+/*
+ * Add an individual entry to the indirect texture switch.
+ *
+ * This builds the sample function and links a case for it into the switch statement.
+ */
+void
+lp_build_sample_array_case_soa(struct lp_build_sample_array_switch *switch_info,
+                           int idx,
+                           const struct lp_static_texture_state *static_texture_state,
+                           const struct lp_static_sampler_state *static_sampler_state,
+                           struct lp_sampler_dynamic_state *dynamic_texture_state)
+{
+   struct gallivm_state *gallivm = switch_info->gallivm;
+   LLVMBasicBlockRef this_block = lp_build_insert_new_block(gallivm, "texblock");
+   LLVMValueRef tex_ret;
+
+   LLVMAddCase(switch_info->switch_ref, LLVMConstInt(LLVMInt32TypeInContext(gallivm->context), idx, 0), this_block);
+   LLVMPositionBuilderAtEnd(gallivm->builder, this_block);
+
+   lp_build_sample_soa_func(gallivm, static_texture_state,
+                            static_sampler_state, dynamic_texture_state, &switch_info->params, idx, idx,
+                            &tex_ret);
+
+   LLVMAddIncoming(switch_info->phi, &tex_ret, &this_block, 1);
+   LLVMBuildBr(gallivm->builder, switch_info->merge_ref);
+}
+
+/*
+ * Finish a switch statement.
+ *
+ * This handles extract the results from the switch.
+ */
+void lp_build_sample_array_fini_soa(struct lp_build_sample_array_switch *switch_info)
+{
+   struct gallivm_state *gallivm = switch_info->gallivm;
+
+   LLVMPositionBuilderAtEnd(gallivm->builder, switch_info->merge_ref);
+   for (unsigned i = 0; i < 4; i++)
+      switch_info->params.texel[i] = LLVMBuildExtractValue(gallivm->builder, switch_info->phi, i, "");
+}
+
+void
+lp_build_image_op_switch_soa(struct lp_build_img_op_array_switch *switch_info,
+                             struct gallivm_state *gallivm,
+                             const struct lp_img_params *params,
+                             LLVMValueRef idx,
+                             unsigned base, unsigned range)
+{
+   switch_info->gallivm = gallivm;
+   switch_info->params = *params;
+   switch_info->base = base;
+   switch_info->range = range;
+
+   /* for generating the switch functions we don't want the texture index offset */
+   switch_info->params.image_index_offset = 0;
+
+   LLVMBasicBlockRef initial_block = LLVMGetInsertBlock(gallivm->builder);
+   switch_info->merge_ref = lp_build_insert_new_block(gallivm, "imgmerge");
+
+   switch_info->switch_ref = LLVMBuildSwitch(gallivm->builder, idx,
+                                             switch_info->merge_ref, range - base);
+
+   if (params->img_op != LP_IMG_STORE) {
+      LLVMTypeRef ret_type = lp_build_vec_type(gallivm, params->type);
+      LLVMValueRef undef_val = LLVMGetUndef(ret_type);
+
+      LLVMPositionBuilderAtEnd(gallivm->builder, switch_info->merge_ref);
+
+      for (unsigned i = 0; i < ((params->img_op == LP_IMG_LOAD) ? 4 : 1); i++) {
+         switch_info->phi[i] = LLVMBuildPhi(gallivm->builder, ret_type, "");
+         LLVMAddIncoming(switch_info->phi[i], &undef_val, &initial_block, 1);
+      }
+   }
+}
+
+void
+lp_build_image_op_array_case(struct lp_build_img_op_array_switch *switch_info,
+                            int idx,
+                            const struct lp_static_texture_state *static_texture_state,
+                            struct lp_sampler_dynamic_state *dynamic_state)
+{
+   struct gallivm_state *gallivm = switch_info->gallivm;
+   LLVMBasicBlockRef this_block = lp_build_insert_new_block(gallivm, "img");
+   LLVMValueRef tex_ret[4];
+
+   LLVMAddCase(switch_info->switch_ref, lp_build_const_int32(gallivm, idx), this_block);
+   LLVMPositionBuilderAtEnd(gallivm->builder, this_block);
+
+   switch_info->params.image_index = idx;
+
+   lp_build_img_op_soa(static_texture_state, dynamic_state, switch_info->gallivm, &switch_info->params, tex_ret);
+   if (switch_info->params.img_op != LP_IMG_STORE) {
+      for (unsigned i = 0; i < ((switch_info->params.img_op == LP_IMG_LOAD) ? 4 : 1); i++)
+         tex_ret[i] = LLVMBuildBitCast(gallivm->builder, tex_ret[i], lp_build_vec_type(gallivm, switch_info->params.type), "");
+
+      this_block = LLVMGetInsertBlock(gallivm->builder);
+      for (unsigned i = 0; i < ((switch_info->params.img_op == LP_IMG_LOAD) ? 4 : 1); i++) {
+         LLVMAddIncoming(switch_info->phi[i], &tex_ret[i], &this_block, 1);
+      }
+   }
+   LLVMBuildBr(gallivm->builder, switch_info->merge_ref);
+}
+
+void lp_build_image_op_array_fini_soa(struct lp_build_img_op_array_switch *switch_info)
+{
+   struct gallivm_state *gallivm = switch_info->gallivm;
+
+   LLVMPositionBuilderAtEnd(gallivm->builder, switch_info->merge_ref);
+
+   if (switch_info->params.img_op != LP_IMG_STORE) {
+      for (unsigned i = 0; i < ((switch_info->params.img_op == LP_IMG_LOAD) ? 4 : 1); i++) {
+         switch_info->params.outdata[i] = switch_info->phi[i];
+      }
    }
 }

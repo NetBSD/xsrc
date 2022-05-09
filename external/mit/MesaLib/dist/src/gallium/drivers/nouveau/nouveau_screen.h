@@ -6,7 +6,7 @@
 #include "util/u_atomic.h"
 #include "util/u_memory.h"
 
-#ifdef DEBUG
+#ifndef NDEBUG
 # define NOUVEAU_ENABLE_DRIVER_STATISTICS
 #endif
 
@@ -27,6 +27,8 @@ struct nouveau_screen {
    struct nouveau_object *channel;
    struct nouveau_client *client;
    struct nouveau_pushbuf *pushbuf;
+
+   char chipset_name[8];
 
    int refcount;
 
@@ -58,6 +60,7 @@ struct nouveau_screen {
    int64_t cpu_gpu_time_delta;
 
    bool hint_buf_keep_sysmem_copy;
+   bool tegra_sector_layout;
 
    unsigned vram_domain;
 
@@ -69,6 +72,10 @@ struct nouveau_screen {
    struct disk_cache *disk_shader_cache;
 
    bool prefer_nir;
+   bool force_enable_cl;
+   bool has_svm;
+   void *svm_cutout;
+   size_t svm_cutout_size;
 
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
    union {

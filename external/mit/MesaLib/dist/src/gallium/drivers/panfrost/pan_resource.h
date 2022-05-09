@@ -26,103 +26,139 @@
 #ifndef PAN_RESOURCE_H
 #define PAN_RESOURCE_H
 
-#include <panfrost-job.h>
 #include "pan_screen.h"
-#include "pan_allocate.h"
+#include "pan_minmax_cache.h"
+#include "pan_texture.h"
 #include "drm-uapi/drm.h"
 #include "util/u_range.h"
 
-/* Describes the memory layout of a BO */
-
-enum panfrost_memory_layout {
-        PAN_LINEAR,
-        PAN_TILED,
-        PAN_AFBC
-};
-
-struct panfrost_slice {
-        unsigned offset;
-        unsigned stride;
-};
-
-struct panfrost_bo {
-        struct pipe_reference reference;
-
-        /* Description of the mip levels */
-        struct panfrost_slice slices[MAX_MIP_LEVELS];
-
-        /* Mapping for the entire object (all levels) */
-        uint8_t *cpu;
-
-        /* GPU address for the object */
-        mali_ptr gpu;
-
-        /* Size of all entire trees */
-        size_t size;
-
-        /* Distance from tree to tree */
-        unsigned cubemap_stride;
-
-        /* Set if this bo was imported rather than allocated */
-        bool imported;
-
-        /* Internal layout (tiled?) */
-        enum panfrost_memory_layout layout;
-
-        /* If AFBC is enabled for this resource, we lug around an AFBC
-         * metadata buffer as well. The actual AFBC resource is also in
-         * afbc_slab (only defined for AFBC) at position afbc_main_offset
-         */
-
-        struct panfrost_memory afbc_slab;
-        int afbc_metadata_size;
-
-        /* If transaciton elimination is enabled, we have a dedicated
-         * buffer for that as well. */
-
-        bool has_checksum;
-        struct panfrost_memory checksum_slab;
-        int checksum_stride;
-
-        int gem_handle;
-};
-
-void
-panfrost_bo_reference(struct panfrost_bo *bo);
-
-void
-panfrost_bo_unreference(struct pipe_screen *screen, struct panfrost_bo *bo);
+#define LAYOUT_CONVERT_THRESHOLD 8
+#define PAN_MAX_BATCHES 32
 
 struct panfrost_resource {
         struct pipe_resource base;
+        struct {
+                struct pipe_scissor_state extent;
+                struct {
+                        bool enable;
+                        unsigned stride;
+                        unsigned size;
+                        BITSET_WORD *data;
+                } tile_map;
+        } damage;
 
-        struct panfrost_bo *bo;
+        struct {
+                /** Number of batches accessing this resource. Used to check if
+                 * a resource is in use. */
+                _Atomic unsigned nr_users;
+
+                /** Number of batches writing this resource. Note that only one
+                 * batch per context may write a resource, so this is the
+                 * number of contexts that have an active writer. */
+                _Atomic unsigned nr_writers;
+        } track;
+
         struct renderonly_scanout *scanout;
 
         struct panfrost_resource *separate_stencil;
 
         struct util_range valid_buffer_range;
+
+        /* Description of the resource layout */
+        struct pan_image image;
+
+        struct {
+                /* Is the checksum for this image valid? Implicitly refers to
+                 * the first slice; we only checksum non-mipmapped 2D images */
+                bool crc;
+
+                /* Has anything been written to this slice? */
+                BITSET_DECLARE(data, MAX_MIP_LEVELS);
+        } valid;
+
+        /* Whether the modifier can be changed */
+        bool modifier_constant;
+
+        /* Used to decide when to convert to another modifier */
+        uint16_t modifier_updates;
+
+        /* Cached min/max values for index buffers */
+        struct panfrost_minmax_cache *index_cache;
 };
 
 static inline struct panfrost_resource *
 pan_resource(struct pipe_resource *p)
 {
-   return (struct panfrost_resource *)p;
+        return (struct panfrost_resource *)p;
 }
 
-struct panfrost_gtransfer {
+struct panfrost_transfer {
         struct pipe_transfer base;
         void *map;
+        struct {
+                struct pipe_resource *rsrc;
+                struct pipe_box box;
+        } staging;
 };
 
-static inline struct panfrost_gtransfer *
+static inline struct panfrost_transfer *
 pan_transfer(struct pipe_transfer *p)
 {
-   return (struct panfrost_gtransfer *)p;
+        return (struct panfrost_transfer *)p;
 }
 
-void panfrost_resource_screen_init(struct panfrost_screen *screen);
+void panfrost_resource_screen_init(struct pipe_screen *screen);
+
+void panfrost_resource_screen_destroy(struct pipe_screen *screen);
 
 void panfrost_resource_context_init(struct pipe_context *pctx);
+
+/* Blitting */
+
+void
+panfrost_blit(struct pipe_context *pipe,
+              const struct pipe_blit_info *info);
+
+void
+panfrost_resource_set_damage_region(struct pipe_screen *screen,
+                                    struct pipe_resource *res,
+                                    unsigned int nrects,
+                                    const struct pipe_box *rects);
+
+static inline enum mali_texture_dimension
+panfrost_translate_texture_dimension(enum pipe_texture_target t) {
+        switch (t)
+        {
+        case PIPE_BUFFER:
+        case PIPE_TEXTURE_1D:
+        case PIPE_TEXTURE_1D_ARRAY:
+                return MALI_TEXTURE_DIMENSION_1D;
+
+        case PIPE_TEXTURE_2D:
+        case PIPE_TEXTURE_2D_ARRAY:
+        case PIPE_TEXTURE_RECT:
+                return MALI_TEXTURE_DIMENSION_2D;
+
+        case PIPE_TEXTURE_3D:
+                return MALI_TEXTURE_DIMENSION_3D;
+
+        case PIPE_TEXTURE_CUBE:
+        case PIPE_TEXTURE_CUBE_ARRAY:
+                return MALI_TEXTURE_DIMENSION_CUBE;
+
+        default:
+                unreachable("Unknown target");
+        }
+}
+
+void
+pan_resource_modifier_convert(struct panfrost_context *ctx,
+                              struct panfrost_resource *rsrc,
+                              uint64_t modifier, const char *reason);
+
+void
+pan_legalize_afbc_format(struct panfrost_context *ctx,
+                         struct panfrost_resource *rsrc,
+                         enum pipe_format format);
 
 #endif /* PAN_RESOURCE_H */

@@ -305,7 +305,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_PSC_SGN_NORM_CNTL                0x21dc
 #   define SGN_NORM_ZERO                                    0
 #   define SGN_NORM_ZERO_CLAMP_MINUS_ONE                    1
-#   define SGN_NORM_NO_ZERO                                 2
+#   define SGN_NORM_NO_ZERO                                 2U
 #   define R300_SGN_NORM_NO_ZERO (SGN_NORM_NO_ZERO | \
         (SGN_NORM_NO_ZERO << 2) | (SGN_NORM_NO_ZERO << 4) | \
         (SGN_NORM_NO_ZERO << 6) | (SGN_NORM_NO_ZERO << 8) | \
@@ -323,7 +323,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * In immediate mode, the pattern is always set to xyzw. In vertex array
  * mode, the swizzling pattern is e.g. used to set zw components in texture
- * coordinates with only tweo components.
+ * coordinates with only two components.
  */
 #define R300_VAP_PROG_STREAM_CNTL_EXT_0                 0x21e0
 #       define R300_SWIZZLE0_SHIFT                      0
@@ -822,8 +822,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_RS_COL_PTR(x)		        ((x) << 24)
 #       define R500_RS_COL_FMT(x)                       ((x) << 27)
 /* gap */
-#define R500_RS_IP_OFFSET_DIS 				(0 << 31)
-#define R500_RS_IP_OFFSET_EN 				(1 << 31)
+#define R500_RS_IP_OFFSET_DIS 				(0U << 31)
+#define R500_RS_IP_OFFSET_EN 				(1U << 31)
 
 /* gap */
 
@@ -856,7 +856,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_WEIGHT_PAIR               (1<<22)
 #	define R500_TX_PHASE_SHIFT               (23)
 #	define R500_TX_DIRECTION_HORIZONTAL	 (0<<27)
-#	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
+#	define R500_TX_DIRECTION_VERTICAL	 (1<<27)
 
 #define R500_SU_TEX_WRAP_PS3		    0x4114
 
@@ -1148,7 +1148,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GA_POLY_MODE_BACK_PTYPE_TRI    (2 << 7)
 /* reserved */
 
-/* Specifies the rouding mode for geometry & color SPFP to FP conversions. */
+/* Specifies the rounding mode for geometry & color SPFP to FP conversions. */
 #define R300_GA_ROUND_MODE                            0x428c
 #	define R300_GA_ROUND_MODE_GEOMETRY_ROUND_TRUNC   (0 << 0)
 #	define R300_GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST (1 << 0)
@@ -1842,7 +1842,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #      define R400_SRC_ADDR_EXT_BIT         (1 << 19)
 #      define R400_DST_ADDR_EXT_BIT         (1 << 20)
 
-/* Output format from the unfied shader */
+/* Output format from the unified shader */
 #define R300_US_OUT_FMT_0                   0x46A4
 #	define R300_US_OUT_FMT_C4_8         (0 << 0)
 #	define R300_US_OUT_FMT_C4_10        (1 << 0)
@@ -2078,7 +2078,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_OUTC_MOD_DIV8           (6 << R300_ALU_OUTC_MOD_SHIFT)
 
 #       define R300_ALU_OUTC_CLAMP              (1 << 30)
-#       define R300_ALU_INSERT_NOP              (1 << 31)
+#       define R300_ALU_INSERT_NOP              (1U << 31)
 
 #define R300_US_ALU_ALPHA_INST_0                 0x49C0
 #       define R300_ALU_ARGA_SRC0C_X            0
@@ -2311,7 +2311,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_1     (5 << 3)
 #       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1     (6 << 3)
 #       define R500_SRC_ALPHA_0_NO_READ                (1 << 30)
-#       define R500_SRC_ALPHA_1_NO_READ                (1 << 31)
+#       define R500_SRC_ALPHA_1_NO_READ                (1U << 31)
 
 /* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
@@ -2666,8 +2666,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_CONTIGUOUS_6XAA_SAMPLES_DISABLE          (1 << 17)
 #	define R500_PEQ_PACKING_DISABLE                      (0 << 18)
 #	define R500_PEQ_PACKING_ENABLE                       (1 << 18)
-#	define R500_COVERED_PTR_MASKING_DISABLE              (0 << 18)
-#	define R500_COVERED_PTR_MASKING_ENABLE               (1 << 18)
+#	define R500_COVERED_PTR_MASKING_DISABLE              (0 << 19)
+#	define R500_COVERED_PTR_MASKING_ENABLE               (1 << 19)
 
 
 /* gap */
@@ -3310,7 +3310,7 @@ enum {
 #   define R500_FC_KBOOL(x)				(x)
 #define R500_US_FC_CTRL					0x4624
 #   define R500_FC_TEST_EN				(1 << 30)
-#   define R500_FC_FULL_FC_EN				(1 << 31)
+#   define R500_FC_FULL_FC_EN				(1U << 31)
 #define R500_US_FC_INST_0				0x9800
 #   define R500_FC_OP_JUMP				(0 << 0)
 #   define R500_FC_OP_LOOP				(1 << 0)
@@ -3489,7 +3489,7 @@ enum {
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0
 #    define R300_INDX_BUFFER_SKIP_SHIFT         16
-#    define R300_INDX_BUFFER_ONE_REG_WR		(1<<31)
+#    define R300_INDX_BUFFER_ONE_REG_WR		(1U << 31)
 
 /* Same as R300_PACKET3_3D_DRAW_VBUF but without VAP_VTX_FMT */
 #define R300_PACKET3_3D_DRAW_VBUF_2         0x00003400

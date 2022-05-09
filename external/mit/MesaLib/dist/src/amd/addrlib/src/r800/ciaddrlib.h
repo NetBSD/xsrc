@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -151,7 +151,6 @@ protected:
         UINT_32 mipLevel, UINT_32 numSamples, ADDR_COMPUTE_SURFACE_INFO_OUTPUT* pOut) const;
 
 private:
-
     VOID ReadGbTileMode(
         UINT_32 regValue, TileConfig* pCfg) const;
 
@@ -184,6 +183,16 @@ private:
     BOOL_32 CheckTcCompatibility(const ADDR_TILEINFO* pTileInfo, UINT_32 bpp, AddrTileMode tileMode,
                                  AddrTileType tileType, const ADDR_COMPUTE_SURFACE_INFO_OUTPUT* pOut) const;
 
+    BOOL_32 SupportDccAndTcCompatibility() const
+    {
+        return ((m_settings.isVolcanicIslands == TRUE) || (m_configFlags.forceDccAndTcCompat == TRUE));
+    }
+
+    BOOL_32 AltTilingEnabled() const
+    {
+        return (m_configFlags.enableAltTiling == TRUE);
+    }
+
     static const UINT_32    MacroTileTableSize = 16;
     static const UINT_32    PrtMacroModeOffset = MacroTileTableSize / 2;
     static const INT_32     MinDepth2DThinIndex = 0;
@@ -199,3 +208,5 @@ private:
 } // Addr
 
 #endif
+
+

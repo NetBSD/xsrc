@@ -58,9 +58,23 @@ struct pipe_surface;
 struct pipe_transfer;
 struct pipe_box;
 struct pipe_memory_info;
+struct pipe_vertex_buffer;
+struct pipe_vertex_element;
+struct pipe_vertex_state;
 struct disk_cache;
 struct driOptionCache;
 struct u_transfer_helper;
+struct pipe_screen;
+
+typedef struct pipe_vertex_state *
+   (*pipe_create_vertex_state_func)(struct pipe_screen *screen,
+                                    struct pipe_vertex_buffer *buffer,
+                                    const struct pipe_vertex_element *elements,
+                                    unsigned num_elements,
+                                    struct pipe_resource *indexbuf,
+                                    uint32_t full_velem_mask);
+typedef void (*pipe_vertex_state_destroy_func)(struct pipe_screen *screen,
+                                               struct pipe_vertex_state *);
 
 /**
  * Gallium screen/adapter context.  Basically everything
@@ -68,6 +82,12 @@ struct u_transfer_helper;
  * context.
  */
 struct pipe_screen {
+   /**
+    * Atomically incremented by drivers to track the number of contexts.
+    * If it's 0, it can be assumed that contexts are not tracked.
+    * Used by some places to skip locking if num_contexts == 1.
+    */
+   unsigned num_contexts;
 
    /**
     * For drivers using u_transfer_helper:
@@ -164,29 +184,29 @@ struct pipe_screen {
     * drawing surface.
     * \param bindings  bitmask of PIPE_BIND_*
     */
-   boolean (*is_format_supported)( struct pipe_screen *,
-                                   enum pipe_format format,
-                                   enum pipe_texture_target target,
-                                   unsigned sample_count,
-                                   unsigned storage_sample_count,
-                                   unsigned bindings );
+   bool (*is_format_supported)( struct pipe_screen *,
+                                enum pipe_format format,
+                                enum pipe_texture_target target,
+                                unsigned sample_count,
+                                unsigned storage_sample_count,
+                                unsigned bindings );
 
    /**
     * Check if the given pipe_format is supported as output for this codec/profile.
     * \param profile  profile to check, may also be PIPE_VIDEO_PROFILE_UNKNOWN
     */
-   boolean (*is_video_format_supported)( struct pipe_screen *,
-                                         enum pipe_format format,
-                                         enum pipe_video_profile profile,
-                                         enum pipe_video_entrypoint entrypoint );
+   bool (*is_video_format_supported)( struct pipe_screen *,
+                                      enum pipe_format format,
+                                      enum pipe_video_profile profile,
+                                      enum pipe_video_entrypoint entrypoint );
 
    /**
     * Check if we can actually create the given resource (test the dimension,
     * overall size, etc).  Used to implement proxy textures.
     * \return TRUE if size is OK, FALSE if too large.
     */
-   boolean (*can_create_resource)(struct pipe_screen *screen,
-                                  const struct pipe_resource *templat);
+   bool (*can_create_resource)(struct pipe_screen *screen,
+                               const struct pipe_resource *templat);
 
    /**
     * Create a new texture object, using the given template info.
@@ -223,7 +243,7 @@ struct pipe_screen {
                                                        void *user_memory);
 
    /**
-    * Unlike pipe_resource::bind, which describes what state trackers want,
+    * Unlike pipe_resource::bind, which describes what gallium frontends want,
     * resources can have much greater capabilities in practice, often implied
     * by the tiling layout or memory placement. This function allows querying
     * whether a capability is supported beyond what was requested by state
@@ -250,17 +270,43 @@ struct pipe_screen {
     * the resource into a format compatible for sharing. The use case is
     * OpenGL-OpenCL interop. The context parameter is allowed to be NULL.
     *
+    * NOTE: for multi-planar resources (which may or may not have the planes
+    * chained through the pipe_resource next pointer) the frontend will
+    * always call this function with the first resource of the chain. It is
+    * the pipe drivers responsibility to walk the resources as needed when
+    * called with handle->plane != 0.
+    *
     * NOTE: in the case of WINSYS_HANDLE_TYPE_FD handles, the caller
     * takes ownership of the FD.  (This is consistent with
     * EGL_MESA_image_dma_buf_export)
     *
     * \param usage  A combination of PIPE_HANDLE_USAGE_* flags.
     */
-   boolean (*resource_get_handle)(struct pipe_screen *,
-                                  struct pipe_context *context,
-				  struct pipe_resource *tex,
-				  struct winsys_handle *handle,
-				  unsigned usage);
+   bool (*resource_get_handle)(struct pipe_screen *,
+                               struct pipe_context *context,
+                               struct pipe_resource *tex,
+                               struct winsys_handle *handle,
+                               unsigned usage);
+
+   /**
+    * Get info for the given pipe resource without the need to get a
+    * winsys_handle.
+    *
+    * The context parameter can optionally be used to flush the resource and
+    * the context to make sure the resource is coherent with whatever user
+    * will use it. Some drivers may also use the context to convert
+    * the resource into a format compatible for sharing. The context parameter
+    * is allowed to be NULL.
+    */
+   bool (*resource_get_param)(struct pipe_screen *screen,
+                              struct pipe_context *context,
+                              struct pipe_resource *resource,
+                              unsigned plane,
+                              unsigned layer,
+                              unsigned level,
+                              enum pipe_resource_param param,
+                              unsigned handle_usage,
+                              uint64_t *value);
 
    /**
     * Get stride and offset for the given pipe resource without the need to get
@@ -292,6 +338,7 @@ struct pipe_screen {
     * \param subbox an optional sub region to flush
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
+                              struct pipe_context *ctx,
                               struct pipe_resource *resource,
                               unsigned level, unsigned layer,
                               void *winsys_drawable_handle,
@@ -314,10 +361,10 @@ struct pipe_screen {
     *
     * \param timeout  in nanoseconds (may be PIPE_TIMEOUT_INFINITE).
     */
-   boolean (*fence_finish)(struct pipe_screen *screen,
-                           struct pipe_context *ctx,
-                           struct pipe_fence_handle *fence,
-                           uint64_t timeout);
+   bool (*fence_finish)(struct pipe_screen *screen,
+                        struct pipe_context *ctx,
+                        struct pipe_fence_handle *fence,
+                        uint64_t timeout);
 
    /**
     * For fences created with PIPE_FLUSH_FENCE_FD (exported fd) or
@@ -464,6 +511,141 @@ struct pipe_screen {
    bool (*is_parallel_shader_compilation_finished)(struct pipe_screen *screen,
                                                    void *shader,
                                                    unsigned shader_type);
+
+   /**
+    * Set the damage region (called when KHR_partial_update() is invoked).
+    * This function is passed an array of rectangles encoding the damage area.
+    * rects are using the bottom-left origin convention.
+    * nrects = 0 means 'reset the damage region'. What 'reset' implies is HW
+    * specific. For tile-based renderers, the damage extent is typically set
+    * to cover the whole resource with no damage rect (or a 0-size damage
+    * rect). This way, the existing resource content is reloaded into the
+    * local tile buffer for every tile thus making partial tile update
+    * possible. For HW operating in immediate mode, this reset operation is
+    * likely to be a NOOP.
+    */
+   void (*set_damage_region)(struct pipe_screen *screen,
+                             struct pipe_resource *resource,
+                             unsigned int nrects,
+                             const struct pipe_box *rects);
+
+   /**
+    * Run driver-specific NIR lowering and optimization passes.
+    *
+    * gallium frontends should call this before passing shaders to drivers,
+    * and ideally also before shader caching.
+    *
+    * The driver may return a non-NULL string to trigger GLSL link failure and
+    * logging of that message in the GLSL linker log.
+    */
+   char *(*finalize_nir)(struct pipe_screen *screen, void *nir);
+
+   /*Separated memory/resource allocations interfaces for Vulkan */
+
+   /**
+    * Create a resource, and retrieve the required size for it but don't allocate
+    * any backing memory.
+    */
+   struct pipe_resource * (*resource_create_unbacked)(struct pipe_screen *,
+                                                      const struct pipe_resource *templat,
+                                                      uint64_t *size_required);
+
+   /**
+    * Allocate backing memory to be bound to resources.
+    */
+   struct pipe_memory_allocation *(*allocate_memory)(struct pipe_screen *screen,
+                                                     uint64_t size);
+   /**
+    * Free previously allocated backing memory.
+    */
+   void (*free_memory)(struct pipe_screen *screen,
+                       struct pipe_memory_allocation *);
+
+   /**
+    * Allocate fd-based memory to be bound to resources.
+    */
+   struct pipe_memory_allocation *(*allocate_memory_fd)(struct pipe_screen *screen,
+                                                        uint64_t size,
+                                                        int *fd);
+
+   /**
+    * Import memory from an fd-handle.
+    */
+   bool (*import_memory_fd)(struct pipe_screen *screen,
+                            int fd,
+                            struct pipe_memory_allocation **pmem,
+                            uint64_t *size);
+
+   /**
+    * Free previously allocated fd-based memory.
+    */
+   void (*free_memory_fd)(struct pipe_screen *screen,
+                          struct pipe_memory_allocation *pmem);
+
+   /**
+    * Bind memory to a resource.
+    */
+   bool (*resource_bind_backing)(struct pipe_screen *screen,
+                                 struct pipe_resource *pt,
+                                 struct pipe_memory_allocation *pmem,
+                                 uint64_t offset);
+
+   /**
+    * Map backing memory.
+    */
+   void *(*map_memory)(struct pipe_screen *screen,
+                       struct pipe_memory_allocation *pmem);
+
+   /**
+    * Unmap backing memory.
+    */
+   void (*unmap_memory)(struct pipe_screen *screen,
+                        struct pipe_memory_allocation *pmem);
+
+   /**
+    * Determine whether the screen supports the specified modifier
+    *
+    * Query whether the driver supports a \p modifier in combination with
+    * \p format.  If \p external_only is not NULL, the value it points to will
+    * be set to 0 or a non-zero value to indicate whether the modifier and
+    * format combination is supported only with external, or also with non-
+    * external texture targets respectively.  The \p external_only parameter is
+    * not used when the function returns false.
+    *
+    * \return true if the format+modifier pair is supported on \p screen, false
+    *         otherwise.
+    */
+   bool (*is_dmabuf_modifier_supported)(struct pipe_screen *screen,
+                                        uint64_t modifier, enum pipe_format,
+                                        bool *external_only);
+
+   /**
+    * Get the number of planes required for a given modifier/format pair.
+    *
+    * If not NULL, this function returns the number of planes needed to
+    * represent \p format in the layout specified by \p modifier, including
+    * any driver-specific auxiliary data planes.
+    *
+    * Must only be called on a modifier supported by the screen for the
+    * specified format.
+    *
+    * If NULL, no auxiliary planes are required for any modifier+format pairs
+    * supported by \p screen.  Hence, the plane count can be derived directly
+    * from \p format.
+    *
+    * \return Number of planes needed to store image data in the layout defined
+    *         by \p format and \p modifier.
+    */
+   unsigned int (*get_dmabuf_modifier_planes)(struct pipe_screen *screen,
+                                              uint64_t modifier,
+                                              enum pipe_format format);
+
+   /**
+    * Vertex state CSO functions for precomputing vertex and index buffer
+    * states for display lists.
+    */
+   pipe_create_vertex_state_func create_vertex_state;
+   pipe_vertex_state_destroy_func vertex_state_destroy;
 };
 
 
@@ -471,7 +653,8 @@ struct pipe_screen {
  * Global configuration options for screen creation.
  */
 struct pipe_screen_config {
-   const struct driOptionCache *options;
+   struct driOptionCache *options;
+   const struct driOptionCache *options_info;
 };
 
 

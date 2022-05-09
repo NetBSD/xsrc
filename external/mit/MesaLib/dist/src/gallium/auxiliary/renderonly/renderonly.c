@@ -31,31 +31,17 @@
 #include <stdio.h>
 #include <xf86drm.h>
 
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 #include "pipe/p_screen.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-
-struct renderonly *
-renderonly_dup(const struct renderonly *ro)
-{
-   struct renderonly *copy;
-
-   copy = CALLOC_STRUCT(renderonly);
-   if (!copy)
-      return NULL;
-
-   memcpy(copy, ro, sizeof(*ro));
-
-   return copy;
-}
 
 void
 renderonly_scanout_destroy(struct renderonly_scanout *scanout,
 			   struct renderonly *ro)
 {
-   struct drm_mode_destroy_dumb destroy_dumb = { };
+   struct drm_mode_destroy_dumb destroy_dumb = {0};
 
    if (ro->kms_fd != -1) {
       destroy_dumb.handle = scanout->handle;
@@ -76,7 +62,7 @@ renderonly_create_kms_dumb_buffer_for_resource(struct pipe_resource *rsc,
       .height = rsc->height0,
       .bpp = util_format_get_blocksizebits(rsc->format),
    };
-   struct drm_mode_destroy_dumb destroy_dumb = { };
+   struct drm_mode_destroy_dumb destroy_dumb = {0};
 
    scanout = CALLOC_STRUCT(renderonly_scanout);
    if (!scanout)
@@ -148,10 +134,8 @@ renderonly_create_gpu_import_for_resource(struct pipe_resource *rsc,
    err = drmPrimeFDToHandle(ro->kms_fd, fd, &scanout->handle);
    close(fd);
 
-   if (err < 0) {
-      fprintf(stderr, "drmPrimeFDToHandle() failed: %s\n", strerror(errno));
+   if (err < 0)
       goto free_scanout;
-   }
 
    return scanout;
 

@@ -34,7 +34,6 @@
 #ifndef U_MEMORY_H
 #define U_MEMORY_H
 
-#include "util/u_pointer.h"
 #include "util/u_debug.h"
 #include "util/os_memory.h"
 
@@ -61,6 +60,7 @@ extern "C" {
 
 #define align_malloc(_size, _alignment) os_malloc_aligned(_size, _alignment)
 #define align_free(_ptr) os_free_aligned(_ptr)
+#define align_realloc(_ptr, _oldsize, _newsize, _alignment) os_realloc_aligned(_ptr, _oldsize, _newsize, _alignment)
 
 static inline void *
 align_calloc(size_t size, unsigned long alignment)
@@ -75,7 +75,7 @@ align_calloc(size_t size, unsigned long alignment)
  * Duplicate a block of memory.
  */
 static inline void *
-mem_dup(const void *src, uint size)
+mem_dup(const void *src, size_t size)
 {
    void *dup = MALLOC(size);
    if (dup)
@@ -90,6 +90,10 @@ mem_dup(const void *src, uint size)
 #define Offset(TYPE, MEMBER) ((uintptr_t)&(((TYPE *)NULL)->MEMBER))
 
 
+/* Allocate a structure aligned to a cache line. (used to make atomic ops faster) */
+#define MALLOC_STRUCT_CL(T) (struct T *)align_malloc(sizeof(struct T), CACHE_LINE_SIZE)
+#define CALLOC_STRUCT_CL(T) (struct T *)align_calloc(sizeof(struct T), CACHE_LINE_SIZE)
+#define FREE_CL(ptr) align_free(ptr)
 
 #ifdef __cplusplus
 }

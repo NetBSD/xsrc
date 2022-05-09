@@ -27,10 +27,13 @@
 #ifndef H_ETNAVIV_SHADER
 #define H_ETNAVIV_SHADER
 
+#include "mesa/main/config.h"
 #include "pipe/p_state.h"
+#include "util/disk_cache.h"
 
 struct etna_context;
 struct etna_shader_variant;
+struct nir_shader;
 
 struct etna_shader_key
 {
@@ -42,6 +45,11 @@ struct etna_shader_key
 
          /* do we need to swap rb in frag color? */
          unsigned frag_rb_swap : 1;
+         /* do we need to invert front facing value? */
+         unsigned front_ccw : 1;
+         /* do we need to replace glTexCoord.xy ? */
+         unsigned sprite_coord_enable : MAX_TEXTURE_COORD_UNITS;
+         unsigned sprite_coord_yinvert : 1;
       };
       uint32_t global;
    };
@@ -56,14 +64,18 @@ etna_shader_key_equal(struct etna_shader_key *a, struct etna_shader_key *b)
 }
 
 struct etna_shader {
-    /* shader id (for debug): */
-    uint32_t id;
-    uint32_t variant_count;
+   /* shader id (for debug): */
+   uint32_t id;
+   uint32_t variant_count;
 
-    struct tgsi_token *tokens;
-    const struct etna_specs *specs;
+   struct tgsi_token *tokens;
+   struct nir_shader *nir;
+   const struct etna_specs *specs;
+   struct etna_compiler *compiler;
 
-    struct etna_shader_variant *variants;
+   struct etna_shader_variant *variants;
+
+   cache_key cache_key;     /* shader disk-cache key */
 };
 
 bool

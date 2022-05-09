@@ -31,7 +31,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "draw/draw_context.h"
 
@@ -41,7 +41,7 @@
 #include "sp_tex_sample.h"
 #include "sp_tex_tile_cache.h"
 #include "sp_screen.h"
-#include "state_tracker/sw_winsys.h"
+#include "frontend/sw_winsys.h"
 
 
 /**
@@ -100,6 +100,8 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
                            enum pipe_shader_type shader,
                            unsigned start,
                            unsigned num,
+                           unsigned unbind_num_trailing_slots,
+                           bool take_ownership,
                            struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
@@ -116,7 +118,13 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
       struct sp_sampler_view *sp_sviewdst =
          &softpipe->tgsi.sampler[shader]->sp_sview[start + i];
       struct pipe_sampler_view **pview = &softpipe->sampler_views[shader][start + i];
-      pipe_sampler_view_reference(pview, views[i]);
+
+      if (take_ownership) {
+         pipe_sampler_view_reference(pview, NULL);
+         *pview = views[i];
+      } else {
+         pipe_sampler_view_reference(pview, views[i]);
+      }
       sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[shader][start + i],
                                          views[i]);
       /*
@@ -133,6 +141,12 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
       else {
          memset(sp_sviewdst, 0,  sizeof(*sp_sviewsrc));
       }
+   }
+   for (; i < num + unbind_num_trailing_slots; i++) {
+      struct pipe_sampler_view **pview = &softpipe->sampler_views[shader][start + i];
+      pipe_sampler_view_reference(pview, NULL);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[shader][start + i],
+                                         NULL);
    }
 
 
@@ -200,7 +214,7 @@ prepare_shader_sampling(
 
          if (!sp_tex->dt) {
             /* regular texture - setup array of mipmap level offsets */
-            MAYBE_UNUSED struct pipe_resource *res = view->texture;
+            ASSERTED struct pipe_resource *res = view->texture;
             int j;
 
             if (view->target != PIPE_BUFFER) {
@@ -248,13 +262,10 @@ prepare_shader_sampling(
          }
          else {
             /* display target texture/surface */
-            /*
-             * XXX: Where should this be unmapped?
-             */
             struct softpipe_screen *screen = softpipe_screen(tex->screen);
             struct sw_winsys *winsys = screen->winsys;
             addr = winsys->displaytarget_map(winsys, sp_tex->dt,
-                                             PIPE_TRANSFER_READ);
+                                             PIPE_MAP_READ);
             row_stride[0] = sp_tex->stride[0];
             img_stride[0] = sp_tex->img_stride[0];
             mip_offsets[0] = 0;
@@ -264,13 +275,27 @@ prepare_shader_sampling(
                                  shader_type,
                                  i,
                                  width0, tex->height0, num_layers,
-                                 first_level, last_level,
+                                 first_level, last_level, 0, 0,
                                  addr,
                                  row_stride, img_stride, mip_offsets);
       }
    }
 }
 
+static void
+sp_sampler_view_display_target_unmap(struct softpipe_context *sp,
+                                     struct pipe_sampler_view *view)
+{
+   if (view) {
+      struct pipe_resource *tex = view->texture;
+      struct softpipe_resource *sp_tex = softpipe_resource(tex);
+      if (sp_tex->dt) {
+         struct softpipe_screen *screen = softpipe_screen(tex->screen);
+         struct sw_winsys *winsys = screen->winsys;
+         winsys->displaytarget_unmap(winsys, sp_tex->dt);
+      }
+   }
+}
 
 /**
  * Called during state validation when SP_NEW_TEXTURE is set.
@@ -289,6 +314,8 @@ softpipe_cleanup_vertex_sampling(struct softpipe_context *ctx)
 {
    unsigned i;
    for (i = 0; i < ARRAY_SIZE(ctx->mapped_vs_tex); i++) {
+      sp_sampler_view_display_target_unmap(
+         ctx, ctx->sampler_views[PIPE_SHADER_VERTEX][i]);
       pipe_resource_reference(&ctx->mapped_vs_tex[i], NULL);
    }
 }
@@ -311,6 +338,8 @@ softpipe_cleanup_geometry_sampling(struct softpipe_context *ctx)
 {
    unsigned i;
    for (i = 0; i < ARRAY_SIZE(ctx->mapped_gs_tex); i++) {
+      sp_sampler_view_display_target_unmap(
+         ctx, ctx->sampler_views[PIPE_SHADER_GEOMETRY][i]);
       pipe_resource_reference(&ctx->mapped_gs_tex[i], NULL);
    }
 }

@@ -32,204 +32,318 @@
 #include "si_pipe.h"
 #include "sid.h"
 
-static inline void radeon_set_config_reg_seq(struct radeon_cmdbuf *cs, unsigned reg, unsigned num)
-{
-	assert(reg < SI_CONTEXT_REG_OFFSET);
-	assert(cs->current.cdw + 2 + num <= cs->current.max_dw);
-	radeon_emit(cs, PKT3(PKT3_SET_CONFIG_REG, num, 0));
-	radeon_emit(cs, (reg - SI_CONFIG_REG_OFFSET) >> 2);
-}
+#if 0
+#include "ac_shadowed_regs.h"
+#define SI_CHECK_SHADOWED_REGS(reg_offset, count) ac_check_shadowed_regs(GFX10, CHIP_NAVI14, reg_offset, count)
+#else
+#define SI_CHECK_SHADOWED_REGS(reg_offset, count)
+#endif
 
-static inline void radeon_set_config_reg(struct radeon_cmdbuf *cs, unsigned reg, unsigned value)
-{
-	radeon_set_config_reg_seq(cs, reg, 1);
-	radeon_emit(cs, value);
-}
+#define radeon_begin(cs) struct radeon_cmdbuf *__cs = (cs); \
+                         unsigned __cs_num = __cs->current.cdw; \
+                         UNUSED unsigned __cs_num_initial = __cs_num; \
+                         uint32_t *__cs_buf = __cs->current.buf
 
-static inline void radeon_set_context_reg_seq(struct radeon_cmdbuf *cs, unsigned reg, unsigned num)
-{
-	assert(reg >= SI_CONTEXT_REG_OFFSET);
-	assert(cs->current.cdw + 2 + num <= cs->current.max_dw);
-	radeon_emit(cs, PKT3(PKT3_SET_CONTEXT_REG, num, 0));
-	radeon_emit(cs, (reg - SI_CONTEXT_REG_OFFSET) >> 2);
-}
+#define radeon_begin_again(cs) do { \
+   assert(__cs == NULL); \
+   __cs = (cs); \
+   __cs_num = __cs->current.cdw; \
+   __cs_num_initial = __cs_num; \
+   __cs_buf = __cs->current.buf; \
+} while (0)
 
-static inline void radeon_set_context_reg(struct radeon_cmdbuf *cs, unsigned reg, unsigned value)
-{
-	radeon_set_context_reg_seq(cs, reg, 1);
-	radeon_emit(cs, value);
-}
+#define radeon_end() do { \
+   __cs->current.cdw = __cs_num; \
+   assert(__cs->current.cdw <= __cs->current.max_dw); \
+   __cs = NULL; \
+} while (0)
 
-static inline void radeon_set_context_reg_idx(struct radeon_cmdbuf *cs,
-					      unsigned reg, unsigned idx,
-					      unsigned value)
-{
-	assert(reg >= SI_CONTEXT_REG_OFFSET);
-	assert(cs->current.cdw + 3 <= cs->current.max_dw);
-	radeon_emit(cs, PKT3(PKT3_SET_CONTEXT_REG, 1, 0));
-	radeon_emit(cs, (reg - SI_CONTEXT_REG_OFFSET) >> 2 | (idx << 28));
-	radeon_emit(cs, value);
-}
+#define radeon_emit(value)  __cs_buf[__cs_num++] = (value)
+#define radeon_packets_added()  (__cs_num != __cs_num_initial)
 
-static inline void radeon_set_sh_reg_seq(struct radeon_cmdbuf *cs, unsigned reg, unsigned num)
-{
-	assert(reg >= SI_SH_REG_OFFSET && reg < SI_SH_REG_END);
-	assert(cs->current.cdw + 2 + num <= cs->current.max_dw);
-	radeon_emit(cs, PKT3(PKT3_SET_SH_REG, num, 0));
-	radeon_emit(cs, (reg - SI_SH_REG_OFFSET) >> 2);
-}
+#define radeon_end_update_context_roll(sctx) do { \
+   radeon_end(); \
+   if (radeon_packets_added()) \
+      (sctx)->context_roll = true; \
+} while (0)
 
-static inline void radeon_set_sh_reg(struct radeon_cmdbuf *cs, unsigned reg, unsigned value)
-{
-	radeon_set_sh_reg_seq(cs, reg, 1);
-	radeon_emit(cs, value);
-}
+#define radeon_emit_array(values, num) do { \
+   unsigned __n = (num); \
+   memcpy(__cs_buf + __cs_num, (values), __n * 4); \
+   __cs_num += __n; \
+} while (0)
 
-static inline void radeon_set_uconfig_reg_seq(struct radeon_cmdbuf *cs, unsigned reg, unsigned num)
-{
-	assert(reg >= CIK_UCONFIG_REG_OFFSET && reg < CIK_UCONFIG_REG_END);
-	assert(cs->current.cdw + 2 + num <= cs->current.max_dw);
-	radeon_emit(cs, PKT3(PKT3_SET_UCONFIG_REG, num, 0));
-	radeon_emit(cs, (reg - CIK_UCONFIG_REG_OFFSET) >> 2);
-}
+#define radeon_set_config_reg_seq(reg, num) do { \
+   SI_CHECK_SHADOWED_REGS(reg, num); \
+   assert((reg) < SI_CONTEXT_REG_OFFSET); \
+   radeon_emit(PKT3(PKT3_SET_CONFIG_REG, num, 0)); \
+   radeon_emit(((reg) - SI_CONFIG_REG_OFFSET) >> 2); \
+} while (0)
 
-static inline void radeon_set_uconfig_reg(struct radeon_cmdbuf *cs, unsigned reg, unsigned value)
-{
-	radeon_set_uconfig_reg_seq(cs, reg, 1);
-	radeon_emit(cs, value);
-}
+#define radeon_set_config_reg(reg, value) do { \
+   radeon_set_config_reg_seq(reg, 1); \
+   radeon_emit(value); \
+} while (0)
 
-static inline void radeon_set_uconfig_reg_idx(struct radeon_cmdbuf *cs,
-					      struct si_screen *screen,
-					      unsigned reg, unsigned idx,
-					      unsigned value)
-{
-	assert(reg >= CIK_UCONFIG_REG_OFFSET && reg < CIK_UCONFIG_REG_END);
-	assert(cs->current.cdw + 3 <= cs->current.max_dw);
-	assert(idx != 0);
-	unsigned opcode = PKT3_SET_UCONFIG_REG_INDEX;
-	if (screen->info.chip_class < GFX9 ||
-	    (screen->info.chip_class == GFX9 && screen->info.me_fw_version < 26))
-		opcode = PKT3_SET_UCONFIG_REG;
-	radeon_emit(cs, PKT3(opcode, 1, 0));
-	radeon_emit(cs, (reg - CIK_UCONFIG_REG_OFFSET) >> 2 | (idx << 28));
-	radeon_emit(cs, value);
-}
+#define radeon_set_context_reg_seq(reg, num) do { \
+   SI_CHECK_SHADOWED_REGS(reg, num); \
+   assert((reg) >= SI_CONTEXT_REG_OFFSET); \
+   radeon_emit(PKT3(PKT3_SET_CONTEXT_REG, num, 0)); \
+   radeon_emit(((reg) - SI_CONTEXT_REG_OFFSET) >> 2); \
+} while (0)
+
+#define radeon_set_context_reg(reg, value) do { \
+   radeon_set_context_reg_seq(reg, 1); \
+   radeon_emit(value); \
+} while (0)
+
+#define radeon_set_context_reg_seq_array(reg, num, values) do { \
+   radeon_set_context_reg_seq(reg, num); \
+   radeon_emit_array(values, num); \
+} while (0)
+
+#define radeon_set_context_reg_idx(reg, idx, value) do { \
+   SI_CHECK_SHADOWED_REGS(reg, 1); \
+   assert((reg) >= SI_CONTEXT_REG_OFFSET); \
+   radeon_emit(PKT3(PKT3_SET_CONTEXT_REG, 1, 0)); \
+   radeon_emit(((reg) - SI_CONTEXT_REG_OFFSET) >> 2 | ((idx) << 28)); \
+   radeon_emit(value); \
+} while (0)
+
+#define radeon_set_sh_reg_seq(reg, num) do { \
+   SI_CHECK_SHADOWED_REGS(reg, num); \
+   assert((reg) >= SI_SH_REG_OFFSET && (reg) < SI_SH_REG_END); \
+   radeon_emit(PKT3(PKT3_SET_SH_REG, num, 0)); \
+   radeon_emit(((reg) - SI_SH_REG_OFFSET) >> 2); \
+} while (0)
+
+#define radeon_set_sh_reg(reg, value) do { \
+   radeon_set_sh_reg_seq(reg, 1); \
+   radeon_emit(value); \
+} while (0)
+
+#define radeon_set_uconfig_reg_seq(reg, num, perfctr) do { \
+   SI_CHECK_SHADOWED_REGS(reg, num); \
+   assert((reg) >= CIK_UCONFIG_REG_OFFSET && (reg) < CIK_UCONFIG_REG_END); \
+   radeon_emit(PKT3(PKT3_SET_UCONFIG_REG, num, perfctr)); \
+   radeon_emit(((reg) - CIK_UCONFIG_REG_OFFSET) >> 2); \
+} while (0)
+
+#define radeon_set_uconfig_reg(reg, value) do { \
+   radeon_set_uconfig_reg_seq(reg, 1, false); \
+   radeon_emit(value); \
+} while (0)
+
+#define radeon_set_uconfig_reg_perfctr(reg, value) do { \
+   radeon_set_uconfig_reg_seq(reg, 1, true); \
+   radeon_emit(value); \
+} while (0)
+
+#define radeon_set_uconfig_reg_idx(screen, chip_class, reg, idx, value) do { \
+   SI_CHECK_SHADOWED_REGS(reg, 1); \
+   assert((reg) >= CIK_UCONFIG_REG_OFFSET && (reg) < CIK_UCONFIG_REG_END); \
+   assert((idx) != 0); \
+   unsigned __opcode = PKT3_SET_UCONFIG_REG_INDEX; \
+   if ((chip_class) < GFX9 || \
+       ((chip_class) == GFX9 && (screen)->info.me_fw_version < 26)) \
+      __opcode = PKT3_SET_UCONFIG_REG; \
+   radeon_emit(PKT3(__opcode, 1, 0)); \
+   radeon_emit(((reg) - CIK_UCONFIG_REG_OFFSET) >> 2 | ((idx) << 28)); \
+   radeon_emit(value); \
+} while (0)
 
 /* Emit PKT3_SET_CONTEXT_REG if the register value is different. */
-static inline void radeon_opt_set_context_reg(struct si_context *sctx, unsigned offset,
-					      enum si_tracked_reg reg, unsigned value)
-{
-	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-
-	if (((sctx->tracked_regs.reg_saved >> reg) & 0x1) != 0x1 ||
-	    sctx->tracked_regs.reg_value[reg] != value) {
-		radeon_set_context_reg(cs, offset, value);
-
-		sctx->tracked_regs.reg_saved |= 0x1ull << reg;
-		sctx->tracked_regs.reg_value[reg] = value;
-	}
-}
+#define radeon_opt_set_context_reg(sctx, offset, reg, val) do { \
+   unsigned __value = val; \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0x1) != 0x1 || \
+       sctx->tracked_regs.reg_value[reg] != __value) { \
+      radeon_set_context_reg(offset, __value); \
+      sctx->tracked_regs.reg_saved |= 0x1ull << (reg); \
+      sctx->tracked_regs.reg_value[reg] = __value; \
+   } \
+} while (0)
 
 /**
  * Set 2 consecutive registers if any registers value is different.
  * @param offset        starting register offset
- * @param value1        is written to first register
- * @param value2        is written to second register
+ * @param val1          is written to first register
+ * @param val2          is written to second register
  */
-static inline void radeon_opt_set_context_reg2(struct si_context *sctx, unsigned offset,
-					       enum si_tracked_reg reg, unsigned value1,
-					       unsigned value2)
-{
-	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-
-	if (((sctx->tracked_regs.reg_saved >> reg) & 0x3) != 0x3 ||
-	    sctx->tracked_regs.reg_value[reg] != value1 ||
-	    sctx->tracked_regs.reg_value[reg+1] != value2) {
-		radeon_set_context_reg_seq(cs, offset, 2);
-		radeon_emit(cs, value1);
-		radeon_emit(cs, value2);
-
-		sctx->tracked_regs.reg_value[reg] = value1;
-		sctx->tracked_regs.reg_value[reg+1] = value2;
-		sctx->tracked_regs.reg_saved |= 0x3ull << reg;
-	}
-}
+#define radeon_opt_set_context_reg2(sctx, offset, reg, val1, val2) do { \
+   unsigned __value1 = (val1), __value2 = (val2); \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0x3) != 0x3 || \
+       sctx->tracked_regs.reg_value[reg] != __value1 || \
+       sctx->tracked_regs.reg_value[(reg) + 1] != __value2) { \
+      radeon_set_context_reg_seq(offset, 2); \
+      radeon_emit(__value1); \
+      radeon_emit(__value2); \
+      sctx->tracked_regs.reg_value[reg] = __value1; \
+      sctx->tracked_regs.reg_value[(reg) + 1] = __value2; \
+      sctx->tracked_regs.reg_saved |= 0x3ull << (reg); \
+   } \
+} while (0)
 
 /**
  * Set 3 consecutive registers if any registers value is different.
  */
-static inline void radeon_opt_set_context_reg3(struct si_context *sctx, unsigned offset,
-					       enum si_tracked_reg reg, unsigned value1,
-					       unsigned value2, unsigned value3)
-{
-	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-
-	if (((sctx->tracked_regs.reg_saved >> reg) & 0x7) != 0x7 ||
-	    sctx->tracked_regs.reg_value[reg] != value1 ||
-	    sctx->tracked_regs.reg_value[reg+1] != value2 ||
-	    sctx->tracked_regs.reg_value[reg+2] != value3) {
-		radeon_set_context_reg_seq(cs, offset, 3);
-		radeon_emit(cs, value1);
-		radeon_emit(cs, value2);
-		radeon_emit(cs, value3);
-
-		sctx->tracked_regs.reg_value[reg] = value1;
-		sctx->tracked_regs.reg_value[reg+1] = value2;
-		sctx->tracked_regs.reg_value[reg+2] = value3;
-		sctx->tracked_regs.reg_saved |= 0x7ull << reg;
-	}
-}
+#define radeon_opt_set_context_reg3(sctx, offset, reg, val1, val2, val3) do { \
+   unsigned __value1 = (val1), __value2 = (val2), __value3 = (val3); \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0x7) != 0x7 || \
+       sctx->tracked_regs.reg_value[reg] != __value1 || \
+       sctx->tracked_regs.reg_value[(reg) + 1] != __value2 || \
+       sctx->tracked_regs.reg_value[(reg) + 2] != __value3) { \
+      radeon_set_context_reg_seq(offset, 3); \
+      radeon_emit(__value1); \
+      radeon_emit(__value2); \
+      radeon_emit(__value3); \
+      sctx->tracked_regs.reg_value[reg] = __value1; \
+      sctx->tracked_regs.reg_value[(reg) + 1] = __value2; \
+      sctx->tracked_regs.reg_value[(reg) + 2] = __value3; \
+      sctx->tracked_regs.reg_saved |= 0x7ull << (reg); \
+   } \
+} while (0)
 
 /**
  * Set 4 consecutive registers if any registers value is different.
  */
-static inline void radeon_opt_set_context_reg4(struct si_context *sctx, unsigned offset,
-					       enum si_tracked_reg reg, unsigned value1,
-					       unsigned value2, unsigned value3,
-					       unsigned value4)
-{
-	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-
-	if (((sctx->tracked_regs.reg_saved >> reg) & 0xf) != 0xf ||
-	    sctx->tracked_regs.reg_value[reg] != value1 ||
-	    sctx->tracked_regs.reg_value[reg+1] != value2 ||
-	    sctx->tracked_regs.reg_value[reg+2] != value3 ||
-	    sctx->tracked_regs.reg_value[reg+3] != value4) {
-		radeon_set_context_reg_seq(cs, offset, 4);
-		radeon_emit(cs, value1);
-		radeon_emit(cs, value2);
-		radeon_emit(cs, value3);
-		radeon_emit(cs, value4);
-
-		sctx->tracked_regs.reg_value[reg] = value1;
-		sctx->tracked_regs.reg_value[reg+1] = value2;
-		sctx->tracked_regs.reg_value[reg+2] = value3;
-		sctx->tracked_regs.reg_value[reg+3] = value4;
-		sctx->tracked_regs.reg_saved |= 0xfull << reg;
-	}
-}
+#define radeon_opt_set_context_reg4(sctx, offset, reg, val1, val2, val3, val4) do { \
+   unsigned __value1 = (val1), __value2 = (val2), __value3 = (val3), __value4 = (val4); \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0xf) != 0xf || \
+       sctx->tracked_regs.reg_value[reg] != __value1 || \
+       sctx->tracked_regs.reg_value[(reg) + 1] != __value2 || \
+       sctx->tracked_regs.reg_value[(reg) + 2] != __value3 || \
+       sctx->tracked_regs.reg_value[(reg) + 3] != __value4) { \
+      radeon_set_context_reg_seq(offset, 4); \
+      radeon_emit(__value1); \
+      radeon_emit(__value2); \
+      radeon_emit(__value3); \
+      radeon_emit(__value4); \
+      sctx->tracked_regs.reg_value[reg] = __value1; \
+      sctx->tracked_regs.reg_value[(reg) + 1] = __value2; \
+      sctx->tracked_regs.reg_value[(reg) + 2] = __value3; \
+      sctx->tracked_regs.reg_value[(reg) + 3] = __value4; \
+      sctx->tracked_regs.reg_saved |= 0xfull << (reg); \
+   } \
+} while (0)
 
 /**
  * Set consecutive registers if any registers value is different.
  */
-static inline void radeon_opt_set_context_regn(struct si_context *sctx, unsigned offset,
-					       unsigned *value, unsigned *saved_val,
-					       unsigned num)
+#define radeon_opt_set_context_regn(sctx, offset, value, saved_val, num) do { \
+   if (memcmp(value, saved_val, sizeof(uint32_t) * (num))) { \
+      radeon_set_context_reg_seq(offset, num); \
+      radeon_emit_array(value, num); \
+      memcpy(saved_val, value, sizeof(uint32_t) * (num)); \
+   } \
+} while (0)
+
+#define radeon_opt_set_sh_reg(sctx, offset, reg, val) do { \
+   unsigned __value = val; \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0x1) != 0x1 || \
+       sctx->tracked_regs.reg_value[reg] != __value) { \
+      radeon_set_sh_reg(offset, __value); \
+      sctx->tracked_regs.reg_saved |= BITFIELD64_BIT(reg); \
+      sctx->tracked_regs.reg_value[reg] = __value; \
+   } \
+} while (0)
+
+#define radeon_opt_set_uconfig_reg(sctx, offset, reg, val) do { \
+   unsigned __value = val; \
+   if (((sctx->tracked_regs.reg_saved >> (reg)) & 0x1) != 0x1 || \
+       sctx->tracked_regs.reg_value[reg] != __value) { \
+      radeon_set_uconfig_reg(offset, __value); \
+      sctx->tracked_regs.reg_saved |= 0x1ull << (reg); \
+      sctx->tracked_regs.reg_value[reg] = __value; \
+   } \
+} while (0)
+
+#define radeon_set_privileged_config_reg(reg, value) do { \
+   assert((reg) < CIK_UCONFIG_REG_OFFSET); \
+   radeon_emit(PKT3(PKT3_COPY_DATA, 4, 0)); \
+   radeon_emit(COPY_DATA_SRC_SEL(COPY_DATA_IMM) | \
+               COPY_DATA_DST_SEL(COPY_DATA_PERF)); \
+   radeon_emit(value); \
+   radeon_emit(0); /* unused */ \
+   radeon_emit((reg) >> 2); \
+   radeon_emit(0); /* unused */ \
+} while (0)
+
+#define radeon_emit_32bit_pointer(sscreen, va) do { \
+   radeon_emit(va); \
+   assert((va) == 0 || ((va) >> 32) == sscreen->info.address32_hi); \
+} while (0)
+
+#define radeon_emit_one_32bit_pointer(sctx, desc, sh_base) do { \
+   unsigned sh_offset = (sh_base) + (desc)->shader_userdata_offset; \
+   radeon_set_sh_reg_seq(sh_offset, 1); \
+   radeon_emit_32bit_pointer(sctx->screen, (desc)->gpu_address); \
+} while (0)
+
+/* This should be evaluated at compile time if all parameters are constants. */
+static ALWAYS_INLINE unsigned
+si_get_user_data_base(enum chip_class chip_class, enum si_has_tess has_tess,
+                      enum si_has_gs has_gs, enum si_has_ngg ngg,
+                      enum pipe_shader_type shader)
 {
-	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-	int i, j;
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      /* VS can be bound as VS, ES, or LS. */
+      if (has_tess) {
+         if (chip_class >= GFX10) {
+            return R_00B430_SPI_SHADER_USER_DATA_HS_0;
+         } else if (chip_class == GFX9) {
+            return R_00B430_SPI_SHADER_USER_DATA_LS_0;
+         } else {
+            return R_00B530_SPI_SHADER_USER_DATA_LS_0;
+         }
+      } else if (chip_class >= GFX10) {
+         if (ngg || has_gs) {
+            return R_00B230_SPI_SHADER_USER_DATA_GS_0;
+         } else {
+            return R_00B130_SPI_SHADER_USER_DATA_VS_0;
+         }
+      } else if (has_gs) {
+         return R_00B330_SPI_SHADER_USER_DATA_ES_0;
+      } else {
+         return R_00B130_SPI_SHADER_USER_DATA_VS_0;
+      }
 
-	for (i = 0; i < num; i++) {
-		if (saved_val[i] != value[i]) {
-			radeon_set_context_reg_seq(cs, offset, num);
-			for (j = 0; j < num; j++)
-				radeon_emit(cs, value[j]);
+   case PIPE_SHADER_TESS_CTRL:
+      if (chip_class == GFX9) {
+         return R_00B430_SPI_SHADER_USER_DATA_LS_0;
+      } else {
+         return R_00B430_SPI_SHADER_USER_DATA_HS_0;
+      }
 
-			memcpy(saved_val, value, sizeof(uint32_t) * num);
-			break;
-		}
-	}
+   case PIPE_SHADER_TESS_EVAL:
+      /* TES can be bound as ES, VS, or not bound. */
+      if (has_tess) {
+         if (chip_class >= GFX10) {
+            if (ngg || has_gs) {
+               return R_00B230_SPI_SHADER_USER_DATA_GS_0;
+            } else {
+               return R_00B130_SPI_SHADER_USER_DATA_VS_0;
+            }
+         } else if (has_gs) {
+            return R_00B330_SPI_SHADER_USER_DATA_ES_0;
+         } else {
+            return R_00B130_SPI_SHADER_USER_DATA_VS_0;
+         }
+      } else {
+         return 0;
+      }
+
+   case PIPE_SHADER_GEOMETRY:
+      if (chip_class == GFX9) {
+         return R_00B330_SPI_SHADER_USER_DATA_ES_0;
+      } else {
+         return R_00B230_SPI_SHADER_USER_DATA_GS_0;
+      }
+
+   default:
+      assert(0);
+      return 0;
+   }
 }
 
 #endif

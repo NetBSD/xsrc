@@ -39,14 +39,14 @@ vl_create_decoder(struct pipe_context *pipe,
 /*
  * vl_video_buffer stubs
  */
-const enum pipe_format *
-vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
+void
+vl_get_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format,
+                            enum pipe_format out_format[VL_NUM_COMPONENTS])
 {
    assert(0);
-   return NULL;
 }
 
-boolean
+bool
 vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
                                     enum pipe_video_profile profile,
@@ -85,7 +85,8 @@ vl_video_buffer_template(struct pipe_resource *templ,
                          const struct pipe_video_buffer *tmpl,
                          enum pipe_format resource_format,
                          unsigned depth, unsigned array_size,
-                         unsigned usage, unsigned plane)
+                         unsigned usage, unsigned plane,
+                         enum pipe_video_chroma_format chroma_format)
 {
    assert(0);
 }

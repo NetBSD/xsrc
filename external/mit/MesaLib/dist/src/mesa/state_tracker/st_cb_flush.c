@@ -52,13 +52,12 @@ st_flush(struct st_context *st,
          struct pipe_fence_handle **fence,
          unsigned flags)
 {
-   st_flush_bitmap_cache(st);
-
    /* We want to call this function periodically.
     * Typically, it has nothing to do so it shouldn't be expensive.
     */
    st_context_free_zombie_objects(st);
 
+   st_flush_bitmap_cache(st);
    st->pipe->flush(st->pipe, fence, flags);
 }
 
@@ -74,9 +73,9 @@ st_finish(struct st_context *st)
    st_flush(st, &fence, PIPE_FLUSH_ASYNC | PIPE_FLUSH_HINT_FINISH);
 
    if (fence) {
-      st->pipe->screen->fence_finish(st->pipe->screen, NULL, fence,
-                                     PIPE_TIMEOUT_INFINITE);
-      st->pipe->screen->fence_reference(st->pipe->screen, &fence, NULL);
+      st->screen->fence_finish(st->screen, NULL, fence,
+                               PIPE_TIMEOUT_INFINITE);
+      st->screen->fence_reference(st->screen, &fence, NULL);
    }
 
    st_manager_flush_swapbuffers();
@@ -88,7 +87,7 @@ st_finish(struct st_context *st)
  * Called via ctx->Driver.Flush()
  */
 static void
-st_glFlush(struct gl_context *ctx)
+st_glFlush(struct gl_context *ctx, unsigned gallium_flush_flags)
 {
    struct st_context *st = st_context(ctx);
 
@@ -97,7 +96,7 @@ st_glFlush(struct gl_context *ctx)
     * synchronization issues.  Calling finish() here will just hide
     * problems that need to be fixed elsewhere.
     */
-   st_flush(st, NULL, 0);
+   st_flush(st, NULL, gallium_flush_flags);
 
    st_manager_flush_frontbuffer(st);
 }
@@ -136,6 +135,18 @@ gl_reset_status_from_pipe_reset_status(enum pipe_reset_status status)
 }
 
 
+static void
+st_device_reset_callback(void *data, enum pipe_reset_status status)
+{
+   struct st_context *st = data;
+
+   assert(status != PIPE_NO_RESET);
+
+   st->reset_status = status;
+   _mesa_set_context_lost_dispatch(st->ctx);
+}
+
+
 /**
  * Query information about GPU resets observed by this context
  *
@@ -152,21 +163,11 @@ st_get_graphics_reset_status(struct gl_context *ctx)
       st->reset_status = PIPE_NO_RESET;
    } else {
       status = st->pipe->get_device_reset_status(st->pipe);
+      if (status != PIPE_NO_RESET)
+         st_device_reset_callback(st, status);
    }
 
    return gl_reset_status_from_pipe_reset_status(status);
-}
-
-
-static void
-st_device_reset_callback(void *data, enum pipe_reset_status status)
-{
-   struct st_context *st = data;
-
-   assert(status != PIPE_NO_RESET);
-
-   st->reset_status = status;
-   _mesa_set_context_lost_dispatch(st->ctx);
 }
 
 

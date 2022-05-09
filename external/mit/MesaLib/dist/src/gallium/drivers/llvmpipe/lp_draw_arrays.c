@@ -51,8 +51,15 @@
  * the drawing to the 'draw' module.
  */
 static void
-llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info,
+                  unsigned drawid_offset,
+                  const struct pipe_draw_indirect_info *indirect,
+                  const struct pipe_draw_start_count_bias *draws,
+                  unsigned num_draws)
 {
+   if (!indirect && (!draws[0].count || !info->instance_count))
+      return;
+
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
    struct draw_context *draw = lp->draw;
    const void *mapped_indices = NULL;
@@ -61,8 +68,8 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (!llvmpipe_check_render_cond(lp))
       return;
 
-   if (info->indirect) {
-      util_draw_indirect(pipe, info);
+   if (indirect && indirect->buffer) {
+      util_draw_indirect(pipe, info, indirect);
       return;
    }
 
@@ -99,22 +106,31 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                        info->index_size, available_space);
    }
 
-   for (i = 0; i < lp->num_so_targets; i++) {
-      void *buf = 0;
-      if (lp->so_targets[i]) {
-         buf = llvmpipe_resource(lp->so_targets[i]->target.buffer)->data;
-         lp->so_targets[i]->mapping = buf;
-      }
-   }
-   draw_set_mapped_so_targets(draw, lp->num_so_targets,
-                              lp->so_targets);
-
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_sampler_views[PIPE_SHADER_VERTEX],
                                     lp->sampler_views[PIPE_SHADER_VERTEX]);
    llvmpipe_prepare_geometry_sampling(lp,
                                       lp->num_sampler_views[PIPE_SHADER_GEOMETRY],
                                       lp->sampler_views[PIPE_SHADER_GEOMETRY]);
+   llvmpipe_prepare_tess_ctrl_sampling(lp,
+                                       lp->num_sampler_views[PIPE_SHADER_TESS_CTRL],
+                                       lp->sampler_views[PIPE_SHADER_TESS_CTRL]);
+   llvmpipe_prepare_tess_eval_sampling(lp,
+                                       lp->num_sampler_views[PIPE_SHADER_TESS_EVAL],
+                                       lp->sampler_views[PIPE_SHADER_TESS_EVAL]);
+
+   llvmpipe_prepare_vertex_images(lp,
+                                  lp->num_images[PIPE_SHADER_VERTEX],
+                                  lp->images[PIPE_SHADER_VERTEX]);
+   llvmpipe_prepare_geometry_images(lp,
+                                    lp->num_images[PIPE_SHADER_GEOMETRY],
+                                    lp->images[PIPE_SHADER_GEOMETRY]);
+   llvmpipe_prepare_tess_ctrl_images(lp,
+                                     lp->num_images[PIPE_SHADER_TESS_CTRL],
+                                     lp->images[PIPE_SHADER_TESS_CTRL]);
+   llvmpipe_prepare_tess_eval_images(lp,
+                                     lp->num_images[PIPE_SHADER_TESS_EVAL],
+                                     lp->images[PIPE_SHADER_TESS_EVAL]);
    if (lp->gs && lp->gs->no_tokens) {
       /* we have an empty geometry shader with stream output, so
          attach the stream output info to the current vertex shader */
@@ -125,8 +141,13 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_collect_pipeline_statistics(draw,
                                     lp->active_statistics_queries > 0);
 
+   draw_collect_primitives_generated(draw,
+                                     lp->active_primgen_queries &&
+                                     !lp->queries_disabled);
+
    /* draw! */
-   draw_vbo(draw, info);
+   draw_vbo(draw, info, drawid_offset, indirect, draws, num_draws,
+            lp->patch_vertices);
 
    /*
     * unmap vertex/index buffers
@@ -137,7 +158,6 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (mapped_indices) {
       draw_set_indexes(draw, NULL, 0, 0);
    }
-   draw_set_mapped_so_targets(draw, 0, NULL);
 
    if (lp->gs && lp->gs->no_tokens) {
       /* we have attached stream output to the vs for rendering,
@@ -146,6 +166,16 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          draw_vs_reset_so(lp->vs);
       }
    }
+
+   llvmpipe_cleanup_stage_sampling(lp, PIPE_SHADER_VERTEX);
+   llvmpipe_cleanup_stage_sampling(lp, PIPE_SHADER_GEOMETRY);
+   llvmpipe_cleanup_stage_sampling(lp, PIPE_SHADER_TESS_CTRL);
+   llvmpipe_cleanup_stage_sampling(lp, PIPE_SHADER_TESS_EVAL);
+
+   llvmpipe_cleanup_stage_images(lp, PIPE_SHADER_VERTEX);
+   llvmpipe_cleanup_stage_images(lp, PIPE_SHADER_GEOMETRY);
+   llvmpipe_cleanup_stage_images(lp, PIPE_SHADER_TESS_CTRL);
+   llvmpipe_cleanup_stage_images(lp, PIPE_SHADER_TESS_EVAL);
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

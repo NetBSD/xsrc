@@ -27,7 +27,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "vmw_context.h"
 #include "vmw_screen.h"
@@ -36,7 +36,7 @@
 #include "svga_drm_public.h"
 #include "svga3d_surfacedefs.h"
 
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 
 #include "vmwgfx_drm.h"
 #include <xf86drm.h>

@@ -436,22 +436,6 @@ iter_declaration(
          TXT( ", " );
          ENM( decl->Interp.Location, tgsi_interpolate_locations );
       }
-
-      if (decl->Interp.CylindricalWrap) {
-         TXT(", CYLWRAP_");
-         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_X) {
-            CHR('X');
-         }
-         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Y) {
-            CHR('Y');
-         }
-         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Z) {
-            CHR('Z');
-         }
-         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_W) {
-            CHR('W');
-         }
-      }
    }
 
    if (decl->Declaration.Invariant) {
@@ -778,7 +762,7 @@ str_dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
       int written;
       va_list ap;
       va_start(ap, format);
-      written = util_vsnprintf(sctx->ptr, sctx->left, format, ap);
+      written = vsnprintf(sctx->ptr, sctx->left, format, ap);
       va_end(ap);
 
       /* Some complicated logic needed to handle the return value of

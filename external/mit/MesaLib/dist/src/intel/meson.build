@@ -28,9 +28,15 @@ subdir('isl')
 subdir('common')
 subdir('compiler')
 subdir('perf')
-if with_tools.contains('intel') or with_tools.contains('intel-ui')
+if with_intel_tools
   subdir('tools')
+endif
+if get_option('vulkan-layers').contains('intel-nullhw')
+  subdir('nullhw-layer')
 endif
 if with_intel_vk
   subdir('vulkan')
+endif
+if with_perfetto and (with_datasources.contains('intel') or with_datasources.contains('auto'))
+  subdir('ds')
 endif

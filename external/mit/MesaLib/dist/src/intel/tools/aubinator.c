@@ -44,7 +44,6 @@
 #include "aub_mem.h"
 
 #define CSI "\e["
-#define BLUE_HEADER  CSI "0;44m"
 #define GREEN_HEADER CSI "1;42m"
 #define NORMAL       CSI "0m"
 
@@ -59,8 +58,8 @@ static enum { COLOR_AUTO, COLOR_ALWAYS, COLOR_NEVER } option_color;
 
 uint16_t pci_id = 0;
 char *input_file = NULL, *xml_path = NULL;
-struct gen_device_info devinfo;
-struct gen_batch_decode_ctx batch_ctx;
+struct intel_device_info devinfo;
+struct intel_batch_decode_ctx batch_ctx;
 struct aub_mem mem;
 
 FILE *outfile;
@@ -78,31 +77,31 @@ aubinator_init(void *user_data, int aub_pci_id, const char *app_name)
 {
    pci_id = aub_pci_id;
 
-   if (!gen_get_device_info(pci_id, &devinfo)) {
+   if (!intel_get_device_info_from_pci_id(pci_id, &devinfo)) {
       fprintf(stderr, "can't find device information: pci_id=0x%x\n", pci_id);
       exit(EXIT_FAILURE);
    }
 
-   enum gen_batch_decode_flags batch_flags = 0;
+   enum intel_batch_decode_flags batch_flags = 0;
    if (option_color == COLOR_ALWAYS)
-      batch_flags |= GEN_BATCH_DECODE_IN_COLOR;
+      batch_flags |= INTEL_BATCH_DECODE_IN_COLOR;
    if (option_full_decode)
-      batch_flags |= GEN_BATCH_DECODE_FULL;
+      batch_flags |= INTEL_BATCH_DECODE_FULL;
    if (option_print_offsets)
-      batch_flags |= GEN_BATCH_DECODE_OFFSETS;
-   batch_flags |= GEN_BATCH_DECODE_FLOATS;
+      batch_flags |= INTEL_BATCH_DECODE_OFFSETS;
+   batch_flags |= INTEL_BATCH_DECODE_FLOATS;
 
-   gen_batch_decode_ctx_init(&batch_ctx, &devinfo, outfile, batch_flags,
-                             xml_path, NULL, NULL, NULL);
+   intel_batch_decode_ctx_init(&batch_ctx, &devinfo, outfile, batch_flags,
+                               xml_path, NULL, NULL, NULL);
 
    /* Check for valid spec instance, if wrong xml_path is passed then spec
     * instance is not initialized properly
     */
    if (!batch_ctx.spec) {
-      fprintf(stderr, "Failed to initialize gen_batch_decode_ctx "
+      fprintf(stderr, "Failed to initialize intel_batch_decode_ctx "
                       "spec instance\n");
       free(xml_path);
-      gen_batch_decode_ctx_finish(&batch_ctx);
+      intel_batch_decode_ctx_finish(&batch_ctx);
       exit(EXIT_FAILURE);
    }
 
@@ -123,13 +122,13 @@ aubinator_init(void *user_data, int aub_pci_id, const char *app_name)
 
    fprintf(outfile, "Application name: %s\n", app_name);
 
-   fprintf(outfile, "Decoding as:      %s\n", gen_get_device_name(pci_id));
+   fprintf(outfile, "Decoding as:      %s\n", devinfo.name);
 
    /* Throw in a new line before the first batch */
    fprintf(outfile, "\n");
 }
 
-static struct gen_batch_decode_bo
+static struct intel_batch_decode_bo
 get_bo(void *user_data, bool ppgtt, uint64_t addr)
 {
    if (ppgtt)
@@ -143,7 +142,7 @@ handle_execlist_write(void *user_data, enum drm_i915_gem_engine_class engine, ui
 {
    const uint32_t pphwsp_size = 4096;
    uint32_t pphwsp_addr = context_descriptor & 0xfffff000;
-   struct gen_batch_decode_bo pphwsp_bo = aub_mem_get_ggtt_bo(&mem, pphwsp_addr);
+   struct intel_batch_decode_bo pphwsp_bo = aub_mem_get_ggtt_bo(&mem, pphwsp_addr);
    uint32_t *context = (uint32_t *)((uint8_t *)pphwsp_bo.map +
                                     (pphwsp_addr - pphwsp_bo.addr) +
                                     pphwsp_size);
@@ -156,21 +155,21 @@ handle_execlist_write(void *user_data, enum drm_i915_gem_engine_class engine, ui
    mem.pml4 = (uint64_t)context[49] << 32 | context[51];
    batch_ctx.user_data = &mem;
 
-   struct gen_batch_decode_bo ring_bo = aub_mem_get_ggtt_bo(&mem,
-                                                            ring_buffer_start);
+   struct intel_batch_decode_bo ring_bo = aub_mem_get_ggtt_bo(&mem,
+                                                              ring_buffer_start);
    assert(ring_bo.size > 0);
    void *commands = (uint8_t *)ring_bo.map + (ring_buffer_start - ring_bo.addr) + ring_buffer_head;
 
    batch_ctx.get_bo = get_bo;
 
    batch_ctx.engine = engine;
-   gen_print_batch(&batch_ctx, commands,
+   intel_print_batch(&batch_ctx, commands,
                    MIN2(ring_buffer_tail - ring_buffer_head, ring_buffer_length),
                    ring_bo.addr + ring_buffer_head, true);
    aub_mem_clear_bo_maps(&mem);
 }
 
-static struct gen_batch_decode_bo
+static struct intel_batch_decode_bo
 get_legacy_bo(void *user_data, bool ppgtt, uint64_t addr)
 {
    return aub_mem_get_ggtt_bo(user_data, addr);
@@ -184,7 +183,7 @@ handle_ring_write(void *user_data, enum drm_i915_gem_engine_class engine,
    batch_ctx.get_bo = get_legacy_bo;
 
    batch_ctx.engine = engine;
-   gen_print_batch(&batch_ctx, data, data_len, 0, false);
+   intel_print_batch(&batch_ctx, data, data_len, 0, false);
 
    aub_mem_clear_bo_maps(&mem);
 }
@@ -297,7 +296,7 @@ int main(int argc, char *argv[])
       { "no-offsets",    no_argument,       (int *) &option_print_offsets, false },
       { "gen",           required_argument, NULL,                          'g' },
       { "headers",       no_argument,       (int *) &option_full_decode,   false },
-      { "color",         required_argument, NULL,                          'c' },
+      { "color",         optional_argument, NULL,                          'c' },
       { "xml",           required_argument, NULL,                          'x' },
       { "max-vbo-lines", required_argument, NULL,                          'v' },
       { NULL,            0,                 NULL,                          0 }
@@ -309,7 +308,7 @@ int main(int argc, char *argv[])
    while ((c = getopt_long(argc, argv, "", aubinator_opts, &i)) != -1) {
       switch (c) {
       case 'g': {
-         const int id = gen_device_name_to_pci_device_id(optarg);
+         const int id = intel_device_name_to_pci_device_id(optarg);
          if (id < 0) {
             fprintf(stderr, "can't parse gen: '%s', expected brw, g4x, ilk, "
                             "snb, ivb, hsw, byt, bdw, chv, skl, bxt, kbl, "
@@ -399,7 +398,7 @@ int main(int argc, char *argv[])
    free(xml_path);
 
    wait(NULL);
-   gen_batch_decode_ctx_finish(&batch_ctx);
+   intel_batch_decode_ctx_finish(&batch_ctx);
 
    return EXIT_SUCCESS;
 }

@@ -31,8 +31,8 @@
   */
 
 #include "util/u_memory.h"
-#include "util/u_format.h"
-#include "util/u_half.h"
+#include "util/format/u_format.h"
+#include "util/half_float.h"
 #include "util/u_math.h"
 #include "pipe/p_state.h"
 #include "translate.h"
@@ -40,9 +40,6 @@
 
 #define DRAW_DBG 0
 
-typedef void (*fetch_func)(void *dst,
-                           const uint8_t *src,
-                           unsigned i, unsigned j);
 typedef void (*emit_func)(const void *attrib, void *ptr);
 
 
@@ -53,7 +50,8 @@ struct translate_generic {
    struct {
       enum translate_element_type type;
 
-      fetch_func fetch;
+      void (*fetch)(void *restrict dst, const uint8_t *restrict src,
+                    unsigned width);
       unsigned buffer;
       unsigned input_offset;
       unsigned instance_divisor;
@@ -111,7 +109,7 @@ emit_##NAME(const void *attrib, void *ptr)		\
 
 #define TO_64_FLOAT(x)   ((double) x)
 #define TO_32_FLOAT(x)   (x)
-#define TO_16_FLOAT(x)   util_float_to_half(x)
+#define TO_16_FLOAT(x)   _mesa_float_to_half(x)
 
 #define TO_8_USCALED(x)  ((unsigned char) x)
 #define TO_16_USCALED(x) ((unsigned short) x)
@@ -626,7 +624,7 @@ generic_run_one(struct translate_generic *tg,
          if (likely(copy_size >= 0)) {
             memcpy(dst, src, copy_size);
          } else {
-            tg->attrib[attr].fetch(data, src, 0, 0);
+            tg->attrib[attr].fetch(data, src, 1);
 
             if (0)
                debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
@@ -799,6 +797,8 @@ translate_generic_create(const struct translate_key *key)
    for (i = 0; i < key->nr_elements; i++) {
       const struct util_format_description *format_desc =
             util_format_description(key->element[i].input_format);
+      const struct util_format_unpack_description *unpack =
+         util_format_unpack_description(key->element[i].input_format);
 
       assert(format_desc);
 
@@ -812,19 +812,9 @@ translate_generic_create(const struct translate_key *key)
             FREE(tg);
             return NULL;
          }
-
-         if (format_desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
-            assert(format_desc->fetch_rgba_sint);
-            tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_sint;
-         } else {
-            assert(format_desc->fetch_rgba_uint);
-            tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_uint;
-         }
-      } else {
-         assert(format_desc->fetch_rgba_float);
-         tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_float;
       }
 
+      tg->attrib[i].fetch = unpack->unpack_rgba;
       tg->attrib[i].buffer = key->element[i].input_buffer;
       tg->attrib[i].input_offset = key->element[i].input_offset;
       tg->attrib[i].instance_divisor = key->element[i].instance_divisor;

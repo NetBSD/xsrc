@@ -31,20 +31,43 @@ extern "C" {
 struct gl_context;
 struct gl_shader_program;
 
+struct gl_nir_linker_options {
+   bool fill_parameters;
+};
+
+#define nir_foreach_gl_uniform_variable(var, shader) \
+   nir_foreach_variable_with_modes(var, shader, nir_var_uniform | \
+                                                nir_var_mem_ubo | \
+                                                nir_var_mem_ssbo)
+
+bool gl_nir_link_spirv(struct gl_context *ctx,
+                       struct gl_shader_program *prog,
+                       const struct gl_nir_linker_options *options);
+
+bool gl_nir_link_glsl(struct gl_context *ctx, struct gl_shader_program *prog);
+
 bool gl_nir_link_uniforms(struct gl_context *ctx,
-                          struct gl_shader_program *prog);
+                          struct gl_shader_program *prog,
+                          bool fill_parameters);
 
 void gl_nir_set_uniform_initializers(struct gl_context *ctx,
                                      struct gl_shader_program *prog);
 
 void nir_build_program_resource_list(struct gl_context *ctx,
-                                     struct gl_shader_program *prog);
+                                     struct gl_shader_program *prog,
+                                     bool rebuild_resourse_list);
 
 void gl_nir_link_assign_atomic_counter_resources(struct gl_context *ctx,
                                                  struct gl_shader_program *prog);
 
+void gl_nir_link_check_atomic_counter_resources(struct gl_context *ctx,
+                                                struct gl_shader_program *prog);
+
 void gl_nir_link_assign_xfb_resources(struct gl_context *ctx,
                                       struct gl_shader_program *prog);
+
+bool gl_nir_link_uniform_blocks(struct gl_context *ctx,
+                                struct gl_shader_program *prog);
 
 #ifdef __cplusplus
 } /* extern "C" */

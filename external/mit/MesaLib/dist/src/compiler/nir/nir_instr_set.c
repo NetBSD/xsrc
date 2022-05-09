@@ -39,7 +39,7 @@ dest_is_ssa(nir_dest *dest, void *data)
    return dest->is_ssa;
 }
 
-static inline bool
+ASSERTED static inline bool
 instr_each_src_and_dest_is_ssa(const nir_instr *instr)
 {
    if (!nir_foreach_dest((nir_instr *)instr, dest_is_ssa, NULL) ||
@@ -83,7 +83,7 @@ instr_can_rewrite(const nir_instr *instr)
 }
 
 
-#define HASH(hash, data) _mesa_fnv32_1a_accumulate((hash), (data))
+#define HASH(hash, data) XXH32(&(data), sizeof(data), hash)
 
 static uint32_t
 hash_src(uint32_t hash, const nir_src *src)
@@ -110,12 +110,18 @@ static uint32_t
 hash_alu(uint32_t hash, const nir_alu_instr *instr)
 {
    hash = HASH(hash, instr->op);
+
+   /* We explicitly don't hash instr->exact. */
+   uint8_t flags = instr->no_signed_wrap |
+                   instr->no_unsigned_wrap << 1;
+   hash = HASH(hash, flags);
+
    hash = HASH(hash, instr->dest.dest.ssa.num_components);
    hash = HASH(hash, instr->dest.dest.ssa.bit_size);
-   /* We explicitly don't hash instr->dest.dest.exact */
 
-   if (nir_op_infos[instr->op].algebraic_properties & NIR_OP_IS_COMMUTATIVE) {
-      assert(nir_op_infos[instr->op].num_inputs == 2);
+   if (nir_op_infos[instr->op].algebraic_properties & NIR_OP_IS_2SRC_COMMUTATIVE) {
+      assert(nir_op_infos[instr->op].num_inputs >= 2);
+
       uint32_t hash0 = hash_alu_src(hash, &instr->src[0],
                                     nir_ssa_alu_instr_src_components(instr, 0));
       uint32_t hash1 = hash_alu_src(hash, &instr->src[1],
@@ -127,6 +133,11 @@ hash_alu(uint32_t hash, const nir_alu_instr *instr)
        * collision.  Either addition or multiplication will also work.
        */
       hash = hash0 * hash1;
+
+      for (unsigned i = 2; i < nir_op_infos[instr->op].num_inputs; i++) {
+         hash = hash_alu_src(hash, &instr->src[i],
+                             nir_ssa_alu_instr_src_components(instr, i));
+      }
    } else {
       for (unsigned i = 0; i < nir_op_infos[instr->op].num_inputs; i++) {
          hash = hash_alu_src(hash, &instr->src[i],
@@ -141,7 +152,7 @@ static uint32_t
 hash_deref(uint32_t hash, const nir_deref_instr *instr)
 {
    hash = HASH(hash, instr->deref_type);
-   hash = HASH(hash, instr->mode);
+   hash = HASH(hash, instr->modes);
    hash = HASH(hash, instr->type);
 
    if (instr->deref_type == nir_deref_type_var)
@@ -161,6 +172,8 @@ hash_deref(uint32_t hash, const nir_deref_instr *instr)
 
    case nir_deref_type_cast:
       hash = HASH(hash, instr->cast.ptr_stride);
+      hash = HASH(hash, instr->cast.align_mul);
+      hash = HASH(hash, instr->cast.align_offset);
       break;
 
    case nir_deref_type_var:
@@ -187,7 +200,7 @@ hash_load_const(uint32_t hash, const nir_load_const_instr *instr)
       }
    } else {
       unsigned size = instr->def.num_components * sizeof(*instr->value);
-      hash = _mesa_fnv32_1a_accumulate_block(hash, instr->value, size);
+      hash = XXH32(instr->value, size, hash);
    }
 
    return hash;
@@ -235,9 +248,11 @@ hash_intrinsic(uint32_t hash, const nir_intrinsic_instr *instr)
       hash = HASH(hash, instr->dest.ssa.bit_size);
    }
 
-   hash = _mesa_fnv32_1a_accumulate_block(hash, instr->const_index,
-                                          info->num_indices
-                                             * sizeof(instr->const_index[0]));
+   hash = XXH32(instr->const_index, info->num_indices * sizeof(instr->const_index[0]), hash);
+
+   for (unsigned i = 0; i < nir_intrinsic_infos[instr->intrinsic].num_srcs; i++)
+      hash = hash_src(hash, &instr->src[i]);
+
    return hash;
 }
 
@@ -257,14 +272,16 @@ hash_tex(uint32_t hash, const nir_tex_instr *instr)
    hash = HASH(hash, instr->is_array);
    hash = HASH(hash, instr->is_shadow);
    hash = HASH(hash, instr->is_new_style_shadow);
+   hash = HASH(hash, instr->is_sparse);
    unsigned component = instr->component;
    hash = HASH(hash, component);
    for (unsigned i = 0; i < 4; ++i)
       for (unsigned j = 0; j < 2; ++j)
          hash = HASH(hash, instr->tg4_offsets[i][j]);
    hash = HASH(hash, instr->texture_index);
-   hash = HASH(hash, instr->texture_array_size);
    hash = HASH(hash, instr->sampler_index);
+   hash = HASH(hash, instr->texture_non_uniform);
+   hash = HASH(hash, instr->sampler_non_uniform);
 
    return hash;
 }
@@ -279,7 +296,7 @@ static uint32_t
 hash_instr(const void *data)
 {
    const nir_instr *instr = data;
-   uint32_t hash = _mesa_fnv32_1a_offset_bias;
+   uint32_t hash = 0;
 
    switch (instr->type) {
    case nir_instr_type_alu:
@@ -349,98 +366,38 @@ get_neg_instr(nir_src s)
 }
 
 bool
-nir_const_value_negative_equal(const nir_const_value *c1,
-                               const nir_const_value *c2,
-                               unsigned components,
-                               nir_alu_type base_type,
-                               unsigned bits)
+nir_const_value_negative_equal(nir_const_value c1,
+                               nir_const_value c2,
+                               nir_alu_type full_type)
 {
-   assert(base_type == nir_alu_type_get_base_type(base_type));
-   assert(base_type != nir_type_invalid);
+   assert(nir_alu_type_get_base_type(full_type) != nir_type_invalid);
+   assert(nir_alu_type_get_type_size(full_type) != 0);
 
-   /* This can occur for 1-bit Boolean values. */
-   if (bits == 1)
-      return false;
+   switch (full_type) {
+   case nir_type_float16:
+      return _mesa_half_to_float(c1.u16) == -_mesa_half_to_float(c2.u16);
 
-   switch (base_type) {
-   case nir_type_float:
-      switch (bits) {
-      case 16:
-         for (unsigned i = 0; i < components; i++) {
-            if (_mesa_half_to_float(c1[i].u16) !=
-                -_mesa_half_to_float(c2[i].u16)) {
-               return false;
-            }
-         }
+   case nir_type_float32:
+      return c1.f32 == -c2.f32;
 
-         return true;
+   case nir_type_float64:
+      return c1.f64 == -c2.f64;
 
-      case 32:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].f32 != -c2[i].f32)
-               return false;
-         }
+   case nir_type_int8:
+   case nir_type_uint8:
+      return c1.i8 == -c2.i8;
 
-         return true;
+   case nir_type_int16:
+   case nir_type_uint16:
+      return c1.i16 == -c2.i16;
 
-      case 64:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].f64 != -c2[i].f64)
-               return false;
-         }
+   case nir_type_int32:
+   case nir_type_uint32:
+      return c1.i32 == -c2.i32;
 
-         return true;
-
-      default:
-         unreachable("unknown bit size");
-      }
-
-      break;
-
-   case nir_type_int:
-   case nir_type_uint:
-      switch (bits) {
-      case 8:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].i8 != -c2[i].i8)
-               return false;
-         }
-
-         return true;
-
-      case 16:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].i16 != -c2[i].i16)
-               return false;
-         }
-
-         return true;
-         break;
-
-      case 32:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].i32 != -c2[i].i32)
-               return false;
-         }
-
-         return true;
-
-      case 64:
-         for (unsigned i = 0; i < components; i++) {
-            if (c1[i].i64 != -c2[i].i64)
-               return false;
-         }
-
-         return true;
-
-      default:
-         unreachable("unknown bit size");
-      }
-
-      break;
-
-   case nir_type_bool:
-      return false;
+   case nir_type_int64:
+   case nir_type_uint64:
+      return c1.i64 == -c2.i64;
 
    default:
       break;
@@ -459,12 +416,31 @@ nir_const_value_negative_equal(const nir_const_value *c1,
  * This function does not detect the general case when \p alu1 and \p alu2 are
  * SSA values that are the negations of each other (e.g., \p alu1 represents
  * (a * b) and \p alu2 represents (-a * b)).
+ *
+ * \warning
+ * It is the responsibility of the caller to ensure that the component counts,
+ * write masks, and base types of the sources being compared are compatible.
  */
 bool
 nir_alu_srcs_negative_equal(const nir_alu_instr *alu1,
                             const nir_alu_instr *alu2,
                             unsigned src1, unsigned src2)
 {
+#ifndef NDEBUG
+   for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++) {
+      assert(nir_alu_instr_channel_used(alu1, src1, i) ==
+             nir_alu_instr_channel_used(alu2, src2, i));
+   }
+
+   if (nir_op_infos[alu1->op].input_types[src1] == nir_type_float) {
+      assert(nir_op_infos[alu1->op].input_types[src1] ==
+             nir_op_infos[alu2->op].input_types[src2]);
+   } else {
+      assert(nir_op_infos[alu1->op].input_types[src1] == nir_type_int);
+      assert(nir_op_infos[alu2->op].input_types[src2] == nir_type_int);
+   }
+#endif
+
    if (alu1->src[src1].abs != alu2->src[src2].abs)
       return false;
 
@@ -492,15 +468,20 @@ nir_alu_srcs_negative_equal(const nir_alu_instr *alu1,
           nir_src_bit_size(alu2->src[src2].src))
          return false;
 
-      /* FINISHME: Apply the swizzle? */
-      return nir_const_value_negative_equal(const1,
-                                            const2,
-                                            nir_ssa_alu_instr_src_components(alu1, src1),
-                                            nir_op_infos[alu1->op].input_types[src1],
-                                            nir_src_bit_size(alu1->src[src1].src));
+      const nir_alu_type full_type = nir_op_infos[alu1->op].input_types[src1] |
+                                     nir_src_bit_size(alu1->src[src1].src);
+      for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++) {
+         if (nir_alu_instr_channel_used(alu1, src1, i) &&
+             !nir_const_value_negative_equal(const1[alu1->src[src1].swizzle[i]],
+                                             const2[alu2->src[src2].swizzle[i]],
+                                             full_type))
+            return false;
+      }
+
+      return true;
    }
 
-   uint8_t alu1_swizzle[4] = {0};
+   uint8_t alu1_swizzle[NIR_MAX_VEC_COMPONENTS] = {0};
    nir_src alu1_actual_src;
    nir_alu_instr *neg1 = get_neg_instr(alu1->src[src1].src);
 
@@ -517,7 +498,7 @@ nir_alu_srcs_negative_equal(const nir_alu_instr *alu1,
          alu1_swizzle[i] = i;
    }
 
-   uint8_t alu2_swizzle[4] = {0};
+   uint8_t alu2_swizzle[NIR_MAX_VEC_COMPONENTS] = {0};
    nir_src alu2_actual_src;
    nir_alu_instr *neg2 = get_neg_instr(alu2->src[src2].src);
 
@@ -581,6 +562,14 @@ nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2)
       if (alu1->op != alu2->op)
          return false;
 
+      /* We explicitly don't compare instr->exact. */
+
+      if (alu1->no_signed_wrap != alu2->no_signed_wrap)
+         return false;
+
+      if (alu1->no_unsigned_wrap != alu2->no_unsigned_wrap)
+         return false;
+
       /* TODO: We can probably acutally do something more inteligent such
        * as allowing different numbers and taking a maximum or something
        * here */
@@ -590,14 +579,17 @@ nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2)
       if (alu1->dest.dest.ssa.bit_size != alu2->dest.dest.ssa.bit_size)
          return false;
 
-      /* We explicitly don't hash instr->dest.dest.exact */
+      if (nir_op_infos[alu1->op].algebraic_properties & NIR_OP_IS_2SRC_COMMUTATIVE) {
+         if ((!nir_alu_srcs_equal(alu1, alu2, 0, 0) ||
+              !nir_alu_srcs_equal(alu1, alu2, 1, 1)) &&
+             (!nir_alu_srcs_equal(alu1, alu2, 0, 1) ||
+              !nir_alu_srcs_equal(alu1, alu2, 1, 0)))
+            return false;
 
-      if (nir_op_infos[alu1->op].algebraic_properties & NIR_OP_IS_COMMUTATIVE) {
-         assert(nir_op_infos[alu1->op].num_inputs == 2);
-         return (nir_alu_srcs_equal(alu1, alu2, 0, 0) &&
-                 nir_alu_srcs_equal(alu1, alu2, 1, 1)) ||
-                (nir_alu_srcs_equal(alu1, alu2, 0, 1) &&
-                 nir_alu_srcs_equal(alu1, alu2, 1, 0));
+         for (unsigned i = 2; i < nir_op_infos[alu1->op].num_inputs; i++) {
+            if (!nir_alu_srcs_equal(alu1, alu2, i, i))
+               return false;
+         }
       } else {
          for (unsigned i = 0; i < nir_op_infos[alu1->op].num_inputs; i++) {
             if (!nir_alu_srcs_equal(alu1, alu2, i, i))
@@ -611,7 +603,7 @@ nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2)
       nir_deref_instr *deref2 = nir_instr_as_deref(instr2);
 
       if (deref1->deref_type != deref2->deref_type ||
-          deref1->mode != deref2->mode ||
+          deref1->modes != deref2->modes ||
           deref1->type != deref2->type)
          return false;
 
@@ -634,7 +626,9 @@ nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2)
          break;
 
       case nir_deref_type_cast:
-         if (deref1->cast.ptr_stride != deref2->cast.ptr_stride)
+         if (deref1->cast.ptr_stride != deref2->cast.ptr_stride ||
+             deref1->cast.align_mul != deref2->cast.align_mul ||
+             deref1->cast.align_offset != deref2->cast.align_offset)
             return false;
          break;
 
@@ -671,7 +665,6 @@ nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2)
           tex1->is_new_style_shadow != tex2->is_new_style_shadow ||
           tex1->component != tex2->component ||
          tex1->texture_index != tex2->texture_index ||
-         tex1->texture_array_size != tex2->texture_array_size ||
          tex1->sampler_index != tex2->sampler_index) {
          return false;
       }
@@ -810,16 +803,21 @@ nir_instr_set_destroy(struct set *instr_set)
 }
 
 bool
-nir_instr_set_add_or_rewrite(struct set *instr_set, nir_instr *instr)
+nir_instr_set_add_or_rewrite(struct set *instr_set, nir_instr *instr,
+                             bool (*cond_function) (const nir_instr *a,
+                                                    const nir_instr *b))
 {
    if (!instr_can_rewrite(instr))
       return false;
 
-   uint32_t hash = hash_instr(instr);
-   struct set_entry *e = _mesa_set_search_pre_hashed(instr_set, hash, instr);
-   if (e) {
+   struct set_entry *e = _mesa_set_search_or_add(instr_set, instr, NULL);
+   nir_instr *match = (nir_instr *) e->key;
+   if (match == instr)
+      return false;
+
+   if (!cond_function || cond_function(match, instr)) {
+      /* rewrite instruction if condition is matched */
       nir_ssa_def *def = nir_instr_get_dest_ssa_def(instr);
-      nir_instr *match = (nir_instr *) e->key;
       nir_ssa_def *new_def = nir_instr_get_dest_ssa_def(match);
 
       /* It's safe to replace an exact instruction with an inexact one as
@@ -830,12 +828,16 @@ nir_instr_set_add_or_rewrite(struct set *instr_set, nir_instr *instr)
       if (instr->type == nir_instr_type_alu && nir_instr_as_alu(instr)->exact)
          nir_instr_as_alu(match)->exact = true;
 
-      nir_ssa_def_rewrite_uses(def, nir_src_for_ssa(new_def));
-      return true;
-   }
+      nir_ssa_def_rewrite_uses(def, new_def);
 
-   _mesa_set_add_pre_hashed(instr_set, hash, instr);
-   return false;
+      nir_instr_remove(instr);
+
+      return true;
+   } else {
+      /* otherwise, replace hashed instruction */
+      e->key = instr;
+      return false;
+   }
 }
 
 void
