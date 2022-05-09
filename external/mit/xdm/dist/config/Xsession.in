@@ -1,6 +1,6 @@
 XCOMM!SHELL_CMD
 XCOMM
-XHASH $NetBSD: Xsession.in,v 1.13 2022/05/09 07:00:15 nia Exp $
+XHASH $NetBSD: Xsession.in,v 1.14 2022/05/09 09:00:20 uwe Exp $
 
 XCOMM redirect errors to a file in user's home directory if we can
 
@@ -72,7 +72,7 @@ else
 		BINDIR/xrdb -load "$resources"
 	else
 		BINDIR/xrdb -load - <<EOF
-#if COLOR
+#ifdef COLOR
 *customization: -color
 #endif
 *VT100.foreground: grey90
