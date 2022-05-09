@@ -43,6 +43,7 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
+#include <llvm/Config/llvm-config.h>
 
 #include "util/u_debug.h"
 #include "util/u_string.h"
@@ -85,14 +86,18 @@ lp_format_intrinsic(char *name,
       c = 'f';
       width = 64;
       break;
+   case LLVMHalfTypeKind:
+      c = 'f';
+      width = 16;
+      break;
    default:
       unreachable("unexpected LLVMTypeKind");
    }
 
    if (length) {
-      util_snprintf(name, size, "%s.v%u%c%u", name_root, length, c, width);
+      snprintf(name, size, "%s.v%u%c%u", name_root, length, c, width);
    } else {
-      util_snprintf(name, size, "%s.%c%u", name_root, c, width);
+      snprintf(name, size, "%s.%c%u", name_root, c, width);
    }
 }
 
@@ -121,7 +126,7 @@ lp_declare_intrinsic(LLVMModuleRef module,
 }
 
 
-#if HAVE_LLVM < 0x0400
+#if LLVM_VERSION_MAJOR < 4
 static LLVMAttribute lp_attr_to_llvm_attr(enum lp_func_attr attr)
 {
    switch (attr) {
@@ -164,7 +169,7 @@ lp_add_function_attr(LLVMValueRef function_or_call,
                      int attr_idx, enum lp_func_attr attr)
 {
 
-#if HAVE_LLVM < 0x0400
+#if LLVM_VERSION_MAJOR < 4
    LLVMAttribute llvm_attr = lp_attr_to_llvm_attr(attr);
    if (LLVMIsAFunction(function_or_call)) {
       if (attr_idx == -1) {
@@ -224,7 +229,7 @@ lp_build_intrinsic(LLVMBuilderRef builder,
 {
    LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
    LLVMValueRef function, call;
-   bool set_callsite_attrs = HAVE_LLVM >= 0x0400 &&
+   bool set_callsite_attrs = LLVM_VERSION_MAJOR >= 4 &&
                              !(attr_mask & LP_FUNC_ATTR_LEGACY);
 
    function = LLVMGetNamedFunction(module, name);
@@ -246,8 +251,9 @@ lp_build_intrinsic(LLVMBuilderRef builder,
        * than a call to address zero in the jited code).
        */
       if (LLVMGetIntrinsicID(function) == 0) {
-         _debug_printf("llvm (version 0x%x) found no intrinsic for %s, going to crash...\n",
-                HAVE_LLVM, name);
+         _debug_printf("llvm (version " MESA_LLVM_VERSION_STRING
+                       ") found no intrinsic for %s, going to crash...\n",
+                name);
          abort();
       }
 

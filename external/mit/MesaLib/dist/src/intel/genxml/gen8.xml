@@ -496,14 +496,14 @@
       <value name="YMAJOR" value="3"/>
     </field>
     <field name="Surface Horizontal Alignment" start="14" end="15" type="uint">
-      <value name="HALIGN 4" value="1"/>
-      <value name="HALIGN 8" value="2"/>
-      <value name="HALIGN 16" value="3"/>
+      <value name="HALIGN_4" value="1"/>
+      <value name="HALIGN_8" value="2"/>
+      <value name="HALIGN_16" value="3"/>
     </field>
     <field name="Surface Vertical Alignment" start="16" end="17" type="uint">
-      <value name="VALIGN 4" value="1"/>
-      <value name="VALIGN 8" value="2"/>
-      <value name="VALIGN 16" value="3"/>
+      <value name="VALIGN_4" value="1"/>
+      <value name="VALIGN_8" value="2"/>
+      <value name="VALIGN_16" value="3"/>
     </field>
     <field name="Surface Format" start="18" end="26" type="uint"/>
     <field name="Surface Array" start="28" end="28" type="bool"/>
@@ -625,15 +625,15 @@
       <value name="PROGRAMMED" value="0"/>
       <value name="OVERRIDE" value="1"/>
     </field>
-    <field name="Shadow Function" start="33" end="35" type="uint">
-      <value name="PREFILTEROP ALWAYS" value="0"/>
-      <value name="PREFILTEROP NEVER" value="1"/>
-      <value name="PREFILTEROP LESS" value="2"/>
-      <value name="PREFILTEROP EQUAL" value="3"/>
-      <value name="PREFILTEROP LEQUAL" value="4"/>
-      <value name="PREFILTEROP GREATER" value="5"/>
-      <value name="PREFILTEROP NOTEQUAL" value="6"/>
-      <value name="PREFILTEROP GEQUAL" value="7"/>
+    <field name="Shadow Function" start="33" end="35" type="uint" prefix="PREFILTEROP">
+      <value name="ALWAYS" value="0"/>
+      <value name="NEVER" value="1"/>
+      <value name="LESS" value="2"/>
+      <value name="EQUAL" value="3"/>
+      <value name="LEQUAL" value="4"/>
+      <value name="GREATER" value="5"/>
+      <value name="NOTEQUAL" value="6"/>
+      <value name="GEQUAL" value="7"/>
     </field>
     <field name="ChromaKey Mode" start="36" end="36" type="uint">
       <value name="KEYFILTER_KILL_ON_ANY_MATCH" value="0"/>
@@ -751,7 +751,7 @@
   <struct name="SO_DECL" length="1">
     <field name="Component Mask" start="0" end="3" type="uint" default="0"/>
     <field name="Register Index" start="4" end="9" type="uint"/>
-    <field name="Hole Flag" start="11" end="11" type="uint"/>
+    <field name="Hole Flag" start="11" end="11" type="bool"/>
     <field name="Output Buffer Slot" start="12" end="13" type="uint"/>
   </struct>
 
@@ -959,7 +959,7 @@
     <field name="Command SubType" start="27" end="28" type="uint" default="3"/>
     <field name="Command Type" start="29" end="31" type="uint" default="3"/>
     <field name="MOCS" start="32" end="38" type="uint"/>
-    <field name="Binding Table Pool Enable" start="43" end="43" type="uint"/>
+    <field name="Binding Table Pool Enable" start="43" end="43" type="bool"/>
     <field name="Binding Table Pool Base Address" start="44" end="95" type="address"/>
     <field name="Binding Table Pool Buffer Size" start="108" end="127" type="uint">
       <value name="No Valid Data" value="0"/>
@@ -4152,7 +4152,7 @@
   </instruction>
 
   <instruction name="MI_FLUSH_DW" bias="2" length="5" engine="video">
-    <field name="DWord Length" start="0" end="5" type="uint"/>
+    <field name="DWord Length" start="0" end="5" type="uint" default="3"/>
     <field name="Video Pipeline Cache Invalidate" start="7" end="7" type="bool"/>
     <field name="Notify Enable" start="8" end="8" type="bool"/>
     <field name="Post-Sync Operation" start="14" end="15" type="uint"/>
@@ -4757,6 +4757,24 @@
     <field name="All Allocation" start="25" end="31" type="uint"/>
   </register>
 
+  <register name="PERFCNT1" length="2" num="0x91b8">
+    <field name="Value" start="0" end="43" type="uint"/>
+    <field name="Event Selection" start="52" end="59" type="uint"/>
+    <field name="Counter Clear" start="60" end="60" type="bool"/>
+    <field name="Edge Detect" start="61" end="61" type="bool"/>
+    <field name="Overflow Enable" start="62" end="62" type="bool"/>
+    <field name="Counter Enable" start="63" end="63" type="bool"/>
+  </register>
+
+  <register name="PERFCNT2" length="2" num="0x91c0">
+    <field name="Value" start="0" end="43" type="uint"/>
+    <field name="Event Selection" start="52" end="59" type="uint"/>
+    <field name="Counter Clear" start="60" end="60" type="bool"/>
+    <field name="Edge Detect" start="61" end="61" type="bool"/>
+    <field name="Overflow Enable" start="62" end="62" type="bool"/>
+    <field name="Counter Enable" start="63" end="63" type="bool"/>
+  </register>
+
   <register name="PS_INVOCATION_COUNT" length="2" num="0x2348">
     <field name="PS Invocation Count Report" start="0" end="63" type="uint"/>
   </register>
@@ -4790,6 +4808,11 @@
     <field name="EU12 Done SS0" start="23" end="23" type="bool"/>
     <field name="EU13 Done SS0" start="24" end="24" type="bool"/>
     <field name="MA1 Done SS0" start="26" end="26" type="bool"/>
+  </register>
+
+  <register name="RPSTAT1" length="1" num="0xa01c">
+    <field name="Previous GT Frequency" start="0" end="6" type="uint"/>
+    <field name="Current GT Frequency" start="7" end="14" type="uint"/>
   </register>
 
   <register name="SAMPLER_INSTDONE" length="1" num="0xe160">

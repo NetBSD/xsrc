@@ -58,12 +58,12 @@ split_conversion(nir_builder *b, nir_alu_instr *alu, nir_op op1, nir_op op2)
    nir_ssa_def *src = nir_ssa_for_alu_src(b, alu, 0);
    nir_ssa_def *tmp = nir_build_alu(b, op1, src, NULL, NULL, NULL);
    nir_ssa_def *res = nir_build_alu(b, op2, tmp, NULL, NULL, NULL);
-   nir_ssa_def_rewrite_uses(&alu->dest.dest.ssa, nir_src_for_ssa(res));
+   nir_ssa_def_rewrite_uses(&alu->dest.dest.ssa, res);
    nir_instr_remove(&alu->instr);
 }
 
 static bool
-lower_instr(nir_builder *b, nir_alu_instr *alu)
+lower_alu_instr(nir_builder *b, nir_alu_instr *alu)
 {
    unsigned src_bit_size = nir_src_bit_size(alu->src[0].src);
    nir_alu_type src_type = nir_op_infos[alu->op].input_types[0];
@@ -126,44 +126,25 @@ lower_instr(nir_builder *b, nir_alu_instr *alu)
 }
 
 static bool
-lower_impl(nir_function_impl *impl)
+lower_instr(nir_builder *b, nir_instr *instr, UNUSED void *cb_data)
 {
-   nir_builder b;
-   nir_builder_init(&b, impl);
-   bool progress = false;
+   if (instr->type != nir_instr_type_alu)
+      return false;
 
-   nir_foreach_block(block, impl) {
-      nir_foreach_instr_safe(instr, block) {
-         if (instr->type != nir_instr_type_alu)
-            continue;
+   nir_alu_instr *alu = nir_instr_as_alu(instr);
+   assert(alu->dest.dest.is_ssa);
 
-         nir_alu_instr *alu = nir_instr_as_alu(instr);
-         assert(alu->dest.dest.is_ssa);
+   if (!nir_op_infos[alu->op].is_conversion)
+      return false;
 
-         if (!nir_op_infos[alu->op].is_conversion)
-            continue;
-
-         progress = lower_instr(&b, alu) || progress;
-      }
-   }
-
-   if (progress) {
-      nir_metadata_preserve(impl, nir_metadata_block_index |
-                                  nir_metadata_dominance);
-   }
-
-   return progress;
+   return lower_alu_instr(b, alu);
 }
 
 bool
 brw_nir_lower_conversions(nir_shader *shader)
 {
-   bool progress = false;
-
-   nir_foreach_function(function, shader) {
-      if (function->impl)
-         progress |= lower_impl(function->impl);
-   }
-
-   return progress;
+   return nir_shader_instructions_pass(shader, lower_instr,
+                                       nir_metadata_block_index |
+                                       nir_metadata_dominance,
+                                       NULL);
 }

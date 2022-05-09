@@ -46,19 +46,23 @@
 #include "lp_surface.h"
 #include "lp_query.h"
 #include "lp_setup.h"
+#include "lp_screen.h"
 
 /* This is only safe if there's just one concurrent context */
-#ifdef PIPE_SUBSYSTEM_EMBEDDED
+#ifdef EMBEDDED_DEVICE
 #define USE_GLOBAL_LLVM_CONTEXT
 #endif
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
-   uint i, j;
+   uint i;
 
    lp_print_counters();
 
+   if (llvmpipe->csctx) {
+      lp_csctx_destroy(llvmpipe->csctx);
+   }
    if (llvmpipe->blitter) {
       util_blitter_destroy(llvmpipe->blitter);
    }
@@ -77,21 +81,18 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
-   for (i = 0; i < ARRAY_SIZE(llvmpipe->sampler_views[0]); i++) {
-      pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_FRAGMENT][i], NULL);
-   }
-
-   for (i = 0; i < ARRAY_SIZE(llvmpipe->sampler_views[0]); i++) {
-      pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_VERTEX][i], NULL);
-   }
-
-   for (i = 0; i < ARRAY_SIZE(llvmpipe->sampler_views[0]); i++) {
-      pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_GEOMETRY][i], NULL);
-   }
-
-   for (i = 0; i < ARRAY_SIZE(llvmpipe->constants); i++) {
-      for (j = 0; j < ARRAY_SIZE(llvmpipe->constants[i]); j++) {
-         pipe_resource_reference(&llvmpipe->constants[i][j].buffer, NULL);
+   for (enum pipe_shader_type s = PIPE_SHADER_VERTEX; s < PIPE_SHADER_TYPES; s++) {
+      for (i = 0; i < ARRAY_SIZE(llvmpipe->sampler_views[0]); i++) {
+         pipe_sampler_view_reference(&llvmpipe->sampler_views[s][i], NULL);
+      }
+      for (i = 0; i < LP_MAX_TGSI_SHADER_IMAGES; i++) {
+         pipe_resource_reference(&llvmpipe->images[s][i].resource, NULL);
+      }
+      for (i = 0; i < LP_MAX_TGSI_SHADER_BUFFERS; i++) {
+         pipe_resource_reference(&llvmpipe->ssbos[s][i].buffer, NULL);
+      }
+      for (i = 0; i < ARRAY_SIZE(llvmpipe->constants[s]); i++) {
+         pipe_resource_reference(&llvmpipe->constants[s][i].buffer, NULL);
       }
    }
 
@@ -121,7 +122,7 @@ do_flush( struct pipe_context *pipe,
 static void
 llvmpipe_render_condition(struct pipe_context *pipe,
                           struct pipe_query *query,
-                          boolean condition,
+                          bool condition,
                           enum pipe_render_cond_flag mode)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
@@ -131,17 +132,59 @@ llvmpipe_render_condition(struct pipe_context *pipe,
    llvmpipe->render_cond_cond = condition;
 }
 
+static void
+llvmpipe_render_condition_mem(struct pipe_context *pipe,
+                              struct pipe_resource *buffer,
+                              unsigned offset,
+                              bool condition)
+{
+   struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
+
+   llvmpipe->render_cond_buffer = llvmpipe_resource(buffer);
+   llvmpipe->render_cond_offset = offset;
+   llvmpipe->render_cond_cond = condition;
+}
+
+static void
+llvmpipe_texture_barrier(struct pipe_context *pipe, unsigned flags)
+{
+   llvmpipe_flush(pipe, NULL, __FUNCTION__);
+}
+
+static void lp_draw_disk_cache_find_shader(void *cookie,
+                                           struct lp_cached_code *cache,
+                                           unsigned char ir_sha1_cache_key[20])
+{
+   struct llvmpipe_screen *screen = cookie;
+   lp_disk_cache_find_shader(screen, cache, ir_sha1_cache_key);
+}
+
+static void lp_draw_disk_cache_insert_shader(void *cookie,
+                                             struct lp_cached_code *cache,
+                                             unsigned char ir_sha1_cache_key[20])
+{
+   struct llvmpipe_screen *screen = cookie;
+   lp_disk_cache_insert_shader(screen, cache, ir_sha1_cache_key);
+}
+
+static enum pipe_reset_status
+llvmpipe_get_device_reset_status(struct pipe_context *pipe)
+{
+   return PIPE_NO_RESET;
+}
+
 struct pipe_context *
 llvmpipe_create_context(struct pipe_screen *screen, void *priv,
                         unsigned flags)
 {
    struct llvmpipe_context *llvmpipe;
 
+   if (!llvmpipe_screen_late_init(llvmpipe_screen(screen)))
+      return NULL;
+
    llvmpipe = align_malloc(sizeof(struct llvmpipe_context), 16);
    if (!llvmpipe)
       return NULL;
-
-   util_init_math();
 
    memset(llvmpipe, 0, sizeof *llvmpipe);
 
@@ -149,6 +192,7 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
 
    make_empty_list(&llvmpipe->setup_variants_list);
 
+   make_empty_list(&llvmpipe->cs_variants_list);
 
    llvmpipe->pipe.screen = screen;
    llvmpipe->pipe.priv = priv;
@@ -158,12 +202,16 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = do_flush;
+   llvmpipe->pipe.texture_barrier = llvmpipe_texture_barrier;
 
    llvmpipe->pipe.render_condition = llvmpipe_render_condition;
+   llvmpipe->pipe.render_condition_mem = llvmpipe_render_condition_mem;
 
+   llvmpipe->pipe.get_device_reset_status = llvmpipe_get_device_reset_status;
    llvmpipe_init_blend_funcs(llvmpipe);
    llvmpipe_init_clip_funcs(llvmpipe);
    llvmpipe_init_draw_funcs(llvmpipe);
+   llvmpipe_init_compute_funcs(llvmpipe);
    llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_vertex_funcs(llvmpipe);
@@ -171,6 +219,7 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
    llvmpipe_init_fs_funcs(llvmpipe);
    llvmpipe_init_vs_funcs(llvmpipe);
    llvmpipe_init_gs_funcs(llvmpipe);
+   llvmpipe_init_tess_funcs(llvmpipe);
    llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
    llvmpipe_init_surface_functions(llvmpipe);
@@ -192,6 +241,13 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
    if (!llvmpipe->draw)
       goto fail;
 
+   draw_set_disk_cache_callbacks(llvmpipe->draw,
+                                 llvmpipe_screen(screen),
+                                 lp_draw_disk_cache_find_shader,
+                                 lp_draw_disk_cache_insert_shader);
+
+   draw_set_constant_buffer_stride(llvmpipe->draw, lp_get_constant_buffer_stride(screen));
+
    /* FIXME: devise alternative to draw_texture_samplers */
 
    llvmpipe->setup = lp_setup_create( &llvmpipe->pipe,
@@ -199,6 +255,9 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
    if (!llvmpipe->setup)
       goto fail;
 
+   llvmpipe->csctx = lp_csctx_create( &llvmpipe->pipe );
+   if (!llvmpipe->csctx)
+      goto fail;
    llvmpipe->pipe.stream_uploader = u_upload_create_default(&llvmpipe->pipe);
    if (!llvmpipe->pipe.stream_uploader)
       goto fail;
@@ -224,6 +283,9 @@ llvmpipe_create_context(struct pipe_screen *screen, void *priv,
    draw_enable_point_sprites(llvmpipe->draw, FALSE);
    draw_wide_point_threshold(llvmpipe->draw, 10000.0);
    draw_wide_line_threshold(llvmpipe->draw, 10000.0);
+
+   /* initial state for clipping - enabled, with no guardband */
+   draw_set_driver_clipping(llvmpipe->draw, FALSE, FALSE, FALSE, TRUE);
 
    lp_reset_counters();
 

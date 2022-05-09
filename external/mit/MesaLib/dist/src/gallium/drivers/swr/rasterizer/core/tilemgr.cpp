@@ -184,7 +184,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT*                pContext,
 
             if (hotTile.state == HOTTILE_DIRTY)
             {
-                pContext->pfnStoreTile(GetPrivateState(pDC),
+                pContext->pfnStoreTile(pDC,
                                        hWorkerPrivateData,
                                        format,
                                        attachment,
@@ -194,7 +194,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT*                pContext,
                                        hotTile.pBuffer);
             }
 
-            pContext->pfnLoadTile(GetPrivateState(pDC),
+            pContext->pfnLoadTile(pDC,
                                   hWorkerPrivateData,
                                   format,
                                   attachment,
@@ -204,7 +204,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT*                pContext,
                                   hotTile.pBuffer);
 
             hotTile.renderTargetArrayIndex = renderTargetArrayIndex;
-            hotTile.state                  = HOTTILE_DIRTY;
+            hotTile.state = HOTTILE_RESOLVED;
         }
     }
     return &tile.Attachment[attachment];
@@ -368,9 +368,9 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
 
         if (pHotTile->state == HOTTILE_INVALID)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // invalid hottile before draw requires a load from surface before we can draw to it
-            pContext->pfnLoadTile(GetPrivateState(pDC),
+            pContext->pfnLoadTile(pDC,
                                   hWorkerPrivateData,
                                   KNOB_COLOR_HOT_TILE_FORMAT,
                                   (SWR_RENDERTARGET_ATTACHMENT)(SWR_ATTACHMENT_COLOR0 + rtSlot),
@@ -378,16 +378,16 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
                                   y,
                                   pHotTile->renderTargetArrayIndex,
                                   pHotTile->pBuffer);
-            pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            pHotTile->state = HOTTILE_RESOLVED;
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
         else if (pHotTile->state == HOTTILE_CLEAR)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // Clear the tile.
             ClearColorHotTile(pHotTile);
             pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
         colorHottileEnableMask &= ~(1 << rtSlot);
     }
@@ -399,9 +399,9 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
             pContext, pDC, hWorkerPrivateData, macroID, SWR_ATTACHMENT_DEPTH, true, numSamples);
         if (pHotTile->state == HOTTILE_INVALID)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // invalid hottile before draw requires a load from surface before we can draw to it
-            pContext->pfnLoadTile(GetPrivateState(pDC),
+            pContext->pfnLoadTile(pDC,
                                   hWorkerPrivateData,
                                   KNOB_DEPTH_HOT_TILE_FORMAT,
                                   SWR_ATTACHMENT_DEPTH,
@@ -410,15 +410,15 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
                                   pHotTile->renderTargetArrayIndex,
                                   pHotTile->pBuffer);
             pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
         else if (pHotTile->state == HOTTILE_CLEAR)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // Clear the tile.
             ClearDepthHotTile(pHotTile);
             pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
     }
 
@@ -429,9 +429,9 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
             pContext, pDC, hWorkerPrivateData, macroID, SWR_ATTACHMENT_STENCIL, true, numSamples);
         if (pHotTile->state == HOTTILE_INVALID)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // invalid hottile before draw requires a load from surface before we can draw to it
-            pContext->pfnLoadTile(GetPrivateState(pDC),
+            pContext->pfnLoadTile(pDC,
                                   hWorkerPrivateData,
                                   KNOB_STENCIL_HOT_TILE_FORMAT,
                                   SWR_ATTACHMENT_STENCIL,
@@ -440,15 +440,15 @@ void HotTileMgr::InitializeHotTiles(SWR_CONTEXT*  pContext,
                                   pHotTile->renderTargetArrayIndex,
                                   pHotTile->pBuffer);
             pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
         else if (pHotTile->state == HOTTILE_CLEAR)
         {
-            RDTSC_BEGIN(BELoadTiles, pDC->drawId);
+            RDTSC_BEGIN(pContext->pBucketMgr, BELoadTiles, pDC->drawId);
             // Clear the tile.
             ClearStencilHotTile(pHotTile);
             pHotTile->state = HOTTILE_DIRTY;
-            RDTSC_END(BELoadTiles, 0);
+            RDTSC_END(pContext->pBucketMgr, BELoadTiles, 0);
         }
     }
 }

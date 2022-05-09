@@ -30,6 +30,8 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
 
+#include "util/compiler.h"
+
 static unsigned translate_opcode(unsigned opcode)
 {
     switch(opcode) {
@@ -135,7 +137,7 @@ static unsigned translate_register_file(unsigned file)
         case TGSI_FILE_OUTPUT: return RC_FILE_OUTPUT;
         default:
             fprintf(stderr, "Unhandled register file: %i\n", file);
-            /* fall-through */
+            FALLTHROUGH;
         case TGSI_FILE_TEMPORARY: return RC_FILE_TEMPORARY;
         case TGSI_FILE_ADDRESS: return RC_FILE_ADDRESS;
     }
@@ -223,17 +225,38 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
         case TGSI_TEXTURE_SHADOW1D:
             dst->U.I.TexSrcTarget = RC_TEXTURE_1D;
             dst->U.I.TexShadow = 1;
-            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
             break;
         case TGSI_TEXTURE_SHADOW2D:
             dst->U.I.TexSrcTarget = RC_TEXTURE_2D;
             dst->U.I.TexShadow = 1;
-            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
             break;
         case TGSI_TEXTURE_SHADOWRECT:
             dst->U.I.TexSrcTarget = RC_TEXTURE_RECT;
             dst->U.I.TexShadow = 1;
-            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
+            break;
+        case TGSI_TEXTURE_1D_ARRAY:
+            dst->U.I.TexSrcTarget = RC_TEXTURE_1D_ARRAY;
+            break;
+        case TGSI_TEXTURE_2D_ARRAY:
+            dst->U.I.TexSrcTarget = RC_TEXTURE_2D_ARRAY;
+            break;
+        case TGSI_TEXTURE_SHADOW1D_ARRAY:
+            dst->U.I.TexSrcTarget = RC_TEXTURE_1D_ARRAY;
+            dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
+            break;
+        case TGSI_TEXTURE_SHADOW2D_ARRAY:
+            dst->U.I.TexSrcTarget = RC_TEXTURE_2D_ARRAY;
+            dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
+            break;
+        case TGSI_TEXTURE_SHADOWCUBE:
+            dst->U.I.TexSrcTarget = RC_TEXTURE_CUBE;
+            dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1U << dst->U.I.TexSrcUnit;
             break;
     }
     dst->U.I.TexSwizzle = RC_SWIZZLE_XYZW;

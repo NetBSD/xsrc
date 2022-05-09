@@ -61,10 +61,8 @@ _mesa_get_current_tex_unit(struct gl_context *ctx)
  * \return NULL if the current unit is not a fixed-func texture unit
  */
 static inline struct gl_fixedfunc_texture_unit *
-_mesa_get_current_fixedfunc_tex_unit(struct gl_context *ctx)
+_mesa_get_fixedfunc_tex_unit(struct gl_context *ctx, GLuint unit)
 {
-   unsigned unit = ctx->Texture.CurrentUnit;
-
    if (unit >= ARRAY_SIZE(ctx->Texture.FixedFuncUnit))
       return NULL;
 
@@ -111,10 +109,10 @@ _mesa_ClientActiveTexture( GLenum target );
  */
 /*@{*/
 
-extern void
+extern GLbitfield
 _mesa_update_texture_matrices(struct gl_context *ctx);
 
-extern void
+extern GLbitfield
 _mesa_update_texture_state(struct gl_context *ctx);
 
 extern GLboolean

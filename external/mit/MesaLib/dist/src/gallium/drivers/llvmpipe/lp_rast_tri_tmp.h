@@ -46,10 +46,15 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
                 int x, int y,
                 const int64_t *c)
 {
-   unsigned mask = 0xffff;
    int j;
+#ifndef MULTISAMPLE
+   unsigned mask = 0xffff;
+#else
+   uint64_t mask = UINT64_MAX;
+#endif
 
    for (j = 0; j < NR_PLANES; j++) {
+#ifndef MULTISAMPLE
 #ifdef RASTER_64
       mask &= ~BUILD_MASK_LINEAR(((c[j] - 1) >> (int64_t)FIXED_ORDER),
                                  -plane[j].dcdx >> FIXED_ORDER,
@@ -59,12 +64,28 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
                                  -plane[j].dcdx,
                                  plane[j].dcdy);
 #endif
+#else
+      for (unsigned s = 0; s < 4; s++) {
+         int64_t new_c = (c[j]) + ((IMUL64(task->scene->fixed_sample_pos[s][1], plane[j].dcdy) + IMUL64(task->scene->fixed_sample_pos[s][0], -plane[j].dcdx)) >> FIXED_ORDER);
+         uint32_t build_mask;
+#ifdef RASTER_64
+         build_mask = BUILD_MASK_LINEAR((int32_t)((new_c - 1) >> (int64_t)FIXED_ORDER),
+                                        -plane[j].dcdx >> FIXED_ORDER,
+                                        plane[j].dcdy >> FIXED_ORDER);
+#else
+         build_mask = BUILD_MASK_LINEAR((new_c - 1),
+                                        -plane[j].dcdx,
+                                        plane[j].dcdy);
+#endif
+         mask &= ~((uint64_t)build_mask << (s * 16));
+      }
+#endif
    }
 
    /* Now pass to the shader:
     */
    if (mask)
-      lp_rast_shade_quads_mask(task, &tri->inputs, x, y, mask);
+      lp_rast_shade_quads_mask_sample(task, &tri->inputs, x, y, mask);
 }
 
 /**
@@ -342,6 +363,16 @@ TRI_16(struct lp_rasterizer_task *task,
 
    outmask = 0;                 /* outside one or more trivial reject planes */
    
+   if (x + 12 >= 64) {
+      int i = ((x + 12) - 64) / 4;
+      outmask |= right_mask_tab[i];
+   }
+
+   if (y + 12 >= 64) {
+      int i = ((y + 12) - 64) / 4;
+      outmask |= bottom_mask_tab[i];
+   }
+
    x += task->x;
    y += task->y;
 

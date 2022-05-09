@@ -38,10 +38,10 @@
 #include "pipe/p_defines.h"
 #include "os/os_thread.h"
 #include "gallivm/lp_bld.h"
-
+#include "gallivm/lp_bld_misc.h"
 
 struct sw_winsys;
-
+struct lp_cs_tpool;
 
 struct llvmpipe_screen
 {
@@ -57,10 +57,31 @@ struct llvmpipe_screen
 
    struct lp_rasterizer *rast;
    mtx_t rast_mutex;
+
+   struct lp_cs_tpool *cs_tpool;
+   mtx_t cs_mutex;
+
+   bool use_tgsi;
+   bool allow_cl;
+
+   mtx_t late_mutex;
+   bool late_init_done;
+
+   char renderer_string[100];
+
+   struct disk_cache *disk_shader_cache;
+   unsigned num_disk_shader_cache_hits;
+   unsigned num_disk_shader_cache_misses;
 };
 
+void lp_disk_cache_find_shader(struct llvmpipe_screen *screen,
+                               struct lp_cached_code *cache,
+                               unsigned char ir_sha1_cache_key[20]);
+void lp_disk_cache_insert_shader(struct llvmpipe_screen *screen,
+                                 struct lp_cached_code *cache,
+                                 unsigned char ir_sha1_cache_key[20]);
 
-
+bool llvmpipe_screen_late_init(struct llvmpipe_screen *screen);
 
 static inline struct llvmpipe_screen *
 llvmpipe_screen( struct pipe_screen *pipe )
@@ -68,6 +89,10 @@ llvmpipe_screen( struct pipe_screen *pipe )
    return (struct llvmpipe_screen *)pipe;
 }
 
-
+static inline unsigned lp_get_constant_buffer_stride(struct pipe_screen *_screen)
+{
+   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
+   return screen->use_tgsi ? (sizeof(float) * 4) : sizeof(float);
+}
 
 #endif /* LP_SCREEN_H */

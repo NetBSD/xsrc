@@ -47,7 +47,6 @@
 #include "main/context.h"
 #include "main/config.h"
 #include "main/macros.h"
-#include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/version.h"
 #include "xfonts.h"
@@ -288,8 +287,6 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
    for (i=0; i<NumVisuals; i++) {
       XMesaVisual v = VisualTable[i];
       if (v->display == dpy
-          && v->mesa_visual.level == level
-          && v->mesa_visual.numAuxBuffers == numAuxBuffers
           && v->ximage_flag == ximageFlag
           && v->mesa_visual.doubleBufferMode == dbFlag
           && v->mesa_visual.stereoMode == stereoFlag
@@ -321,10 +318,6 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       /* add xmvis to the list */
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
-      /* XXX minor hack, because XMesaCreateVisual doesn't support an
-       * aux buffers parameter.
-       */
-      xmvis->mesa_visual.numAuxBuffers = numAuxBuffers;
    }
    return xmvis;
 }
@@ -1207,8 +1200,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          stencil_size = 8;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
-         accumRedSize = 
-         accumGreenSize = 
+         accumRedSize =
+         accumGreenSize =
          accumBlueSize = default_accum_bits();
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
@@ -1546,17 +1539,12 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
 	 *value = xmvis->visinfo->depth;
 	 return 0;
       case GLX_LEVEL:
-	 *value = xmvis->mesa_visual.level;
+	 *value = 0;
 	 return 0;
       case GLX_RGBA:
          if (fbconfig)
             return GLX_BAD_ATTRIBUTE;
-	 if (xmvis->mesa_visual.rgbMode) {
-	    *value = True;
-	 }
-	 else {
-	    *value = False;
-	 }
+         *value = True;
 	 return 0;
       case GLX_DOUBLEBUFFER:
 	 *value = (int) xmvis->mesa_visual.doubleBufferMode;
@@ -1565,7 +1553,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
 	 *value = (int) xmvis->mesa_visual.stereoMode;
 	 return 0;
       case GLX_AUX_BUFFERS:
-	 *value = xmvis->mesa_visual.numAuxBuffers;
+	 *value = 0;
 	 return 0;
       case GLX_RED_SIZE:
          *value = xmvis->mesa_visual.redBits;
@@ -1612,23 +1600,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          }
          return 0;
       case GLX_TRANSPARENT_TYPE_EXT:
-         if (xmvis->mesa_visual.level==0) {
-            /* normal planes */
-            *value = GLX_NONE_EXT;
-         }
-         else if (xmvis->mesa_visual.level>0) {
-            /* overlay */
-            if (xmvis->mesa_visual.rgbMode) {
-               *value = GLX_TRANSPARENT_RGB_EXT;
-            }
-            else {
-               *value = GLX_TRANSPARENT_INDEX_EXT;
-            }
-         }
-         else if (xmvis->mesa_visual.level<0) {
-            /* underlay */
-            *value = GLX_NONE_EXT;
-         }
+         *value = GLX_NONE_EXT;
          return 0;
       case GLX_TRANSPARENT_INDEX_VALUE_EXT:
          {
@@ -1656,11 +1628,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
        * GLX_EXT_visual_info extension
        */
       case GLX_VISUAL_CAVEAT_EXT:
-         /* test for zero, just in case */
-         if (xmvis->mesa_visual.visualRating > 0)
-            *value = xmvis->mesa_visual.visualRating;
-         else
-            *value = GLX_NONE_EXT;
+         *value = GLX_NONE_EXT;
          return 0;
 
       /*
@@ -1691,10 +1659,8 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
             return GLX_BAD_ATTRIBUTE;
          if (xmvis->mesa_visual.floatMode)
             *value = GLX_RGBA_FLOAT_BIT_ARB;
-         else if (xmvis->mesa_visual.rgbMode)
-            *value = GLX_RGBA_BIT;
          else
-            *value = GLX_COLOR_INDEX_BIT;
+            *value = GLX_RGBA_BIT;
          break;
       case GLX_X_RENDERABLE_SGIX:
          if (!fbconfig)
@@ -2536,14 +2502,14 @@ Fake_glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf)
 }
 
 
-static int
+static void
 Fake_glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value)
 {
    const XMesaBuffer xmbuf = XMesaFindBuffer(dpy, pbuf);
 
    if (!xmbuf) {
       /* Generate GLXBadPbufferSGIX for bad pbuffer */
-      return 0;
+      return;
    }
 
    switch (attribute) {
@@ -2565,7 +2531,6 @@ Fake_glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, un
       default:
          *value = 0;
    }
-   return 0;
 }
 
 
@@ -2687,7 +2652,7 @@ Fake_glXAssociateDMPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuffer, DMparams *p
 /*** GLX_SUN_get_transparent_index ***/
 
 static Status
-Fake_glXGetTransparentIndexSUN(Display *dpy, Window overlay, Window underlay, long *pTransparent)
+Fake_glXGetTransparentIndexSUN(Display *dpy, Window overlay, Window underlay, unsigned long *pTransparent)
 {
    (void) dpy;
    (void) overlay;

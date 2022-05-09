@@ -217,7 +217,7 @@ int windows_bind_context(windowsContext *context, windowsDrawable *draw, windows
       read->callbacks->releasedc(read, readDc);
 
       if (!ret) {
-         printf("wglMakeContextCurrentARB error: %08x\n", GetLastError());
+         printf("wglMakeContextCurrentARB error: %08x\n", (int)GetLastError());
          return FALSE;
       }
    }
@@ -226,7 +226,7 @@ int windows_bind_context(windowsContext *context, windowsDrawable *draw, windows
       /* Otherwise, just use wglMakeCurrent */
       BOOL ret = wglMakeCurrent(drawDc, context->ctx);
       if (!ret) {
-         printf("wglMakeCurrent error: %08x\n", GetLastError());
+         printf("wglMakeCurrent error: %08x\n", (int)GetLastError());
          return FALSE;
       }
    }
@@ -388,16 +388,4 @@ windows_extensions(char **gl_extensions, char **wgl_extensions)
 
    *gl_extensions = result.gl_extensions;
    *wgl_extensions = result.wgl_extensions;
-}
-
-void windows_setTexBuffer(windowsContext *context, int textureTarget,
-                         int textureFormat, windowsDrawable *drawable)
-{
-   // not yet implemented
-}
-
-void windows_releaseTexBuffer(windowsContext *context, int textureTarget,
-                             windowsDrawable *drawable)
-{
-   // not yet implemented
 }

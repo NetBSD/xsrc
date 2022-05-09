@@ -37,6 +37,7 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/transformfeedback.h"
+#include "util/u_memory.h"
 
 #include "st_cb_bufferobjects.h"
 #include "st_cb_xformfb.h"
@@ -96,11 +97,7 @@ st_delete_transform_feedback(struct gl_context *ctx,
       pipe_so_target_reference(&sobj->targets[i], NULL);
    }
 
-   for (i = 0; i < ARRAY_SIZE(sobj->base.Buffers); i++) {
-      _mesa_reference_buffer_object(ctx, &sobj->base.Buffers[i], NULL);
-   }
-
-   free(obj);
+   _mesa_delete_transform_feedback_object(ctx, obj);
 }
 
 
@@ -217,7 +214,8 @@ st_end_transform_feedback(struct gl_context *ctx,
 
 bool
 st_transform_feedback_draw_init(struct gl_transform_feedback_object *obj,
-                                unsigned stream, struct pipe_draw_info *out)
+                                unsigned stream,
+                                struct pipe_draw_indirect_info *out)
 {
    struct st_transform_feedback_object *sobj =
          st_transform_feedback_object(obj);

@@ -64,7 +64,7 @@ JitManager::JitManager(uint32_t simdWidth, const char* arch, const char* core) :
     mArch(arch)
 {
     mpCurrentModule = nullptr;
-    mpExec = nullptr;
+    mpExec          = nullptr;
 
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
@@ -159,7 +159,7 @@ JitManager::JitManager(uint32_t simdWidth, const char* arch, const char* core) :
 
     mFetchShaderTy = FunctionType::get(Type::getVoidTy(mContext), fsArgs, false);
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
     // explicitly instantiate used symbols from potentially staticly linked libs
     sys::DynamicLibrary::AddSymbol("exp2f", &exp2f);
     sys::DynamicLibrary::AddSymbol("log2f", &log2f);
@@ -313,7 +313,11 @@ DIType* JitManager::GetDebugType(Type* pTy)
     case Type::PointerTyID:
         return builder.createPointerType(GetDebugType(pTy->getPointerElementType()), 64, 64);
         break;
+#if LLVM_VERSION_MAJOR >= 11
+    case Type::FixedVectorTyID:
+#else
     case Type::VectorTyID:
+#endif
         return GetDebugVectorType(pTy);
         break;
     case Type::FunctionTyID:
@@ -377,16 +381,31 @@ DIType* JitManager::GetDebugIntegerType(Type* pTy)
 DIType* JitManager::GetDebugVectorType(Type* pTy)
 {
     DIBuilder                 builder(*mpCurrentModule);
+#if LLVM_VERSION_MAJOR >= 12
+    FixedVectorType*          pVecTy    = cast<FixedVectorType>(pTy);
+#elif LLVM_VERSION_MAJOR >= 11
     VectorType*               pVecTy    = cast<VectorType>(pTy);
+#else
+    auto                      pVecTy    = pTy;
+#endif
     DataLayout                DL        = DataLayout(mpCurrentModule);
     uint32_t                  size      = DL.getTypeAllocSizeInBits(pVecTy);
     uint32_t                  alignment = DL.getABITypeAlignment(pVecTy);
     SmallVector<Metadata*, 1> Elems;
+
+#if LLVM_VERSION_MAJOR >= 11
+    Elems.push_back(builder.getOrCreateSubrange(0, pVecTy->getNumElements()));
+#else
     Elems.push_back(builder.getOrCreateSubrange(0, pVecTy->getVectorNumElements()));
+#endif
 
     return builder.createVectorType(size,
                                     alignment,
+#if LLVM_VERSION_MAJOR >= 11
+                                    GetDebugType(pVecTy->getElementType()),
+#else
                                     GetDebugType(pVecTy->getVectorElementType()),
+#endif
                                     builder.getOrCreateArray(Elems));
 }
 
@@ -423,7 +442,10 @@ void JitManager::DumpAsm(Function* pFunction, const char* fileName)
         legacy::PassManager* pMPasses         = new legacy::PassManager();
         auto*                pTarget          = mpExec->getTargetMachine();
         pTarget->Options.MCOptions.AsmVerbose = true;
-#if LLVM_VERSION_MAJOR >= 7
+#if LLVM_VERSION_MAJOR >= 10
+        pTarget->addPassesToEmitFile(
+            *pMPasses, filestream, nullptr, CGFT_AssemblyFile);
+#elif LLVM_VERSION_MAJOR >= 7
         pTarget->addPassesToEmitFile(
             *pMPasses, filestream, nullptr, TargetMachine::CGFT_AssemblyFile);
 #else
@@ -452,7 +474,9 @@ std::string JitManager::GetOutputDir()
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Dump function to file.
-void JitManager::DumpToFile(Module* M, const char* fileName, llvm::AssemblyAnnotationWriter* annotater)
+void JitManager::DumpToFile(Module*                         M,
+                            const char*                     fileName,
+                            llvm::AssemblyAnnotationWriter* annotater)
 {
     if (KNOB_DUMP_SHADER_IR)
     {
@@ -582,7 +606,7 @@ struct JitCacheFileHeader
     uint64_t GetObjectCRC() const { return m_objCRC; }
 
 private:
-    static const uint64_t JC_MAGIC_NUMBER = 0xfedcba9876543210ULL + 6;
+    static const uint64_t JC_MAGIC_NUMBER = 0xfedcba9876543210ULL + 7;
     static const size_t   JC_STR_MAX_LEN  = 32;
     static const uint32_t JC_PLATFORM_KEY = (LLVM_VERSION_MAJOR << 24) |
                                             (LLVM_VERSION_MINOR << 16) | (LLVM_VERSION_PATCH << 8) |
@@ -647,7 +671,8 @@ JitCache::JitCache()
 
 int ExecUnhookedProcess(const std::string& CmdLine, std::string* pStdOut, std::string* pStdErr)
 {
-    return ExecCmd(CmdLine, "", pStdOut, pStdErr);
+
+    return ExecCmd(CmdLine, nullptr, pStdOut, pStdErr);
 }
 
 /// Calculate actual directory where module will be cached.
@@ -668,7 +693,6 @@ void JitCache::CalcModuleCacheDir()
 
     mModuleCacheDir = moduleDir;
 }
-
 
 /// notifyObjectCompiled - Provides a pointer to compiled code for Module M.
 void JitCache::notifyObjectCompiled(const llvm::Module* M, llvm::MemoryBufferRef Obj)
@@ -805,25 +829,25 @@ std::unique_ptr<llvm::MemoryBuffer> JitCache::getObject(const llvm::Module* M)
     return pBuf;
 }
 
-void InterleaveAssemblyAnnotater::emitInstructionAnnot(const llvm::Instruction *pInst, llvm::formatted_raw_ostream &OS)
+void InterleaveAssemblyAnnotater::emitInstructionAnnot(const llvm::Instruction*     pInst,
+                                                       llvm::formatted_raw_ostream& OS)
 {
     auto dbgLoc = pInst->getDebugLoc();
-    if(dbgLoc)
+    if (dbgLoc)
     {
         unsigned int line = dbgLoc.getLine();
-        if(line != mCurrentLineNo)
+        if (line != mCurrentLineNo)
         {
-            if(line > 0 && line <= mAssembly.size())
+            if (line > 0 && line <= mAssembly.size())
             {
                 // HACK: here we assume that OS is a formatted_raw_ostream(ods())
                 // and modify the color accordingly. We can't do the color
                 // modification on OS because formatted_raw_ostream strips
                 // the color information. The only way to fix this behavior
                 // is to patch LLVM.
-                OS << "\n; " << line << ": " << mAssembly[line-1] << "\n";
+                OS << "\n; " << line << ": " << mAssembly[line - 1] << "\n";
             }
             mCurrentLineNo = line;
         }
     }
 }
-

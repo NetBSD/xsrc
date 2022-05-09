@@ -21,13 +21,13 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VC5_SCREEN_H
-#define VC5_SCREEN_H
+#ifndef V3D_SCREEN_H
+#define V3D_SCREEN_H
 
 #include "pipe/p_screen.h"
 #include "renderonly/renderonly.h"
 #include "os/os_thread.h"
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 #include "util/list.h"
 #include "util/slab.h"
 #include "broadcom/common/v3d_debug.h"
@@ -38,13 +38,13 @@ struct v3d_bo;
 /* These are tunable parameters in the HW design, but all the V3D
  * implementations agree.
  */
-#define VC5_UIFCFG_BANKS 8
-#define VC5_UIFCFG_PAGE_SIZE 4096
-#define VC5_UIFCFG_XOR_VALUE (1 << 4)
-#define VC5_PAGE_CACHE_SIZE (VC5_UIFCFG_PAGE_SIZE * VC5_UIFCFG_BANKS)
-#define VC5_UBLOCK_SIZE 64
-#define VC5_UIFBLOCK_SIZE (4 * VC5_UBLOCK_SIZE)
-#define VC5_UIFBLOCK_ROW_SIZE (4 * VC5_UIFBLOCK_SIZE)
+#define V3D_UIFCFG_BANKS 8
+#define V3D_UIFCFG_PAGE_SIZE 4096
+#define V3D_UIFCFG_XOR_VALUE (1 << 4)
+#define V3D_PAGE_CACHE_SIZE (V3D_UIFCFG_PAGE_SIZE * V3D_UIFCFG_BANKS)
+#define V3D_UBLOCK_SIZE 64
+#define V3D_UIFBLOCK_SIZE (4 * V3D_UBLOCK_SIZE)
+#define V3D_UIFBLOCK_ROW_SIZE (4 * V3D_UIFBLOCK_SIZE)
 
 struct v3d_simulator_file;
 
@@ -71,13 +71,17 @@ struct v3d_screen {
 
         const struct v3d_compiler *compiler;
 
-        struct util_hash_table *bo_handles;
+        struct hash_table *bo_handles;
         mtx_t bo_handles_mutex;
 
         uint32_t bo_size;
         uint32_t bo_count;
+        uint32_t prim_types;
 
         bool has_csd;
+        bool has_cache_flush;
+        bool has_perfmon;
+        bool nonmsaa_texture_size_limit;
 
         struct v3d_simulator_file *sim_file;
 };
@@ -88,9 +92,11 @@ v3d_screen(struct pipe_screen *screen)
         return (struct v3d_screen *)screen;
 }
 
-struct pipe_screen *v3d_screen_create(int fd, struct renderonly *ro);
+struct pipe_screen *v3d_screen_create(int fd,
+                                      const struct pipe_screen_config *config,
+                                      struct renderonly *ro);
 
 void
 v3d_fence_init(struct v3d_screen *screen);
 
-#endif /* VC5_SCREEN_H */
+#endif /* V3D_SCREEN_H */

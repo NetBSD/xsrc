@@ -293,6 +293,15 @@ scan_src_operand(struct tgsi_shader_info *info,
        !is_mem_query_inst(fullinst->Instruction.Opcode)) {
       *is_mem_inst = true;
 
+      if (src->Register.File == TGSI_FILE_IMAGE &&
+          (fullinst->Memory.Texture == TGSI_TEXTURE_2D_MSAA ||
+           fullinst->Memory.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA)) {
+         if (src->Register.Indirect)
+            info->msaa_images_declared = info->images_declared;
+         else
+            info->msaa_images_declared |= 1 << src->Register.Index;
+      }
+
       if (tgsi_get_opcode_info(fullinst->Instruction.Opcode)->is_store) {
          info->writes_memory = TRUE;
 
@@ -392,6 +401,8 @@ scan_instruction(struct tgsi_shader_info *info,
    case TGSI_OPCODE_ATOMIMIN:
    case TGSI_OPCODE_ATOMIMAX:
    case TGSI_OPCODE_ATOMFADD:
+   case TGSI_OPCODE_ATOMINC_WRAP:
+   case TGSI_OPCODE_ATOMDEC_WRAP:
       if (tgsi_is_bindless_image_file(fullinst->Src[0].Register.File)) {
          info->uses_bindless_images = true;
 
@@ -410,6 +421,9 @@ scan_instruction(struct tgsi_shader_info *info,
          else
             info->uses_bindless_image_store = true;
       }
+      break;
+   case TGSI_OPCODE_FBFETCH:
+      info->uses_fbfetch = true;
       break;
    default:
       break;
@@ -555,6 +569,14 @@ scan_instruction(struct tgsi_shader_info *info,
          info->writes_memory = TRUE;
 
          if (dst->Register.File == TGSI_FILE_IMAGE) {
+            if (fullinst->Memory.Texture == TGSI_TEXTURE_2D_MSAA ||
+                fullinst->Memory.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA) {
+               if (dst->Register.Indirect)
+                  info->msaa_images_declared = info->images_declared;
+               else
+                  info->msaa_images_declared |= 1 << dst->Register.Index;
+            }
+
             if (dst->Register.Indirect)
                info->images_store = info->images_declared;
             else
@@ -646,7 +668,6 @@ scan_declaration(struct tgsi_shader_info *info,
          info->input_semantic_index[reg] = (ubyte) semIndex;
          info->input_interpolate[reg] = (ubyte)fulldecl->Interp.Interpolate;
          info->input_interpolate_loc[reg] = (ubyte)fulldecl->Interp.Location;
-         info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Interp.CylindricalWrap;
 
          /* Vertex shaders can have inputs with holes between them. */
          info->num_inputs = MAX2(info->num_inputs, reg + 1);
@@ -846,7 +867,6 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
       info->file_max[i] = -1;
    for (i = 0; i < ARRAY_SIZE(info->const_file_max); i++)
       info->const_file_max[i] = -1;
-   info->properties[TGSI_PROPERTY_GS_INVOCATIONS] = 1;
    for (i = 0; i < ARRAY_SIZE(info->sampler_targets); i++)
       info->sampler_targets[i] = TGSI_TEXTURE_UNKNOWN;
 
@@ -866,6 +886,9 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
           procType == PIPE_SHADER_COMPUTE);
    info->processor = procType;
    info->num_tokens = tgsi_num_tokens(parse.Tokens);
+
+   if (procType == PIPE_SHADER_GEOMETRY)
+      info->properties[TGSI_PROPERTY_GS_INVOCATIONS] = 1;
 
    /**
     ** Loop over incoming program tokens/instructions

@@ -25,21 +25,56 @@
 #ifndef INTEL_AUB_WRITE
 #define INTEL_AUB_WRITE
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "drm-uapi/i915_drm.h"
 
-#include "dev/gen_device_info.h"
-#include "common/gen_gem.h"
+#include "dev/intel_device_info.h"
+#include "common/intel_gem.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+static inline void PRINTFLIKE(2, 3) NORETURN
+_fail(const char *prefix, const char *format, ...)
+{
+   va_list args;
+
+   va_start(args, format);
+   if (prefix)
+      fprintf(stderr, "%s: ", prefix);
+   vfprintf(stderr, format, args);
+   va_end(args);
+
+   abort();
+}
+
+#define _fail_if(cond, prefix, ...) do { \
+   if (cond) \
+      _fail(prefix, __VA_ARGS__); \
+} while (0)
+
+#define MAX_CONTEXT_COUNT 64
+
 struct aub_ppgtt_table {
    uint64_t phys_addr;
    struct aub_ppgtt_table *subtables[512];
+};
+
+struct aub_hw_context {
+   bool initialized;
+   uint64_t ring_addr;
+   uint64_t pphwsp_addr;
+};
+
+/* GEM context, as seen from userspace */
+struct aub_context {
+   uint32_t id;
+   struct aub_hw_context hw_contexts[I915_ENGINE_CLASS_VIDEO + 1];
 };
 
 struct aub_file {
@@ -51,18 +86,22 @@ struct aub_file {
    FILE *verbose_log_file;
 
    uint16_t pci_id;
-   struct gen_device_info devinfo;
+   struct intel_device_info devinfo;
 
    int addr_bits;
 
    struct aub_ppgtt_table pml4;
    uint64_t phys_addrs_allocator;
+   uint64_t ggtt_addrs_allocator;
 
    struct {
-      uint64_t ring_addr;
-      uint64_t pphwsp_addr;
-      uint64_t descriptor;
+      uint64_t hwsp_addr;
    } engine_setup[I915_ENGINE_CLASS_VIDEO_ENHANCE + 1];
+
+   struct aub_context contexts[MAX_CONTEXT_COUNT];
+   int num_contexts;
+
+   uint32_t next_context_handle;
 };
 
 void aub_file_init(struct aub_file *aub, FILE *file, FILE *debug, uint16_t pci_id, const char *app_name);
@@ -70,16 +109,16 @@ void aub_file_finish(struct aub_file *aub);
 
 static inline bool aub_use_execlists(const struct aub_file *aub)
 {
-   return aub->devinfo.gen >= 8;
+   return aub->devinfo.ver >= 8;
 }
 
 uint32_t aub_gtt_size(struct aub_file *aub);
 
 static inline void
-aub_write_reloc(const struct gen_device_info *devinfo, void *p, uint64_t v)
+aub_write_reloc(const struct intel_device_info *devinfo, void *p, uint64_t v)
 {
-   if (devinfo->gen >= 8) {
-      *(uint64_t *)p = gen_canonical_address(v);
+   if (devinfo->ver >= 8) {
+      *(uint64_t *)p = intel_canonical_address(v);
    } else {
       *(uint32_t *)p = v;
    }
@@ -91,10 +130,12 @@ void aub_write_ggtt(struct aub_file *aub, uint64_t virt_addr, uint64_t size, con
 void aub_write_trace_block(struct aub_file *aub,
                            uint32_t type, void *virtual,
                            uint32_t size, uint64_t gtt_offset);
-void aub_write_exec(struct aub_file *aub, uint64_t batch_addr,
+void aub_write_exec(struct aub_file *aub, uint32_t ctx_id, uint64_t batch_addr,
                     uint64_t offset, enum drm_i915_gem_engine_class engine_class);
 void aub_write_context_execlists(struct aub_file *aub, uint64_t context_addr,
                                  enum drm_i915_gem_engine_class engine_class);
+
+uint32_t aub_write_context_create(struct aub_file *aub, uint32_t *ctx_id);
 
 #ifdef __cplusplus
 }

@@ -41,21 +41,20 @@ vec4_visitor::dead_code_eliminate()
 {
    bool progress = false;
 
-   calculate_live_intervals();
-
-   int num_vars = live_intervals->num_vars;
+   const vec4_live_variables &live_vars = live_analysis.require();
+   int num_vars = live_vars.num_vars;
    BITSET_WORD *live = rzalloc_array(NULL, BITSET_WORD, BITSET_WORDS(num_vars));
    BITSET_WORD *flag_live = rzalloc_array(NULL, BITSET_WORD, 1);
 
    foreach_block_reverse_safe(block, cfg) {
-      memcpy(live, live_intervals->block_data[block->num].liveout,
+      memcpy(live, live_vars.block_data[block->num].liveout,
              sizeof(BITSET_WORD) * BITSET_WORDS(num_vars));
-      memcpy(flag_live, live_intervals->block_data[block->num].flag_liveout,
+      memcpy(flag_live, live_vars.block_data[block->num].flag_liveout,
              sizeof(BITSET_WORD));
 
       foreach_inst_in_block_reverse_safe(vec4_instruction, inst, block) {
          if ((inst->dst.file == VGRF && !inst->has_side_effects()) ||
-             (inst->dst.is_null() && inst->writes_flag())){
+             (inst->dst.is_null() && inst->writes_flag(devinfo))){
             bool result_live[4] = { false };
             if (inst->dst.file == VGRF) {
                for (unsigned i = 0; i < DIV_ROUND_UP(inst->size_written, 16); i++) {
@@ -81,7 +80,7 @@ vec4_visitor::dead_code_eliminate()
                result_live[3] = result;
             }
 
-            if (inst->writes_flag()) {
+            if (inst->writes_flag(devinfo)) {
                /* Independently calculate the usage of the flag components and
                 * the destination value components.
                 */
@@ -127,7 +126,7 @@ vec4_visitor::dead_code_eliminate()
             }
          }
 
-         if (inst->dst.is_null() && inst->writes_flag()) {
+         if (inst->dst.is_null() && inst->writes_flag(devinfo)) {
             bool combined_live = false;
             for (unsigned c = 0; c < 4; c++)
                combined_live |= BITSET_TEST(flag_live, c);
@@ -150,7 +149,7 @@ vec4_visitor::dead_code_eliminate()
             }
          }
 
-         if (inst->writes_flag() && !inst->predicate && inst->exec_size == 8) {
+         if (inst->writes_flag(devinfo) && !inst->predicate && inst->exec_size == 8) {
             for (unsigned c = 0; c < 4; c++)
                BITSET_CLEAR(flag_live, c);
          }
@@ -183,7 +182,7 @@ vec4_visitor::dead_code_eliminate()
    ralloc_free(flag_live);
 
    if (progress)
-      invalidate_live_intervals();
+      invalidate_analysis(DEPENDENCY_INSTRUCTIONS);
 
    return progress;
 }

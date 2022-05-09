@@ -222,7 +222,7 @@ Instruction *Value::getUniqueInsn() const
             return (*it)->getInsn();
       // should be unreachable and trigger assertion at the end
    }
-#ifdef DEBUG
+#ifndef NDEBUG
    if (reg.data.id < 0) {
       int n = 0;
       for (DefCIterator it = defs.begin(); n < 2 && it != defs.end(); ++it)
@@ -336,7 +336,7 @@ static inline Instruction *cloneForward(Function *ctx, Instruction *obj)
 // XXX: use a virtual function so we're really really safe ?
 LValue *Value::asLValue()
 {
-   if (reg.file >= FILE_GPR && reg.file <= FILE_ADDRESS)
+   if (reg.file >= FILE_GPR && reg.file <= LAST_REGISTER_FILE)
       return static_cast<LValue *>(this);
    return NULL;
 }

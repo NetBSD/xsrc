@@ -23,11 +23,12 @@ inc_loader = include_directories('.')
 if with_platform_x11 and with_dri3
   libloader_dri3_helper = static_library(
     'loader_dri3_helper',
-    ['loader_dri3_helper.c', 'loader_dri3_helper.h'],
-    c_args : c_vis_args,
+    'loader_dri3_helper.c',
+    gnu_symbol_visibility : 'hidden',
     include_directories : [inc_include, inc_src],
     dependencies : [
       dep_libdrm, dep_xcb_dri3, dep_xcb_present, dep_xcb_sync, dep_xshmfence,
+      dep_xcb_xfixes,
     ],
     build_by_default : false,
   )
@@ -35,13 +36,24 @@ else
   libloader_dri3_helper = []
 endif
 
+loader_c_args = [
+  '-DUSE_DRICONF',
+  '-DDEFAULT_DRIVER_DIR="@0@"'.format(dri_search_path),
+]
+
+if get_option('prefer-iris')
+  loader_c_args += ['-DPREFER_IRIS']
+endif
+
+if get_option('prefer-crocus')
+  loader_c_args += ['-DPREFER_CROCUS']
+endif
+
 libloader = static_library(
   'loader',
-  ['loader.c', 'loader.h', 'pci_id_driver_map.c', 'pci_id_driver_map.h',
-   xmlpool_options_h],
-  c_args : [c_vis_args, '-DUSE_DRICONF',
-            '-DDEFAULT_DRIVER_DIR="@0@"'.format(dri_search_path),
-],
+  ['loader_dri_helper.c', 'loader.c', 'pci_id_driver_map.c'],
+  c_args : loader_c_args,
+  gnu_symbol_visibility : 'hidden',
   include_directories : [inc_include, inc_src, inc_util],
   dependencies : [dep_libdrm, dep_thread],
   build_by_default : false,

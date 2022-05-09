@@ -49,6 +49,7 @@ struct blorp_context {
                          const void *key, uint32_t key_size,
                          uint32_t *kernel_out, void *prog_data_out);
    bool (*upload_shader)(struct blorp_batch *batch,
+                         uint32_t stage,
                          const void *key, uint32_t key_size,
                          const void *kernel, uint32_t kernel_size,
                          const struct brw_stage_prog_data *prog_data,
@@ -77,6 +78,11 @@ enum blorp_batch_flags {
     * color buffer.
     */
    BLORP_BATCH_NO_UPDATE_CLEAR_COLOR = (1 << 2),
+
+   /* This flag indicates that blorp should use a compute program for the
+    * operation.
+    */
+   BLORP_BATCH_USE_COMPUTE = (1 << 3),
 };
 
 struct blorp_batch {
@@ -109,7 +115,7 @@ struct blorp_surf
 
    /**
     * If set (bo != NULL), clear_color is ignored and the actual clear color
-    * is fetched from this address.  On gen7-8, this is all of dword 7 of
+    * is fetched from this address.  On gfx7-8, this is all of dword 7 of
     * RENDER_SURFACE_STATE and is the responsibility of the caller to ensure
     * that it contains a swizzle of RGBA and resource min LOD of 0.
     */
@@ -132,7 +138,7 @@ enum blorp_filter {
 void
 blorp_blit(struct blorp_batch *batch,
            const struct blorp_surf *src_surf,
-           unsigned src_level, unsigned src_layer,
+           unsigned src_level, float src_layer,
            enum isl_format src_format, struct isl_swizzle src_swizzle,
            const struct blorp_surf *dst_surf,
            unsigned dst_level, unsigned dst_layer,
@@ -160,14 +166,25 @@ blorp_buffer_copy(struct blorp_batch *batch,
                   struct blorp_address dst,
                   uint64_t size);
 
-union isl_color_value
-swizzle_color_value(union isl_color_value src, struct isl_swizzle swizzle);
-
 void
 blorp_fast_clear(struct blorp_batch *batch,
-                 const struct blorp_surf *surf, enum isl_format format,
+                 const struct blorp_surf *surf,
+                 enum isl_format format, struct isl_swizzle swizzle,
                  uint32_t level, uint32_t start_layer, uint32_t num_layers,
                  uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1);
+
+bool
+blorp_clear_supports_compute(struct blorp_context *blorp,
+                             uint8_t color_write_disable, bool blend_enabled,
+                             enum isl_aux_usage aux_usage);
+
+bool
+blorp_copy_supports_compute(struct blorp_context *blorp,
+                            enum isl_aux_usage dst_aux_usage);
+
+bool
+blorp_blit_supports_compute(struct blorp_context *blorp,
+                            enum isl_aux_usage dst_aux_usage);
 
 void
 blorp_clear(struct blorp_batch *batch,
@@ -176,7 +193,7 @@ blorp_clear(struct blorp_batch *batch,
             uint32_t level, uint32_t start_layer, uint32_t num_layers,
             uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1,
             union isl_color_value clear_color,
-            const bool color_write_disable[4]);
+            uint8_t color_write_disable);
 
 void
 blorp_clear_depth_stencil(struct blorp_batch *batch,
@@ -188,10 +205,11 @@ blorp_clear_depth_stencil(struct blorp_batch *batch,
                           bool clear_depth, float depth_value,
                           uint8_t stencil_mask, uint8_t stencil_value);
 bool
-blorp_can_hiz_clear_depth(uint8_t gen, enum isl_format format,
-                          uint32_t num_samples,
-                          uint32_t x0, uint32_t y0,
-                          uint32_t x1, uint32_t y1);
+blorp_can_hiz_clear_depth(const struct intel_device_info *devinfo,
+                          const struct isl_surf *surf,
+                          enum isl_aux_usage aux_usage,
+                          uint32_t level, uint32_t layer,
+                          uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1);
 void
 blorp_hiz_clear_depth_stencil(struct blorp_batch *batch,
                               const struct blorp_surf *depth,
@@ -205,7 +223,7 @@ blorp_hiz_clear_depth_stencil(struct blorp_batch *batch,
 
 
 void
-blorp_gen8_hiz_clear_attachments(struct blorp_batch *batch,
+blorp_gfx8_hiz_clear_attachments(struct blorp_batch *batch,
                                  uint32_t num_samples,
                                  uint32_t x0, uint32_t y0,
                                  uint32_t x1, uint32_t y1,

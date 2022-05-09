@@ -14,10 +14,13 @@ struct nouveau_bo;
  *
  * USER_MEMORY: resource->data is a pointer to client memory and may change
  *  between GL calls
+ *
+ * USER_PTR: bo is backed by user memory mapped into the GPUs VM
  */
 #define NOUVEAU_BUFFER_STATUS_GPU_READING (1 << 0)
 #define NOUVEAU_BUFFER_STATUS_GPU_WRITING (1 << 1)
 #define NOUVEAU_BUFFER_STATUS_DIRTY       (1 << 2)
+#define NOUVEAU_BUFFER_STATUS_USER_PTR    (1 << 6)
 #define NOUVEAU_BUFFER_STATUS_USER_MEMORY (1 << 7)
 
 #define NOUVEAU_BUFFER_STATUS_REALLOC_MASK NOUVEAU_BUFFER_STATUS_USER_MEMORY
@@ -30,7 +33,6 @@ struct nouveau_bo;
  */
 struct nv04_resource {
    struct pipe_resource base;
-   const struct u_resource_vtbl *vtbl;
 
    uint64_t address; /* virtual address (nv50+) */
 
@@ -68,6 +70,15 @@ void *
 nouveau_resource_map_offset(struct nouveau_context *, struct nv04_resource *,
                             uint32_t offset, uint32_t flags);
 
+void
+nouveau_buffer_destroy(struct pipe_screen *pscreen,
+                       struct pipe_resource *presource);
+
+void
+nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
+                                     struct pipe_transfer *transfer,
+                                     const struct pipe_box *box);
+
 static inline void
 nouveau_resource_unmap(struct nv04_resource *res)
 {
@@ -92,6 +103,11 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
                       const struct pipe_resource *templ);
 
 struct pipe_resource *
+nouveau_buffer_create_from_user(struct pipe_screen *pscreen,
+                                const struct pipe_resource *templ,
+                                void *user_ptr);
+
+struct pipe_resource *
 nouveau_user_buffer_create(struct pipe_screen *screen, void *ptr,
                            unsigned bytes, unsigned usage);
 
@@ -110,5 +126,16 @@ uint64_t
 nouveau_scratch_data(struct nouveau_context *,
                      const void *data, unsigned base, unsigned size,
                      struct nouveau_bo **);
+
+void *
+nouveau_buffer_transfer_map(struct pipe_context *pipe,
+                            struct pipe_resource *resource,
+                            unsigned level, unsigned usage,
+                            const struct pipe_box *box,
+                            struct pipe_transfer **ptransfer);
+
+void
+nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
+                              struct pipe_transfer *transfer);
 
 #endif

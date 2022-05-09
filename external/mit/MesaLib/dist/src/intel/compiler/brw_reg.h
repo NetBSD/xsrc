@@ -43,7 +43,7 @@
 #define BRW_REG_H
 
 #include <stdbool.h>
-#include "main/compiler.h"
+#include "util/compiler.h"
 #include "main/macros.h"
 #include "program/prog_instruction.h"
 #include "brw_eu_defines.h"
@@ -53,7 +53,7 @@
 extern "C" {
 #endif
 
-struct gen_device_info;
+struct intel_device_info;
 
 /** Number of general purpose registers (VS, WM, etc) */
 #define BRW_MAX_GRF 128
@@ -61,13 +61,13 @@ struct gen_device_info;
 /**
  * First GRF used for the MRF hack.
  *
- * On gen7, MRFs are no longer used, and contiguous GRFs are used instead.  We
+ * On gfx7, MRFs are no longer used, and contiguous GRFs are used instead.  We
  * haven't converted our compiler to be aware of this, so it asks for MRFs and
  * brw_eu_emit.c quietly converts them to be accesses of the top GRFs.  The
  * register allocators have to be careful of this to avoid corrupting the "MRF"s
  * with actual GRF allocations.
  */
-#define GEN7_MRF_HACK_START 112
+#define GFX7_MRF_HACK_START 112
 
 /** Number of message register file registers */
 #define BRW_MAX_MRF(gen) (gen == 6 ? 24 : 16)
@@ -318,6 +318,7 @@ type_sz(unsigned type)
    case BRW_REGISTER_TYPE_UQ:
    case BRW_REGISTER_TYPE_Q:
    case BRW_REGISTER_TYPE_DF:
+   case BRW_REGISTER_TYPE_NF:
       return 8;
    case BRW_REGISTER_TYPE_UD:
    case BRW_REGISTER_TYPE_D:
@@ -326,9 +327,10 @@ type_sz(unsigned type)
       return 4;
    case BRW_REGISTER_TYPE_UW:
    case BRW_REGISTER_TYPE_W:
+   case BRW_REGISTER_TYPE_HF:
+   /* [U]V components are 4-bit, but HW unpacks them to 16-bit (2 bytes) */
    case BRW_REGISTER_TYPE_UV:
    case BRW_REGISTER_TYPE_V:
-   case BRW_REGISTER_TYPE_HF:
       return 2;
    case BRW_REGISTER_TYPE_UB:
    case BRW_REGISTER_TYPE_B:
@@ -375,15 +377,6 @@ brw_int_type(unsigned sz, bool is_signed)
    }
 }
 
-static inline bool
-type_is_unsigned_int(enum brw_reg_type tp)
-{
-   return tp == BRW_REGISTER_TYPE_UB ||
-          tp == BRW_REGISTER_TYPE_UW ||
-          tp == BRW_REGISTER_TYPE_UD ||
-          tp == BRW_REGISTER_TYPE_UQ;
-}
-
 /**
  * Construct a brw_reg.
  * \param file      one of the BRW_x_REGISTER_FILE values
@@ -417,7 +410,7 @@ brw_reg(enum brw_reg_file file,
    else if (file == BRW_ARCHITECTURE_REGISTER_FILE)
       assert(nr <= BRW_ARF_TIMESTAMP);
    /* Asserting on the MRF register number requires to know the hardware gen
-    * (gen6 has 24 MRF registers), which we don't know here, so we assert
+    * (gfx6 has 24 MRF registers), which we don't know here, so we assert
     * for that in the generators and in brw_eu_emit.c
     */
 
@@ -916,8 +909,8 @@ brw_flag_subreg(unsigned subreg)
 }
 
 /**
- * Return the mask register present in Gen4-5, or the related register present
- * in Gen7.5 and later hardware referred to as "channel enable" register in
+ * Return the mask register present in Gfx4-5, or the related register present
+ * in Gfx7.5 and later hardware referred to as "channel enable" register in
  * the documentation.
  */
 static inline struct brw_reg
@@ -936,6 +929,21 @@ static inline struct brw_reg
 brw_dmask_reg()
 {
    return brw_sr0_reg(2);
+}
+
+static inline struct brw_reg
+brw_mask_stack_reg(unsigned subnr)
+{
+   return suboffset(retype(brw_vec16_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                                         BRW_ARF_MASK_STACK, 0),
+                           BRW_REGISTER_TYPE_UB), subnr);
+}
+
+static inline struct brw_reg
+brw_mask_stack_depth_reg(unsigned subnr)
+{
+   return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                      BRW_ARF_MASK_STACK_DEPTH, subnr);
 }
 
 static inline struct brw_reg
@@ -985,7 +993,7 @@ static inline struct brw_reg
 spread(struct brw_reg reg, unsigned s)
 {
    if (s) {
-      assert(_mesa_is_pow_two(s));
+      assert(util_is_power_of_two_nonzero(s));
 
       if (reg.hstride)
          reg.hstride += cvt(s) - 1;
@@ -1006,11 +1014,17 @@ spread(struct brw_reg reg, unsigned s)
 static inline struct brw_reg
 subscript(struct brw_reg reg, enum brw_reg_type type, unsigned i)
 {
-   if (reg.file == IMM)
-      return reg;
-
    unsigned scale = type_sz(reg.type) / type_sz(type);
    assert(scale >= 1 && i < scale);
+
+   if (reg.file == IMM) {
+      unsigned bit_size = type_sz(type) * 8;
+      reg.u64 >>= i * bit_size;
+      reg.u64 &= BITFIELD64_MASK(bit_size);
+      if (bit_size <= 16)
+         reg.u64 |= reg.u64 << 16;
+      return retype(reg, type);
+   }
 
    return suboffset(retype(spread(reg, scale), type), i);
 }
@@ -1223,6 +1237,28 @@ region_matches(struct brw_reg reg, enum brw_vertical_stride v,
 #define has_scalar_region(reg) \
    region_matches(reg, BRW_VERTICAL_STRIDE_0, BRW_WIDTH_1, \
                   BRW_HORIZONTAL_STRIDE_0)
+
+/**
+ * Return the size in bytes per data element of register \p reg on the
+ * corresponding register file.
+ */
+static inline unsigned
+element_sz(struct brw_reg reg)
+{
+   if (reg.file == BRW_IMMEDIATE_VALUE || has_scalar_region(reg)) {
+      return type_sz(reg.type);
+
+   } else if (reg.width == BRW_WIDTH_1 &&
+              reg.hstride == BRW_HORIZONTAL_STRIDE_0) {
+      assert(reg.vstride != BRW_VERTICAL_STRIDE_0);
+      return type_sz(reg.type) << (reg.vstride - 1);
+
+   } else {
+      assert(reg.hstride != BRW_HORIZONTAL_STRIDE_0);
+      assert(reg.vstride == reg.hstride + reg.width);
+      return type_sz(reg.type) << (reg.hstride - 1);
+   }
+}
 
 /* brw_packed_float.c */
 int brw_float_to_vf(float f);

@@ -24,12 +24,13 @@
 
 
 #include "glheader.h"
-#include "imports.h"
+
 #include "context.h"
 #include "fbobject.h"
 #include "formats.h"
 #include "mtypes.h"
 #include "renderbuffer.h"
+#include "util/u_memory.h"
 
 
 /**
@@ -39,8 +40,6 @@ void
 _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   simple_mtx_init(&rb->Mutex, mtx_plain);
 
    rb->ClassID = 0;
    rb->Name = name;
@@ -101,7 +100,6 @@ _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
 void
 _mesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   simple_mtx_destroy(&rb->Mutex);
    free(rb->Label);
    free(rb);
 }
@@ -198,29 +196,20 @@ _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
 {
    if (*ptr) {
       /* Unreference the old renderbuffer */
-      GLboolean deleteFlag = GL_FALSE;
       struct gl_renderbuffer *oldRb = *ptr;
 
-      simple_mtx_lock(&oldRb->Mutex);
       assert(oldRb->RefCount > 0);
-      oldRb->RefCount--;
-      deleteFlag = (oldRb->RefCount == 0);
-      simple_mtx_unlock(&oldRb->Mutex);
 
-      if (deleteFlag) {
+      if (p_atomic_dec_zero(&oldRb->RefCount)) {
          GET_CURRENT_CONTEXT(ctx);
          oldRb->Delete(ctx, oldRb);
       }
-
-      *ptr = NULL;
    }
-   assert(!*ptr);
 
    if (rb) {
       /* reference new renderbuffer */
-      simple_mtx_lock(&rb->Mutex);
-      rb->RefCount++;
-      simple_mtx_unlock(&rb->Mutex);
-      *ptr = rb;
+      p_atomic_inc(&rb->RefCount);
    }
+
+   *ptr = rb;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -353,6 +353,7 @@ protected:
     virtual BOOL_32 HwlGetAlignmentInfoMacroTiled(
         const ADDR_COMPUTE_SURFACE_INFO_INPUT* pIn,
         UINT_32* pPitchAlign, UINT_32* pHeightAlign, UINT_32* pSizeAlign) const = 0;
+
 
     virtual VOID HwlOverrideTileMode(ADDR_COMPUTE_SURFACE_INFO_INPUT* pInOut) const
     {

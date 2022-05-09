@@ -32,6 +32,7 @@
 #include "hw/common.xml.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
+#include "util/half_float.h"
 
 void *
 etna_blend_state_create(struct pipe_context *pctx,
@@ -42,6 +43,13 @@ etna_blend_state_create(struct pipe_context *pctx,
    struct etna_blend_state *co = CALLOC_STRUCT(etna_blend_state);
    bool alpha_enable, logicop_enable;
 
+   /* pipe_blend_func happens to match the hardware. */
+   STATIC_ASSERT(PIPE_BLEND_ADD == BLEND_EQ_ADD);
+   STATIC_ASSERT(PIPE_BLEND_SUBTRACT == BLEND_EQ_SUBTRACT);
+   STATIC_ASSERT(PIPE_BLEND_REVERSE_SUBTRACT == BLEND_EQ_REVERSE_SUBTRACT);
+   STATIC_ASSERT(PIPE_BLEND_MIN == BLEND_EQ_MIN);
+   STATIC_ASSERT(PIPE_BLEND_MAX == BLEND_EQ_MAX);
+
    if (!co)
       return NULL;
 
@@ -49,23 +57,26 @@ etna_blend_state_create(struct pipe_context *pctx,
 
    /* Enable blending if
     * - blend enabled in blend state
-    * - NOT source factor is ONE and destination factor ZERO for both rgb and
-    *   alpha (which would mean that blending is effectively disabled)
+    * - NOT source factor is ONE and destination factor ZERO and eq is ADD for
+    *   both rgb and alpha (which mean that blending is effectively disabled)
     */
    alpha_enable = rt0->blend_enable &&
                  !(rt0->rgb_src_factor == PIPE_BLENDFACTOR_ONE &&
                    rt0->rgb_dst_factor == PIPE_BLENDFACTOR_ZERO &&
+                   rt0->rgb_func == PIPE_BLEND_ADD &&
                    rt0->alpha_src_factor == PIPE_BLENDFACTOR_ONE &&
-                   rt0->alpha_dst_factor == PIPE_BLENDFACTOR_ZERO);
+                   rt0->alpha_dst_factor == PIPE_BLENDFACTOR_ZERO &&
+                   rt0->alpha_func == PIPE_BLEND_ADD);
 
    /* Enable separate alpha if
     * - Blending enabled (see above)
-    * - NOT source factor is equal to destination factor for both rgb abd
-    *   alpha (which would effectively that mean alpha is not separate)
+    * - NOT source/destination factor and eq is same for both rgb and alpha
+    *   (which would effectively that mean alpha is not separate), and
     */
    bool separate_alpha = alpha_enable &&
                          !(rt0->rgb_src_factor == rt0->alpha_src_factor &&
-                           rt0->rgb_dst_factor == rt0->alpha_dst_factor);
+                           rt0->rgb_dst_factor == rt0->alpha_dst_factor &&
+                           rt0->rgb_func == rt0->alpha_func);
 
    if (alpha_enable) {
       co->PE_ALPHA_CONFIG =
@@ -75,8 +86,8 @@ etna_blend_state_create(struct pipe_context *pctx,
          VIVS_PE_ALPHA_CONFIG_SRC_FUNC_ALPHA(translate_blend_factor(rt0->alpha_src_factor)) |
          VIVS_PE_ALPHA_CONFIG_DST_FUNC_COLOR(translate_blend_factor(rt0->rgb_dst_factor)) |
          VIVS_PE_ALPHA_CONFIG_DST_FUNC_ALPHA(translate_blend_factor(rt0->alpha_dst_factor)) |
-         VIVS_PE_ALPHA_CONFIG_EQ_COLOR(translate_blend(rt0->rgb_func)) |
-         VIVS_PE_ALPHA_CONFIG_EQ_ALPHA(translate_blend(rt0->alpha_func));
+         VIVS_PE_ALPHA_CONFIG_EQ_COLOR(rt0->rgb_func) |
+         VIVS_PE_ALPHA_CONFIG_EQ_ALPHA(rt0->alpha_func);
    } else {
       co->PE_ALPHA_CONFIG = 0;
    }
@@ -86,6 +97,7 @@ etna_blend_state_create(struct pipe_context *pctx,
 
    co->PE_LOGIC_OP =
          VIVS_PE_LOGIC_OP_OP(logicop_enable ? so->logicop_func : LOGIC_OP_COPY) |
+         VIVS_PE_LOGIC_OP_DITHER_MODE(3) | /* TODO: related to dithering, sometimes 2 */
          0x000E4000 /* ??? */;
 
    co->fo_allowed = !alpha_enable && !logicop_enable;
@@ -118,7 +130,7 @@ etna_update_blend(struct etna_context *ctx)
    uint32_t colormask;
 
    if (pfb->cbufs[0] &&
-       translate_rs_format_rb_swap(pfb->cbufs[0]->format)) {
+       translate_pe_format_rb_swap(pfb->cbufs[0]->format)) {
       colormask = rt0->colormask & (PIPE_MASK_A | PIPE_MASK_G);
       if (rt0->colormask & PIPE_MASK_R)
          colormask |= PIPE_MASK_B;
@@ -159,21 +171,20 @@ etna_update_blend_color(struct etna_context *ctx)
 {
    struct pipe_framebuffer_state *pfb = &ctx->framebuffer_s;
    struct compiled_blend_color *cs = &ctx->blend_color;
+   bool rb_swap = (pfb->cbufs[0] && translate_pe_format_rb_swap(pfb->cbufs[0]->format));
 
-   if (pfb->cbufs[0] &&
-       translate_rs_format_rb_swap(pfb->cbufs[0]->format)) {
-      cs->PE_ALPHA_BLEND_COLOR =
-         VIVS_PE_ALPHA_BLEND_COLOR_R(etna_cfloat_to_uint8(cs->color[2])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_G(etna_cfloat_to_uint8(cs->color[1])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_B(etna_cfloat_to_uint8(cs->color[0])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_A(etna_cfloat_to_uint8(cs->color[3]));
-   } else {
-      cs->PE_ALPHA_BLEND_COLOR =
-         VIVS_PE_ALPHA_BLEND_COLOR_R(etna_cfloat_to_uint8(cs->color[0])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_G(etna_cfloat_to_uint8(cs->color[1])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_B(etna_cfloat_to_uint8(cs->color[2])) |
-         VIVS_PE_ALPHA_BLEND_COLOR_A(etna_cfloat_to_uint8(cs->color[3]));
-	}
+   cs->PE_ALPHA_BLEND_COLOR =
+      VIVS_PE_ALPHA_BLEND_COLOR_R(etna_cfloat_to_uint8(cs->color[rb_swap ? 2 : 0])) |
+      VIVS_PE_ALPHA_BLEND_COLOR_G(etna_cfloat_to_uint8(cs->color[1])) |
+      VIVS_PE_ALPHA_BLEND_COLOR_B(etna_cfloat_to_uint8(cs->color[rb_swap ? 0 : 2])) |
+      VIVS_PE_ALPHA_BLEND_COLOR_A(etna_cfloat_to_uint8(cs->color[3]));
 
-	return true;
+   cs->PE_ALPHA_COLOR_EXT0 =
+      VIVS_PE_ALPHA_COLOR_EXT0_B(_mesa_float_to_half(cs->color[rb_swap ? 2 : 0])) |
+      VIVS_PE_ALPHA_COLOR_EXT0_G(_mesa_float_to_half(cs->color[1]));
+   cs->PE_ALPHA_COLOR_EXT1 =
+      VIVS_PE_ALPHA_COLOR_EXT1_R(_mesa_float_to_half(cs->color[rb_swap ? 0 : 2])) |
+      VIVS_PE_ALPHA_COLOR_EXT1_A(_mesa_float_to_half(cs->color[3]));
+
+   return true;
 }

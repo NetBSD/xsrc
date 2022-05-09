@@ -222,14 +222,14 @@ SIMD_EMU_IWRAPPER_2(subs_epu8); // return (b > a) ? 0 : (a - b) (uint8)
 //-----------------------------------------------------------------------
 // Logical operations
 //-----------------------------------------------------------------------
-SIMD_WRAPPER_2(and_ps);         // return a & b       (float treated as int)
-SIMD_EMU_IWRAPPER_2(and_si);    // return a & b       (int)
-SIMD_WRAPPER_2(andnot_ps);      // return (~a) & b    (float treated as int)
-SIMD_EMU_IWRAPPER_2(andnot_si); // return (~a) & b    (int)
-SIMD_WRAPPER_2(or_ps);          // return a | b       (float treated as int)
-SIMD_EMU_IWRAPPER_2(or_si);     // return a | b       (int)
-SIMD_WRAPPER_2(xor_ps);         // return a ^ b       (float treated as int)
-SIMD_EMU_IWRAPPER_2(xor_si);    // return a ^ b       (int)
+SIMD_WRAPPER_2(and_ps);                         // return a & b       (float treated as int)
+SIMD_IFWRAPPER_2(and_si, _mm256_and_ps);        // return a & b       (int)
+SIMD_WRAPPER_2(andnot_ps);                      // return (~a) & b    (float treated as int)
+SIMD_IFWRAPPER_2(andnot_si, _mm256_andnot_ps);  // return (~a) & b    (int)
+SIMD_WRAPPER_2(or_ps);                          // return a | b       (float treated as int)
+SIMD_IFWRAPPER_2(or_si, _mm256_or_ps);          // return a | b       (int)
+SIMD_WRAPPER_2(xor_ps);                         // return a ^ b       (float treated as int)
+SIMD_IFWRAPPER_2(xor_si, _mm256_xor_ps);        // return a ^ b       (int)
 
 //-----------------------------------------------------------------------
 // Shift operations
@@ -635,7 +635,7 @@ static SIMDINLINE Float SIMDCALL
     uint32_t* pOffsets = (uint32_t*)&idx;
     Float     vResult  = old;
     float*    pResult  = (float*)&vResult;
-    DWORD     index;
+    unsigned long index = 0;
     uint32_t  umask = movemask_ps(mask);
     while (_BitScanForward(&index, umask))
     {

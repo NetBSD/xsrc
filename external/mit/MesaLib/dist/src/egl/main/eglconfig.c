@@ -737,9 +737,6 @@ _eglFilterConfigArray(_EGLArray *array, EGLConfig *configs,
    _EGLConfig **configList;
    EGLint i, count;
 
-   if (!num_configs)
-      return _eglError(EGL_BAD_PARAMETER, "eglChooseConfig");
-
    /* get the number of matched configs */
    count = _eglFilterArray(array, NULL, 0,
          (_EGLArrayForEach) match, priv_data);
@@ -793,7 +790,7 @@ _eglFallbackCompare(const _EGLConfig *conf1, const _EGLConfig *conf2,
  * Typical fallback routine for eglChooseConfig
  */
 EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
+_eglChooseConfig(_EGLDisplay *disp, const EGLint *attrib_list,
                  EGLConfig *configs, EGLint config_size, EGLint *num_configs)
 {
    _EGLConfig criteria;
@@ -812,7 +809,7 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
  * Fallback for eglGetConfigAttrib.
  */
 EGLBoolean
-_eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
+_eglGetConfigAttrib(_EGLDisplay *disp, _EGLConfig *conf,
                     EGLint attribute, EGLint *value)
 {
    if (!_eglIsConfigAttribValid(conf, attribute))
@@ -848,12 +845,9 @@ _eglFlattenConfig(void *elem, void *buffer)
  * Fallback for eglGetConfigs.
  */
 EGLBoolean
-_eglGetConfigs(_EGLDriver *drv, _EGLDisplay *disp, EGLConfig *configs,
+_eglGetConfigs(_EGLDisplay *disp, EGLConfig *configs,
                EGLint config_size, EGLint *num_config)
 {
-   if (!num_config)
-      return _eglError(EGL_BAD_PARAMETER, "eglGetConfigs");
-
    *num_config = _eglFlattenArray(disp->Configs, (void *) configs,
          sizeof(configs[0]), config_size, _eglFlattenConfig);
 

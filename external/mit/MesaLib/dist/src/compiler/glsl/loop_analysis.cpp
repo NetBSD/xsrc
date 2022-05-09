@@ -88,7 +88,7 @@ find_initial_value(ir_loop *loop, ir_variable *var)
 static int
 calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
                      enum ir_expression_operation op, bool continue_from_then,
-                     bool swap_compare_operands)
+                     bool swap_compare_operands, bool inc_before_terminator)
 {
    if (from == NULL || to == NULL || increment == NULL)
       return -1;
@@ -116,7 +116,33 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       iter = cast->constant_expression_value(mem_ctx);
    }
 
-   int iter_value = iter->get_int_component(0);
+   int64_t iter_value = iter->get_int64_component(0);
+
+   /* Code after this block works under assumption that iterator will be
+    * incremented or decremented until it hits the limit,
+    * however the loop condition can be false on the first iteration.
+    * Handle such loops first.
+    */
+   {
+      ir_rvalue *first_value = from;
+      if (inc_before_terminator) {
+         first_value =
+            new(mem_ctx) ir_expression(ir_binop_add, from->type, from, increment);
+      }
+
+      ir_expression *cmp = swap_compare_operands
+            ? new(mem_ctx) ir_expression(op, glsl_type::bool_type, to, first_value)
+            : new(mem_ctx) ir_expression(op, glsl_type::bool_type, first_value, to);
+      if (continue_from_then)
+         cmp = new(mem_ctx) ir_expression(ir_unop_logic_not, cmp);
+
+      ir_constant *const cmp_result = cmp->constant_expression_value(mem_ctx);
+      assert(cmp_result != NULL);
+      if (cmp_result->get_bool_component(0)) {
+         ralloc_free(mem_ctx);
+         return 0;
+      }
+   }
 
    /* Make sure that the calculated number of iterations satisfies the exit
     * condition.  This is needed to catch off-by-one errors and some types of
@@ -133,13 +159,28 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       /* Increment may be of type int, uint or float. */
       switch (increment->type->base_type) {
       case GLSL_TYPE_INT:
-         iter = new(mem_ctx) ir_constant(iter_value + bias[i]);
+         iter = new(mem_ctx) ir_constant(int32_t(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_INT16:
+         iter = new(mem_ctx) ir_constant(int16_t(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_INT64:
+         iter = new(mem_ctx) ir_constant(int64_t(iter_value + bias[i]));
          break;
       case GLSL_TYPE_UINT:
          iter = new(mem_ctx) ir_constant(unsigned(iter_value + bias[i]));
          break;
+      case GLSL_TYPE_UINT16:
+         iter = new(mem_ctx) ir_constant(uint16_t(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_UINT64:
+         iter = new(mem_ctx) ir_constant(uint64_t(iter_value + bias[i]));
+         break;
       case GLSL_TYPE_FLOAT:
          iter = new(mem_ctx) ir_constant(float(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_FLOAT16:
+         iter = new(mem_ctx) ir_constant(float16_t(float(iter_value + bias[i])));
          break;
       case GLSL_TYPE_DOUBLE:
          iter = new(mem_ctx) ir_constant(double(iter_value + bias[i]));
@@ -172,6 +213,11 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
    }
 
    ralloc_free(mem_ctx);
+
+   if (inc_before_terminator) {
+      iter_value--;
+   }
+
    return (valid_loop) ? iter_value : -1;
 }
 
@@ -288,6 +334,9 @@ loop_state::get(const ir_loop *ir)
 loop_variable *
 loop_variable_state::get(const ir_variable *ir)
 {
+   if (ir == NULL)
+      return NULL;
+
    hash_entry *entry = _mesa_hash_table_search(this->var_hash, ir);
    return entry ? (loop_variable *) entry->data : NULL;
 }
@@ -312,10 +361,8 @@ loop_terminator *
 loop_variable_state::insert(ir_if *if_stmt, bool continue_from_then)
 {
    void *mem_ctx = ralloc_parent(this);
-   loop_terminator *t = new(mem_ctx) loop_terminator();
-
-   t->ir = if_stmt;
-   t->continue_from_then = continue_from_then;
+   loop_terminator *t = new(mem_ctx) loop_terminator(if_stmt,
+                                                     continue_from_then);
 
    this->terminators.push_tail(t);
 
@@ -608,13 +655,13 @@ loop_analysis::visit_leave(ir_loop *ir)
 
          loop_variable *lv = ls->get(var);
          if (lv != NULL && lv->is_induction_var()) {
+            bool inc_before_terminator =
+               incremented_before_terminator(ir, var, t->ir);
+
             t->iterations = calculate_iterations(init, limit, lv->increment,
                                                  cmp, t->continue_from_then,
-                                                 swap_compare_operands);
-
-            if (incremented_before_terminator(ir, var, t->ir)) {
-               t->iterations--;
-            }
+                                                 swap_compare_operands,
+                                                 inc_before_terminator);
 
             if (t->iterations >= 0 &&
                 (ls->limiting_terminator == NULL ||

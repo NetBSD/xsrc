@@ -26,8 +26,6 @@
 #    Ian Romanick <idr@us.ibm.com>
 #    Jeremy Kolb <jkolb@brandeis.edu>
 
-from __future__ import division, print_function
-
 import argparse
 
 import gl_XML, glX_XML, glX_proto_common, license
@@ -441,10 +439,8 @@ __indirect_get_proc_address(const char *name)
                 print('#define %s %d' % (func.opcode_vendor_name(name), func.glx_vendorpriv))
                 print('%s gl%s(%s)' % (func.return_type, func_name, func.get_parameter_string()))
                 print('{')
-                print('    struct glx_context * const gc = __glXGetCurrentContext();')
-                print('')
                 print('#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)')
-                print('    if (gc->isDirect) {')
+                print('    if (((struct glx_context *)__glXGetCurrentContext())->isDirect) {')
                 print('        const _glapi_proc *const disp_table = (_glapi_proc *)GET_DISPATCH();')
                 print('        PFNGL%sPROC p =' % (name.upper()))
                 print('            (PFNGL%sPROC) disp_table[%d];' % (name.upper(), func.offset))
@@ -573,7 +569,7 @@ generic_%u_byte( GLint rop, const void * ptr )
                         condition = 'compsize > 0'
 
                     print('if (%s) {' % (condition))
-                    print('    gc->fillImage(gc, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr))
+                    print('    __glFillImage(gc, %s, %s, %s, %s, %s, %s, %s, %s, %s);' % (dim_str, width, height, depth, param.img_format, param.img_type, param.name, pcPtr, pixHeaderPtr))
                     print('} else {')
                     print('    (void) memcpy( %s, default_pixel_store_%uD, default_pixel_store_%uD_size );' % (pixHeaderPtr, dim, dim))
                     print('}')

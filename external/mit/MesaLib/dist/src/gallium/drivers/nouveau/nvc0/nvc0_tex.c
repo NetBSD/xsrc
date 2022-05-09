@@ -27,7 +27,7 @@
 #include "nv50/g80_texture.xml.h"
 #include "nv50/g80_defs.xml.h"
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #define NVE4_TIC_ENTRY_INVALID 0x000fffff
 #define NVE4_TSC_ENTRY_INVALID 0xfff00000
@@ -58,15 +58,14 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    if (templ->target == PIPE_TEXTURE_RECT || templ->target == PIPE_BUFFER)
       flags |= NV50_TEXVIEW_SCALED_COORDS;
 
-   return nvc0_create_texture_view(pipe, res, templ, flags, templ->target);
+   return nvc0_create_texture_view(pipe, res, templ, flags);
 }
 
 static struct pipe_sampler_view *
 gm107_create_texture_view(struct pipe_context *pipe,
                           struct pipe_resource *texture,
                           const struct pipe_sampler_view *templ,
-                          uint32_t flags,
-                          enum pipe_texture_target target)
+                          uint32_t flags)
 {
    const struct util_format_description *desc;
    const struct nvc0_format *fmt;
@@ -172,7 +171,7 @@ gm107_create_texture_view(struct pipe_context *pipe,
    tic[1]  = address;
    tic[2] |= address >> 32;
 
-   switch (target) {
+   switch (templ->target) {
    case PIPE_TEXTURE_1D:
       tic[4] |= GM107_TIC2_4_TEXTURE_TYPE_ONE_D;
       break;
@@ -253,6 +252,7 @@ gm107_create_texture_view_from_image(struct pipe_context *pipe,
    if (target == PIPE_TEXTURE_CUBE || target == PIPE_TEXTURE_CUBE_ARRAY)
       target = PIPE_TEXTURE_2D_ARRAY;
 
+   templ.target = target;
    templ.format = view->format;
    templ.swizzle_r = PIPE_SWIZZLE_X;
    templ.swizzle_g = PIPE_SWIZZLE_Y;
@@ -270,15 +270,14 @@ gm107_create_texture_view_from_image(struct pipe_context *pipe,
 
    flags = NV50_TEXVIEW_SCALED_COORDS | NV50_TEXVIEW_IMAGE_GM107;
 
-   return nvc0_create_texture_view(pipe, &res->base, &templ, flags, target);
+   return nvc0_create_texture_view(pipe, &res->base, &templ, flags);
 }
 
 static struct pipe_sampler_view *
 gf100_create_texture_view(struct pipe_context *pipe,
                           struct pipe_resource *texture,
                           const struct pipe_sampler_view *templ,
-                          uint32_t flags,
-                          enum pipe_texture_target target)
+                          uint32_t flags)
 {
    const struct util_format_description *desc;
    const struct nvc0_format *fmt;
@@ -380,7 +379,7 @@ gf100_create_texture_view(struct pipe_context *pipe,
    tic[1] = address;
    tic[2] |= address >> 32;
 
-   switch (target) {
+   switch (templ->target) {
    case PIPE_TEXTURE_1D:
       tic[2] |= G80_TIC_2_TEXTURE_TYPE_ONE_D;
       break;
@@ -443,12 +442,11 @@ struct pipe_sampler_view *
 nvc0_create_texture_view(struct pipe_context *pipe,
                          struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ,
-                         uint32_t flags,
-                         enum pipe_texture_target target)
+                         uint32_t flags)
 {
    if (nvc0_context(pipe)->screen->tic.maxwell)
-      return gm107_create_texture_view(pipe, texture, templ, flags, target);
-   return gf100_create_texture_view(pipe, texture, templ, flags, target);
+      return gm107_create_texture_view(pipe, texture, templ, flags);
+   return gf100_create_texture_view(pipe, texture, templ, flags);
 }
 
 bool
@@ -948,7 +946,7 @@ nvc0_mark_image_range_valid(const struct pipe_image_view *view)
 
    assert(view->resource->target == PIPE_BUFFER);
 
-   util_range_add(&res->valid_buffer_range,
+   util_range_add(&res->base, &res->valid_buffer_range,
                   view->u.buf.offset,
                   view->u.buf.offset + view->u.buf.size);
 }
@@ -1104,19 +1102,27 @@ nvc0_set_surface_info(struct nouveau_pushbuf *push,
 
    /* Stick the blockwidth (ie. number of bytes per pixel) to calculate pixel
     * offset and to check if the format doesn't mismatch. */
-   info[12] = util_format_get_blocksize(view->format);
+   info[12] = ffs(util_format_get_blocksize(view->format)) - 1;
 
    if (res->base.target == PIPE_BUFFER) {
       info[0]  = address >> 8;
       info[2]  = width;
    } else {
       struct nv50_miptree *mt = nv50_miptree(&res->base);
+      struct nv50_miptree_level *lvl = &mt->level[view->u.tex.level];
+      unsigned z = mt->layout_3d ? view->u.tex.first_layer : 0;
+      unsigned nby = align(util_format_get_nblocksy(view->format, height),
+                           NVC0_TILE_SIZE_Y(lvl->tile_mode));
 
+      /* NOTE: this does not precisely match nve4; the values are made to be
+       * easier for the shader to consume.
+       */
       info[0]  = address >> 8;
-      info[2]  = width;
-      info[4]  = height;
+      info[2]  = (NVC0_TILE_SHIFT_X(lvl->tile_mode) - info[12]) << 24;
+      info[4]  = NVC0_TILE_SHIFT_Y(lvl->tile_mode) << 24 | nby;
       info[5]  = mt->layer_stride >> 8;
-      info[6]  = depth;
+      info[6]  = NVC0_TILE_SHIFT_Z(lvl->tile_mode) << 24;
+      info[7]  = z;
       info[14] = mt->ms_x;
       info[15] = mt->ms_y;
    }
@@ -1169,24 +1175,31 @@ nvc0_validate_suf(struct nvc0_context *nvc0, int s)
          } else {
             struct nv50_miptree *mt = nv50_miptree(view->resource);
             struct nv50_miptree_level *lvl = &mt->level[view->u.tex.level];
-            const unsigned z = view->u.tex.first_layer;
+            unsigned adjusted_width = width, adjusted_height = height;
 
             if (mt->layout_3d) {
-               address += nvc0_mt_zslice_offset(mt, view->u.tex.level, z);
-               if (depth >= 1) {
-                  pipe_debug_message(&nvc0->base.debug, CONFORMANCE,
-                                     "3D images are not supported!");
-                  debug_printf("3D images are not supported!\n");
-               }
+               // We have to adjust the size of the 3d surface to be
+               // accessible within 2d limits. The size of each z tile goes
+               // into the x direction, while the number of z tiles goes into
+               // the y direction.
+               const unsigned nbx = util_format_get_nblocksx(view->format, width);
+               const unsigned nby = util_format_get_nblocksy(view->format, height);
+               const unsigned tsx = NVC0_TILE_SIZE_X(lvl->tile_mode);
+               const unsigned tsy = NVC0_TILE_SIZE_Y(lvl->tile_mode);
+               const unsigned tsz = NVC0_TILE_SIZE_Z(lvl->tile_mode);
+
+               adjusted_width = align(nbx, tsx / util_format_get_blocksize(view->format)) * tsz;
+               adjusted_height = align(nby, tsy) * align(depth, tsz) >> NVC0_TILE_SHIFT_Z(lvl->tile_mode);
             } else {
+               const unsigned z = view->u.tex.first_layer;
                address += mt->layer_stride * z;
             }
             address += lvl->offset;
 
             PUSH_DATAh(push, address);
             PUSH_DATA (push, address);
-            PUSH_DATA (push, width << mt->ms_x);
-            PUSH_DATA (push, height << mt->ms_y);
+            PUSH_DATA (push, adjusted_width << mt->ms_x);
+            PUSH_DATA (push, adjusted_height << mt->ms_y);
             PUSH_DATA (push, rt);
             PUSH_DATA (push, lvl->tile_mode & 0xff); /* mask out z-tiling */
          }
@@ -1433,7 +1446,15 @@ gm107_create_image_handle(struct pipe_context *pipe,
 
    nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 
-   return 0x100000000ULL | tic->id;
+   // Compute handle. This will include the TIC as well as some additional
+   // info regarding the bound 3d surface layer, if applicable.
+   uint64_t handle = 0x100000000ULL | tic->id;
+   struct nv04_resource *res = nv04_resource(view->resource);
+   if (res->base.target == PIPE_TEXTURE_3D) {
+      handle |= 1 << 11;
+      handle |= view->u.tex.first_layer << (11 + 16);
+   }
+   return handle;
 
 fail:
    FREE(tic);
@@ -1472,7 +1493,7 @@ gm107_make_image_handle_resident(struct pipe_context *pipe, uint64_t handle,
       res->flags = (access & 3) << 8;
       if (res->buf->base.target == PIPE_BUFFER &&
           access & PIPE_IMAGE_ACCESS_WRITE)
-         util_range_add(&res->buf->valid_buffer_range,
+         util_range_add(&res->buf->base, &res->buf->valid_buffer_range,
                         tic->pipe.u.buf.offset,
                         tic->pipe.u.buf.offset + tic->pipe.u.buf.size);
       list_add(&res->list, &nvc0->img_head);

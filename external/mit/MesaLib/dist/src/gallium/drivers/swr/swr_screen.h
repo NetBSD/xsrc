@@ -29,10 +29,13 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_dl.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "api.h"
 
 #include "memory/TilingFunctions.h"
+#include "memory/InitMemory.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 struct sw_winsys;
 
@@ -45,7 +48,7 @@ struct swr_screen {
    struct sw_winsys *winsys;
 
    /* Configurable environment settings */
-   boolean msaa_force_enable;
+   bool msaa_force_enable;
    uint8_t msaa_max_count;
    uint32_t client_copy_limit;
 
@@ -54,6 +57,7 @@ struct swr_screen {
    /* Dynamic backend implementations */
    util_dl_library *pLibrary;
    PFNSwrGetInterface pfnSwrGetInterface;
+   PFNSwrGetTileInterface pfnSwrGetTileInterface;
 
    /* Do we run on Xeon Phi? */
    bool is_knl;
@@ -67,5 +71,16 @@ swr_screen(struct pipe_screen *pipe)
 
 SWR_FORMAT
 mesa_to_swr_format(enum pipe_format format);
+
+INLINE void swr_print_info(const char *format, ...)
+{
+   static bool print_info = debug_get_bool_option("SWR_PRINT_INFO", false);
+   if(print_info) {
+      va_list args;
+      va_start(args, format);
+      vfprintf(stderr, format, args);
+      va_end(args);
+   }
+}
 
 #endif

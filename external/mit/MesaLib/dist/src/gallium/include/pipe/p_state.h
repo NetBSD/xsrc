@@ -53,6 +53,7 @@
 extern "C" {
 #endif
 
+struct gl_buffer_object;
 
 /**
  * Implementation limits
@@ -111,10 +112,12 @@ struct pipe_rasterizer_state
    unsigned point_tri_clip:1; /** large points clipped as tris or points */
    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
    unsigned multisample:1;         /* XXX maybe more ms state in future */
+   unsigned no_ms_sample_mask_out:1;
    unsigned force_persample_interp:1;
    unsigned line_smooth:1;
    unsigned line_stipple_enable:1;
    unsigned line_last_pixel:1;
+   unsigned line_rectangular:1; /** lines rasterized as rectangles or parallelograms */
    unsigned conservative_raster_mode:2; /**< PIPE_CONSERVATIVE_RASTER_x */
 
    /**
@@ -158,6 +161,13 @@ struct pipe_rasterizer_state
     */
    unsigned depth_clip_near:1;
    unsigned depth_clip_far:1;
+
+   /**
+    * When true, depth clamp is enabled.
+    * If PIPE_CAP_DEPTH_CLAMP_ENABLE is unsupported, this is always the inverse
+    * of depth_clip_far.
+    */
+   unsigned depth_clamp:1;
 
    /**
     * When true clip space in the z axis goes from [0..1] (D3D).  When false
@@ -213,6 +223,10 @@ struct pipe_viewport_state
 {
    float scale[3];
    float translate[3];
+   enum pipe_viewport_swizzle swizzle_x:8;
+   enum pipe_viewport_swizzle swizzle_y:8;
+   enum pipe_viewport_swizzle swizzle_z:8;
+   enum pipe_viewport_swizzle swizzle_w:8;
 };
 
 
@@ -272,7 +286,7 @@ struct pipe_stream_output_info
  *
  * NOTE: since it is expected that the consumer will want to perform
  * additional passes on the nir_shader, the driver takes ownership of
- * the nir_shader.  If state trackers need to hang on to the IR (for
+ * the nir_shader.  If gallium frontends need to hang on to the IR (for
  * example, variant management), it should use nir_shader_clone().
  */
 struct pipe_shader_state
@@ -296,16 +310,6 @@ pipe_shader_state_from_tgsi(struct pipe_shader_state *state,
    memset(&state->stream_output, 0, sizeof(state->stream_output));
 }
 
-struct pipe_depth_state
-{
-   unsigned enabled:1;         /**< depth test enabled? */
-   unsigned writemask:1;       /**< allow depth buffer writes? */
-   unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
-   unsigned bounds_test:1;     /**< depth bounds test enabled? */
-   float bounds_min;           /**< minimum depth bound */
-   float bounds_max;           /**< maximum depth bound */
-};
-
 
 struct pipe_stencil_state
 {
@@ -319,19 +323,21 @@ struct pipe_stencil_state
 };
 
 
-struct pipe_alpha_state
-{
-   unsigned enabled:1;
-   unsigned func:3;     /**< PIPE_FUNC_x */
-   float ref_value;     /**< reference value */
-};
-
-
 struct pipe_depth_stencil_alpha_state
 {
-   struct pipe_depth_state depth;
    struct pipe_stencil_state stencil[2]; /**< [0] = front, [1] = back */
-   struct pipe_alpha_state alpha;
+
+   unsigned alpha_enabled:1;         /**< alpha test enabled? */
+   unsigned alpha_func:3;            /**< PIPE_FUNC_x */
+
+   unsigned depth_enabled:1;         /**< depth test enabled? */
+   unsigned depth_writemask:1;       /**< allow depth buffer writes? */
+   unsigned depth_func:3;            /**< depth test func (PIPE_FUNC_x) */
+   unsigned depth_bounds_test:1;     /**< depth bounds test enabled? */
+
+   float alpha_ref_value;            /**< reference value */
+   double depth_bounds_min;          /**< minimum depth bound */
+   double depth_bounds_max;          /**< maximum depth bound */
 };
 
 
@@ -358,7 +364,10 @@ struct pipe_blend_state
    unsigned logicop_func:4;      /**< PIPE_LOGICOP_x */
    unsigned dither:1;
    unsigned alpha_to_coverage:1;
+   unsigned alpha_to_coverage_dither:1;
    unsigned alpha_to_one:1;
+   unsigned max_rt:3;            /* index of max rt, Ie. # of cbufs minus 1 */
+   unsigned advanced_blend_func:4;
    struct pipe_rt_blend_state rt[PIPE_MAX_COLOR_BUFS];
 };
 
@@ -411,6 +420,9 @@ struct pipe_sampler_state
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
    unsigned max_anisotropy:5;
    unsigned seamless_cube_map:1;
+   unsigned border_color_is_integer:1;
+   unsigned reduction_mode:2;    /**< PIPE_TEX_REDUCTION_x */
+   unsigned pad:5;               /**< take bits from this for new members */
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
    union pipe_color_union border_color;
@@ -460,7 +472,9 @@ struct pipe_surface
  */
 struct pipe_sampler_view
 {
-   struct pipe_reference reference;
+   /* Put the refcount on its own cache line to prevent "False sharing". */
+   EXCLUSIVE_CACHELINE(struct pipe_reference reference);
+
    enum pipe_format format:15;      /**< typed PIPE_FORMAT_x */
    enum pipe_texture_target target:5; /**< PIPE_TEXTURE_x */
    unsigned swizzle_r:3;         /**< PIPE_SWIZZLE_x for red component */
@@ -531,7 +545,8 @@ struct pipe_box
  */
 struct pipe_resource
 {
-   struct pipe_reference reference;
+   /* Put the refcount on its own cache line to prevent "False sharing". */
+   EXCLUSIVE_CACHELINE(struct pipe_reference reference);
 
    unsigned width0; /**< Used by both buffers and textures. */
    uint16_t height0; /* Textures: The maximum height/depth/array_size is 16k. */
@@ -567,6 +582,10 @@ struct pipe_resource
    struct pipe_screen *screen; /**< screen that this texture belongs to */
 };
 
+/**
+ * Opaque object used for separate resource/memory allocations.
+ */
+struct pipe_memory_allocation;
 
 /**
  * Transfer object.  For data transfer to/from a resource.
@@ -574,11 +593,16 @@ struct pipe_resource
 struct pipe_transfer
 {
    struct pipe_resource *resource; /**< resource to transfer to/from  */
-   unsigned level;                 /**< texture mipmap level */
-   enum pipe_transfer_usage usage;
+   enum pipe_map_flags usage:24;
+   unsigned level:8;               /**< texture mipmap level */
    struct pipe_box box;            /**< region of the resource to access */
    unsigned stride;                /**< row stride in bytes */
    unsigned layer_stride;          /**< image/layer stride in bytes */
+
+   /* Offset into a driver-internal staging buffer to make use of unused
+    * padding in this structure.
+    */
+   unsigned offset;
 };
 
 
@@ -660,14 +684,26 @@ struct pipe_stream_output_target
 struct pipe_vertex_element
 {
    /** Offset of this attribute, in bytes, from the start of the vertex */
-   unsigned src_offset:16;
+   uint16_t src_offset;
 
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */
-   unsigned vertex_buffer_index:5;
+   uint8_t vertex_buffer_index:7;
 
-   enum pipe_format src_format:11;
+   /**
+    * Whether this element refers to a dual-slot vertex shader input.
+    * The purpose of this field is to do dual-slot lowering when the CSO is
+    * created instead of during every state change.
+    *
+    * It's lowered by util_lower_uint64_vertex_elements.
+    */
+   bool dual_slot:1;
+
+   /**
+    * This has only 8 bits because all vertex formats should be <= 255.
+    */
+   uint8_t src_format; /* low 8 bits of enum pipe_format. */
 
    /** Instance data rate divisor. 0 means this is per-vertex data,
     *  n means per-instance data used for n consecutive instances (n > 0).
@@ -675,6 +711,39 @@ struct pipe_vertex_element
    unsigned instance_divisor;
 };
 
+/**
+ * Opaque refcounted constant state object encapsulating a vertex buffer,
+ * index buffer, and vertex elements. Used by display lists to bind those
+ * states and pass buffer references quickly.
+ *
+ * The state contains 1 index buffer, 0 or 1 vertex buffer, and 0 or more
+ * vertex elements.
+ *
+ * Constraints on the buffers to get the fastest codepath:
+ * - All buffer contents are considered immutable and read-only after
+ *   initialization. This implies the following things.
+ * - No place is required to track whether these buffers are busy.
+ * - All CPU mappings of these buffers can be forced to UNSYNCHRONIZED by
+ *   both drivers and common code unconditionally.
+ * - Buffer invalidation can be skipped by both drivers and common code
+ *   unconditionally.
+ */
+struct pipe_vertex_state {
+   struct pipe_reference reference;
+   struct pipe_screen *screen;
+
+   /* The following structure is used as a key for util_vertex_state_cache
+    * to deduplicate identical state objects and thus enable more
+    * opportunities for draw merging.
+    */
+   struct {
+      struct pipe_resource *indexbuf;
+      struct pipe_vertex_buffer vbuffer;
+      unsigned num_elements;
+      struct pipe_vertex_element elements[PIPE_MAX_ATTRIBS];
+      uint32_t full_velem_mask;
+   } input;
+};
 
 struct pipe_draw_indirect_info
 {
@@ -700,6 +769,8 @@ struct pipe_draw_indirect_info
     *     uint32_t start;
     *     uint32_t start_instance;
     *  };
+    *
+    * If NULL, count_from_stream_output != NULL.
     */
    struct pipe_resource *buffer;
 
@@ -707,59 +778,6 @@ struct pipe_draw_indirect_info
     * is to be used as the real draw_count.
     */
    struct pipe_resource *indirect_draw_count;
-};
-
-
-/**
- * Information to describe a draw_vbo call.
- */
-struct pipe_draw_info
-{
-   ubyte index_size;  /**< if 0, the draw is not indexed. */
-   enum pipe_prim_type mode:8;  /**< the mode of the primitive */
-   unsigned primitive_restart:1;
-   unsigned has_user_indices:1; /**< if true, use index.user_buffer */
-   ubyte vertices_per_patch; /**< the number of vertices per patch */
-
-   /**
-    * Direct draws: start is the index of the first vertex
-    * Non-indexed indirect draws: not used
-    * Indexed indirect draws: start is added to the indirect start.
-    */
-   unsigned start;
-   unsigned count;  /**< number of vertices */
-
-   unsigned start_instance; /**< first instance id */
-   unsigned instance_count; /**< number of instances */
-
-   unsigned drawid; /**< id of this draw in a multidraw */
-
-   /**
-    * For indexed drawing, these fields apply after index lookup.
-    */
-   int index_bias; /**< a bias to be added to each index */
-   unsigned min_index; /**< the min index */
-   unsigned max_index; /**< the max index */
-
-   /**
-    * Primitive restart enable/index (only applies to indexed drawing)
-    */
-   unsigned restart_index;
-
-   /* Pointers must be at the end for an optimal structure layout on 64-bit. */
-
-   /**
-    * An index buffer.  When an index buffer is bound, all indices to vertices
-    * will be looked up from the buffer.
-    *
-    * If has_user_indices, use index.user, else use index.resource.
-    */
-   union {
-      struct pipe_resource *resource;  /**< real buffer */
-      const void *user;  /**< pointer to a user buffer */
-   } index;
-
-   struct pipe_draw_indirect_info *indirect; /**< Indirect draw. */
 
    /**
     * Stream output target. If not NULL, it's used to provide the 'count'
@@ -776,6 +794,84 @@ struct pipe_draw_info
     * be set via set_vertex_buffers manually.
     */
    struct pipe_stream_output_target *count_from_stream_output;
+};
+
+struct pipe_draw_start_count_bias {
+   unsigned start;
+   unsigned count;
+   int index_bias; /**< a bias to be added to each index */
+};
+
+/**
+ * Draw vertex state description. It's translated to pipe_draw_info as follows:
+ * - mode comes from this structure
+ * - index_size is 4
+ * - instance_count is 1
+ * - index.resource comes from pipe_vertex_state
+ * - everything else is 0
+ */
+struct pipe_draw_vertex_state_info {
+#if defined(__GNUC__)
+   /* sizeof(mode) == 1 because it's a packed enum. */
+   enum pipe_prim_type mode;  /**< the mode of the primitive */
+#else
+   /* sizeof(mode) == 1 is required by draw merging in u_threaded_context. */
+   uint8_t mode;              /**< the mode of the primitive */
+#endif
+   bool take_vertex_state_ownership; /**< for skipping reference counting */
+};
+
+/**
+ * Information to describe a draw_vbo call.
+ */
+struct pipe_draw_info
+{
+#if defined(__GNUC__)
+   /* sizeof(mode) == 1 because it's a packed enum. */
+   enum pipe_prim_type mode;  /**< the mode of the primitive */
+#else
+   /* sizeof(mode) == 1 is required by draw merging in u_threaded_context. */
+   uint8_t mode;              /**< the mode of the primitive */
+#endif
+   uint8_t index_size;        /**< if 0, the draw is not indexed. */
+   uint8_t view_mask;         /**< mask of multiviews for this draw */
+   bool primitive_restart:1;
+   bool has_user_indices:1;   /**< if true, use index.user_buffer */
+   bool index_bounds_valid:1; /**< whether min_index and max_index are valid;
+                                   they're always invalid if index_size == 0 */
+   bool increment_draw_id:1;  /**< whether drawid increments for direct draws */
+   bool take_index_buffer_ownership:1; /**< callee inherits caller's refcount
+         (no need to reference indexbuf, but still needs to unreference it) */
+   bool index_bias_varies:1;   /**< true if index_bias varies between draws */
+   uint8_t _pad:2;
+
+   unsigned start_instance; /**< first instance id */
+   unsigned instance_count; /**< number of instances */
+
+   /**
+    * Primitive restart enable/index (only applies to indexed drawing)
+    */
+   unsigned restart_index;
+
+   /* Pointers must be placed appropriately for optimal structure packing on
+    * 64-bit CPUs.
+    */
+
+   /**
+    * An index buffer.  When an index buffer is bound, all indices to vertices
+    * will be looked up from the buffer.
+    *
+    * If has_user_indices, use index.user, else use index.resource.
+    */
+   union {
+      struct pipe_resource *resource;  /**< real buffer */
+      struct gl_buffer_object *gl_bo; /**< for the GL frontend, not passed to drivers */
+      const void *user;  /**< pointer to a user buffer */
+   } index;
+
+   /* These must be last for better packing in u_threaded_context. */
+   unsigned min_index; /**< the min index */
+   unsigned max_index; /**< the max index */
 };
 
 
@@ -795,18 +891,19 @@ struct pipe_blit_info
 
    unsigned mask; /**< bitmask of PIPE_MASK_R/G/B/A/Z/S */
    unsigned filter; /**< PIPE_TEX_FILTER_* */
-
-   boolean scissor_enable;
+   bool sample0_only;
+   bool scissor_enable;
    struct pipe_scissor_state scissor;
 
    /* Window rectangles can either be inclusive or exclusive. */
-   boolean window_rectangle_include;
+   bool window_rectangle_include;
    unsigned num_window_rectangles;
    struct pipe_scissor_state window_rectangles[PIPE_MAX_WINDOW_RECTANGLES];
 
-   boolean render_condition_enable; /**< whether the blit should honor the
-                                    current render condition */
-   boolean alpha_blend; /* dst.rgb = src.rgb * src.a + dst.rgb * (1 - src.a) */
+   bool render_condition_enable; /**< whether the blit should honor the
+                                 current render condition */
+   bool alpha_blend; /* dst.rgb = src.rgb * src.a + dst.rgb * (1 - src.a) */
+   bool is_dri_blit_image;
 };
 
 /**
@@ -865,6 +962,11 @@ struct pipe_grid_info
     */
    uint grid[3];
 
+   /**
+    * Base offsets to launch grids from
+    */
+   uint grid_base[3];
+
    /* Indirect compute parameters resource: If not NULL, block sizes are taken
     * from this buffer instead, which is laid out as follows:
     *
@@ -879,11 +981,12 @@ struct pipe_grid_info
 };
 
 /**
- * Structure used as a header for serialized LLVM programs.
+ * Structure used as a header for serialized compute programs.
  */
-struct pipe_llvm_program_header
+struct pipe_binary_program_header
 {
    uint32_t num_bytes; /**< Number of bytes in the LLVM bytecode program. */
+   char blob[];
 };
 
 struct pipe_compute_state
@@ -897,7 +1000,7 @@ struct pipe_compute_state
 
 /**
  * Structure that contains a callback for debug messages from the driver back
- * to the state tracker.
+ * to the gallium frontend.
  */
 struct pipe_debug_callback
 {
@@ -909,7 +1012,7 @@ struct pipe_debug_callback
 
    /**
     * Callback for the driver to report debug/performance/etc information back
-    * to the state tracker.
+    * to the gallium frontend.
     *
     * \param data       user-supplied data pointer
     * \param id         message type identifier, if pointed value is 0, then a
@@ -928,7 +1031,7 @@ struct pipe_debug_callback
 
 /**
  * Structure that contains a callback for device reset messages from the driver
- * back to the state tracker.
+ * back to the gallium frontend.
  *
  * The callback must not be called from driver-created threads.
  */

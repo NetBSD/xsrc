@@ -22,7 +22,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -199,7 +199,7 @@ static void get_external_state(
                 state->unit[i].wrap_mode = RC_WRAP_NONE;
             }
 
-            if (t->b.b.target == PIPE_TEXTURE_3D)
+            if (t->b.target == PIPE_TEXTURE_3D)
                 state->unit[i].clamp_and_scale_before_fetch = TRUE;
         }
     }

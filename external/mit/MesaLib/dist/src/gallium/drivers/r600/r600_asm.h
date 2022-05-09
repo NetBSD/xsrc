@@ -27,6 +27,10 @@
 #include "r600_isa.h"
 #include "tgsi/tgsi_exec.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct r600_bytecode_alu_src {
 	unsigned			sel;
 	unsigned			chan;
@@ -210,6 +214,8 @@ struct r600_bytecode_cf {
 	struct r600_bytecode_alu		*prev_bs_head;
 	struct r600_bytecode_alu		*prev2_bs_head;
 	unsigned isa[2];
+	unsigned nlds_read;
+	unsigned nqueue_read;
 };
 
 #define FC_NONE				0
@@ -272,6 +278,7 @@ struct r600_bytecode {
 	unsigned        r6xx_nop_after_rel_dst;
 	bool            index_loaded[2];
 	unsigned        index_reg[2]; /* indexing register CF_INDEX_[01] */
+	unsigned        index_reg_chan[2]; /* indexing register chanel CF_INDEX_[01] */
 	unsigned        debug_id;
 	struct r600_isa* isa;
 	struct r600_bytecode_output pending_outputs[5];
@@ -314,8 +321,7 @@ int r600_bytecode_add_cfinst(struct r600_bytecode *bc,
 		unsigned op);
 int r600_bytecode_add_alu_type(struct r600_bytecode *bc,
 		const struct r600_bytecode_alu *alu, unsigned type);
-void r600_bytecode_special_constants(uint32_t value,
-		unsigned *sel, unsigned *neg, unsigned abs);
+void r600_bytecode_special_constants(uint32_t value, unsigned *sel);
 void r600_bytecode_disasm(struct r600_bytecode *bc);
 void r600_bytecode_alu_read(struct r600_bytecode *bc,
 		struct r600_bytecode_alu *alu, uint32_t word0, uint32_t word1);
@@ -358,4 +364,9 @@ static inline int fp64_switch(int i)
 	}
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

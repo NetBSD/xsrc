@@ -42,7 +42,8 @@
 #include <stdbool.h>
 #include "dri_util.h"
 #include "utils.h"
-#include "util/xmlpool.h"
+#include "util/u_endian.h"
+#include "util/driconf.h"
 #include "main/mtypes.h"
 #include "main/framebuffer.h"
 #include "main/version.h"
@@ -50,12 +51,16 @@
 #include "main/errors.h"
 #include "main/macros.h"
 
-const char __dri2ConfigOptions[] =
-   DRI_CONF_BEGIN
+driOptionDescription __dri2ConfigOptions[] = {
+      DRI_CONF_SECTION_DEBUG
+         DRI_CONF_GLX_EXTENSION_OVERRIDE()
+         DRI_CONF_INDIRECT_GL_EXTENSION_OVERRIDE()
+      DRI_CONF_SECTION_END
+
       DRI_CONF_SECTION_PERFORMANCE
          DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_1)
       DRI_CONF_SECTION_END
-   DRI_CONF_END;
+};
 
 /*****************************************************************/
 /** \name Screen handling functions                              */
@@ -147,8 +152,10 @@ driCreateNewScreen2(int scrn, int fd,
     psp->myNum = scrn;
 
     /* Option parsing before ->InitScreen(), as some options apply there. */
-    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions);
-    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2", NULL);
+    driParseOptionInfo(&psp->optionInfo,
+                       __dri2ConfigOptions, ARRAY_SIZE(__dri2ConfigOptions));
+    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum,
+                        "dri2", NULL, NULL, NULL, 0, NULL, 0);
 
     *driver_configs = psp->driver->InitScreen(psp);
     if (*driver_configs == NULL) {
@@ -765,6 +772,17 @@ dri2ConfigQueryf(__DRIscreen *screen, const char *var, float *val)
     return 0;
 }
 
+static int
+dri2ConfigQuerys(__DRIscreen *screen, const char *var, char **val)
+{
+   if (!driCheckOption(&screen->optionCache, var, DRI_STRING))
+      return -1;
+
+    *val = driQueryOptionstr(&screen->optionCache, var);
+
+    return 0;
+}
+
 static unsigned int
 driGetAPIMask(__DRIscreen *screen)
 {
@@ -830,11 +848,12 @@ const __DRIswrastExtension driSWRastExtension = {
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
-   .base = { __DRI2_CONFIG_QUERY, 1 },
+   .base = { __DRI2_CONFIG_QUERY, 2 },
 
    .configQueryb        = dri2ConfigQueryb,
    .configQueryi        = dri2ConfigQueryi,
    .configQueryf        = dri2ConfigQueryf,
+   .configQuerys        = dri2ConfigQuerys,
 };
 
 const __DRI2flushControlExtension dri2FlushControlExtension = {
@@ -873,87 +892,127 @@ driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv)
 static const struct {
    uint32_t    image_format;
    mesa_format mesa_format;
+   GLenum internal_format;
 } format_mapping[] = {
    {
-      .image_format = __DRI_IMAGE_FORMAT_RGB565,
-      .mesa_format  =        MESA_FORMAT_B5G6R5_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_RGB565,
+      .mesa_format     =        MESA_FORMAT_B5G6R5_UNORM,
+      .internal_format =        GL_RGB565,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_ARGB1555,
-      .mesa_format  =        MESA_FORMAT_B5G5R5A1_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_ARGB1555,
+      .mesa_format     =        MESA_FORMAT_B5G5R5A1_UNORM,
+      .internal_format =        GL_RGB5_A1,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_XRGB8888,
-      .mesa_format  =        MESA_FORMAT_B8G8R8X8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_XRGB8888,
+      .mesa_format     =        MESA_FORMAT_B8G8R8X8_UNORM,
+      .internal_format =        GL_RGB8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_ARGB2101010,
-      .mesa_format  =        MESA_FORMAT_B10G10R10A2_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_ABGR16161616F,
+      .mesa_format     =        MESA_FORMAT_RGBA_FLOAT16,
+      .internal_format =        GL_RGBA16F,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_XRGB2101010,
-      .mesa_format  =        MESA_FORMAT_B10G10R10X2_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_XBGR16161616F,
+      .mesa_format     =        MESA_FORMAT_RGBX_FLOAT16,
+      .internal_format =        GL_RGBA16F,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_ABGR2101010,
-      .mesa_format  =        MESA_FORMAT_R10G10B10A2_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_ARGB2101010,
+      .mesa_format     =        MESA_FORMAT_B10G10R10A2_UNORM,
+      .internal_format =        GL_RGB10_A2,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_XBGR2101010,
-      .mesa_format  =        MESA_FORMAT_R10G10B10X2_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_XRGB2101010,
+      .mesa_format     =        MESA_FORMAT_B10G10R10X2_UNORM,
+      .internal_format =        GL_RGB10_A2,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_ARGB8888,
-      .mesa_format  =        MESA_FORMAT_B8G8R8A8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_ABGR2101010,
+      .mesa_format     =        MESA_FORMAT_R10G10B10A2_UNORM,
+      .internal_format =        GL_RGB10_A2,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_ABGR8888,
-      .mesa_format  =        MESA_FORMAT_R8G8B8A8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_XBGR2101010,
+      .mesa_format     =        MESA_FORMAT_R10G10B10X2_UNORM,
+      .internal_format =        GL_RGB10_A2,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_XBGR8888,
-      .mesa_format  =        MESA_FORMAT_R8G8B8X8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_ARGB8888,
+      .mesa_format     =        MESA_FORMAT_B8G8R8A8_UNORM,
+      .internal_format =        GL_RGBA8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_R8,
-      .mesa_format  =        MESA_FORMAT_R_UNORM8,
+      .image_format    = __DRI_IMAGE_FORMAT_ABGR8888,
+      .mesa_format     =        MESA_FORMAT_R8G8B8A8_UNORM,
+      .internal_format =        GL_RGBA8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_R8,
-      .mesa_format  =        MESA_FORMAT_L_UNORM8,
+      .image_format    = __DRI_IMAGE_FORMAT_XBGR8888,
+      .mesa_format     =        MESA_FORMAT_R8G8B8X8_UNORM,
+      .internal_format =        GL_RGB8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_GR88,
-      .mesa_format  =        MESA_FORMAT_R8G8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_R8,
+      .mesa_format     =        MESA_FORMAT_R_UNORM8,
+      .internal_format =        GL_R8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_GR88,
-      .mesa_format  =        MESA_FORMAT_L8A8_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_R8,
+      .mesa_format     =        MESA_FORMAT_L_UNORM8,
+      .internal_format =        GL_R8,
+   },
+#if UTIL_ARCH_LITTLE_ENDIAN
+   {
+      .image_format    = __DRI_IMAGE_FORMAT_GR88,
+      .mesa_format     =        MESA_FORMAT_RG_UNORM8,
+      .internal_format =        GL_RG8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_SABGR8,
-      .mesa_format  =        MESA_FORMAT_R8G8B8A8_SRGB,
+      .image_format    = __DRI_IMAGE_FORMAT_GR88,
+      .mesa_format     =        MESA_FORMAT_LA_UNORM8,
+      .internal_format =        GL_RG8,
+   },
+#endif
+   {
+      .image_format    = __DRI_IMAGE_FORMAT_SABGR8,
+      .mesa_format     =        MESA_FORMAT_R8G8B8A8_SRGB,
+      .internal_format =        GL_SRGB8_ALPHA8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_SARGB8,
-      .mesa_format  =        MESA_FORMAT_B8G8R8A8_SRGB,
+      .image_format    = __DRI_IMAGE_FORMAT_SARGB8,
+      .mesa_format     =        MESA_FORMAT_B8G8R8A8_SRGB,
+      .internal_format =        GL_SRGB8_ALPHA8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_R16,
-      .mesa_format  =        MESA_FORMAT_R_UNORM16,
+      .image_format = __DRI_IMAGE_FORMAT_SXRGB8,
+      .mesa_format  =           MESA_FORMAT_B8G8R8X8_SRGB,
+      .internal_format =        GL_SRGB8_ALPHA8,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_R16,
-      .mesa_format  =        MESA_FORMAT_L_UNORM16,
+      .image_format    = __DRI_IMAGE_FORMAT_R16,
+      .mesa_format     =        MESA_FORMAT_R_UNORM16,
+      .internal_format =        GL_R16,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_GR1616,
-      .mesa_format  =        MESA_FORMAT_R16G16_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_R16,
+      .mesa_format     =        MESA_FORMAT_L_UNORM16,
+      .internal_format =        GL_R16,
+   },
+#if UTIL_ARCH_LITTLE_ENDIAN
+   {
+      .image_format    = __DRI_IMAGE_FORMAT_GR1616,
+      .mesa_format     =        MESA_FORMAT_RG_UNORM16,
+      .internal_format =        GL_RG16,
    },
    {
-      .image_format = __DRI_IMAGE_FORMAT_GR1616,
-      .mesa_format  =        MESA_FORMAT_L16A16_UNORM,
+      .image_format    = __DRI_IMAGE_FORMAT_GR1616,
+      .mesa_format     =        MESA_FORMAT_LA_UNORM16,
+      .internal_format =        GL_RG16,
    },
+#endif
 };
 
 uint32_t
@@ -964,6 +1023,16 @@ driGLFormatToImageFormat(mesa_format format)
          return format_mapping[i].image_format;
 
    return __DRI_IMAGE_FORMAT_NONE;
+}
+
+uint32_t
+driGLFormatToSizedInternalGLFormat(mesa_format format)
+{
+   for (size_t i = 0; i < ARRAY_SIZE(format_mapping); i++)
+      if (format_mapping[i].mesa_format == format)
+         return format_mapping[i].internal_format;
+
+   return GL_NONE;
 }
 
 mesa_format

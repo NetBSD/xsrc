@@ -106,7 +106,7 @@ opt_constant_if(nir_if *if_stmt, bool condition)
 
       assert(def);
       assert(phi->dest.is_ssa);
-      nir_ssa_def_rewrite_uses(&phi->dest.ssa, nir_src_for_ssa(def));
+      nir_ssa_def_rewrite_uses(&phi->dest.ssa, def);
       nir_instr_remove(instr);
    }
 
@@ -218,15 +218,17 @@ node_is_dead(nir_cf_node *node)
          if (instr->type == nir_instr_type_call)
             return false;
 
-         /* Return instructions can cause us to skip over other side-effecting
-          * instructions after the loop, so consider them to have side effects
-          * here.
+         /* Return and halt instructions can cause us to skip over other
+          * side-effecting instructions after the loop, so consider them to
+          * have side effects here.
           *
           * When the block is not inside a loop, break and continue might also
           * cause a skip.
           */
          if (instr->type == nir_instr_type_jump &&
-             (!inside_loop || nir_instr_as_jump(instr)->type == nir_jump_return))
+             (!inside_loop ||
+              nir_instr_as_jump(instr)->type == nir_jump_return ||
+              nir_instr_as_jump(instr)->type == nir_jump_halt))
             return false;
 
          if (instr->type == nir_instr_type_intrinsic) {
@@ -234,6 +236,41 @@ node_is_dead(nir_cf_node *node)
             if (!(nir_intrinsic_infos[intrin->intrinsic].flags &
                 NIR_INTRINSIC_CAN_ELIMINATE))
                return false;
+
+            switch (intrin->intrinsic) {
+            case nir_intrinsic_load_deref:
+            case nir_intrinsic_load_ssbo:
+            case nir_intrinsic_load_global:
+               /* If there's a memory barrier after the loop, a load might be
+                * required to happen before some other instruction after the
+                * barrier, so it is not valid to eliminate it -- unless we
+                * know we can reorder it.
+                *
+                * Consider only loads that the result can be affected by other
+                * invocations.
+                */
+               if (intrin->intrinsic == nir_intrinsic_load_deref) {
+                  nir_deref_instr *deref = nir_src_as_deref(intrin->src[0]);
+                  if (!nir_deref_mode_may_be(deref, nir_var_mem_ssbo |
+                                                    nir_var_mem_shared |
+                                                    nir_var_mem_global |
+                                                    nir_var_shader_out))
+                     break;
+               }
+               if (nir_intrinsic_access(intrin) & ACCESS_CAN_REORDER)
+                  break;
+               return false;
+
+            case nir_intrinsic_load_shared:
+            case nir_intrinsic_load_output:
+            case nir_intrinsic_load_per_vertex_output:
+               /* Same as above loads. */
+               return false;
+
+            default:
+               /* Do nothing. */
+               break;
+            }
          }
 
          if (!nir_foreach_ssa_def(instr, def_only_used_in_cf_node, node))
@@ -334,6 +371,13 @@ dead_cf_list(struct exec_list *list, bool *list_ends_in_jump)
          bool dummy;
          progress |= dead_cf_list(&loop->body, &dummy);
 
+         nir_block *next = nir_cf_node_as_block(nir_cf_node_next(cur));
+         if (next->predecessors->entries == 0 &&
+             (!exec_list_is_empty(&next->instr_list) ||
+             !exec_node_is_tail_sentinel(next->cf_node.node.next))) {
+            remove_after_cf_node(cur);
+            return true;
+         }
          break;
       }
 
@@ -367,9 +411,7 @@ opt_dead_cf_impl(nir_function_impl *impl)
        */
       nir_repair_ssa_impl(impl);
    } else {
-#ifndef NDEBUG
-      impl->valid_metadata &= ~nir_metadata_not_properly_reset;
-#endif
+      nir_metadata_preserve(impl, nir_metadata_all);
    }
 
    return progress;

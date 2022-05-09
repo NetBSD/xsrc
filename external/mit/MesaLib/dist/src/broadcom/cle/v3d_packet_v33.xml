@@ -174,6 +174,41 @@
     <value name="int" value="3" min_ver="42"/> <!-- clamp to integer RT's range -->
   </enum>
 
+  <!---
+    CL cache flush commands are not fully documented and subject to a
+    number of hardware issues that make them unreliable. Specifically:
+
+    * The L2T flush command has a 'deferred' bit to ensure the command
+      doesn't execute until all other commands in the CL have completed,
+      which is required to achieve the expected behavior. This bit comes
+      right after the mode field.
+
+    * GFXH-1895: Overlapping write combiner flush requests from different
+      sources are not safe. If two flush requests from different sources
+      overlap, the TMU may send the done signal for the first flush back to
+      the wrong source.
+
+    * GFXH-1888: It is possible for a regular access to sneak past a
+      pending L2T flush. If an L2T flush is requested via L2TCACTL while a
+      CLE-requested flush is in progress, it is possible for a regular
+      access to sneak through in the gap between the CLE flush and the
+      L2TCACTL flush.
+
+    * GFXH-1897: Writing 0 to L2TCACTL clobbers in-progress flush status.
+      Writing 0 to TMUWCF (bit 8) clears the TMUWCF bit, even if a write
+      combiner flush is still in progress. Similarly, writing 0 to L2TFLS
+      (bit 0) clears the L2TFLS bit, even if an L2T flush is still in
+      progress. Writing 0 to L2TFLM (bits 1..2) overwrites the flush mode,
+      even if a flush is not being requested (ie 0 is being written to
+      L2TFLS). If the last flush has not yet made it through the L2T
+      arbiter, this will change the mode of that flush.
+
+    GFXH-1888 and GFXH-1897 are problematic when we don't wait for L2T
+    flushes requested via LATCACTL to complete immediately.
+
+    Because of this, the driver will do all of its flushing via the kernel
+    using L2TCACTL instead of using the CL commands.
+  -->
   <enum name="L2T Flush Mode" prefix="L2T_FLUSH_MODE">
     <!-- invalidates all cache lines -->
     <value name="flush" value="0"/>
@@ -234,6 +269,7 @@
     <value name="d16"      value="42" min_ver="41"/>
     <value name="d24s8"    value="43" min_ver="41"/>
     <value name="s8"       value="44" min_ver="41"/>
+    <value name="rgba5551" value="45" min_ver="41"/>
   </enum>
 
   <enum name="Z/S Output Image Format" prefix="V3D_OUTPUT_IMAGE_FORMAT_ZS" max_ver="33">
@@ -254,12 +290,23 @@
     <value name="16-way" value="0"/>
     <value name="8-way" value="1"/>
     <value name="4-way" value="2"/>
+    <value name="1-way" value="3"/>
   </enum>
 
   <enum name="TCS flush mode" prefix="V3D_TCS_FLUSH_MODE">
     <value name="fully packed" value="0"/>
     <value name="single patch" value="1"/>
     <value name="packed complete patches" value="2"/>
+  </enum>
+
+  <enum name="Primitve counters" prefix="V3D_PRIM_COUNTS">
+    <value name="tf_words_buffer0" value="0"/>
+    <value name="tf_words_buffer1" value="1"/>
+    <value name="tf_words_buffer2" value="2"/>
+    <value name="tf_words_buffer3" value="3"/>
+    <value name="written" value="4"/>
+    <value name="tf_written" value="5"/>
+    <value name="tf_overflow" value="6"/>
   </enum>
 
   <packet code="0" name="Halt"/>
@@ -426,6 +473,7 @@
 
     <field name="R/B swap" size="1" start="20" type="bool"/>
     <field name="Channel Reverse" size="1" start="19" type="bool"/>
+    <field name="Force alpha 1" size="1" start="18" type="bool"/>
 
     <field name="Input Image Format" size="6" start="12" type="Output Image Format"/>
 
@@ -584,11 +632,11 @@
   </packet>
 
   <packet code="54" name="Set InstanceID" cl="B" min_ver="41">
-    <field name="Instance ID" size="32" start="32" type="uint"/>
+    <field name="Instance ID" size="32" start="0" type="uint"/>
   </packet>
 
   <packet code="55" name="Set PrimitiveID" cl="B" min_ver="41">
-    <field name="Primitive ID" size="32" start="32" type="uint"/>
+    <field name="Primitive ID" size="32" start="0" type="uint"/>
   </packet>
 
   <packet code="56" name="Prim List Format">
@@ -902,11 +950,7 @@
     <field name="Double-buffer in non-ms mode" size="1" start="15" type="bool"/>
     <field name="Multisample Mode (4x)" size="1" start="14" type="bool"/>
 
-    <field name="Maximum BPP of all render targets" size="2" start="12" type="uint">
-      <value name="Render target maximum 32bpp" value="0"/>
-      <value name="Render target maximum 64bpp" value="1"/>
-      <value name="Render target maximum 128bpp" value="2"/>
-    </field>
+    <field name="Maximum BPP of all render targets" size="2" start="12" type="Internal BPP"/>
 
     <field name="Number of Render Targets" size="4" start="8" type="uint" minus_one="true"/>
 
@@ -944,11 +988,7 @@
     <field name="Double-buffer in non-ms mode" size="1" start="43" type="bool"/>
     <field name="Multisample Mode (4x)" size="1" start="42" type="bool"/>
 
-    <field name="Maximum BPP of all render targets" size="2" start="40" type="uint">
-      <value name="Render target maximum 32bpp" value="0"/>
-      <value name="Render target maximum 64bpp" value="1"/>
-      <value name="Render target maximum 128bpp" value="2"/>
-    </field>
+    <field name="Maximum BPP of all render targets" size="2" start="40" type="Internal BPP"/>
 
     <field name="Image Height (pixels)" size="16" start="24" type="uint"/>
     <field name="Image Width (pixels)" size="16" start="8" type="uint"/>
@@ -1005,9 +1045,9 @@
 
   <packet code="121" name="Tile Rendering Mode Cfg (Color)" cl="R" min_ver="41">
 
-    <field name="Pad" size="28" start="34" type="uint"/>
+    <field name="Pad" size="28" start="36" type="uint"/>
 
-    <field name="Render Target 3 Clamp" size="2" start="32" type="Render Target Clamp"/>
+    <field name="Render Target 3 Clamp" size="2" start="34" type="Render Target Clamp"/>
     <field name="Render Target 3 Internal Type" size="4" start="30" type="Internal Type"/>
     <field name="Render Target 3 Internal BPP" size="2" start="28" type="Internal BPP"/>
 
@@ -1255,24 +1295,39 @@
   </struct>
 
   <struct name="Geometry Shader State Record" min_ver="41">
-    <field name="Geometry Bin Mode Shader Code Address" size="32" start="0b" type="address"/>
-    <field name="4-way threadable" size="1" start="0" type="bool"/>
-    <field name="Start in final thread section" size="1" start="1" type="bool"/>
-    <field name="Propagate NaNs" size="1" start="2" type="bool"/>
+    <field name="Geometry Bin Mode Shader Code Address" size="29" start="3" type="address"/>
+    <field name="Geometry Bin Mode Shader 4-way threadable" size="1" start="0" type="bool"/>
+    <field name="Geometry Bin Mode Shader Start in final thread section" size="1" start="1" type="bool"/>
+    <field name="Geometry Bin Mode Shader Propagate NaNs" size="1" start="2" type="bool"/>
     <field name="Geometry Bin Mode Shader Uniforms Address" size="32" start="4b" type="address"/>
-    <field name="Geometry Render Mode Shader Code Address" size="32" start="8b" type="address"/>
+    <field name="Geometry Render Mode Shader Code Address" size="29" start="67" type="address"/>
+    <field name="Geometry Render Mode Shader 4-way threadable" size="1" start="64" type="bool"/>
+    <field name="Geometry Render Mode Shader Start in final thread section" size="1" start="65" type="bool"/>
+    <field name="Geometry Render Mode Shader Propagate NaNs" size="1" start="66" type="bool"/>
     <field name="Geometry Render Mode Shader Uniforms Address" size="32" start="12b" type="address"/>
   </struct>
 
   <struct name="Tessellation Shader State Record" min_ver="41">
-    <field name="Tessellation Bin Mode Control Shader Code Address" size="32" start="0b" type="address"/>
+    <field name="Tessellation Bin Mode Control Shader Code Address" size="29" start="3" type="address"/>
+    <field name="Tessellation Bin Mode Control Shader 4-way threadable" size="1" start="0" type="bool"/>
+    <field name="Tessellation Bin Mode Control Shader Start in final thread section" size="1" start="1" type="bool"/>
+    <field name="Tessellation Bin Mode Control Shader Propagate NaNs" size="1" start="2" type="bool"/>
     <field name="Tessellation Bin Mode Control Shader Uniforms Address" size="32" start="4b" type="address"/>
-    <field name="Tessellation Render Mode Control Shader Code Address" size="32" start="8b" type="address"/>
+    <field name="Tessellation Render Mode Control Shader Code Address" size="29" start="67" type="address"/>
+    <field name="Tessellation Render Mode Control Shader 4-way threadable" size="1" start="64" type="bool"/>
+    <field name="Tessellation Render Mode Control Shader Start in final thread section" size="1" start="65" type="bool"/>
+    <field name="Tessellation Render Mode Control Shader Propagate NaNs" size="1" start="66" type="bool"/>
     <field name="Tessellation Render Mode Control Shader Uniforms Address" size="32" start="12b" type="address"/>
 
-    <field name="Tessellation Bin Mode Evaluation Shader Code Address" size="32" start="16b" type="address"/>
+    <field name="Tessellation Bin Mode Evaluation Shader Code Address" size="29" start="131" type="address"/>
+    <field name="Tessellation Bin Mode Evaluation Shader 4-way threadable" size="1" start="128" type="bool"/>
+    <field name="Tessellation Bin Mode Evaluation Shader Start in final thread section" size="1" start="129" type="bool"/>
+    <field name="Tessellation Bin Mode Evaluation Shader Propagate NaNs" size="1" start="130" type="bool"/>
     <field name="Tessellation Bin Mode Evaluation Shader Uniforms Address" size="32" start="20b" type="address"/>
-    <field name="Tessellation Render Mode Evaluation Shader Code Address" size="32" start="24b" type="address"/>
+    <field name="Tessellation Render Mode Evaluation Shader Code Address" size="29" start="195" type="address"/>
+    <field name="Tessellation Render Mode Evaluation Shader 4-way threadable" size="1" start="192" type="bool"/>
+    <field name="Tessellation Render Mode Evaluation Shader Start in final thread section" size="1" start="193" type="bool"/>
+    <field name="Tessellation Render Mode Evaluation Shader Propagate NaNs" size="1" start="194" type="bool"/>
     <field name="Tessellation Render Mode Evaluation Shader Uniforms Address" size="32" start="28b" type="address"/>
   </struct>
 
@@ -1303,6 +1358,11 @@
 
     <field name="Geometry Shader Instances" size="5" start="19" type="uint"/> <!-- 0 == 32 -->
 
+     <!-- This field should not be filled, but we need it in the struct description so
+          we don't compute an incorrect packet size, since it uses an full byte.
+      -->
+    <field name="Reserved" size="8" start="24" type="uint"/>
+
     <!-- followed by "Tessellation/Geometry Shader Params" for bin, then render -->
   </struct>
 
@@ -1328,7 +1388,7 @@
     <field name="TPG max TCS output segments per TES batch" size="3" start="51" type="uint" minus_one="true"/>
     <field name="TPG min TES output segments required in play" size="3" start="54" type="uint" minus_one="true"/>
     <field name="GBG max TES output/vertex segments per GS batch" size="2" start="57" type="uint"/>
-    <field name="GBG max TES output/vertex segments required in play" size="3" start="59" type="uint" minus_one="true"/>
+    <field name="GBG min GS output segments required in play" size="3" start="59" type="uint" minus_one="true"/>
   </struct>
 
   <struct name="GL Shader State Attribute Record" max_ver="33">
@@ -1465,7 +1525,7 @@
   </struct>
 
   <struct name="TMU Config Parameter 2" min_ver="41" max_ver="41">
-    <field name="Pad" size="24" start="8" type="uint"/>
+    <field name="Pad" size="8" start="24" type="uint"/>
     <field name="Op" size="4" start="20" type="TMU Op"/>
     <field name="Offset R" size="4" start="16" type="int"/>
     <field name="Offset T" size="4" start="12" type="int"/>
@@ -1479,8 +1539,8 @@
   </struct>
 
   <struct name="TMU Config Parameter 2" min_ver="42">
-    <field name="Pad" size="23" start="9" type="uint"/>
-    <field name="LOD Query" size="1" start="8" type="bool"/>
+    <field name="Pad" size="7" start="25" type="uint"/>
+    <field name="LOD Query" size="1" start="24" type="bool"/>
     <field name="Op" size="4" start="20" type="TMU Op"/>
     <field name="Offset R" size="4" start="16" type="int"/>
     <field name="Offset T" size="4" start="12" type="int"/>
@@ -1709,6 +1769,7 @@
     <value name="Texture Data Format RGBA32I" value="112"/>
     <value name="Texture Data Format RGBA32UI" value="113"/>
     <value name="Texture Data Format RGB10_A2UI" value="114"/>
+    <value name="Texture Data Format A1_RGB5" value="115"/>
 
   </enum>
 </vcxml>

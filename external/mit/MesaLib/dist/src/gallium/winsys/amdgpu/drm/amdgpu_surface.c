@@ -26,7 +26,7 @@
  */
 
 #include "amdgpu_winsys.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 static int amdgpu_surface_sanity(const struct pipe_resource *tex)
 {
@@ -34,7 +34,7 @@ static int amdgpu_surface_sanity(const struct pipe_resource *tex)
    case PIPE_TEXTURE_1D:
       if (tex->height0 > 1)
          return -EINVAL;
-      /* fall through */
+      FALLTHROUGH;
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
       if (tex->depth0 > 1 || tex->array_size > 1)
@@ -47,7 +47,7 @@ static int amdgpu_surface_sanity(const struct pipe_resource *tex)
    case PIPE_TEXTURE_1D_ARRAY:
       if (tex->height0 > 1)
          return -EINVAL;
-      /* fall through */
+      FALLTHROUGH;
    case PIPE_TEXTURE_CUBE:
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_CUBE_ARRAY:
@@ -66,7 +66,7 @@ static int amdgpu_surface_init(struct radeon_winsys *rws,
                                enum radeon_surf_mode mode,
                                struct radeon_surf *surf)
 {
-   struct amdgpu_winsys *ws = (struct amdgpu_winsys*)rws;
+   struct amdgpu_winsys *ws = amdgpu_winsys(rws);
    int r;
 
    r = amdgpu_surface_sanity(tex);
@@ -88,8 +88,10 @@ static int amdgpu_surface_init(struct radeon_winsys *rws,
    config.info.storage_samples = tex->nr_storage_samples;
    config.info.levels = tex->last_level + 1;
    config.info.num_channels = util_format_get_nr_components(tex->format);
-   config.is_3d = !!(tex->target == PIPE_TEXTURE_3D);
-   config.is_cube = !!(tex->target == PIPE_TEXTURE_CUBE);
+   config.is_1d = tex->target == PIPE_TEXTURE_1D ||
+                  tex->target == PIPE_TEXTURE_1D_ARRAY;
+   config.is_3d = tex->target == PIPE_TEXTURE_3D;
+   config.is_cube = tex->target == PIPE_TEXTURE_CUBE;
 
    /* Use different surface counters for color and FMASK, so that MSAA MRTs
     * always use consecutive surface indices when FMASK is allocated between
@@ -104,7 +106,7 @@ static int amdgpu_surface_init(struct radeon_winsys *rws,
    return ac_compute_surface(ws->addrlib, &ws->info, &config, mode, surf);
 }
 
-void amdgpu_surface_init_functions(struct amdgpu_winsys *ws)
+void amdgpu_surface_init_functions(struct amdgpu_screen_winsys *ws)
 {
    ws->base.surface_init = amdgpu_surface_init;
 }

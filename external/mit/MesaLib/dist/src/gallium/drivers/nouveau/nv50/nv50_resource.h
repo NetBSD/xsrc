@@ -86,10 +86,12 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
                          const struct pipe_resource *template,
                          struct winsys_handle *whandle);
 
-boolean
+bool
 nv50_miptree_get_handle(struct pipe_screen *pscreen,
+                        struct pipe_context *context,
                         struct pipe_resource *pt,
-                        struct winsys_handle *whandle);
+                        struct winsys_handle *whandle,
+                        unsigned usage);
 
 struct nv50_surface {
    struct pipe_surface base;

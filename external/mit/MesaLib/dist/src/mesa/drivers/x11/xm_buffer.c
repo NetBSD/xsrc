@@ -32,17 +32,17 @@
 #include "glxheader.h"
 #include "xmesaP.h"
 #include "main/errors.h"
-#include "main/imports.h"
 #include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "swrast/s_renderbuffer.h"
+#include "util/u_memory.h"
 
 
 #define XMESA_RENDERBUFFER 0x1234
 
 
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
 static volatile int mesaXErrorFlag = 0;
 
 /**
@@ -89,8 +89,9 @@ alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
       return GL_FALSE;
    }
 
+   /* 0600 = user read+write */
    b->shminfo.shmid = shmget(IPC_PRIVATE, b->backxrb->ximage->bytes_per_line
-			     * b->backxrb->ximage->height, IPC_CREAT|0777);
+                             * b->backxrb->ximage->height, IPC_CREAT | 0600);
    if (b->shminfo.shmid < 0) {
       _mesa_warning(NULL, "shmget failed while allocating back buffer.\n");
       XDestroyImage(b->backxrb->ximage);
@@ -175,7 +176,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
    if (b->db_mode == BACK_XIMAGE) {
       /* Deallocate the old backxrb->ximage, if any */
       if (b->backxrb->ximage) {
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
 	 if (b->shm) {
 	    XShmDetach(b->xm_visual->display, &b->shminfo);
 	    XDestroyImage(b->backxrb->ximage);
@@ -394,7 +395,7 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
    if (fb->Visual.doubleBufferMode) {
       /* free back ximage/pixmap/shmregion */
       if (b->backxrb->ximage) {
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
          if (b->shm) {
             XShmDetach( b->display, &b->shminfo );
             XDestroyImage( b->backxrb->ximage );

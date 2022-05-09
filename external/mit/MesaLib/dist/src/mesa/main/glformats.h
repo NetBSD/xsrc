@@ -29,6 +29,7 @@
 
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <GL/gl.h>
 
 
@@ -105,6 +106,9 @@ extern GLboolean
 _mesa_is_depth_or_stencil_format(GLenum format);
 
 extern GLboolean
+_mesa_has_depth_float_channel(GLenum internalFormat);
+
+extern GLboolean
 _mesa_is_compressed_format(const struct gl_context *ctx, GLenum format);
 
 extern GLboolean
@@ -146,6 +150,9 @@ _mesa_base_tex_format(const struct gl_context *ctx, GLint internalFormat );
 
 extern uint32_t
 _mesa_format_from_format_and_type(GLenum format, GLenum type);
+
+bool
+_mesa_swap_bytes_in_type_enum(GLenum *type);
 
 extern uint32_t
 _mesa_tex_format_from_format_and_type(const struct gl_context *ctx,

@@ -250,7 +250,7 @@ fenced_buffer_destroy_locked(struct fenced_manager *fenced_mgr,
    assert(!fenced_buf->fence);
    assert(fenced_buf->head.prev);
    assert(fenced_buf->head.next);
-   LIST_DEL(&fenced_buf->head);
+   list_del(&fenced_buf->head);
    assert(fenced_mgr->num_unfenced);
    --fenced_mgr->num_unfenced;
 
@@ -276,10 +276,10 @@ fenced_buffer_add_locked(struct fenced_manager *fenced_mgr,
 
    p_atomic_inc(&fenced_buf->base.reference.count);
 
-   LIST_DEL(&fenced_buf->head);
+   list_del(&fenced_buf->head);
    assert(fenced_mgr->num_unfenced);
    --fenced_mgr->num_unfenced;
-   LIST_ADDTAIL(&fenced_buf->head, &fenced_mgr->fenced);
+   list_addtail(&fenced_buf->head, &fenced_mgr->fenced);
    ++fenced_mgr->num_fenced;
 }
 
@@ -305,11 +305,11 @@ fenced_buffer_remove_locked(struct fenced_manager *fenced_mgr,
    assert(fenced_buf->head.prev);
    assert(fenced_buf->head.next);
 
-   LIST_DEL(&fenced_buf->head);
+   list_del(&fenced_buf->head);
    assert(fenced_mgr->num_fenced);
    --fenced_mgr->num_fenced;
 
-   LIST_ADDTAIL(&fenced_buf->head, &fenced_mgr->unfenced);
+   list_addtail(&fenced_buf->head, &fenced_mgr->unfenced);
    ++fenced_mgr->num_unfenced;
 
    if (p_atomic_dec_zero(&fenced_buf->base.reference.count)) {
@@ -645,7 +645,7 @@ fenced_buffer_copy_storage_to_cpu_locked(struct fenced_buffer *fenced_buf)
 
 
 static void
-fenced_buffer_destroy(struct pb_buffer *buf)
+fenced_buffer_destroy(void *winsys, struct pb_buffer *buf)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    struct fenced_manager *fenced_mgr = fenced_buf->mgr;
@@ -826,7 +826,7 @@ fenced_buffer_fence(struct pb_buffer *buf,
       assert(fenced_buf->validation_flags);
 
       if (fenced_buf->fence) {
-         MAYBE_UNUSED boolean destroyed = fenced_buffer_remove_locked(fenced_mgr, fenced_buf);
+         ASSERTED boolean destroyed = fenced_buffer_remove_locked(fenced_mgr, fenced_buf);
          assert(!destroyed);
       }
       if (fence) {
@@ -908,7 +908,7 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr,
       goto no_buffer;
 
    pipe_reference_init(&fenced_buf->base.reference, 1);
-   fenced_buf->base.alignment = desc->alignment;
+   fenced_buf->base.alignment_log2 = util_logbase2(desc->alignment);
    fenced_buf->base.usage = desc->usage;
    fenced_buf->base.size = size;
    fenced_buf->size = size;
@@ -939,7 +939,7 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr,
 
    assert(fenced_buf->buffer || fenced_buf->data);
 
-   LIST_ADDTAIL(&fenced_buf->head, &fenced_mgr->unfenced);
+   list_addtail(&fenced_buf->head, &fenced_mgr->unfenced);
    ++fenced_mgr->num_unfenced;
    mtx_unlock(&fenced_mgr->mutex);
 
@@ -1027,10 +1027,10 @@ fenced_bufmgr_create(struct pb_manager *provider,
    fenced_mgr->max_buffer_size = max_buffer_size;
    fenced_mgr->max_cpu_total_size = max_cpu_total_size;
 
-   LIST_INITHEAD(&fenced_mgr->fenced);
+   list_inithead(&fenced_mgr->fenced);
    fenced_mgr->num_fenced = 0;
 
-   LIST_INITHEAD(&fenced_mgr->unfenced);
+   list_inithead(&fenced_mgr->unfenced);
    fenced_mgr->num_unfenced = 0;
 
    (void) mtx_init(&fenced_mgr->mutex, mtx_plain);

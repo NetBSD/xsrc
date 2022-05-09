@@ -43,11 +43,17 @@ _mesa_init_performance_queries(struct gl_context *ctx)
 }
 
 static void
-free_performance_query(GLuint key, void *data, void *user)
+free_performance_query(void *data, void *user)
 {
    struct gl_perf_query_object *m = data;
    struct gl_context *ctx = user;
 
+   /* Don't confuse the implementation by deleting an active query. We can
+    * toggle Active/Used to false because we're tearing down the GL context
+    * and it's already idle (see _mesa_free_context_data).
+    */
+   m->Active = false;
+   m->Used = false;
    ctx->Driver.DeletePerfQuery(ctx, m);
 }
 
@@ -456,7 +462,7 @@ _mesa_CreatePerfQueryINTEL(GLuint queryId, GLuint *queryHandle)
    obj->Active = false;
    obj->Ready = false;
 
-   _mesa_HashInsert(ctx->PerfQuery.Objects, id, obj);
+   _mesa_HashInsert(ctx->PerfQuery.Objects, id, obj, true);
    *queryHandle = id;
 }
 
@@ -611,6 +617,15 @@ _mesa_GetPerfQueryDataINTEL(GLuint queryHandle, GLuint flags,
     */
    *bytesWritten = 0;
 
+   /* Not explicitly covered in the spec but a query that was never started
+    * cannot return any data.
+    */
+   if (!obj->Used) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetPerfQueryDataINTEL(query never began)");
+      return;
+   }
+
    /* Not explicitly covered in the spec but to be consistent with
     * EndPerfQuery which validates that an application only ends an
     * active query we also validate that an application doesn't try
@@ -626,13 +641,20 @@ _mesa_GetPerfQueryDataINTEL(GLuint queryHandle, GLuint flags,
 
    if (!obj->Ready) {
       if (flags == GL_PERFQUERY_FLUSH_INTEL) {
-         ctx->Driver.Flush(ctx);
+         ctx->Driver.Flush(ctx, 0);
       } else if (flags == GL_PERFQUERY_WAIT_INTEL) {
          ctx->Driver.WaitPerfQuery(ctx, obj);
          obj->Ready = true;
       }
    }
 
-   if (obj->Ready)
-      ctx->Driver.GetPerfQueryData(ctx, obj, dataSize, data, bytesWritten);
+   if (obj->Ready) {
+      if (!ctx->Driver.GetPerfQueryData(ctx, obj, dataSize, data, bytesWritten)) {
+         memset(data, 0, dataSize);
+         *bytesWritten = 0;
+
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetPerfQueryDataINTEL(deferred begin query failure)");
+      }
+   }
 }

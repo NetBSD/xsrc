@@ -33,12 +33,12 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <EGL/eglmesaext.h>
+#include <EGL/eglextchromium.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct _egl_api _EGLAPI;
 
 typedef struct _egl_array _EGLArray;
 

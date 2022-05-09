@@ -78,12 +78,12 @@ static void
 brw_lower_packing_builtins(struct brw_context *brw,
                            exec_list *ir)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
 
    /* Gens < 7 don't have instructions to convert to or from half-precision,
     * and Gens < 6 don't expose that functionality.
     */
-   if (devinfo->gen != 6)
+   if (devinfo->ver != 6)
       return;
 
    lower_packing_builtins(ir, LOWER_PACK_HALF_2x16 | LOWER_UNPACK_HALF_2x16);
@@ -94,7 +94,7 @@ process_glsl_ir(struct brw_context *brw,
                 struct gl_shader_program *shader_prog,
                 struct gl_linked_shader *shader)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    struct gl_context *ctx = &brw->ctx;
 
    /* Temporary memory context for any new IR. */
@@ -102,8 +102,10 @@ process_glsl_ir(struct brw_context *brw,
 
    ralloc_adopt(mem_ctx, shader->ir);
 
-   lower_blend_equation_advanced(
-      shader, ctx->Extensions.KHR_blend_equation_advanced_coherent);
+   if (shader->Stage == MESA_SHADER_FRAGMENT) {
+      lower_blend_equation_advanced(
+         shader, ctx->Extensions.KHR_blend_equation_advanced_coherent);
+   }
 
    /* lower_packing_builtins() inserts arithmetic instructions, so it
     * must precede lower_instructions().
@@ -116,7 +118,7 @@ process_glsl_ir(struct brw_context *brw,
                                      EXP_TO_EXP2 |
                                      LOG_TO_LOG2 |
                                      DFREXP_DLDEXP_TO_ARITH);
-   if (devinfo->gen < 7) {
+   if (devinfo->ver < 7) {
       instructions_to_lower |= BIT_COUNT_TO_MATH |
                                EXTRACT_TO_SHIFTS |
                                INSERT_TO_SHIFTS |
@@ -125,17 +127,15 @@ process_glsl_ir(struct brw_context *brw,
 
    lower_instructions(shader->ir, instructions_to_lower);
 
-   /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
+   /* Pre-gfx6 HW can only nest if-statements 16 deep.  Beyond this,
     * if-statements need to be flattened.
     */
-   if (devinfo->gen < 6)
+   if (devinfo->ver < 6)
       lower_if_to_cond_assign(shader->Stage, shader->ir, 16);
 
-   do_lower_texture_projection(shader->ir);
    do_vec_index_to_cond_assign(shader->ir);
    lower_vector_insert(shader->ir, true);
    lower_offset_arrays(shader->ir);
-   lower_noise(shader->ir);
    lower_quadop_vector(shader->ir, false);
 
    validate_ir_tree(shader->ir);
@@ -248,7 +248,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       prog->ShadowSamplers = shader->shadow_samplers;
 
       bool debug_enabled =
-         (INTEL_DEBUG & intel_debug_flag_for_shader_stage(shader->Stage));
+         INTEL_DEBUG(intel_debug_flag_for_shader_stage(shader->Stage));
 
       if (debug_enabled && shader->ir) {
          fprintf(stderr, "GLSL IR for native %s shader %d:\n",
@@ -261,13 +261,19 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
                                  compiler->scalar_stage[stage]);
    }
 
+   /* TODO: Verify if its feasible to split up the NIR linking work into a
+    * per-stage part (that fill out information we need for the passes) and a
+    * actual linking part, so that we could fold back brw_nir_lower_resources
+    * back into brw_create_nir.
+    */
+
    /* SPIR-V programs use a NIR linker */
    if (shProg->data->spirv) {
-      if (!gl_nir_link_uniforms(ctx, shProg))
-         return false;
-
-      gl_nir_link_assign_atomic_counter_resources(ctx, shProg);
-      gl_nir_link_assign_xfb_resources(ctx, shProg);
+      static const gl_nir_linker_options opts = {
+         .fill_parameters = false,
+      };
+      if (!gl_nir_link_spirv(ctx, shProg, &opts))
+         return GL_FALSE;
    }
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
@@ -276,6 +282,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
          continue;
 
       struct gl_program *prog = shader->Program;
+
+      brw_nir_lower_resources(prog->nir, shProg, prog, &brw->screen->devinfo);
 
       NIR_PASS_V(prog->nir, brw_nir_lower_gl_images, prog);
    }
@@ -299,15 +307,15 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
     * TODO: Look into Shadow of Mordor regressions on HSW and enable this for
     * all platforms. See: https://bugs.freedesktop.org/show_bug.cgi?id=103537
     */
-    if (first != last && brw->screen->devinfo.gen >= 8) {
+    if (first != last && brw->screen->devinfo.ver >= 8) {
        int next = last;
        for (int i = next - 1; i >= 0; i--) {
           if (shProg->_LinkedShaders[i] == NULL)
              continue;
 
           brw_nir_link_shaders(compiler,
-                               &shProg->_LinkedShaders[i]->Program->nir,
-                               &shProg->_LinkedShaders[next]->Program->nir);
+                               shProg->_LinkedShaders[i]->Program->nir,
+                               shProg->_LinkedShaders[next]->Program->nir);
           next = i;
        }
     }
@@ -324,8 +332,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       brw_shader_gather_info(prog->nir, prog);
 
       NIR_PASS_V(prog->nir, gl_nir_lower_atomics, shProg, false);
-      NIR_PASS_V(prog->nir, nir_lower_atomics_to_ssbo,
-                 prog->nir->info.num_abos);
+      NIR_PASS_V(prog->nir, nir_lower_atomics_to_ssbo);
 
       nir_sweep(prog->nir);
 
@@ -340,7 +347,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * too late.  At that point, the values for the built-in uniforms won't
        * get sent to the shader.
        */
-      nir_foreach_variable(var, &prog->nir->uniforms) {
+      nir_foreach_uniform_variable(var, prog->nir) {
          const nir_state_slot *const slots = var->state_slots;
          for (unsigned int i = 0; i < var->num_state_slots; i++) {
             assert(slots != NULL);
@@ -372,13 +379,13 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
    }
 
    if (brw->precompile && !brw_shader_precompile(ctx, shProg))
-      return false;
+      return GL_FALSE;
 
    /* SPIR-V programs build its resource list from linked NIR shaders. */
    if (!shProg->data->spirv)
-      build_program_resource_list(ctx, shProg);
+      build_program_resource_list(ctx, shProg, false);
    else
-      nir_build_program_resource_list(ctx, shProg);
+      nir_build_program_resource_list(ctx, shProg, true);
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       struct gl_linked_shader *shader = shProg->_LinkedShaders[stage];
@@ -390,5 +397,5 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       shader->ir = NULL;
    }
 
-   return true;
+   return GL_TRUE;
 }

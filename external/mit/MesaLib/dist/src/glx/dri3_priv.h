@@ -61,7 +61,7 @@
 
 #include "loader_dri3_helper.h"
 
-/* From xmlpool/options.h, user exposed so should be stable */
+/* From driconf.h, user exposed so should be stable */
 #define DRI_CONF_VBLANK_NEVER 0
 #define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
 #define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
@@ -89,6 +89,12 @@ struct dri3_screen {
    __DRIscreen *driScreen;
    __GLXDRIscreen vtable;
 
+   /* DRI screen is created for display GPU in case of prime.
+    * This screen is used to allocate linear_buffer from
+    * display GPU space in dri3_alloc_render_buffer() function.
+    */
+   __DRIscreen *driScreenDisplayGPU;
+
    const __DRIimageExtension *image;
    const __DRIimageDriverExtension *image_driver;
    const __DRIcoreExtension *core;
@@ -102,6 +108,10 @@ struct dri3_screen {
    void *driver;
    int fd;
    bool is_different_gpu;
+   bool prefer_back_buffer_reuse;
+
+   /* fd for display GPU in case of prime */
+   int fd_display_gpu;
 
    int show_fps_interval;
 

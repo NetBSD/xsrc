@@ -91,7 +91,7 @@ static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
 
 /**
  * Determines if the given swizzle is valid for r300/r400.  In most situations
- * it is better to use r300_swizzle_is_native() which can be accesed via
+ * it is better to use r300_swizzle_is_native() which can be accessed via
  * struct radeon_compiler *c; c->SwizzleCaps->IsNative().
  */
 int r300_swizzle_is_native_basic(unsigned int swizzle)
@@ -195,7 +195,7 @@ static void r300_swizzle_split(
 	}
 }
 
-struct rc_swizzle_caps r300_swizzle_caps = {
+const struct rc_swizzle_caps r300_swizzle_caps = {
 	.IsNative = r300_swizzle_is_native,
 	.Split = r300_swizzle_split
 };

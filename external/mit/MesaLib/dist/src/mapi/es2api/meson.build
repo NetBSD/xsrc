@@ -27,19 +27,30 @@ es2_glapi_mapi_tmp_h = custom_target(
   capture : true,
 )
 
+_es2_c_args = []
+if with_platform_windows
+  _es2_c_args += ['-D_GDI32_', '-DBUILD_GL32']
+endif
+
 libgles2 = shared_library(
   'GLESv2' + get_option('gles-lib-suffix'),
   ['../entry.c', es2_glapi_mapi_tmp_h],
   c_args : [
-    c_msvc_compat_args, c_vis_args, '-DMAPI_MODE_BRIDGE',
+    c_msvc_compat_args,
+    _es2_c_args,
+    '-DMAPI_MODE_BRIDGE',
     '-DMAPI_ABI_HEADER="@0@"'.format(es2_glapi_mapi_tmp_h.full_path()),
     gcc_lto_quirk,
   ],
+  gnu_symbol_visibility : 'hidden',
   link_args : [ld_args_gc_sections],
   include_directories : [inc_src, inc_include, inc_mapi],
   link_with : libglapi,
   dependencies : [dep_thread, dep_libdrm, dep_m, dep_dl],
+  soversion : host_machine.system() == 'windows' ? '' : '2',
   version : '2.0.0',
+  darwin_versions : '3.0.0',
+  name_prefix : 'lib',
   install : true,
 )
 
@@ -52,12 +63,15 @@ pkg.generate(
   libraries_private : gl_priv_libs,
 )
 
-if with_tests and prog_nm.found()
+if with_symbols_check
   test(
     'es2-ABI-check',
-    find_program('ABI-check'),
-    env : env_test,
-    args : libgles2,
+    symbols_check,
+    args : [
+      '--lib', libgles2,
+      '--symbols-file', files('gles2-symbols.txt'),
+      symbols_check_args,
+    ],
     suite : ['mapi'],
   )
 endif

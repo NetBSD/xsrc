@@ -65,8 +65,14 @@ struct zwp_linux_dmabuf_v1;
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "EGL-DRI2"
 
-#include <system/window.h>
 #include <hardware/gralloc.h>
+
+#if ANDROID_API_LEVEL >= 26
+#include <vndk/window.h>
+#else
+#include <system/window.h>
+#endif
+
 #endif /* HAVE_ANDROID_PLATFORM */
 
 #include "eglconfig.h"
@@ -81,80 +87,87 @@ struct zwp_linux_dmabuf_v1;
 #include "eglsync.h"
 
 #include "util/u_vector.h"
+#include "util/bitset.h"
+
+#define EGL_DRI2_MAX_FORMATS 11
 
 struct wl_buffer;
 
 struct dri2_egl_display_vtbl {
+   /* mandatory on Wayland, unused otherwise */
    int (*authenticate)(_EGLDisplay *disp, uint32_t id);
 
-   _EGLSurface* (*create_window_surface)(_EGLDriver *drv, _EGLDisplay *disp,
-                                         _EGLConfig *config,
+   /* mandatory */
+   _EGLSurface* (*create_window_surface)(_EGLDisplay *disp, _EGLConfig *config,
                                          void *native_window,
                                          const EGLint *attrib_list);
 
-   _EGLSurface* (*create_pixmap_surface)(_EGLDriver *drv, _EGLDisplay *disp,
-                                         _EGLConfig *config,
+   /* optional */
+   _EGLSurface* (*create_pixmap_surface)(_EGLDisplay *disp, _EGLConfig *config,
                                          void *native_pixmap,
                                          const EGLint *attrib_list);
 
-   _EGLSurface* (*create_pbuffer_surface)(_EGLDriver *drv, _EGLDisplay *disp,
-                                          _EGLConfig *config,
+   /* optional */
+   _EGLSurface* (*create_pbuffer_surface)(_EGLDisplay *disp, _EGLConfig *config,
                                           const EGLint *attrib_list);
 
-   EGLBoolean (*destroy_surface)(_EGLDriver *drv, _EGLDisplay *disp,
-                                 _EGLSurface *surface);
+   /* mandatory */
+   EGLBoolean (*destroy_surface)(_EGLDisplay *disp, _EGLSurface *surface);
 
-   EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *disp,
-                               _EGLSurface *surf, EGLint interval);
+   /* optional */
+   EGLBoolean (*swap_interval)(_EGLDisplay *disp, _EGLSurface *surf,
+                               EGLint interval);
 
-   _EGLImage* (*create_image)(_EGLDriver *drv, _EGLDisplay *disp,
-                              _EGLContext *ctx, EGLenum target,
-                              EGLClientBuffer buffer,
+   /* mandatory */
+   _EGLImage* (*create_image)(_EGLDisplay *disp, _EGLContext *ctx,
+                              EGLenum target, EGLClientBuffer buffer,
                               const EGLint *attr_list);
 
-   EGLBoolean (*swap_buffers)(_EGLDriver *drv, _EGLDisplay *disp,
-                              _EGLSurface *surf);
+   /* mandatory */
+   EGLBoolean (*swap_buffers)(_EGLDisplay *disp, _EGLSurface *surf);
 
-   EGLBoolean (*swap_buffers_with_damage)(_EGLDriver *drv, _EGLDisplay *disp,
-                                          _EGLSurface *surface,
+   /* optional - falls back to .swap_buffers */
+   EGLBoolean (*swap_buffers_with_damage)(_EGLDisplay *disp, _EGLSurface *surface,
                                           const EGLint *rects, EGLint n_rects);
 
-   EGLBoolean (*set_damage_region)(_EGLDriver *drv, _EGLDisplay *disp,
-                                   _EGLSurface *surface,
-                                   const EGLint *rects, EGLint n_rects);
+   /* optional */
+   EGLBoolean (*swap_buffers_region)(_EGLDisplay *disp, _EGLSurface *surf,
+                                     EGLint numRects, const EGLint *rects);
 
-   EGLBoolean (*swap_buffers_region)(_EGLDriver *drv, _EGLDisplay *disp,
-                                     _EGLSurface *surf, EGLint numRects,
-                                     const EGLint *rects);
-
-   EGLBoolean (*post_sub_buffer)(_EGLDriver *drv, _EGLDisplay *disp,
-                                 _EGLSurface *surf,
+   /* optional */
+   EGLBoolean (*post_sub_buffer)(_EGLDisplay *disp, _EGLSurface *surf,
                                  EGLint x, EGLint y,
                                  EGLint width, EGLint height);
 
-   EGLBoolean (*copy_buffers)(_EGLDriver *drv, _EGLDisplay *disp,
-                              _EGLSurface *surf, void *native_pixmap_target);
+   /* optional */
+   EGLBoolean (*copy_buffers)(_EGLDisplay *disp, _EGLSurface *surf,
+                              void *native_pixmap_target);
 
-   EGLint (*query_buffer_age)(_EGLDriver *drv, _EGLDisplay *disp,
-                              _EGLSurface *surf);
+   /* optional */
+   EGLint (*query_buffer_age)(_EGLDisplay *disp, _EGLSurface *surf);
 
-   EGLBoolean (*query_surface)(_EGLDriver *drv, _EGLDisplay *disp,
-                               _EGLSurface *surf, EGLint attribute,
-                               EGLint *value);
+   /* optional */
+   EGLBoolean (*query_surface)(_EGLDisplay *disp, _EGLSurface *surf,
+                               EGLint attribute, EGLint *value);
 
-   struct wl_buffer* (*create_wayland_buffer_from_image)(
-                        _EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img);
+   /* optional */
+   struct wl_buffer* (*create_wayland_buffer_from_image)(_EGLDisplay *disp,
+                                                         _EGLImage *img);
 
+   /* optional */
    EGLBoolean (*get_sync_values)(_EGLDisplay *display, _EGLSurface *surface,
                                  EGLuint64KHR *ust, EGLuint64KHR *msc,
                                  EGLuint64KHR *sbc);
 
+   /* mandatory */
    __DRIdrawable *(*get_dri_drawable)(_EGLSurface *surf);
 
+   /* optional */
    void (*close_screen_notify)(_EGLDisplay *disp);
 
    /* Used in EGL_KHR_mutable_render_buffer to update the native window's
     * shared buffer mode.
+    * optional
     */
    bool (*set_shared_buffer_mode)(_EGLDisplay *disp, _EGLSurface *surf,
                                   bool mode);
@@ -182,6 +195,7 @@ struct dri2_egl_display
    const __DRInoErrorExtension    *no_error;
    const __DRI2configQueryExtension *config;
    const __DRI2fenceExtension *fence;
+   const __DRI2bufferDamageExtension *buffer_damage;
    const __DRI2blobExtension *blob;
    const __DRI2rendererQueryExtension *rendererQuery;
    const __DRI2interopExtension *interop;
@@ -232,13 +246,15 @@ struct dri2_egl_display
    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
    struct u_vector          *wl_modifiers;
    bool                      authenticated;
-   unsigned                  formats;
+   BITSET_DECLARE(formats, EGL_DRI2_MAX_FORMATS);
    uint32_t                  capabilities;
    char                     *device_name;
 #endif
 
 #ifdef HAVE_ANDROID_PLATFORM
    const gralloc_module_t *gralloc;
+   /* gralloc vendor usage bit for front rendering */
+   uint32_t front_rendering_usage;
 #endif
 
    bool                      is_render_node;
@@ -286,6 +302,7 @@ struct dri2_egl_surface
    struct wl_drm         *wl_drm_wrapper;
    struct wl_callback    *throttle_callback;
    int                    format;
+   bool                   resized;
 #endif
 
 #ifdef HAVE_DRM_PLATFORM
@@ -330,14 +347,18 @@ struct dri2_egl_surface
       struct ANativeWindowBuffer *buffer;
       int age;
    } *color_buffers, *back;
+   uint32_t gralloc_usage;
 #endif
 
-#if defined(HAVE_SURFACELESS_PLATFORM)
-      __DRIimage           *front;
-      unsigned int         visual;
-#endif
+   /* surfaceless and device */
+   __DRIimage           *front;
+   unsigned int         visual;
+
    int out_fence_fd;
    EGLBoolean enable_out_fence;
+
+   /* swrast device */
+   char *swrast_device_buffer;
 };
 
 struct dri2_egl_config
@@ -360,7 +381,7 @@ struct dri2_egl_sync {
    void *fence;
 };
 
-/* From xmlpool/options.h, user exposed so should be stable */
+/* From driconf.h, user exposed so should be stable */
 #define DRI_CONF_VBLANK_NEVER 0
 #define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
 #define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
@@ -374,6 +395,7 @@ _EGL_DRIVER_TYPECAST(dri2_egl_sync, _EGLSync, obj)
 extern const __DRIimageLookupExtension image_lookup_extension;
 extern const __DRIuseInvalidateExtension use_invalidate;
 extern const __DRIbackgroundCallableExtension background_callable_extension;
+extern const __DRIswrastLoaderExtension swrast_pbuffer_loader_extension;
 
 EGLBoolean
 dri2_load_driver(_EGLDisplay *disp);
@@ -400,33 +422,58 @@ dri2_setup_extensions(_EGLDisplay *disp);
 __DRIdrawable *
 dri2_surface_get_dri_drawable(_EGLSurface *surf);
 
+GLboolean
+dri2_validate_egl_image(void *image, void *data);
+
+__DRIimage *
+dri2_lookup_egl_image_validated(void *image, void *data);
+
 __DRIimage *
 dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data);
+
+void
+dri2_get_shifts_and_sizes(const __DRIcoreExtension *core,
+		          const __DRIconfig *config, int *shifts,
+			  unsigned int *sizes);
+
+void
+dri2_get_render_type_float(const __DRIcoreExtension *core,
+                           const __DRIconfig *config,
+                           bool *is_float);
+
+unsigned int
+dri2_image_format_for_pbuffer_config(struct dri2_egl_display *dri2_dpy,
+                                     const __DRIconfig *config);
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
                 EGLint surface_type, const EGLint *attr_list,
-                const unsigned int *rgba_masks);
+                const int *rgba_shifts, const unsigned int *rgba_sizes);
+
+EGLBoolean
+dri2_add_pbuffer_configs_for_visuals(_EGLDisplay *disp);
 
 _EGLImage *
-dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
-                      _EGLContext *ctx, EGLenum target,
+dri2_create_image_khr(_EGLDisplay *disp, _EGLContext *ctx, EGLenum target,
                       EGLClientBuffer buffer, const EGLint *attr_list);
 
 _EGLImage *
 dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
                           EGLClientBuffer buffer, const EGLint *attr_list);
 
+_EGLImage *
+dri2_create_image_from_dri(_EGLDisplay *disp, __DRIimage *dri_image);
+
 #ifdef HAVE_X11_PLATFORM
 EGLBoolean
-dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp);
+dri2_initialize_x11(_EGLDisplay *disp);
 void
 dri2_teardown_x11(struct dri2_egl_display *dri2_dpy);
 unsigned int
 dri2_x11_get_red_mask_for_depth(struct dri2_egl_display *dri2_dpy, int depth);
 #else
 static inline EGLBoolean
-dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_initialize_x11(_EGLDisplay *disp)
 {
    return _eglError(EGL_NOT_INITIALIZED, "X11 platform not built");
 }
@@ -441,12 +488,12 @@ dri2_x11_get_red_mask_for_depth(struct dri2_egl_display *dri2_dpy, int depth)
 
 #ifdef HAVE_DRM_PLATFORM
 EGLBoolean
-dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp);
+dri2_initialize_drm(_EGLDisplay *disp);
 void
 dri2_teardown_drm(struct dri2_egl_display *dri2_dpy);
 #else
 static inline EGLBoolean
-dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_initialize_drm(_EGLDisplay *disp)
 {
    return _eglError(EGL_NOT_INITIALIZED, "GBM/DRM platform not built");
 }
@@ -456,14 +503,14 @@ dri2_teardown_drm(struct dri2_egl_display *dri2_dpy) {}
 
 #ifdef HAVE_WAYLAND_PLATFORM
 EGLBoolean
-dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp);
+dri2_initialize_wayland(_EGLDisplay *disp);
 void
 dri2_teardown_wayland(struct dri2_egl_display *dri2_dpy);
 bool
 dri2_wl_is_format_supported(void* user_data, uint32_t format);
 #else
 static inline EGLBoolean
-dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_initialize_wayland(_EGLDisplay *disp)
 {
    return _eglError(EGL_NOT_INITIALIZED, "Wayland platform not built");
 }
@@ -473,25 +520,22 @@ dri2_teardown_wayland(struct dri2_egl_display *dri2_dpy) {}
 
 #ifdef HAVE_ANDROID_PLATFORM
 EGLBoolean
-dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp);
+dri2_initialize_android(_EGLDisplay *disp);
 #else
 static inline EGLBoolean
-dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_initialize_android(_EGLDisplay *disp)
 {
    return _eglError(EGL_NOT_INITIALIZED, "Android platform not built");
 }
 #endif
 
-#ifdef HAVE_SURFACELESS_PLATFORM
 EGLBoolean
-dri2_initialize_surfaceless(_EGLDriver *drv, _EGLDisplay *disp);
-#else
-static inline EGLBoolean
-dri2_initialize_surfaceless(_EGLDriver *drv, _EGLDisplay *disp)
-{
-   return _eglError(EGL_NOT_INITIALIZED, "Surfaceless platform not built");
-}
-#endif
+dri2_initialize_surfaceless(_EGLDisplay *disp);
+
+EGLBoolean
+dri2_initialize_device(_EGLDisplay *disp);
+static inline void
+dri2_teardown_device(struct dri2_egl_display *dri2_dpy) { /* noop */ }
 
 void
 dri2_flush_drawable_for_swapbuffers(_EGLDisplay *disp, _EGLSurface *draw);
@@ -501,12 +545,10 @@ dri2_get_dri_config(struct dri2_egl_config *conf, EGLint surface_type,
                     EGLenum colorspace);
 
 static inline void
-dri2_set_WL_bind_wayland_display(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_set_WL_bind_wayland_display(_EGLDisplay *disp)
 {
 #ifdef HAVE_WAYLAND_PLATFORM
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-
-   (void) drv;
 
    if (dri2_dpy->device_name && dri2_dpy->image) {
        if (dri2_dpy->image->base.version >= 10 &&
@@ -536,7 +578,8 @@ dri2_egl_surface_free_local_buffers(struct dri2_egl_surface *dri2_surf);
 
 EGLBoolean
 dri2_init_surface(_EGLSurface *surf, _EGLDisplay *disp, EGLint type,
-        _EGLConfig *conf, const EGLint *attrib_list, EGLBoolean enable_out_fence);
+        _EGLConfig *conf, const EGLint *attrib_list,
+        EGLBoolean enable_out_fence, void *native_surface);
 
 void
 dri2_fini_surface(_EGLSurface *surf);
@@ -544,7 +587,8 @@ dri2_fini_surface(_EGLSurface *surf);
 EGLBoolean
 dri2_create_drawable(struct dri2_egl_display *dri2_dpy,
                      const __DRIconfig *config,
-                     struct dri2_egl_surface *dri2_surf);
+                     struct dri2_egl_surface *dri2_surf,
+                     void *loaderPrivate);
 
 static inline uint64_t
 combine_u32_into_u64(uint32_t hi, uint32_t lo)

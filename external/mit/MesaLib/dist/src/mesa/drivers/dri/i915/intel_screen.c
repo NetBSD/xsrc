@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
+#include "drm-uapi/drm_fourcc.h"
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
@@ -39,48 +40,50 @@
 #include "swrast/s_renderbuffer.h"
 
 #include "utils.h"
-#include "util/xmlpool.h"
+#include "util/debug.h"
+#include "util/driconf.h"
+#include "util/u_memory.h"
 
-static const __DRIconfigOptionsExtension i915_config_options = {
-   .base = { __DRI_CONFIG_OPTIONS, 1 },
-   .xml =
-
-DRI_CONF_BEGIN
+static const driOptionDescription i915_driconf[] = {
    DRI_CONF_SECTION_PERFORMANCE
       /* Options correspond to DRI_CONF_BO_REUSE_DISABLED,
        * DRI_CONF_BO_REUSE_ALL
        */
-      DRI_CONF_OPT_BEGIN_V(bo_reuse, enum, 1, "0:1")
-	 DRI_CONF_DESC_BEGIN(en, "Buffer object reuse")
-	    DRI_CONF_ENUM(0, "Disable buffer object reuse")
-	    DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects")
-	 DRI_CONF_DESC_END
-      DRI_CONF_OPT_END
+      DRI_CONF_OPT_E(bo_reuse, 1, 0, 1,
+                     "Buffer object reuse",
+                     DRI_CONF_ENUM(0, "Disable buffer object reuse")
+                     DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects"))
 
-      DRI_CONF_OPT_BEGIN_B(fragment_shader, "true")
-	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
-      DRI_CONF_OPT_END
+      DRI_CONF_OPT_B(fragment_shader, true,
+                     "Enable limited ARB_fragment_shader support on 915/945.")
 
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
-      DRI_CONF_ALWAYS_FLUSH_BATCH("false")
-      DRI_CONF_ALWAYS_FLUSH_CACHE("false")
-      DRI_CONF_DISABLE_THROTTLING("false")
-      DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN("false")
-      DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS("false")
-      DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED("false")
+      DRI_CONF_ALWAYS_FLUSH_BATCH(false)
+      DRI_CONF_ALWAYS_FLUSH_CACHE(false)
+      DRI_CONF_DISABLE_THROTTLING(false)
+      DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(false)
+      DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS(false)
+      DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(false)
 
-      DRI_CONF_OPT_BEGIN_B(stub_occlusion_query, "false")
-	 DRI_CONF_DESC(en, "Enable stub ARB_occlusion_query support on 915/945.")
-      DRI_CONF_OPT_END
+      DRI_CONF_OPT_B(stub_occlusion_query, false, "Enable stub ARB_occlusion_query support on 915/945.")
 
-      DRI_CONF_OPT_BEGIN_B(shader_precompile, "true")
-	 DRI_CONF_DESC(en, "Perform code generation at shader link time.")
-      DRI_CONF_OPT_END
+      DRI_CONF_OPT_B(shader_precompile, true, "Perform code generation at shader link time.")
    DRI_CONF_SECTION_END
-DRI_CONF_END
+};
+
+static char *
+i915_driconf_get_xml(const char *driver_name)
+{
+   return driGetOptionsXml(i915_driconf, ARRAY_SIZE(i915_driconf));
+}
+
+static const __DRIconfigOptionsExtension i915_config_options = {
+   .base = { __DRI_CONFIG_OPTIONS, 2 },
+   .xml = NULL,
+   .getXml = i915_driconf_get_xml,
 };
 
 #include "intel_batchbuffer.h"
@@ -151,16 +154,21 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 };
 
 static void
-intelDRI2Flush(__DRIdrawable *drawable)
+intelDRI2FlushWithFlags(__DRIcontext *context,
+                        __DRIdrawable *drawable,
+                        unsigned flags,
+                        enum __DRI2throttleReason reason)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
+   struct intel_context *intel = context->driverPrivate;
    if (intel == NULL)
       return;
+   struct gl_context *ctx = &intel->ctx;
 
    INTEL_FIREVERTICES(intel);
 
-   intel->need_throttle = true;
+   if (reason == __DRI2_THROTTLE_SWAPBUFFER ||
+       reason == __DRI2_THROTTLE_FLUSHFRONT)
+      intel->need_throttle = true;
 
    if (intel->batch.used)
       intel_batchbuffer_flush(intel);
@@ -170,53 +178,62 @@ intelDRI2Flush(__DRIdrawable *drawable)
    }
 }
 
+static void
+intelDRI2Flush(__DRIdrawable *drawable)
+{
+   intelDRI2FlushWithFlags(drawable->driContextPriv, drawable,
+                           __DRI2_FLUSH_DRAWABLE,
+                           __DRI2_THROTTLE_SWAPBUFFER);
+}
+
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
-    .base = { __DRI2_FLUSH, 3 },
+    .base = { __DRI2_FLUSH, 4 },
 
     .flush              = intelDRI2Flush,
     .invalidate         = dri2InvalidateDrawable,
+    .flush_with_flags   = intelDRI2FlushWithFlags,
 };
 
 static struct intel_image_format intel_image_formats[] = {
-   { __DRI_IMAGE_FOURCC_ARGB8888, __DRI_IMAGE_COMPONENTS_RGBA, 1,
+   { DRM_FORMAT_ARGB8888, __DRI_IMAGE_COMPONENTS_RGBA, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } },
 
    { __DRI_IMAGE_FOURCC_SARGB8888, __DRI_IMAGE_COMPONENTS_RGBA, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_SARGB8, 4 } } },
 
-   { __DRI_IMAGE_FOURCC_XRGB8888, __DRI_IMAGE_COMPONENTS_RGB, 1,
+   { DRM_FORMAT_XRGB8888, __DRI_IMAGE_COMPONENTS_RGB, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_XRGB8888, 4 }, } },
 
-   { __DRI_IMAGE_FOURCC_YUV410, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+   { DRM_FORMAT_YUV410, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { __DRI_IMAGE_FOURCC_YUV411, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+   { DRM_FORMAT_YUV411, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { __DRI_IMAGE_FOURCC_YUV420, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+   { DRM_FORMAT_YUV420, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { __DRI_IMAGE_FOURCC_YUV422, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+   { DRM_FORMAT_YUV422, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { __DRI_IMAGE_FOURCC_YUV444, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+   { DRM_FORMAT_YUV444, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { __DRI_IMAGE_FOURCC_NV12, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
+   { DRM_FORMAT_NV12, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 1, __DRI_IMAGE_FORMAT_GR88, 2 } } },
 
-   { __DRI_IMAGE_FOURCC_NV16, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
+   { DRM_FORMAT_NV16, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 0, __DRI_IMAGE_FORMAT_GR88, 2 } } },
 
@@ -228,10 +245,10 @@ static struct intel_image_format intel_image_formats[] = {
     * V into A.  This lets the texture sampler interpolate the Y
     * components correctly when sampling from plane 0, and interpolate
     * U and V correctly when sampling from plane 1. */
-   { __DRI_IMAGE_FOURCC_YUYV, __DRI_IMAGE_COMPONENTS_Y_XUXV, 2,
+   { DRM_FORMAT_YUYV, __DRI_IMAGE_COMPONENTS_Y_XUXV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
        { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } },
-   { __DRI_IMAGE_FOURCC_UYVY, __DRI_IMAGE_COMPONENTS_Y_UXVX, 2,
+   { DRM_FORMAT_UYVY, __DRI_IMAGE_COMPONENTS_Y_UXVX, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
        { 0, 1, 0, __DRI_IMAGE_FORMAT_ABGR8888, 4 } } }
 };
@@ -390,7 +407,7 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
       return NULL;
    }
 
-   if (level < obj->BaseLevel || level > obj->_MaxLevel) {
+   if (level < obj->Attrib.BaseLevel || level > obj->_MaxLevel) {
       *error = __DRI_IMAGE_ERROR_BAD_MATCH;
       return NULL;
    }
@@ -493,7 +510,10 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       return true;
    case __DRI_IMAGE_ATTRIB_FD:
       return !drm_intel_bo_gem_export_to_prime(image->region->bo, value);
-  default:
+   case __DRI_IMAGE_ATTRIB_OFFSET:
+      *value = image->offset;
+      return true;
+   default:
       return false;
    }
 }
@@ -910,8 +930,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                                   false, /* never sw depth */
                                   false, /* never sw stencil */
                                   mesaVis->accumRedBits > 0,
-                                  false, /* never sw alpha */
-                                  false  /* never sw aux */ );
+                                  false /* never sw alpha */);
    driDrawPriv->driverPrivate = fb;
 
    return true;
@@ -1001,7 +1020,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 {
    __DRIscreen *spriv = intelScreen->driScrnPriv;
 
-   intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
+   intelScreen->no_hw = env_var_as_boolean("INTEL_NO_HW", false);
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
    if (intelScreen->bufmgr == NULL) {
@@ -1065,7 +1084,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      num_depth_stencil_bits,
                                      back_buffer_modes, 2,
                                      singlesample_samples, 1,
-                                     false, false, false);
+                                     false, false);
       configs = driConcatConfigs(configs, new_configs);
    }
 
@@ -1087,7 +1106,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      depth_bits, stencil_bits, 1,
                                      back_buffer_modes, 1,
                                      singlesample_samples, 1,
-                                     true, false, false);
+                                     true, false);
       configs = driConcatConfigs(configs, new_configs);
    }
 
@@ -1160,7 +1179,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       return false;
    }
    /* parse information in __driConfigOptions */
-   driParseOptionInfo(&intelScreen->optionCache, i915_config_options.xml);
+   driParseOptionInfo(&intelScreen->optionCache, i915_driconf,
+                      ARRAY_SIZE(i915_driconf));
 
    intelScreen->driScrnPriv = psp;
    psp->driverPrivate = (void *) intelScreen;
@@ -1264,6 +1284,13 @@ static const __DRIextension *i915_driver_extensions[] = {
 };
 
 PUBLIC const __DRIextension **__driDriverGetExtensions_i915(void)
+{
+   globalDriverAPI = &i915_driver_api;
+
+   return i915_driver_extensions;
+}
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_i830(void)
 {
    globalDriverAPI = &i915_driver_api;
 

@@ -21,9 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "v3d_context.h"
-#include "v3d_tiling.h"
+#include "broadcom/common/v3d_tiling.h"
 #include "broadcom/common/v3d_macros.h"
 #include "broadcom/cle/v3dx_pack.h"
 
@@ -53,7 +53,7 @@ flush_last_load(struct v3d_cl *cl)
 
 static void
 load_general(struct v3d_cl *cl, struct pipe_surface *psurf, int buffer,
-             uint32_t pipe_bit, uint32_t *loads_pending)
+             int layer, uint32_t pipe_bit, uint32_t *loads_pending)
 {
         struct v3d_surface *surf = v3d_surface(psurf);
         bool separate_stencil = surf->separate_stencil && buffer == STENCIL;
@@ -64,9 +64,12 @@ load_general(struct v3d_cl *cl, struct pipe_surface *psurf, int buffer,
 
         struct v3d_resource *rsc = v3d_resource(psurf->texture);
 
+        uint32_t layer_offset =
+                v3d_layer_offset(&rsc->base, psurf->u.tex.level,
+                                 psurf->u.tex.first_layer + layer);
         cl_emit(cl, LOAD_TILE_BUFFER_GENERAL, load) {
                 load.buffer_to_load = buffer;
-                load.address = cl_address(rsc->bo, surf->offset);
+                load.address = cl_address(rsc->bo, layer_offset);
 
 #if V3D_VERSION >= 40
                 load.memory_format = surf->tiling;
@@ -75,12 +78,12 @@ load_general(struct v3d_cl *cl, struct pipe_surface *psurf, int buffer,
                 else
                         load.input_image_format = surf->format;
                 load.r_b_swap = surf->swap_rb;
-
-                if (surf->tiling == VC5_TILING_UIF_NO_XOR ||
-                    surf->tiling == VC5_TILING_UIF_XOR) {
+                load.force_alpha_1 = util_format_has_alpha1(psurf->format);
+                if (surf->tiling == V3D_TILING_UIF_NO_XOR ||
+                    surf->tiling == V3D_TILING_UIF_XOR) {
                         load.height_in_ub_or_stride =
                                 surf->padded_height_of_output_image_in_uif_blocks;
-                } else if (surf->tiling == VC5_TILING_RASTER) {
+                } else if (surf->tiling == V3D_TILING_RASTER) {
                         struct v3d_resource_slice *slice =
                                 &rsc->slices[psurf->u.tex.level];
                         load.height_in_ub_or_stride = slice->stride;
@@ -109,8 +112,10 @@ load_general(struct v3d_cl *cl, struct pipe_surface *psurf, int buffer,
 
 static void
 store_general(struct v3d_job *job,
-              struct v3d_cl *cl, struct pipe_surface *psurf, int buffer,
-              int pipe_bit, uint32_t *stores_pending, bool general_color_clear)
+              struct v3d_cl *cl, struct pipe_surface *psurf,
+              int layer, int buffer, int pipe_bit,
+              uint32_t *stores_pending, bool general_color_clear,
+              bool resolve_4x)
 {
         struct v3d_surface *surf = v3d_surface(psurf);
         bool separate_stencil = surf->separate_stencil && buffer == STENCIL;
@@ -126,9 +131,12 @@ store_general(struct v3d_job *job,
 
         rsc->writes++;
 
+        uint32_t layer_offset =
+                v3d_layer_offset(&rsc->base, psurf->u.tex.level,
+                                 psurf->u.tex.first_layer + layer);
         cl_emit(cl, STORE_TILE_BUFFER_GENERAL, store) {
                 store.buffer_to_store = buffer;
-                store.address = cl_address(rsc->bo, surf->offset);
+                store.address = cl_address(rsc->bo, layer_offset);
 
 #if V3D_VERSION >= 40
                 store.clear_buffer_being_stored = false;
@@ -141,18 +149,21 @@ store_general(struct v3d_job *job,
                 store.r_b_swap = surf->swap_rb;
                 store.memory_format = surf->tiling;
 
-                if (surf->tiling == VC5_TILING_UIF_NO_XOR ||
-                    surf->tiling == VC5_TILING_UIF_XOR) {
+                if (surf->tiling == V3D_TILING_UIF_NO_XOR ||
+                    surf->tiling == V3D_TILING_UIF_XOR) {
                         store.height_in_ub_or_stride =
                                 surf->padded_height_of_output_image_in_uif_blocks;
-                } else if (surf->tiling == VC5_TILING_RASTER) {
+                } else if (surf->tiling == V3D_TILING_RASTER) {
                         struct v3d_resource_slice *slice =
                                 &rsc->slices[psurf->u.tex.level];
                         store.height_in_ub_or_stride = slice->stride;
                 }
 
+                assert(!resolve_4x || job->bbuf);
                 if (psurf->texture->nr_samples > 1)
                         store.decimate_mode = V3D_DECIMATE_MODE_ALL_SAMPLES;
+                else if (resolve_4x && job->bbuf->texture->nr_samples > 1)
+                        store.decimate_mode = V3D_DECIMATE_MODE_4X;
                 else
                         store.decimate_mode = V3D_DECIMATE_MODE_SAMPLE_0;
 
@@ -203,41 +214,52 @@ zs_buffer_from_pipe_bits(int pipe_clear_bits)
 }
 
 static void
-v3d_rcl_emit_loads(struct v3d_job *job, struct v3d_cl *cl)
+v3d_rcl_emit_loads(struct v3d_job *job, struct v3d_cl *cl, int layer)
 {
-        uint32_t loads_pending = job->load;
+        /* When blitting, no color or zs buffer is loaded; instead the blit
+         * source buffer is loaded for the aspects that we are going to blit.
+         */
+        assert(!job->bbuf || job->load == 0);
+        assert(!job->bbuf || job->nr_cbufs <= 1);
+        assert(!job->bbuf || V3D_VERSION >= 40);
 
-        for (int i = 0; i < V3D_MAX_DRAW_BUFFERS; i++) {
+        uint32_t loads_pending = job->bbuf ? job->store : job->load;
+
+        for (int i = 0; i < job->nr_cbufs; i++) {
                 uint32_t bit = PIPE_CLEAR_COLOR0 << i;
                 if (!(loads_pending & bit))
                         continue;
 
-                struct pipe_surface *psurf = job->cbufs[i];
+                struct pipe_surface *psurf = job->bbuf ? job->bbuf : job->cbufs[i];
+                assert(!job->bbuf || i == 0);
+
                 if (!psurf || (V3D_VERSION < 40 &&
                                psurf->texture->nr_samples <= 1)) {
                         continue;
                 }
 
-                load_general(cl, psurf, RENDER_TARGET_0 + i,
+                load_general(cl, psurf, RENDER_TARGET_0 + i, layer,
                              bit, &loads_pending);
         }
 
         if ((loads_pending & PIPE_CLEAR_DEPTHSTENCIL) &&
             (V3D_VERSION >= 40 ||
              (job->zsbuf && job->zsbuf->texture->nr_samples > 1))) {
-                struct v3d_resource *rsc = v3d_resource(job->zsbuf->texture);
+                struct pipe_surface *src = job->bbuf ? job->bbuf : job->zsbuf;
+                struct v3d_resource *rsc = v3d_resource(src->texture);
 
                 if (rsc->separate_stencil &&
                     (loads_pending & PIPE_CLEAR_STENCIL)) {
-                        load_general(cl, job->zsbuf,
-                                     STENCIL,
+                        load_general(cl, src,
+                                     STENCIL, layer,
                                      PIPE_CLEAR_STENCIL,
                                      &loads_pending);
                 }
 
                 if (loads_pending & PIPE_CLEAR_DEPTHSTENCIL) {
-                        load_general(cl, job->zsbuf,
+                        load_general(cl, src,
                                      zs_buffer_from_pipe_bits(loads_pending),
+                                     layer,
                                      loads_pending & PIPE_CLEAR_DEPTHSTENCIL,
                                      &loads_pending);
                 }
@@ -266,12 +288,12 @@ v3d_rcl_emit_loads(struct v3d_job *job, struct v3d_cl *cl)
 }
 
 static void
-v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
+v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl, int layer)
 {
 #if V3D_VERSION < 40
-        MAYBE_UNUSED bool needs_color_clear = job->clear & PIPE_CLEAR_COLOR_BUFFERS;
-        MAYBE_UNUSED bool needs_z_clear = job->clear & PIPE_CLEAR_DEPTH;
-        MAYBE_UNUSED bool needs_s_clear = job->clear & PIPE_CLEAR_STENCIL;
+        UNUSED bool needs_color_clear = job->clear & PIPE_CLEAR_COLOR_BUFFERS;
+        UNUSED bool needs_z_clear = job->clear & PIPE_CLEAR_DEPTH;
+        UNUSED bool needs_s_clear = job->clear & PIPE_CLEAR_STENCIL;
 
         /* For clearing color in a TLB general on V3D 3.3:
          *
@@ -305,7 +327,8 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
          * perspective.  Non-MSAA surfaces will use
          * STORE_MULTI_SAMPLE_RESOLVED_TILE_COLOR_BUFFER_EXTENDED.
          */
-        for (int i = 0; i < V3D_MAX_DRAW_BUFFERS; i++) {
+        assert(!job->bbuf || job->nr_cbufs <= 1);
+        for (int i = 0; i < job->nr_cbufs; i++) {
                 uint32_t bit = PIPE_CLEAR_COLOR0 << i;
                 if (!(job->store & bit))
                         continue;
@@ -316,8 +339,8 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
                         continue;
                 }
 
-                store_general(job, cl, psurf, RENDER_TARGET_0 + i, bit,
-                              &stores_pending, general_color_clear);
+                store_general(job, cl, psurf, layer, RENDER_TARGET_0 + i, bit,
+                              &stores_pending, general_color_clear, job->bbuf);
         }
 
         if (job->store & PIPE_CLEAR_DEPTHSTENCIL && job->zsbuf &&
@@ -325,23 +348,26 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
                 struct v3d_resource *rsc = v3d_resource(job->zsbuf->texture);
                 if (rsc->separate_stencil) {
                         if (job->store & PIPE_CLEAR_DEPTH) {
-                                store_general(job, cl, job->zsbuf, Z,
-                                              PIPE_CLEAR_DEPTH,
+                                store_general(job, cl, job->zsbuf, layer,
+                                              Z, PIPE_CLEAR_DEPTH,
                                               &stores_pending,
-                                              general_color_clear);
+                                              general_color_clear,
+                                              false);
                         }
 
                         if (job->store & PIPE_CLEAR_STENCIL) {
-                                store_general(job, cl, job->zsbuf, STENCIL,
-                                              PIPE_CLEAR_STENCIL,
+                                store_general(job, cl, job->zsbuf, layer,
+                                              STENCIL, PIPE_CLEAR_STENCIL,
                                               &stores_pending,
-                                              general_color_clear);
+                                              general_color_clear,
+                                              false);
                         }
                 } else {
-                        store_general(job, cl, job->zsbuf,
+                        store_general(job, cl, job->zsbuf, layer,
                                       zs_buffer_from_pipe_bits(job->store),
                                       job->store & PIPE_CLEAR_DEPTHSTENCIL,
-                                      &stores_pending, general_color_clear);
+                                      &stores_pending, general_color_clear,
+                                      false);
                 }
         }
 
@@ -400,7 +426,7 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
 }
 
 static void
-v3d_rcl_emit_generic_per_tile_list(struct v3d_job *job, int last_cbuf)
+v3d_rcl_emit_generic_per_tile_list(struct v3d_job *job, int layer)
 {
         /* Emit the generic list in our indirect state -- the rcl will just
          * have pointers into it.
@@ -416,7 +442,7 @@ v3d_rcl_emit_generic_per_tile_list(struct v3d_job *job, int last_cbuf)
                 cl_emit(cl, TILE_COORDINATES_IMPLICIT, coords);
         }
 
-        v3d_rcl_emit_loads(job, cl);
+        v3d_rcl_emit_loads(job, cl, layer);
 
         if (V3D_VERSION < 40) {
                 /* Tile Coordinates triggers the last reload and sets where
@@ -432,9 +458,16 @@ v3d_rcl_emit_generic_per_tile_list(struct v3d_job *job, int last_cbuf)
                 fmt.primitive_type = LIST_TRIANGLES;
         }
 
+#if V3D_VERSION >= 41
+        /* PTB assumes that value to be 0, but hw will not set it. */
+        cl_emit(cl, SET_INSTANCEID, set) {
+           set.instance_id = 0;
+        }
+#endif
+
         cl_emit(cl, BRANCH_TO_IMPLICIT_TILE_LIST, branch);
 
-        v3d_rcl_emit_stores(job, cl);
+        v3d_rcl_emit_stores(job, cl, layer);
 
 #if V3D_VERSION >= 40
         cl_emit(cl, END_OF_TILE_MARKER, end);
@@ -458,6 +491,10 @@ v3d_setup_render_target(struct v3d_job *job, int cbuf,
 
         struct v3d_surface *surf = v3d_surface(job->cbufs[cbuf]);
         *rt_bpp = surf->internal_bpp;
+        if (job->bbuf) {
+           struct v3d_surface *bsurf = v3d_surface(job->bbuf);
+           *rt_bpp = MAX2(*rt_bpp, bsurf->internal_bpp);
+        }
         *rt_type = surf->internal_type;
         *rt_clamp = V3D_RENDER_TARGET_CLAMP_NONE;
 }
@@ -481,7 +518,7 @@ v3d_emit_z_stencil_config(struct v3d_job *job, struct v3d_surface *surf,
                 zs.padded_height_of_output_image_in_uif_blocks =
                         surf->padded_height_of_output_image_in_uif_blocks;
 
-                assert(surf->tiling != VC5_TILING_RASTER);
+                assert(surf->tiling != V3D_TILING_RASTER);
                 zs.memory_format = surf->tiling;
         }
 
@@ -495,24 +532,169 @@ v3d_emit_z_stencil_config(struct v3d_job *job, struct v3d_surface *surf,
 
 #define div_round_up(a, b) (((a) + (b) - 1) / b)
 
+static bool
+supertile_in_job_scissors(struct v3d_job *job,
+                          uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+   if (job->scissor.disabled || job->scissor.count == 0)
+      return true;
+
+   const uint32_t min_x = x * w;
+   const uint32_t min_y = y * h;
+   const uint32_t max_x = min_x + w - 1;
+   const uint32_t max_y = min_y + h - 1;
+
+   for (uint32_t i = 0; i < job->scissor.count; i++) {
+           const uint32_t min_s_x = job->scissor.rects[i].min_x;
+           const uint32_t min_s_y = job->scissor.rects[i].min_y;
+           const uint32_t max_s_x = job->scissor.rects[i].max_x;
+           const uint32_t max_s_y = job->scissor.rects[i].max_y;
+
+           if (max_x < min_s_x || min_x > max_s_x ||
+               max_y < min_s_y || min_y > max_s_y) {
+                   continue;
+           }
+
+           return true;
+   }
+
+   return false;
+}
+
+static void
+emit_render_layer(struct v3d_job *job, uint32_t layer)
+{
+        uint32_t supertile_w = 1, supertile_h = 1;
+
+        /* If doing multicore binning, we would need to initialize each
+         * core's tile list here.
+         */
+        uint32_t tile_alloc_offset =
+                layer * job->draw_tiles_x * job->draw_tiles_y * 64;
+        cl_emit(&job->rcl, MULTICORE_RENDERING_TILE_LIST_SET_BASE, list) {
+                list.address = cl_address(job->tile_alloc, tile_alloc_offset);
+        }
+
+        cl_emit(&job->rcl, MULTICORE_RENDERING_SUPERTILE_CFG, config) {
+                uint32_t frame_w_in_supertiles, frame_h_in_supertiles;
+                const uint32_t max_supertiles = 256;
+
+                /* Size up our supertiles until we get under the limit. */
+                for (;;) {
+                        frame_w_in_supertiles = div_round_up(job->draw_tiles_x,
+                                                             supertile_w);
+                        frame_h_in_supertiles = div_round_up(job->draw_tiles_y,
+                                                             supertile_h);
+                        if (frame_w_in_supertiles *
+                                frame_h_in_supertiles < max_supertiles) {
+                                break;
+                        }
+
+                        if (supertile_w < supertile_h)
+                                supertile_w++;
+                        else
+                                supertile_h++;
+                }
+
+                config.number_of_bin_tile_lists = 1;
+                config.total_frame_width_in_tiles = job->draw_tiles_x;
+                config.total_frame_height_in_tiles = job->draw_tiles_y;
+
+                config.supertile_width_in_tiles = supertile_w;
+                config.supertile_height_in_tiles = supertile_h;
+
+                config.total_frame_width_in_supertiles = frame_w_in_supertiles;
+                config.total_frame_height_in_supertiles = frame_h_in_supertiles;
+        }
+
+        /* Start by clearing the tile buffer. */
+        cl_emit(&job->rcl, TILE_COORDINATES, coords) {
+                coords.tile_column_number = 0;
+                coords.tile_row_number = 0;
+        }
+
+        /* Emit an initial clear of the tile buffers.  This is necessary
+         * for any buffers that should be cleared (since clearing
+         * normally happens at the *end* of the generic tile list), but
+         * it's also nice to clear everything so the first tile doesn't
+         * inherit any contents from some previous frame.
+         *
+         * Also, implement the GFXH-1742 workaround.  There's a race in
+         * the HW between the RCL updating the TLB's internal type/size
+         * and thespawning of the QPU instances using the TLB's current
+         * internal type/size.  To make sure the QPUs get the right
+         * state, we need 1 dummy store in between internal type/size
+         * changes on V3D 3.x, and 2 dummy stores on 4.x.
+         */
+#if V3D_VERSION < 40
+        cl_emit(&job->rcl, STORE_TILE_BUFFER_GENERAL, store) {
+                store.buffer_to_store = NONE;
+        }
+#else
+        for (int i = 0; i < 2; i++) {
+                if (i > 0)
+                        cl_emit(&job->rcl, TILE_COORDINATES, coords);
+                cl_emit(&job->rcl, END_OF_LOADS, end);
+                cl_emit(&job->rcl, STORE_TILE_BUFFER_GENERAL, store) {
+                        store.buffer_to_store = NONE;
+                }
+                if (i == 0) {
+                        cl_emit(&job->rcl, CLEAR_TILE_BUFFERS, clear) {
+                                clear.clear_z_stencil_buffer = true;
+                                clear.clear_all_render_targets = true;
+                        }
+                }
+                cl_emit(&job->rcl, END_OF_TILE_MARKER, end);
+        }
+#endif
+
+        cl_emit(&job->rcl, FLUSH_VCD_CACHE, flush);
+
+        v3d_rcl_emit_generic_per_tile_list(job, layer);
+
+        /* XXX perf: We should expose GL_MESA_tile_raster_order to
+         * improve X11 performance, but we should use Morton order
+         * otherwise to improve cache locality.
+         */
+        uint32_t supertile_w_in_pixels = job->tile_width * supertile_w;
+        uint32_t supertile_h_in_pixels = job->tile_height * supertile_h;
+        uint32_t min_x_supertile = job->draw_min_x / supertile_w_in_pixels;
+        uint32_t min_y_supertile = job->draw_min_y / supertile_h_in_pixels;
+
+        uint32_t max_x_supertile = 0;
+        uint32_t max_y_supertile = 0;
+        if (job->draw_max_x != 0 && job->draw_max_y != 0) {
+                max_x_supertile = (job->draw_max_x - 1) / supertile_w_in_pixels;
+                max_y_supertile = (job->draw_max_y - 1) / supertile_h_in_pixels;
+        }
+
+        for (int y = min_y_supertile; y <= max_y_supertile; y++) {
+                for (int x = min_x_supertile; x <= max_x_supertile; x++) {
+                        if (supertile_in_job_scissors(job, x, y,
+                                                      supertile_w_in_pixels,
+                                                      supertile_h_in_pixels)) {
+                                cl_emit(&job->rcl, SUPERTILE_COORDINATES, coords) {
+                                      coords.column_number_in_supertiles = x;
+                                      coords.row_number_in_supertiles = y;
+                                }
+                        }
+                }
+        }
+}
+
 void
 v3dX(emit_rcl)(struct v3d_job *job)
 {
         /* The RCL list should be empty. */
         assert(!job->rcl.bo);
 
-        v3d_cl_ensure_space_with_branch(&job->rcl, 200 + 256 *
+        v3d_cl_ensure_space_with_branch(&job->rcl, 200 +
+                                        MAX2(job->num_layers, 1) * 256 *
                                         cl_packet_length(SUPERTILE_COORDINATES));
         job->submit.rcl_start = job->rcl.bo->offset;
         v3d_job_add_bo(job, job->rcl.bo);
 
-        int nr_cbufs = 0;
-        for (int i = 0; i < V3D_MAX_DRAW_BUFFERS; i++) {
-                if (job->cbufs[i])
-                        nr_cbufs = i + 1;
-        }
-
-        /* Comon config must be the first TILE_RENDERING_MODE_CFG
+        /* Common config must be the first TILE_RENDERING_MODE_CFG
          * and Z_STENCIL_CLEAR_VALUES must be last.  The ones in between are
          * optional updates to the previous HW state.
          */
@@ -530,44 +712,44 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 /* XXX: Early D/S clear */
 
                 switch (job->first_ez_state) {
-                case VC5_EZ_UNDECIDED:
-                case VC5_EZ_LT_LE:
+                case V3D_EZ_UNDECIDED:
+                case V3D_EZ_LT_LE:
                         config.early_z_disable = false;
                         config.early_z_test_and_update_direction =
                                 EARLY_Z_DIRECTION_LT_LE;
                         break;
-                case VC5_EZ_GT_GE:
+                case V3D_EZ_GT_GE:
                         config.early_z_disable = false;
                         config.early_z_test_and_update_direction =
                                 EARLY_Z_DIRECTION_GT_GE;
                         break;
-                case VC5_EZ_DISABLED:
+                case V3D_EZ_DISABLED:
                         config.early_z_disable = true;
                 }
 
                 config.image_width_pixels = job->draw_width;
                 config.image_height_pixels = job->draw_height;
 
-                config.number_of_render_targets = MAX2(nr_cbufs, 1);
+                config.number_of_render_targets = MAX2(job->nr_cbufs, 1);
 
                 config.multisample_mode_4x = job->msaa;
 
                 config.maximum_bpp_of_all_render_targets = job->internal_bpp;
         }
 
-        for (int i = 0; i < nr_cbufs; i++) {
+        for (int i = 0; i < job->nr_cbufs; i++) {
                 struct pipe_surface *psurf = job->cbufs[i];
                 if (!psurf)
                         continue;
                 struct v3d_surface *surf = v3d_surface(psurf);
                 struct v3d_resource *rsc = v3d_resource(psurf->texture);
 
-                MAYBE_UNUSED uint32_t config_pad = 0;
+                UNUSED uint32_t config_pad = 0;
                 uint32_t clear_pad = 0;
 
                 /* XXX: Set the pad for raster. */
-                if (surf->tiling == VC5_TILING_UIF_NO_XOR ||
-                    surf->tiling == VC5_TILING_UIF_XOR) {
+                if (surf->tiling == V3D_TILING_UIF_NO_XOR ||
+                    surf->tiling == V3D_TILING_UIF_XOR) {
                         int uif_block_height = v3d_utile_height(rsc->cpp) * 2;
                         uint32_t implicit_padded_height = (align(job->draw_height, uif_block_height) /
                                                            uif_block_height);
@@ -684,131 +866,15 @@ v3dX(emit_rcl)(struct v3d_job *job)
                         TILE_ALLOCATION_BLOCK_SIZE_64B;
         }
 
-        uint32_t supertile_w = 1, supertile_h = 1;
-
-        /* If doing multicore binning, we would need to initialize each core's
-         * tile list here.
+        /* ARB_framebuffer_no_attachments allows rendering to happen even when
+         * the framebuffer has no attachments, the idea being that fragment
+         * shaders can still do image load/store, ssbo, etc without having to
+         * write to actual attachments, so always run at least one iteration
+         * of the loop.
          */
-        cl_emit(&job->rcl, MULTICORE_RENDERING_TILE_LIST_SET_BASE, list) {
-                list.address = cl_address(job->tile_alloc, 0);
-        }
-
-        cl_emit(&job->rcl, MULTICORE_RENDERING_SUPERTILE_CFG, config) {
-                uint32_t frame_w_in_supertiles, frame_h_in_supertiles;
-                const uint32_t max_supertiles = 256;
-
-                /* Size up our supertiles until we get under the limit. */
-                for (;;) {
-                        frame_w_in_supertiles = div_round_up(job->draw_tiles_x,
-                                                             supertile_w);
-                        frame_h_in_supertiles = div_round_up(job->draw_tiles_y,
-                                                             supertile_h);
-                        if (frame_w_in_supertiles * frame_h_in_supertiles <
-                            max_supertiles) {
-                                break;
-                        }
-
-                        if (supertile_w < supertile_h)
-                                supertile_w++;
-                        else
-                                supertile_h++;
-                }
-
-                config.number_of_bin_tile_lists = 1;
-                config.total_frame_width_in_tiles = job->draw_tiles_x;
-                config.total_frame_height_in_tiles = job->draw_tiles_y;
-
-                config.supertile_width_in_tiles = supertile_w;
-                config.supertile_height_in_tiles = supertile_h;
-
-                config.total_frame_width_in_supertiles = frame_w_in_supertiles;
-                config.total_frame_height_in_supertiles = frame_h_in_supertiles;
-        }
-
-        /* Start by clearing the tile buffer. */
-        cl_emit(&job->rcl, TILE_COORDINATES, coords) {
-                coords.tile_column_number = 0;
-                coords.tile_row_number = 0;
-        }
-
-        /* Emit an initial clear of the tile buffers.  This is necessary for
-         * any buffers that should be cleared (since clearing normally happens
-         * at the *end* of the generic tile list), but it's also nice to clear
-         * everything so the first tile doesn't inherit any contents from some
-         * previous frame.
-         *
-         * Also, implement the GFXH-1742 workaround.  There's a race in the HW
-         * between the RCL updating the TLB's internal type/size and the
-         * spawning of the QPU instances using the TLB's current internal
-         * type/size.  To make sure the QPUs get the right state,, we need 1
-         * dummy store in between internal type/size changes on V3D 3.x, and 2
-         * dummy stores on 4.x.
-         */
-#if V3D_VERSION < 40
-        cl_emit(&job->rcl, STORE_TILE_BUFFER_GENERAL, store) {
-                store.buffer_to_store = NONE;
-        }
-#else
-        for (int i = 0; i < 2; i++) {
-                if (i > 0)
-                        cl_emit(&job->rcl, TILE_COORDINATES, coords);
-                cl_emit(&job->rcl, END_OF_LOADS, end);
-                cl_emit(&job->rcl, STORE_TILE_BUFFER_GENERAL, store) {
-                        store.buffer_to_store = NONE;
-                }
-                if (i == 0) {
-                        cl_emit(&job->rcl, CLEAR_TILE_BUFFERS, clear) {
-                                clear.clear_z_stencil_buffer = true;
-                                clear.clear_all_render_targets = true;
-                        }
-                }
-                cl_emit(&job->rcl, END_OF_TILE_MARKER, end);
-        }
-#endif
-
-        cl_emit(&job->rcl, FLUSH_VCD_CACHE, flush);
-
-        v3d_rcl_emit_generic_per_tile_list(job, nr_cbufs - 1);
-
-        /* XXX perf: We should expose GL_MESA_tile_raster_order to improve X11
-         * performance, but we should use Morton order otherwise to improve
-         * cache locality.
-         */
-        uint32_t supertile_w_in_pixels = job->tile_width * supertile_w;
-        uint32_t supertile_h_in_pixels = job->tile_height * supertile_h;
-        uint32_t min_x_supertile = job->draw_min_x / supertile_w_in_pixels;
-        uint32_t min_y_supertile = job->draw_min_y / supertile_h_in_pixels;
-
-        uint32_t max_x_supertile = 0;
-        uint32_t max_y_supertile = 0;
-        if (job->draw_max_x != 0 && job->draw_max_y != 0) {
-                max_x_supertile = (job->draw_max_x - 1) / supertile_w_in_pixels;
-                max_y_supertile = (job->draw_max_y - 1) / supertile_h_in_pixels;
-        }
-
-        for (int y = min_y_supertile; y <= max_y_supertile; y++) {
-                for (int x = min_x_supertile; x <= max_x_supertile; x++) {
-                        cl_emit(&job->rcl, SUPERTILE_COORDINATES, coords) {
-                                coords.column_number_in_supertiles = x;
-                                coords.row_number_in_supertiles = y;
-                        }
-                }
-        }
-
-        if (job->tmu_dirty_rcl) {
-           cl_emit(&job->rcl, L1_CACHE_FLUSH_CONTROL, flush) {
-              flush.tmu_config_cache_clear = 0xf;
-              flush.tmu_data_cache_clear = 0xf;
-              flush.uniforms_cache_clear = 0xf;
-              flush.instruction_cache_clear = 0xf;
-           }
-
-           cl_emit(&job->rcl, L2T_CACHE_FLUSH_CONTROL, flush) {
-              flush.l2t_flush_mode = L2T_FLUSH_MODE_CLEAN;
-              flush.l2t_flush_start = cl_address(NULL, 0);
-              flush.l2t_flush_end = cl_address(NULL, ~0);
-           }
-        }
+        assert(job->num_layers > 0 || (job->load == 0 && job->store == 0));
+        for (int layer = 0; layer < MAX2(1, job->num_layers); layer++)
+                emit_render_layer(job, layer);
 
         cl_emit(&job->rcl, END_OF_RENDERING, end);
 }

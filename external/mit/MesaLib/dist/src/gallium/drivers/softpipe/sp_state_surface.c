@@ -34,7 +34,7 @@
 
 #include "draw/draw_context.h"
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 
 
@@ -97,5 +97,5 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    sp->framebuffer.samples = fb->samples;
    sp->framebuffer.layers = fb->layers;
 
-   sp->dirty |= SP_NEW_FRAMEBUFFER;
+   sp->dirty |= SP_NEW_FRAMEBUFFER | SP_NEW_TEXTURE;
 }

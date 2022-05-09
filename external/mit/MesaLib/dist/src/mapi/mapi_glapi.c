@@ -38,11 +38,11 @@
  * u_current.c.
  */
 
-#ifdef GLX_USE_TLS
+#ifdef USE_ELF_TLS
 /* not used, but defined for compatibility */
 const struct _glapi_table *_glapi_Dispatch;
 const void *_glapi_Context;
-#endif /* GLX_USE_TLS */
+#endif /* USE_ELF_TLS */
 
 void
 _glapi_destroy_multithread(void)
@@ -121,7 +121,7 @@ _glapi_add_dispatch( const char * const * function_names,
    const struct mapi_stub *alias = NULL;
    unsigned i;
 
-   (void) memset(function_stubs, 0, sizeof(function_stubs));
+   (void) memset((void*)function_stubs, 0, sizeof(function_stubs));
 
    /* find the missing stubs, and decide the alias */
    for (i = 0; function_names[i] != NULL && i < 8; i++) {
@@ -169,22 +169,34 @@ _glapi_add_dispatch( const char * const * function_names,
    return (alias) ? stub_get_slot(alias) : -1;
 }
 
+#if defined(ANDROID) && ANDROID_API_LEVEL <= 30
+static int is_debug_marker_func(const char *name)
+{
+   return (!strcmp(name, "InsertEventMarkerEXT") ||
+           !strcmp(name, "PushGroupMarkerEXT") ||
+           !strcmp(name, "PopGroupMarkerEXT"));
+}
+#endif
+
 static const struct mapi_stub *
 _glapi_get_stub(const char *name, int generate)
 {
    const struct mapi_stub *stub;
-
-#ifdef USE_MGL_NAMESPACE
-   if (name && name[0] == 'm')
-      name++;
-#endif
 
    if (!name || name[0] != 'g' || name[1] != 'l')
       return NULL;
    name += 2;
 
    stub = stub_find_public(name);
+#if defined(ANDROID) && ANDROID_API_LEVEL <= 30
+   /* Android framework till API Level 30 uses function pointers from
+    * eglGetProcAddress without checking GL_EXT_debug_marker.
+    * Make sure we don't return stub function pointers if we don't
+    * support GL_EXT_debug_marker */
+   if (!stub && !is_debug_marker_func(name))
+#else
    if (!stub)
+#endif
       stub = stub_find_dynamic(name, generate);
 
    return stub;

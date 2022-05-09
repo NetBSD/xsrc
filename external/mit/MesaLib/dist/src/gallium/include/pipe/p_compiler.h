@@ -128,7 +128,7 @@ typedef unsigned char boolean;
 /* See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Variable-Attributes.html */
 #define PIPE_ALIGN_VAR(_alignment) __attribute__((aligned(_alignment)))
 
-#if defined(__GNUC__) && !defined(PIPE_ARCH_X86_64)
+#if defined(__GNUC__) && defined(PIPE_ARCH_X86)
 #define PIPE_ALIGN_STACK __attribute__((force_align_arg_pointer))
 #else
 #define PIPE_ALIGN_STACK
@@ -155,6 +155,23 @@ typedef unsigned char boolean;
 
 #endif
 
+/**
+ * Declare a variable on its own cache line.
+ *
+ * This helps eliminate "False sharing" to make atomic operations
+ * on pipe_reference::count faster and/or access to adjacent fields faster.
+ *
+ * https://en.wikipedia.org/wiki/False_sharing
+ *
+ * CALLOC_STRUCT_CL or MALLOC_STRUCT_CL and FREE_CL should be used to allocate
+ * structures that contain this.
+ *
+ * NOTE: Don't use PIPE_ALIGN_VAR because it causes the whole structure to be
+ *       aligned, but we only want to align the field.
+ */
+#define EXCLUSIVE_CACHELINE(decl) \
+   union { char __cl_space[CACHE_LINE_SIZE]; \
+           decl; }
 
 #if defined(__GNUC__)
 

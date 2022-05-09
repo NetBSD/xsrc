@@ -23,7 +23,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "nv50/nv50_context.h"
 #include "nv50/nv50_resource.h"
@@ -99,7 +99,7 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, bool compressed)
    default:
       /* Most color formats don't work with compression. */
       compressed = false;
-      /* fallthrough */
+      FALLTHROUGH;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_R8G8B8A8_SRGB:
    case PIPE_FORMAT_R8G8B8X8_UNORM:
@@ -178,11 +178,16 @@ nv50_miptree_destroy(struct pipe_screen *pscreen, struct pipe_resource *pt)
    FREE(mt);
 }
 
-boolean
+bool
 nv50_miptree_get_handle(struct pipe_screen *pscreen,
+                        struct pipe_context *context,
                         struct pipe_resource *pt,
-                        struct winsys_handle *whandle)
+                        struct winsys_handle *whandle,
+                        unsigned usage)
 {
+   if (pt->target == PIPE_BUFFER)
+      return false;
+
    struct nv50_miptree *mt = nv50_miptree(pt);
    unsigned stride;
 
@@ -196,15 +201,6 @@ nv50_miptree_get_handle(struct pipe_screen *pscreen,
                                        stride,
                                        whandle);
 }
-
-const struct u_resource_vtbl nv50_miptree_vtbl =
-{
-   nv50_miptree_get_handle,         /* get_handle */
-   nv50_miptree_destroy,            /* resource_destroy */
-   nv50_miptree_transfer_map,       /* transfer_map */
-   u_default_transfer_flush_region, /* transfer_flush_region */
-   nv50_miptree_transfer_unmap,     /* transfer_unmap */
-};
 
 static inline bool
 nv50_miptree_init_ms_mode(struct nv50_miptree *mt)
@@ -342,11 +338,11 @@ nv50_miptree_create(struct pipe_screen *pscreen,
    int ret;
    union nouveau_bo_config bo_config;
    uint32_t bo_flags;
+   unsigned pitch_align;
 
    if (!mt)
       return NULL;
 
-   mt->base.vtbl = &nv50_miptree_vtbl;
    *pt = *templ;
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
@@ -370,10 +366,17 @@ nv50_miptree_create(struct pipe_screen *pscreen,
    } else
    if (bo_config.nv50.memtype != 0) {
       nv50_miptree_init_layout_tiled(mt);
-   } else
-   if (!nv50_miptree_init_layout_linear(mt, 64)) {
-      FREE(mt);
-      return NULL;
+   } else {
+      if (pt->usage & PIPE_BIND_CURSOR)
+         pitch_align = 1;
+      else if (pt->usage & PIPE_BIND_SCANOUT)
+         pitch_align = 256;
+      else
+         pitch_align = 64;
+      if (!nv50_miptree_init_layout_linear(mt, pitch_align)) {
+         FREE(mt);
+         return NULL;
+      }
    }
    bo_config.nv50.tile_mode = mt->level[0].tile_mode;
 
@@ -426,7 +429,6 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
    mt->base.address = mt->base.bo->offset;
 
    mt->base.base = *templ;
-   mt->base.vtbl = &nv50_miptree_vtbl;
    pipe_reference_init(&mt->base.base.reference, 1);
    mt->base.base.screen = pscreen;
    mt->level[0].pitch = stride;

@@ -34,13 +34,13 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-
+#include "util/u_cpu_detect.h"
 
 /*
  * TGSI translation limits.
  *
  * Some are slightly above SM 3.0 requirements to give some wiggle room to
- * the state trackers.
+ * the gallium frontends.
  */
 
 #define LP_MAX_TGSI_TEMPS 4096
@@ -55,6 +55,12 @@
 
 #define LP_MAX_TGSI_CONST_BUFFER_SIZE (LP_MAX_TGSI_CONSTS * sizeof(float[4]))
 
+#define LP_MAX_TGSI_SHADER_BUFFERS 16
+
+#define LP_MAX_TGSI_SHADER_BUFFER_SIZE (1 << 27)
+
+#define LP_MAX_TGSI_SHADER_IMAGES 16
+
 /*
  * For quick access we cache registers in statically
  * allocated arrays. Here we define the maximum size
@@ -67,11 +73,12 @@
 /**
  * Maximum control flow nesting
  *
+ * Vulkan CTS tests seem to have up to 76 levels. Add a few for safety.
  * SM4.0 requires 64 (per subroutine actually, subroutine nesting itself is 32)
  * SM3.0 requires 24 (most likely per subroutine too)
  * add 2 more (some translation could add one more)
  */
-#define LP_MAX_TGSI_NESTING 66
+#define LP_MAX_TGSI_NESTING 80
 
 /**
  * Maximum iterations before loop termination
@@ -79,6 +86,11 @@
  */
 #define LP_MAX_TGSI_LOOP_ITERATIONS 65535
 
+static inline bool
+lp_has_fp16(void)
+{
+   return util_get_cpu_caps()->has_f16c;
+}
 
 /**
  * Some of these limits are actually infinite (i.e., only limited by available
@@ -104,7 +116,7 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
    case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
       return LP_MAX_TGSI_CONST_BUFFER_SIZE;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-      return PIPE_MAX_CONSTANT_BUFFERS;
+      return LP_MAX_TGSI_CONST_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
       return LP_MAX_TGSI_TEMPS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
@@ -118,9 +130,17 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
       return 1;
    case PIPE_SHADER_CAP_INTEGERS:
       return 1;
-   case PIPE_SHADER_CAP_INT64_ATOMICS:
    case PIPE_SHADER_CAP_FP16:
+   case PIPE_SHADER_CAP_FP16_DERIVATIVES:
+      return lp_has_fp16();
+   //enabling this breaks GTF-GL46.gtf21.GL2Tests.glGetUniform.glGetUniform
+   case PIPE_SHADER_CAP_FP16_CONST_BUFFERS:
       return 0;
+   case PIPE_SHADER_CAP_INT64_ATOMICS:
+      return 0;
+   case PIPE_SHADER_CAP_INT16:
+   case PIPE_SHADER_CAP_GLSL_16BIT_CONSTS:
+      return 1;
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
@@ -128,7 +148,7 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
    case PIPE_SHADER_CAP_PREFERRED_IR:
       return PIPE_SHADER_IR_TGSI;
    case PIPE_SHADER_CAP_SUPPORTED_IRS:
-      return 1 << PIPE_SHADER_IR_TGSI;
+      return (1 << PIPE_SHADER_IR_TGSI) | (1 << PIPE_SHADER_IR_NIR);
    case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_ANY_INOUT_DECL_RANGE:
       return 1;
@@ -136,17 +156,17 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
    case PIPE_SHADER_CAP_TGSI_DFRACEXP_DLDEXP_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_LDEXP_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
-   case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
-   case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
    case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
    case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
    case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
    case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
       return 0;
-   case PIPE_SHADER_CAP_SCALAR_ISA:
-      return 1;
    case PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT:
       return 32;
+   case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
+      return LP_MAX_TGSI_SHADER_BUFFERS;
+   case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
+      return LP_MAX_TGSI_SHADER_IMAGES;
    }
    /* if we get here, we missed a shader cap above (and should have seen
     * a compiler warning.)

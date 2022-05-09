@@ -64,6 +64,8 @@ ror(uint32_t n, uint32_t d)
    return (n >> d) | (n << (32 - d));
 }
 
+// bswap32 already exists as a macro on some platforms (FreeBSD)
+#ifndef bswap32
 static inline uint32_t
 bswap32(uint32_t n)
 {
@@ -76,6 +78,7 @@ bswap32(uint32_t n)
           (n << 24);
 #endif
 }
+#endif
 
 /**
  * Copy RGBA to BGRA - swap R and B.
@@ -825,7 +828,7 @@ ytiled_to_linear_faster(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
  * 'src' is the address of (xt1, yt1) in the source linear texture.
  */
 static void
-intel_linear_to_tiled(uint32_t xt1, uint32_t xt2,
+linear_to_tiled(uint32_t xt1, uint32_t xt2,
                       uint32_t yt1, uint32_t yt2,
                       char *dst, const char *src,
                       uint32_t dst_pitch, int32_t src_pitch,
@@ -916,7 +919,7 @@ intel_linear_to_tiled(uint32_t xt1, uint32_t xt2,
  * 'src' is the address of (0, 0) in the source tiled texture.
  */
 static void
-intel_tiled_to_linear(uint32_t xt1, uint32_t xt2,
+tiled_to_linear(uint32_t xt1, uint32_t xt2,
                       uint32_t yt1, uint32_t yt2,
                       char *dst, const char *src,
                       int32_t dst_pitch, uint32_t src_pitch,

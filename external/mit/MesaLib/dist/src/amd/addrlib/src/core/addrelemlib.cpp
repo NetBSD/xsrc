@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -346,6 +346,7 @@ VOID ElemLib::Int32sToPixel(
     UINT_32 compMask;
     UINT_32 elemMask=0;
     UINT_32 elementXor = 0;  // address xor when reading bytes from elements
+
 
     // @@ NOTE: assert if called on a compressed format!
 
@@ -1272,7 +1273,6 @@ VOID ElemLib::RestoreSurfaceInfo(
     UINT_32 bpp;
 
     BOOL_32 bBCnFormat = FALSE;
-    (void)bBCnFormat;
 
     ADDR_ASSERT(pBpp != NULL);
     ADDR_ASSERT(pWidth != NULL && pHeight != NULL);
@@ -1744,6 +1744,7 @@ BOOL_32 ElemLib::IsBlockCompressed(
     return (((format >= ADDR_FMT_BC1) && (format <= ADDR_FMT_BC7)) ||
             ((format >= ADDR_FMT_ASTC_4x4) && (format <= ADDR_FMT_ETC2_128BPP)));
 }
+
 
 /**
 ****************************************************************************************************

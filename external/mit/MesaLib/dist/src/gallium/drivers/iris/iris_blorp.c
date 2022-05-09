@@ -41,16 +41,9 @@
 #include "iris_context.h"
 
 #include "util/u_upload_mgr.h"
-#include "intel/common/gen_l3_config.h"
+#include "intel/common/intel_l3_config.h"
 
-#define BLORP_USE_SOFTPIN
 #include "blorp/blorp_genX_exec.h"
-
-#if GEN_GEN == 8
-#define MOCS_WB 0x78
-#else
-#define MOCS_WB (2 << 1)
-#endif
 
 static uint32_t *
 stream_state(struct iris_batch *batch,
@@ -66,10 +59,13 @@ stream_state(struct iris_batch *batch,
    u_upload_alloc(uploader, 0, size, alignment, out_offset, &res, &ptr);
 
    struct iris_bo *bo = iris_resource_bo(res);
-   iris_use_pinned_bo(batch, bo, false);
+   iris_use_pinned_bo(batch, bo, false, IRIS_DOMAIN_NONE);
+
+   iris_record_state_size(batch->state_sizes,
+                          bo->address + *out_offset, size);
 
    /* If the caller has asked for a BO, we leave them the responsibility of
-    * adding bo->gtt_offset (say, by handing an address to genxml).  If not,
+    * adding bo->address (say, by handing an address to genxml).  If not,
     * we assume they want the offset from a base address.
     */
    if (out_bo)
@@ -96,10 +92,11 @@ combine_and_pin_address(struct blorp_batch *blorp_batch,
    struct iris_batch *batch = blorp_batch->driver_batch;
    struct iris_bo *bo = addr.buffer;
 
-   iris_use_pinned_bo(batch, bo, addr.reloc_flags & RELOC_WRITE);
+   iris_use_pinned_bo(batch, bo, addr.reloc_flags & RELOC_WRITE,
+                      IRIS_DOMAIN_NONE);
 
    /* Assume this is a general address, not relative to a base. */
-   return bo->gtt_offset + addr.offset;
+   return bo->address + addr.offset;
 }
 
 static uint64_t
@@ -142,6 +139,16 @@ blorp_alloc_dynamic_state(struct blorp_batch *blorp_batch,
                        size, alignment, offset, NULL);
 }
 
+UNUSED static void *
+blorp_alloc_general_state(struct blorp_batch *blorp_batch,
+                          uint32_t size,
+                          uint32_t alignment,
+                          uint32_t *offset)
+{
+   /* Use dynamic state range for general state on iris. */
+   return blorp_alloc_dynamic_state(blorp_batch, size, alignment, offset);
+}
+
 static void
 blorp_alloc_binding_table(struct blorp_batch *blorp_batch,
                           unsigned num_entries,
@@ -162,12 +169,12 @@ blorp_alloc_binding_table(struct blorp_batch *blorp_batch,
       surface_maps[i] = stream_state(batch, ice->state.surface_uploader,
                                      state_size, state_alignment,
                                      &surface_offsets[i], NULL);
-      bt_map[i] = surface_offsets[i] - (uint32_t) binder->bo->gtt_offset;
+      bt_map[i] = surface_offsets[i] - (uint32_t) binder->bo->address;
    }
 
-   iris_use_pinned_bo(batch, binder->bo, false);
+   iris_use_pinned_bo(batch, binder->bo, false, IRIS_DOMAIN_NONE);
 
-   ice->vtbl.update_surface_base_address(batch, binder);
+   batch->screen->vtbl.update_surface_base_address(batch, binder);
 }
 
 static void *
@@ -180,13 +187,14 @@ blorp_alloc_vertex_buffer(struct blorp_batch *blorp_batch,
    struct iris_bo *bo;
    uint32_t offset;
 
-   void *map = stream_state(batch, ice->ctx.stream_uploader, size, 64,
+   void *map = stream_state(batch, ice->ctx.const_uploader, size, 64,
                             &offset, &bo);
 
    *addr = (struct blorp_address) {
       .buffer = bo,
       .offset = offset,
-      .mocs = MOCS_WB,
+      .mocs = iris_mocs(bo, &batch->screen->isl_dev,
+                        ISL_SURF_USAGE_VERTEX_BUFFER_BIT),
    };
 
    return map;
@@ -199,15 +207,17 @@ blorp_alloc_vertex_buffer(struct blorp_batch *blorp_batch,
 static void
 blorp_vf_invalidate_for_vb_48b_transitions(struct blorp_batch *blorp_batch,
                                            const struct blorp_address *addrs,
+                                           UNUSED uint32_t *sizes,
                                            unsigned num_vbs)
 {
+#if GFX_VER < 11
    struct iris_context *ice = blorp_batch->blorp->driver_ctx;
    struct iris_batch *batch = blorp_batch->driver_batch;
    bool need_invalidate = false;
 
    for (unsigned i = 0; i < num_vbs; i++) {
       struct iris_bo *bo = addrs[i].buffer;
-      uint16_t high_bits = bo ? bo->gtt_offset >> 32u : 0;
+      uint16_t high_bits = bo->address >> 32u;
 
       if (high_bits != ice->state.last_vbo_high_bits[i]) {
          need_invalidate = true;
@@ -216,17 +226,23 @@ blorp_vf_invalidate_for_vb_48b_transitions(struct blorp_batch *blorp_batch,
    }
 
    if (need_invalidate) {
-      iris_emit_pipe_control_flush(batch, PIPE_CONTROL_VF_CACHE_INVALIDATE |
-                                          PIPE_CONTROL_CS_STALL);
+      iris_emit_pipe_control_flush(batch,
+                                   "workaround: VF cache 32-bit key [blorp]",
+                                   PIPE_CONTROL_VF_CACHE_INVALIDATE |
+                                   PIPE_CONTROL_CS_STALL);
    }
+#endif
 }
 
 static struct blorp_address
-blorp_get_workaround_page(struct blorp_batch *blorp_batch)
+blorp_get_workaround_address(struct blorp_batch *blorp_batch)
 {
    struct iris_batch *batch = blorp_batch->driver_batch;
 
-   return (struct blorp_address) { .buffer = batch->screen->workaround_bo };
+   return (struct blorp_address) {
+      .buffer = batch->screen->workaround_address.bo,
+      .offset = batch->screen->workaround_address.offset,
+   };
 }
 
 static void
@@ -239,24 +255,11 @@ blorp_flush_range(UNUSED struct blorp_batch *blorp_batch,
     */
 }
 
-static void
-blorp_emit_urb_config(struct blorp_batch *blorp_batch,
-                      unsigned vs_entry_size,
-                      UNUSED unsigned sf_entry_size)
+static const struct intel_l3_config *
+blorp_get_l3_config(struct blorp_batch *blorp_batch)
 {
-   struct iris_context *ice = blorp_batch->blorp->driver_ctx;
    struct iris_batch *batch = blorp_batch->driver_batch;
-
-   unsigned size[4] = { vs_entry_size, 1, 1, 1 };
-
-   /* If last VS URB size is good enough for what the BLORP operation needed,
-    * then we can skip reconfiguration
-    */
-   if (ice->shaders.last_vs_entry_size >= vs_entry_size)
-      return;
-
-   genX(emit_urb_setup)(ice, batch, size, false, false);
-   ice->state.dirty |= IRIS_DIRTY_URB;
+   return batch->screen->l3_config_3d;
 }
 
 static void
@@ -266,7 +269,7 @@ iris_blorp_exec(struct blorp_batch *blorp_batch,
    struct iris_context *ice = blorp_batch->blorp->driver_ctx;
    struct iris_batch *batch = blorp_batch->driver_batch;
 
-#if GEN_GEN >= 11
+#if GFX_VER >= 11
    /* The PIPE_CONTROL command description says:
     *
     *    "Whenever a Binding Table Index (BTI) used by a Render Target Message
@@ -276,42 +279,46 @@ iris_blorp_exec(struct blorp_batch *blorp_batch,
     *     be set in this packet."
     */
    iris_emit_pipe_control_flush(batch,
+                                "workaround: RT BTI change [blorp]",
                                 PIPE_CONTROL_RENDER_TARGET_FLUSH |
                                 PIPE_CONTROL_STALL_AT_SCOREBOARD);
 #endif
 
-   /* Flush the sampler and render caches.  We definitely need to flush the
-    * sampler cache so that we get updated contents from the render cache for
-    * the glBlitFramebuffer() source.  Also, we are sometimes warned in the
-    * docs to flush the cache between reinterpretations of the same surface
-    * data with different formats, which blorp does for stencil and depth
-    * data.
+   if (params->depth.enabled &&
+       !(blorp_batch->flags & BLORP_BATCH_NO_EMIT_DEPTH_STENCIL))
+      genX(emit_depth_state_workarounds)(ice, batch, &params->depth.surf);
+
+   /* Flush the render cache in cases where the same surface is used with
+    * different aux modes, which can lead to GPU hangs.  Invalidation of
+    * sampler caches and flushing of any caches which had previously written
+    * the source surfaces should already have been handled by the caller.
     */
-   if (params->src.enabled)
-      iris_cache_flush_for_read(batch, params->src.addr.buffer);
    if (params->dst.enabled) {
       iris_cache_flush_for_render(batch, params->dst.addr.buffer,
-                                  params->dst.view.format,
                                   params->dst.aux_usage);
    }
-   if (params->depth.enabled)
-      iris_cache_flush_for_depth(batch, params->depth.addr.buffer);
-   if (params->stencil.enabled)
-      iris_cache_flush_for_depth(batch, params->stencil.addr.buffer);
 
    iris_require_command_space(batch, 1400);
 
-   // XXX: Emit L3 state
-
-#if GEN_GEN == 8
-   // XXX: PMA - gen8_write_pma_stall_bits(ice, 0);
+#if GFX_VER == 8
+   genX(update_pma_fix)(ice, batch, false);
 #endif
 
-   // XXX: TODO...drawing rectangle...unrevert Jason's patches on master
+   const unsigned scale = params->fast_clear_op ? UINT_MAX : 1;
+   if (ice->state.current_hash_scale != scale) {
+      genX(emit_hashing_mode)(ice, batch, params->x1 - params->x0,
+                              params->y1 - params->y0, scale);
+   }
+
+#if GFX_VER >= 12
+   genX(invalidate_aux_map_state)(batch);
+#endif
+
+   iris_handle_always_flush_cache(batch);
 
    blorp_exec(blorp_batch, params);
 
-   // XXX: aperture checks?
+   iris_handle_always_flush_cache(batch);
 
    /* We've smashed all state compared to what the normal 3D pipeline
     * rendering tracks for GL.
@@ -323,17 +330,35 @@ iris_blorp_exec(struct blorp_batch *blorp_batch,
                          IRIS_DIRTY_LINE_STIPPLE |
                          IRIS_ALL_DIRTY_FOR_COMPUTE |
                          IRIS_DIRTY_SCISSOR_RECT |
-                         IRIS_DIRTY_UNCOMPILED_VS |
-                         IRIS_DIRTY_UNCOMPILED_TCS |
-                         IRIS_DIRTY_UNCOMPILED_TES |
-                         IRIS_DIRTY_UNCOMPILED_GS |
-                         IRIS_DIRTY_UNCOMPILED_FS |
                          IRIS_DIRTY_VF |
-                         IRIS_DIRTY_SF_CL_VIEWPORT |
-                         IRIS_DIRTY_SAMPLER_STATES_VS |
-                         IRIS_DIRTY_SAMPLER_STATES_TCS |
-                         IRIS_DIRTY_SAMPLER_STATES_TES |
-                         IRIS_DIRTY_SAMPLER_STATES_GS);
+                         IRIS_DIRTY_SF_CL_VIEWPORT);
+   uint64_t skip_stage_bits = (IRIS_ALL_STAGE_DIRTY_FOR_COMPUTE |
+                               IRIS_STAGE_DIRTY_UNCOMPILED_VS |
+                               IRIS_STAGE_DIRTY_UNCOMPILED_TCS |
+                               IRIS_STAGE_DIRTY_UNCOMPILED_TES |
+                               IRIS_STAGE_DIRTY_UNCOMPILED_GS |
+                               IRIS_STAGE_DIRTY_UNCOMPILED_FS |
+                               IRIS_STAGE_DIRTY_SAMPLER_STATES_VS |
+                               IRIS_STAGE_DIRTY_SAMPLER_STATES_TCS |
+                               IRIS_STAGE_DIRTY_SAMPLER_STATES_TES |
+                               IRIS_STAGE_DIRTY_SAMPLER_STATES_GS);
+
+   if (!ice->shaders.uncompiled[MESA_SHADER_TESS_EVAL]) {
+      /* BLORP disabled tessellation, that's fine for the next draw */
+      skip_stage_bits |= IRIS_STAGE_DIRTY_TCS |
+                         IRIS_STAGE_DIRTY_TES |
+                         IRIS_STAGE_DIRTY_CONSTANTS_TCS |
+                         IRIS_STAGE_DIRTY_CONSTANTS_TES |
+                         IRIS_STAGE_DIRTY_BINDINGS_TCS |
+                         IRIS_STAGE_DIRTY_BINDINGS_TES;
+   }
+
+   if (!ice->shaders.uncompiled[MESA_SHADER_GEOMETRY]) {
+      /* BLORP disabled geometry shaders, that's fine for the next draw */
+      skip_stage_bits |= IRIS_STAGE_DIRTY_GS |
+                         IRIS_STAGE_DIRTY_CONSTANTS_GS |
+                         IRIS_STAGE_DIRTY_BINDINGS_GS;
+   }
 
    /* we can skip flagging IRIS_DIRTY_DEPTH_BUFFER, if
     * BLORP_BATCH_NO_EMIT_DEPTH_STENCIL is set.
@@ -345,16 +370,36 @@ iris_blorp_exec(struct blorp_batch *blorp_batch,
       skip_bits |= IRIS_DIRTY_BLEND_STATE | IRIS_DIRTY_PS_BLEND;
 
    ice->state.dirty |= ~skip_bits;
+   ice->state.stage_dirty |= ~skip_stage_bits;
 
-   if (params->dst.enabled) {
-      iris_render_cache_add_bo(batch, params->dst.addr.buffer,
-                               params->dst.view.format,
-                               params->dst.aux_usage);
-   }
+   for (int i = 0; i < ARRAY_SIZE(ice->shaders.urb.size); i++)
+      ice->shaders.urb.size[i] = 0;
+
+   if (params->src.enabled)
+      iris_bo_bump_seqno(params->src.addr.buffer, batch->next_seqno,
+                         IRIS_DOMAIN_OTHER_READ);
+   if (params->dst.enabled)
+      iris_bo_bump_seqno(params->dst.addr.buffer, batch->next_seqno,
+                         IRIS_DOMAIN_RENDER_WRITE);
    if (params->depth.enabled)
-      iris_depth_cache_add_bo(batch, params->depth.addr.buffer);
+      iris_bo_bump_seqno(params->depth.addr.buffer, batch->next_seqno,
+                         IRIS_DOMAIN_DEPTH_WRITE);
    if (params->stencil.enabled)
-      iris_depth_cache_add_bo(batch, params->stencil.addr.buffer);
+      iris_bo_bump_seqno(params->stencil.addr.buffer, batch->next_seqno,
+                         IRIS_DOMAIN_DEPTH_WRITE);
+}
+
+static void
+blorp_measure_start(struct blorp_batch *blorp_batch,
+                    const struct blorp_params *params)
+{
+   struct iris_context *ice = blorp_batch->blorp->driver_ctx;
+   struct iris_batch *batch = blorp_batch->driver_batch;
+
+   if (batch->measure == NULL)
+      return;
+
+   iris_measure_snapshot(ice, batch, params->snapshot_type, NULL, NULL, NULL);
 }
 
 void

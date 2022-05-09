@@ -121,12 +121,12 @@ files_r300 = files(
 libr300 = static_library(
   'r300',
   files_r300,
-  c_args : [c_vis_args],
   include_directories : [
     inc_src, inc_include, inc_gallium, inc_gallium_aux, inc_gallium_drivers,
     inc_mesa,
   ],
-  dependencies : [dep_libdrm_radeon, dep_llvm],
+  gnu_symbol_visibility : 'hidden',
+  dependencies : [dep_libdrm_radeon, dep_llvm, idep_mesautil],
 )
 
 driver_r300 = declare_dependency(
@@ -156,8 +156,8 @@ if with_tests
         inc_src, inc_include, inc_gallium, inc_gallium_aux,
         include_directories('compiler'),
       ],
-      link_with : [libr300, libgallium, libmesa_util],
-      dependencies : [dep_m, dep_clock, dep_dl, dep_thread, dep_unwind],
+      link_with : [libr300, libgallium],
+      dependencies : [dep_m, dep_clock, dep_dl, dep_unwind, idep_mesautil],
     ),
     suite : ['r300'],
   )

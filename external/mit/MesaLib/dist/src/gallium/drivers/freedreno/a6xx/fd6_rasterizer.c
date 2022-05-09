@@ -25,124 +25,108 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-
 #include "pipe/p_state.h"
-#include "util/u_string.h"
 #include "util/u_memory.h"
+#include "util/u_string.h"
 
-#include "fd6_rasterizer.h"
 #include "fd6_context.h"
 #include "fd6_format.h"
+#include "fd6_pack.h"
+#include "fd6_rasterizer.h"
+
+struct fd_ringbuffer *
+__fd6_setup_rasterizer_stateobj(struct fd_context *ctx,
+                                const struct pipe_rasterizer_state *cso,
+                                bool primitive_restart)
+{
+   struct fd_ringbuffer *ring = fd_ringbuffer_new_object(ctx->pipe, 26 * 4);
+   float psize_min, psize_max;
+
+   if (cso->point_size_per_vertex) {
+      psize_min = util_get_min_point_size(cso);
+      psize_max = 4092;
+   } else {
+      /* Force the point size to be as if the vertex output was disabled. */
+      psize_min = cso->point_size;
+      psize_max = cso->point_size;
+   }
+
+   OUT_REG(ring, A6XX_GRAS_CL_CNTL(.znear_clip_disable = !cso->depth_clip_near,
+                                   .zfar_clip_disable = !cso->depth_clip_far,
+                                   .unk5 = !cso->depth_clip_near ||
+                                           !cso->depth_clip_far,
+                                   .vp_clip_code_ignore = 1,
+                                   .zero_gb_scale_z = cso->clip_halfz));
+
+   OUT_REG(ring,
+           A6XX_GRAS_SU_CNTL(.linehalfwidth = cso->line_width / 2.0,
+                             .poly_offset = cso->offset_tri,
+                             .line_mode = cso->multisample ? RECTANGULAR : BRESENHAM,
+                             .cull_front = cso->cull_face & PIPE_FACE_FRONT,
+                             .cull_back = cso->cull_face & PIPE_FACE_BACK,
+                             .front_cw = !cso->front_ccw, ));
+
+   OUT_REG(ring,
+           A6XX_GRAS_SU_POINT_MINMAX(.min = psize_min, .max = psize_max, ),
+           A6XX_GRAS_SU_POINT_SIZE(cso->point_size));
+
+   OUT_REG(ring, A6XX_GRAS_SU_POLY_OFFSET_SCALE(cso->offset_scale),
+           A6XX_GRAS_SU_POLY_OFFSET_OFFSET(cso->offset_units),
+           A6XX_GRAS_SU_POLY_OFFSET_OFFSET_CLAMP(cso->offset_clamp));
+
+   OUT_REG(ring,
+           A6XX_PC_PRIMITIVE_CNTL_0(.provoking_vtx_last = !cso->flatshade_first,
+                                    .primitive_restart = primitive_restart, ));
+
+   enum a6xx_polygon_mode mode = POLYMODE6_TRIANGLES;
+   switch (cso->fill_front) {
+   case PIPE_POLYGON_MODE_POINT:
+      mode = POLYMODE6_POINTS;
+      break;
+   case PIPE_POLYGON_MODE_LINE:
+      mode = POLYMODE6_LINES;
+      break;
+   default:
+      assert(cso->fill_front == PIPE_POLYGON_MODE_FILL);
+      break;
+   }
+
+   OUT_REG(ring, A6XX_VPC_POLYGON_MODE(mode));
+   OUT_REG(ring, A6XX_PC_POLYGON_MODE(mode));
+
+   if (ctx->screen->info->a6xx.has_shading_rate) {
+      OUT_REG(ring, A6XX_RB_UNKNOWN_8A00());
+      OUT_REG(ring, A6XX_RB_UNKNOWN_8A10());
+      OUT_REG(ring, A6XX_RB_UNKNOWN_8A20());
+      OUT_REG(ring, A6XX_RB_UNKNOWN_8A30());
+   }
+
+   return ring;
+}
 
 void *
 fd6_rasterizer_state_create(struct pipe_context *pctx,
-		const struct pipe_rasterizer_state *cso)
+                            const struct pipe_rasterizer_state *cso)
 {
-	struct fd_context *ctx = fd_context(pctx);
-	struct fd6_rasterizer_stateobj *so;
-	float psize_min, psize_max;
+   struct fd6_rasterizer_stateobj *so;
 
-	so = CALLOC_STRUCT(fd6_rasterizer_stateobj);
-	if (!so)
-		return NULL;
+   so = CALLOC_STRUCT(fd6_rasterizer_stateobj);
+   if (!so)
+      return NULL;
 
-	so->base = *cso;
+   so->base = *cso;
 
-	if (cso->point_size_per_vertex) {
-		psize_min = util_get_min_point_size(cso);
-		psize_max = 4092;
-	} else {
-		/* Force the point size to be as if the vertex output was disabled. */
-		psize_min = cso->point_size;
-		psize_max = cso->point_size;
-	}
-
-	so->gras_su_point_minmax =
-			A6XX_GRAS_SU_POINT_MINMAX_MIN(psize_min) |
-			A6XX_GRAS_SU_POINT_MINMAX_MAX(psize_max);
-	so->gras_su_point_size   = A6XX_GRAS_SU_POINT_SIZE(cso->point_size);
-	so->gras_su_poly_offset_scale =
-			A6XX_GRAS_SU_POLY_OFFSET_SCALE(cso->offset_scale);
-	so->gras_su_poly_offset_offset =
-			A6XX_GRAS_SU_POLY_OFFSET_OFFSET(cso->offset_units);
-	so->gras_su_poly_offset_clamp =
-			A6XX_GRAS_SU_POLY_OFFSET_OFFSET_CLAMP(cso->offset_clamp);
-
-	so->gras_su_cntl =
-			A6XX_GRAS_SU_CNTL_LINEHALFWIDTH(cso->line_width/2.0) |
-			COND(cso->multisample, A6XX_GRAS_SU_CNTL_MSAA_ENABLE);
-
-#if 0
-	so->pc_raster_cntl =
-		A6XX_PC_RASTER_CNTL_POLYMODE_FRONT_PTYPE(fd_polygon_mode(cso->fill_front)) |
-		A6XX_PC_RASTER_CNTL_POLYMODE_BACK_PTYPE(fd_polygon_mode(cso->fill_back));
-#endif
-
-#if 0
-	if (cso->fill_front != PIPE_POLYGON_MODE_FILL ||
-		cso->fill_back != PIPE_POLYGON_MODE_FILL)
-		so->pc_raster_cntl |= A6XX_PC_RASTER_CNTL_POLYMODE_ENABLE;
-#endif
-
-	if (cso->cull_face & PIPE_FACE_FRONT)
-		so->gras_su_cntl |= A6XX_GRAS_SU_CNTL_CULL_FRONT;
-	if (cso->cull_face & PIPE_FACE_BACK)
-		so->gras_su_cntl |= A6XX_GRAS_SU_CNTL_CULL_BACK;
-	if (!cso->front_ccw)
-		so->gras_su_cntl |= A6XX_GRAS_SU_CNTL_FRONT_CW;
-	if (cso->offset_tri)
-		so->gras_su_cntl |= A6XX_GRAS_SU_CNTL_POLY_OFFSET;
-
-	if (!cso->flatshade_first)
-		so->pc_primitive_cntl |= A6XX_PC_PRIMITIVE_CNTL_0_PROVOKING_VTX_LAST;
-
-//	if (!cso->depth_clip)
-//		so->gras_cl_clip_cntl |= A6XX_GRAS_CL_CLIP_CNTL_ZNEAR_CLIP_DISABLE |
-//			A6XX_GRAS_CL_CLIP_CNTL_ZFAR_CLIP_DISABLE;
-#if 0
-	if (cso->clip_halfz)
-		so->gras_cl_clip_cntl |= A6XX_GRAS_CL_CNTL_ZERO_GB_SCALE_Z;
-#endif
-
-	so->stateobj = fd_ringbuffer_new_object(ctx->pipe, 15 * 4);
-	struct fd_ringbuffer *ring = so->stateobj;
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_UNKNOWN_8000, 1);
-	OUT_RING(ring, 0x80);
-	OUT_PKT4(ring, REG_A6XX_GRAS_UNKNOWN_8001, 1);
-	OUT_RING(ring, 0x0);
-	OUT_PKT4(ring, REG_A6XX_GRAS_UNKNOWN_8004, 1);
-	OUT_RING(ring, 0x0);
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_SU_CNTL, 1);
-	OUT_RING(ring, so->gras_su_cntl);
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_SU_POINT_MINMAX, 2);
-	OUT_RING(ring, so->gras_su_point_minmax);
-	OUT_RING(ring, so->gras_su_point_size);
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_SU_POLY_OFFSET_SCALE, 3);
-	OUT_RING(ring, so->gras_su_poly_offset_scale);
-	OUT_RING(ring, so->gras_su_poly_offset_offset);
-	OUT_RING(ring, so->gras_su_poly_offset_clamp);
-
-#if 0
-	OUT_PKT4(ring, REG_A6XX_PC_RASTER_CNTL, 1);
-	OUT_RING(ring, so->pc_raster_cntl);
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_CL_CNTL, 1);
-	OUT_RING(ring, so->gras_cl_clip_cntl);
-#endif
-
-	return so;
+   return so;
 }
 
 void
 fd6_rasterizer_state_delete(struct pipe_context *pctx, void *hwcso)
 {
-	struct fd6_rasterizer_stateobj *so = hwcso;
+   struct fd6_rasterizer_stateobj *so = hwcso;
 
-	fd_ringbuffer_del(so->stateobj);
-	FREE(hwcso);
+   for (unsigned i = 0; i < ARRAY_SIZE(so->stateobjs); i++)
+      if (so->stateobjs[i])
+         fd_ringbuffer_del(so->stateobjs[i]);
+
+   FREE(hwcso);
 }
-

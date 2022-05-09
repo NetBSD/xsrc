@@ -41,7 +41,8 @@ struct _mesa_prim;
 struct gl_context;
 struct st_context;
 
-void st_init_draw_functions(struct dd_function_table *functions);
+void st_init_draw_functions(struct pipe_screen *screen,
+                            struct dd_function_table *functions);
 
 void st_destroy_draw( struct st_context *st );
 
@@ -50,14 +51,15 @@ struct draw_context *st_get_draw_context(struct st_context *st);
 extern void
 st_feedback_draw_vbo(struct gl_context *ctx,
                      const struct _mesa_prim *prims,
-                     GLuint nr_prims,
+                     unsigned nr_prims,
                      const struct _mesa_index_buffer *ib,
-		     GLboolean index_bounds_valid,
-                     GLuint min_index,
-                     GLuint max_index,
-                     struct gl_transform_feedback_object *tfb_vertcount,
-                     unsigned stream,
-                     struct gl_buffer_object *indirect);
+		     bool index_bounds_valid,
+                     bool primitive_restart,
+                     unsigned restart_index,
+                     unsigned min_index,
+                     unsigned max_index,
+                     unsigned num_instances,
+                     unsigned base_instance);
 
 /**
  * When drawing with VBOs, the addresses specified with

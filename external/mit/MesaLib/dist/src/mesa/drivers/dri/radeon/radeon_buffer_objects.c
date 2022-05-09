@@ -25,9 +25,9 @@
  *
  */
 
-#include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/bufferobj.h"
+#include "util/u_memory.h"
 
 #include "radeon_common.h"
 #include "radeon_buffer_objects.h"
@@ -185,7 +185,7 @@ radeonMapBufferRange(struct gl_context * ctx,
        (access & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)) == GL_MAP_WRITE_BIT;
 
     if (write_only) {
-        ctx->Driver.Flush(ctx);
+        ctx->Driver.Flush(ctx, 0);
     }
 
     if (radeon_obj->bo == NULL) {

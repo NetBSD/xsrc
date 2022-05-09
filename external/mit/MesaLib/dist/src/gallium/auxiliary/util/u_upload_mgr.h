@@ -69,9 +69,9 @@ u_upload_create_default(struct pipe_context *pipe);
 struct u_upload_mgr *
 u_upload_clone(struct pipe_context *pipe, struct u_upload_mgr *upload);
 
-/** Whether to use FLUSH_EXPLICIT with persistent mappings. */
+/** Whether to avoid persistent mappings where available */
 void
-u_upload_enable_flush_explicit(struct u_upload_mgr *upload);
+u_upload_disable_persistent(struct u_upload_mgr *upload);
 
 /**
  * Destroy the upload manager.

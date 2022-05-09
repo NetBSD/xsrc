@@ -35,9 +35,10 @@
 #include "loader/loader.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 
 #include "nouveau/drm/nouveau_drm_public.h"
 
@@ -128,7 +129,7 @@ tegra_screen_get_timestamp(struct pipe_screen *pscreen)
    return screen->gpu->get_timestamp(screen->gpu);
 }
 
-static boolean
+static bool
 tegra_screen_is_format_supported(struct pipe_screen *pscreen,
                                  enum pipe_format format,
                                  enum pipe_texture_target target,
@@ -143,7 +144,7 @@ tegra_screen_is_format_supported(struct pipe_screen *pscreen,
                                            usage);
 }
 
-static boolean
+static bool
 tegra_screen_is_video_format_supported(struct pipe_screen *pscreen,
                                        enum pipe_format format,
                                        enum pipe_video_profile profile,
@@ -155,7 +156,7 @@ tegra_screen_is_video_format_supported(struct pipe_screen *pscreen,
                                                  entrypoint);
 }
 
-static boolean
+static bool
 tegra_screen_can_create_resource(struct pipe_screen *pscreen,
                                  const struct pipe_resource *template)
 {
@@ -168,7 +169,7 @@ static int tegra_screen_import_resource(struct tegra_screen *screen,
                                         struct tegra_resource *resource)
 {
    struct winsys_handle handle;
-   boolean status;
+   bool status;
    int fd, err;
 
    memset(&handle, 0, sizeof(handle));
@@ -244,6 +245,10 @@ tegra_screen_resource_create(struct pipe_screen *pscreen,
    pipe_reference_init(&resource->base.reference, 1);
    resource->base.screen = &screen->base;
 
+   /* use private reference count for wrapped resources */
+   resource->gpu->reference.count += 100000000;
+   resource->refcount = 100000000;
+
    return &resource->base;
 
 destroy:
@@ -314,7 +319,7 @@ tegra_screen_resource_from_user_memory(struct pipe_screen *pscreen,
    return resource;
 }
 
-static boolean
+static bool
 tegra_screen_resource_get_handle(struct pipe_screen *pscreen,
                                  struct pipe_context *pcontext,
                                  struct pipe_resource *presource,
@@ -324,7 +329,7 @@ tegra_screen_resource_get_handle(struct pipe_screen *pscreen,
    struct tegra_resource *resource = to_tegra_resource(presource);
    struct tegra_context *context = to_tegra_context(pcontext);
    struct tegra_screen *screen = to_tegra_screen(pscreen);
-   boolean ret = TRUE;
+   bool ret = true;
 
    /*
     * Assume that KMS handles for scanout resources will only ever be used
@@ -351,12 +356,15 @@ tegra_screen_resource_destroy(struct pipe_screen *pscreen,
 {
    struct tegra_resource *resource = to_tegra_resource(presource);
 
+   /* adjust private reference count */
+   p_atomic_add(&resource->gpu->reference.count, -resource->refcount);
    pipe_resource_reference(&resource->gpu, NULL);
    free(resource);
 }
 
 static void
 tegra_screen_flush_frontbuffer(struct pipe_screen *pscreen,
+                               struct pipe_context *pcontext,
                                struct pipe_resource *resource,
                                unsigned int level,
                                unsigned int layer,
@@ -364,8 +372,11 @@ tegra_screen_flush_frontbuffer(struct pipe_screen *pscreen,
                                struct pipe_box *box)
 {
    struct tegra_screen *screen = to_tegra_screen(pscreen);
+   struct tegra_context *context = to_tegra_context(pcontext);
 
-   screen->gpu->flush_frontbuffer(screen->gpu, resource, level, layer,
+   screen->gpu->flush_frontbuffer(screen->gpu,
+                                  context ? context->gpu : NULL,
+                                  resource, level, layer,
                                   winsys_drawable_handle, box);
 }
 
@@ -379,7 +390,7 @@ tegra_screen_fence_reference(struct pipe_screen *pscreen,
    screen->gpu->fence_reference(screen->gpu, ptr, fence);
 }
 
-static boolean
+static bool
 tegra_screen_fence_finish(struct pipe_screen *pscreen,
                           struct pipe_context *pcontext,
                           struct pipe_fence_handle *fence,
@@ -514,6 +525,30 @@ static void tegra_screen_query_dmabuf_modifiers(struct pipe_screen *pscreen,
                                        external_only, count);
 }
 
+static bool
+tegra_screen_is_dmabuf_modifier_supported(struct pipe_screen *pscreen,
+                                          uint64_t modifier,
+                                          enum pipe_format format,
+                                          bool *external_only)
+{
+   struct tegra_screen *screen = to_tegra_screen(pscreen);
+
+   return screen->gpu->is_dmabuf_modifier_supported(screen->gpu, modifier,
+                                                    format, external_only);
+}
+
+static unsigned int
+tegra_screen_get_dmabuf_modifier_planes(struct pipe_screen *pscreen,
+                                        uint64_t modifier,
+                                        enum pipe_format format)
+{
+   struct tegra_screen *screen = to_tegra_screen(pscreen);
+
+   return screen->gpu->get_dmabuf_modifier_planes ?
+      screen->gpu->get_dmabuf_modifier_planes(screen->gpu, modifier, format) :
+      util_format_get_num_planes(format);
+}
+
 static struct pipe_memory_object *
 tegra_screen_memobj_create_from_handle(struct pipe_screen *pscreen,
                                        struct winsys_handle *handle,
@@ -592,6 +627,8 @@ tegra_screen_create(int fd)
 
    screen->base.resource_create_with_modifiers = tegra_screen_resource_create_with_modifiers;
    screen->base.query_dmabuf_modifiers = tegra_screen_query_dmabuf_modifiers;
+   screen->base.is_dmabuf_modifier_supported = tegra_screen_is_dmabuf_modifier_supported;
+   screen->base.get_dmabuf_modifier_planes = tegra_screen_get_dmabuf_modifier_planes;
    screen->base.memobj_create_from_handle = tegra_screen_memobj_create_from_handle;
 
    return &screen->base;

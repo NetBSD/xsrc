@@ -28,7 +28,9 @@ files_gbm = files(
   'main/gbmint.h',
 )
 deps_gbm = []
-args_gbm = []
+args_gbm = [
+  '-DDEFAULT_BACKENDS_PATH="@0@"'.format(gbm_backends_path),
+]
 deps_gbm = []
 incs_gbm = [
   include_directories('main'), inc_include, inc_src, inc_loader,
@@ -47,13 +49,19 @@ libgbm = shared_library(
   'gbm',
   files_gbm,
   include_directories : incs_gbm,
-  c_args : [c_vis_args, args_gbm],
+  c_args : [args_gbm],
   link_args : [ld_args_gc_sections],
-  link_with : [libloader, libmesa_util, libxmlconfig],
-  dependencies : [deps_gbm, dep_dl, dep_thread],
+  link_with : libloader,
+  dependencies : [deps_gbm, dep_dl, dep_thread, idep_mesautil, idep_xmlconfig],
+  gnu_symbol_visibility : 'hidden',
   version : '1.0.0',
   install : true,
 )
+
+if with_tests
+  abi_check = executable('gbm_abi_check', 'main/gbm_abi_check.c')
+  test('gbm-abi-check', abi_check, suite : ['gbm'])
+endif
 
 install_headers('main/gbm.h')
 
@@ -63,15 +71,19 @@ pkg.generate(
   description : 'Mesa gbm library',
   version : meson.project_version(),
   libraries : libgbm,
-  libraries_private : '-ldl',  # FIXME: autotools lists this a incomplete
+  libraries_private : gbm_priv_libs,
+  variables : ['gbmbackendspath=' + gbm_backends_path],
 )
 
-if with_tests and prog_nm.found()
+if with_symbols_check
   test(
     'gbm-symbols-check',
-    find_program('gbm-symbols-check'),
-    env : env_test,
-    args : libgbm,
+    symbols_check,
+    args : [
+      '--lib', libgbm,
+      '--symbols-file', files('gbm-symbols.txt'),
+      symbols_check_args,
+    ],
     suite : ['gbm'],
   )
 endif

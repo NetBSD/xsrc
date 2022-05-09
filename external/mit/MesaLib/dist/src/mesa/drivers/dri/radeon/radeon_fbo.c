@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Red Hat Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,11 +22,10 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
-#include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
@@ -36,6 +35,7 @@
 #include "main/context.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
+#include "util/u_memory.h"
 
 #include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
@@ -176,7 +176,7 @@ radeon_map_renderbuffer_s8z24(struct gl_renderbuffer *rb,
     }
 
     radeon_bo_unmap(rrb->bo);
-		   
+
     *out_map = rrb->map_buffer;
     *out_stride = rrb->map_pitch;
 }
@@ -274,7 +274,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
        rrb->map_bo = radeon_bo_open(rmesa->radeonScreen->bom, 0,
 				    rrb->map_pitch * h, 4,
 				    RADEON_GEM_DOMAIN_GTT, 0);
-       
+
        ok = rmesa->vtbl.blit(ctx, rrb->bo, rrb->draw_offset,
 			     rb->Format, rrb->pitch / rrb->cpp,
 			     rb->Width, rb->Height,
@@ -358,7 +358,7 @@ radeon_unmap_renderbuffer_s8z24(struct gl_context *ctx,
        int y_bias = (rb->Name == 0) ? (rb->Height - 1) : 0;
 
        radeon_bo_map(rrb->bo, 1);
-       
+
        tiled_s8z24_map = rrb->bo->ptr;
 
        for (uint32_t pix_y = 0; pix_y < rrb->map_h; pix_y++) {
@@ -391,7 +391,7 @@ radeon_unmap_renderbuffer_z16(struct gl_context *ctx,
        int y_bias = (rb->Name == 0) ? (rb->Height - 1) : 0;
 
        radeon_bo_map(rrb->bo, 1);
-       
+
        tiled_z16_map = rrb->bo->ptr;
 
        for (uint32_t pix_y = 0; pix_y < rrb->map_h; pix_y++) {
@@ -534,7 +534,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
   rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
 
   if (ctx->Driver.Flush)
-	  ctx->Driver.Flush(ctx); /* +r6/r7 */
+	  ctx->Driver.Flush(ctx, 0); /* +r6/r7 */
 
   if (rrb->bo)
     radeon_bo_unref(rrb->bo);
@@ -578,7 +578,7 @@ radeon_image_target_renderbuffer_storage(struct gl_context *ctx,
    rrb = radeon_renderbuffer(rb);
 
    if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx); /* +r6/r7 */
+      ctx->Driver.Flush(ctx, 0); /* +r6/r7 */
 
    if (rrb->bo)
       radeon_bo_unref(rrb->bo);
@@ -720,7 +720,7 @@ radeon_framebuffer_renderbuffer(struct gl_context * ctx,
 {
 
 	if (ctx->Driver.Flush)
-		ctx->Driver.Flush(ctx); /* +r6/r7 */
+		ctx->Driver.Flush(ctx, 0); /* +r6/r7 */
 
 	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 		"%s(%p, fb %p, rb %p) \n",
@@ -731,7 +731,7 @@ radeon_framebuffer_renderbuffer(struct gl_context * ctx,
 }
 
 static GLboolean
-radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb, 
+radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb,
 		     struct gl_texture_image *texImage)
 {
 	struct gl_renderbuffer *rb = &rrb->base.Base;
@@ -829,7 +829,7 @@ radeon_finish_render_texture(struct gl_context *ctx, struct gl_renderbuffer *rb)
 	radeon_image->used_as_render_target = GL_FALSE;
 
     if (ctx->Driver.Flush)
-        ctx->Driver.Flush(ctx); /* +r6/r7 */
+        ctx->Driver.Flush(ctx, 0); /* +r6/r7 */
 }
 static void
 radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
@@ -880,7 +880,7 @@ void radeon_fbo_init(struct radeon_context *radeon)
 	  radeon_image_target_renderbuffer_storage;
 }
 
-  
+
 void radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
 				struct radeon_bo *bo)
 {

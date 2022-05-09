@@ -27,7 +27,7 @@
 #include "pipe/p_screen.h"
 #include "renderonly/renderonly.h"
 #include "os/os_thread.h"
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 #include "util/list.h"
 #include "util/slab.h"
 
@@ -87,11 +87,12 @@ struct vc4_screen {
                 uint32_t bo_count;
         } bo_cache;
 
-        struct util_hash_table *bo_handles;
+        struct hash_table *bo_handles;
         mtx_t bo_handles_mutex;
 
         uint32_t bo_size;
         uint32_t bo_count;
+        uint32_t prim_types;
         bool has_control_flow;
         bool has_etc1;
         bool has_threaded_fs;

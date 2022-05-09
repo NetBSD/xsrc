@@ -30,7 +30,6 @@
   */
 
 #include <pthread.h>
-#include "main/imports.h"
 #include "main/glspirv.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
@@ -48,7 +47,7 @@
 #include "brw_context.h"
 #include "compiler/brw_nir.h"
 #include "brw_defines.h"
-#include "intel_batchbuffer.h"
+#include "brw_batch.h"
 
 #include "brw_cs.h"
 #include "brw_gs.h"
@@ -63,18 +62,19 @@ static bool
 brw_nir_lower_uniforms(nir_shader *nir, bool is_scalar)
 {
    if (is_scalar) {
-      nir_assign_var_locations(&nir->uniforms, &nir->num_uniforms,
+      nir_assign_var_locations(nir, nir_var_uniform, &nir->num_uniforms,
                                type_size_scalar_bytes);
       return nir_lower_io(nir, nir_var_uniform, type_size_scalar_bytes, 0);
    } else {
-      nir_assign_var_locations(&nir->uniforms, &nir->num_uniforms,
+      nir_assign_var_locations(nir, nir_var_uniform, &nir->num_uniforms,
                                type_size_vec4_bytes);
       return nir_lower_io(nir, nir_var_uniform, type_size_vec4_bytes, 0);
    }
 }
 
-static struct gl_program *brwNewProgram(struct gl_context *ctx, GLenum target,
-                                        GLuint id, bool is_arb_asm);
+static struct gl_program *brw_new_program(struct gl_context *ctx,
+                                          gl_shader_stage stage,
+                                          GLuint id, bool is_arb_asm);
 
 nir_shader *
 brw_create_nir(struct brw_context *brw,
@@ -83,7 +83,7 @@ brw_create_nir(struct brw_context *brw,
                gl_shader_stage stage,
                bool is_scalar)
 {
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    struct gl_context *ctx = &brw->ctx;
    const nir_shader_compiler_options *options =
       ctx->Const.ShaderCompilerOptions[stage].NirOptions;
@@ -95,10 +95,19 @@ brw_create_nir(struct brw_context *brw,
          nir = _mesa_spirv_to_nir(ctx, shader_prog, stage, options);
       } else {
          nir = glsl_to_nir(ctx, shader_prog, stage, options);
+
+         /* Remap the locations to slots so those requiring two slots will
+          * occupy two locations. For instance, if we have in the IR code a
+          * dvec3 attr0 in location 0 and vec4 attr1 in location 1, in NIR attr0
+          * will use locations/slots 0 and 1, and attr1 will use location/slot 2
+          */
+         if (nir->info.stage == MESA_SHADER_VERTEX)
+            nir_remap_dual_slot_attributes(nir, &prog->DualSlotInputs);
       }
       assert (nir);
 
-      nir_remove_dead_variables(nir, nir_var_shader_in | nir_var_shader_out);
+      nir_remove_dead_variables(nir, nir_var_shader_in | nir_var_shader_out,
+                                NULL);
       nir_validate_shader(nir, "after glsl_to_nir or spirv_to_nir");
       NIR_PASS_V(nir, nir_lower_io_to_temporaries,
                  nir_shader_get_entrypoint(nir), true, false);
@@ -110,30 +119,18 @@ brw_create_nir(struct brw_context *brw,
 
    nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
 
-   nir_shader *softfp64 = NULL;
-   if ((options->lower_doubles_options & nir_lower_fp64_full_software) &&
-       nir->info.uses_64bit) {
-      softfp64 = glsl_float64_funcs_to_nir(ctx, options);
-      ralloc_steal(ralloc_parent(nir), softfp64);
+   if (!ctx->SoftFP64 && ((nir->info.bit_sizes_int | nir->info.bit_sizes_float) & 64) &&
+       (options->lower_doubles_options & nir_lower_fp64_full_software)) {
+      ctx->SoftFP64 = glsl_float64_funcs_to_nir(ctx, options);
    }
 
-   nir = brw_preprocess_nir(brw->screen->compiler, nir, softfp64);
-
-   NIR_PASS_V(nir, gl_nir_lower_samplers, shader_prog);
-   prog->info.textures_used = nir->info.textures_used;
-   prog->info.textures_used_by_txf = nir->info.textures_used_by_txf;
-
-   NIR_PASS_V(nir, brw_nir_lower_image_load_store, devinfo);
-
-   NIR_PASS_V(nir, gl_nir_lower_buffers, shader_prog);
-   /* Do a round of constant folding to clean up address calculations */
-   NIR_PASS_V(nir, nir_opt_constant_folding);
+   brw_preprocess_nir(brw->screen->compiler, nir, ctx->SoftFP64);
 
    if (stage == MESA_SHADER_TESS_CTRL) {
-      /* Lower gl_PatchVerticesIn from a sys. value to a uniform on Gen8+. */
+      /* Lower gl_PatchVerticesIn from a sys. value to a uniform on Gfx8+. */
       static const gl_state_index16 tokens[STATE_LENGTH] =
-         { STATE_INTERNAL, STATE_TCS_PATCH_VERTICES_IN };
-      nir_lower_patch_vertices(nir, 0, devinfo->gen >= 8 ? tokens : NULL);
+         { STATE_TCS_PATCH_VERTICES_IN };
+      nir_lower_patch_vertices(nir, 0, devinfo->ver >= 8 ? tokens : NULL);
    }
 
    if (stage == MESA_SHADER_TESS_EVAL) {
@@ -145,13 +142,13 @@ brw_create_nir(struct brw_context *brw,
       uint32_t static_patch_vertices =
          tcs ? tcs->Program->nir->info.tess.tcs_vertices_out : 0;
       static const gl_state_index16 tokens[STATE_LENGTH] =
-         { STATE_INTERNAL, STATE_TES_PATCH_VERTICES_IN };
+         { STATE_TES_PATCH_VERTICES_IN };
       nir_lower_patch_vertices(nir, static_patch_vertices, tokens);
    }
 
    if (stage == MESA_SHADER_FRAGMENT) {
       static const struct nir_lower_wpos_ytransform_options wpos_options = {
-         .state_tokens = {STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM, 0, 0, 0},
+         .state_tokens = {STATE_FB_WPOS_Y_TRANSFORM, 0, 0},
          .fs_coord_pixel_center_integer = 1,
          .fs_coord_origin_upper_left = 1,
       };
@@ -164,9 +161,44 @@ brw_create_nir(struct brw_context *brw,
       }
    }
 
-   NIR_PASS_V(nir, brw_nir_lower_uniforms, is_scalar);
-
    return nir;
+}
+
+static void
+shared_type_info(const struct glsl_type *type, unsigned *size, unsigned *align)
+{
+   assert(glsl_type_is_vector_or_scalar(type));
+
+   uint32_t comp_size = glsl_type_is_boolean(type)
+      ? 4 : glsl_get_bit_size(type) / 8;
+   unsigned length = glsl_get_vector_elements(type);
+   *size = comp_size * length,
+   *align = comp_size * (length == 3 ? 4 : length);
+}
+
+void
+brw_nir_lower_resources(nir_shader *nir, struct gl_shader_program *shader_prog,
+                        struct gl_program *prog,
+                        const struct intel_device_info *devinfo)
+{
+   NIR_PASS_V(nir, brw_nir_lower_uniforms, nir->options->lower_to_scalar);
+   NIR_PASS_V(prog->nir, gl_nir_lower_samplers, shader_prog);
+   BITSET_COPY(prog->info.textures_used, prog->nir->info.textures_used);
+   BITSET_COPY(prog->info.textures_used_by_txf, prog->nir->info.textures_used_by_txf);
+
+   NIR_PASS_V(prog->nir, brw_nir_lower_storage_image, devinfo);
+
+   if (prog->nir->info.stage == MESA_SHADER_COMPUTE &&
+       shader_prog->data->spirv) {
+      NIR_PASS_V(prog->nir, nir_lower_vars_to_explicit_types,
+                 nir_var_mem_shared, shared_type_info);
+      NIR_PASS_V(prog->nir, nir_lower_explicit_io,
+                 nir_var_mem_shared, nir_address_format_32bit_offset);
+   }
+
+   NIR_PASS_V(prog->nir, gl_nir_lower_buffers, shader_prog);
+   /* Do a round of constant folding to clean up address calculations */
+   NIR_PASS_V(prog->nir, nir_opt_constant_folding);
 }
 
 void
@@ -183,13 +215,15 @@ brw_shader_gather_info(nir_shader *nir, struct gl_program *prog)
 }
 
 static unsigned
-get_new_program_id(struct intel_screen *screen)
+get_new_program_id(struct brw_screen *screen)
 {
    return p_atomic_inc_return(&screen->program_id);
 }
 
-static struct gl_program *brwNewProgram(struct gl_context *ctx, GLenum target,
-                                        GLuint id, bool is_arb_asm)
+static struct gl_program *
+brw_new_program(struct gl_context *ctx,
+                gl_shader_stage stage,
+                GLuint id, bool is_arb_asm)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_program *prog = rzalloc(NULL, struct brw_program);
@@ -197,14 +231,14 @@ static struct gl_program *brwNewProgram(struct gl_context *ctx, GLenum target,
    if (prog) {
       prog->id = get_new_program_id(brw->screen);
 
-      return _mesa_init_gl_program(&prog->program, target, id, is_arb_asm);
+      return _mesa_init_gl_program(&prog->program, stage, id, is_arb_asm);
    }
 
    return NULL;
 }
 
-static void brwDeleteProgram( struct gl_context *ctx,
-			      struct gl_program *prog )
+static void
+brw_delete_program(struct gl_context *ctx, struct gl_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -241,9 +275,9 @@ static void brwDeleteProgram( struct gl_context *ctx,
 
 
 static GLboolean
-brwProgramStringNotify(struct gl_context *ctx,
-		       GLenum target,
-		       struct gl_program *prog)
+brw_program_string_notify(struct gl_context *ctx,
+                          GLenum target,
+                          struct gl_program *prog)
 {
    assert(target == GL_VERTEX_PROGRAM_ARB || !prog->arb.IsPositionInvariant);
 
@@ -257,10 +291,13 @@ brwProgramStringNotify(struct gl_context *ctx,
          brw_program_const(brw->programs[MESA_SHADER_FRAGMENT]);
 
       if (newFP == curFP)
-	 brw->ctx.NewDriverState |= BRW_NEW_FRAGMENT_PROGRAM;
+         brw->ctx.NewDriverState |= BRW_NEW_FRAGMENT_PROGRAM;
+      _mesa_program_fragment_position_to_sysval(&newFP->program);
       newFP->id = get_new_program_id(brw->screen);
 
       prog->nir = brw_create_nir(brw, NULL, prog, MESA_SHADER_FRAGMENT, true);
+
+      brw_nir_lower_resources(prog->nir, NULL, prog, &brw->screen->devinfo);
 
       brw_shader_gather_info(prog->nir, prog);
 
@@ -273,9 +310,9 @@ brwProgramStringNotify(struct gl_context *ctx,
          brw_program_const(brw->programs[MESA_SHADER_VERTEX]);
 
       if (newVP == curVP)
-	 brw->ctx.NewDriverState |= BRW_NEW_VERTEX_PROGRAM;
+         brw->ctx.NewDriverState |= BRW_NEW_VERTEX_PROGRAM;
       if (newVP->program.arb.IsPositionInvariant) {
-	 _mesa_insert_mvp_code(ctx, &newVP->program);
+         _mesa_insert_mvp_code(ctx, &newVP->program);
       }
       newVP->id = get_new_program_id(brw->screen);
 
@@ -285,6 +322,8 @@ brwProgramStringNotify(struct gl_context *ctx,
 
       prog->nir = brw_create_nir(brw, NULL, prog, MESA_SHADER_VERTEX,
                                  compiler->scalar_stage[MESA_SHADER_VERTEX]);
+
+      brw_nir_lower_resources(prog->nir, NULL, prog, &brw->screen->devinfo);
 
       brw_shader_gather_info(prog->nir, prog);
 
@@ -309,9 +348,9 @@ static void
 brw_memory_barrier(struct gl_context *ctx, GLbitfield barriers)
 {
    struct brw_context *brw = brw_context(ctx);
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
    unsigned bits = PIPE_CONTROL_DATA_CACHE_FLUSH | PIPE_CONTROL_CS_STALL;
-   assert(devinfo->gen >= 7 && devinfo->gen <= 11);
+   assert(devinfo->ver >= 7 && devinfo->ver <= 11);
 
    if (barriers & (GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT |
                    GL_ELEMENT_ARRAY_BARRIER_BIT |
@@ -337,7 +376,7 @@ brw_memory_barrier(struct gl_context *ctx, GLbitfield barriers)
    /* Typed surface messages are handled by the render cache on IVB, so we
     * need to flush it too.
     */
-   if (devinfo->gen == 7 && !devinfo->is_haswell)
+   if (devinfo->verx10 == 70)
       bits |= PIPE_CONTROL_RENDER_TARGET_FLUSH;
 
    brw_emit_pipe_control_flush(brw, bits);
@@ -347,10 +386,10 @@ static void
 brw_framebuffer_fetch_barrier(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
 
    if (!ctx->Extensions.EXT_shader_framebuffer_fetch) {
-      if (devinfo->gen >= 6) {
+      if (devinfo->ver >= 6) {
          brw_emit_pipe_control_flush(brw,
                                      PIPE_CONTROL_RENDER_TARGET_FLUSH |
                                      PIPE_CONTROL_CS_STALL);
@@ -365,7 +404,7 @@ brw_framebuffer_fetch_barrier(struct gl_context *ctx)
 
 void
 brw_get_scratch_bo(struct brw_context *brw,
-		   struct brw_bo **scratch_bo, int size)
+                   struct brw_bo **scratch_bo, int size)
 {
    struct brw_bo *old_bo = *scratch_bo;
 
@@ -397,90 +436,22 @@ brw_alloc_stage_scratch(struct brw_context *brw,
    if (stage_state->scratch_bo)
       brw_bo_unreference(stage_state->scratch_bo);
 
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
-   unsigned thread_count;
-   switch(stage_state->stage) {
-   case MESA_SHADER_VERTEX:
-      thread_count = devinfo->max_vs_threads;
-      break;
-   case MESA_SHADER_TESS_CTRL:
-      thread_count = devinfo->max_tcs_threads;
-      break;
-   case MESA_SHADER_TESS_EVAL:
-      thread_count = devinfo->max_tes_threads;
-      break;
-   case MESA_SHADER_GEOMETRY:
-      thread_count = devinfo->max_gs_threads;
-      break;
-   case MESA_SHADER_FRAGMENT:
-      thread_count = devinfo->max_wm_threads;
-      break;
-   case MESA_SHADER_COMPUTE: {
-      unsigned subslices = MAX2(brw->screen->subslice_total, 1);
-
-      /* The documentation for 3DSTATE_PS "Scratch Space Base Pointer" says:
-       *
-       * "Scratch Space per slice is computed based on 4 sub-slices.  SW must
-       *  allocate scratch space enough so that each slice has 4 slices
-       *  allowed."
-       *
-       * According to the other driver team, this applies to compute shaders
-       * as well.  This is not currently documented at all.
-       *
-       * brw->screen->subslice_total is the TOTAL number of subslices
-       * and we wish to view that there are 4 subslices per slice
-       * instead of the actual number of subslices per slice.
-       */
-      if (devinfo->gen >= 9 && devinfo->gen < 11)
-         subslices = 4 * brw->screen->devinfo.num_slices;
-
-      unsigned scratch_ids_per_subslice;
-      if (devinfo->is_haswell) {
-         /* WaCSScratchSize:hsw
-          *
-          * Haswell's scratch space address calculation appears to be sparse
-          * rather than tightly packed. The Thread ID has bits indicating
-          * which subslice, EU within a subslice, and thread within an EU it
-          * is. There's a maximum of two slices and two subslices, so these
-          * can be stored with a single bit. Even though there are only 10 EUs
-          * per subslice, this is stored in 4 bits, so there's an effective
-          * maximum value of 16 EUs. Similarly, although there are only 7
-          * threads per EU, this is stored in a 3 bit number, giving an
-          * effective maximum value of 8 threads per EU.
-          *
-          * This means that we need to use 16 * 8 instead of 10 * 7 for the
-          * number of threads per subslice.
-          */
-         scratch_ids_per_subslice = 16 * 8;
-      } else if (devinfo->is_cherryview) {
-         /* Cherryview devices have either 6 or 8 EUs per subslice, and each
-          * EU has 7 threads. The 6 EU devices appear to calculate thread IDs
-          * as if it had 8 EUs.
-          */
-         scratch_ids_per_subslice = 8 * 7;
-      } else {
-         scratch_ids_per_subslice = devinfo->max_cs_threads;
-      }
-
-      thread_count = scratch_ids_per_subslice * subslices;
-      break;
-   }
-   default:
-      unreachable("Unsupported stage!");
-   }
-
+   const struct intel_device_info *devinfo = &brw->screen->devinfo;
+   assert(stage_state->stage < ARRAY_SIZE(devinfo->max_scratch_ids));
+   unsigned max_ids = devinfo->max_scratch_ids[stage_state->stage];
    stage_state->scratch_bo =
       brw_bo_alloc(brw->bufmgr, "shader scratch space",
-                   per_thread_size * thread_count, BRW_MEMZONE_SCRATCH);
+                   per_thread_size * max_ids, BRW_MEMZONE_SCRATCH);
 }
 
-void brwInitFragProgFuncs( struct dd_function_table *functions )
+void
+brw_init_frag_prog_functions(struct dd_function_table *functions)
 {
    assert(functions->ProgramStringNotify == _tnl_program_string);
 
-   functions->NewProgram = brwNewProgram;
-   functions->DeleteProgram = brwDeleteProgram;
-   functions->ProgramStringNotify = brwProgramStringNotify;
+   functions->NewProgram = brw_new_program;
+   functions->DeleteProgram = brw_delete_program;
+   functions->ProgramStringNotify = brw_program_string_notify;
 
    functions->LinkShader = brw_link_shader;
 
@@ -766,11 +737,11 @@ brw_dump_arb_asm(const char *stage, struct gl_program *prog)
 }
 
 void
-brw_setup_tex_for_precompile(const struct gen_device_info *devinfo,
+brw_setup_tex_for_precompile(const struct intel_device_info *devinfo,
                              struct brw_sampler_prog_key_data *tex,
-                             struct gl_program *prog)
+                             const struct gl_program *prog)
 {
-   const bool has_shader_channel_select = devinfo->is_haswell || devinfo->gen >= 8;
+   const bool has_shader_channel_select = devinfo->verx10 >= 75;
    unsigned sampler_count = util_last_bit(prog->SamplersUsed);
    for (unsigned i = 0; i < sampler_count; i++) {
       if (!has_shader_channel_select && (prog->ShadowSamplers & (1 << i))) {
@@ -793,7 +764,7 @@ brw_setup_tex_for_precompile(const struct gen_device_info *devinfo,
  * trigger some of our asserts that surface indices are < BRW_MAX_SURFACES.
  */
 uint32_t
-brw_assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
+brw_assign_common_binding_table_offsets(const struct intel_device_info *devinfo,
                                         const struct gl_program *prog,
                                         struct brw_stage_prog_data *stage_prog_data,
                                         uint32_t next_binding_table_offset)
@@ -820,7 +791,7 @@ brw_assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
       stage_prog_data->binding_table.ssbo_start = 0xd0d0d0d0;
    }
 
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+   if (INTEL_DEBUG(DEBUG_SHADER_TIME)) {
       stage_prog_data->binding_table.shader_time_start = next_binding_table_offset;
       next_binding_table_offset++;
    } else {
@@ -828,7 +799,7 @@ brw_assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
    }
 
    if (prog->info.uses_texture_gather) {
-      if (devinfo->gen >= 8) {
+      if (devinfo->ver >= 8) {
          stage_prog_data->binding_table.gather_texture_start =
             stage_prog_data->binding_table.texture_start;
       } else {
@@ -869,45 +840,29 @@ brw_assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
 }
 
 void
-brw_prog_key_set_id(union brw_any_prog_key *key, gl_shader_stage stage,
-                    unsigned id)
-{
-   static const unsigned stage_offsets[] = {
-      offsetof(struct brw_vs_prog_key, program_string_id),
-      offsetof(struct brw_tcs_prog_key, program_string_id),
-      offsetof(struct brw_tes_prog_key, program_string_id),
-      offsetof(struct brw_gs_prog_key, program_string_id),
-      offsetof(struct brw_wm_prog_key, program_string_id),
-      offsetof(struct brw_cs_prog_key, program_string_id),
-   };
-   assert((int)stage >= 0 && stage < ARRAY_SIZE(stage_offsets));
-   *(unsigned*)((uint8_t*)key + stage_offsets[stage]) = id;
-}
-
-void
-brw_populate_default_key(const struct gen_device_info *devinfo,
+brw_populate_default_key(const struct brw_compiler *compiler,
                          union brw_any_prog_key *prog_key,
                          struct gl_shader_program *sh_prog,
                          struct gl_program *prog)
 {
    switch (prog->info.stage) {
    case MESA_SHADER_VERTEX:
-      brw_vs_populate_default_key(devinfo, &prog_key->vs, prog);
+      brw_vs_populate_default_key(compiler, &prog_key->vs, prog);
       break;
    case MESA_SHADER_TESS_CTRL:
-      brw_tcs_populate_default_key(devinfo, &prog_key->tcs, sh_prog, prog);
+      brw_tcs_populate_default_key(compiler, &prog_key->tcs, sh_prog, prog);
       break;
    case MESA_SHADER_TESS_EVAL:
-      brw_tes_populate_default_key(devinfo, &prog_key->tes, sh_prog, prog);
+      brw_tes_populate_default_key(compiler, &prog_key->tes, sh_prog, prog);
       break;
    case MESA_SHADER_GEOMETRY:
-      brw_gs_populate_default_key(devinfo, &prog_key->gs, prog);
+      brw_gs_populate_default_key(compiler, &prog_key->gs, prog);
       break;
    case MESA_SHADER_FRAGMENT:
-      brw_wm_populate_default_key(devinfo, &prog_key->wm, prog);
+      brw_wm_populate_default_key(compiler, &prog_key->wm, prog);
       break;
    case MESA_SHADER_COMPUTE:
-      brw_cs_populate_default_key(devinfo, &prog_key->cs, prog);
+      brw_cs_populate_default_key(compiler, &prog_key->cs, prog);
       break;
    default:
       unreachable("Unsupported stage!");
@@ -918,17 +873,16 @@ void
 brw_debug_recompile(struct brw_context *brw,
                     gl_shader_stage stage,
                     unsigned api_id,
-                    unsigned key_program_string_id,
-                    void *key)
+                    struct brw_base_prog_key *key)
 {
    const struct brw_compiler *compiler = brw->screen->compiler;
    enum brw_cache_id cache_id = brw_stage_cache_id(stage);
 
-   compiler->shader_perf_log(brw, "Recompiling %s shader for program %d\n",
-                             _mesa_shader_stage_to_string(stage), api_id);
+   brw_shader_perf_log(compiler, brw, "Recompiling %s shader for program %d\n",
+                       _mesa_shader_stage_to_string(stage), api_id);
 
    const void *old_key =
-      brw_find_previous_compile(&brw->cache, cache_id, key_program_string_id);
+      brw_find_previous_compile(&brw->cache, cache_id, key->program_string_id);
 
    brw_debug_key_recompile(compiler, brw, stage, old_key, key);
 }

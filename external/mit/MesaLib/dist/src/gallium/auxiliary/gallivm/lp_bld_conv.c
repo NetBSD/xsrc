@@ -34,7 +34,7 @@
  * The other side of this is that we need to be able convert between several
  * types accurately and efficiently.
  *
- * Conversion between types of different bit width is quite complex since a 
+ * Conversion between types of different bit width is quite complex since a
  *
  * To remember there are a few invariants in type conversions:
  *
@@ -63,7 +63,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
-#include "util/u_half.h"
+#include "util/half_float.h"
 #include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
@@ -78,6 +78,14 @@
 #include "lp_bld_format.h"
 
 
+/* the lp_test_format test fails on mingw/i686 at -O2 with gcc 10.x
+ * ref https://gitlab.freedesktop.org/mesa/mesa/-/issues/3906
+ */
+
+#if defined(__MINGW32__) && !defined(__MINGW64__) && (__GNUC__ == 10)
+#warning "disabling caller-saves optimization for this file to work around compiler bug"
+#pragma GCC optimize("-fno-caller-saves")
+#endif
 
 /**
  * Converts int16 half-float to float32
@@ -101,21 +109,37 @@ lp_build_half_to_float(struct gallivm_state *gallivm,
    LLVMTypeRef int_vec_type = lp_build_vec_type(gallivm, i32_type);
    LLVMValueRef h;
 
-   if (util_cpu_caps.has_f16c &&
+   if (util_get_cpu_caps()->has_f16c &&
        (src_length == 4 || src_length == 8)) {
-      const char *intrinsic = NULL;
-      if (src_length == 4) {
-         src = lp_build_pad_vector(gallivm, src, 8);
-         intrinsic = "llvm.x86.vcvtph2ps.128";
+      if (LLVM_VERSION_MAJOR < 11) {
+         const char *intrinsic = NULL;
+         if (src_length == 4) {
+            src = lp_build_pad_vector(gallivm, src, 8);
+            intrinsic = "llvm.x86.vcvtph2ps.128";
+         }
+         else {
+            intrinsic = "llvm.x86.vcvtph2ps.256";
+         }
+         src = LLVMBuildBitCast(builder, src,
+                                LLVMVectorType(LLVMInt16TypeInContext(gallivm->context), 8), "");
+         return lp_build_intrinsic_unary(builder, intrinsic,
+                                         lp_build_vec_type(gallivm, f32_type), src);
+      } else {
+         /*
+          * XXX: could probably use on other archs as well.
+          * But if the cpu doesn't support it natively it looks like the backends still
+          * can't lower it and will try to call out to external libraries, which will crash.
+          */
+         /*
+          * XXX: lp_build_vec_type() would use int16 vector. Probably need to revisit
+          * this at some point.
+          */
+         src = LLVMBuildBitCast(builder, src,
+                                LLVMVectorType(LLVMHalfTypeInContext(gallivm->context), src_length), "");
+         return LLVMBuildFPExt(builder, src, lp_build_vec_type(gallivm, f32_type), "");
       }
-      else {
-         intrinsic = "llvm.x86.vcvtph2ps.256";
-      }
-      return lp_build_intrinsic_unary(builder, intrinsic,
-                                      lp_build_vec_type(gallivm, f32_type), src);
    }
 
-   /* Convert int16 vector to int32 vector by zero ext (might generate bad code) */
    h = LLVMBuildZExt(builder, src, int_vec_type, "");
    return lp_build_smallfloat_to_float(gallivm, f32_type, h, 10, 5, 0, true);
 }
@@ -153,7 +177,7 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
     * useless.
     */
 
-   if (util_cpu_caps.has_f16c &&
+   if (util_get_cpu_caps()->has_f16c &&
        (length == 4 || length == 8)) {
       struct lp_type i168_type = lp_type_int_vec(16, 16 * 8);
       unsigned mode = 3; /* same as LP_BUILD_ROUND_TRUNCATE */
@@ -171,6 +195,7 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
       if (length == 4) {
          result = lp_build_extract_range(gallivm, result, 0, 4);
       }
+      result = LLVMBuildBitCast(builder, result, lp_build_vec_type(gallivm, lp_type_float_vec(16, 16 * length)), "");
    }
 
    else {
@@ -190,8 +215,8 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
      unsigned i;
 
      LLVMTypeRef func_type = LLVMFunctionType(i16t, &f32t, 1, 0);
-     LLVMValueRef func = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)util_float_to_half));
-     func = LLVMBuildBitCast(builder, func, LLVMPointerType(func_type, 0), "util_float_to_half");
+     LLVMValueRef func = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)_mesa_float_to_half));
+     func = LLVMBuildBitCast(builder, func, LLVMPointerType(func_type, 0), "_mesa_float_to_half");
 
      for (i = 0; i < length; ++i) {
         LLVMValueRef index = LLVMConstInt(i32t, i, 0);
@@ -321,7 +346,10 @@ lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
 
       res = LLVMBuildFMul(builder, src,
                           lp_build_const_vec(gallivm, src_type, scale), "");
-      res = LLVMBuildFPToSI(builder, res, int_vec_type, "");
+      if (!src_type.sign && src_type.width == 32)
+         res = LLVMBuildFPToUI(builder, res, int_vec_type, "");
+      else
+         res = LLVMBuildFPToSI(builder, res, int_vec_type, "");
 
       /*
        * Align the most significant bit to its final place.
@@ -472,7 +500,7 @@ int lp_build_conv_auto(struct gallivm_state *gallivm,
 
       /* Special case 4x4x32 --> 1x16x8 */
       if (src_type.length == 4 &&
-            (util_cpu_caps.has_sse2 || util_cpu_caps.has_altivec))
+            (util_get_cpu_caps()->has_sse2 || util_get_cpu_caps()->has_altivec))
       {
          num_dsts = (num_srcs + 3) / 4;
          dst_type->length = num_srcs * 4 >= 16 ? 16 : num_srcs * 4;
@@ -483,7 +511,7 @@ int lp_build_conv_auto(struct gallivm_state *gallivm,
 
       /* Special case 2x8x32 --> 1x16x8 */
       if (src_type.length == 8 &&
-          util_cpu_caps.has_avx)
+          util_get_cpu_caps()->has_avx)
       {
          num_dsts = (num_srcs + 1) / 2;
          dst_type->length = num_srcs * 8 >= 16 ? 16 : num_srcs * 8;
@@ -580,7 +608,7 @@ lp_build_conv(struct gallivm_state *gallivm,
        ((dst_type.length == 16 && 4 * num_dsts == num_srcs) ||
         (num_dsts == 1 && dst_type.length * num_srcs == 16 && num_srcs != 3)) &&
 
-       (util_cpu_caps.has_sse2 || util_cpu_caps.has_altivec))
+       (util_get_cpu_caps()->has_sse2 || util_get_cpu_caps()->has_altivec))
    {
       struct lp_build_context bld;
       struct lp_type int16_type, int32_type;
@@ -620,13 +648,15 @@ lp_build_conv(struct gallivm_state *gallivm,
                 * conversion path (meaning too large values are fine, but
                 * NaNs get converted to -128 (purely by luck, as we don't
                 * specify nan behavior for the max there) instead of 0).
+                *
+                * dEQP has GLES31 tests that expect +inf -> 255.0.
                 */
                if (dst_type.sign) {
                   tmp[j] = lp_build_min(&bld, bld.one, src[j]);
 
                }
                else {
-                  if (0) {
+                  if (1) {
                      tmp[j] = lp_build_min_ext(&bld, bld.one, src[j],
                                                GALLIVM_NAN_RETURN_NAN_FIRST_NONNAN);
                   }
@@ -670,7 +700,7 @@ lp_build_conv(struct gallivm_state *gallivm,
          dst[0] = lp_build_extract_range(gallivm, dst[0], 0, dst_type.length);
       }
 
-      return; 
+      return;
    }
 
    /* Special case 2x8x32 --> 1x16x8, 1x8x32 ->1x8x8
@@ -691,7 +721,7 @@ lp_build_conv(struct gallivm_state *gallivm,
       ((dst_type.length == 16 && 2 * num_dsts == num_srcs) ||
        (num_dsts == 1 && dst_type.length * num_srcs == 8)) &&
 
-      util_cpu_caps.has_avx) {
+      util_get_cpu_caps()->has_avx) {
 
       struct lp_build_context bld;
       struct lp_type int16_type, int32_type;
@@ -726,7 +756,7 @@ lp_build_conv(struct gallivm_state *gallivm,
 
                }
                else {
-                  if (0) {
+                  if (1) {
                      a = lp_build_min_ext(&bld, bld.one, a,
                                           GALLIVM_NAN_RETURN_NAN_FIRST_NONNAN);
                   }

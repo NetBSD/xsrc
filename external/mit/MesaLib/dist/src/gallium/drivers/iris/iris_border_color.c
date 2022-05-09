@@ -71,8 +71,8 @@ iris_reset_border_color_pool(struct iris_border_color_pool *pool,
    iris_bo_unreference(pool->bo);
 
    pool->bo = iris_bo_alloc(bufmgr, "border colors",
-                            IRIS_BORDER_COLOR_POOL_SIZE,
-                            IRIS_MEMZONE_BORDER_COLOR_POOL);
+                            IRIS_BORDER_COLOR_POOL_SIZE, 1,
+                            IRIS_MEMZONE_BORDER_COLOR_POOL, 0);
    pool->map = iris_bo_map(NULL, pool->bo, MAP_WRITE);
 
    /* Don't make 0 a valid offset - tools treat that as a NULL pointer. */
@@ -147,7 +147,7 @@ iris_upload_border_color(struct iris_context *ice,
    memcpy(pool->map + offset, color, sizeof(*color));
    pool->insert_point += BC_ALIGNMENT;
 
-   _mesa_hash_table_insert_pre_hashed(pool->ht, hash, color,
+   _mesa_hash_table_insert_pre_hashed(pool->ht, hash, pool->map + offset,
                                       (void *) (uintptr_t) offset);
    return offset;
 }

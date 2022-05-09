@@ -28,7 +28,8 @@
 #include "radeon_queryobj.h"
 #include "radeon_debug.h"
 
-#include "main/imports.h"
+
+#include "main/queryobj.h"
 
 #include <inttypes.h>
 
@@ -80,7 +81,7 @@ static void radeonDeleteQuery(struct gl_context *ctx, struct gl_query_object *q)
 		radeon_bo_unref(query->bo);
 	}
 
-	free(query);
+	_mesa_delete_query(ctx, q);
 }
 
 static void radeonWaitQuery(struct gl_context *ctx, struct gl_query_object *q)
@@ -90,7 +91,7 @@ static void radeonWaitQuery(struct gl_context *ctx, struct gl_query_object *q)
 
 	/* If the cmdbuf with packets for this query hasn't been flushed yet, do it now */
 	if (radeon_bo_is_referenced_by_cs(query->bo, radeon->cmdbuf.cs))
-		ctx->Driver.Flush(ctx);
+		ctx->Driver.Flush(ctx, 0);
 
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s: query id %d, bo %p, offset %d\n", __func__, q->Id, query->bo, query->curr_offset);
 
@@ -168,7 +169,7 @@ static void radeonCheckQuery(struct gl_context *ctx, struct gl_query_object *q)
 
 	/* Need to perform a flush, as per ARB_occlusion_query spec */
 	if (radeon_bo_is_referenced_by_cs(query->bo, radeon->cmdbuf.cs)) {
-		ctx->Driver.Flush(ctx);
+		ctx->Driver.Flush(ctx, 0);
 	}
 
 	if (radeon_bo_is_busy(query->bo, &domain) == 0) {

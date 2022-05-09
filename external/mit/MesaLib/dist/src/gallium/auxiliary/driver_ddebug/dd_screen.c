@@ -126,7 +126,7 @@ static void dd_screen_query_memory_info(struct pipe_screen *_screen,
 {
    struct pipe_screen *screen = dd_screen(_screen)->screen;
 
-   return screen->query_memory_info(screen, info);
+   screen->query_memory_info(screen, info);
 }
 
 static struct pipe_context *
@@ -142,7 +142,7 @@ dd_screen_context_create(struct pipe_screen *_screen, void *priv,
                             screen->context_create(screen, priv, flags));
 }
 
-static boolean
+static bool
 dd_screen_is_format_supported(struct pipe_screen *_screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
@@ -156,7 +156,7 @@ dd_screen_is_format_supported(struct pipe_screen *_screen,
                                       storage_sample_count, tex_usage);
 }
 
-static boolean
+static bool
 dd_screen_can_create_resource(struct pipe_screen *_screen,
                               const struct pipe_resource *templat)
 {
@@ -167,14 +167,16 @@ dd_screen_can_create_resource(struct pipe_screen *_screen,
 
 static void
 dd_screen_flush_frontbuffer(struct pipe_screen *_screen,
+                            struct pipe_context *_pipe,
                             struct pipe_resource *resource,
                             unsigned level, unsigned layer,
                             void *context_private,
                             struct pipe_box *sub_box)
 {
    struct pipe_screen *screen = dd_screen(_screen)->screen;
+   struct pipe_context *pipe = _pipe ? dd_context(_pipe)->pipe : NULL;
 
-   screen->flush_frontbuffer(screen, resource, level, layer, context_private,
+   screen->flush_frontbuffer(screen, pipe, resource, level, layer, context_private,
                              sub_box);
 }
 
@@ -298,7 +300,7 @@ dd_screen_resource_destroy(struct pipe_screen *_screen,
    screen->resource_destroy(screen, res);
 }
 
-static boolean
+static bool
 dd_screen_resource_get_handle(struct pipe_screen *_screen,
                               struct pipe_context *_pipe,
                               struct pipe_resource *resource,
@@ -309,6 +311,24 @@ dd_screen_resource_get_handle(struct pipe_screen *_screen,
    struct pipe_context *pipe = _pipe ? dd_context(_pipe)->pipe : NULL;
 
    return screen->resource_get_handle(screen, pipe, resource, handle, usage);
+}
+
+static bool
+dd_screen_resource_get_param(struct pipe_screen *_screen,
+                             struct pipe_context *_pipe,
+                             struct pipe_resource *resource,
+                             unsigned plane,
+                             unsigned layer,
+                             unsigned level,
+                             enum pipe_resource_param param,
+                             unsigned handle_usage,
+                             uint64_t *value)
+{
+   struct pipe_screen *screen = dd_screen(_screen)->screen;
+   struct pipe_context *pipe = _pipe ? dd_context(_pipe)->pipe : NULL;
+
+   return screen->resource_get_param(screen, pipe, resource, plane, layer,
+                                     level, param, handle_usage, value);
 }
 
 static void
@@ -347,7 +367,7 @@ dd_screen_fence_reference(struct pipe_screen *_screen,
    screen->fence_reference(screen, pdst, src);
 }
 
-static boolean
+static bool
 dd_screen_fence_finish(struct pipe_screen *_screen,
                        struct pipe_context *_ctx,
                        struct pipe_fence_handle *fence,
@@ -393,6 +413,14 @@ dd_screen_memobj_destroy(struct pipe_screen *_screen,
 /********************************************************************
  * screen
  */
+
+static char *
+dd_screen_finalize_nir(struct pipe_screen *_screen, void *nir)
+{
+   struct pipe_screen *screen = dd_screen(_screen)->screen;
+
+   return screen->finalize_nir(screen, nir);
+}
 
 static void
 dd_screen_destroy(struct pipe_screen *_screen)
@@ -565,6 +593,7 @@ ddebug_screen_create(struct pipe_screen *screen)
    SCR_INIT(resource_from_user_memory);
    SCR_INIT(check_resource_capability);
    dscreen->base.resource_get_handle = dd_screen_resource_get_handle;
+   SCR_INIT(resource_get_param);
    SCR_INIT(resource_get_info);
    SCR_INIT(resource_changed);
    dscreen->base.resource_destroy = dd_screen_resource_destroy;
@@ -579,6 +608,7 @@ ddebug_screen_create(struct pipe_screen *screen)
    SCR_INIT(get_compiler_options);
    SCR_INIT(get_driver_uuid);
    SCR_INIT(get_device_uuid);
+   SCR_INIT(finalize_nir);
 
 #undef SCR_INIT
 

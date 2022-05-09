@@ -409,7 +409,7 @@ public:
         pa.Assemble(vertexClipCullOffset, vClipCullDistLo);
         pa.Assemble(vertexClipCullOffset + 1, vClipCullDistHi);
 
-        DWORD index;
+        unsigned long index;
         while (_BitScanForward(&index, cullMask))
         {
             cullMask &= ~(1 << index);
@@ -781,7 +781,7 @@ public:
 
         if (clipMask)
         {
-            RDTSC_BEGIN(FEGuardbandClip, pa.pDC->drawId);
+            RDTSC_BEGIN(pa.pDC->pContext->pBucketMgr, FEGuardbandClip, pa.pDC->drawId);
             // we have to clip tris, execute the clipper, which will also
             // call the binner
             ClipSimd(prim,
@@ -791,7 +791,7 @@ public:
                      primId,
                      viewportIdx,
                      rtIdx);
-            RDTSC_END(FEGuardbandClip, 1);
+            RDTSC_END(pa.pDC->pContext->pBucketMgr, FEGuardbandClip, 1);
         }
         else if (validMask)
         {
@@ -881,7 +881,7 @@ private:
         const uint32_t* pOffsets = reinterpret_cast<const uint32_t*>(&vOffsets);
         const float*    pSrc     = reinterpret_cast<const float*>(&vSrc);
         uint32_t        mask     = SIMD_T::movemask_ps(vMask);
-        DWORD           lane;
+        unsigned long  lane;
         while (_BitScanForward(&lane, mask))
         {
             mask &= ~(1 << lane);

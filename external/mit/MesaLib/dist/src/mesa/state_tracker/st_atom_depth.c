@@ -40,29 +40,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "cso_cache/cso_context.h"
-
+#include "main/samplerobj.h"
 #include "main/stencil.h"
-
-
-/**
- * Convert an OpenGL compare mode to a pipe tokens.
- */
-GLuint
-st_compare_func_to_pipe(GLenum func)
-{
-   /* Same values, just biased */
-   STATIC_ASSERT(PIPE_FUNC_NEVER == GL_NEVER - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_LESS == GL_LESS - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_GREATER == GL_GREATER - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
-   STATIC_ASSERT(PIPE_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
-   assert(func >= GL_NEVER);
-   assert(func <= GL_ALWAYS);
-   return func - GL_NEVER;
-}
 
 
 /**
@@ -106,21 +85,21 @@ st_update_depth_stencil_alpha(struct st_context *st)
 
    if (ctx->DrawBuffer->Visual.depthBits > 0) {
       if (ctx->Depth.Test) {
-         dsa->depth.enabled = 1;
-         dsa->depth.func = st_compare_func_to_pipe(ctx->Depth.Func);
-         if (dsa->depth.func != PIPE_FUNC_EQUAL)
-            dsa->depth.writemask = ctx->Depth.Mask;
+         dsa->depth_enabled = 1;
+         dsa->depth_func = func_to_gallium(ctx->Depth.Func);
+         if (dsa->depth_func != PIPE_FUNC_EQUAL)
+            dsa->depth_writemask = ctx->Depth.Mask;
       }
       if (ctx->Depth.BoundsTest) {
-         dsa->depth.bounds_test = 1;
-         dsa->depth.bounds_min = ctx->Depth.BoundsMin;
-         dsa->depth.bounds_max = ctx->Depth.BoundsMax;
+         dsa->depth_bounds_test = 1;
+         dsa->depth_bounds_min = ctx->Depth.BoundsMin;
+         dsa->depth_bounds_max = ctx->Depth.BoundsMax;
       }
    }
 
    if (ctx->Stencil.Enabled && ctx->DrawBuffer->Visual.stencilBits > 0) {
       dsa->stencil[0].enabled = 1;
-      dsa->stencil[0].func = st_compare_func_to_pipe(ctx->Stencil.Function[0]);
+      dsa->stencil[0].func = func_to_gallium(ctx->Stencil.Function[0]);
       dsa->stencil[0].fail_op = gl_stencil_op_to_pipe(ctx->Stencil.FailFunc[0]);
       dsa->stencil[0].zfail_op = gl_stencil_op_to_pipe(ctx->Stencil.ZFailFunc[0]);
       dsa->stencil[0].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[0]);
@@ -131,7 +110,7 @@ st_update_depth_stencil_alpha(struct st_context *st)
       if (_mesa_stencil_is_two_sided(ctx)) {
          const GLuint back = ctx->Stencil._BackFace;
          dsa->stencil[1].enabled = 1;
-         dsa->stencil[1].func = st_compare_func_to_pipe(ctx->Stencil.Function[back]);
+         dsa->stencil[1].func = func_to_gallium(ctx->Stencil.Function[back]);
          dsa->stencil[1].fail_op = gl_stencil_op_to_pipe(ctx->Stencil.FailFunc[back]);
          dsa->stencil[1].zfail_op = gl_stencil_op_to_pipe(ctx->Stencil.ZFailFunc[back]);
          dsa->stencil[1].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[back]);
@@ -149,13 +128,13 @@ st_update_depth_stencil_alpha(struct st_context *st)
       }
    }
 
-   if (ctx->Color.AlphaEnabled &&
+   if (ctx->Color.AlphaEnabled && !st->lower_alpha_test &&
        !(ctx->DrawBuffer->_IntegerBuffers & 0x1)) {
-      dsa->alpha.enabled = 1;
-      dsa->alpha.func = st_compare_func_to_pipe(ctx->Color.AlphaFunc);
-      dsa->alpha.ref_value = ctx->Color.AlphaRefUnclamped;
+      dsa->alpha_enabled = 1;
+      dsa->alpha_func = func_to_gallium(ctx->Color.AlphaFunc);
+      dsa->alpha_ref_value = ctx->Color.AlphaRefUnclamped;
    }
 
    cso_set_depth_stencil_alpha(st->cso_context, dsa);
-   cso_set_stencil_ref(st->cso_context, &sr);
+   cso_set_stencil_ref(st->cso_context, sr);
 }

@@ -52,6 +52,8 @@
 #include "draw_vs.h"
 #include "draw_pipe.h"
 
+#include "nir.h"
+#include "nir/nir_draw_helpers.h"
 
 /** Approx number of new tokens for instructions in aa_transform_inst() */
 #define NUM_NEW_TOKENS 200
@@ -364,6 +366,8 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    struct pipe_context *pipe = aapoint->stage.draw->pipe;
 
    aapoint_fs = *orig_fs; /* copy to init */
+
+   assert(aapoint_fs.type == PIPE_SHADER_IR_TGSI);
    aapoint_fs.tokens = tgsi_alloc_tokens(newLen);
    if (aapoint_fs.tokens == NULL)
       return FALSE;
@@ -404,6 +408,28 @@ fail:
    return FALSE;
 }
 
+static boolean
+generate_aapoint_fs_nir(struct aapoint_stage *aapoint)
+{
+   struct pipe_context *pipe = aapoint->stage.draw->pipe;
+   const struct pipe_shader_state *orig_fs = &aapoint->fs->state;
+   struct pipe_shader_state aapoint_fs;
+
+   aapoint_fs = *orig_fs; /* copy to init */
+   aapoint_fs.ir.nir = nir_shader_clone(NULL, orig_fs->ir.nir);
+   if (!aapoint_fs.ir.nir)
+      return FALSE;
+
+   nir_lower_aapoint_fs(aapoint_fs.ir.nir, &aapoint->fs->generic_attrib);
+   aapoint->fs->aapoint_fs = aapoint->driver_create_fs_state(pipe, &aapoint_fs);
+   if (aapoint->fs->aapoint_fs == NULL)
+      goto fail;
+
+   return TRUE;
+
+fail:
+   return FALSE;
+}
 
 /**
  * When we're about to draw our first AA point in a batch, this function is
@@ -415,9 +441,13 @@ bind_aapoint_fragment_shader(struct aapoint_stage *aapoint)
    struct draw_context *draw = aapoint->stage.draw;
    struct pipe_context *pipe = draw->pipe;
 
-   if (!aapoint->fs->aapoint_fs &&
-       !generate_aapoint_fs(aapoint))
-      return FALSE;
+   if (!aapoint->fs->aapoint_fs) {
+      if (aapoint->fs->state.type == PIPE_SHADER_IR_NIR) {
+         if (!generate_aapoint_fs_nir(aapoint))
+            return FALSE;
+      } else if (!generate_aapoint_fs(aapoint))
+         return FALSE;
+   }
 
    draw->suspend_flushing = TRUE;
    aapoint->driver_bind_fs_state(pipe, aapoint->fs->aapoint_fs);
@@ -548,7 +578,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    const struct pipe_rasterizer_state *rast = draw->rasterizer;
    void *r;
 
-   assert(draw->rasterizer->point_smooth);
+   assert(draw->rasterizer->point_smooth && !draw->rasterizer->multisample);
 
    if (draw->rasterizer->point_size <= 2.0)
       aapoint->radius = 1.0;
@@ -565,7 +595,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    draw->suspend_flushing = TRUE;
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
-   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   r = draw_get_rasterizer_no_cull(draw, rast);
    pipe->bind_rasterizer_state(pipe, r);
 
    draw->suspend_flushing = FALSE;
@@ -634,14 +664,17 @@ draw_aapoint_prepare_outputs(struct draw_context *draw,
    /* update vertex attrib info */
    aapoint->pos_slot = draw_current_shader_position_output(draw);
 
-   if (!rast->point_smooth)
+   if (!rast->point_smooth || rast->multisample)
       return;
 
-   /* allocate the extra post-transformed vertex attribute */
-   aapoint->tex_slot = draw_alloc_extra_vertex_attrib(draw,
-                                                      TGSI_SEMANTIC_GENERIC,
-                                                      aapoint->fs->generic_attrib);
-   assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
+   if (aapoint->fs && aapoint->fs->aapoint_fs) {
+      /* allocate the extra post-transformed vertex attribute */
+      aapoint->tex_slot = draw_alloc_extra_vertex_attrib(draw,
+                                                         TGSI_SEMANTIC_GENERIC,
+                                                         aapoint->fs->generic_attrib);
+      assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
+   } else
+      aapoint->tex_slot = -1;
 
    /* find psize slot in post-transform vertex */
    aapoint->psize_slot = -1;
@@ -699,7 +732,7 @@ aapoint_stage_from_pipe(struct pipe_context *pipe)
 
 /**
  * This function overrides the driver's create_fs_state() function and
- * will typically be called by the state tracker.
+ * will typically be called by the gallium frontend.
  */
 static void *
 aapoint_create_fs_state(struct pipe_context *pipe,
@@ -710,8 +743,11 @@ aapoint_create_fs_state(struct pipe_context *pipe,
    if (!aafs)
       return NULL;
 
-   aafs->state.tokens = tgsi_dup_tokens(fs->tokens);
-
+   aafs->state.type = fs->type;
+   if (fs->type == PIPE_SHADER_IR_TGSI)
+      aafs->state.tokens = tgsi_dup_tokens(fs->tokens);
+   else
+      aafs->state.ir.nir = nir_shader_clone(NULL, fs->ir.nir);
    /* pass-through */
    aafs->driver_fs = aapoint->driver_create_fs_state(pipe, fs);
 
@@ -744,7 +780,10 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
    if (aafs->aapoint_fs)
       aapoint->driver_delete_fs_state(pipe, aafs->aapoint_fs);
 
-   FREE((void*)aafs->state.tokens);
+   if (aafs->state.type == PIPE_SHADER_IR_TGSI)
+      FREE((void*)aafs->state.tokens);
+   else
+      ralloc_free(aafs->state.ir.nir);
 
    FREE(aafs);
 }

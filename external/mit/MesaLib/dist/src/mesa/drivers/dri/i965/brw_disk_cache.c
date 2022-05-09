@@ -21,10 +21,10 @@
  * IN THE SOFTWARE.
  */
 
-#include "compiler/blob.h"
 #include "compiler/glsl/ir_uniform.h"
 #include "compiler/glsl/shader_cache.h"
 #include "main/mtypes.h"
+#include "util/blob.h"
 #include "util/build_id.h"
 #include "util/debug.h"
 #include "util/disk_cache.h"
@@ -32,7 +32,7 @@
 #include "util/mesa-sha1.h"
 
 #include "compiler/brw_eu.h"
-#include "dev/gen_debug.h"
+#include "dev/intel_debug.h"
 
 #include "brw_context.h"
 #include "brw_program.h"
@@ -49,11 +49,11 @@ debug_enabled_for_stage(gl_shader_stage stage)
       DEBUG_VS, DEBUG_TCS, DEBUG_TES, DEBUG_GS, DEBUG_WM, DEBUG_CS,
    };
    assert((int)stage >= 0 && stage < ARRAY_SIZE(stage_debug_flags));
-   return (INTEL_DEBUG & stage_debug_flags[stage]) != 0;
+   return INTEL_DEBUG(stage_debug_flags[stage]);
 }
 
 static void
-gen_shader_sha1(struct gl_program *prog, gl_shader_stage stage,
+intel_shader_sha1(struct gl_program *prog, gl_shader_stage stage,
                 void *key, unsigned char *out_sha1)
 {
    char sha1_buf[41];
@@ -118,9 +118,9 @@ read_and_upload(struct brw_context *brw, struct disk_cache *cache,
     * lookup, so set the id to 0 for the sha1 hashing. program_string_id will
     * be set below.
     */
-   brw_prog_key_set_id(&prog_key, stage, 0);
+   prog_key.base.program_string_id = 0;
 
-   gen_shader_sha1(prog, stage, &prog_key, binary_sha1);
+   intel_shader_sha1(prog, stage, &prog_key, binary_sha1);
 
    size_t buffer_size;
    uint8_t *buffer = disk_cache_get(cache, binary_sha1, &buffer_size);
@@ -194,7 +194,7 @@ read_and_upload(struct brw_context *brw, struct disk_cache *cache,
       unreachable("Unsupported stage!");
    }
 
-   brw_prog_key_set_id(&prog_key, stage, brw_program(prog)->id);
+   prog_key.base.program_string_id = brw_program(prog)->id;
 
    brw_alloc_stage_scratch(brw, stage_state, prog_data->total_scratch);
 
@@ -207,8 +207,8 @@ read_and_upload(struct brw_context *brw, struct disk_cache *cache,
       fprintf(stderr, "Native code for %s %s shader %s from disk cache:\n",
               nir->info.label ? nir->info.label : "unnamed",
               _mesa_shader_stage_to_string(nir->info.stage), nir->info.name);
-      brw_disassemble(&brw->screen->devinfo, program, 0,
-                      prog_data->program_size, stderr);
+      brw_disassemble_with_labels(&brw->screen->devinfo, program, 0,
+                                  prog_data->program_size, stderr);
    }
 
    brw_upload_cache(&brw->cache, cache_id, &prog_key, brw_prog_key_size(stage),
@@ -233,6 +233,9 @@ brw_disk_cache_upload_program(struct brw_context *brw, gl_shader_stage stage)
 
    struct gl_program *prog = brw->ctx._Shader->CurrentProgram[stage];
    if (prog == NULL)
+      return false;
+
+   if (prog->sh.data->spirv)
       return false;
 
    if (brw->ctx._Shader->Flags & GLSL_CACHE_FALLBACK)
@@ -277,7 +280,7 @@ write_program_data(struct brw_context *brw, struct gl_program *prog,
 
    unsigned char sha1[20];
    char buf[41];
-   gen_shader_sha1(prog, stage, key, sha1);
+   intel_shader_sha1(prog, stage, key, sha1);
    _mesa_sha1_format(buf, sha1);
    if (brw->ctx._Shader->Flags & GLSL_CACHE_INFO) {
       fprintf(stderr, "putting binary in cache: %s\n", buf);
@@ -296,12 +299,19 @@ brw_disk_cache_write_render_programs(struct brw_context *brw)
    if (cache == NULL)
       return;
 
-   struct gl_program *prog =
-      brw->ctx._Shader->CurrentProgram[MESA_SHADER_VERTEX];
+   struct gl_program *prog;
+   gl_shader_stage stage;
+   for (stage = MESA_SHADER_VERTEX; stage <= MESA_SHADER_FRAGMENT; stage++) {
+      prog = brw->ctx._Shader->CurrentProgram[stage];
+      if (prog && prog->sh.data->spirv)
+         return;
+   }
+
+   prog = brw->ctx._Shader->CurrentProgram[MESA_SHADER_VERTEX];
    if (prog && !prog->program_written_to_cache) {
       struct brw_vs_prog_key vs_key;
       brw_vs_populate_key(brw, &vs_key);
-      vs_key.program_string_id = 0;
+      vs_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &vs_key, brw->vs.base.prog_data,
                          brw->vs.base.prog_offset, cache,
@@ -312,7 +322,7 @@ brw_disk_cache_write_render_programs(struct brw_context *brw)
    if (prog && !prog->program_written_to_cache) {
       struct brw_tcs_prog_key tcs_key;
       brw_tcs_populate_key(brw, &tcs_key);
-      tcs_key.program_string_id = 0;
+      tcs_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &tcs_key, brw->tcs.base.prog_data,
                          brw->tcs.base.prog_offset, cache,
@@ -323,7 +333,7 @@ brw_disk_cache_write_render_programs(struct brw_context *brw)
    if (prog && !prog->program_written_to_cache) {
       struct brw_tes_prog_key tes_key;
       brw_tes_populate_key(brw, &tes_key);
-      tes_key.program_string_id = 0;
+      tes_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &tes_key, brw->tes.base.prog_data,
                          brw->tes.base.prog_offset, cache,
@@ -334,7 +344,7 @@ brw_disk_cache_write_render_programs(struct brw_context *brw)
    if (prog && !prog->program_written_to_cache) {
       struct brw_gs_prog_key gs_key;
       brw_gs_populate_key(brw, &gs_key);
-      gs_key.program_string_id = 0;
+      gs_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &gs_key, brw->gs.base.prog_data,
                          brw->gs.base.prog_offset, cache,
@@ -345,7 +355,7 @@ brw_disk_cache_write_render_programs(struct brw_context *brw)
    if (prog && !prog->program_written_to_cache) {
       struct brw_wm_prog_key wm_key;
       brw_wm_populate_key(brw, &wm_key);
-      wm_key.program_string_id = 0;
+      wm_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &wm_key, brw->wm.base.prog_data,
                          brw->wm.base.prog_offset, cache,
@@ -362,10 +372,14 @@ brw_disk_cache_write_compute_program(struct brw_context *brw)
 
    struct gl_program *prog =
       brw->ctx._Shader->CurrentProgram[MESA_SHADER_COMPUTE];
+
+   if (prog && prog->sh.data->spirv)
+      return;
+
    if (prog && !prog->program_written_to_cache) {
       struct brw_cs_prog_key cs_key;
       brw_cs_populate_key(brw, &cs_key);
-      cs_key.program_string_id = 0;
+      cs_key.base.program_string_id = 0;
 
       write_program_data(brw, prog, &cs_key, brw->cs.base.prog_data,
                          brw->cs.base.prog_offset, cache,
@@ -374,15 +388,15 @@ brw_disk_cache_write_compute_program(struct brw_context *brw)
 }
 
 void
-brw_disk_cache_init(struct intel_screen *screen)
+brw_disk_cache_init(struct brw_screen *screen)
 {
 #ifdef ENABLE_SHADER_CACHE
-   if (INTEL_DEBUG & DEBUG_DISK_CACHE_DISABLE_MASK)
+   if (INTEL_DEBUG(DEBUG_DISK_CACHE_DISABLE_MASK))
       return;
 
    /* array length: print length + null char + 1 extra to verify it is unused */
    char renderer[11];
-   MAYBE_UNUSED int len = snprintf(renderer, sizeof(renderer), "i965_%04x",
+   ASSERTED int len = snprintf(renderer, sizeof(renderer), "i965_%04x",
                                    screen->deviceID);
    assert(len == sizeof(renderer) - 2);
 

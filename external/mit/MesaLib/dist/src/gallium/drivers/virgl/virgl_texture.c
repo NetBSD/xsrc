@@ -20,11 +20,12 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 
 #include "virgl_context.h"
+#include "virgl_encode.h"
 #include "virgl_resource.h"
 #include "virgl_screen.h"
 
@@ -38,10 +39,6 @@ static void virgl_copy_region_with_blit(struct pipe_context *pipe,
 {
    struct pipe_blit_info blit;
 
-   assert(src_box->width == dst_box->width);
-   assert(src_box->height == dst_box->height);
-   assert(src_box->depth == dst_box->depth);
-
    memset(&blit, 0, sizeof(blit));
    blit.src.resource = src;
    blit.src.format = src->format;
@@ -53,9 +50,9 @@ static void virgl_copy_region_with_blit(struct pipe_context *pipe,
    blit.dst.box.x = dst_box->x;
    blit.dst.box.y = dst_box->y;
    blit.dst.box.z = dst_box->z;
-   blit.dst.box.width = src_box->width;
-   blit.dst.box.height = src_box->height;
-   blit.dst.box.depth = src_box->depth;
+   blit.dst.box.width = dst_box->width;
+   blit.dst.box.height = dst_box->height;
+   blit.dst.box.depth = dst_box->depth;
    blit.mask = util_format_get_mask(src->format) &
       util_format_get_mask(dst->format);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
@@ -115,47 +112,6 @@ static void virgl_init_temp_resource_from_box(struct pipe_resource *res,
    }
 }
 
-static void *texture_transfer_map_plain(struct pipe_context *ctx,
-                                        struct pipe_resource *resource,
-                                        unsigned level,
-                                        unsigned usage,
-                                        const struct pipe_box *box,
-                                        struct pipe_transfer **transfer)
-{
-   struct virgl_context *vctx = virgl_context(ctx);
-   struct virgl_winsys *vws = virgl_screen(ctx->screen)->vws;
-   struct virgl_resource *vtex = virgl_resource(resource);
-   struct virgl_transfer *trans;
-   bool flush, readback;
-
-   trans = virgl_resource_create_transfer(&vctx->transfer_pool, resource,
-                                          &vtex->metadata, level, usage, box);
-   trans->resolve_transfer = NULL;
-
-   assert(resource->nr_samples <= 1);
-
-   flush = virgl_res_needs_flush(vctx, trans);
-   if (flush)
-      ctx->flush(ctx, NULL, 0);
-
-   readback = virgl_res_needs_readback(vctx, vtex, usage, level);
-   if (readback)
-      vws->transfer_get(vws, vtex->hw_res, box, trans->base.stride,
-                        trans->l_stride, trans->offset, level);
-
-   if (readback || flush)
-      vws->resource_wait(vws, vtex->hw_res);
-
-   trans->hw_res_map = vws->resource_map(vws, vtex->hw_res);
-   if (!trans->hw_res_map) {
-      virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);
-      return NULL;
-   }
-
-   *transfer = &trans->base;
-   return trans->hw_res_map + trans->offset;
-}
-
 static void *texture_transfer_map_resolve(struct pipe_context *ctx,
                                           struct pipe_resource *resource,
                                           unsigned level,
@@ -168,13 +124,13 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
    struct pipe_resource templ, *resolve_tmp;
    struct virgl_transfer *trans;
 
-   trans = virgl_resource_create_transfer(&vctx->transfer_pool, resource,
+   trans = virgl_resource_create_transfer(vctx, resource,
                                           &vtex->metadata, level, usage, box);
    if (!trans)
       return NULL;
 
    enum pipe_format fmt = resource->format;
-   if (!virgl_has_readback_format(ctx->screen, fmt)) {
+   if (!virgl_has_readback_format(ctx->screen, pipe_to_virgl_format(fmt))) {
       if (util_format_fits_8unorm(util_format_description(fmt)))
          fmt = PIPE_FORMAT_R8G8B8A8_UNORM;
       else if (util_format_is_pure_sint(fmt))
@@ -183,28 +139,38 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
          fmt = PIPE_FORMAT_R32G32B32A32_UINT;
       else
          fmt = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      assert(virgl_has_readback_format(ctx->screen, fmt));
+      assert(virgl_has_readback_format(ctx->screen, pipe_to_virgl_format(fmt)));
    }
 
-   virgl_init_temp_resource_from_box(&templ, resource, box, level, 0, fmt);
+   struct pipe_box dst_box = *box;
+   dst_box.x = dst_box.y = dst_box.z = 0;
+   if (usage & PIPE_MAP_READ) {
+      /* readback should scale to the block size */
+      dst_box.width = align(dst_box.width,
+            util_format_get_blockwidth(resource->format));
+      dst_box.height = align(dst_box.height,
+            util_format_get_blockheight(resource->format));
+   }
+
+   virgl_init_temp_resource_from_box(&templ, resource, &dst_box, level, 0, fmt);
 
    resolve_tmp = ctx->screen->resource_create(ctx->screen, &templ);
    if (!resolve_tmp)
       return NULL;
 
-   struct pipe_box dst_box = *box;
-   dst_box.x = dst_box.y = dst_box.z = 0;
-
-   if (usage & PIPE_TRANSFER_READ) {
+   if (usage & PIPE_MAP_READ) {
       virgl_copy_region_with_blit(ctx, resolve_tmp, 0, &dst_box, resource,
                                   level, box);
       ctx->flush(ctx, NULL, 0);
    }
 
-   void *ptr = texture_transfer_map_plain(ctx, resolve_tmp, 0, usage, &dst_box,
-                                          &trans->resolve_transfer);
+   void *ptr = virgl_resource_transfer_map(ctx, resolve_tmp, 0, usage, &dst_box,
+                                           &trans->resolve_transfer);
    if (!ptr)
       goto fail;
+
+   /* trans->resolve_transfer owns resolve_tmp now */
+   pipe_resource_reference(&resolve_tmp, NULL);
 
    *transfer = &trans->base;
    if (fmt == resource->format) {
@@ -212,15 +178,15 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
       trans->base.layer_stride = trans->resolve_transfer->layer_stride;
       return ptr;
    } else {
-      if (usage & PIPE_TRANSFER_READ) {
+      if (usage & PIPE_MAP_READ) {
          struct virgl_winsys *vws = virgl_screen(ctx->screen)->vws;
          void *src = ptr;
          ptr = vws->resource_map(vws, vtex->hw_res);
          if (!ptr)
             goto fail;
 
-          if (!util_format_translate_3d(resource->format,
-                                       ptr,
+         if (!util_format_translate_3d(resource->format,
+                                       ptr + vtex->metadata.level_offset[level],
                                        trans->base.stride,
                                        trans->base.layer_stride,
                                        box->x, box->y, box->z,
@@ -229,7 +195,9 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
                                        trans->resolve_transfer->stride,
                                        trans->resolve_transfer->layer_stride,
                                        0, 0, 0,
-                                       box->width, box->height, box->depth)) {
+                                       dst_box.width,
+                                       dst_box.height,
+                                       dst_box.depth)) {
             debug_printf("failed to translate format %s to %s\n",
                          util_format_short_name(fmt),
                          util_format_short_name(resource->format));
@@ -237,7 +205,7 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
          }
       }
 
-      if ((usage & PIPE_TRANSFER_WRITE) == 0)
+      if ((usage & PIPE_MAP_WRITE) == 0)
          pipe_resource_reference(&trans->resolve_transfer->resource, NULL);
 
       return ptr + trans->offset;
@@ -245,7 +213,7 @@ static void *texture_transfer_map_resolve(struct pipe_context *ctx,
 
 fail:
    pipe_resource_reference(&resolve_tmp, NULL);
-   virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);
+   virgl_resource_destroy_transfer(vctx, trans);
    return NULL;
 }
 
@@ -255,25 +223,25 @@ static bool needs_resolve(struct pipe_screen *screen,
    if (resource->nr_samples > 1)
       return true;
 
-   if (usage & PIPE_TRANSFER_READ)
+   if (usage & PIPE_MAP_READ)
       return !util_format_is_depth_or_stencil(resource->format) &&
-             !virgl_has_readback_format(screen, resource->format);
+             !virgl_has_readback_format(screen, pipe_to_virgl_format(resource->format));
 
    return false;
 }
 
-static void *virgl_texture_transfer_map(struct pipe_context *ctx,
-                                        struct pipe_resource *resource,
-                                        unsigned level,
-                                        unsigned usage,
-                                        const struct pipe_box *box,
-                                        struct pipe_transfer **transfer)
+void *virgl_texture_transfer_map(struct pipe_context *ctx,
+                                 struct pipe_resource *resource,
+                                 unsigned level,
+                                 unsigned usage,
+                                 const struct pipe_box *box,
+                                 struct pipe_transfer **transfer)
 {
    if (needs_resolve(ctx->screen, resource, usage))
       return texture_transfer_map_resolve(ctx, resource, level, usage, box,
                                           transfer);
 
-   return texture_transfer_map_plain(ctx, resource, level, usage, box, transfer);
+   return virgl_resource_transfer_map(ctx, resource, level, usage, box, transfer);
 }
 
 static void flush_data(struct pipe_context *ctx,
@@ -281,20 +249,20 @@ static void flush_data(struct pipe_context *ctx,
                        const struct pipe_box *box)
 {
    struct virgl_winsys *vws = virgl_screen(ctx->screen)->vws;
-   vws->transfer_put(vws, virgl_resource(trans->base.resource)->hw_res, box,
+   vws->transfer_put(vws, trans->hw_res, box,
                      trans->base.stride, trans->l_stride, trans->offset,
                      trans->base.level);
 }
 
-static void virgl_texture_transfer_unmap(struct pipe_context *ctx,
-                                         struct pipe_transfer *transfer)
+void virgl_texture_transfer_unmap(struct pipe_context *ctx,
+                                  struct pipe_transfer *transfer)
 {
    struct virgl_context *vctx = virgl_context(ctx);
    struct virgl_transfer *trans = virgl_transfer(transfer);
    bool queue_unmap = false;
 
-   if (transfer->usage & PIPE_TRANSFER_WRITE &&
-       (transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT) == 0) {
+   if (transfer->usage & PIPE_MAP_WRITE &&
+       (transfer->usage & PIPE_MAP_FLUSH_EXPLICIT) == 0) {
 
       if (trans->resolve_transfer && (trans->base.resource->format ==
           trans->resolve_transfer->resource->format)) {
@@ -318,27 +286,22 @@ static void virgl_texture_transfer_unmap(struct pipe_context *ctx,
    }
 
    if (trans->resolve_transfer) {
-      pipe_resource_reference(&trans->resolve_transfer->resource, NULL);
-      virgl_resource_destroy_transfer(&vctx->transfer_pool,
+      virgl_resource_destroy_transfer(vctx,
                                       virgl_transfer(trans->resolve_transfer));
    }
 
-   if (queue_unmap)
-      virgl_transfer_queue_unmap(&vctx->queue, trans);
-   else
-      virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);
+   if (queue_unmap) {
+      if (trans->copy_src_hw_res) {
+         virgl_encode_copy_transfer(vctx, trans);
+         virgl_resource_destroy_transfer(vctx, trans);
+      } else {
+         virgl_transfer_queue_unmap(&vctx->queue, trans);
+      }
+   } else {
+      virgl_resource_destroy_transfer(vctx, trans);
+   }
 }
-
-static const struct u_resource_vtbl virgl_texture_vtbl =
-{
-   virgl_resource_get_handle,           /* get_handle */
-   virgl_resource_destroy,              /* resource_destroy */
-   virgl_texture_transfer_map,          /* transfer_map */
-   NULL,                                /* transfer_flush_region */
-   virgl_texture_transfer_unmap,        /* transfer_unmap */
-};
 
 void virgl_texture_init(struct virgl_resource *res)
 {
-   res->u.vtbl = &virgl_texture_vtbl;
 }

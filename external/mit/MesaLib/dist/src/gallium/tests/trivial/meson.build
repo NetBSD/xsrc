@@ -22,9 +22,9 @@ foreach t : ['compute', 'tri', 'quad-tex']
   executable(
     t,
     '@0@.c'.format(t),
-    include_directories : inc_common,
-    link_with : [libmesa_util, libgallium, libpipe_loader_dynamic],
-    dependencies : dep_thread,
+    include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
+    link_with : [libgallium, libpipe_loader_dynamic],
+    dependencies : idep_mesautil,
     install : false,
   )
 endforeach

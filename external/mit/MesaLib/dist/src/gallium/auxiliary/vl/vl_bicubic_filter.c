@@ -201,10 +201,11 @@ create_frag_shader(struct vl_bicubic_filter *filter, unsigned video_width,
 
    ureg_FLR(shader, ureg_writemask(t_array[22], TGSI_WRITEMASK_XY),
             ureg_src(t_array[22]));
-   ureg_DIV(shader, ureg_writemask(t_array[22], TGSI_WRITEMASK_XY),
-            ureg_src(t_array[22]), ureg_imm2f(shader, video_width, video_height));
-   ureg_ADD(shader, ureg_writemask(t_array[22], TGSI_WRITEMASK_XY),
-            ureg_src(t_array[22]), half_pixel);
+
+   ureg_MAD(shader, ureg_writemask(t_array[22], TGSI_WRITEMASK_XY),
+            ureg_src(t_array[22]),
+            ureg_imm2f(shader, 1.0f / video_width, 1.0f / video_height),
+            half_pixel);
 
    /*
     * t_array[0..*] = vtex + offset[0..*]
@@ -421,8 +422,12 @@ vl_bicubic_filter_render(struct vl_bicubic_filter *filter,
       viewport.scale[1] = dst->height;
    }
    viewport.scale[2] = 1;
+   viewport.swizzle_x = PIPE_VIEWPORT_SWIZZLE_POSITIVE_X;
+   viewport.swizzle_y = PIPE_VIEWPORT_SWIZZLE_POSITIVE_Y;
+   viewport.swizzle_z = PIPE_VIEWPORT_SWIZZLE_POSITIVE_Z;
+   viewport.swizzle_w = PIPE_VIEWPORT_SWIZZLE_POSITIVE_W;
 
-   struct pipe_constant_buffer cb = {};
+   struct pipe_constant_buffer cb = {0};
    float *ptr = NULL;
 
    u_upload_alloc(filter->pipe->const_uploader, 0, 2 * sizeof(float), 256,
@@ -445,18 +450,18 @@ vl_bicubic_filter_render(struct vl_bicubic_filter *filter,
    filter->pipe->clear_render_target(filter->pipe, dst, &clear_color,
                                      0, 0, dst->width, dst->height, false);
    filter->pipe->set_constant_buffer(filter->pipe, PIPE_SHADER_FRAGMENT,
-                                     0, &cb);
+                                     0, false, &cb);
    filter->pipe->bind_rasterizer_state(filter->pipe, filter->rs_state);
    filter->pipe->bind_blend_state(filter->pipe, filter->blend);
    filter->pipe->bind_sampler_states(filter->pipe, PIPE_SHADER_FRAGMENT,
                                      0, 1, &filter->sampler);
    filter->pipe->set_sampler_views(filter->pipe, PIPE_SHADER_FRAGMENT,
-                                   0, 1, &src);
+                                   0, 1, 0, false, &src);
    filter->pipe->bind_vs_state(filter->pipe, filter->vs);
    filter->pipe->bind_fs_state(filter->pipe, filter->fs);
    filter->pipe->set_framebuffer_state(filter->pipe, &fb_state);
    filter->pipe->set_viewport_states(filter->pipe, 0, 1, &viewport);
-   filter->pipe->set_vertex_buffers(filter->pipe, 0, 1, &filter->quad);
+   filter->pipe->set_vertex_buffers(filter->pipe, 0, 1, 0, false, &filter->quad);
    filter->pipe->bind_vertex_elements_state(filter->pipe, filter->ves);
 
    util_draw_arrays(filter->pipe, PIPE_PRIM_QUADS, 0, 4);

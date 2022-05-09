@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/imports.h"
+
 #include "main/mtypes.h"
 
 #include "main/externalobjects.h"
@@ -31,9 +31,13 @@
 #include "st_cb_memoryobjects.h"
 #include "st_util.h"
 
-#include "state_tracker/drm_driver.h"
+#include "frontend/drm_driver.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
+
+#ifdef HAVE_LIBDRM
+#include "drm-uapi/drm_fourcc.h"
+#endif
 
 static struct gl_memory_object *
 st_memoryobj_alloc(struct gl_context *ctx, GLuint name)
@@ -50,6 +54,12 @@ static void
 st_memoryobj_free(struct gl_context *ctx,
                   struct gl_memory_object *obj)
 {
+   struct st_memory_object *st_obj = st_memory_object(obj);
+   struct st_context *st = st_context(ctx);
+   struct pipe_screen *screen = st->screen;
+
+   if (st_obj->memory)
+      screen->memobj_destroy(screen, st_obj->memory);
    _mesa_delete_memory_object(ctx, obj);
 }
 
@@ -62,15 +72,14 @@ st_import_memoryobj_fd(struct gl_context *ctx,
 {
    struct st_memory_object *st_obj = st_memory_object(obj);
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct winsys_handle whandle;
-
-   whandle.type = WINSYS_HANDLE_TYPE_FD;
-   whandle.handle = fd;
-   whandle.offset = 0;
-   whandle.layer = 0;
-   whandle.stride = 0;
+   struct pipe_screen *screen = st->screen;
+   struct winsys_handle whandle = {
+      .type = WINSYS_HANDLE_TYPE_FD,
+      .handle = fd,
+#ifdef HAVE_LIBDRM
+      .modifier = DRM_FORMAT_MOD_INVALID,
+#endif
+   };
 
    st_obj->memory = screen->memobj_create_from_handle(screen,
                                                       &whandle,

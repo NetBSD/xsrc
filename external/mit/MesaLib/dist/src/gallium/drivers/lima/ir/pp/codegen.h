@@ -111,7 +111,8 @@ typedef enum {
 typedef struct __attribute__((__packed__)) {
    unsigned                  lod_bias     :  6;
    unsigned                  index_offset :  6;
-   unsigned                  unknown_0    :  6; /* = 000000 */
+   unsigned                  unknown_0    :  5; /* = 00000 */
+   bool                      explicit_lod :  1;
    bool                      lod_bias_en  :  1;
    unsigned                  unknown_1    :  5; /* = 00000 */
    ppir_codegen_sampler_type type         :  5;
@@ -345,7 +346,7 @@ typedef union __attribute__((__packed__)) {
       bool     cond_lt     :  1;
       unsigned unknown_1   : 22; /* = 0 0000 0000 0000 0000 0000 0 */
       signed   target      : 27;
-      unsigned unknown_2   :  5; /* = 0 0011 */
+      unsigned next_count  :  5;
    } branch;
    struct __attribute__((__packed__)) {
       unsigned word0 : 32;
@@ -354,6 +355,6 @@ typedef union __attribute__((__packed__)) {
    } discard;
 } ppir_codegen_field_branch;
 
-void ppir_disassemble_instr(uint32_t *instr, unsigned offset);
+void ppir_disassemble_instr(uint32_t *instr, unsigned offset, FILE *fp);
 
 #endif

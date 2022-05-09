@@ -44,6 +44,7 @@
 #include "builtin_functions.h"
 #include "opt_add_neg_to_sub.h"
 #include "main/mtypes.h"
+#include "program/program.h"
 
 class dead_variable_visitor : public ir_hierarchical_visitor {
 public:
@@ -98,32 +99,21 @@ private:
 };
 
 static void
-init_gl_program(struct gl_program *prog, bool is_arb_asm)
+init_gl_program(struct gl_program *prog, bool is_arb_asm, gl_shader_stage stage)
 {
    prog->RefCount = 1;
    prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
-   prog->is_arb_asm = is_arb_asm;
+   prog->info.is_arb_asm = is_arb_asm;
+   prog->info.stage = stage;
 }
 
 static struct gl_program *
-new_program(UNUSED struct gl_context *ctx, GLenum target,
+new_program(UNUSED struct gl_context *ctx, gl_shader_stage stage,
             UNUSED GLuint id, bool is_arb_asm)
 {
-   switch (target) {
-   case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
-   case GL_GEOMETRY_PROGRAM_NV:
-   case GL_TESS_CONTROL_PROGRAM_NV:
-   case GL_TESS_EVALUATION_PROGRAM_NV:
-   case GL_FRAGMENT_PROGRAM_ARB:
-   case GL_COMPUTE_PROGRAM_NV: {
-      struct gl_program *prog = rzalloc(NULL, struct gl_program);
-      init_gl_program(prog, is_arb_asm);
-      return prog;
-   }
-   default:
-      printf("bad target in new_program\n");
-      return NULL;
-   }
+   struct gl_program *prog = rzalloc(NULL, struct gl_program);
+   init_gl_program(prog, is_arb_asm, stage);
+   return prog;
 }
 
 static const struct standalone_options *options;
@@ -132,7 +122,7 @@ static void
 initialize_context(struct gl_context *ctx, gl_api api)
 {
    initialize_context_to_defaults(ctx, api);
-   glsl_type_singleton_init_or_ref();
+   _mesa_glsl_builtin_functions_init_or_ref();
 
    /* The standalone compiler needs to claim support for almost
     * everything in order to compile the built-in functions.
@@ -390,15 +380,12 @@ load_text_file(void *ctx, const char *file_name)
 static void
 compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 {
-   struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
-
    _mesa_glsl_compile_shader(ctx, shader, options->dump_ast,
                              options->dump_hir, true);
 
    /* Print out the resulting IR */
-   if (!state->error && options->dump_lir) {
-      _mesa_print_ir(stdout, shader->ir, state);
+   if (shader->CompileStatus == COMPILE_SUCCESS && options->dump_lir) {
+      _mesa_print_ir(stdout, shader->ir, NULL);
    }
 
    return;
@@ -442,6 +429,18 @@ standalone_compile_shader(const struct standalone_options *_options,
       initialize_context(ctx, API_OPENGLES2);
    } else {
       initialize_context(ctx, options->glsl_version > 130 ? API_OPENGL_CORE : API_OPENGL_COMPAT);
+   }
+
+   if (options->lower_precision) {
+      for (unsigned i = MESA_SHADER_VERTEX; i <= MESA_SHADER_COMPUTE; i++) {
+         struct gl_shader_compiler_options *options =
+            &ctx->Const.ShaderCompilerOptions[i];
+         options->LowerPrecisionFloat16 = true;
+         options->LowerPrecisionInt16 = true;
+         options->LowerPrecisionDerivatives = true;
+         options->LowerPrecisionConstants = true;
+         options->LowerPrecisionFloat16Uniforms = true;
+      }
    }
 
    struct gl_shader_program *whole_program;
@@ -598,7 +597,7 @@ standalone_compile_shader(const struct standalone_options *_options,
 fail:
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (whole_program->_LinkedShaders[i])
-         ralloc_free(whole_program->_LinkedShaders[i]->Program);
+         _mesa_delete_linked_shader(ctx, whole_program->_LinkedShaders[i]);
    }
 
    ralloc_free(whole_program);
@@ -610,14 +609,14 @@ standalone_compiler_cleanup(struct gl_shader_program *whole_program)
 {
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (whole_program->_LinkedShaders[i])
-         ralloc_free(whole_program->_LinkedShaders[i]->Program);
+         _mesa_delete_linked_shader(NULL, whole_program->_LinkedShaders[i]);
    }
 
    delete whole_program->AttributeBindings;
    delete whole_program->FragDataBindings;
    delete whole_program->FragDataIndexBindings;
+   delete whole_program->UniformHash;
 
    ralloc_free(whole_program);
-   glsl_type_singleton_decref();
-   _mesa_glsl_release_builtin_functions();
+   _mesa_glsl_builtin_functions_decref();
 }

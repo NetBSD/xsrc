@@ -50,10 +50,12 @@
 #include "st_format.h"
 #include "st_cb_flush.h"
 
-#include "state_tracker/vdpau_interop.h"
-#include "state_tracker/vdpau_dmabuf.h"
-#include "state_tracker/vdpau_funcs.h"
-#include "state_tracker/drm_driver.h"
+#include "frontend/vdpau_interop.h"
+#include "frontend/vdpau_dmabuf.h"
+#include "frontend/vdpau_funcs.h"
+#include "frontend/drm_driver.h"
+
+#include "drm-uapi/drm_fourcc.h"
 
 static struct pipe_resource *
 st_vdpau_video_surface_gallium(struct gl_context *ctx, const void *vdpSurface,
@@ -129,11 +131,12 @@ st_vdpau_resource_from_description(struct gl_context *ctx,
    memset(&whandle, 0, sizeof(whandle));
    whandle.type = WINSYS_HANDLE_TYPE_FD;
    whandle.handle = desc->handle;
+   whandle.modifier = DRM_FORMAT_MOD_INVALID;
    whandle.offset = desc->offset;
    whandle.stride = desc->stride;
 
-   res = st->pipe->screen->resource_from_handle(st->pipe->screen, &templ, &whandle,
-						PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE);
+   res = st->screen->resource_from_handle(st->screen, &templ, &whandle,
+                                          PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE);
    close(desc->handle);
 
    return res;
@@ -185,12 +188,13 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
                      const void *vdpSurface, GLuint index)
 {
    struct st_context *st = st_context(ctx);
+   struct pipe_screen *screen = st->screen;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
 
    struct pipe_resource *res;
    mesa_format texFormat;
-   uint layer_override = 0;
+   int layer_override = -1;
 
    if (output) {
       res = st_vdpau_output_surface_dma_buf(ctx, vdpSurface);
@@ -207,15 +211,27 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
       }
    }
 
-   if (!res) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "VDPAUMapSurfacesNV");
-      return;
+   /* If the resource is from a different screen, try re-importing it */
+   if (res && res->screen != screen) {
+      struct pipe_resource *new_res = NULL;
+      struct winsys_handle whandle = { .type = WINSYS_HANDLE_TYPE_FD };
+      unsigned usage = PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE;
+
+      if (screen->get_param(screen, PIPE_CAP_DMABUF) &&
+          res->screen->get_param(res->screen, PIPE_CAP_DMABUF) &&
+          res->screen->resource_get_handle(res->screen, NULL, res, &whandle,
+                                           usage)) {
+         whandle.modifier = DRM_FORMAT_MOD_INVALID;
+         new_res = screen->resource_from_handle(screen, res, &whandle, usage);
+         close(whandle.handle);
+      }
+
+      pipe_resource_reference(&res, NULL);
+      res = new_res;
    }
 
-   /* do we have different screen objects ? */
-   if (res->screen != st->pipe->screen) {
+   if (!res) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "VDPAUMapSurfacesNV");
-      pipe_resource_reference(&res, NULL);
       return;
    }
 
@@ -236,7 +252,7 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
    pipe_resource_reference(&stImage->pt, res);
 
    stObj->surface_format = res->format;
-   stObj->level_override = 0;
+   stObj->level_override = -1;
    stObj->layer_override = layer_override;
 
    _mesa_dirty_texobj(ctx, texObj);
@@ -257,8 +273,8 @@ st_vdpau_unmap_surface(struct gl_context *ctx, GLenum target, GLenum access,
    st_texture_release_all_sampler_views(st, stObj);
    pipe_resource_reference(&stImage->pt, NULL);
 
-   stObj->level_override = 0;
-   stObj->layer_override = 0;
+   stObj->level_override = -1;
+   stObj->layer_override = -1;
 
    _mesa_dirty_texobj(ctx, texObj);
 

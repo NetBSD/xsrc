@@ -38,6 +38,7 @@
 #include "lp_setup.h"
 #include "lp_query.h"
 #include "lp_debug.h"
+#include "lp_state.h"
 
 
 /**
@@ -47,6 +48,7 @@
 void
 llvmpipe_clear(struct pipe_context *pipe, 
                unsigned buffers,
+               const struct pipe_scissor_state *scissor_state,
                const union pipe_color_union *color,
                double depth,
                unsigned stencil)
@@ -55,6 +57,8 @@ llvmpipe_clear(struct pipe_context *pipe,
 
    if (!llvmpipe_check_render_cond(llvmpipe))
       return;
+
+   llvmpipe_update_derived_clear(llvmpipe);
 
    if (LP_PERF & PERF_NO_DEPTH)
       buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;

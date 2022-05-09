@@ -33,7 +33,7 @@
 #include "util/u_pack_color.h"
 #include "util/u_string.h"
 #include "util/u_thread.h"
-
+#include "util/u_memset.h"
 #include "util/os_time.h"
 
 #include "lp_scene_queue.h"
@@ -56,6 +56,10 @@ const struct lp_rast_state *jit_state = NULL;
 const struct lp_rasterizer_task *jit_task = NULL;
 #endif
 
+const float lp_sample_pos_4x[4][2] = { { 0.375, 0.125 },
+                                       { 0.875, 0.375 },
+                                       { 0.125, 0.625 },
+                                       { 0.625, 0.875 } };
 
 /**
  * Begin rasterizing a scene.
@@ -152,18 +156,20 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
    LP_DBG(DEBUG_RAST, "%s clear value (target format %d) raw 0x%x,0x%x,0x%x,0x%x\n",
           __FUNCTION__, format, uc.ui[0], uc.ui[1], uc.ui[2], uc.ui[3]);
 
-
-   util_fill_box(scene->cbufs[cbuf].map,
-                 format,
-                 scene->cbufs[cbuf].stride,
-                 scene->cbufs[cbuf].layer_stride,
-                 task->x,
-                 task->y,
-                 0,
-                 task->width,
-                 task->height,
-                 scene->fb_max_layer + 1,
-                 &uc);
+   for (unsigned s = 0; s < scene->cbufs[cbuf].nr_samples; s++) {
+      void *map = (char *)scene->cbufs[cbuf].map + scene->cbufs[cbuf].sample_stride * s;
+      util_fill_box(map,
+                    format,
+                    scene->cbufs[cbuf].stride,
+                    scene->cbufs[cbuf].layer_stride,
+                    task->x,
+                    task->y,
+                    0,
+                    task->width,
+                    task->height,
+                    scene->fb_max_layer + 1,
+                    &uc);
+   }
 
    /* this will increase for each rb which probably doesn't mean much */
    LP_COUNT(nr_color_tile_clear);
@@ -200,86 +206,89 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    if (scene->fb.zsbuf) {
       unsigned layer;
-      uint8_t *dst_layer = task->depth_tile;
-      block_size = util_format_get_blocksize(scene->fb.zsbuf->format);
 
-      clear_value &= clear_mask;
+      for (unsigned s = 0; s < scene->zsbuf.nr_samples; s++) {
+         uint8_t *dst_layer = task->depth_tile + (s * scene->zsbuf.sample_stride);
+         block_size = util_format_get_blocksize(scene->fb.zsbuf->format);
 
-      for (layer = 0; layer <= scene->fb_max_layer; layer++) {
-         dst = dst_layer;
+         clear_value &= clear_mask;
 
-         switch (block_size) {
-         case 1:
-            assert(clear_mask == 0xff);
-            memset(dst, (uint8_t) clear_value, height * width);
-            break;
-         case 2:
-            if (clear_mask == 0xffff) {
+         for (layer = 0; layer <= scene->fb_max_layer; layer++) {
+            dst = dst_layer;
+
+            switch (block_size) {
+            case 1:
+               assert(clear_mask == 0xff);
                for (i = 0; i < height; i++) {
-                  uint16_t *row = (uint16_t *)dst;
-                  for (j = 0; j < width; j++)
-                     *row++ = (uint16_t) clear_value;
+                  uint8_t *row = (uint8_t *)dst;
+                  memset(row, (uint8_t) clear_value, width);
                   dst += dst_stride;
                }
-            }
-            else {
-               for (i = 0; i < height; i++) {
-                  uint16_t *row = (uint16_t *)dst;
-                  for (j = 0; j < width; j++) {
-                     uint16_t tmp = ~clear_mask & *row;
-                     *row++ = clear_value | tmp;
+               break;
+            case 2:
+               if (clear_mask == 0xffff) {
+                  for (i = 0; i < height; i++) {
+                     uint16_t *row = (uint16_t *)dst;
+                     for (j = 0; j < width; j++)
+                        *row++ = (uint16_t) clear_value;
+                     dst += dst_stride;
                   }
-                  dst += dst_stride;
                }
-            }
-            break;
-         case 4:
-            if (clear_mask == 0xffffffff) {
-               for (i = 0; i < height; i++) {
-                  uint32_t *row = (uint32_t *)dst;
-                  for (j = 0; j < width; j++)
-                     *row++ = clear_value;
-                  dst += dst_stride;
-               }
-            }
-            else {
-               for (i = 0; i < height; i++) {
-                  uint32_t *row = (uint32_t *)dst;
-                  for (j = 0; j < width; j++) {
-                     uint32_t tmp = ~clear_mask & *row;
-                     *row++ = clear_value | tmp;
+               else {
+                  for (i = 0; i < height; i++) {
+                     uint16_t *row = (uint16_t *)dst;
+                     for (j = 0; j < width; j++) {
+                        uint16_t tmp = ~clear_mask & *row;
+                        *row++ = clear_value | tmp;
+                     }
+                     dst += dst_stride;
                   }
-                  dst += dst_stride;
                }
-            }
-            break;
-         case 8:
-            clear_value64 &= clear_mask64;
-            if (clear_mask64 == 0xffffffffffULL) {
-               for (i = 0; i < height; i++) {
-                  uint64_t *row = (uint64_t *)dst;
-                  for (j = 0; j < width; j++)
-                     *row++ = clear_value64;
-                  dst += dst_stride;
-               }
-            }
-            else {
-               for (i = 0; i < height; i++) {
-                  uint64_t *row = (uint64_t *)dst;
-                  for (j = 0; j < width; j++) {
-                     uint64_t tmp = ~clear_mask64 & *row;
-                     *row++ = clear_value64 | tmp;
+               break;
+            case 4:
+               if (clear_mask == 0xffffffff) {
+                  for (i = 0; i < height; i++) {
+                     util_memset32(dst, clear_value, width);
+                     dst += dst_stride;
                   }
-                  dst += dst_stride;
                }
-            }
-            break;
+               else {
+                  for (i = 0; i < height; i++) {
+                     uint32_t *row = (uint32_t *)dst;
+                     for (j = 0; j < width; j++) {
+                        uint32_t tmp = ~clear_mask & *row;
+                        *row++ = clear_value | tmp;
+                     }
+                     dst += dst_stride;
+                  }
+               }
+               break;
+            case 8:
+               clear_value64 &= clear_mask64;
+               if (clear_mask64 == 0xffffffffffULL) {
+                  for (i = 0; i < height; i++) {
+                     util_memset64(dst, clear_value64, width);
+                     dst += dst_stride;
+                  }
+               }
+               else {
+                  for (i = 0; i < height; i++) {
+                     uint64_t *row = (uint64_t *)dst;
+                     for (j = 0; j < width; j++) {
+                        uint64_t tmp = ~clear_mask64 & *row;
+                        *row++ = clear_value64 | tmp;
+                     }
+                     dst += dst_stride;
+                  }
+               }
+               break;
 
-         default:
-            assert(0);
-            break;
+            default:
+               assert(0);
+               break;
+            }
+            dst_layer += scene->zsbuf.layer_stride;
          }
-         dst_layer += scene->zsbuf.layer_stride;
       }
    }
 }
@@ -321,19 +330,23 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
       for (x = 0; x < task->width; x += 4) {
          uint8_t *color[PIPE_MAX_COLOR_BUFS];
          unsigned stride[PIPE_MAX_COLOR_BUFS];
+         unsigned sample_stride[PIPE_MAX_COLOR_BUFS];
          uint8_t *depth = NULL;
          unsigned depth_stride = 0;
+         unsigned depth_sample_stride = 0;
          unsigned i;
 
          /* color buffer */
          for (i = 0; i < scene->fb.nr_cbufs; i++){
             if (scene->fb.cbufs[i]) {
                stride[i] = scene->cbufs[i].stride;
+               sample_stride[i] = scene->cbufs[i].sample_stride;
                color[i] = lp_rast_get_color_block_pointer(task, i, tile_x + x,
-                                                          tile_y + y, inputs->layer);
+                                                          tile_y + y, inputs->layer + inputs->view_index);
             }
             else {
                stride[i] = 0;
+               sample_stride[i] = 0;
                color[i] = NULL;
             }
          }
@@ -341,12 +354,18 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          /* depth buffer */
          if (scene->zsbuf.map) {
             depth = lp_rast_get_depth_block_pointer(task, tile_x + x,
-                                                    tile_y + y, inputs->layer);
+                                                    tile_y + y, inputs->layer + inputs->view_index);
             depth_stride = scene->zsbuf.stride;
+            depth_sample_stride = scene->zsbuf.sample_stride;
          }
+
+         uint64_t mask = 0;
+         for (unsigned i = 0; i < scene->fb_max_samples; i++)
+            mask |= (uint64_t)(0xffff) << (16 * i);
 
          /* Propagate non-interpolated raster state. */
          task->thread_data.raster_state.viewport_index = inputs->viewport_index;
+         task->thread_data.raster_state.view_index = inputs->view_index;
 
          /* run shader on 4x4 block */
          BEGIN_JIT_CALL(state, task);
@@ -358,10 +377,12 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                             GET_DADY(inputs),
                                             color,
                                             depth,
-                                            0xffff,
+                                            mask,
                                             &task->thread_data,
                                             stride,
-                                            depth_stride);
+                                            depth_stride,
+                                            sample_stride,
+                                            depth_sample_stride);
          END_JIT_CALL();
       }
    }
@@ -395,18 +416,20 @@ lp_rast_shade_tile_opaque(struct lp_rasterizer_task *task,
  * \param y  Y position of quad in window coords
  */
 void
-lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
-                         const struct lp_rast_shader_inputs *inputs,
-                         unsigned x, unsigned y,
-                         unsigned mask)
+lp_rast_shade_quads_mask_sample(struct lp_rasterizer_task *task,
+                                const struct lp_rast_shader_inputs *inputs,
+                                unsigned x, unsigned y,
+                                uint64_t mask)
 {
    const struct lp_rast_state *state = task->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const struct lp_scene *scene = task->scene;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    unsigned stride[PIPE_MAX_COLOR_BUFS];
+   unsigned sample_stride[PIPE_MAX_COLOR_BUFS];
    uint8_t *depth = NULL;
    unsigned depth_stride = 0;
+   unsigned depth_sample_stride = 0;
    unsigned i;
 
    assert(state);
@@ -424,11 +447,13 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       if (scene->fb.cbufs[i]) {
          stride[i] = scene->cbufs[i].stride;
+         sample_stride[i] = scene->cbufs[i].sample_stride;
          color[i] = lp_rast_get_color_block_pointer(task, i, x, y,
-                                                    inputs->layer);
+                                                    inputs->layer + inputs->view_index);
       }
       else {
          stride[i] = 0;
+         sample_stride[i] = 0;
          color[i] = NULL;
       }
    }
@@ -436,7 +461,8 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    /* depth buffer */
    if (scene->zsbuf.map) {
       depth_stride = scene->zsbuf.stride;
-      depth = lp_rast_get_depth_block_pointer(task, x, y, inputs->layer);
+      depth_sample_stride = scene->zsbuf.sample_stride;
+      depth = lp_rast_get_depth_block_pointer(task, x, y, inputs->layer + inputs->view_index);
    }
 
    assert(lp_check_alignment(state->jit_context.u8_blend_color, 16));
@@ -448,6 +474,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
       /* Propagate non-interpolated raster state. */
       task->thread_data.raster_state.viewport_index = inputs->viewport_index;
+      task->thread_data.raster_state.view_index = inputs->view_index;
 
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);
@@ -462,12 +489,144 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                                             mask,
                                             &task->thread_data,
                                             stride,
-                                            depth_stride);
+                                            depth_stride,
+                                            sample_stride,
+                                            depth_sample_stride);
       END_JIT_CALL();
    }
 }
 
+void
+lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
+                         const struct lp_rast_shader_inputs *inputs,
+                         unsigned x, unsigned y,
+                         unsigned mask)
+{
+   uint64_t new_mask = 0;
+   for (unsigned i = 0; i < task->scene->fb_max_samples; i++)
+      new_mask |= ((uint64_t)mask) << (16 * i);
+   lp_rast_shade_quads_mask_sample(task, inputs, x, y, new_mask);
+}
 
+/**
+ * Directly copy pixels from a texture to the destination color buffer.
+ * This is a bin command called during bin processing.
+ */
+static void
+lp_rast_blit_tile_to_dest(struct lp_rasterizer_task *task,
+                          const union lp_rast_cmd_arg arg)
+{
+   const struct lp_scene *scene = task->scene;
+   const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
+   const struct lp_rast_state *state = task->state;
+   struct lp_fragment_shader_variant *variant = state->variant;
+   const struct lp_jit_texture *texture = &state->jit_context.textures[0];
+   const uint8_t *src;
+   uint8_t *dst;
+   unsigned src_stride;
+   unsigned dst_stride;
+   struct pipe_surface *cbuf = scene->fb.cbufs[0];
+   const unsigned face_slice = cbuf->u.tex.first_layer;
+   const unsigned level = cbuf->u.tex.level;
+   struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
+   int src_x, src_y;
+
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+
+   if (inputs->disable) {
+      /* This command was partially binned and has been disabled */
+      return;
+   }
+
+   dst = llvmpipe_get_texture_image_address(lpt, face_slice, level);
+
+   if (!dst)
+      return;
+
+   dst_stride = lpt->row_stride[level];
+
+   src = texture->base;
+   src_stride = texture->row_stride[0];
+
+   src_x = util_iround(GET_A0(inputs)[1][0]*texture->width - 0.5f);
+   src_y = util_iround(GET_A0(inputs)[1][1]*texture->height - 0.5f);
+
+   src_x = src_x + task->x;
+   src_y = src_y + task->y;
+
+   if (0) {
+      union util_color uc;
+      uc.ui[0] = 0xff0000ff;
+      util_fill_rect(dst,
+                     cbuf->format,
+                     dst_stride,
+                     task->x,
+                     task->y,
+                     task->width,
+                     task->height,
+                     &uc);
+      return;
+   }
+
+   if (src_x >= 0 &&
+       src_y >= 0 &&
+       src_x + task->width <= texture->width &&
+       src_y + task->height <= texture->height) {
+
+      if (variant->shader->kind == LP_FS_KIND_BLIT_RGBA ||
+          (variant->shader->kind == LP_FS_KIND_BLIT_RGB1 &&
+           cbuf->format == PIPE_FORMAT_B8G8R8X8_UNORM)) {
+         util_copy_rect(dst,
+                        cbuf->format,
+                        dst_stride,
+                        task->x, task->y,
+                        task->width, task->height,
+                        src, src_stride,
+                        src_x, src_y);
+         return;
+      }
+
+      if (variant->shader->kind == LP_FS_KIND_BLIT_RGB1) {
+         if (cbuf->format == PIPE_FORMAT_B8G8R8A8_UNORM) {
+            int x, y;
+
+            dst += task->x * 4;
+            src += src_x * 4;
+            dst += task->y * dst_stride;
+            src += src_y * src_stride;
+
+            for (y = 0; y < task->height; ++y) {
+               const uint32_t *src_row = (const uint32_t *)src;
+               uint32_t *dst_row = (uint32_t *)dst;
+
+               for (x = 0; x < task->width; ++x) {
+                  *dst_row++ = *src_row++ | 0xff000000;
+               }
+               dst += dst_stride;
+               src += src_stride;
+            }
+
+            return;
+         }
+      }
+
+   }
+
+   /*
+    * Fall back to the jit shaders.
+    */
+
+   lp_rast_shade_tile_opaque(task, arg);
+}
+
+static void
+lp_rast_blit_tile(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
+{
+   /* This kindof just works, but isn't efficient:
+    */
+   lp_rast_blit_tile_to_dest(task, arg);
+}
 
 /**
  * Begin a new occlusion query.
@@ -488,6 +647,9 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       pq->start[task->thread_index] = task->thread_data.ps_invocations;
+      break;
+   case PIPE_QUERY_TIME_ELAPSED:
+      pq->start[task->thread_index] = os_time_get_nano();
       break;
    default:
       assert(0);
@@ -516,6 +678,7 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
       pq->start[task->thread_index] = 0;
       break;
    case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
       pq->end[task->thread_index] = os_time_get_nano();
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
@@ -558,8 +721,123 @@ lp_rast_tile_end(struct lp_rasterizer_task *task)
    task->bin = NULL;
 }
 
-static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
-{
+
+
+
+ 
+
+/* Currently have two rendering paths only - the general case triangle
+ * path and the super-specialized blit/clear path.
+ */
+#define TRI   ((LP_RAST_FLAGS_TRI <<1)-1)        /* general case */
+#define RECT  ((LP_RAST_FLAGS_RECT<<1)-1)        /* direct rectangle rasterizer */
+#define BLIT  ((LP_RAST_FLAGS_BLIT<<1)-1)        /* write direct-to-dest */
+
+static const unsigned
+rast_flags[] = {
+   BLIT,                        /* clear color */
+   TRI,                         /* clear zstencil */
+   TRI,                         /* triangle_1 */
+   TRI,                         /* triangle_2 */
+   TRI,                         /* triangle_3 */
+   TRI,                         /* triangle_4 */
+   TRI,                         /* triangle_5 */
+   TRI,                         /* triangle_6 */
+   TRI,                         /* triangle_7 */
+   TRI,                         /* triangle_8 */
+   TRI,                         /* triangle_3_4 */
+   TRI,                         /* triangle_3_16 */
+   TRI,                         /* triangle_4_16 */
+   RECT,                        /* shade_tile */
+   RECT,                        /* shade_tile_opaque */
+   TRI,                         /* begin_query */
+   TRI,                         /* end_query */
+   BLIT,                        /* set_state, */
+   TRI,                         /* lp_rast_triangle_32_1 */
+   TRI,                         /* lp_rast_triangle_32_2 */
+   TRI,                         /* lp_rast_triangle_32_3 */
+   TRI,                         /* lp_rast_triangle_32_4 */
+   TRI,                         /* lp_rast_triangle_32_5 */
+   TRI,                         /* lp_rast_triangle_32_6 */
+   TRI,                         /* lp_rast_triangle_32_7 */
+   TRI,                         /* lp_rast_triangle_32_8 */
+   TRI,                         /* lp_rast_triangle_32_3_4 */
+   TRI,                         /* lp_rast_triangle_32_3_16 */
+   TRI,                         /* lp_rast_triangle_32_4_16 */
+   TRI,                         /* lp_rast_triangle_ms_1 */
+   TRI,                         /* lp_rast_triangle_ms_2 */
+   TRI,                         /* lp_rast_triangle_ms_3 */
+   TRI,                         /* lp_rast_triangle_ms_4 */
+   TRI,                         /* lp_rast_triangle_ms_5 */
+   TRI,                         /* lp_rast_triangle_ms_6 */
+   TRI,                         /* lp_rast_triangle_ms_7 */
+   TRI,                         /* lp_rast_triangle_ms_8 */
+   TRI,                         /* lp_rast_triangle_ms_3_4 */
+   TRI,                         /* lp_rast_triangle_ms_3_16 */
+   TRI,                         /* lp_rast_triangle_ms_4_16 */
+
+   RECT,                        /* rectangle */
+   BLIT,                        /* blit */
+};
+
+/* 
+ */
+static const lp_rast_cmd_func
+dispatch_blit[] = {
+   lp_rast_clear_color,
+   NULL,                        /* clear_zstencil */
+   NULL,                        /* triangle_1 */
+   NULL,                        /* triangle_2 */
+   NULL,                        /* triangle_3 */
+   NULL,                        /* triangle_4 */
+   NULL,                        /* triangle_5 */
+   NULL,                        /* triangle_6 */
+   NULL,                        /* triangle_7 */
+   NULL,                        /* triangle_8 */
+   NULL,                        /* triangle_3_4 */
+   NULL,                        /* triangle_3_16 */
+   NULL,                        /* triangle_4_16 */
+   NULL,                        /* shade_tile */
+   NULL,                        /* shade_tile_opaque */
+   NULL,                        /* begin_query */
+   NULL,                        /* end_query */
+   lp_rast_set_state,           /* set_state */
+   NULL,                        /* lp_rast_triangle_32_1 */
+   NULL,                        /* lp_rast_triangle_32_2 */
+   NULL,                        /* lp_rast_triangle_32_3 */
+   NULL,                        /* lp_rast_triangle_32_4 */
+   NULL,                        /* lp_rast_triangle_32_5 */
+   NULL,                        /* lp_rast_triangle_32_6 */
+   NULL,                        /* lp_rast_triangle_32_7 */
+   NULL,                        /* lp_rast_triangle_32_8 */
+   NULL,                        /* lp_rast_triangle_32_3_4 */
+   NULL,                        /* lp_rast_triangle_32_3_16 */
+   NULL,                        /* lp_rast_triangle_32_4_16 */
+   NULL,                        /* lp_rast_triangle_ms_1 */
+   NULL,                        /* lp_rast_triangle_ms_2 */
+   NULL,                        /* lp_rast_triangle_ms_3 */
+   NULL,                        /* lp_rast_triangle_ms_4 */
+   NULL,                        /* lp_rast_triangle_ms_5 */
+   NULL,                        /* lp_rast_triangle_ms_6 */
+   NULL,                        /* lp_rast_triangle_ms_7 */
+   NULL,                        /* lp_rast_triangle_ms_8 */
+   NULL,                        /* lp_rast_triangle_ms_3_4 */
+   NULL,                        /* lp_rast_triangle_ms_3_16 */
+   NULL,                        /* lp_rast_triangle_ms_4_16 */
+
+   NULL,                        /* rectangle */
+   lp_rast_blit_tile_to_dest,
+};
+
+
+
+/* Triangle and general case rasterization: Use the SOA llvm shdaers,
+ * an active swizzled tile for each color buf, etc.  Don't blit/clear
+ * directly to destination surface as we know there are swizzled
+ * operations coming.
+ */
+static const lp_rast_cmd_func
+dispatch_tri[] = {
    lp_rast_clear_color,
    lp_rast_clear_zstencil,
    lp_rast_triangle_1,
@@ -588,28 +866,145 @@ static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
    lp_rast_triangle_32_8,
    lp_rast_triangle_32_3_4,
    lp_rast_triangle_32_3_16,
-   lp_rast_triangle_32_4_16
+   lp_rast_triangle_32_4_16,
+   lp_rast_triangle_ms_1,
+   lp_rast_triangle_ms_2,
+   lp_rast_triangle_ms_3,
+   lp_rast_triangle_ms_4,
+   lp_rast_triangle_ms_5,
+   lp_rast_triangle_ms_6,
+   lp_rast_triangle_ms_7,
+   lp_rast_triangle_ms_8,
+   lp_rast_triangle_ms_3_4,
+   lp_rast_triangle_ms_3_16,
+   lp_rast_triangle_ms_4_16,
+   lp_rast_rectangle,
+   lp_rast_blit_tile,
 };
 
 
+/* Debug rasterization with most fastpaths disabled.
+ */
+static const lp_rast_cmd_func
+dispatch_tri_debug[] =
+{
+   lp_rast_clear_color,
+   lp_rast_clear_zstencil,
+   lp_rast_triangle_1,
+   lp_rast_triangle_2,
+   lp_rast_triangle_3,
+   lp_rast_triangle_4,
+   lp_rast_triangle_5,
+   lp_rast_triangle_6,
+   lp_rast_triangle_7,
+   lp_rast_triangle_8,
+   lp_rast_triangle_3_4,
+   lp_rast_triangle_3_16,
+   lp_rast_triangle_4_16,
+   lp_rast_shade_tile,
+   lp_rast_shade_tile,
+   lp_rast_begin_query,
+   lp_rast_end_query,
+   lp_rast_set_state,
+   lp_rast_triangle_32_1,
+   lp_rast_triangle_32_2,
+   lp_rast_triangle_32_3,
+   lp_rast_triangle_32_4,
+   lp_rast_triangle_32_5,
+   lp_rast_triangle_32_6,
+   lp_rast_triangle_32_7,
+   lp_rast_triangle_32_8,
+   lp_rast_triangle_32_3_4,
+   lp_rast_triangle_32_3_16,
+   lp_rast_triangle_32_4_16,
+   lp_rast_triangle_ms_1,
+   lp_rast_triangle_ms_2,
+   lp_rast_triangle_ms_3,
+   lp_rast_triangle_ms_4,
+   lp_rast_triangle_ms_5,
+   lp_rast_triangle_ms_6,
+   lp_rast_triangle_ms_7,
+   lp_rast_triangle_ms_8,
+   lp_rast_triangle_ms_3_4,
+   lp_rast_triangle_ms_3_16,
+   lp_rast_triangle_ms_4_16,
+
+   lp_rast_rectangle,
+   lp_rast_shade_tile,
+};
+
+struct lp_bin_info
+lp_characterize_bin(const struct cmd_bin *bin)
+{
+   struct cmd_block *block;
+   struct lp_bin_info info;
+   unsigned andflags = ~0;
+   unsigned k, j = 0;
+
+   STATIC_ASSERT(ARRAY_SIZE(rast_flags) == LP_RAST_OP_MAX);
+
+   for (block = bin->head; block; block = block->next) {
+      for (k = 0; k < block->count; k++, j++) {
+         andflags &= rast_flags[block->cmd[k]];
+      }
+   }
+   
+   info.type = andflags;
+   info.count = j;
+
+   return info;
+}
+
+
 static void
-do_rasterize_bin(struct lp_rasterizer_task *task,
-                 const struct cmd_bin *bin,
-                 int x, int y)
+blit_rasterize_bin(struct lp_rasterizer_task *task,
+                   const struct cmd_bin *bin)
 {
    const struct cmd_block *block;
    unsigned k;
 
-   if (0)
-      lp_debug_bin(bin, x, y);
+   STATIC_ASSERT(ARRAY_SIZE(dispatch_blit) == LP_RAST_OP_MAX);
 
+   if (0) debug_printf("%s\n", __FUNCTION__);
    for (block = bin->head; block; block = block->next) {
       for (k = 0; k < block->count; k++) {
-         dispatch[block->cmd[k]]( task, block->arg[k] );
+         dispatch_blit[block->cmd[k]]( task, block->arg[k] );
       }
    }
 }
 
+static void
+tri_rasterize_bin(struct lp_rasterizer_task *task,
+                  const struct cmd_bin *bin,
+                  int x, int y)
+{
+   const struct cmd_block *block;
+   unsigned k;
+
+   STATIC_ASSERT(ARRAY_SIZE(dispatch_tri) == LP_RAST_OP_MAX);
+
+   for (block = bin->head; block; block = block->next) {
+      for (k = 0; k < block->count; k++) {
+         dispatch_tri[block->cmd[k]]( task, block->arg[k] );
+      }
+   }
+}
+
+static void
+debug_rasterize_bin(struct lp_rasterizer_task *task,
+                  const struct cmd_bin *bin)
+{
+   const struct cmd_block *block;
+   unsigned k;
+
+   STATIC_ASSERT(ARRAY_SIZE(dispatch_tri_debug) == LP_RAST_OP_MAX);
+
+   for (block = bin->head; block; block = block->next) {
+      for (k = 0; k < block->count; k++) {
+         dispatch_tri_debug[block->cmd[k]]( task, block->arg[k] );
+      }
+   }
+}
 
 
 /**
@@ -622,21 +1017,35 @@ static void
 rasterize_bin(struct lp_rasterizer_task *task,
               const struct cmd_bin *bin, int x, int y )
 {
+   struct lp_bin_info info = lp_characterize_bin(bin);
+
    lp_rast_tile_begin( task, bin, x, y );
 
-   do_rasterize_bin(task, bin, x, y);
+   if (LP_DEBUG & DEBUG_NO_FASTPATH)
+      debug_rasterize_bin(task, bin);
+   else if (info.type & LP_RAST_FLAGS_BLIT)
+      blit_rasterize_bin(task, bin);
+   else if (task->scene->permit_linear_rasterizer &&
+            !(LP_PERF & PERF_NO_RAST_LINEAR) &&
+            (info.type & LP_RAST_FLAGS_RECT))
+      lp_linear_rasterize_bin(task, bin);
+   else
+      tri_rasterize_bin(task, bin, x, y);
 
    lp_rast_tile_end(task);
 
-
+#ifdef DEBUG
    /* Debug/Perf flags:
     */
    if (bin->head->count == 1) {
-      if (bin->head->cmd[0] == LP_RAST_OP_SHADE_TILE_OPAQUE)
+      if (bin->head->cmd[0] == LP_RAST_OP_BLIT)
+         LP_COUNT(nr_pure_blit_64);
+      else if (bin->head->cmd[0] == LP_RAST_OP_SHADE_TILE_OPAQUE)
          LP_COUNT(nr_pure_shade_opaque_64);
       else if (bin->head->cmd[0] == LP_RAST_OP_SHADE_TILE)
          LP_COUNT(nr_pure_shade_64);
    }
+#endif
 }
 
 
@@ -789,7 +1198,7 @@ thread_function(void *init_data)
    char thread_name[16];
    unsigned fpstate;
 
-   util_snprintf(thread_name, sizeof thread_name, "llvmpipe-%u", task->thread_index);
+   snprintf(thread_name, sizeof thread_name, "llvmpipe-%u", task->thread_index);
    u_thread_setname(thread_name);
 
    /* Make sure that denorms are treated like zeros. This is 
@@ -866,6 +1275,10 @@ create_rast_threads(struct lp_rasterizer *rast)
       pipe_semaphore_init(&rast->tasks[i].work_done, 0);
       rast->threads[i] = u_thread_create(thread_function,
                                             (void *) &rast->tasks[i]);
+      if (!rast->threads[i]) {
+         rast->num_threads = i; /* previous thread is max */
+         break;
+      }
    }
 }
 
@@ -953,7 +1366,12 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
     * per https://bugs.freedesktop.org/show_bug.cgi?id=76252 */
    for (i = 0; i < rast->num_threads; i++) {
 #ifdef _WIN32
-      pipe_semaphore_wait(&rast->tasks[i].work_done);
+      /* Threads might already be dead - Windows apparently terminates other threads when
+       * returning from main.
+       */
+      DWORD exit_code = STILL_ACTIVE;
+      if (GetExitCodeThread(rast->threads[i], &exit_code) && exit_code == STILL_ACTIVE)
+         pipe_semaphore_wait(&rast->tasks[i].work_done);
 #else
       thrd_join(rast->threads[i], NULL);
 #endif

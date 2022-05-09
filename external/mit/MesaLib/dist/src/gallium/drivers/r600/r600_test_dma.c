@@ -59,7 +59,7 @@ static void set_random_pixels(struct pipe_context *ctx,
 	uint8_t *map;
 	unsigned x,y,z;
 
-	map = pipe_transfer_map_3d(ctx, tex, 0, PIPE_TRANSFER_WRITE,
+	map = pipe_texture_map_3d(ctx, tex, 0, PIPE_MAP_WRITE,
 				   0, 0, 0, tex->width0, tex->height0,
 				   tex->array_size, &t);
 	assert(map);
@@ -82,7 +82,7 @@ static void set_random_pixels(struct pipe_context *ctx,
 		}
 	}
 
-	pipe_transfer_unmap(ctx, t);
+	pipe_texture_unmap(ctx, t);
 }
 
 static bool compare_textures(struct pipe_context *ctx,
@@ -94,7 +94,7 @@ static bool compare_textures(struct pipe_context *ctx,
 	int y,z;
 	bool pass = true;
 
-	map = pipe_transfer_map_3d(ctx, tex, 0, PIPE_TRANSFER_READ,
+	map = pipe_texture_map_3d(ctx, tex, 0, PIPE_MAP_READ,
 				   0, 0, 0, tex->width0, tex->height0,
 				   tex->array_size, &t);
 	assert(map);
@@ -112,7 +112,7 @@ static bool compare_textures(struct pipe_context *ctx,
 		}
 	}
 done:
-	pipe_transfer_unmap(ctx, t);
+	pipe_texture_unmap(ctx, t);
 	return pass;
 }
 
@@ -177,11 +177,10 @@ void r600_test_dma(struct r600_common_screen *rscreen)
 	struct pipe_context *ctx = screen->context_create(screen, NULL, 0);
 	struct r600_common_context *rctx = (struct r600_common_context*)ctx;
 	uint64_t max_alloc_size;
-	unsigned i, iterations, num_partial_copies, max_levels, max_tex_side;
+	unsigned i, iterations, num_partial_copies, max_tex_side;
 	unsigned num_pass = 0, num_fail = 0;
 
-	max_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-	max_tex_side = 1 << (max_levels - 1);
+	max_tex_side = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_SIZE);
 
 	/* Max 128 MB allowed for both textures. */
 	max_alloc_size = 128 * 1024 * 1024;

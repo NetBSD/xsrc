@@ -23,7 +23,7 @@
 
 #include "brw_clip.h"
 
-#include "dev/gen_debug.h"
+#include "dev/intel_debug.h"
 
 const unsigned *
 brw_compile_clip(const struct brw_compiler *compiler,
@@ -85,10 +85,10 @@ brw_compile_clip(const struct brw_compiler *compiler,
 
    const unsigned *program = brw_get_program(&c.func, final_assembly_size);
 
-   if (unlikely(INTEL_DEBUG & DEBUG_CLIP)) {
+   if (INTEL_DEBUG(DEBUG_CLIP)) {
       fprintf(stderr, "clip:\n");
-      brw_disassemble(compiler->devinfo,
-                      program, 0, *final_assembly_size, stderr);
+      brw_disassemble_with_labels(compiler->devinfo,
+                                  program, 0, *final_assembly_size, stderr);
       fprintf(stderr, "\n");
    }
 

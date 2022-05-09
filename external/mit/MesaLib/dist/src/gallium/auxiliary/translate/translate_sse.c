@@ -30,12 +30,12 @@
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "translate.h"
 
 
-#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && !defined(PIPE_SUBSYSTEM_EMBEDDED)
+#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && !defined(EMBEDDED_DEVICE)
 
 #include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"

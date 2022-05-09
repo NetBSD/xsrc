@@ -118,8 +118,16 @@
 #define PIPE_ARCH_ARM
 #endif
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(_M_ARM64)
 #define PIPE_ARCH_AARCH64
+#endif
+
+#if defined(__mips64) && defined(__LP64__)
+#define PIPE_ARCH_MIPS64
+#endif
+
+#if defined(__mips__)
+#define  PIPE_ARCH_MIPS
 #endif
 
 /*
@@ -127,109 +135,66 @@
  */
 
 #include "util/u_endian.h"
-#if !defined(PIPE_ARCH_LITTLE_ENDIAN) && !defined(PIPE_ARCH_BIG_ENDIAN)
-
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64) || defined(PIPE_ARCH_ARM) || defined(PIPE_ARCH_AARCH64)
-#define PIPE_ARCH_LITTLE_ENDIAN
-#elif defined(PIPE_ARCH_PPC) || defined(PIPE_ARCH_PPC_64) || defined(PIPE_ARCH_S390)
-#define PIPE_ARCH_BIG_ENDIAN
-#endif
-
-#endif
-
-#if !defined(PIPE_ARCH_LITTLE_ENDIAN) && !defined(PIPE_ARCH_BIG_ENDIAN)
-#error Unknown Endianness
-#endif
 
 /*
  * Auto-detect the operating system family.
- * 
- * See subsystem below for a more fine-grained distinction.
  */
+#include "util/detect_os.h"
 
-#if defined(__linux__)
+#if DETECT_OS_LINUX
 #define PIPE_OS_LINUX
+#endif
+
+#if DETECT_OS_UNIX
 #define PIPE_OS_UNIX
 #endif
 
-/*
- * Android defines __linux__ so PIPE_OS_LINUX and PIPE_OS_UNIX will also be
- * defined.
- */
-#if defined(ANDROID)
+#if DETECT_OS_ANDROID
 #define PIPE_OS_ANDROID
 #endif
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if DETECT_OS_FREEBSD
 #define PIPE_OS_FREEBSD
-#define PIPE_OS_BSD
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__OpenBSD__)
+#if DETECT_OS_BSD
+#define PIPE_OS_BSD
+#endif
+
+#if DETECT_OS_OPENBSD
 #define PIPE_OS_OPENBSD
-#define PIPE_OS_BSD
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__NetBSD__)
+#if DETECT_OS_NETBSD
 #define PIPE_OS_NETBSD
-#define PIPE_OS_BSD
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__DragonFly__)
+#if DETECT_OS_DRAGONFLY
 #define PIPE_OS_DRAGONFLY
-#define PIPE_OS_BSD
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__GNU__)
+#if DETECT_OS_HURD
 #define PIPE_OS_HURD
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__sun)
+#if DETECT_OS_SOLARIS
 #define PIPE_OS_SOLARIS
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__APPLE__)
+#if DETECT_OS_APPLE
 #define PIPE_OS_APPLE
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(_WIN32) || defined(WIN32)
+#if DETECT_OS_WINDOWS
 #define PIPE_OS_WINDOWS
 #endif
 
-#if defined(__HAIKU__)
+#if DETECT_OS_HAIKU
 #define PIPE_OS_HAIKU
-#define PIPE_OS_UNIX
 #endif
 
-#if defined(__CYGWIN__)
+#if DETECT_OS_CYGWIN
 #define PIPE_OS_CYGWIN
-#define PIPE_OS_UNIX
 #endif
-
-/*
- * Try to auto-detect the subsystem.
- * 
- * NOTE: There is no way to auto-detect most of these.
- */
-
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
-#define PIPE_SUBSYSTEM_DRI
-#endif /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
-
-#if defined(PIPE_OS_WINDOWS)
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-/* Windows User-space Library */
-#else
-#define PIPE_SUBSYSTEM_WINDOWS_USER
-#endif
-#endif /* PIPE_OS_WINDOWS */
-
 
 #endif /* P_CONFIG_H_ */

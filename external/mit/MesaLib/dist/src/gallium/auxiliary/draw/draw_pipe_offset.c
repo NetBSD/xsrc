@@ -32,7 +32,7 @@
  * \author  Brian Paul
  */
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "draw_pipe.h"
@@ -97,7 +97,7 @@ static void do_offset_tri( struct draw_stage *stage,
    if (stage->draw->floating_point_depth) {
       float bias;
       union fi maxz;
-      maxz.f = MAX3(v0[2], v1[2], v2[2]);
+      maxz.f = MAX3(fabs(v0[2]), fabs(v1[2]), fabs(v2[2]));
       /* just do the math directly on shifted number */
       maxz.ui &= 0xff << 23;
       maxz.i -= 23 << 23;
@@ -120,9 +120,9 @@ static void do_offset_tri( struct draw_stage *stage,
     * Note: we're applying the offset and clamping per-vertex.
     * Ideally, the offset is applied per-fragment prior to fragment shading.
     */
-   v0[2] = CLAMP(v0[2] + zoffset, 0.0f, 1.0f);
-   v1[2] = CLAMP(v1[2] + zoffset, 0.0f, 1.0f);
-   v2[2] = CLAMP(v2[2] + zoffset, 0.0f, 1.0f);
+   v0[2] = SATURATE(v0[2] + zoffset);
+   v1[2] = SATURATE(v1[2] + zoffset);
+   v2[2] = SATURATE(v2[2] + zoffset);
 
    stage->next->tri( stage->next, header );
 }
@@ -187,7 +187,7 @@ static void offset_first_tri( struct draw_stage *stage,
       if (stage->draw->floating_point_depth) {
          offset->units = (float) rast->offset_units;
       } else {
-         offset->units = (float) (rast->offset_units * stage->draw->mrd);
+         offset->units = (float) (rast->offset_units * stage->draw->mrd * 2);
       }
    }
    else {

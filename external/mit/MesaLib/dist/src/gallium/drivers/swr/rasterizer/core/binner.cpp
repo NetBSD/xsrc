@@ -179,7 +179,7 @@ INLINE void ProcessAttributes(
             uint32_t mask = backendState.swizzleMap[i].componentOverrideMask;
             if (mask)
             {
-                DWORD comp;
+                unsigned long comp;
                 while (_BitScanForward(&comp, mask))
                 {
                     mask &= ~(1 << comp);
@@ -245,7 +245,7 @@ void ProcessUserClipDist(const SWR_BACKEND_STATE& state,
                          float*                   pRecipW,
                          float*                   pUserClipBuffer)
 {
-    DWORD    clipDist;
+    unsigned long clipDist;
     uint32_t clipDistMask = state.clipDistanceMask;
     while (_BitScanForward(&clipDist, clipDistMask))
     {
@@ -347,7 +347,8 @@ struct EarlyRastHelper<SIMD512>
 /// @param oneTileMask - defines triangles for ER to work on
 ///                      (tris that fit into ER tile)
 template <typename SIMD_T, uint32_t SIMD_WIDTH, typename CT>
-uint32_t SIMDCALL EarlyRasterizer(SIMDBBOX_T<SIMD_T>& er_bbox,
+uint32_t SIMDCALL EarlyRasterizer(DRAW_CONTEXT*       pDC,
+                                  SIMDBBOX_T<SIMD_T>& er_bbox,
                                   Integer<SIMD_T> (&vAi)[3],
                                   Integer<SIMD_T> (&vBi)[3],
                                   Integer<SIMD_T> (&vXi)[3],
@@ -373,7 +374,10 @@ uint32_t SIMDCALL EarlyRasterizer(SIMDBBOX_T<SIMD_T>& er_bbox,
     Integer<SIMD_T> vNegB1 = SIMD_T::mullo_epi32(vBi[1], SIMD_T::set1_epi32(-1));
     Integer<SIMD_T> vNegB2 = SIMD_T::mullo_epi32(vBi[2], SIMD_T::set1_epi32(-1));
 
-    RDTSC_EVENT(FEEarlyRastEnter, _mm_popcnt_u32(oneTileMask & triMask), 0);
+    RDTSC_EVENT(pDC->pContext->pBucketMgr,
+                FEEarlyRastEnter,
+                _mm_popcnt_u32(oneTileMask & triMask),
+                0);
 
     Integer<SIMD_T> vShiftCntrl = EarlyRastHelper<SIMD_T>::InitShiftCntrl();
     Integer<SIMD_T> vCwTris     = SIMD_T::set1_epi32(cwTrisMask);
@@ -639,7 +643,10 @@ uint32_t SIMDCALL EarlyRasterizer(SIMDBBOX_T<SIMD_T>& er_bbox,
 
     if (triMask ^ oldTriMask)
     {
-        RDTSC_EVENT(FEEarlyRastExit, _mm_popcnt_u32(triMask & oneTileMask), 0);
+        RDTSC_EVENT(pDC->pContext->pBucketMgr,
+                    FEEarlyRastExit,
+                    _mm_popcnt_u32(triMask & oneTileMask),
+                    0);
     }
     return triMask;
 }
@@ -668,7 +675,7 @@ void SIMDCALL BinTrianglesImpl(DRAW_CONTEXT*          pDC,
 {
     const uint32_t* aRTAI = reinterpret_cast<const uint32_t*>(&rtIdx);
 
-    RDTSC_BEGIN(FEBinTriangles, pDC->drawId);
+    RDTSC_BEGIN(pDC->pContext->pBucketMgr, FEBinTriangles, pDC->drawId);
 
     const API_STATE&          state     = GetApiState(pDC);
     const SWR_RASTSTATE&      rastState = state.rastState;
@@ -806,7 +813,10 @@ void SIMDCALL BinTrianglesImpl(DRAW_CONTEXT*          pDC,
 
     if (origTriMask ^ triMask)
     {
-        RDTSC_EVENT(FECullZeroAreaAndBackface, _mm_popcnt_u32(origTriMask ^ triMask), 0);
+        RDTSC_EVENT(pDC->pContext->pBucketMgr,
+                    FECullZeroAreaAndBackface,
+                    _mm_popcnt_u32(origTriMask ^ triMask),
+                    0);
     }
 
     AR_EVENT(CullInfoEvent(pDC->drawId, cullZeroAreaMask, cullTris, origTriMask));
@@ -917,7 +927,10 @@ void SIMDCALL BinTrianglesImpl(DRAW_CONTEXT*          pDC,
 
         if (origTriMask ^ triMask)
         {
-            RDTSC_EVENT(FECullBetweenCenters, _mm_popcnt_u32(origTriMask ^ triMask), 0);
+            RDTSC_EVENT(pDC->pContext->pBucketMgr,
+                        FECullBetweenCenters,
+                        _mm_popcnt_u32(origTriMask ^ triMask),
+                        0);
         }
     }
 
@@ -1013,11 +1026,11 @@ void SIMDCALL BinTrianglesImpl(DRAW_CONTEXT*          pDC,
 
             // Try early rasterization
             triMask = EarlyRasterizer<SIMD_T, SIMD_WIDTH, CT>(
-                er_bbox, vAi, vBi, vXi, vYi, cwTrisMask, triMask, oneTileMask);
+                pDC, er_bbox, vAi, vBi, vXi, vYi, cwTrisMask, triMask, oneTileMask);
 
             if (!triMask)
             {
-                RDTSC_END(FEBinTriangles, 1);
+                RDTSC_END(pDC->pContext->pBucketMgr, FEBinTriangles, 1);
                 return;
             }
         }
@@ -1029,7 +1042,7 @@ endBinTriangles:
 
     if (!triMask)
     {
-        RDTSC_END(FEBinTriangles, 1);
+        RDTSC_END(pDC->pContext->pBucketMgr, FEBinTriangles, 1);
         return;
     }
 
@@ -1065,7 +1078,7 @@ endBinTriangles:
         BinPostSetupLinesImpl<SIMD_T, SIMD_WIDTH>(
             pDC, pa, workerId, line, recipW, triMask, primID, viewportIdx, rtIdx);
 
-        RDTSC_END(FEBinTriangles, 1);
+        RDTSC_END(pDC->pContext->pBucketMgr, FEBinTriangles, 1);
         return;
     }
     else if (rastState.fillMode == SWR_FILLMODE_POINT)
@@ -1078,7 +1091,7 @@ endBinTriangles:
         BinPostSetupPointsImpl<SIMD_T, SIMD_WIDTH>(
             pDC, pa, workerId, &tri[2], triMask, primID, viewportIdx, rtIdx);
 
-        RDTSC_END(FEBinTriangles, 1);
+        RDTSC_END(pDC->pContext->pBucketMgr, FEBinTriangles, 1);
         return;
     }
 
@@ -1109,7 +1122,7 @@ endBinTriangles:
     TransposeVertices(vHorizW, vRecipW0, vRecipW1, vRecipW2);
 
     // scan remaining valid triangles and bin each separately
-    while (_BitScanForward((DWORD*)&triIndex, triMask))
+    while (_BitScanForward((unsigned long*)&triIndex, triMask))
     {
         uint32_t linkageCount     = state.backendState.numAttributes;
         uint32_t numScalarAttribs = linkageCount * 4;
@@ -1194,7 +1207,7 @@ endBinTriangles:
         triMask &= ~(1 << triIndex);
     }
 
-    RDTSC_END(FEBinTriangles, 1);
+    RDTSC_END(pDC->pContext->pBucketMgr, FEBinTriangles, 1);
 }
 
 template <typename CT>
@@ -1274,7 +1287,7 @@ void BinPostSetupPointsImpl(DRAW_CONTEXT*          pDC,
                             Integer<SIMD_T> const& viewportIdx,
                             Integer<SIMD_T> const& rtIdx)
 {
-    RDTSC_BEGIN(FEBinPoints, pDC->drawId);
+    RDTSC_BEGIN(pDC->pContext->pBucketMgr, FEBinPoints, pDC->drawId);
 
     Vec4<SIMD_T>& primVerts = prim[0];
 
@@ -1350,7 +1363,7 @@ void BinPostSetupPointsImpl(DRAW_CONTEXT*          pDC,
         const SWR_BACKEND_STATE& backendState = pDC->pState->state.backendState;
 
         // scan remaining valid triangles and bin each separately
-        while (_BitScanForward((DWORD*)&primIndex, primMask))
+        while (_BitScanForward((unsigned long*)&primIndex, primMask))
         {
             uint32_t linkageCount     = backendState.numAttributes;
             uint32_t numScalarAttribs = linkageCount * 4;
@@ -1506,7 +1519,7 @@ void BinPostSetupPointsImpl(DRAW_CONTEXT*          pDC,
         // scan remaining valid prims and bin each separately
         const SWR_BACKEND_STATE& backendState = state.backendState;
         uint32_t                 primIndex;
-        while (_BitScanForward((DWORD*)&primIndex, primMask))
+        while (_BitScanForward((unsigned long*)&primIndex, primMask))
         {
             uint32_t linkageCount     = backendState.numAttributes;
             uint32_t numScalarAttribs = linkageCount * 4;
@@ -1572,7 +1585,7 @@ void BinPostSetupPointsImpl(DRAW_CONTEXT*          pDC,
         }
     }
 
-    RDTSC_END(FEBinPoints, 1);
+    RDTSC_END(pDC->pContext->pBucketMgr, FEBinPoints, 1);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1674,7 +1687,7 @@ void BinPostSetupLinesImpl(DRAW_CONTEXT*          pDC,
 {
     const uint32_t* aRTAI = reinterpret_cast<const uint32_t*>(&rtIdx);
 
-    RDTSC_BEGIN(FEBinLines, pDC->drawId);
+    RDTSC_BEGIN(pDC->pContext->pBucketMgr, FEBinLines, pDC->drawId);
 
     const API_STATE&     state     = GetApiState(pDC);
     const SWR_RASTSTATE& rastState = state.rastState;
@@ -1805,8 +1818,8 @@ void BinPostSetupLinesImpl(DRAW_CONTEXT*          pDC,
     TransposeVertices(vHorizW, vRecipW0, vRecipW1, SIMD_T::setzero_ps());
 
     // scan remaining valid prims and bin each separately
-    uint32_t primIndex;
-    while (_BitScanForward((DWORD*)&primIndex, primMask))
+    unsigned long primIndex;
+    while (_BitScanForward(&primIndex, primMask))
     {
         uint32_t linkageCount     = state.backendState.numAttributes;
         uint32_t numScalarAttribs = linkageCount * 4;
@@ -1867,7 +1880,7 @@ void BinPostSetupLinesImpl(DRAW_CONTEXT*          pDC,
 
 endBinLines:
 
-    RDTSC_END(FEBinLines, 1);
+    RDTSC_END(pDC->pContext->pBucketMgr, FEBinLines, 1);
 }
 
 //////////////////////////////////////////////////////////////////////////

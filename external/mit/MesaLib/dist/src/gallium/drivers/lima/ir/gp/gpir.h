@@ -120,6 +120,7 @@ typedef struct {
    int *slots;
    gpir_node_type type;
    bool spillless;
+   bool schedule_first;
    bool may_consume_two_slots;
 } gpir_op_info;
 
@@ -131,8 +132,6 @@ typedef struct {
       GPIR_DEP_OFFSET,    /* def is the offset of use (i.e. temp store) */
       GPIR_DEP_READ_AFTER_WRITE,
       GPIR_DEP_WRITE_AFTER_READ,
-      GPIR_DEP_VREG_READ_AFTER_WRITE,
-      GPIR_DEP_VREG_WRITE_AFTER_READ,
    } type;
 
    /* node execute before succ */
@@ -145,6 +144,9 @@ typedef struct {
    /* for ndoe succ_list */
    struct list_head succ_link;
 } gpir_dep;
+
+struct gpir_instr;
+struct gpir_store_node;
 
 typedef struct gpir_node {
    struct list_head list;
@@ -165,12 +167,15 @@ typedef struct gpir_node {
    int value_reg;
    union {
       struct {
-         int instr;
+         struct gpir_instr *instr;
+         struct gpir_store_node *physreg_store;
          int pos;
          int dist;
          int index;
          bool ready;
          bool inserted;
+         bool max_node, next_max_node;
+         bool complex_allowed;
       } sched;
       struct {
          int parent_index;
@@ -206,11 +211,6 @@ typedef struct {
 typedef struct {
    int index;
    struct list_head list;
-
-   struct list_head defs_list;
-   struct list_head uses_list;
-
-   int start, end;
 } gpir_reg;
 
 typedef struct {
@@ -223,7 +223,7 @@ typedef struct {
    struct list_head reg_link;
 } gpir_load_node;
 
-typedef struct {
+typedef struct gpir_store_node {
    gpir_node node;
 
    unsigned index;
@@ -231,7 +231,6 @@ typedef struct {
    gpir_node *child;
 
    gpir_reg *reg;
-   struct list_head reg_link;
 } gpir_store_node;
 
 enum gpir_instr_slot {
@@ -241,7 +240,6 @@ enum gpir_instr_slot {
    GPIR_INSTR_SLOT_ADD1,
    GPIR_INSTR_SLOT_PASS,
    GPIR_INSTR_SLOT_COMPLEX,
-   GPIR_INSTR_SLOT_BRANCH,
    GPIR_INSTR_SLOT_REG0_LOAD0,
    GPIR_INSTR_SLOT_REG0_LOAD1,
    GPIR_INSTR_SLOT_REG0_LOAD2,
@@ -266,14 +264,55 @@ enum gpir_instr_slot {
    GPIR_INSTR_SLOT_DIST_TWO_END   = GPIR_INSTR_SLOT_PASS,
 };
 
-typedef struct {
+typedef struct gpir_instr {
    int index;
    struct list_head list;
 
    gpir_node *slots[GPIR_INSTR_SLOT_NUM];
 
+   /* The number of ALU slots free for moves. */
    int alu_num_slot_free;
+
+   /* The number of ALU slots free for moves, except for the complex slot. */
+   int alu_non_cplx_slot_free;
+
+   /* We need to make sure that we can insert moves in the following cases:
+    * (1) There was a use of a value two cycles ago.
+    * (2) There were more than 5 uses of a value 1 cycle ago (or else we can't
+    *     possibly satisfy (1) for the next cycle).
+    * (3) There is a store instruction scheduled, but not its child.
+    *
+    * The complex slot cannot be used for a move in case (1), since it only
+    * has a FIFO depth of 1, but it can be used for (2) as well as (3) as long
+    * as the uses aren't in certain slots. It turns out that we don't have to
+    * worry about nodes that can't use the complex slot for (2), since there
+    * are at most 4 uses 1 cycle ago that can't use the complex slot, but we
+    * do have to worry about (3). This means tracking stores whose children
+    * cannot be in the complex slot. In order to ensure that we have enough
+    * space for all three, we maintain the following invariants:
+    *
+    * (1) alu_num_slot_free >= alu_num_slot_needed_by_store +
+    *       alu_num_slot_needed_by_max +
+    *       max(alu_num_unscheduled_next_max - alu_max_allowed_next_max, 0)
+    * (2) alu_non_cplx_slot_free >= alu_num_slot_needed_by_max +
+    *       alu_num_slot_needed_by_non_cplx_store
+    *
+    * alu_max_allowed_next_max is normally 5 (since there can be at most 5 max
+    * nodes for the next instruction) but when there is a complex1 node in
+    * this instruction it reduces to 4 to reserve a slot for complex2 in the
+    * next instruction.
+    */
    int alu_num_slot_needed_by_store;
+   int alu_num_slot_needed_by_non_cplx_store;
+   int alu_num_slot_needed_by_max;
+   int alu_num_unscheduled_next_max;
+   int alu_max_allowed_next_max;
+
+   /* Used to communicate to the scheduler how many slots need to be cleared
+    * up in order to satisfy the invariants.
+    */
+   int slot_difference;
+   int non_cplx_slot_difference;
 
    int reg0_use_count;
    bool reg0_is_attr;
@@ -301,6 +340,33 @@ typedef struct gpir_block {
    struct list_head instr_list;
    struct gpir_compiler *comp;
 
+   struct gpir_block *successors[2];
+   struct list_head predecessors;
+   struct list_head predecessors_node;
+
+   /* for regalloc */
+
+   /* The set of live registers, i.e. registers whose value may be used
+    * eventually, at the beginning of the block.
+    */
+   BITSET_WORD *live_in;
+
+   /* Set of live registers at the end of the block. */
+   BITSET_WORD *live_out;
+
+   /* Set of registers that may have a value defined at the end of the
+    * block.
+    */
+   BITSET_WORD *def_out;
+
+   /* After register allocation, the set of live physical registers at the end
+    * of the block. Needed for scheduling.
+    */
+   uint64_t live_out_phys;
+
+   /* For codegen, the offset in the final program. */
+   unsigned instr_offset;
+
    /* for scheduler */
    union {
       struct {
@@ -315,23 +381,52 @@ typedef struct gpir_block {
 typedef struct {
    gpir_node node;
    gpir_block *dest;
+   gpir_node *cond;
 } gpir_branch_node;
 
-struct lima_vs_shader_state;
+struct lima_vs_compiled_shader;
+
+#define GPIR_VECTOR_SSA_VIEWPORT_SCALE  0
+#define GPIR_VECTOR_SSA_VIEWPORT_OFFSET 1
+#define GPIR_VECTOR_SSA_NUM 2
 
 typedef struct gpir_compiler {
    struct list_head block_list;
    int cur_index;
 
-   /* array for searching ssa node */
-   gpir_node **var_nodes;
+   /* Find the gpir node for a given NIR SSA def. */
+   gpir_node **node_for_ssa;
+
+   /* Find the gpir node for a given NIR register. */
+   gpir_node **node_for_reg;
+
+   /* Find the gpir register for a given NIR SSA def. */
+   gpir_reg **reg_for_ssa;
+
+   /* Find the gpir register for a given NIR register. */
+   gpir_reg **reg_for_reg;
+
+   /* gpir block for NIR block. */
+   gpir_block **blocks;
 
    /* for physical reg */
    struct list_head reg_list;
    int cur_reg;
 
-   struct lima_vs_shader_state *prog;
+   /* lookup for vector ssa */
+   struct {
+      int ssa;
+      gpir_node *nodes[4];
+   } vector_ssa[GPIR_VECTOR_SSA_NUM];
+
+   struct lima_vs_compiled_shader *prog;
    int constant_base;
+
+   /* shaderdb */
+   int num_instr;
+   int num_loops;
+   int num_spills;
+   int num_fills;
 } gpir_compiler;
 
 #define GPIR_VALUE_REG_NUM 11
@@ -359,36 +454,31 @@ void gpir_node_print_prog_seq(gpir_compiler *comp);
 
 static inline bool gpir_node_is_root(gpir_node *node)
 {
-   return list_empty(&node->succ_list);
+   return list_is_empty(&node->succ_list);
 }
 
 static inline bool gpir_node_is_leaf(gpir_node *node)
 {
-   return list_empty(&node->pred_list);
+   return list_is_empty(&node->pred_list);
 }
 
 #define gpir_node_to_alu(node) ((gpir_alu_node *)(node))
 #define gpir_node_to_const(node) ((gpir_const_node *)(node))
 #define gpir_node_to_load(node) ((gpir_load_node *)(node))
 #define gpir_node_to_store(node) ((gpir_store_node *)(node))
+#define gpir_node_to_branch(node) ((gpir_branch_node *)(node))
 
 gpir_instr *gpir_instr_create(gpir_block *block);
 bool gpir_instr_try_insert_node(gpir_instr *instr, gpir_node *node);
 void gpir_instr_remove_node(gpir_instr *instr, gpir_node *node);
 void gpir_instr_print_prog(gpir_compiler *comp);
 
-static inline bool gpir_instr_alu_slot_is_full(gpir_instr *instr)
-{
-   return instr->alu_num_slot_free <= instr->alu_num_slot_needed_by_store;
-}
-
 bool gpir_codegen_acc_same_op(gpir_op op1, gpir_op op2);
 
+bool gpir_optimize(gpir_compiler *comp);
 bool gpir_pre_rsched_lower_prog(gpir_compiler *comp);
-bool gpir_post_rsched_lower_prog(gpir_compiler *comp);
 bool gpir_reduce_reg_pressure_schedule_prog(gpir_compiler *comp);
-bool gpir_value_regalloc_prog(gpir_compiler *comp);
-bool gpir_physical_regalloc_prog(gpir_compiler *comp);
+bool gpir_regalloc_prog(gpir_compiler *comp);
 bool gpir_schedule_prog(gpir_compiler *comp);
 bool gpir_codegen_prog(gpir_compiler *comp);
 

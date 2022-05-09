@@ -92,28 +92,9 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
                               bool use_txf);
 
 extern void *
-util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
-                                         enum tgsi_texture_type tex_target,
-                                         enum tgsi_interpolate_mode interp_mode,
-                                         bool load_level_zero,
-                                         bool use_txf);
-
-
-extern void *
-util_make_fragment_tex_shader_writedepthstencil(struct pipe_context *pipe,
-                                         enum tgsi_texture_type tex_target,
-                                         enum tgsi_interpolate_mode interp_mode,
-                                         bool load_level_zero,
-                                         bool use_txf);
-
-
-extern void *
-util_make_fragment_tex_shader_writestencil(struct pipe_context *pipe,
-                                         enum tgsi_texture_type tex_target,
-                                         enum tgsi_interpolate_mode interp_mode,
-                                         bool load_level_zero,
-                                         bool use_txf);
-
+util_make_fs_blit_zs(struct pipe_context *pipe, unsigned zs_mask,
+                     enum tgsi_texture_type tex_target,
+                     bool load_level_zero, bool use_txf);
 
 extern void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe,
@@ -171,6 +152,25 @@ util_make_geometry_passthrough_shader(struct pipe_context *pipe,
                                       uint num_attribs,
                                       const ubyte *semantic_names,
                                       const ubyte *semantic_indexes);
+
+void *
+util_make_fs_pack_color_zs(struct pipe_context *pipe,
+                           enum tgsi_texture_type tex_target,
+                           enum pipe_format zs_format,
+                           bool dst_is_color);
+
+extern void *
+util_make_tess_ctrl_passthrough_shader(struct pipe_context *pipe,
+                                       uint num_vs_outputs,
+                                       uint num_tes_inputs,
+                                       const ubyte *vs_semantic_names,
+                                       const ubyte *vs_semantic_indexes,
+                                       const ubyte *tes_semantic_names,
+                                       const ubyte *tes_semantic_indexes,
+                                       const unsigned vertices_per_patch);
+
+void *
+util_make_fs_stencil_blit(struct pipe_context *pipe, bool msaa_src);
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,7 @@
 #include "svga_screen.h"
 #include "svga_screen_cache.h"
 #include "svga_context.h"
-
+#include "svga_cmd.h"
 
 #define SVGA_SURFACE_CACHE_ENABLED 1
 
@@ -41,8 +41,8 @@
 /**
  * Return the size of the surface described by the key (in bytes).
  */
-static unsigned
-surface_size(const struct svga_host_surface_cache_key *key)
+unsigned
+svga_surface_size(const struct svga_host_surface_cache_key *key)
 {
    unsigned bw, bh, bpb, total_size, i;
 
@@ -133,16 +133,16 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
          entry->handle = NULL;
 
          /* Remove from hash table */
-         LIST_DEL(&entry->bucket_head);
+         list_del(&entry->bucket_head);
 
          /* remove from LRU list */
-         LIST_DEL(&entry->head);
+         list_del(&entry->head);
 
          /* Add the cache entry (but not the surface!) to the empty list */
-         LIST_ADD(&entry->head, &cache->empty);
+         list_add(&entry->head, &cache->empty);
 
          /* update the cache size */
-         surf_size = surface_size(&entry->key);
+         surf_size = svga_surface_size(&entry->key);
          assert(surf_size <= cache->total_size);
          if (surf_size > cache->total_size)
             cache->total_size = 0; /* should never happen, but be safe */
@@ -187,14 +187,14 @@ svga_screen_cache_shrink(struct svga_screen *svgascreen,
       if (entry->key.format != SVGA3D_BUFFER) {
          /* we don't want to discard vertex/index buffers */
 
-         cache->total_size -= surface_size(&entry->key);
+         cache->total_size -= svga_surface_size(&entry->key);
 
          assert(entry->handle);
          sws->surface_reference(sws, &entry->handle, NULL);
 
-         LIST_DEL(&entry->bucket_head);
-         LIST_DEL(&entry->head);
-         LIST_ADD(&entry->head, &cache->empty);
+         list_del(&entry->bucket_head);
+         list_del(&entry->head);
+         list_add(&entry->head, &cache->empty);
 
          if (cache->total_size <= target_size) {
             /* all done */
@@ -225,7 +225,7 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    if (!handle)
       return;
 
-   surf_size = surface_size(key);
+   surf_size = svga_surface_size(key);
 
    *p_handle = NULL;
    mtx_lock(&cache->mutex);
@@ -256,7 +256,7 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
       }
    }
 
-   if (!LIST_IS_EMPTY(&cache->empty)) {
+   if (!list_is_empty(&cache->empty)) {
       /* An empty entry has no surface associated with it.
        * Use the first empty entry.
        */
@@ -264,24 +264,24 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
                          cache->empty.next, head);
 
       /* Remove from LRU list */
-      LIST_DEL(&entry->head);
+      list_del(&entry->head);
    }
-   else if (!LIST_IS_EMPTY(&cache->unused)) {
+   else if (!list_is_empty(&cache->unused)) {
       /* free the last used buffer and reuse its entry */
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry,
                          cache->unused.prev, head);
       SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
                "unref sid %p (make space)\n", entry->handle);
 
-      cache->total_size -= surface_size(&entry->key);
+      cache->total_size -= svga_surface_size(&entry->key);
 
       sws->surface_reference(sws, &entry->handle, NULL);
 
       /* Remove from hash table */
-      LIST_DEL(&entry->bucket_head);
+      list_del(&entry->bucket_head);
 
       /* Remove from LRU list */
-      LIST_DEL(&entry->head);
+      list_del(&entry->head);
    }
 
    if (entry) {
@@ -291,7 +291,12 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
 
       SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
                "cache sid %p\n", entry->handle);
-      LIST_ADD(&entry->head, &cache->validated);
+
+      /* If we don't have gb objects, we don't need to invalidate. */
+      if (sws->have_gb_objects)
+         list_add(&entry->head, &cache->validated);
+      else
+         list_add(&entry->head, &cache->invalidated);
 
       cache->total_size += surf_size;
    }
@@ -305,6 +310,9 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    mtx_unlock(&cache->mutex);
 }
 
+
+/* Maximum number of invalidate surface commands in a command buffer */
+# define SVGA_MAX_SURFACE_TO_INVALIDATE 1000
 
 /**
  * Called during the screen flush to move all buffers not in a validate list
@@ -333,38 +341,41 @@ svga_screen_cache_flush(struct svga_screen *svgascreen,
 
       if (sws->surface_is_flushed(sws, entry->handle)) {
          /* remove entry from the invalidated list */
-         LIST_DEL(&entry->head);
+         list_del(&entry->head);
 
          sws->fence_reference(sws, &entry->fence, fence);
 
          /* Add entry to the unused list */
-         LIST_ADD(&entry->head, &cache->unused);
+         list_add(&entry->head, &cache->unused);
 
          /* Add entry to the hash table bucket */
          bucket = svga_screen_cache_bucket(&entry->key);
-         LIST_ADD(&entry->bucket_head, &cache->bucket[bucket]);
+         list_add(&entry->bucket_head, &cache->bucket[bucket]);
       }
 
       curr = next;
       next = curr->next;
    }
 
+   unsigned nsurf = 0;
    curr = cache->validated.next;
    next = curr->next;
    while (curr != &cache->validated) {
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry, curr, head);
 
       assert(entry->handle);
+      assert(svga_have_gb_objects(svga));
 
       if (sws->surface_is_flushed(sws, entry->handle)) {
          /* remove entry from the validated list */
-         LIST_DEL(&entry->head);
+         list_del(&entry->head);
 
          /* It is now safe to invalidate the surface content.
           * It will be done using the current context.
           */
-         if (svga->swc->surface_invalidate(svga->swc, entry->handle) != PIPE_OK) {
-            MAYBE_UNUSED enum pipe_error ret;
+         if (SVGA_TRY(SVGA3D_InvalidateGBSurface(svga->swc, entry->handle))
+             != PIPE_OK) {
+            ASSERTED enum pipe_error ret;
 
             /* Even though surface invalidation here is done after the command
              * buffer is flushed, it is still possible that it will
@@ -374,13 +385,18 @@ svga_screen_cache_flush(struct svga_screen *svgascreen,
              * Note, we don't want to call svga_context_flush() here because
              * this function itself is called inside svga_context_flush().
              */
+            svga_retry_enter(svga);
             svga->swc->flush(svga->swc, NULL);
-            ret = svga->swc->surface_invalidate(svga->swc, entry->handle);
+            nsurf = 0;
+            ret = SVGA3D_InvalidateGBSurface(svga->swc, entry->handle);
+            svga_retry_exit(svga);
             assert(ret == PIPE_OK);
          }
 
          /* add the entry to the invalidated list */
-         LIST_ADD(&entry->head, &cache->invalidated);
+
+         list_add(&entry->head, &cache->invalidated);
+         nsurf++;
       }
 
       curr = next;
@@ -388,6 +404,16 @@ svga_screen_cache_flush(struct svga_screen *svgascreen,
    }
 
    mtx_unlock(&cache->mutex);
+
+   /**
+    * In some rare cases (when running ARK survival), we hit the max number
+    * of surface relocations with invalidated surfaces during context flush.
+    * So if the number of invalidated surface exceeds a certain limit (1000),
+    * we'll do another winsys flush.
+    */
+   if (nsurf > SVGA_MAX_SURFACE_TO_INVALIDATE) {
+      svga->swc->flush(svga->swc, NULL);
+   }
 }
 
 
@@ -408,7 +434,7 @@ svga_screen_cache_cleanup(struct svga_screen *svgascreen)
                   "unref sid %p (shutdown)\n", cache->entries[i].handle);
 	 sws->surface_reference(sws, &cache->entries[i].handle, NULL);
 
-         cache->total_size -= surface_size(&cache->entries[i].key);
+         cache->total_size -= svga_surface_size(&cache->entries[i].key);
       }
 
       if (cache->entries[i].fence)
@@ -430,17 +456,17 @@ svga_screen_cache_init(struct svga_screen *svgascreen)
    (void) mtx_init(&cache->mutex, mtx_plain);
 
    for (i = 0; i < SVGA_HOST_SURFACE_CACHE_BUCKETS; ++i)
-      LIST_INITHEAD(&cache->bucket[i]);
+      list_inithead(&cache->bucket[i]);
 
-   LIST_INITHEAD(&cache->unused);
+   list_inithead(&cache->unused);
 
-   LIST_INITHEAD(&cache->validated);
+   list_inithead(&cache->validated);
 
-   LIST_INITHEAD(&cache->invalidated);
+   list_inithead(&cache->invalidated);
 
-   LIST_INITHEAD(&cache->empty);
+   list_inithead(&cache->empty);
    for (i = 0; i < SVGA_HOST_SURFACE_CACHE_SIZE; ++i)
-      LIST_ADDTAIL(&cache->entries[i].head, &cache->empty);
+      list_addtail(&cache->entries[i].head, &cache->empty);
 
    return PIPE_OK;
 }
@@ -544,6 +570,8 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
          usage |= SVGA_SURFACE_USAGE_SHARED;
       if (key->scanout)
          usage |= SVGA_SURFACE_USAGE_SCANOUT;
+      if (key->coherent)
+         usage |= SVGA_SURFACE_USAGE_COHERENT;
 
       handle = sws->surface_create(sws,
                                    key->flags,

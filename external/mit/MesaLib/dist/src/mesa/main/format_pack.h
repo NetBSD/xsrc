@@ -27,82 +27,58 @@
 #define FORMAT_PACK_H
 
 
+#include "util/format/u_format.h"
 #include "formats.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/** Pack a GLubyte rgba[4] color to dest address */
-typedef void (*gl_pack_ubyte_rgba_func)(const GLubyte src[4], void *dst);
+static inline void
+_mesa_pack_float_rgba_row(mesa_format format, uint32_t n,
+                          const float src[][4], void *dst)
+{
+   util_format_pack_rgba(format, dst, src, n);
+}
 
-/** Pack a GLfloat rgba[4] color to dest address */
-typedef void (*gl_pack_float_rgba_func)(const GLfloat src[4], void *dst);
+static inline void
+_mesa_pack_ubyte_rgba_row(mesa_format format, uint32_t n,
+                          const uint8_t *src, void *dst)
+{
+   const struct util_format_pack_description *pack = util_format_pack_description(format);
+   pack->pack_rgba_8unorm((uint8_t *)dst, 0, src, 0, n, 1);
+}
 
-/** Pack a GLfloat Z value to dest address */
-typedef void (*gl_pack_float_z_func)(const GLfloat *src, void *dst);
+static inline void
+_mesa_pack_uint_rgba_row(mesa_format format, uint32_t n,
+                         const uint32_t src[][4], void *dst)
+{
+   util_format_pack_rgba(format, dst, src, n);
+}
 
-/** Pack a GLuint Z value to dest address */
-typedef void (*gl_pack_uint_z_func)(const GLuint *src, void *dst);
+static inline void
+_mesa_pack_float_z_row(mesa_format format, uint32_t n,
+                       const float *src, void *dst)
+{
+   util_format_pack_z_float(format, dst, src, n);
+}
 
-/** Pack a GLubyte stencil value to dest address */
-typedef void (*gl_pack_ubyte_stencil_func)(const GLubyte *src, void *dst);
+static inline void
+_mesa_pack_uint_z_row(mesa_format format, uint32_t n,
+                      const uint32_t *src, void *dst)
+{
+   util_format_pack_z_32unorm(format, dst, src, n);
+}
 
+static inline void
+_mesa_pack_ubyte_stencil_row(mesa_format format, uint32_t n,
+                             const uint8_t *src, void *dst)
+{
+   util_format_pack_s_8uint(format, dst, src, n);
+}
 
-
-
-extern gl_pack_ubyte_rgba_func
-_mesa_get_pack_ubyte_rgba_function(mesa_format format);
-
-
-extern gl_pack_float_rgba_func
-_mesa_get_pack_float_rgba_function(mesa_format format);
-
-
-extern gl_pack_float_z_func
-_mesa_get_pack_float_z_func(mesa_format format);
-
-
-extern gl_pack_uint_z_func
-_mesa_get_pack_uint_z_func(mesa_format format);
-
-
-extern gl_pack_ubyte_stencil_func
-_mesa_get_pack_ubyte_stencil_func(mesa_format format);
-
-
-extern void
-_mesa_pack_float_rgba_row(mesa_format format, GLuint n,
-                          const GLfloat src[][4], void *dst);
-
-extern void
-_mesa_pack_ubyte_rgba_row(mesa_format format, GLuint n,
-                          const GLubyte src[][4], void *dst);
-
-extern void
-_mesa_pack_uint_rgba_row(mesa_format format, GLuint n,
-                         const GLuint src[][4], void *dst);
-
-extern void
-_mesa_pack_ubyte_rgba_rect(mesa_format format, GLuint width, GLuint height,
-                           const GLubyte *src, GLint srcRowStride,
-                           void *dst, GLint dstRowStride);
-
-extern void
-_mesa_pack_float_z_row(mesa_format format, GLuint n,
-                       const GLfloat *src, void *dst);
-
-extern void
-_mesa_pack_uint_z_row(mesa_format format, GLuint n,
-                      const GLuint *src, void *dst);
-
-extern void
-_mesa_pack_ubyte_stencil_row(mesa_format format, GLuint n,
-                             const GLubyte *src, void *dst);
-
-extern void
-_mesa_pack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
-                                       const GLuint *src, void *dst);
-
-
-extern void
-_mesa_pack_colormask(mesa_format format, const GLubyte colorMask[4], void *dst);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

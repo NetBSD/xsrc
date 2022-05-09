@@ -25,7 +25,7 @@
 #include "nv50/g80_texture.xml.h"
 #include "nv50/g80_defs.xml.h"
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 static inline uint32_t
 nv50_tic_swizzle(const struct nv50_format *fmt, unsigned swz, bool tex_int)
@@ -53,15 +53,14 @@ nv50_create_sampler_view(struct pipe_context *pipe,
    if (templ->target == PIPE_TEXTURE_RECT || templ->target == PIPE_BUFFER)
       flags |= NV50_TEXVIEW_SCALED_COORDS;
 
-   return nv50_create_texture_view(pipe, res, templ, flags, templ->target);
+   return nv50_create_texture_view(pipe, res, templ, flags);
 }
 
 struct pipe_sampler_view *
 nv50_create_texture_view(struct pipe_context *pipe,
                          struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ,
-                         uint32_t flags,
-                         enum pipe_texture_target target)
+                         uint32_t flags)
 {
    const uint32_t class_3d = nouveau_context(pipe)->screen->class_3d;
    const struct util_format_description *desc;
@@ -130,7 +129,7 @@ nv50_create_texture_view(struct pipe_context *pipe,
       tic[2] |= G80_TIC_2_NORMALIZED_COORDS;
 
    if (unlikely(!nouveau_bo_memtype(nv04_resource(texture)->bo))) {
-      if (target == PIPE_BUFFER) {
+      if (templ->target == PIPE_BUFFER) {
          addr += view->pipe.u.buf.offset;
          tic[2] |= G80_TIC_2_LAYOUT_PITCH | G80_TIC_2_TEXTURE_TYPE_ONE_D_BUFFER;
          tic[3] = 0;
@@ -157,12 +156,15 @@ nv50_create_texture_view(struct pipe_context *pipe,
       ((mt->level[0].tile_mode & 0x0f0) << (22 - 4)) |
       ((mt->level[0].tile_mode & 0xf00) << (25 - 8));
 
-   switch (target) {
+   switch (templ->target) {
    case PIPE_TEXTURE_1D:
       tic[2] |= G80_TIC_2_TEXTURE_TYPE_ONE_D;
       break;
    case PIPE_TEXTURE_2D:
-      tic[2] |= G80_TIC_2_TEXTURE_TYPE_TWO_D;
+      if (mt->ms_x)
+         tic[2] |= G80_TIC_2_TEXTURE_TYPE_TWO_D_NO_MIPMAP;
+      else
+         tic[2] |= G80_TIC_2_TEXTURE_TYPE_TWO_D;
       break;
    case PIPE_TEXTURE_RECT:
       tic[2] |= G80_TIC_2_TEXTURE_TYPE_TWO_D_NO_MIPMAP;
@@ -236,13 +238,14 @@ nv50_update_tic(struct nv50_context *nv50, struct nv50_tic_entry *tic,
    tic->tic[2] |= address >> 32;
 }
 
-static bool
+bool
 nv50_validate_tic(struct nv50_context *nv50, int s)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nouveau_bo *txc = nv50->screen->txc;
    unsigned i;
    bool need_flush = false;
+   const bool is_compute_stage = s == NV50_SHADER_STAGE_COMPUTE;
 
    assert(nv50->num_textures[s] <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nv50->num_textures[s]; ++i) {
@@ -250,7 +253,10 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
       struct nv04_resource *res;
 
       if (!tic) {
-         BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
+         if (unlikely(is_compute_stage))
+            BEGIN_NV04(push, NV50_CP(BIND_TIC), 1);
+         else
+            BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
          PUSH_DATA (push, (i << 1) | 0);
          continue;
       }
@@ -289,7 +295,10 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
          need_flush = true;
       } else
       if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
-         BEGIN_NV04(push, NV50_3D(TEX_CACHE_CTL), 1);
+         if (unlikely(is_compute_stage))
+            BEGIN_NV04(push, NV50_CP(TEX_CACHE_CTL), 1);
+         else
+            BEGIN_NV04(push, NV50_3D(TEX_CACHE_CTL), 1);
          PUSH_DATA (push, 0x20);
       }
 
@@ -298,24 +307,37 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
       res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
-      BCTX_REFN(nv50->bufctx_3d, 3D_TEXTURES, res, RD);
-
-      BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
+      if (unlikely(is_compute_stage)) {
+         BCTX_REFN(nv50->bufctx_cp, CP_TEXTURES, res, RD);
+         BEGIN_NV04(push, NV50_CP(BIND_TIC), 1);
+      } else {
+         BCTX_REFN(nv50->bufctx_3d, 3D_TEXTURES, res, RD);
+         BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
+      }
       PUSH_DATA (push, (tic->id << 9) | (i << 1) | 1);
    }
    for (; i < nv50->state.num_textures[s]; ++i) {
-      BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
+      if (unlikely(is_compute_stage))
+         BEGIN_NV04(push, NV50_CP(BIND_TIC), 1);
+      else
+         BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
       PUSH_DATA (push, (i << 1) | 0);
    }
    if (nv50->num_textures[s]) {
-      BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+      if (unlikely(is_compute_stage))
+         BEGIN_NV04(push, NV50_CP(CB_ADDR), 1);
+      else
+         BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
       PUSH_DATA (push, ((NV50_CB_AUX_TEX_MS_OFFSET + 16 * s * 2 * 4) << (8 - 2)) | NV50_CB_AUX);
-      BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nv50->num_textures[s] * 2);
+      if (unlikely(is_compute_stage))
+         BEGIN_NV04(push, NV50_CP(CB_DATA(0)), nv50->num_textures[s] * 2);
+      else
+         BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nv50->num_textures[s] * 2);
       for (i = 0; i < nv50->num_textures[s]; i++) {
          struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);
          struct nv50_miptree *res;
 
-         if (!tic) {
+         if (!tic || tic->pipe.target == PIPE_BUFFER) {
             PUSH_DATA (push, 0);
             PUSH_DATA (push, 0);
             continue;
@@ -332,31 +354,39 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
 
 void nv50_validate_textures(struct nv50_context *nv50)
 {
-   bool need_flush;
+   unsigned s;
+   bool need_flush = false;
 
-   need_flush  = nv50_validate_tic(nv50, 0);
-   need_flush |= nv50_validate_tic(nv50, 1);
-   need_flush |= nv50_validate_tic(nv50, 2);
+   for (s = 0; s < NV50_MAX_3D_SHADER_STAGES; ++s)
+      need_flush |= nv50_validate_tic(nv50, s);
 
    if (need_flush) {
       BEGIN_NV04(nv50->base.pushbuf, NV50_3D(TIC_FLUSH), 1);
       PUSH_DATA (nv50->base.pushbuf, 0);
    }
+
+   /* Invalidate all CP textures because they are aliased. */
+   nouveau_bufctx_reset(nv50->bufctx_cp, NV50_BIND_CP_TEXTURES);
+   nv50->dirty_cp |= NV50_NEW_CP_TEXTURES;
 }
 
-static bool
+bool
 nv50_validate_tsc(struct nv50_context *nv50, int s)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    unsigned i;
    bool need_flush = false;
+   const bool is_compute_stage = s == NV50_SHADER_STAGE_COMPUTE;
 
    assert(nv50->num_samplers[s] <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nv50->num_samplers[s]; ++i) {
       struct nv50_tsc_entry *tsc = nv50_tsc_entry(nv50->samplers[s][i]);
 
       if (!tsc) {
-         BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
+         if (is_compute_stage)
+            BEGIN_NV04(push, NV50_CP(BIND_TSC), 1);
+         else
+            BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
          PUSH_DATA (push, (i << 4) | 0);
          continue;
       }
@@ -371,11 +401,17 @@ nv50_validate_tsc(struct nv50_context *nv50, int s)
       }
       nv50->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);
 
-      BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
+      if (is_compute_stage)
+         BEGIN_NV04(push, NV50_CP(BIND_TSC), 1);
+      else
+         BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
       PUSH_DATA (push, (tsc->id << 12) | (i << 4) | 1);
    }
    for (; i < nv50->state.num_samplers[s]; ++i) {
-      BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
+      if (is_compute_stage)
+         BEGIN_NV04(push, NV50_CP(BIND_TSC), 1);
+      else
+         BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
       PUSH_DATA (push, (i << 4) | 0);
    }
    nv50->state.num_samplers[s] = nv50->num_samplers[s];
@@ -386,7 +422,10 @@ nv50_validate_tsc(struct nv50_context *nv50, int s)
    // entry is initialized, we're good to go. This is the only bit that has
    // any effect on what TXF does.
    if (!nv50->samplers[s][0]) {
-      BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
+      if (is_compute_stage)
+         BEGIN_NV04(push, NV50_CP(BIND_TSC), 1);
+      else
+         BEGIN_NV04(push, NV50_3D(BIND_TSC(s)), 1);
       PUSH_DATA (push, 1);
    }
 
@@ -395,16 +434,23 @@ nv50_validate_tsc(struct nv50_context *nv50, int s)
 
 void nv50_validate_samplers(struct nv50_context *nv50)
 {
-   bool need_flush;
+   unsigned s;
+   bool need_flush = false;
 
-   need_flush  = nv50_validate_tsc(nv50, 0);
-   need_flush |= nv50_validate_tsc(nv50, 1);
-   need_flush |= nv50_validate_tsc(nv50, 2);
+   for (s = 0; s < NV50_MAX_3D_SHADER_STAGES; ++s)
+      need_flush |= nv50_validate_tsc(nv50, s);
 
    if (need_flush) {
-      BEGIN_NV04(nv50->base.pushbuf, NV50_3D(TSC_FLUSH), 1);
+      if (unlikely(s == NV50_SHADER_STAGE_COMPUTE))
+         // TODO(pmoreau): Is this needed? Not done on nvc0
+         BEGIN_NV04(nv50->base.pushbuf, NV50_CP(TSC_FLUSH), 1);
+      else
+         BEGIN_NV04(nv50->base.pushbuf, NV50_3D(TSC_FLUSH), 1);
       PUSH_DATA (nv50->base.pushbuf, 0);
    }
+
+   /* Invalidate all CP samplers because they are aliased. */
+   nv50->dirty_cp |= NV50_NEW_CP_SAMPLERS;
 }
 
 /* There can be up to 4 different MS levels (1, 2, 4, 8). To simplify the

@@ -25,7 +25,7 @@
 */
 
 /* Platform-specific types and definitions for egl.h
- * $Revision: 1.1.1.5 $ on $Date: 2019/03/10 03:42:48 $
+ * $Revision: 1.1.1.6 $ on $Date: 2022/05/09 01:23:24 $
  *
  * Adopters may modify khrplatform.h and this file to suit their platform.
  * You are encouraged to submit all modifications to the Khronos group so that
@@ -55,6 +55,12 @@
 #endif
 #define EGLAPIENTRYP EGLAPIENTRY*
 
+#if defined(MESA_EGL_NO_X11_HEADERS) && !defined(EGL_NO_X11)
+#warning "`MESA_EGL_NO_X11_HEADERS` is deprecated, and doesn't work with the unmodified Khronos header"
+#warning "Please use `EGL_NO_X11` instead, as `MESA_EGL_NO_X11_HEADERS` will be removed soon"
+#define EGL_NO_X11
+#endif
+
 /* The types NativeDisplayType, NativeWindowType, and NativePixmapType
  * are aliases of window-system-dependent types, such as X Display * or
  * Windows Device Context. They must be defined in platform-specific
@@ -77,11 +83,17 @@ typedef HDC     EGLNativeDisplayType;
 typedef HBITMAP EGLNativePixmapType;
 typedef HWND    EGLNativeWindowType;
 
+#elif defined(__EMSCRIPTEN__)
+
+typedef int EGLNativeDisplayType;
+typedef int EGLNativePixmapType;
+typedef int EGLNativeWindowType;
+
 #elif defined(__WINSCW__) || defined(__SYMBIAN32__)  /* Symbian */
 
 typedef int   EGLNativeDisplayType;
-typedef void *EGLNativeWindowType;
 typedef void *EGLNativePixmapType;
+typedef void *EGLNativeWindowType;
 
 #elif defined(WL_EGL_PLATFORM)
 
@@ -100,25 +112,23 @@ typedef void               *EGLNativeWindowType;
 struct ANativeWindow;
 struct egl_native_pixmap_t;
 
-typedef struct ANativeWindow*           EGLNativeWindowType;
-typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
 typedef void*                           EGLNativeDisplayType;
+typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
+typedef struct ANativeWindow*           EGLNativeWindowType;
 
 #elif defined(USE_OZONE)
 
 typedef intptr_t EGLNativeDisplayType;
-typedef intptr_t EGLNativeWindowType;
 typedef intptr_t EGLNativePixmapType;
+typedef intptr_t EGLNativeWindowType;
 
-#elif defined(__unix__) || defined(__APPLE__)
+#elif defined(__unix__) && defined(EGL_NO_X11)
 
-#if defined(MESA_EGL_NO_X11_HEADERS)
-
-typedef void            *EGLNativeDisplayType;
+typedef void             *EGLNativeDisplayType;
 typedef khronos_uintptr_t EGLNativePixmapType;
 typedef khronos_uintptr_t EGLNativeWindowType;
 
-#else
+#elif defined(__unix__) || defined(USE_X11)
 
 /* X11 (tentative)  */
 #include <X11/Xlib.h>
@@ -128,7 +138,11 @@ typedef Display *EGLNativeDisplayType;
 typedef Pixmap   EGLNativePixmapType;
 typedef Window   EGLNativeWindowType;
 
-#endif /* MESA_EGL_NO_X11_HEADERS */
+#elif defined(__APPLE__)
+
+typedef int   EGLNativeDisplayType;
+typedef void *EGLNativePixmapType;
+typedef void *EGLNativeWindowType;
 
 #elif defined(__HAIKU__)
 

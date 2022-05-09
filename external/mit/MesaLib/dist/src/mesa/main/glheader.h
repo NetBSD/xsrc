@@ -128,10 +128,6 @@ typedef int GLclampx;
 #define GL_HALF_FLOAT_OES                                       0x8D61
 #endif
 
-#ifndef GL_MESA_framebuffer_flip_y
-#define GL_FRAMEBUFFER_FLIP_Y_MESA                              0x8BBB
-#endif
-
 /* There is no formal spec for the following extension. */
 #ifndef GL_ATI_texture_compression_3dc
 #define GL_ATI_texture_compression_3dc                          1
@@ -140,6 +136,10 @@ typedef int GLclampx;
 
 #ifndef GL_EXT_texture_sRGB_R8
 #define GL_SR8_EXT                                              0x8FBD
+#endif
+
+#ifndef GL_EXT_texture_sRGB_RG8
+#define GL_SRG8_EXT                                             0x8FBE
 #endif
 
 #ifndef GL_AMD_compressed_ATC_texture
@@ -159,6 +159,10 @@ typedef int GLclampx;
 
 #ifndef GL_EXT_multisampled_render_to_texture
 #define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_SAMPLES_EXT 0x8D6C
+#endif
+
+#ifndef GL_ANGLE_pack_reverse_row_order
+#define GL_PACK_REVERSE_ROW_ORDER_ANGLE 0x93A4
 #endif
 
 #ifdef __cplusplus

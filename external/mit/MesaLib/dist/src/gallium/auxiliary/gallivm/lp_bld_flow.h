@@ -95,6 +95,10 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value);
 
 void
+lp_build_mask_force(struct lp_build_mask_context *mask,
+                    LLVMValueRef value);
+
+void
 lp_build_mask_check(struct lp_build_mask_context *mask);
 
 LLVMValueRef
@@ -127,6 +131,12 @@ lp_build_loop_end(struct lp_build_loop_state *state,
                   LLVMValueRef end,
                   LLVMValueRef step);
 
+void
+lp_build_loop_force_set_counter(struct lp_build_loop_state *state,
+                                LLVMValueRef end);
+
+void
+lp_build_loop_force_reload_counter(struct lp_build_loop_state *state);
 void
 lp_build_loop_end_cond(struct lp_build_loop_state *state,
                        LLVMValueRef end,

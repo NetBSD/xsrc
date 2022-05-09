@@ -97,13 +97,13 @@ bool rvid_resize_buffer(struct pipe_screen *screen, struct radeon_cmdbuf *cs,
 	if (!rvid_create_buffer(screen, new_buf, new_size, new_buf->usage))
 		goto error;
 
-	src = ws->buffer_map(old_buf.res->buf, cs,
-			     PIPE_TRANSFER_READ | RADEON_TRANSFER_TEMPORARY);
+	src = ws->buffer_map(ws, old_buf.res->buf, cs,
+			     PIPE_MAP_READ | RADEON_MAP_TEMPORARY);
 	if (!src)
 		goto error;
 
-	dst = ws->buffer_map(new_buf->res->buf, cs,
-			     PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
+	dst = ws->buffer_map(ws, new_buf->res->buf, cs,
+			     PIPE_MAP_WRITE | RADEON_MAP_TEMPORARY);
 	if (!dst)
 		goto error;
 
@@ -113,14 +113,14 @@ bool rvid_resize_buffer(struct pipe_screen *screen, struct radeon_cmdbuf *cs,
 		dst += bytes;
 		memset(dst, 0, new_size);
 	}
-	ws->buffer_unmap(new_buf->res->buf);
-	ws->buffer_unmap(old_buf.res->buf);
+	ws->buffer_unmap(ws, new_buf->res->buf);
+	ws->buffer_unmap(ws, old_buf.res->buf);
 	rvid_destroy_buffer(&old_buf);
 	return true;
 
 error:
 	if (src)
-		ws->buffer_unmap(old_buf.res->buf);
+		ws->buffer_unmap(ws, old_buf.res->buf);
 	rvid_destroy_buffer(new_buf);
 	*new_buf = old_buf;
 	return false;
@@ -171,7 +171,7 @@ void rvid_join_surfaces(struct r600_common_context *rctx,
 			continue;
 
 		/* adjust the texture layer offsets */
-		off = align(off, surfaces[i]->surf_alignment);
+		off = align(off, 1 << surfaces[i]->surf_alignment_log2);
 
 		/* copy the tiling parameters */
 		surfaces[i]->u.legacy.bankw = surfaces[best_tiling]->u.legacy.bankw;
@@ -180,7 +180,7 @@ void rvid_join_surfaces(struct r600_common_context *rctx,
 		surfaces[i]->u.legacy.tile_split = surfaces[best_tiling]->u.legacy.tile_split;
 
 		for (j = 0; j < ARRAY_SIZE(surfaces[i]->u.legacy.level); ++j)
-			surfaces[i]->u.legacy.level[j].offset += off;
+			surfaces[i]->u.legacy.level[j].offset_256B += off / 256;
 
 		off += surfaces[i]->surf_size;
 	}
@@ -189,9 +189,9 @@ void rvid_join_surfaces(struct r600_common_context *rctx,
 		if (!buffers[i] || !*buffers[i])
 			continue;
 
-		size = align(size, (*buffers[i])->alignment);
+		size = align(size, 1 << (*buffers[i])->alignment_log2);
 		size += (*buffers[i])->size;
-		alignment = MAX2(alignment, (*buffers[i])->alignment * 1);
+		alignment = MAX2(alignment, 1 << (*buffers[i])->alignment_log2);
 	}
 
 	if (!size)
@@ -224,7 +224,7 @@ int rvid_get_video_param(struct pipe_screen *screen,
 	enum pipe_video_format codec = u_reduce_video_profile(profile);
 	struct radeon_info info;
 
-	rscreen->ws->query_info(rscreen->ws, &info);
+	rscreen->ws->query_info(rscreen->ws, &info, false, false);
 
 	if (entrypoint == PIPE_VIDEO_ENTRYPOINT_ENCODE) {
 		switch (param) {
@@ -278,10 +278,7 @@ int rvid_get_video_param(struct pipe_screen *screen,
 	case PIPE_VIDEO_CAP_MAX_HEIGHT:
 		return 1152;
 	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-		if (profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)
-			return PIPE_FORMAT_P016;
-		else
-			return PIPE_FORMAT_NV12;
+		return PIPE_FORMAT_NV12;
 
 	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
 	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
@@ -293,9 +290,7 @@ int rvid_get_video_param(struct pipe_screen *screen,
 		} else {
 			enum pipe_video_format format = u_reduce_video_profile(profile);
 
-			if (format == PIPE_VIDEO_FORMAT_HEVC)
-				return false; //The firmware doesn't support interlaced HEVC.
-			else if (format == PIPE_VIDEO_FORMAT_JPEG)
+			if (format == PIPE_VIDEO_FORMAT_JPEG)
 				return false;
 			return true;
 		}
@@ -322,9 +317,6 @@ int rvid_get_video_param(struct pipe_screen *screen,
 		case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
 		case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
 			return 41;
-		case PIPE_VIDEO_PROFILE_HEVC_MAIN:
-		case PIPE_VIDEO_PROFILE_HEVC_MAIN_10:
-			return 186;
 		default:
 			return 0;
 		}
@@ -333,16 +325,11 @@ int rvid_get_video_param(struct pipe_screen *screen,
 	}
 }
 
-boolean rvid_is_format_supported(struct pipe_screen *screen,
-				 enum pipe_format format,
-				 enum pipe_video_profile profile,
-				 enum pipe_video_entrypoint entrypoint)
+bool rvid_is_format_supported(struct pipe_screen *screen,
+			      enum pipe_format format,
+			      enum pipe_video_profile profile,
+			      enum pipe_video_entrypoint entrypoint)
 {
-	/* HEVC 10 bit decoding should use P016 instead of NV12 if possible */
-	if (profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)
-		return (format == PIPE_FORMAT_NV12) ||
-			(format == PIPE_FORMAT_P016);
-
 	/* we can only handle this one with UVD */
 	if (profile != PIPE_VIDEO_PROFILE_UNKNOWN)
 		return format == PIPE_FORMAT_NV12;

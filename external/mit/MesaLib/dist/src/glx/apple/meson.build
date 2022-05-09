@@ -54,8 +54,8 @@ endif
 libappleglx = static_library(
   'glxapple',
   [files_libappleglx, glapitable_h],
-  include_directories: [inc_mesa, inc_glx, inc_src, inc_include, inc_glapi],
+  include_directories: [inc_mesa, inc_glx, inc_src, inc_include, inc_glapi, inc_loader],
   dependencies: [dep_xext, dep_xplugin],
-  c_args: [c_vis_args],
+  gnu_symbol_visibility : 'hidden',
   build_by_default: false,
 )

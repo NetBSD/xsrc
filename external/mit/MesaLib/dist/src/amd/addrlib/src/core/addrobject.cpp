@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -119,7 +119,7 @@ VOID* Object::Alloc(
     size_t objSize      ///< [in] Size to allocate
     ) const
 {
-    return ClientAlloc(objSize, &m_client);
+    return ClientAlloc(objSize, &m_client);;
 }
 
 /**
@@ -177,7 +177,8 @@ VOID Object::Free(
 */
 VOID* Object::operator new(
     size_t objSize,     ///< [in] Size to allocate
-    VOID*  pMem)        ///< [in] Pre-allocated pointer
+    VOID*  pMem        ///< [in] Pre-allocated pointer
+    ) noexcept
 {
     return pMem;
 }
@@ -216,15 +217,20 @@ VOID Object::DebugPrint(
 #if DEBUG
     if (m_client.callbacks.debugPrint != NULL)
     {
+        va_list ap;
+
+        va_start(ap, pDebugString);
+
         ADDR_DEBUGPRINT_INPUT debugPrintInput = {0};
 
         debugPrintInput.size         = sizeof(ADDR_DEBUGPRINT_INPUT);
         debugPrintInput.pDebugString = const_cast<CHAR*>(pDebugString);
         debugPrintInput.hClient      = m_client.handle;
-        va_start(debugPrintInput.ap, pDebugString);
+        va_copy(debugPrintInput.ap, ap);
 
         m_client.callbacks.debugPrint(&debugPrintInput);
 
+        va_end(ap);
         va_end(debugPrintInput.ap);
     }
 #endif

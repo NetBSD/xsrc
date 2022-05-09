@@ -28,7 +28,7 @@
 
 #include <stdbool.h>
 #include "bufferobj.h"
-#include "compiler.h"
+#include "util/compiler.h"
 #include "glheader.h"
 #include "mtypes.h"
 
@@ -108,6 +108,11 @@ extern void
 _mesa_init_transform_feedback_object(struct gl_transform_feedback_object *obj,
                                      GLuint name);
 
+extern void
+_mesa_delete_transform_feedback_object(struct gl_context *ctx,
+                                       struct gl_transform_feedback_object
+                                              *obj);
+
 struct gl_transform_feedback_object *
 _mesa_lookup_transform_feedback_object(struct gl_context *ctx, GLuint name);
 
@@ -160,11 +165,11 @@ _mesa_set_transform_feedback_binding(struct gl_context *ctx,
 {
    _mesa_reference_buffer_object(ctx, &tfObj->Buffers[index], bufObj);
 
-   tfObj->BufferNames[index]   = bufObj->Name;
+   tfObj->BufferNames[index]   = bufObj ? bufObj->Name : 0;
    tfObj->Offset[index]        = offset;
    tfObj->RequestedSize[index] = size;
 
-   if (bufObj != ctx->Shared->NullBufferObj)
+   if (bufObj)
       bufObj->UsageHistory |= USAGE_TRANSFORM_FEEDBACK_BUFFER;
 }
 

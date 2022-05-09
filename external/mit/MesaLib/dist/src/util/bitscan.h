@@ -72,7 +72,7 @@ int ffs(int i);
 
 #ifdef HAVE___BUILTIN_FFSLL
 #define ffsll __builtin_ffsll
-#elif defined(_MSC_VER) && (_M_AMD64 || _M_ARM || _M_IA64)
+#elif defined(_MSC_VER) && (_M_AMD64 || _M_ARM64 || _M_IA64)
 static inline int
 ffsll(long long int i)
 {
@@ -104,6 +104,11 @@ u_bit_scan(unsigned *mask)
    return i;
 }
 
+#define u_foreach_bit(b, dword)                          \
+   for (uint32_t __dword = (dword), b;                     \
+        ((b) = ffs(__dword) - 1, __dword);      \
+        __dword &= ~(1 << (b)))
+
 static inline int
 u_bit_scan64(uint64_t *mask)
 {
@@ -111,6 +116,11 @@ u_bit_scan64(uint64_t *mask)
    *mask ^= (((uint64_t)1) << i);
    return i;
 }
+
+#define u_foreach_bit64(b, dword)                          \
+   for (uint64_t __dword = (dword), b;                     \
+        ((b) = ffsll(__dword) - 1, __dword);      \
+        __dword &= ~(1ull << (b)))
 
 /* Determine if an unsigned value is a power of two.
  *
@@ -235,7 +245,7 @@ util_last_bit64(uint64_t u)
 {
 #if defined(HAVE___BUILTIN_CLZLL)
    return u == 0 ? 0 : 64 - __builtin_clzll(u);
-#elif defined(_MSC_VER) && (_M_AMD64 || _M_ARM || _M_IA64)
+#elif defined(_MSC_VER) && (_M_AMD64 || _M_ARM64 || _M_IA64)
    unsigned long index;
    if (_BitScanReverse64(&index, u))
       return index + 1;
@@ -286,6 +296,58 @@ u_bit_consecutive64(unsigned start, unsigned count)
    return (((uint64_t)1 << count) - 1) << start;
 }
 
+/**
+ * Return number of bits set in n.
+ */
+static inline unsigned
+util_bitcount(unsigned n)
+{
+#if defined(HAVE___BUILTIN_POPCOUNT)
+   return __builtin_popcount(n);
+#else
+   /* K&R classic bitcount.
+    *
+    * For each iteration, clear the LSB from the bitfield.
+    * Requires only one iteration per set bit, instead of
+    * one iteration per bit less than highest set bit.
+    */
+   unsigned bits;
+   for (bits = 0; n; bits++) {
+      n &= n - 1;
+   }
+   return bits;
+#endif
+}
+
+/**
+ * Return the number of bits set in n using the native popcnt instruction.
+ * The caller is responsible for ensuring that popcnt is supported by the CPU.
+ *
+ * gcc doesn't use it if -mpopcnt or -march= that has popcnt is missing.
+ *
+ */
+static inline unsigned
+util_popcnt_inline_asm(unsigned n)
+{
+#if defined(USE_X86_64_ASM) || defined(USE_X86_ASM)
+   uint32_t out;
+   __asm volatile("popcnt %1, %0" : "=r"(out) : "r"(n));
+   return out;
+#else
+   /* We should never get here by accident, but I'm sure it'll happen. */
+   return util_bitcount(n);
+#endif
+}
+
+static inline unsigned
+util_bitcount64(uint64_t n)
+{
+#ifdef HAVE___BUILTIN_POPCOUNTLL
+   return __builtin_popcountll(n);
+#else
+   return util_bitcount(n) + util_bitcount(n >> 32);
+#endif
+}
 
 #ifdef __cplusplus
 }

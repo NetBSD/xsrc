@@ -1,8 +1,5 @@
 #encoding=utf-8
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
 import argparse
 import ast
 import xml.parsers.expat
@@ -10,6 +7,7 @@ import re
 import sys
 import copy
 import textwrap
+from util import *
 
 license =  """/*
  * Copyright (C) 2016 Intel Corporation
@@ -55,8 +53,8 @@ pack_header = """%(license)s
 #define __gen_validate_value(x)
 #endif
 
-#ifndef __gen_field_functions
-#define __gen_field_functions
+#ifndef __intel_field_functions
+#define __intel_field_functions
 
 #ifdef NDEBUG
 #define NDEBUG_UNUSED __attribute__((unused))
@@ -64,18 +62,18 @@ pack_header = """%(license)s
 #define NDEBUG_UNUSED
 #endif
 
-union __gen_value {
+union __intel_value {
    float f;
    uint32_t dw;
 };
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_mbo(uint32_t start, uint32_t end)
 {
    return (~0ull >> (64 - (end - start + 1))) << start;
 }
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_uint(uint64_t v, uint32_t start, NDEBUG_UNUSED uint32_t end)
 {
    __gen_validate_value(v);
@@ -91,7 +89,7 @@ __gen_uint(uint64_t v, uint32_t start, NDEBUG_UNUSED uint32_t end)
    return v << start;
 }
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_sint(int64_t v, uint32_t start, uint32_t end)
 {
    const int width = end - start + 1;
@@ -111,7 +109,7 @@ __gen_sint(int64_t v, uint32_t start, uint32_t end)
    return (v & mask) << start;
 }
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_offset(uint64_t v, NDEBUG_UNUSED uint32_t start, NDEBUG_UNUSED uint32_t end)
 {
    __gen_validate_value(v);
@@ -124,14 +122,30 @@ __gen_offset(uint64_t v, NDEBUG_UNUSED uint32_t start, NDEBUG_UNUSED uint32_t en
    return v;
 }
 
-static inline uint32_t
+static inline __attribute__((always_inline)) uint64_t
+__gen_address(__gen_user_data *data, void *location,
+              __gen_address_type address, uint32_t delta,
+              __attribute__((unused)) uint32_t start, uint32_t end)
+{
+   uint64_t addr_u64 = __gen_combine_address(data, location, address, delta);
+   if (end == 31) {
+      return addr_u64;
+   } else if (end < 63) {
+      const unsigned shift = 63 - end;
+      return (addr_u64 << shift) >> shift;
+   } else {
+      return addr_u64;
+   }
+}
+
+static inline __attribute__((always_inline)) uint32_t
 __gen_float(float v)
 {
    __gen_validate_value(v);
-   return ((union __gen_value) { .f = (v) }).dw;
+   return ((union __intel_value) { .f = (v) }).dw;
 }
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_sfixed(float v, uint32_t start, uint32_t end, uint32_t fract_bits)
 {
    __gen_validate_value(v);
@@ -150,7 +164,7 @@ __gen_sfixed(float v, uint32_t start, uint32_t end, uint32_t fract_bits)
    return (int_val & mask) << start;
 }
 
-static inline uint64_t
+static inline __attribute__((always_inline)) uint64_t
 __gen_ufixed(float v, uint32_t start, NDEBUG_UNUSED uint32_t end, uint32_t fract_bits)
 {
    __gen_validate_value(v);
@@ -181,41 +195,6 @@ __gen_ufixed(float v, uint32_t start, NDEBUG_UNUSED uint32_t end, uint32_t fract
 #endif
 
 """
-
-def to_alphanum(name):
-    substitutions = {
-        ' ': '',
-        '/': '',
-        '[': '',
-        ']': '',
-        '(': '',
-        ')': '',
-        '-': '',
-        ':': '',
-        '.': '',
-        ',': '',
-        '=': '',
-        '>': '',
-        '#': '',
-        'α': 'alpha',
-        '&': '',
-        '*': '',
-        '"': '',
-        '+': '',
-        '\'': '',
-    }
-
-    for i, j in substitutions.items():
-        name = name.replace(i, j)
-
-    return name
-
-def safe_name(name):
-    name = to_alphanum(name)
-    if not name[0].isalpha():
-        name = '_' + name
-
-    return name
 
 def num_from_str(num_str):
     if num_str.lower().startswith('0x'):
@@ -363,7 +342,7 @@ class Group(object):
 
             if field.type == "address":
                 # assert dwords[index].address == None
-                dwords[index].address = field
+                dwords[index].address = clone
 
             # Coalesce all the dwords covered by this field. The two cases we
             # handle are where multiple fields are in a 64 bit word (typically
@@ -496,13 +475,16 @@ class Group(object):
 
             if dw.size == 32:
                 if dw.address:
-                    print("   dw[%d] = __gen_combine_address(data, &dw[%d], values->%s, %s);" % (index, index, dw.address.name + field.dim, v))
+                    print("   dw[%d] = __gen_address(data, &dw[%d], values->%s, %s, %d, %d);" %
+                    (index, index, dw.address.name + field.dim, v,
+                     dw.address.start - dword_start, dw.address.end - dword_start))
                 continue
 
             if dw.address:
                 v_address = "v%d_address" % index
-                print("   const uint64_t %s =\n      __gen_combine_address(data, &dw[%d], values->%s, %s);" %
-                      (v_address, index, dw.address.name + field.dim, v))
+                print("   const uint64_t %s =\n      __gen_address(data, &dw[%d], values->%s, %s, %d, %d);" %
+                      (v_address, index, dw.address.name + field.dim, v,
+                       dw.address.start - dword_start, dw.address.end - dword_start))
                 if len(dw.fields) > address_count:
                     print("   dw[%d] = %s;" % (index, v_address))
                     print("   dw[%d] = (%s >> 32) | (%s >> 32);" % (index + 1, v_address, v))
@@ -531,8 +513,8 @@ class Parser(object):
 
     def gen_prefix(self, name):
         if name[0] == "_":
-            return 'GEN%s%s' % (self.gen, name)
-        return 'GEN%s_%s' % (self.gen, name)
+            return 'GFX%s%s' % (self.gen, name)
+        return 'GFX%s_%s' % (self.gen, name)
 
     def gen_guard(self):
         return self.gen_prefix("PACK_H")
@@ -619,7 +601,7 @@ class Parser(object):
     def emit_pack_function(self, name, group):
         name = self.gen_prefix(name)
         print(textwrap.dedent("""\
-            static inline void
+            static inline __attribute__((always_inline)) void
             %s_pack(__attribute__((unused)) __gen_user_data *data,
                   %s__attribute__((unused)) void * restrict dst,
                   %s__attribute__((unused)) const struct %s * restrict values)
@@ -651,7 +633,13 @@ class Parser(object):
                 continue
             if field.default is None:
                 continue
-            default_fields.append("   .%-35s = %6d" % (field.name, field.default))
+
+            if field.is_builtin_type():
+                default_fields.append("   .%-35s = %6d" % (field.name, field.default))
+            else:
+                # Default values should not apply to structures
+                assert field.is_enum_type()
+                default_fields.append("   .%-35s = (enum %s) %6d" % (field.name, self.gen_prefix(safe_name(field.type)), field.default))
 
         if default_fields:
             print('#define %-40s\\' % (self.gen_prefix(name + '_header')))

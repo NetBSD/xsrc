@@ -24,7 +24,12 @@
 #ifndef NIR_BUILTIN_BUILDER_H
 #define NIR_BUILTIN_BUILDER_H
 
-#include "nir/nir_builder.h"
+#include "util/u_math.h"
+#include "nir_builder.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Functions are sorted alphabetically with removed type and "fast" prefix.
@@ -33,19 +38,25 @@
 
 nir_ssa_def* nir_cross3(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y);
 nir_ssa_def* nir_cross4(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y);
-nir_ssa_def* nir_length(nir_builder *b, nir_ssa_def *vec);
 nir_ssa_def* nir_fast_length(nir_builder *b, nir_ssa_def *vec);
 nir_ssa_def* nir_nextafter(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y);
 nir_ssa_def* nir_normalize(nir_builder *b, nir_ssa_def *vec);
-nir_ssa_def* nir_rotate(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y);
 nir_ssa_def* nir_smoothstep(nir_builder *b, nir_ssa_def *edge0,
                             nir_ssa_def *edge1, nir_ssa_def *x);
 nir_ssa_def* nir_upsample(nir_builder *b, nir_ssa_def *hi, nir_ssa_def *lo);
+nir_ssa_def* nir_atan(nir_builder *b, nir_ssa_def *y_over_x);
+nir_ssa_def* nir_atan2(nir_builder *b, nir_ssa_def *y, nir_ssa_def *x);
+
+nir_ssa_def *
+nir_get_texture_lod(nir_builder *b, nir_tex_instr *tex);
+
+nir_ssa_def *
+nir_get_texture_size(nir_builder *b, nir_tex_instr *tex);
 
 static inline nir_ssa_def *
 nir_nan_check2(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *res)
 {
-   return nir_bcsel(b, nir_fne(b, x, x), x, nir_bcsel(b, nir_fne(b, y, y), y, res));
+   return nir_bcsel(b, nir_fneu(b, x, x), x, nir_bcsel(b, nir_fneu(b, y, y), y, res));
 }
 
 static inline nir_ssa_def *
@@ -76,30 +87,42 @@ nir_uabs_diff(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y)
 }
 
 static inline nir_ssa_def *
+nir_fexp(nir_builder *b, nir_ssa_def *x)
+{
+   return nir_fexp2(b, nir_fmul_imm(b, x, M_LOG2E));
+}
+
+static inline nir_ssa_def *
+nir_flog(nir_builder *b, nir_ssa_def *x)
+{
+   return nir_fmul_imm(b, nir_flog2(b, x), 1.0 / M_LOG2E);
+}
+
+static inline nir_ssa_def *
+nir_imad24(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *z)
+{
+   nir_ssa_def *temp = nir_imul24(b, x, y);
+   return nir_iadd(b, temp, z);
+}
+
+static inline nir_ssa_def *
+nir_imad_hi(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *z)
+{
+   nir_ssa_def *temp = nir_imul_high(b, x, y);
+   return nir_iadd(b, temp, z);
+}
+
+static inline nir_ssa_def *
+nir_umad_hi(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *z)
+{
+   nir_ssa_def *temp = nir_umul_high(b, x, y);
+   return nir_iadd(b, temp, z);
+}
+
+static inline nir_ssa_def *
 nir_bitselect(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *s)
 {
    return nir_ior(b, nir_iand(b, nir_inot(b, s), x), nir_iand(b, s, y));
-}
-
-static inline nir_ssa_def *
-nir_fclamp(nir_builder *b,
-           nir_ssa_def *x, nir_ssa_def *min_val, nir_ssa_def *max_val)
-{
-   return nir_fmin(b, nir_fmax(b, x, min_val), max_val);
-}
-
-static inline nir_ssa_def *
-nir_iclamp(nir_builder *b,
-           nir_ssa_def *x, nir_ssa_def *min_val, nir_ssa_def *max_val)
-{
-   return nir_imin(b, nir_imax(b, x, min_val), max_val);
-}
-
-static inline nir_ssa_def *
-nir_uclamp(nir_builder *b,
-           nir_ssa_def *x, nir_ssa_def *min_val, nir_ssa_def *max_val)
-{
-   return nir_umin(b, nir_umax(b, x, min_val), max_val);
 }
 
 static inline nir_ssa_def *
@@ -129,12 +152,6 @@ nir_fdim(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y)
 
    // return NaN if either x or y are NaN, else x-y if x>y, else +0.0
    return nir_nan_check2(b, x, y, nir_bcsel(b, cond, res, zero));
-}
-
-static inline nir_ssa_def *
-nir_distance(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y)
-{
-   return nir_length(b, nir_fsub(b, x, y));
 }
 
 static inline nir_ssa_def *
@@ -206,7 +223,35 @@ nir_select(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y, nir_ssa_def *s)
       uint64_t mask = 1ull << (s->bit_size - 1);
       s = nir_iand(b, s, nir_imm_intN_t(b, mask, s->bit_size));
    }
-   return nir_bcsel(b, nir_ieq(b, s, nir_imm_intN_t(b, 0, s->bit_size)), x, y);
+   return nir_bcsel(b, nir_ieq_imm(b, s, 0), x, y);
 }
+
+static inline nir_ssa_def *
+nir_ftan(nir_builder *b, nir_ssa_def *x)
+{
+   return nir_fdiv(b, nir_fsin(b, x), nir_fcos(b, x));
+}
+
+static inline nir_ssa_def *
+nir_clz_u(nir_builder *b, nir_ssa_def *a)
+{
+   nir_ssa_def *val;
+   val = nir_isub(b, nir_imm_intN_t(b, a->bit_size - 1, 32), nir_ufind_msb(b, a));
+   return nir_u2u(b, val, a->bit_size);
+}
+
+static inline nir_ssa_def *
+nir_ctz_u(nir_builder *b, nir_ssa_def *a)
+{
+   nir_ssa_def *cond = nir_ieq(b, a, nir_imm_intN_t(b, 0, a->bit_size));
+
+   return nir_bcsel(b, cond,
+                    nir_imm_intN_t(b, a->bit_size, a->bit_size),
+                    nir_u2u(b, nir_find_lsb(b, a), a->bit_size));
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NIR_BUILTIN_BUILDER_H */

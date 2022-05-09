@@ -33,9 +33,9 @@
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
 #include "util/u_string.h"
-#include "util/u_format.h"
-#include "util/u_format_tests.h"
-#include "util/u_format_s3tc.h"
+#include "util/format/u_format.h"
+#include "util/format/u_format_tests.h"
+#include "util/format/u_format_s3tc.h"
 
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_debug.h"
@@ -96,8 +96,8 @@ add_fetch_rgba_test(struct gallivm_state *gallivm, unsigned verbose,
    LLVMValueRef rgba;
    LLVMValueRef cache = NULL;
 
-   util_snprintf(name, sizeof name, "fetch_%s_%s", desc->short_name,
-                 type.floating ? "float" : "unorm8");
+   snprintf(name, sizeof name, "fetch_%s_%s", desc->short_name,
+            type.floating ? "float" : "unorm8");
 
    args[0] = LLVMPointerType(lp_build_vec_type(gallivm, type), 0);
    args[1] = LLVMPointerType(LLVMInt8TypeInContext(context), 0);
@@ -150,7 +150,7 @@ test_format_float(unsigned verbose, FILE *fp,
    unsigned i, j, k, l;
 
    context = LLVMContextCreate();
-   gallivm = gallivm_create("test_module_float", context);
+   gallivm = gallivm_create("test_module_float", context, NULL);
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc,
                                lp_float32_vec4_type(), use_cache);
@@ -251,7 +251,7 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    unsigned i, j, k, l;
 
    context = LLVMContextCreate();
-   gallivm = gallivm_create("test_module_unorm8", context);
+   gallivm = gallivm_create("test_module_unorm8", context, NULL);
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc,
                                lp_unorm8_vec4_type(), use_cache);
@@ -384,17 +384,14 @@ test_all(unsigned verbose, FILE *fp)
          if (util_format_is_pure_integer(format))
             continue;
 
-         /* only have util fetch func for etc1 */
-         if (format_desc->layout == UTIL_FORMAT_LAYOUT_ETC &&
-             format != PIPE_FORMAT_ETC1_RGB8) {
+         /* The codegen sometimes falls back to calling the precompiled fetch
+          * func, so if we don't have one of those (some compressed formats,
+          * some ), we can't reliably test it.  We'll surely have a
+          * precompiled fetch func for any format before we write LLVM code to
+          * fetch from it.
+          */
+         if (!util_format_fetch_rgba_func(format))
             continue;
-         }
-
-         /* missing fetch funcs */
-         if (format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC ||
-             format_desc->layout == UTIL_FORMAT_LAYOUT_ATC) {
-            continue;
-         }
 
          /* only test twice with formats which can use cache */
          if (format_desc->layout != UTIL_FORMAT_LAYOUT_S3TC && use_cache) {

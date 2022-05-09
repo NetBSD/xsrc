@@ -21,8 +21,6 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from __future__ import division, print_function
-
 import format_parser as parser
 import sys
 
@@ -128,6 +126,8 @@ def get_channel_bits(fmat, chan_name):
          return bits if fmat.has_channel(chan_name) else 0
       elif fmat.layout == 'atc':
          return 8 if fmat.has_channel(chan_name) else 0
+      elif fmat.layout == 'other' and ('RG_RB' in fmat.name or 'GR_BR' in fmat.name):
+         return 8 if fmat.has_channel(chan_name) else 0
       else:
          assert False
    else:
@@ -169,16 +169,20 @@ print('''
   * manually or commit it into version control.
   */
 
-static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
+static const struct mesa_format_info format_info[MESA_FORMAT_COUNT] =
 {
 ''')
 
 def format_channel_bits(fmat, tuple_list):
    return ['.%s = %s' % (field, str(get_channel_bits(fmat, name))) for (field, name) in tuple_list]
 
+bf_map = {
+   "GL_DEPTH_COMPONENT" : "MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH",
+   "GL_STENCIL_INDEX" : "MESA_ARRAY_FORMAT_BASE_FORMAT_STENCIL",
+}
 
 for fmat in formats:
-   print('   {')
+   print('   [{0}] = {{'.format(fmat.name))
    print('      .Name = {0},'.format(fmat.name))
    print('      .StrName = "{0}",'.format(fmat.name))
    print('      .Layout = {0},'.format('MESA_FORMAT_LAYOUT_' + fmat.layout.upper()))
@@ -200,6 +204,7 @@ for fmat in formats:
       chan = fmat.array_element()
       norm = chan.norm or chan.type == parser.FLOAT
       print('      .ArrayFormat = MESA_ARRAY_FORMAT({0}),'.format(', '.join([
+         bf_map.get(get_gl_base_format(fmat), "MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS"),
          str(chan.size // 8),
          str(int(chan.sign)),
          str(int(chan.type == parser.FLOAT)),

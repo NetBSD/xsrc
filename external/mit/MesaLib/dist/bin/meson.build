@@ -19,3 +19,5 @@
 # SOFTWARE.
 
 git_sha1_gen_py = files('git_sha1_gen.py')
+symbols_check = find_program('symbols-check.py')
+install_megadrivers_py = find_program('install_megadrivers.py')

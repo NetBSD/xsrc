@@ -129,8 +129,10 @@ analyze_ubos_block(struct ubo_analysis_state *state, nir_block *block)
       case nir_intrinsic_image_deref_load:
       case nir_intrinsic_image_deref_store:
       case nir_intrinsic_image_deref_atomic_add:
-      case nir_intrinsic_image_deref_atomic_min:
-      case nir_intrinsic_image_deref_atomic_max:
+      case nir_intrinsic_image_deref_atomic_imin:
+      case nir_intrinsic_image_deref_atomic_umin:
+      case nir_intrinsic_image_deref_atomic_imax:
+      case nir_intrinsic_image_deref_atomic_umax:
       case nir_intrinsic_image_deref_atomic_and:
       case nir_intrinsic_image_deref_atomic_or:
       case nir_intrinsic_image_deref_atomic_xor:
@@ -198,14 +200,6 @@ brw_nir_analyze_ubo_ranges(const struct brw_compiler *compiler,
                            const struct brw_vs_prog_key *vs_key,
                            struct brw_ubo_range out_ranges[4])
 {
-   const struct gen_device_info *devinfo = compiler->devinfo;
-
-   if ((devinfo->gen <= 7 && !devinfo->is_haswell) ||
-       !compiler->scalar_stage[nir->info.stage]) {
-      memset(out_ranges, 0, 4 * sizeof(struct brw_ubo_range));
-      return;
-   }
-
    void *mem_ctx = ralloc_context(NULL);
 
    struct ubo_analysis_state state = {
@@ -281,7 +275,7 @@ brw_nir_analyze_ubo_ranges(const struct brw_compiler *compiler,
          }
 
          struct ubo_range_entry *entry =
-            util_dynarray_grow(&ranges, sizeof(struct ubo_range_entry));
+            util_dynarray_grow(&ranges, struct ubo_range_entry, 1);
 
          entry->range.block = b;
          entry->range.start = first_bit;
@@ -311,8 +305,10 @@ brw_nir_analyze_ubo_ranges(const struct brw_compiler *compiler,
     */
 
    /* Sort the list so the most beneficial ranges are at the front. */
-   qsort(ranges.data, nr_entries, sizeof(struct ubo_range_entry),
-         cmp_ubo_range_entry);
+   if (nr_entries > 0) {
+      qsort(ranges.data, nr_entries, sizeof(struct ubo_range_entry),
+            cmp_ubo_range_entry);
+   }
 
    struct ubo_range_entry *entries = ranges.data;
 

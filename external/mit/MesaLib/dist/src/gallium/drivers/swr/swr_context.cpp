@@ -31,7 +31,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_atomic.h"
 #include "util/u_upload_mgr.h"
 #include "util/u_transfer.h"
@@ -111,10 +111,10 @@ swr_transfer_map(struct pipe_context *pipe,
     * and nothing needs to be done at unmap. */
    swr_store_dirty_resource(pipe, resource, SWR_TILE_INVALID);
 
-   if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+   if (!(usage & PIPE_MAP_UNSYNCHRONIZED)) {
       /* If resource is in use, finish fence before mapping.
        * Unless requested not to block, then if not done return NULL map */
-      if (usage & PIPE_TRANSFER_DONTBLOCK) {
+      if (usage & PIPE_MAP_DONTBLOCK) {
          if (swr_is_fence_pending(screen->flush_fence))
             return NULL;
       } else {
@@ -134,7 +134,7 @@ swr_transfer_map(struct pipe_context *pipe,
    if (!pt)
       return NULL;
    pipe_resource_reference(&pt->resource, resource);
-   pt->usage = (pipe_transfer_usage)usage;
+   pt->usage = (pipe_map_flags)usage;
    pt->level = level;
    pt->box = *box;
    pt->stride = spr->swr.pitch;
@@ -143,7 +143,7 @@ swr_transfer_map(struct pipe_context *pipe,
    /* if we're mapping the depth/stencil, copy in stencil for the section
     * being read in
     */
-   if (usage & PIPE_TRANSFER_READ && spr->has_depth && spr->has_stencil) {
+   if (usage & PIPE_MAP_READ && spr->has_depth && spr->has_stencil) {
       size_t zbase, sbase;
       for (int z = box->z; z < box->z + box->depth; z++) {
          zbase = (z * spr->swr.qpitch + box->y) * spr->swr.pitch +
@@ -181,7 +181,7 @@ swr_transfer_flush_region(struct pipe_context *pipe,
                           const struct pipe_box *flush_box)
 {
    assert(transfer->resource);
-   assert(transfer->usage & PIPE_TRANSFER_WRITE);
+   assert(transfer->usage & PIPE_MAP_WRITE);
 
    struct swr_resource *spr = swr_resource(transfer->resource);
    if (!spr->has_depth || !spr->has_stencil)
@@ -222,8 +222,8 @@ swr_transfer_unmap(struct pipe_context *pipe, struct pipe_transfer *transfer)
    /* if we're mapping the depth/stencil, copy in stencil for the section
     * being written out
     */
-   if (transfer->usage & PIPE_TRANSFER_WRITE &&
-       !(transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT) &&
+   if (transfer->usage & PIPE_MAP_WRITE &&
+       !(transfer->usage & PIPE_MAP_FLUSH_EXPLICIT) &&
        spr->has_depth && spr->has_stencil) {
       struct pipe_box box;
       u_box_3d(0, 0, 0, transfer->box.width, transfer->box.height,
@@ -320,13 +320,15 @@ swr_blit(struct pipe_context *pipe, const struct pipe_blit_info *blit_info)
    util_blitter_save_vertex_elements(ctx->blitter, (void *)ctx->velems);
    util_blitter_save_vertex_shader(ctx->blitter, (void *)ctx->vs);
    util_blitter_save_geometry_shader(ctx->blitter, (void*)ctx->gs);
+   util_blitter_save_tessctrl_shader(ctx->blitter, (void*)ctx->tcs);
+   util_blitter_save_tesseval_shader(ctx->blitter, (void*)ctx->tes);
    util_blitter_save_so_targets(
       ctx->blitter,
       ctx->num_so_targets,
       (struct pipe_stream_output_target **)ctx->so_targets);
    util_blitter_save_rasterizer(ctx->blitter, (void *)ctx->rasterizer);
-   util_blitter_save_viewport(ctx->blitter, &ctx->viewport);
-   util_blitter_save_scissor(ctx->blitter, &ctx->scissor);
+   util_blitter_save_viewport(ctx->blitter, &ctx->viewports[0]);
+   util_blitter_save_scissor(ctx->blitter, &ctx->scissors[0]);
    util_blitter_save_fragment_shader(ctx->blitter, ctx->fs);
    util_blitter_save_blend(ctx->blitter, (void *)ctx->blend);
    util_blitter_save_depth_stencil_alpha(ctx->blitter,
@@ -403,6 +405,7 @@ swr_destroy(struct pipe_context *pipe)
 
    swr_destroy_scratch_buffers(ctx);
 
+
    /* Only update screen->pipe if current context is being destroyed */
    assert(screen);
    if (screen->pipe == pipe)
@@ -415,7 +418,7 @@ swr_destroy(struct pipe_context *pipe)
 static void
 swr_render_condition(struct pipe_context *pipe,
                      struct pipe_query *query,
-                     boolean condition,
+                     bool condition,
                      enum pipe_render_cond_flag mode)
 {
    struct swr_context *ctx = swr_context(pipe);
@@ -423,6 +426,13 @@ swr_render_condition(struct pipe_context *pipe,
    ctx->render_cond_query = query;
    ctx->render_cond_mode = mode;
    ctx->render_cond_cond = condition;
+}
+
+
+static void
+swr_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+{
+   // NOOP
 }
 
 static void
@@ -471,29 +481,43 @@ swr_UpdateStatsFE(HANDLE hPrivateContext, const SWR_STATS_FE *pStats)
    }
 }
 
+static void
+swr_UpdateStreamOut(HANDLE hPrivateContext, uint64_t numPrims)
+{
+   swr_draw_context *pDC = (swr_draw_context*)hPrivateContext;
+
+   if (!pDC)
+      return;
+
+   if (pDC->soPrims)
+       *pDC->soPrims += numPrims;
+}
+
 struct pipe_context *
 swr_create_context(struct pipe_screen *p_screen, void *priv, unsigned flags)
 {
    struct swr_context *ctx = (struct swr_context *)
       AlignedMalloc(sizeof(struct swr_context), KNOB_SIMD_BYTES);
-   memset(ctx, 0, sizeof(struct swr_context));
+   memset((void*)ctx, 0, sizeof(struct swr_context));
 
    swr_screen(p_screen)->pfnSwrGetInterface(ctx->api);
+   swr_screen(p_screen)->pfnSwrGetTileInterface(ctx->tileApi);
    ctx->swrDC.pAPI = &ctx->api;
+   ctx->swrDC.pTileAPI = &ctx->tileApi;
 
    ctx->blendJIT =
       new std::unordered_map<BLEND_COMPILE_STATE, PFN_BLEND_JIT_FUNC>;
 
    ctx->max_draws_in_flight = KNOB_MAX_DRAWS_IN_FLIGHT;
 
-   SWR_CREATECONTEXT_INFO createInfo;
-   memset(&createInfo, 0, sizeof(createInfo));
+   SWR_CREATECONTEXT_INFO createInfo {0};
+
    createInfo.privateStateSize = sizeof(swr_draw_context);
    createInfo.pfnLoadTile = swr_LoadHotTile;
    createInfo.pfnStoreTile = swr_StoreHotTile;
-   createInfo.pfnClearTile = swr_StoreHotTileClear;
    createInfo.pfnUpdateStats = swr_UpdateStats;
    createInfo.pfnUpdateStatsFE = swr_UpdateStatsFE;
+   createInfo.pfnUpdateStreamOut = swr_UpdateStreamOut;
    createInfo.pfnMakeGfxPtr = swr_MakeGfxPtr;
 
    SWR_THREADING_INFO threadingInfo {0};
@@ -531,8 +555,10 @@ swr_create_context(struct pipe_screen *p_screen, void *priv, unsigned flags)
    ctx->pipe.priv = priv;
    ctx->pipe.create_surface = swr_create_surface;
    ctx->pipe.surface_destroy = swr_surface_destroy;
-   ctx->pipe.transfer_map = swr_transfer_map;
-   ctx->pipe.transfer_unmap = swr_transfer_unmap;
+   ctx->pipe.buffer_map = swr_transfer_map;
+   ctx->pipe.buffer_unmap = swr_transfer_unmap;
+   ctx->pipe.texture_map = swr_transfer_map;
+   ctx->pipe.texture_unmap = swr_transfer_unmap;
    ctx->pipe.transfer_flush_region = swr_transfer_flush_region;
 
    ctx->pipe.buffer_subdata = u_default_buffer_subdata;
@@ -540,6 +566,7 @@ swr_create_context(struct pipe_screen *p_screen, void *priv, unsigned flags)
 
    ctx->pipe.clear_texture = util_clear_texture;
    ctx->pipe.resource_copy_region = swr_resource_copy;
+   ctx->pipe.flush_resource = swr_flush_resource;
    ctx->pipe.render_condition = swr_render_condition;
 
    swr_state_init(&ctx->pipe);

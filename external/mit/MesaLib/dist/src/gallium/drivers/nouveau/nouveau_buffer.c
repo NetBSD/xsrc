@@ -20,6 +20,17 @@ struct nouveau_transfer {
    uint32_t offset;
 };
 
+static void *
+nouveau_user_ptr_transfer_map(struct pipe_context *pipe,
+                              struct pipe_resource *resource,
+                              unsigned level, unsigned usage,
+                              const struct pipe_box *box,
+                              struct pipe_transfer **ptransfer);
+
+static void
+nouveau_user_ptr_transfer_unmap(struct pipe_context *pipe,
+                                struct pipe_transfer *transfer);
+
 static inline struct nouveau_transfer *
 nouveau_transfer(struct pipe_transfer *transfer)
 {
@@ -78,6 +89,8 @@ release_allocation(struct nouveau_mm_allocation **mm,
 inline void
 nouveau_buffer_release_gpu_storage(struct nv04_resource *buf)
 {
+   assert(!(buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
+
    if (buf->fence && buf->fence->state < NOUVEAU_FENCE_STATE_FLUSHED) {
       nouveau_fence_work(buf->fence, nouveau_fence_unref_bo, buf->bo);
       buf->bo = NULL;
@@ -110,11 +123,16 @@ nouveau_buffer_reallocate(struct nouveau_screen *screen,
    return nouveau_buffer_allocate(screen, buf, domain);
 }
 
-static void
+void
 nouveau_buffer_destroy(struct pipe_screen *pscreen,
                        struct pipe_resource *presource)
 {
    struct nv04_resource *res = nv04_resource(presource);
+
+   if (res->status & NOUVEAU_BUFFER_STATUS_USER_PTR) {
+      FREE(res);
+      return;
+   }
 
    nouveau_buffer_release_gpu_storage(res);
 
@@ -226,7 +244,7 @@ static inline bool
 nouveau_buffer_sync(struct nouveau_context *nv,
                     struct nv04_resource *buf, unsigned rw)
 {
-   if (rw == PIPE_TRANSFER_READ) {
+   if (rw == PIPE_MAP_READ) {
       if (!buf->fence_wr)
          return true;
       NOUVEAU_DRV_STAT_RES(buf, buf_non_kernel_fence_sync_count,
@@ -251,7 +269,7 @@ nouveau_buffer_sync(struct nouveau_context *nv,
 static inline bool
 nouveau_buffer_busy(struct nv04_resource *buf, unsigned rw)
 {
-   if (rw == PIPE_TRANSFER_READ)
+   if (rw == PIPE_MAP_READ)
       return (buf->fence_wr && !nouveau_fence_signalled(buf->fence_wr));
    else
       return (buf->fence && !nouveau_fence_signalled(buf->fence));
@@ -329,7 +347,7 @@ nouveau_buffer_cache(struct nouveau_context *nv, struct nv04_resource *buf)
 
 
 #define NOUVEAU_TRANSFER_DISCARD \
-   (PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE)
+   (PIPE_MAP_DISCARD_RANGE | PIPE_MAP_DISCARD_WHOLE_RESOURCE)
 
 /* Checks whether it is possible to completely discard the memory backing this
  * resource. This can be useful if we would otherwise have to wait for a read
@@ -338,13 +356,13 @@ nouveau_buffer_cache(struct nouveau_context *nv, struct nv04_resource *buf)
 static inline bool
 nouveau_buffer_should_discard(struct nv04_resource *buf, unsigned usage)
 {
-   if (!(usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE))
+   if (!(usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE))
       return false;
    if (unlikely(buf->base.bind & PIPE_BIND_SHARED))
       return false;
-   if (unlikely(usage & PIPE_TRANSFER_PERSISTENT))
+   if (unlikely(usage & PIPE_MAP_PERSISTENT))
       return false;
-   return buf->mm && nouveau_buffer_busy(buf, PIPE_TRANSFER_WRITE);
+   return buf->mm && nouveau_buffer_busy(buf, PIPE_MAP_WRITE);
 }
 
 /* Returns a pointer to a memory area representing a window into the
@@ -370,7 +388,7 @@ nouveau_buffer_should_discard(struct nv04_resource *buf, unsigned usage)
  * The strategy for determining what kind of memory area to return is complex,
  * see comments inside of the function.
  */
-static void *
+void *
 nouveau_buffer_transfer_map(struct pipe_context *pipe,
                             struct pipe_resource *resource,
                             unsigned level, unsigned usage,
@@ -379,6 +397,10 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
 {
    struct nouveau_context *nv = nouveau_context(pipe);
    struct nv04_resource *buf = nv04_resource(resource);
+
+   if (buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR)
+      return nouveau_user_ptr_transfer_map(pipe, resource, level, usage, box, ptransfer);
+
    struct nouveau_transfer *tx = MALLOC_STRUCT(nouveau_transfer);
    uint8_t *map;
    int ret;
@@ -388,9 +410,9 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    nouveau_buffer_transfer_init(tx, resource, box, usage);
    *ptransfer = &tx->base;
 
-   if (usage & PIPE_TRANSFER_READ)
+   if (usage & PIPE_MAP_READ)
       NOUVEAU_DRV_STAT(nv->screen, buf_transfers_rd, 1);
-   if (usage & PIPE_TRANSFER_WRITE)
+   if (usage & PIPE_MAP_WRITE)
       NOUVEAU_DRV_STAT(nv->screen, buf_transfers_wr, 1);
 
    /* If we are trying to write to an uninitialized range, the user shouldn't
@@ -400,15 +422,15 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
     * uninitialized, the GPU can't care what was there, and so we can treat
     * the write as being unsynchronized.
     */
-   if ((usage & PIPE_TRANSFER_WRITE) &&
+   if ((usage & PIPE_MAP_WRITE) &&
        !util_ranges_intersect(&buf->valid_buffer_range, box->x, box->x + box->width))
-      usage |= PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_UNSYNCHRONIZED;
+      usage |= PIPE_MAP_DISCARD_RANGE | PIPE_MAP_UNSYNCHRONIZED;
 
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & NOUVEAU_TRANSFER_DISCARD) {
          /* Set up a staging area for the user to write to. It will be copied
           * back into VRAM on unmap. */
-         if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE)
+         if (usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE)
             buf->status &= NOUVEAU_BUFFER_STATUS_REALLOC_MASK;
          nouveau_transfer_staging(nv, tx, true);
       } else {
@@ -426,7 +448,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
          } else {
             /* The buffer is currently idle. Create a staging area for writes,
              * and make sure that the cached data is up-to-date. */
-            if (usage & PIPE_TRANSFER_WRITE)
+            if (usage & PIPE_MAP_WRITE)
                nouveau_transfer_staging(nv, tx, true);
             if (!buf->data)
                nouveau_buffer_cache(nv, buf);
@@ -463,31 +485,31 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    map = (uint8_t *)buf->bo->map + buf->offset + box->x;
 
    /* using kernel fences only if !buf->mm */
-   if ((usage & PIPE_TRANSFER_UNSYNCHRONIZED) || !buf->mm)
+   if ((usage & PIPE_MAP_UNSYNCHRONIZED) || !buf->mm)
       return map;
 
    /* If the GPU is currently reading/writing this buffer, we shouldn't
     * interfere with its progress. So instead we either wait for the GPU to
     * complete its operation, or set up a staging area to perform our work in.
     */
-   if (nouveau_buffer_busy(buf, usage & PIPE_TRANSFER_READ_WRITE)) {
-      if (unlikely(usage & (PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE |
-                            PIPE_TRANSFER_PERSISTENT))) {
+   if (nouveau_buffer_busy(buf, usage & PIPE_MAP_READ_WRITE)) {
+      if (unlikely(usage & (PIPE_MAP_DISCARD_WHOLE_RESOURCE |
+                            PIPE_MAP_PERSISTENT))) {
          /* Discarding was not possible, must sync because
           * subsequent transfers might use UNSYNCHRONIZED. */
-         nouveau_buffer_sync(nv, buf, usage & PIPE_TRANSFER_READ_WRITE);
+         nouveau_buffer_sync(nv, buf, usage & PIPE_MAP_READ_WRITE);
       } else
-      if (usage & PIPE_TRANSFER_DISCARD_RANGE) {
+      if (usage & PIPE_MAP_DISCARD_RANGE) {
          /* The whole range is being discarded, so it doesn't matter what was
           * there before. No need to copy anything over. */
          nouveau_transfer_staging(nv, tx, true);
          map = tx->map;
       } else
-      if (nouveau_buffer_busy(buf, PIPE_TRANSFER_READ)) {
-         if (usage & PIPE_TRANSFER_DONTBLOCK)
+      if (nouveau_buffer_busy(buf, PIPE_MAP_READ)) {
+         if (usage & PIPE_MAP_DONTBLOCK)
             map = NULL;
          else
-            nouveau_buffer_sync(nv, buf, usage & PIPE_TRANSFER_READ_WRITE);
+            nouveau_buffer_sync(nv, buf, usage & PIPE_MAP_READ_WRITE);
       } else {
          /* It is expected that the returned buffer be a representation of the
           * data in question, so we must copy it over from the buffer. */
@@ -504,7 +526,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
 
 
 
-static void
+void
 nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
                                      struct pipe_transfer *transfer,
                                      const struct pipe_box *box)
@@ -515,7 +537,7 @@ nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
    if (tx->map)
       nouveau_transfer_write(nouveau_context(pipe), tx, box->x, box->width);
 
-   util_range_add(&buf->valid_buffer_range,
+   util_range_add(&buf->base, &buf->valid_buffer_range,
                   tx->base.box.x + box->x,
                   tx->base.box.x + box->x + box->width);
 }
@@ -526,20 +548,24 @@ nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
  *
  * Also marks vbo dirty based on the buffer's binding
  */
-static void
+void
 nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
                               struct pipe_transfer *transfer)
 {
    struct nouveau_context *nv = nouveau_context(pipe);
-   struct nouveau_transfer *tx = nouveau_transfer(transfer);
    struct nv04_resource *buf = nv04_resource(transfer->resource);
 
-   if (tx->base.usage & PIPE_TRANSFER_WRITE) {
-      if (!(tx->base.usage & PIPE_TRANSFER_FLUSH_EXPLICIT)) {
+   if (buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR)
+      return nouveau_user_ptr_transfer_unmap(pipe, transfer);
+
+   struct nouveau_transfer *tx = nouveau_transfer(transfer);
+
+   if (tx->base.usage & PIPE_MAP_WRITE) {
+      if (!(tx->base.usage & PIPE_MAP_FLUSH_EXPLICIT)) {
          if (tx->map)
             nouveau_transfer_write(nv, tx, 0, tx->base.box.width);
 
-         util_range_add(&buf->valid_buffer_range,
+         util_range_add(&buf->base, &buf->valid_buffer_range,
                         tx->base.box.x, tx->base.box.x + tx->base.box.width);
       }
 
@@ -551,7 +577,7 @@ nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
       }
    }
 
-   if (!tx->bo && (tx->base.usage & PIPE_TRANSFER_WRITE))
+   if (!tx->bo && (tx->base.usage & PIPE_MAP_WRITE))
       NOUVEAU_DRV_STAT(nv->screen, buf_write_bytes_direct, tx->base.box.width);
 
    nouveau_buffer_transfer_del(nv, tx);
@@ -565,6 +591,9 @@ nouveau_copy_buffer(struct nouveau_context *nv,
                     struct nv04_resource *src, unsigned srcx, unsigned size)
 {
    assert(dst->base.target == PIPE_BUFFER && src->base.target == PIPE_BUFFER);
+
+   assert(!(dst->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
+   assert(!(src->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
 
    if (likely(dst->domain) && likely(src->domain)) {
       nv->copy_data(nv,
@@ -590,7 +619,7 @@ nouveau_copy_buffer(struct nouveau_context *nv,
                                 &src->base, 0, &src_box);
    }
 
-   util_range_add(&dst->valid_buffer_range, dstx, dstx + size);
+   util_range_add(&dst->base, &dst->valid_buffer_range, dstx, dstx + size);
 }
 
 
@@ -599,7 +628,8 @@ nouveau_resource_map_offset(struct nouveau_context *nv,
                             struct nv04_resource *res, uint32_t offset,
                             uint32_t flags)
 {
-   if (unlikely(res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY))
+   if (unlikely(res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) ||
+       unlikely(res->status & NOUVEAU_BUFFER_STATUS_USER_PTR))
       return res->data + offset;
 
    if (res->domain == NOUVEAU_BO_VRAM) {
@@ -611,7 +641,7 @@ nouveau_resource_map_offset(struct nouveau_context *nv,
 
    if (res->mm) {
       unsigned rw;
-      rw = (flags & NOUVEAU_BO_WR) ? PIPE_TRANSFER_WRITE : PIPE_TRANSFER_READ;
+      rw = (flags & NOUVEAU_BO_WR) ? PIPE_MAP_WRITE : PIPE_MAP_READ;
       nouveau_buffer_sync(nv, res, rw);
       if (nouveau_bo_map(res->bo, 0, NULL))
          return NULL;
@@ -622,15 +652,28 @@ nouveau_resource_map_offset(struct nouveau_context *nv,
    return (uint8_t *)res->bo->map + res->offset + offset;
 }
 
-
-const struct u_resource_vtbl nouveau_buffer_vtbl =
+static void *
+nouveau_user_ptr_transfer_map(struct pipe_context *pipe,
+                              struct pipe_resource *resource,
+                              unsigned level, unsigned usage,
+                              const struct pipe_box *box,
+                              struct pipe_transfer **ptransfer)
 {
-   u_default_resource_get_handle,     /* get_handle */
-   nouveau_buffer_destroy,               /* resource_destroy */
-   nouveau_buffer_transfer_map,          /* transfer_map */
-   nouveau_buffer_transfer_flush_region, /* transfer_flush_region */
-   nouveau_buffer_transfer_unmap,        /* transfer_unmap */
-};
+   struct nouveau_transfer *tx = MALLOC_STRUCT(nouveau_transfer);
+   if (!tx)
+      return NULL;
+   nouveau_buffer_transfer_init(tx, resource, box, usage);
+   *ptransfer = &tx->base;
+   return nv04_resource(resource)->data;
+}
+
+static void
+nouveau_user_ptr_transfer_unmap(struct pipe_context *pipe,
+                                struct pipe_transfer *transfer)
+{
+   struct nouveau_transfer *tx = nouveau_transfer(transfer);
+   FREE(tx);
+}
 
 struct pipe_resource *
 nouveau_buffer_create(struct pipe_screen *pscreen,
@@ -645,7 +688,6 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
       return NULL;
 
    buffer->base = *templ;
-   buffer->vtbl = &nouveau_buffer_vtbl;
    pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.screen = pscreen;
 
@@ -700,6 +742,31 @@ fail:
    return NULL;
 }
 
+struct pipe_resource *
+nouveau_buffer_create_from_user(struct pipe_screen *pscreen,
+                                const struct pipe_resource *templ,
+                                void *user_ptr)
+{
+   struct nv04_resource *buffer;
+
+   buffer = CALLOC_STRUCT(nv04_resource);
+   if (!buffer)
+      return NULL;
+
+   buffer->base = *templ;
+   /* set address and data to the same thing for higher compatibility with
+    * existing code. It's correct nonetheless as the same pointer is equally
+    * valid on the CPU and the GPU.
+    */
+   buffer->address = (uintptr_t)user_ptr;
+   buffer->data = user_ptr;
+   buffer->status = NOUVEAU_BUFFER_STATUS_USER_PTR;
+   buffer->base.screen = pscreen;
+
+   pipe_reference_init(&buffer->base.reference, 1);
+
+   return &buffer->base;
+}
 
 struct pipe_resource *
 nouveau_user_buffer_create(struct pipe_screen *pscreen, void *ptr,
@@ -712,7 +779,6 @@ nouveau_user_buffer_create(struct pipe_screen *pscreen, void *ptr,
       return NULL;
 
    pipe_reference_init(&buffer->base.reference, 1);
-   buffer->vtbl = &nouveau_buffer_vtbl;
    buffer->base.screen = pscreen;
    buffer->base.format = PIPE_FORMAT_R8_UNORM;
    buffer->base.usage = PIPE_USAGE_IMMUTABLE;
@@ -725,7 +791,7 @@ nouveau_user_buffer_create(struct pipe_screen *pscreen, void *ptr,
    buffer->status = NOUVEAU_BUFFER_STATUS_USER_MEMORY;
 
    util_range_init(&buffer->valid_buffer_range);
-   util_range_add(&buffer->valid_buffer_range, 0, bytes);
+   util_range_add(&buffer->base, &buffer->valid_buffer_range, 0, bytes);
 
    return &buffer->base;
 }
@@ -747,6 +813,8 @@ bool
 nouveau_buffer_migrate(struct nouveau_context *nv,
                        struct nv04_resource *buf, const unsigned new_domain)
 {
+   assert(!(buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
+
    struct nouveau_screen *screen = nv->screen;
    struct nouveau_bo *bo;
    const unsigned old_domain = buf->domain;
@@ -818,6 +886,8 @@ nouveau_user_buffer_upload(struct nouveau_context *nv,
                            struct nv04_resource *buf,
                            unsigned base, unsigned size)
 {
+   assert(!(buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
+
    struct nouveau_screen *screen = nouveau_screen(buf->base.screen);
    int ret;
 
@@ -846,20 +916,17 @@ nouveau_buffer_invalidate(struct pipe_context *pipe,
    struct nv04_resource *buf = nv04_resource(resource);
    int ref = buf->base.reference.count - 1;
 
+   assert(!(buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR));
+
    /* Shared buffers shouldn't get reallocated */
    if (unlikely(buf->base.bind & PIPE_BIND_SHARED))
-      return;
-
-   /* We can't touch persistent/coherent buffers */
-   if (buf->base.flags & (PIPE_RESOURCE_FLAG_MAP_PERSISTENT |
-                          PIPE_RESOURCE_FLAG_MAP_COHERENT))
       return;
 
    /* If the buffer is sub-allocated and not currently being written, just
     * wipe the valid buffer range. Otherwise we have to create fresh
     * storage. (We don't keep track of fences for non-sub-allocated BO's.)
     */
-   if (buf->mm && !nouveau_buffer_busy(buf, PIPE_TRANSFER_WRITE)) {
+   if (buf->mm && !nouveau_buffer_busy(buf, PIPE_MAP_WRITE)) {
       util_range_set_empty(&buf->valid_buffer_range);
    } else {
       nouveau_buffer_reallocate(nv->screen, buf, buf->domain);

@@ -96,7 +96,7 @@ rewrite_dest(nir_dest *dest, void *_state)
 
    list_del(&dest->reg.def_link);
    nir_ssa_dest_init(instr, dest, reg->num_components,
-                     reg->bit_size, reg->name);
+                     reg->bit_size, NULL);
 
    nir_phi_builder_value_set_block_def(value, instr->block, &dest->ssa);
 
@@ -131,7 +131,10 @@ rewrite_alu_instr(nir_alu_instr *alu, struct regs_to_ssa_state *state)
     * channels in the write mask.
     */
    unsigned num_components;
-   unsigned vec_swizzle[4] = { 0, 1, 2, 3 };
+   uint8_t vec_swizzle[NIR_MAX_VEC_COMPONENTS];
+   for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++)
+      vec_swizzle[i] = i;
+
    if (nir_op_infos[alu->op].output_size == 0) {
       /* Figure out the swizzle we need on the vecN operation and compute
        * the number of components in the SSA def at the same time.
@@ -176,15 +179,9 @@ rewrite_alu_instr(nir_alu_instr *alu, struct regs_to_ssa_state *state)
    alu->dest.write_mask = (1 << num_components) - 1;
    list_del(&alu->dest.dest.reg.def_link);
    nir_ssa_dest_init(&alu->instr, &alu->dest.dest, num_components,
-                     reg->bit_size, reg->name);
+                     reg->bit_size, NULL);
 
-   nir_op vecN_op;
-   switch (reg->num_components) {
-   case 2: vecN_op = nir_op_vec2; break;
-   case 3: vecN_op = nir_op_vec3; break;
-   case 4: vecN_op = nir_op_vec4; break;
-   default: unreachable("not reached");
-   }
+   nir_op vecN_op = nir_op_vec(reg->num_components);
 
    nir_alu_instr *vec = nir_alu_instr_create(state->shader, vecN_op);
 
@@ -203,7 +200,7 @@ rewrite_alu_instr(nir_alu_instr *alu, struct regs_to_ssa_state *state)
    }
 
    nir_ssa_dest_init(&vec->instr, &vec->dest.dest, reg->num_components,
-                     reg->bit_size, reg->name);
+                     reg->bit_size, NULL);
    nir_instr_insert(nir_after_instr(&alu->instr), &vec->instr);
 
    nir_phi_builder_value_set_block_def(value, alu->instr.block,
@@ -220,14 +217,16 @@ nir_lower_regs_to_ssa_impl(nir_function_impl *impl)
                               nir_metadata_dominance);
    nir_index_local_regs(impl);
 
+   void *dead_ctx = ralloc_context(NULL);
    struct regs_to_ssa_state state;
    state.shader = impl->function->shader;
-   state.values = malloc(impl->reg_alloc * sizeof(*state.values));
+   state.values = ralloc_array(dead_ctx, struct nir_phi_builder_value *,
+                               impl->reg_alloc);
 
    struct nir_phi_builder *phi_build = nir_phi_builder_create(impl);
 
    const unsigned block_set_words = BITSET_WORDS(impl->num_blocks);
-   NIR_VLA(BITSET_WORD, defs, block_set_words);
+   BITSET_WORD *defs = ralloc_array(dead_ctx, BITSET_WORD, block_set_words);
 
    nir_foreach_register(reg, &impl->registers) {
       if (reg->num_array_elems != 0) {
@@ -277,35 +276,21 @@ nir_lower_regs_to_ssa_impl(nir_function_impl *impl)
        * loops, a phi source may be a back-edge so we have to handle it as if
        * it were one of the last instructions in the predecessor block.
        */
-      for (unsigned i = 0; i < ARRAY_SIZE(block->successors); i++) {
-         if (block->successors[i] == NULL)
-            continue;
-
-         nir_foreach_instr(instr, block->successors[i]) {
-            if (instr->type != nir_instr_type_phi)
-               break;
-
-            nir_phi_instr *phi = nir_instr_as_phi(instr);
-            nir_foreach_phi_src(phi_src, phi) {
-               if (phi_src->pred == block)
-                  rewrite_src(&phi_src->src, &state);
-            }
-         }
-      }
+      nir_foreach_phi_src_leaving_block(block, rewrite_src, &state);
    }
 
    nir_phi_builder_finish(phi_build);
 
    nir_foreach_register_safe(reg, &impl->registers) {
       if (state.values[reg->index]) {
-         assert(list_empty(&reg->uses));
-         assert(list_empty(&reg->if_uses));
-         assert(list_empty(&reg->defs));
+         assert(list_is_empty(&reg->uses));
+         assert(list_is_empty(&reg->if_uses));
+         assert(list_is_empty(&reg->defs));
          exec_node_remove(&reg->node);
       }
    }
 
-   free(state.values);
+   ralloc_free(dead_ctx);
 
    nir_metadata_preserve(impl, nir_metadata_block_index |
                                nir_metadata_dominance);

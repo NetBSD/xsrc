@@ -36,7 +36,7 @@
 static inline bool
 are_all_uses_fadd(nir_ssa_def *def)
 {
-   if (!list_empty(&def->if_uses))
+   if (!list_is_empty(&def->if_uses))
       return false;
 
    nir_foreach_use(use_src, def) {
@@ -50,8 +50,7 @@ are_all_uses_fadd(nir_ssa_def *def)
       case nir_op_fadd:
          break; /* This one's ok */
 
-      case nir_op_imov:
-      case nir_op_fmov:
+      case nir_op_mov:
       case nir_op_fneg:
       case nir_op_fabs:
          assert(use_alu->dest.dest.is_ssa);
@@ -91,8 +90,7 @@ get_mul_for_src(nir_alu_src *src, unsigned num_components,
       return NULL;
 
    switch (alu->op) {
-   case nir_op_imov:
-   case nir_op_fmov:
+   case nir_op_mov:
       alu = get_mul_for_src(&alu->src[0], alu->dest.dest.ssa.num_components,
                             swizzle, negate, abs);
       break;
@@ -155,7 +153,7 @@ any_alu_src_is_a_constant(nir_alu_src srcs[])
             nir_instr_as_load_const (srcs[i].src.ssa->parent_instr);
 
          if (list_is_singular(&load_const->def.uses) &&
-             list_empty(&load_const->def.if_uses)) {
+             list_is_empty(&load_const->def.if_uses)) {
             return true;
          }
       }
@@ -165,136 +163,107 @@ any_alu_src_is_a_constant(nir_alu_src srcs[])
 }
 
 static bool
-brw_nir_opt_peephole_ffma_block(nir_builder *b, nir_block *block)
+brw_nir_opt_peephole_ffma_instr(nir_builder *b,
+                                nir_instr *instr,
+                                UNUSED void *cb_data)
 {
-   bool progress = false;
+   if (instr->type != nir_instr_type_alu)
+      return false;
 
-   nir_foreach_instr_safe(instr, block) {
-      if (instr->type != nir_instr_type_alu)
-         continue;
+   nir_alu_instr *add = nir_instr_as_alu(instr);
+   if (add->op != nir_op_fadd)
+      return false;
 
-      nir_alu_instr *add = nir_instr_as_alu(instr);
-      if (add->op != nir_op_fadd)
-         continue;
+   assert(add->dest.dest.is_ssa);
+   if (add->exact)
+      return false;
 
-      assert(add->dest.dest.is_ssa);
-      if (add->exact)
-         continue;
+   assert(add->src[0].src.is_ssa && add->src[1].src.is_ssa);
 
-      assert(add->src[0].src.is_ssa && add->src[1].src.is_ssa);
+   /* This, is the case a + a.  We would rather handle this with an
+    * algebraic reduction than fuse it.  Also, we want to only fuse
+    * things where the multiply is used only once and, in this case,
+    * it would be used twice by the same instruction.
+    */
+   if (add->src[0].src.ssa == add->src[1].src.ssa)
+      return false;
 
-      /* This, is the case a + a.  We would rather handle this with an
-       * algebraic reduction than fuse it.  Also, we want to only fuse
-       * things where the multiply is used only once and, in this case,
-       * it would be used twice by the same instruction.
-       */
-      if (add->src[0].src.ssa == add->src[1].src.ssa)
-         continue;
+   nir_alu_instr *mul;
+   uint8_t add_mul_src, swizzle[4];
+   bool negate, abs;
+   for (add_mul_src = 0; add_mul_src < 2; add_mul_src++) {
+      for (unsigned i = 0; i < 4; i++)
+         swizzle[i] = i;
 
-      nir_alu_instr *mul;
-      uint8_t add_mul_src, swizzle[4];
-      bool negate, abs;
-      for (add_mul_src = 0; add_mul_src < 2; add_mul_src++) {
-         for (unsigned i = 0; i < 4; i++)
-            swizzle[i] = i;
+      negate = false;
+      abs = false;
 
-         negate = false;
-         abs = false;
+      mul = get_mul_for_src(&add->src[add_mul_src],
+                            add->dest.dest.ssa.num_components,
+                            swizzle, &negate, &abs);
 
-         mul = get_mul_for_src(&add->src[add_mul_src],
-                               add->dest.dest.ssa.num_components,
-                               swizzle, &negate, &abs);
-
-         if (mul != NULL)
-            break;
-      }
-
-      if (mul == NULL)
-         continue;
-
-      unsigned bit_size = add->dest.dest.ssa.bit_size;
-
-      nir_ssa_def *mul_src[2];
-      mul_src[0] = mul->src[0].src.ssa;
-      mul_src[1] = mul->src[1].src.ssa;
-
-      /* If any of the operands of the fmul and any of the fadd is a constant,
-       * we bypass because it will be more efficient as the constants will be
-       * propagated as operands, potentially saving two load_const instructions.
-       */
-      if (any_alu_src_is_a_constant(mul->src) &&
-          any_alu_src_is_a_constant(add->src)) {
-         continue;
-      }
-
-      b->cursor = nir_before_instr(&add->instr);
-
-      if (abs) {
-         for (unsigned i = 0; i < 2; i++)
-            mul_src[i] = nir_fabs(b, mul_src[i]);
-      }
-
-      if (negate)
-         mul_src[0] = nir_fneg(b, mul_src[0]);
-
-      nir_alu_instr *ffma = nir_alu_instr_create(b->shader, nir_op_ffma);
-      ffma->dest.saturate = add->dest.saturate;
-      ffma->dest.write_mask = add->dest.write_mask;
-
-      for (unsigned i = 0; i < 2; i++) {
-         ffma->src[i].src = nir_src_for_ssa(mul_src[i]);
-         for (unsigned j = 0; j < add->dest.dest.ssa.num_components; j++)
-            ffma->src[i].swizzle[j] = mul->src[i].swizzle[swizzle[j]];
-      }
-      nir_alu_src_copy(&ffma->src[2], &add->src[1 - add_mul_src], ffma);
-
-      assert(add->dest.dest.is_ssa);
-
-      nir_ssa_dest_init(&ffma->instr, &ffma->dest.dest,
-                        add->dest.dest.ssa.num_components,
-                        bit_size,
-                        add->dest.dest.ssa.name);
-      nir_ssa_def_rewrite_uses(&add->dest.dest.ssa,
-                               nir_src_for_ssa(&ffma->dest.dest.ssa));
-
-      nir_builder_instr_insert(b, &ffma->instr);
-      assert(list_empty(&add->dest.dest.ssa.uses));
-      nir_instr_remove(&add->instr);
-
-      progress = true;
+      if (mul != NULL)
+         break;
    }
 
-   return progress;
-}
+   if (mul == NULL)
+      return false;
 
-static bool
-brw_nir_opt_peephole_ffma_impl(nir_function_impl *impl)
-{
-   bool progress = false;
+   unsigned bit_size = add->dest.dest.ssa.bit_size;
 
-   nir_builder builder;
-   nir_builder_init(&builder, impl);
+   nir_ssa_def *mul_src[2];
+   mul_src[0] = mul->src[0].src.ssa;
+   mul_src[1] = mul->src[1].src.ssa;
 
-   nir_foreach_block(block, impl) {
-      progress |= brw_nir_opt_peephole_ffma_block(&builder, block);
+   /* If any of the operands of the fmul and any of the fadd is a constant,
+    * we bypass because it will be more efficient as the constants will be
+    * propagated as operands, potentially saving two load_const instructions.
+    */
+   if (any_alu_src_is_a_constant(mul->src) &&
+       any_alu_src_is_a_constant(add->src)) {
+      return false;
    }
 
-   if (progress)
-      nir_metadata_preserve(impl, nir_metadata_block_index |
-                                  nir_metadata_dominance);
+   b->cursor = nir_before_instr(&add->instr);
 
-   return progress;
+   if (abs) {
+      for (unsigned i = 0; i < 2; i++)
+         mul_src[i] = nir_fabs(b, mul_src[i]);
+   }
+
+   if (negate)
+      mul_src[0] = nir_fneg(b, mul_src[0]);
+
+   nir_alu_instr *ffma = nir_alu_instr_create(b->shader, nir_op_ffma);
+   ffma->dest.saturate = add->dest.saturate;
+   ffma->dest.write_mask = add->dest.write_mask;
+
+   for (unsigned i = 0; i < 2; i++) {
+      ffma->src[i].src = nir_src_for_ssa(mul_src[i]);
+      for (unsigned j = 0; j < add->dest.dest.ssa.num_components; j++)
+         ffma->src[i].swizzle[j] = mul->src[i].swizzle[swizzle[j]];
+   }
+   nir_alu_src_copy(&ffma->src[2], &add->src[1 - add_mul_src]);
+
+   assert(add->dest.dest.is_ssa);
+
+   nir_ssa_dest_init(&ffma->instr, &ffma->dest.dest,
+                     add->dest.dest.ssa.num_components,
+                     bit_size, NULL);
+   nir_ssa_def_rewrite_uses(&add->dest.dest.ssa, &ffma->dest.dest.ssa);
+
+   nir_builder_instr_insert(b, &ffma->instr);
+   assert(list_is_empty(&add->dest.dest.ssa.uses));
+   nir_instr_remove(&add->instr);
+
+   return true;
 }
 
 bool
 brw_nir_opt_peephole_ffma(nir_shader *shader)
 {
-   bool progress = false;
-
-   nir_foreach_function(function, shader) {
-      if (function->impl)
-         progress |= brw_nir_opt_peephole_ffma_impl(function->impl);
-   }
-
-   return progress;
+   return nir_shader_instructions_pass(shader, brw_nir_opt_peephole_ffma_instr,
+                                       nir_metadata_block_index |
+                                       nir_metadata_dominance,
+                                       NULL);
 }

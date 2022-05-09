@@ -87,7 +87,7 @@ set_opaque_binding(struct set_opaque_binding_closure *data,
                   storage->storage[i].i;
             }
          }
-      } else if (glsl_type_is_image(type)) {
+      } else if (glsl_type_is_image(storage->type)) {
          for (unsigned i = 0; i < elements; i++) {
             const unsigned index = storage->opaque[sh].index + i;
 
@@ -118,31 +118,37 @@ copy_constant_to_storage(union gl_constant_value *storage,
    const enum glsl_base_type base_type = glsl_get_base_type(type);
    const unsigned n_columns = glsl_get_matrix_columns(type);
    const unsigned n_rows = glsl_get_vector_elements(type);
+   unsigned dmul = glsl_base_type_is_64bit(base_type) ? 2 : 1;
    int i = 0;
 
-   for (unsigned int column = 0; column < n_columns; column++) {
+   if (n_columns > 1) {
+      const struct glsl_type *column_type = glsl_get_column_type(type);
+      for (unsigned int column = 0; column < n_columns; column++) {
+         copy_constant_to_storage(&storage[i], val->elements[column],
+                                  column_type, boolean_true);
+         i += n_rows * dmul;
+      }
+   } else {
       for (unsigned int row = 0; row < n_rows; row++) {
          switch (base_type) {
          case GLSL_TYPE_UINT:
-            storage[i].u = val->values[column][row].u32;
+            storage[i].u = val->values[row].u32;
             break;
          case GLSL_TYPE_INT:
          case GLSL_TYPE_SAMPLER:
-            storage[i].i = val->values[column][row].i32;
+            storage[i].i = val->values[row].i32;
             break;
          case GLSL_TYPE_FLOAT:
-            storage[i].f = val->values[column][row].f32;
+            storage[i].f = val->values[row].f32;
             break;
          case GLSL_TYPE_DOUBLE:
          case GLSL_TYPE_UINT64:
          case GLSL_TYPE_INT64:
             /* XXX need to check on big-endian */
-            memcpy(&storage[i * 2].u,
-                   &val->values[column][row].f64,
-                   sizeof(double));
+            memcpy(&storage[i].u, &val->values[row].f64, sizeof(double));
             break;
          case GLSL_TYPE_BOOL:
-            storage[i].b = val->values[column][row].u32 ? boolean_true : 0;
+            storage[i].b = val->values[row].u32 ? boolean_true : 0;
             break;
          case GLSL_TYPE_ARRAY:
          case GLSL_TYPE_STRUCT:
@@ -164,7 +170,7 @@ copy_constant_to_storage(union gl_constant_value *storage,
             assert(!"Should not get here.");
             break;
          }
-         i++;
+         i += dmul;
       }
    }
 }
@@ -259,7 +265,7 @@ gl_nir_set_uniform_initializers(struct gl_context *ctx,
       nir_shader *nir = sh->Program->nir;
       assert(nir);
 
-      nir_foreach_variable(var, &nir->uniforms) {
+      nir_foreach_gl_uniform_variable(var, nir) {
          if (var->constant_initializer) {
             struct set_uniform_initializer_closure data = {
                .shader_prog = prog,
@@ -272,6 +278,12 @@ gl_nir_set_uniform_initializers(struct gl_context *ctx,
                                     var->type,
                                     var->constant_initializer);
          } else if (var->data.explicit_binding) {
+
+            if (nir_variable_is_in_block(var)) {
+               /* This case is handled by link_uniform_blocks */
+               continue;
+            }
+
             const struct glsl_type *without_array =
                glsl_without_array(var->type);
 
@@ -289,4 +301,7 @@ gl_nir_set_uniform_initializers(struct gl_context *ctx,
          }
       }
    }
+   memcpy(prog->data->UniformDataDefaults, prog->data->UniformDataSlots,
+          sizeof(union gl_constant_value) * prog->data->NumUniformDataSlots);
+
 }

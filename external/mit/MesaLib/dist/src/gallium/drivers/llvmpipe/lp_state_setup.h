@@ -25,7 +25,9 @@ struct lp_setup_variant_key {
    unsigned pixel_center_half:1;
    unsigned twoside:1;
    unsigned floating_point_depth:1;
-   unsigned pad:4;
+   unsigned uses_constant_interp:1;
+   unsigned multisample:1;
+   unsigned pad:3;
 
    /* TODO: get those floats out of the key and use a jit_context for setup */
    float pgon_offset_units;
@@ -41,7 +43,8 @@ typedef void (*lp_jit_setup_triangle)( const float (*v0)[4],
 				       boolean front_facing,
 				       float (*a0)[4],
 				       float (*dadx)[4],
-				       float (*dady)[4] );
+				       float (*dady)[4],
+                                       const struct lp_setup_variant_key *key );
 
 
 

@@ -252,6 +252,7 @@ public:
    virtual void visit(ir_call *);
    virtual void visit(ir_return *);
    virtual void visit(ir_discard *);
+   virtual void visit(ir_demote *);
    virtual void visit(ir_texture *);
    virtual void visit(ir_if *);
    virtual void visit(ir_emit_vertex *);
@@ -499,83 +500,9 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
 }
 
 static int
-storage_type_size(const struct glsl_type *type, bool bindless)
-{
-   unsigned int i;
-   int size;
-
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_UINT8:
-   case GLSL_TYPE_INT8:
-   case GLSL_TYPE_UINT16:
-   case GLSL_TYPE_INT16:
-   case GLSL_TYPE_FLOAT:
-   case GLSL_TYPE_FLOAT16:
-   case GLSL_TYPE_BOOL:
-      if (type->is_matrix()) {
-	 return type->matrix_columns;
-      } else {
-	 /* Regardless of size of vector, it gets a vec4. This is bad
-	  * packing for things like floats, but otherwise arrays become a
-	  * mess.  Hopefully a later pass over the code can pack scalars
-	  * down if appropriate.
-	  */
-	 return 1;
-      }
-      break;
-   case GLSL_TYPE_DOUBLE:
-      if (type->is_matrix()) {
-         if (type->vector_elements > 2)
-            return type->matrix_columns * 2;
-         else
-            return type->matrix_columns;
-      } else {
-         if (type->vector_elements > 2)
-            return 2;
-         else
-            return 1;
-      }
-      break;
-   case GLSL_TYPE_UINT64:
-   case GLSL_TYPE_INT64:
-      if (type->vector_elements > 2)
-         return 2;
-      else
-         return 1;
-   case GLSL_TYPE_ARRAY:
-      assert(type->length > 0);
-      return storage_type_size(type->fields.array, bindless) * type->length;
-   case GLSL_TYPE_STRUCT:
-      size = 0;
-      for (i = 0; i < type->length; i++) {
-	 size += storage_type_size(type->fields.structure[i].type, bindless);
-      }
-      return size;
-   case GLSL_TYPE_SAMPLER:
-   case GLSL_TYPE_IMAGE:
-      if (!bindless)
-         return 0;
-      /* fall through */
-   case GLSL_TYPE_SUBROUTINE:
-      return 1;
-   case GLSL_TYPE_ATOMIC_UINT:
-   case GLSL_TYPE_VOID:
-   case GLSL_TYPE_ERROR:
-   case GLSL_TYPE_INTERFACE:
-   case GLSL_TYPE_FUNCTION:
-      assert(!"Invalid type in type_size");
-      break;
-   }
-
-   return 0;
-}
-
-static int
 type_size(const struct glsl_type *type)
 {
-   return storage_type_size(type, false);
+   return type->count_vec4_slots(false, false);
 }
 
 /**
@@ -1103,15 +1030,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       inst->saturate = true;
       break;
    }
-   case ir_unop_noise: {
-      const enum prog_opcode opcode =
-	 prog_opcode(OPCODE_NOISE1
-		     + (ir->operands[0]->type->vector_elements) - 1);
-      assert((opcode >= OPCODE_NOISE1) && (opcode <= OPCODE_NOISE4));
-
-      emit(ir, opcode, result_dst, op[0]);
-      break;
-   }
 
    case ir_binop_add:
       emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
@@ -1128,7 +1046,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_mod:
       /* Floating point should be lowered by MOD_TO_FLOOR in the compiler. */
-      assert(ir->type->is_integer());
+      assert(ir->type->is_integer_32());
       emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
 
@@ -1369,6 +1287,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_ldexp:
    case ir_binop_carry:
    case ir_binop_borrow:
+   case ir_binop_abs_sub:
+   case ir_binop_add_sat:
+   case ir_binop_sub_sat:
+   case ir_binop_avg:
+   case ir_binop_avg_round:
+   case ir_binop_mul_32x16:
    case ir_binop_imul_high:
    case ir_unop_interpolate_at_centroid:
    case ir_binop_interpolate_at_offset:
@@ -1411,10 +1335,23 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_sampler_2x32:
    case ir_unop_pack_image_2x32:
    case ir_unop_unpack_image_2x32:
+   case ir_unop_atan:
+   case ir_binop_atan2:
+   case ir_unop_clz:
+   case ir_unop_f162f:
+   case ir_unop_f2f16:
+   case ir_unop_f2fmp:
+   case ir_unop_f162b:
+   case ir_unop_b2f16:
+   case ir_unop_i2i:
+   case ir_unop_i2imp:
+   case ir_unop_u2u:
+   case ir_unop_u2ump:
       assert(!"not supported");
       break;
 
    case ir_unop_ssbo_unsized_array_length:
+   case ir_unop_implicitly_sized_array_length:
    case ir_quadop_vector:
       /* This operation should have already been handled.
        */
@@ -1431,7 +1368,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
 {
    src_reg src;
    int i;
-   int swizzle[4];
+   int swizzle[4] = {0};
 
    /* Note that this is only swizzles in expressions, not those on the left
     * hand side of an assignment, which do write masking.  See ir_assignment
@@ -2202,6 +2139,12 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
 }
 
 void
+ir_to_mesa_visitor::visit(ir_demote *ir)
+{
+   assert(!"demote statement unsupported");
+}
+
+void
 ir_to_mesa_visitor::visit(ir_if *ir)
 {
    ir_to_mesa_instruction *if_inst;
@@ -2248,6 +2191,10 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_signature_id = 1;
    current_function = NULL;
    mem_ctx = ralloc_context(NULL);
+   ctx = NULL;
+   prog = NULL;
+   shader_program = NULL;
+   options = NULL;
 }
 
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
@@ -2390,7 +2337,8 @@ public:
    add_uniform_to_shader(struct gl_context *ctx,
                          struct gl_shader_program *shader_program,
 			 struct gl_program_parameter_list *params)
-      : ctx(ctx), params(params), idx(-1)
+      : ctx(ctx), shader_program(shader_program), params(params), idx(-1),
+        var(NULL)
    {
       /* empty */
    }
@@ -2411,6 +2359,7 @@ private:
                             bool last_field);
 
    struct gl_context *ctx;
+   struct gl_shader_program *shader_program;
    struct gl_program_parameter_list *params;
    int idx;
    ir_variable *var;
@@ -2443,7 +2392,7 @@ add_uniform_to_shader::visit_field(const glsl_type *type, const char *name,
    if (is_dual_slot)
       num_params *= 2;
 
-   _mesa_reserve_parameter_storage(params, num_params);
+   _mesa_reserve_parameter_storage(params, num_params, num_params);
    index = params->NumParameters;
 
    if (ctx->Const.PackedDriverUniformStorage) {
@@ -2472,6 +2421,21 @@ add_uniform_to_shader::visit_field(const glsl_type *type, const char *name,
     */
    if (this->idx < 0)
       this->idx = index;
+
+   /* Each Parameter will hold the index to the backing uniform storage.
+    * This avoids relying on names to match parameters and uniform
+    * storages later when associating uniform storage.
+    */
+   unsigned location = -1;
+   ASSERTED const bool found =
+      shader_program->UniformHash->get(location, params->Parameters[index].Name);
+   assert(found);
+
+   for (unsigned i = 0; i < num_params; i++) {
+      struct gl_program_parameter *param = &params->Parameters[index + i];
+      param->UniformStorageIndex = location;
+      param->MainUniformStorageIndex = params->Parameters[this->idx].UniformStorageIndex;
+   }
 }
 
 /**
@@ -2511,6 +2475,8 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
    struct gl_program_parameter_list *params = prog->Parameters;
    gl_shader_stage shader_type = prog->info.stage;
 
+   _mesa_disallow_parameter_storage_realloc(params);
+
    /* After adding each uniform to the parameter list, connect the storage for
     * the parameter with the tracking structure used by the API for the
     * uniform.
@@ -2520,13 +2486,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
       if (params->Parameters[i].Type != PROGRAM_UNIFORM)
          continue;
 
-      unsigned location;
-      const bool found =
-         shader_program->UniformHash->get(location, params->Parameters[i].Name);
-      assert(found);
-
-      if (!found)
-         continue;
+      unsigned location = params->Parameters[i].UniformStorageIndex;
 
       struct gl_uniform_storage *storage =
          &shader_program->data->UniformStorage[location];
@@ -2540,7 +2500,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
          unsigned columns = 0;
 
          int dmul;
-         if (ctx->Const.PackedDriverUniformStorage && !prog->is_arb_asm) {
+         if (ctx->Const.PackedDriverUniformStorage && !prog->info.is_arb_asm) {
             dmul = storage->type->vector_elements * sizeof(float);
          } else {
             dmul = 4 * sizeof(float);
@@ -2550,7 +2510,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
          case GLSL_TYPE_UINT64:
             if (storage->type->vector_elements > 2)
                dmul *= 2;
-            /* fallthrough */
+            FALLTHROUGH;
          case GLSL_TYPE_UINT:
          case GLSL_TYPE_UINT16:
          case GLSL_TYPE_UINT8:
@@ -2561,7 +2521,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
          case GLSL_TYPE_INT64:
             if (storage->type->vector_elements > 2)
                dmul *= 2;
-            /* fallthrough */
+            FALLTHROUGH;
          case GLSL_TYPE_INT:
          case GLSL_TYPE_INT16:
          case GLSL_TYPE_INT8:
@@ -2572,7 +2532,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
          case GLSL_TYPE_DOUBLE:
             if (storage->type->vector_elements > 2)
                dmul *= 2;
-            /* fallthrough */
+            FALLTHROUGH;
          case GLSL_TYPE_FLOAT:
          case GLSL_TYPE_FLOAT16:
             format = uniform_native;
@@ -2599,7 +2559,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
             break;
          }
 
-         unsigned pvo = params->ParameterValueOffset[i];
+         unsigned pvo = params->Parameters[i].ValueOffset;
          _mesa_uniform_attach_driver_storage(storage, dmul * columns, dmul,
                                              format,
                                              &params->ParameterValues[pvo]);
@@ -2633,7 +2593,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
           * initializers in the source code to be copied over.
           */
          unsigned array_elements = MAX2(1, storage->array_elements);
-         if (ctx->Const.PackedDriverUniformStorage && !prog->is_arb_asm &&
+         if (ctx->Const.PackedDriverUniformStorage && !prog->info.is_arb_asm &&
              (storage->is_bindless || !storage->type->contains_opaque())) {
             const int dmul = storage->type->is_64bit() ? 2 : 1;
             const unsigned components =
@@ -2655,6 +2615,24 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	      last_location = location;
       }
    }
+}
+
+void
+_mesa_ensure_and_associate_uniform_storage(struct gl_context *ctx,
+                              struct gl_shader_program *shader_program,
+                              struct gl_program *prog, unsigned required_space)
+{
+   /* Avoid reallocation of the program parameter list, because the uniform
+    * storage is only associated with the original parameter list.
+    */
+   _mesa_reserve_parameter_storage(prog->Parameters, required_space,
+                                   required_space);
+
+   /* This has to be done last.  Any operation the can cause
+    * prog->ParameterValues to get reallocated (e.g., anything that adds a
+    * program constant) has to happen before creating this linkage.
+    */
+   _mesa_associate_uniform_storage(ctx, shader_program, prog);
 }
 
 /*
@@ -3065,8 +3043,6 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 progress = lower_if_to_cond_assign((gl_shader_stage)i, ir,
                                             options->MaxIfDepth) || progress;
 
-         progress = lower_noise(ir) || progress;
-
 	 /* If there are forms of indirect addressing that the driver
 	  * cannot handle, perform the lowering pass.
 	  */
@@ -3108,7 +3084,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   build_program_resource_list(ctx, prog);
+   build_program_resource_list(ctx, prog, false);
    return prog->data->LinkStatus;
 }
 
@@ -3167,6 +3143,9 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->data->LinkStatus && !ctx->Driver.LinkShader(ctx, prog)) {
       prog->data->LinkStatus = LINKING_FAILURE;
    }
+
+   if (prog->data->LinkStatus != LINKING_FAILURE)
+      _mesa_create_program_resource_hash(prog);
 
    /* Return early if we are loading the shader from on-disk cache */
    if (prog->data->LinkStatus == LINKING_SKIPPED)

@@ -24,7 +24,7 @@
  */
 
 #include "pipe/p_context.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_inlines.h"
 
 #include "main/context.h"
@@ -41,6 +41,36 @@
 #include "st_cb_bufferobjects.h"
 #include "st_cb_texture.h"
 
+/* Subtract remaining private references. Typically used before
+ * destruction. See the header file for explanation.
+ */
+static void
+st_remove_private_references(struct st_sampler_view *sv)
+{
+   if (sv->private_refcount) {
+      assert(sv->private_refcount > 0);
+      p_atomic_add(&sv->view->reference.count, -sv->private_refcount);
+      sv->private_refcount = 0;
+   }
+}
+
+/* Return a sampler view while incrementing the refcount by 1. */
+static struct pipe_sampler_view *
+get_sampler_view_reference(struct st_sampler_view *sv,
+                           struct pipe_sampler_view *view)
+{
+   if (unlikely(sv->private_refcount <= 0)) {
+      assert(sv->private_refcount == 0);
+
+      /* This is the number of atomic increments we will skip. */
+      sv->private_refcount = 100000000;
+      p_atomic_add(&view->reference.count, sv->private_refcount);
+   }
+
+   /* Return a reference while decrementing the private refcount. */
+   sv->private_refcount--;
+   return view;
+}
 
 /**
  * Set the given view as the current context's view for the texture.
@@ -57,7 +87,8 @@ static struct pipe_sampler_view *
 st_texture_set_sampler_view(struct st_context *st,
                             struct st_texture_object *stObj,
                             struct pipe_sampler_view *view,
-                            bool glsl130_or_later, bool srgb_skip_decode)
+                            bool glsl130_or_later, bool srgb_skip_decode,
+                            bool get_reference)
 {
    struct st_sampler_views *views;
    struct st_sampler_view *free = NULL;
@@ -74,6 +105,7 @@ st_texture_set_sampler_view(struct st_context *st,
       if (sv->view) {
          /* check if the context matches */
          if (sv->view->context == st->pipe) {
+            st_remove_private_references(sv);
             pipe_sampler_view_reference(&sv->view, NULL);
             goto found;
          }
@@ -152,6 +184,9 @@ found:
    sv->view = view;
    sv->st = st;
 
+   if (get_reference)
+      view = get_sampler_view_reference(sv, view);
+
 out:
    simple_mtx_unlock(&stObj->validate_mutex);
    return view;
@@ -164,14 +199,14 @@ out:
  *
  * Performs no additional validation.
  */
-const struct st_sampler_view *
+struct st_sampler_view *
 st_texture_get_current_sampler_view(const struct st_context *st,
                                     const struct st_texture_object *stObj)
 {
-   const struct st_sampler_views *views = p_atomic_read(&stObj->sampler_views);
+   struct st_sampler_views *views = p_atomic_read(&stObj->sampler_views);
 
    for (unsigned i = 0; i < views->count; ++i) {
-      const struct st_sampler_view *sv = &views->views[i];
+      struct st_sampler_view *sv = &views->views[i];
       if (sv->view && sv->view->context == st->pipe)
          return sv;
    }
@@ -194,10 +229,11 @@ st_texture_release_context_sampler_view(struct st_context *st,
    simple_mtx_lock(&stObj->validate_mutex);
    struct st_sampler_views *views = stObj->sampler_views;
    for (i = 0; i < views->count; ++i) {
-      struct pipe_sampler_view **sv = &views->views[i].view;
+      struct st_sampler_view *sv = &views->views[i];
 
-      if (*sv && (*sv)->context == st->pipe) {
-         pipe_sampler_view_reference(sv, NULL);
+      if (sv->view && sv->view->context == st->pipe) {
+         st_remove_private_references(sv);
+         pipe_sampler_view_reference(&sv->view, NULL);
          break;
       }
    }
@@ -226,7 +262,9 @@ st_texture_release_all_sampler_views(struct st_context *st,
    for (unsigned i = 0; i < views->count; ++i) {
       struct st_sampler_view *stsv = &views->views[i];
       if (stsv->view) {
-         if (stsv->st != st) {
+         st_remove_private_references(stsv);
+
+         if (stsv->st && stsv->st != st) {
             /* Transfer this reference to the zombie list.  It will
              * likely be freed when the zombie list is freed.
              */
@@ -396,7 +434,7 @@ get_texture_format_swizzle(const struct st_context *st,
 {
    GLenum baseFormat = _mesa_base_tex_image(&stObj->base)->_BaseFormat;
    unsigned tex_swizzle;
-   GLenum depth_mode = stObj->base.DepthMode;
+   GLenum depth_mode = stObj->base.Attrib.DepthMode;
 
    /* In ES 3.0, DEPTH_TEXTURE_MODE is expected to be GL_RED for textures
     * with depth component data specified with a sized internal format.
@@ -417,7 +455,7 @@ get_texture_format_swizzle(const struct st_context *st,
                                                 glsl130_or_later);
 
    /* Combine the texture format swizzle with user's swizzle */
-   return swizzle_swizzle(stObj->base._Swizzle, tex_swizzle);
+   return swizzle_swizzle(stObj->base.Attrib._Swizzle, tex_swizzle);
 }
 
 
@@ -427,7 +465,7 @@ get_texture_format_swizzle(const struct st_context *st,
  *
  * \param stObj  the st texture object,
  */
-MAYBE_UNUSED static boolean
+ASSERTED static boolean
 check_sampler_swizzle(const struct st_context *st,
                       const struct st_texture_object *stObj,
                       const struct pipe_sampler_view *sv,
@@ -445,10 +483,11 @@ check_sampler_swizzle(const struct st_context *st,
 static unsigned
 last_level(const struct st_texture_object *stObj)
 {
-   unsigned ret = MIN2(stObj->base.MinLevel + stObj->base._MaxLevel,
+   unsigned ret = MIN2(stObj->base.Attrib.MinLevel + stObj->base._MaxLevel,
                        stObj->pt->last_level);
    if (stObj->base.Immutable)
-      ret = MIN2(ret, stObj->base.MinLevel + stObj->base.NumLevels - 1);
+      ret = MIN2(ret, stObj->base.Attrib.MinLevel +
+                 stObj->base.Attrib.NumLevels - 1);
    return ret;
 }
 
@@ -457,7 +496,8 @@ static unsigned
 last_layer(const struct st_texture_object *stObj)
 {
    if (stObj->base.Immutable && stObj->pt->array_size > 1)
-      return MIN2(stObj->base.MinLayer + stObj->base.NumLayers - 1,
+      return MIN2(stObj->base.Attrib.MinLayer +
+                  stObj->base.Attrib.NumLayers - 1,
                   stObj->pt->array_size - 1);
    return stObj->pt->array_size - 1;
 }
@@ -489,11 +529,52 @@ get_sampler_view_format(struct st_context *st,
    if (srgb_skip_decode)
       format = util_format_linear(format);
 
+   /* if resource format matches then YUV wasn't lowered */
+   if (format == stObj->pt->format)
+      return format;
+
    /* Use R8_UNORM for video formats */
    switch (format) {
    case PIPE_FORMAT_NV12:
+      if (stObj->pt->format == PIPE_FORMAT_R8_G8B8_420_UNORM) {
+         format = PIPE_FORMAT_R8_G8B8_420_UNORM;
+         break;
+      }
+      FALLTHROUGH;
    case PIPE_FORMAT_IYUV:
       format = PIPE_FORMAT_R8_UNORM;
+      break;
+   case PIPE_FORMAT_P010:
+   case PIPE_FORMAT_P012:
+   case PIPE_FORMAT_P016:
+      format = PIPE_FORMAT_R16_UNORM;
+      break;
+   case PIPE_FORMAT_Y210:
+   case PIPE_FORMAT_Y212:
+   case PIPE_FORMAT_Y216:
+      format = PIPE_FORMAT_R16G16_UNORM;
+      break;
+   case PIPE_FORMAT_Y410:
+      format = PIPE_FORMAT_R10G10B10A2_UNORM;
+      break;
+   case PIPE_FORMAT_Y412:
+   case PIPE_FORMAT_Y416:
+      format = PIPE_FORMAT_R16G16B16A16_UNORM;
+      break;
+   case PIPE_FORMAT_YUYV:
+   case PIPE_FORMAT_UYVY:
+      if (stObj->pt->format == PIPE_FORMAT_R8G8_R8B8_UNORM ||
+          stObj->pt->format == PIPE_FORMAT_G8R8_B8R8_UNORM) {
+         format = stObj->pt->format;
+         break;
+      }
+      format = PIPE_FORMAT_R8G8_UNORM;
+      break;
+   case PIPE_FORMAT_AYUV:
+      format = PIPE_FORMAT_RGBA8888_UNORM;
+      break;
+   case PIPE_FORMAT_XYUV:
+      format = PIPE_FORMAT_RGBX8888_UNORM;
       break;
    default:
       break;
@@ -514,16 +595,17 @@ st_create_texture_sampler_view_from_stobj(struct st_context *st,
 
    templ.format = format;
 
-   if (stObj->level_override) {
+   if (stObj->level_override >= 0) {
       templ.u.tex.first_level = templ.u.tex.last_level = stObj->level_override;
    } else {
-      templ.u.tex.first_level = stObj->base.MinLevel + stObj->base.BaseLevel;
+      templ.u.tex.first_level = stObj->base.Attrib.MinLevel +
+                                stObj->base.Attrib.BaseLevel;
       templ.u.tex.last_level = last_level(stObj);
    }
-   if (stObj->layer_override) {
+   if (stObj->layer_override >= 0) {
       templ.u.tex.first_layer = templ.u.tex.last_layer = stObj->layer_override;
    } else {
-      templ.u.tex.first_layer = stObj->base.MinLayer;
+      templ.u.tex.first_layer = stObj->base.Attrib.MinLayer;
       templ.u.tex.last_layer = last_layer(stObj);
    }
    assert(templ.u.tex.first_layer <= templ.u.tex.last_layer);
@@ -538,18 +620,18 @@ st_create_texture_sampler_view_from_stobj(struct st_context *st,
    return st->pipe->create_sampler_view(st->pipe, stObj->pt, &templ);
 }
 
-
 struct pipe_sampler_view *
 st_get_texture_sampler_view_from_stobj(struct st_context *st,
                                        struct st_texture_object *stObj,
                                        const struct gl_sampler_object *samp,
                                        bool glsl130_or_later,
-                                       bool ignore_srgb_decode)
+                                       bool ignore_srgb_decode,
+                                       bool get_reference)
 {
-   const struct st_sampler_view *sv;
+   struct st_sampler_view *sv;
    bool srgb_skip_decode = false;
 
-   if (!ignore_srgb_decode && samp->sRGBDecode == GL_SKIP_DECODE_EXT)
+   if (!ignore_srgb_decode && samp->Attrib.sRGBDecode == GL_SKIP_DECODE_EXT)
       srgb_skip_decode = true;
 
    sv = st_texture_get_current_sampler_view(st, stObj);
@@ -565,14 +647,18 @@ st_get_texture_sampler_view_from_stobj(struct st_context *st,
       assert(!check_sampler_swizzle(st, stObj, view, glsl130_or_later));
       assert(get_sampler_view_format(st, stObj, srgb_skip_decode) == view->format);
       assert(gl_target_to_pipe(stObj->base.Target) == view->target);
-      assert(stObj->level_override ||
-             stObj->base.MinLevel + stObj->base.BaseLevel == view->u.tex.first_level);
-      assert(stObj->level_override || last_level(stObj) == view->u.tex.last_level);
-      assert(stObj->layer_override || stObj->base.MinLayer == view->u.tex.first_layer);
-      assert(stObj->layer_override || last_layer(stObj) == view->u.tex.last_layer);
-      assert(!stObj->layer_override ||
+      assert(stObj->level_override >= 0 ||
+             stObj->base.Attrib.MinLevel +
+             stObj->base.Attrib.BaseLevel == view->u.tex.first_level);
+      assert(stObj->level_override >= 0 || last_level(stObj) == view->u.tex.last_level);
+      assert(stObj->layer_override >= 0 ||
+             stObj->base.Attrib.MinLayer == view->u.tex.first_layer);
+      assert(stObj->layer_override >= 0 || last_layer(stObj) == view->u.tex.last_layer);
+      assert(stObj->layer_override < 0 ||
              (stObj->layer_override == view->u.tex.first_layer &&
               stObj->layer_override == view->u.tex.last_layer));
+      if (get_reference)
+         view = get_sampler_view_reference(sv, view);
       return view;
    }
 
@@ -584,17 +670,18 @@ st_get_texture_sampler_view_from_stobj(struct st_context *st,
                                                    glsl130_or_later);
 
    view = st_texture_set_sampler_view(st, stObj, view,
-                                      glsl130_or_later, srgb_skip_decode);
-
+                                      glsl130_or_later, srgb_skip_decode,
+                                      get_reference);
    return view;
 }
 
 
 struct pipe_sampler_view *
 st_get_buffer_sampler_view_from_stobj(struct st_context *st,
-                                      struct st_texture_object *stObj)
+                                      struct st_texture_object *stObj,
+                                      bool get_reference)
 {
-   const struct st_sampler_view *sv;
+   struct st_sampler_view *sv;
    struct st_buffer_object *stBuf =
       st_buffer_object(stObj->base.BufferObject);
 
@@ -616,11 +703,13 @@ st_get_buffer_sampler_view_from_stobj(struct st_context *st,
                                               stObj->base._BufferObjectFormat)
              == view->format);
          assert(view->target == PIPE_BUFFER);
-         unsigned base = stObj->base.BufferOffset;
-         MAYBE_UNUSED unsigned size = MIN2(buf->width0 - base,
+         ASSERTED unsigned base = stObj->base.BufferOffset;
+         ASSERTED unsigned size = MIN2(buf->width0 - base,
                            (unsigned) stObj->base.BufferSize);
          assert(view->u.buf.offset == base);
          assert(view->u.buf.size == size);
+         if (get_reference)
+            view = get_sampler_view_reference(sv, view);
          return view;
       }
    }
@@ -653,7 +742,8 @@ st_get_buffer_sampler_view_from_stobj(struct st_context *st,
    struct pipe_sampler_view *view =
       st->pipe->create_sampler_view(st->pipe, buf, &templ);
 
-   view = st_texture_set_sampler_view(st, stObj, view, false, false);
+   view = st_texture_set_sampler_view(st, stObj, view, false, false,
+                                      get_reference);
 
    return view;
 }

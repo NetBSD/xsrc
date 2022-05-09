@@ -8,17 +8,17 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- state.xml     (  26087 bytes, from 2018-02-10 13:09:26)
-- common.xml    (  35468 bytes, from 2018-02-10 13:09:26)
-- common_3d.xml (  14843 bytes, from 2019-01-18 10:13:41)
-- state_hi.xml  (  30232 bytes, from 2018-03-30 07:48:22)
+- state.xml     (  26877 bytes, from 2020-02-14 10:19:56)
+- common.xml    (  35468 bytes, from 2020-01-04 20:02:31)
+- common_3d.xml (  15058 bytes, from 2020-04-17 16:31:50)
+- state_hi.xml  (  34851 bytes, from 2020-04-17 16:25:34)
 - copyright.xml (   1597 bytes, from 2018-02-10 13:09:26)
 - state_2d.xml  (  51552 bytes, from 2018-02-10 13:09:26)
-- state_3d.xml  (  79992 bytes, from 2019-01-18 10:10:57)
-- state_blt.xml (  13405 bytes, from 2018-02-10 13:09:26)
+- state_3d.xml  (  83771 bytes, from 2020-04-17 17:15:55)
+- state_blt.xml (  14252 bytes, from 2020-01-10 14:36:29)
 - state_vg.xml  (   5975 bytes, from 2018-02-10 13:09:26)
 
-Copyright (C) 2012-2018 by the following authors:
+Copyright (C) 2012-2020 by the following authors:
 - Wladimir J. van der Laan <laanwj@gmail.com>
 - Christian Gmeiner <christian.gmeiner@gmail.com>
 - Lucas Stach <l.stach@pengutronix.de>
@@ -55,6 +55,8 @@ DEALINGS IN THE SOFTWARE.
 #define FE_DATA_TYPE_UNSIGNED_SHORT				0x00000003
 #define FE_DATA_TYPE_INT					0x00000004
 #define FE_DATA_TYPE_UNSIGNED_INT				0x00000005
+#define FE_DATA_TYPE_INT_2_10_10_10_REV				0x00000006
+#define FE_DATA_TYPE_UNSIGNED_INT_2_10_10_10_REV		0x00000007
 #define FE_DATA_TYPE_FLOAT					0x00000008
 #define FE_DATA_TYPE_HALF_FLOAT					0x00000009
 #define FE_DATA_TYPE_FIXED					0x0000000b
@@ -89,6 +91,7 @@ DEALINGS IN THE SOFTWARE.
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_NORMALIZE__MASK		0x0000c000
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_NORMALIZE__SHIFT		14
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_NORMALIZE_OFF		0x00000000
+#define VIVS_FE_VERTEX_ELEMENT_CONFIG_NORMALIZE_SIGN_EXTEND	0x00004000
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_NORMALIZE_ON		0x00008000
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_START__MASK		0x00ff0000
 #define VIVS_FE_VERTEX_ELEMENT_CONFIG_START__SHIFT		16
@@ -209,7 +212,15 @@ DEALINGS IN THE SOFTWARE.
 
 #define VIVS_FE_GENERIC_ATTRIB_SCALE(i0)		       (0x00000780 + 0x4*(i0))
 
-#define VIVS_FE_HALTI5_UNK007C4					0x000007c4
+#define VIVS_FE_HALTI5_ID_CONFIG				0x000007c4
+#define VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_ENABLE		0x00000001
+#define VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_ENABLE		0x00000002
+#define VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_REG__MASK		0x0000ff00
+#define VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_REG__SHIFT		8
+#define VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_REG(x)		(((x) << VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_REG__SHIFT) & VIVS_FE_HALTI5_ID_CONFIG_VERTEX_ID_REG__MASK)
+#define VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_REG__MASK		0x00ff0000
+#define VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_REG__SHIFT		16
+#define VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_REG(x)		(((x) << VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_REG__SHIFT) & VIVS_FE_HALTI5_ID_CONFIG_INSTANCE_ID_REG__MASK)
 
 #define VIVS_FE_HALTI5_UNK007D0(i0)			       (0x000007d0 + 0x4*(i0))
 #define VIVS_FE_HALTI5_UNK007D0__ESIZE				0x00000004
@@ -368,7 +379,7 @@ DEALINGS IN THE SOFTWARE.
 
 #define VIVS_GL_OCCLUSION_QUERY_CONTROL				0x00003830
 
-#define VIVS_GL_UNK03834					0x00003834
+#define VIVS_GL_VARYING_NUM_COMPONENTS2				0x00003834
 
 #define VIVS_GL_UNK03838					0x00003838
 
@@ -451,7 +462,7 @@ DEALINGS IN THE SOFTWARE.
 
 #define VIVS_NFE_VERTEX_STREAMS_CONTROL(i0)		       (0x00014640 + 0x4*(i0))
 
-#define VIVS_NFE_VERTEX_STREAMS_UNK14680(i0)		       (0x00014680 + 0x4*(i0))
+#define VIVS_NFE_VERTEX_STREAMS_VERTEX_DIVISOR(i0)	       (0x00014680 + 0x4*(i0))
 
 #define VIVS_NFE_VERTEX_STREAMS_ROBUSTNESS_UNK146C0(i0)	       (0x000146c0 + 0x4*(i0))
 

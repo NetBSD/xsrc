@@ -37,12 +37,6 @@ etna_align_up(uint32_t value, uint32_t granularity)
    return (value + (granularity - 1)) & (~(granularity - 1));
 }
 
-static inline uint32_t
-etna_bits_ones(unsigned num)
-{
-   return (1 << num) - 1;
-}
-
 /* clamped float [0.0 .. 1.0] -> [0 .. 255] */
 static inline uint8_t
 etna_cfloat_to_uint8(float f)
@@ -85,11 +79,31 @@ etna_float_to_fixp55(float f)
    return (int32_t)(f * 32.0f + 0.5f);
 }
 
+/* float to fixp 8.8 */
+static inline uint32_t
+etna_float_to_fixp88(float f)
+{
+   if (f >= (32767.0 - 1.0f) / 256.0f)
+      return 32767;
+
+   if (f < -16.0f)
+      return 32768;
+
+   return (int32_t)(f * 256.0f + 0.5f);
+}
+
 /* texture size to log2 in fixp 5.5 format */
 static inline uint32_t
 etna_log2_fixp55(unsigned width)
 {
    return etna_float_to_fixp55(logf((float)width) * RCPLOG2);
+}
+
+/* texture size to log2 in fixp 8.8 format */
+static inline uint32_t
+etna_log2_fixp88(unsigned width)
+{
+   return etna_float_to_fixp88(logf((float)width) * RCPLOG2);
 }
 
 /* float to fixp 16.16 */

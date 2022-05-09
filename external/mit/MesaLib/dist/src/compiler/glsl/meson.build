@@ -20,21 +20,31 @@
 
 subdir('glcpp')
 
+bison_command = []
+if yacc_is_bison
+  bison_command = [
+    prog_bison, '-o', '@OUTPUT0@', '-p', '_mesa_glsl_', '--defines=@OUTPUT1@',
+    '@INPUT@',
+  ]
+else
+  bison_command = [
+    prog_bison, '-o', '@OUTPUT0@', '-p', '_mesa_glsl_', '-H', '@OUTPUT1@',
+    '@INPUT@',
+  ]
+endif
+
 glsl_parser = custom_target(
   'glsl_parser',
   input : 'glsl_parser.yy',
   output : ['glsl_parser.cpp', 'glsl_parser.h'],
-  command : [
-    prog_bison, '-o', '@OUTPUT0@', '-p', '_mesa_glsl_', '--defines=@OUTPUT1@',
-    '@INPUT@',
-  ],
+  command : bison_command
 )
 
 glsl_lexer_cpp = custom_target(
   'glsl_lexer_cpp',
   input : 'glsl_lexer.ll',
   output : 'glsl_lexer.cpp',
-  command : [prog_flex, '-o', '@OUTPUT@', '@INPUT@'],
+  command : [prog_flex_cpp, '-o', '@OUTPUT@', '@INPUT@'],
 )
 
 ir_expression_operation_constant_h = custom_target(
@@ -55,7 +65,7 @@ ir_expression_operation_strings_h = custom_target(
 
 float64_glsl_h = custom_target(
   'float64_glsl.h',
-  input : ['xxd.py', 'float64.glsl'],
+  input : [files_xxd, 'float64.glsl'],
   output : 'float64_glsl.h',
   command : [prog_python, '@INPUT@', '@OUTPUT@', '-n', 'float64_source'],
 )
@@ -74,11 +84,12 @@ files_libglsl = files(
   'builtin_variables.cpp',
   'generate_ir.cpp',
   'gl_nir_lower_atomics.c',
-  'gl_nir_lower_bindless_images.c',
+  'gl_nir_lower_images.c',
   'gl_nir_lower_buffers.c',
   'gl_nir_lower_samplers.c',
   'gl_nir_lower_samplers_as_deref.c',
   'gl_nir_link_atomics.c',
+  'gl_nir_link_uniform_blocks.c',
   'gl_nir_link_uniform_initializers.c',
   'gl_nir_link_uniforms.c',
   'gl_nir_link_xfb.c',
@@ -146,6 +157,7 @@ files_libglsl = files(
   'lower_blend_equation_advanced.cpp',
   'lower_buffer_access.cpp',
   'lower_buffer_access.h',
+  'lower_builtins.cpp',
   'lower_const_arrays_to_uniforms.cpp',
   'lower_cs_derived.cpp',
   'lower_discard.cpp',
@@ -156,14 +168,13 @@ files_libglsl = files(
   'lower_int64.cpp',
   'lower_jumps.cpp',
   'lower_mat_op_to_vec.cpp',
-  'lower_noise.cpp',
   'lower_offset_array.cpp',
   'lower_packed_varyings.cpp',
   'lower_named_interface_blocks.cpp',
   'lower_packing_builtins.cpp',
+  'lower_precision.cpp',
   'lower_subroutine.cpp',
   'lower_tess_level.cpp',
-  'lower_texture_projection.cpp',
   'lower_variable_index_to_cond_assign.cpp',
   'lower_vec_index_to_cond_assign.cpp',
   'lower_vec_index_to_swizzle.cpp',
@@ -174,6 +185,7 @@ files_libglsl = files(
   'lower_output_reads.cpp',
   'lower_shared_reference.cpp',
   'lower_ubo_reference.cpp',
+  'lower_xfb_varying.cpp',
   'opt_algebraic.cpp',
   'opt_array_splitting.cpp',
   'opt_conditional_discard.cpp',
@@ -224,10 +236,11 @@ libglsl = static_library(
   [files_libglsl, glsl_parser, glsl_lexer_cpp, ir_expression_operation_h,
    ir_expression_operation_strings_h, ir_expression_operation_constant_h,
    float64_glsl_h],
-  c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
-  cpp_args : [cpp_vis_args, cpp_msvc_compat_args],
+  c_args : [c_msvc_compat_args, no_override_init_args],
+  cpp_args : [cpp_msvc_compat_args],
+  gnu_symbol_visibility : 'hidden',
   link_with : libglcpp,
-  include_directories : [inc_common, inc_compiler, inc_nir],
+  include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_compiler],
   dependencies : idep_nir,
   build_by_default : false,
 )
@@ -235,21 +248,23 @@ libglsl = static_library(
 libglsl_standalone = static_library(
   'glsl_standalone',
   [files_libglsl_standalone, ir_expression_operation_h],
-  c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
-  cpp_args : [cpp_vis_args, cpp_msvc_compat_args],
-  include_directories : [inc_common],
-  link_with : [libglsl, libglsl_util, libmesa_util],
-  dependencies : [dep_thread],
+  c_args : [c_msvc_compat_args, no_override_init_args],
+  cpp_args : [cpp_msvc_compat_args],
+  gnu_symbol_visibility : 'hidden',
+  include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
+  link_with : [libglsl, libglsl_util, libglcpp_standalone],
+  dependencies : [idep_mesautil, idep_getopt],
   build_by_default : false,
 )
 
 glsl_compiler = executable(
   'glsl_compiler',
   'main.cpp',
-  c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
-  cpp_args : [cpp_vis_args, cpp_msvc_compat_args],
-  dependencies : [dep_clock, dep_thread],
-  include_directories : [inc_common],
+  c_args : [c_msvc_compat_args, no_override_init_args],
+  cpp_args : [cpp_msvc_compat_args],
+  gnu_symbol_visibility : 'hidden',
+  dependencies : [dep_clock, dep_thread, idep_getopt, idep_mesautil],
+  include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
   link_with : [libglsl_standalone],
   build_by_default : with_tools.contains('glsl'),
   install : with_tools.contains('glsl'),
@@ -259,10 +274,11 @@ glsl_test = executable(
   'glsl_test',
   ['test.cpp', 'test_optpass.cpp', 'test_optpass.h',
    ir_expression_operation_h],
-  c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
-  cpp_args : [cpp_vis_args, cpp_msvc_compat_args],
-  include_directories : [inc_common],
-  dependencies : [dep_clock, dep_thread],
+  c_args : [c_msvc_compat_args, no_override_init_args],
+  cpp_args : [cpp_msvc_compat_args],
+  gnu_symbol_visibility : 'hidden',
+  include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux],
+  dependencies : [dep_clock, dep_thread, idep_getopt, idep_mesautil],
   link_with : [libglsl, libglsl_standalone, libglsl_util],
   build_by_default : with_tools.contains('glsl'),
   install : with_tools.contains('glsl'),

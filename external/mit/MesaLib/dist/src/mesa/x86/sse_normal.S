@@ -32,7 +32,8 @@
 
 #ifdef USE_SSE_ASM
 #include "assyntax.h"
-#include "matypes.h"
+#define MATH_ASM_PTR_SIZE 4
+#include "math/m_vector_asm.h"
 #include "norm_args.h"
 
    SEG_TEXT
@@ -47,7 +48,7 @@ ALIGNTEXT16
 GLOBL GLNAME(_mesa_sse_transform_rescale_normals_no_rot)
 HIDDEN(_mesa_sse_transform_rescale_normals_no_rot)
 GLNAME(_mesa_sse_transform_rescale_normals_no_rot):
-
+	_CET_ENDBR
 #define FRAME_OFFSET 8
 	PUSH_L  ( ESI )
 	PUSH_L  ( EDI )
@@ -56,7 +57,7 @@ GLNAME(_mesa_sse_transform_rescale_normals_no_rot):
 	MOV_L	( ARG_DEST, EDI )			/* ptr to dest GLvector3f */
 
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
-	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
+	ADD_L	( CONST(MATRIX_INV), EDX )		/* matrix->inv */
 
 	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 
@@ -109,7 +110,7 @@ ALIGNTEXT16
 GLOBL GLNAME(_mesa_sse_transform_rescale_normals)
 HIDDEN(_mesa_sse_transform_rescale_normals)
 GLNAME(_mesa_sse_transform_rescale_normals):
-
+	_CET_ENDBR
 #define FRAME_OFFSET 8
 	PUSH_L  ( ESI )
 	PUSH_L  ( EDI )
@@ -118,7 +119,7 @@ GLNAME(_mesa_sse_transform_rescale_normals):
 	MOV_L	( ARG_DEST, EDI )			/* ptr to dest GLvector3f */
 
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
-	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
+	ADD_L	( CONST(MATRIX_INV), EDX )		/* matrix->inv */
 
 	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 
@@ -202,7 +203,7 @@ ALIGNTEXT16
 GLOBL GLNAME(_mesa_sse_transform_normals_no_rot)
 HIDDEN(_mesa_sse_transform_normals_no_rot)
 GLNAME(_mesa_sse_transform_normals_no_rot):
-
+	_CET_ENDBR
 #define FRAME_OFFSET 8
 	PUSH_L  ( ESI )
 	PUSH_L  ( EDI )
@@ -211,7 +212,7 @@ GLNAME(_mesa_sse_transform_normals_no_rot):
 	MOV_L	( ARG_DEST, EDI )			/* ptr to dest GLvector3f */
 
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
-	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
+	ADD_L	( CONST(MATRIX_INV), EDX )		/* matrix->inv */
 
 	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 

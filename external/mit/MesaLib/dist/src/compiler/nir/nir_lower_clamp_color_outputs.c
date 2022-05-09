@@ -36,6 +36,7 @@ is_color_output(lower_state *state, nir_variable *out)
    switch (state->shader->info.stage) {
    case MESA_SHADER_VERTEX:
    case MESA_SHADER_GEOMETRY:
+   case MESA_SHADER_TESS_EVAL:
       switch (out->data.location) {
       case VARYING_SLOT_COL0:
       case VARYING_SLOT_COL1:
@@ -67,7 +68,7 @@ lower_intrinsic(lower_state *state, nir_intrinsic_instr *intr)
       break;
    case nir_intrinsic_store_output:
       /* already had i/o lowered.. lookup the matching output var: */
-      nir_foreach_variable(var, &state->shader->outputs) {
+      nir_foreach_shader_out_variable(var, state->shader) {
          int drvloc = var->data.driver_location;
          if (nir_intrinsic_base(intr) == drvloc) {
             out = var;

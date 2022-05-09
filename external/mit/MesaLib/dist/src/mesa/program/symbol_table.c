@@ -21,10 +21,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/imports.h"
+
 #include "main/errors.h"
 #include "symbol_table.h"
-#include "../../util/hash_table.h"
+#include "util/hash_table.h"
 #include "util/u_string.h"
 
 struct symbol {
@@ -63,7 +63,7 @@ struct symbol {
 struct scope_level {
     /** Link to next (inner) scope level. */
     struct scope_level *next;
-    
+
     /** Linked list of symbols with the same scope. */
     struct symbol *symbols;
 };
@@ -154,7 +154,7 @@ _mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
 
    if (sym) {
       assert(sym->depth <= table->depth);
-      return sym->depth - table->depth;
+      return table->depth - sym->depth;
    }
 
    return -1;
@@ -194,7 +194,7 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
       new_sym->next_with_same_name = sym;
       new_sym->name = sym->name;
    } else {
-      new_sym->name = util_strdup(name);
+      new_sym->name = strdup(name);
       if (new_sym->name == NULL) {
          free(new_sym);
          _mesa_error_no_memory(__func__);
@@ -266,7 +266,7 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
 
       sym->name = inner_sym->name;
    } else {
-      sym->name = util_strdup(name);
+      sym->name = strdup(name);
       if (sym->name == NULL) {
          free(sym);
          _mesa_error_no_memory(__func__);
@@ -292,7 +292,7 @@ _mesa_symbol_table_ctor(void)
     struct _mesa_symbol_table *table = calloc(1, sizeof(*table));
 
     if (table != NULL) {
-       table->ht = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
+       table->ht = _mesa_hash_table_create(NULL, _mesa_hash_string,
                                            _mesa_key_string_equal);
 
        _mesa_symbol_table_push_scope(table);

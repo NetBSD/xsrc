@@ -108,45 +108,6 @@ namespace SwrJit
         return (uint16_t)tmpVal;
     }
 
-    //////////////////////////////////////////////////////////////////////////
-    /// @brief Convert an IEEE 754 16-bit float to an 32-bit single precision
-    ///        float
-    /// @param val - 16-bit float
-    /// @todo Maybe move this outside of this file into a header?
-    static float ConvertFloat16ToFloat32(uint32_t val)
-    {
-        uint32_t result;
-        if ((val & 0x7fff) == 0)
-        {
-            result = ((uint32_t)(val & 0x8000)) << 16;
-        }
-        else if ((val & 0x7c00) == 0x7c00)
-        {
-            result = ((val & 0x3ff) == 0) ? 0x7f800000 : 0x7fc00000;
-            result |= ((uint32_t)val & 0x8000) << 16;
-        }
-        else
-        {
-            uint32_t sign = (val & 0x8000) << 16;
-            uint32_t mant = (val & 0x3ff) << 13;
-            uint32_t exp  = (val >> 10) & 0x1f;
-            if ((exp == 0) && (mant != 0)) // Adjust exponent and mantissa for denormals
-            {
-                mant <<= 1;
-                while (mant < (0x400 << 13))
-                {
-                    exp--;
-                    mant <<= 1;
-                }
-                mant &= (0x3ff << 13);
-            }
-            exp    = ((exp - 15 + 127) & 0xff) << 23;
-            result = sign | exp | mant;
-        }
-
-        return *(float*)&result;
-    }
-
     Constant* Builder::C(bool i) { return ConstantInt::get(IRB()->getInt1Ty(), (i ? 1 : 0)); }
 
     Constant* Builder::C(char i) { return ConstantInt::get(IRB()->getInt8Ty(), i); }
@@ -170,61 +131,131 @@ namespace SwrJit
         return ConstantInt::get(IRB()->getInt1Ty(), (pred ? 1 : 0));
     }
 
+    Value* Builder::VIMMED1(uint64_t i)
+    {
+#if LLVM_VERSION_MAJOR <= 10
+        return ConstantVector::getSplat(mVWidth, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth, false), cast<ConstantInt>(C(i)));
+#endif
+    }
+
+    Value* Builder::VIMMED1_16(uint64_t i)
+    {
+#if LLVM_VERSION_MAJOR <= 10
+        return ConstantVector::getSplat(mVWidth16, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth16, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth16, false), cast<ConstantInt>(C(i)));
+#endif
+    }
+
     Value* Builder::VIMMED1(int i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1_16(int i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth16, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth16, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth16, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1(uint32_t i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1_16(uint32_t i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth16, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth16, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth16, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1(float i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth, cast<ConstantFP>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth, false), cast<ConstantFP>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth, false), cast<ConstantFP>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1_16(float i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth16, cast<ConstantFP>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth16, false), cast<ConstantFP>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth16, false), cast<ConstantFP>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1(bool i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
     Value* Builder::VIMMED1_16(bool i)
     {
+#if LLVM_VERSION_MAJOR <= 10
         return ConstantVector::getSplat(mVWidth16, cast<ConstantInt>(C(i)));
+#elif LLVM_VERSION_MAJOR == 11
+        return ConstantVector::getSplat(ElementCount(mVWidth16, false), cast<ConstantInt>(C(i)));
+#else
+        return ConstantVector::getSplat(ElementCount::get(mVWidth16, false), cast<ConstantInt>(C(i)));
+#endif
     }
 
-    Value* Builder::VUNDEF_IPTR() { return UndefValue::get(VectorType::get(mInt32PtrTy, mVWidth)); }
+    Value* Builder::VUNDEF_IPTR() { return UndefValue::get(getVectorType(mInt32PtrTy, mVWidth)); }
 
-    Value* Builder::VUNDEF(Type* t) { return UndefValue::get(VectorType::get(t, mVWidth)); }
+    Value* Builder::VUNDEF(Type* t) { return UndefValue::get(getVectorType(t, mVWidth)); }
 
-    Value* Builder::VUNDEF_I() { return UndefValue::get(VectorType::get(mInt32Ty, mVWidth)); }
+    Value* Builder::VUNDEF_I() { return UndefValue::get(getVectorType(mInt32Ty, mVWidth)); }
 
-    Value* Builder::VUNDEF_I_16() { return UndefValue::get(VectorType::get(mInt32Ty, mVWidth16)); }
+    Value* Builder::VUNDEF_I_16() { return UndefValue::get(getVectorType(mInt32Ty, mVWidth16)); }
 
-    Value* Builder::VUNDEF_F() { return UndefValue::get(VectorType::get(mFP32Ty, mVWidth)); }
+    Value* Builder::VUNDEF_F() { return UndefValue::get(getVectorType(mFP32Ty, mVWidth)); }
 
-    Value* Builder::VUNDEF_F_16() { return UndefValue::get(VectorType::get(mFP32Ty, mVWidth16)); }
+    Value* Builder::VUNDEF_F_16() { return UndefValue::get(getVectorType(mFP32Ty, mVWidth16)); }
 
     Value* Builder::VUNDEF(Type* ty, uint32_t size)
     {
-        return UndefValue::get(VectorType::get(ty, size));
+        return UndefValue::get(getVectorType(ty, size));
     }
 
     Value* Builder::VBROADCAST(Value* src, const llvm::Twine& name)
@@ -270,14 +301,24 @@ namespace SwrJit
         std::vector<Value*> args;
         for (auto arg : argsList)
             args.push_back(arg);
+#if LLVM_VERSION_MAJOR >= 11
+        // see comment to CALLA(Callee) function in the header
+        return CALLA(FunctionCallee(cast<Function>(Callee)), args, name);
+#else
         return CALLA(Callee, args, name);
+#endif
     }
 
     CallInst* Builder::CALL(Value* Callee, Value* arg)
     {
         std::vector<Value*> args;
         args.push_back(arg);
+#if LLVM_VERSION_MAJOR >= 11
+        // see comment to CALLA(Callee) function in the header
+        return CALLA(FunctionCallee(cast<Function>(Callee)), args);
+#else
         return CALLA(Callee, args);
+#endif
     }
 
     CallInst* Builder::CALL2(Value* Callee, Value* arg1, Value* arg2)
@@ -285,7 +326,12 @@ namespace SwrJit
         std::vector<Value*> args;
         args.push_back(arg1);
         args.push_back(arg2);
+#if LLVM_VERSION_MAJOR >= 11
+        // see comment to CALLA(Callee) function in the header
+        return CALLA(FunctionCallee(cast<Function>(Callee)), args);
+#else
         return CALLA(Callee, args);
+#endif
     }
 
     CallInst* Builder::CALL3(Value* Callee, Value* arg1, Value* arg2, Value* arg3)
@@ -294,7 +340,12 @@ namespace SwrJit
         args.push_back(arg1);
         args.push_back(arg2);
         args.push_back(arg3);
+#if LLVM_VERSION_MAJOR >= 11
+        // see comment to CALLA(Callee) function in the header
+        return CALLA(FunctionCallee(cast<Function>(Callee)), args);
+#else
         return CALLA(Callee, args);
+#endif
     }
 
     Value* Builder::VRCP(Value* va, const llvm::Twine& name)
@@ -341,7 +392,11 @@ namespace SwrJit
             if (pType->isVectorTy())
             {
                 Type* pContainedType = pType->getContainedType(0);
-
+#if LLVM_VERSION_MAJOR >= 12
+                FixedVectorType* pVectorType = cast<FixedVectorType>(pType);
+#elif LLVM_VERSION_MAJOR >= 11
+                VectorType* pVectorType = cast<VectorType>(pType);
+#endif
                 if (toupper(tempStr[pos + 1]) == 'X')
                 {
                     tempStr[pos]     = '0';
@@ -352,7 +407,11 @@ namespace SwrJit
                     printCallArgs.push_back(VEXTRACT(pArg, C(0)));
 
                     std::string vectorFormatStr;
+#if LLVM_VERSION_MAJOR >= 11
+                    for (uint32_t i = 1; i < pVectorType->getNumElements(); ++i)
+#else
                     for (uint32_t i = 1; i < pType->getVectorNumElements(); ++i)
+#endif
                     {
                         vectorFormatStr += "0x%08X ";
                         printCallArgs.push_back(VEXTRACT(pArg, C(i)));
@@ -364,7 +423,11 @@ namespace SwrJit
                 else if ((tempStr[pos + 1] == 'f') && (pContainedType->isFloatTy()))
                 {
                     uint32_t i = 0;
-                    for (; i < (pArg->getType()->getVectorNumElements()) - 1; i++)
+#if LLVM_VERSION_MAJOR >= 11
+                    for (; i < pVectorType->getNumElements() - 1; i++)
+#else
+                    for (; i < pType->getVectorNumElements() - 1; i++)
+#endif
                     {
                         tempStr.insert(pos, std::string("%f "));
                         pos += 3;
@@ -377,7 +440,11 @@ namespace SwrJit
                 else if ((tempStr[pos + 1] == 'd') && (pContainedType->isIntegerTy()))
                 {
                     uint32_t i = 0;
-                    for (; i < (pArg->getType()->getVectorNumElements()) - 1; i++)
+#if LLVM_VERSION_MAJOR >= 11
+                    for (; i < pVectorType->getNumElements() - 1; i++)
+#else
+                    for (; i < pType->getVectorNumElements() - 1; i++)
+#endif
                     {
                         tempStr.insert(pos, std::string("%d "));
                         pos += 3;
@@ -390,7 +457,11 @@ namespace SwrJit
                 else if ((tempStr[pos + 1] == 'u') && (pContainedType->isIntegerTy()))
                 {
                     uint32_t i = 0;
-                    for (; i < (pArg->getType()->getVectorNumElements()) - 1; i++)
+#if LLVM_VERSION_MAJOR >= 11
+                    for (; i < pVectorType->getNumElements() - 1; i++)
+#else
+                    for (; i < pType->getVectorNumElements() - 1; i++)
+#endif
                     {
                         tempStr.insert(pos, std::string("%d "));
                         pos += 3;
@@ -422,7 +493,7 @@ namespace SwrJit
                 }
             }
 
-            // advance to the next arguement
+            // advance to the next argument
             v++;
             pos = tempStr.find('%', ++pos);
         }
@@ -505,8 +576,18 @@ namespace SwrJit
     /// @brief Convert <Nxi1> llvm mask to integer
     Value* Builder::VMOVMSK(Value* mask)
     {
+#if LLVM_VERSION_MAJOR >= 11
+#if LLVM_VERSION_MAJOR >= 12
+        FixedVectorType* pVectorType = cast<FixedVectorType>(mask->getType());
+#else
+        VectorType* pVectorType = cast<VectorType>(mask->getType());
+#endif
+        SWR_ASSERT(pVectorType->getElementType() == mInt1Ty);
+        uint32_t numLanes = pVectorType->getNumElements();
+#else
         SWR_ASSERT(mask->getType()->getVectorElementType() == mInt1Ty);
         uint32_t numLanes = mask->getType()->getVectorNumElements();
+#endif
         Value*   i32Result;
         if (numLanes == 8)
         {
@@ -543,10 +624,15 @@ namespace SwrJit
         else
         {
             Constant* cB = dyn_cast<Constant>(b);
+            assert(cB != nullptr);
             // number of 8 bit elements in b
+#if LLVM_VERSION_MAJOR >= 12
+            uint32_t numElms = cast<FixedVectorType>(cB->getType())->getNumElements();
+#else
             uint32_t numElms = cast<VectorType>(cB->getType())->getNumElements();
+#endif
             // output vector
-            Value* vShuf = UndefValue::get(VectorType::get(mInt8Ty, numElms));
+            Value* vShuf = UndefValue::get(getVectorType(mInt8Ty, numElms));
 
             // insert an 8 bit value from the high and low lanes of a per loop iteration
             numElms /= 2;
@@ -587,7 +673,7 @@ namespace SwrJit
     Value* Builder::PMOVSXBD(Value* a)
     {
         // VPMOVSXBD output type
-        Type* v8x32Ty = VectorType::get(mInt32Ty, 8);
+        Type* v8x32Ty = getVectorType(mInt32Ty, 8);
         // Extract 8 values from 128bit lane and sign extend
         return S_EXT(VSHUFFLE(a, a, C<int>({0, 1, 2, 3, 4, 5, 6, 7})), v8x32Ty);
     }
@@ -599,7 +685,7 @@ namespace SwrJit
     Value* Builder::PMOVSXWD(Value* a)
     {
         // VPMOVSXWD output type
-        Type* v8x32Ty = VectorType::get(mInt32Ty, 8);
+        Type* v8x32Ty = getVectorType(mInt32Ty, 8);
         // Extract 8 values from 128bit lane and sign extend
         return S_EXT(VSHUFFLE(a, a, C<int>({0, 1, 2, 3, 4, 5, 6, 7})), v8x32Ty);
     }
@@ -610,37 +696,17 @@ namespace SwrJit
     /// @param a - 128bit SIMD lane(8x16bit) of float16 in int16 format.
     Value* Builder::CVTPH2PS(Value* a, const llvm::Twine& name)
     {
-        if (JM()->mArch.F16C())
-        {
-            return VCVTPH2PS(a, name);
-        }
-        else
-        {
-            FunctionType* pFuncTy   = FunctionType::get(mFP32Ty, mInt16Ty);
-            Function*     pCvtPh2Ps = cast<Function>(
-#if LLVM_VERSION_MAJOR >= 9
-                JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat16ToFloat32", pFuncTy).getCallee());
+        // Bitcast Nxint16 to Nxhalf
+#if LLVM_VERSION_MAJOR >= 12
+        uint32_t numElems = cast<FixedVectorType>(a->getType())->getNumElements();
+#elif LLVM_VERSION_MAJOR >= 11
+        uint32_t numElems = cast<VectorType>(a->getType())->getNumElements();
 #else
-                JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat16ToFloat32", pFuncTy));
+        uint32_t numElems = a->getType()->getVectorNumElements();
 #endif
+        Value*   input    = BITCAST(a, getVectorType(mFP16Ty, numElems));
 
-            if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat16ToFloat32") == nullptr)
-            {
-                sys::DynamicLibrary::AddSymbol("ConvertFloat16ToFloat32",
-                                               (void*)&ConvertFloat16ToFloat32);
-            }
-
-            Value* pResult = UndefValue::get(mSimdFP32Ty);
-            for (uint32_t i = 0; i < mVWidth; ++i)
-            {
-                Value* pSrc  = VEXTRACT(a, C(i));
-                Value* pConv = CALL(pCvtPh2Ps, std::initializer_list<Value*>{pSrc});
-                pResult      = VINSERT(pResult, pConv, C(i));
-            }
-
-            pResult->setName(name);
-            return pResult;
-        }
+        return FP_EXT(input, getVectorType(mFP32Ty, numElems), name);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -786,6 +852,15 @@ namespace SwrJit
     {
         SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
         Value* fixed = nullptr;
+
+#if 0   // This doesn't work for negative numbers!!
+        {
+            fixed = FP_TO_SI(VROUND(FMUL(vFloat, VIMMED1(float(1 << numFracBits))),
+                                    C(_MM_FROUND_TO_NEAREST_INT)),
+                             mSimdInt32Ty);
+        }
+        else
+#endif
         {
             // Do round to nearest int on fractional bits first
             // Not entirely perfect for negative numbers, but close enough
@@ -849,13 +924,35 @@ namespace SwrJit
     {
         SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
         Value* fixed = nullptr;
-        // KNOB_SIM_FAST_MATH?  Below works correctly from a precision
+#if 1   // KNOB_SIM_FAST_MATH?  Below works correctly from a precision
         // standpoint...
         {
             fixed = FP_TO_UI(VROUND(FMUL(vFloat, VIMMED1(float(1 << numFracBits))),
                                     C(_MM_FROUND_TO_NEAREST_INT)),
                              mSimdInt32Ty);
         }
+#else
+        {
+            // Do round to nearest int on fractional bits first
+            vFloat = VROUND(FMUL(vFloat, VIMMED1(float(1 << numFracBits))),
+                            C(_MM_FROUND_TO_NEAREST_INT));
+            vFloat = FMUL(vFloat, VIMMED1(1.0f / float(1 << numFracBits)));
+
+            // TODO: Handle INF, NAN, overflow / underflow, etc.
+
+            Value* vSgn      = FCMP_OLT(vFloat, VIMMED1(0.0f));
+            Value* vFloatInt = BITCAST(vFloat, mSimdInt32Ty);
+            Value* vFixed    = AND(vFloatInt, VIMMED1((1 << 23) - 1));
+            vFixed           = OR(vFixed, VIMMED1(1 << 23));
+
+            Value* vExp = LSHR(SHL(vFloatInt, VIMMED1(1)), VIMMED1(24));
+            vExp        = SUB(vExp, VIMMED1(127));
+
+            Value* vExtraBits = SUB(VIMMED1(23 - numFracBits), vExp);
+
+            fixed = LSHR(vFixed, vExtraBits, name);
+        }
+#endif
         return fixed;
     }
 
@@ -969,7 +1066,7 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function*     pFunc   = cast<Function>(
-#if LLVM_VERSION_MAJOR >=9
+#if LLVM_VERSION_MAJOR >= 9
                 JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy).getCallee());
 #else
                 JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy));

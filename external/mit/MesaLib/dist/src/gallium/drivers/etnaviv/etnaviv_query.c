@@ -29,10 +29,10 @@
 #include "util/u_inlines.h"
 
 #include "etnaviv_context.h"
+#include "etnaviv_perfmon.h"
 #include "etnaviv_query.h"
-#include "etnaviv_query_hw.h"
+#include "etnaviv_query_acc.h"
 #include "etnaviv_query_sw.h"
-#include "etnaviv_query_pm.h"
 
 static struct pipe_query *
 etna_create_query(struct pipe_context *pctx, unsigned query_type,
@@ -43,9 +43,7 @@ etna_create_query(struct pipe_context *pctx, unsigned query_type,
 
    q = etna_sw_create_query(ctx, query_type);
    if (!q)
-      q = etna_hw_create_query(ctx, query_type);
-   if (!q)
-      q = etna_pm_create_query(ctx, query_type);
+      q = etna_acc_create_query(ctx, query_type);
 
    return (struct pipe_query *)q;
 }
@@ -58,19 +56,14 @@ etna_destroy_query(struct pipe_context *pctx, struct pipe_query *pq)
    q->funcs->destroy_query(etna_context(pctx), q);
 }
 
-static boolean
+static bool
 etna_begin_query(struct pipe_context *pctx, struct pipe_query *pq)
 {
    struct etna_query *q = etna_query(pq);
-   boolean ret;
 
-   if (q->active)
-      return false;
+   q->funcs->begin_query(etna_context(pctx), q);
 
-   ret = q->funcs->begin_query(etna_context(pctx), q);
-   q->active = ret;
-
-   return ret;
+   return true;
 }
 
 static bool
@@ -78,23 +71,16 @@ etna_end_query(struct pipe_context *pctx, struct pipe_query *pq)
 {
    struct etna_query *q = etna_query(pq);
 
-   if (!q->active)
-      return false;
-
    q->funcs->end_query(etna_context(pctx), q);
-   q->active = false;
 
    return true;
 }
 
-static boolean
+static bool
 etna_get_query_result(struct pipe_context *pctx, struct pipe_query *pq,
-                      boolean wait, union pipe_query_result *result)
+                      bool wait, union pipe_query_result *result)
 {
    struct etna_query *q = etna_query(pq);
-
-   if (q->active)
-      return false;
 
    util_query_clear_result(result, q->type);
 
@@ -134,8 +120,17 @@ etna_get_driver_query_group_info(struct pipe_screen *pscreen, unsigned index,
 }
 
 static void
-etna_set_active_query_state(struct pipe_context *pipe, boolean enable)
+etna_set_active_query_state(struct pipe_context *pctx, bool enable)
 {
+   struct etna_context *ctx = etna_context(pctx);
+
+   if (enable) {
+      list_for_each_entry(struct etna_acc_query, aq, &ctx->active_acc_queries, node)
+         etna_acc_query_resume(aq, ctx);
+   } else {
+      list_for_each_entry(struct etna_acc_query, aq, &ctx->active_acc_queries, node)
+         etna_acc_query_suspend(aq, ctx);
+   }
 }
 
 void

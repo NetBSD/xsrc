@@ -45,6 +45,8 @@
 #include "vl/vl_compositor.h"
 #include "vl/vl_winsys.h"
 
+#include "drm-uapi/drm_fourcc.h"
+
 #define BACK_BUFFER_NUM 3
 
 struct vl_dri3_buffer
@@ -53,6 +55,7 @@ struct vl_dri3_buffer
    struct pipe_resource *linear_texture;
 
    uint32_t pixmap;
+   uint32_t region;
    uint32_t sync_fence;
    struct xshmfence *shm_fence;
 
@@ -105,6 +108,8 @@ static void
 dri3_free_back_buffer(struct vl_dri3_screen *scrn,
                         struct vl_dri3_buffer *buffer)
 {
+   if (buffer->region)
+      xcb_xfixes_destroy_region(scrn->conn, buffer->region);
    xcb_free_pixmap(scrn->conn, buffer->pixmap);
    xcb_sync_destroy_fence(scrn->conn, buffer->sync_fence);
    xshmfence_unmap_shm(buffer->shm_fence);
@@ -221,7 +226,6 @@ dri3_alloc_back_buffer(struct vl_dri3_screen *scrn)
    int buffer_fd, fence_fd;
    struct pipe_resource templ, *pixmap_buffer_texture;
    struct winsys_handle whandle;
-   unsigned usage;
 
    buffer = CALLOC_STRUCT(vl_dri3_buffer);
    if (!buffer)
@@ -271,10 +275,8 @@ dri3_alloc_back_buffer(struct vl_dri3_screen *scrn)
    }
    memset(&whandle, 0, sizeof(whandle));
    whandle.type= WINSYS_HANDLE_TYPE_FD;
-   usage = PIPE_HANDLE_USAGE_EXPLICIT_FLUSH;
    scrn->base.pscreen->resource_get_handle(scrn->base.pscreen, NULL,
-                                           pixmap_buffer_texture, &whandle,
-                                           usage);
+                                           pixmap_buffer_texture, &whandle, 0);
    buffer_fd = whandle.handle;
    buffer->pitch = whandle.stride;
    buffer->width = templ.width0;
@@ -438,6 +440,7 @@ dri3_set_drawable(struct vl_dri3_screen *scrn, Drawable drawable)
          ret = false;
       else {
          scrn->is_pixmap = true;
+         scrn->base.set_back_texture_from_output = NULL;
          if (scrn->front_buffer) {
             dri3_free_front_buffer(scrn, scrn->front_buffer);
             scrn->front_buffer = NULL;
@@ -494,6 +497,7 @@ dri3_get_front_buffer(struct vl_dri3_screen *scrn)
    whandle.type = WINSYS_HANDLE_TYPE_FD;
    whandle.handle = (unsigned)fds[0];
    whandle.stride = bp_reply->stride;
+   whandle.modifier = DRM_FORMAT_MOD_INVALID;
    memset(&templ, 0, sizeof(templ));
    templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
    templ.format = vl_dri2_format_for_depth(&scrn->base, bp_reply->depth);
@@ -554,6 +558,7 @@ dri3_get_screen_for_root(xcb_connection_t *conn, xcb_window_t root)
 
 static void
 vl_dri3_flush_frontbuffer(struct pipe_screen *screen,
+                          struct pipe_context *pipe,
                           struct pipe_resource *resource,
                           unsigned level, unsigned layer,
                           void *context_private, struct pipe_box *sub_box)
@@ -562,7 +567,6 @@ vl_dri3_flush_frontbuffer(struct pipe_screen *screen,
    uint32_t options = XCB_PRESENT_OPTION_NONE;
    struct vl_dri3_buffer *back;
    struct pipe_box src_box;
-   xcb_xfixes_region_t region;
    xcb_rectangle_t rectangle;
 
    back = scrn->back_buffers[scrn->cur_back];
@@ -578,8 +582,11 @@ vl_dri3_flush_frontbuffer(struct pipe_screen *screen,
    rectangle.width = (scrn->output_texture) ? scrn->clip_width : scrn->width;
    rectangle.height = (scrn->output_texture) ? scrn->clip_height : scrn->height;
 
-   region = xcb_generate_id(scrn->conn);
-   xcb_xfixes_create_region(scrn->conn, region, 2, &rectangle);
+   if (!back->region) {
+      back->region = xcb_generate_id(scrn->conn);
+      xcb_xfixes_create_region(scrn->conn, back->region, 0, NULL);
+   }
+   xcb_xfixes_set_region(scrn->conn, back->region, 1, &rectangle);
 
    if (scrn->is_different_gpu) {
       u_box_origin_2d(back->width, back->height, &src_box);
@@ -598,7 +605,7 @@ vl_dri3_flush_frontbuffer(struct pipe_screen *screen,
                       scrn->drawable,
                       back->pixmap,
                       (uint32_t)(++scrn->send_sbc),
-                      0, region, 0, 0,
+                      0, back->region, 0, 0,
                       None, None,
                       back->sync_fence,
                       options,
@@ -831,8 +838,7 @@ vl_dri3_screen_create(Display *display, int screen)
    if (!scrn->base.pscreen)
       goto release_pipe;
 
-   scrn->pipe = scrn->base.pscreen->context_create(scrn->base.pscreen,
-                                                   NULL, 0);
+   scrn->pipe = pipe_create_multimedia_context(scrn->base.pscreen);
    if (!scrn->pipe)
        goto no_context;
 
@@ -846,6 +852,9 @@ vl_dri3_screen_create(Display *display, int screen)
    scrn->base.set_back_texture_from_output = vl_dri3_screen_set_back_texture_from_output;
 
    scrn->next_back = 1;
+
+   close(fd);
+   
    return &scrn->base;
 
 no_context:

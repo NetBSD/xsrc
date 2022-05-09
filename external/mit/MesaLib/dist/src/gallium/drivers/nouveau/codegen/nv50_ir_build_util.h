@@ -66,6 +66,7 @@ public:
    Instruction *mkMov(Value *, Value *, DataType = TYPE_U32);
    Instruction *mkMovToReg(int id, Value *);
    Instruction *mkMovFromReg(Value *, int id);
+   inline Instruction *mkBMov(Value *, Value *);
 
    Instruction *mkInterp(unsigned mode, Value *, int32_t offset, Value *rel);
    Instruction *mkFetch(Value *, DataType, DataFile, int32_t offset,
@@ -91,6 +92,7 @@ public:
 
    ImmediateValue *mkImm(float);
    ImmediateValue *mkImm(double);
+   ImmediateValue *mkImm(uint16_t);
    ImmediateValue *mkImm(uint32_t);
    ImmediateValue *mkImm(uint64_t);
 
@@ -98,6 +100,7 @@ public:
 
    Value *loadImm(Value *dst, float);
    Value *loadImm(Value *dst, double);
+   Value *loadImm(Value *dst, uint16_t);
    Value *loadImm(Value *dst, uint32_t);
    Value *loadImm(Value *dst, uint64_t);
 
@@ -137,7 +140,9 @@ public:
    class DataArray
    {
    public:
-      DataArray(BuildUtil *bld) : up(bld) { }
+      DataArray(BuildUtil *bld) : up(bld), array(0), arrayIdx(0), baseAddr(0),
+         arrayLen(0), baseSym(NULL), vecDim(0), eltSize(0), file(FILE_NULL),
+         regOnly(false) { }
 
       void setup(unsigned array, unsigned arrayIdx,
                  uint32_t base, int len, int vecDim, int eltSize,
@@ -174,6 +179,7 @@ public:
                     DataType ty, uint32_t baseAddress);
 
    Symbol *mkSysVal(SVSemantic svName, uint32_t svIndex);
+   Symbol *mkTSVal(TSSemantic tsName);
 
 private:
    void init(Program *);
@@ -298,6 +304,12 @@ BuildUtil::mkLoadv(DataType ty, Symbol *mem, Value *ptr)
    LValue *dst = getScratch(typeSizeof(ty));
    mkLoad(ty, dst, mem, ptr);
    return dst;
+}
+
+inline Instruction *
+BuildUtil::mkBMov(Value *dst, Value *src)
+{
+   return mkCvt(OP_CVT, TYPE_U32, dst, TYPE_U32, src);
 }
 
 bool

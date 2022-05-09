@@ -48,7 +48,7 @@ get_unwrapped_array_length(nir_shader *nir, nir_variable *var)
     * array length.
     */
    const struct glsl_type *type = var->type;
-   if (nir_is_per_vertex_io(var, nir->info.stage))
+   if (nir_is_arrayed_io(var, nir->info.stage))
       type = glsl_get_array_element(type);
 
    assert(glsl_type_is_array(type));
@@ -58,13 +58,13 @@ get_unwrapped_array_length(nir_shader *nir, nir_variable *var)
 
 static bool
 combine_clip_cull(nir_shader *nir,
-                  struct exec_list *vars,
+                  nir_variable_mode mode,
                   bool store_info)
 {
    nir_variable *cull = NULL;
    nir_variable *clip = NULL;
 
-   nir_foreach_variable(var, vars) {
+   nir_foreach_variable_with_modes(var, nir, mode) {
       if (var->data.location == VARYING_SLOT_CLIP_DIST0)
          clip = var;
 
@@ -72,8 +72,17 @@ combine_clip_cull(nir_shader *nir,
          cull = var;
    }
 
-   if (!cull && !clip)
+   if (!cull && !clip) {
+      /* If this is run after optimizations and the variables have been
+       * eliminated, we should update the shader info, because no other
+       * place does that.
+       */
+      if (store_info) {
+         nir->info.clip_distance_array_size = 0;
+         nir->info.cull_distance_array_size = 0;
+      }
       return false;
+   }
 
    if (!cull && clip) {
       /* The GLSL IR lowering pass must have converted these to vectors */
@@ -107,16 +116,6 @@ combine_clip_cull(nir_shader *nir,
       cull->data.location_frac = clip_array_size % 4;
    }
 
-   nir_foreach_function(function, nir) {
-      if (function->impl) {
-         nir_metadata_preserve(function->impl,
-                               nir_metadata_block_index |
-                               nir_metadata_dominance |
-                               nir_metadata_live_ssa_defs |
-                               nir_metadata_loop_analysis);
-      }
-   }
-
    return true;
 }
 
@@ -126,10 +125,27 @@ nir_lower_clip_cull_distance_arrays(nir_shader *nir)
    bool progress = false;
 
    if (nir->info.stage <= MESA_SHADER_GEOMETRY)
-      progress |= combine_clip_cull(nir, &nir->outputs, true);
+      progress |= combine_clip_cull(nir, nir_var_shader_out, true);
 
-   if (nir->info.stage > MESA_SHADER_VERTEX)
-      progress |= combine_clip_cull(nir, &nir->inputs, false);
+   if (nir->info.stage > MESA_SHADER_VERTEX) {
+      progress |= combine_clip_cull(nir, nir_var_shader_in,
+                                    nir->info.stage == MESA_SHADER_FRAGMENT);
+   }
+
+   nir_foreach_function(function, nir) {
+      if (!function->impl)
+         continue;
+
+      if (progress) {
+         nir_metadata_preserve(function->impl,
+                               nir_metadata_block_index |
+                               nir_metadata_dominance |
+                               nir_metadata_live_ssa_defs |
+                               nir_metadata_loop_analysis);
+      } else {
+         nir_metadata_preserve(function->impl, nir_metadata_all);
+      }
+   }
 
    return progress;
 }

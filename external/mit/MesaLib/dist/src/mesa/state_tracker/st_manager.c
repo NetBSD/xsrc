@@ -55,19 +55,20 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_helpers.h"
 #include "util/u_pointer.h"
 #include "util/u_inlines.h"
 #include "util/u_atomic.h"
 #include "util/u_surface.h"
 #include "util/list.h"
+#include "util/u_memory.h"
 
 struct hash_table;
 struct st_manager_private
 {
    struct hash_table *stfbi_ht; /* framebuffer iface objects hash table */
-   mtx_t st_mutex;
+   simple_mtx_t st_mutex;
 };
 
 
@@ -98,7 +99,6 @@ attachment_to_buffer_index(enum st_attachment_type statt)
    case ST_ATTACHMENT_ACCUM:
       index = BUFFER_ACCUM;
       break;
-   case ST_ATTACHMENT_SAMPLE:
    default:
       index = BUFFER_COUNT;
       break;
@@ -208,7 +208,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    uint width, height;
    unsigned i;
-   boolean changed = FALSE;
+   bool changed = false;
    int32_t new_stamp;
 
    new_stamp = p_atomic_read(&stfb->iface->stamp);
@@ -257,7 +257,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
          st_set_ws_renderbuffer_surface(strb, ps);
          pipe_surface_reference(&ps, NULL);
 
-         changed = TRUE;
+         changed = true;
 
          width = strb->Base.Width;
          height = strb->Base.Height;
@@ -282,6 +282,10 @@ st_framebuffer_update_attachments(struct st_framebuffer *stfb)
    gl_buffer_index idx;
 
    stfb->num_statts = 0;
+
+   for (enum st_attachment_type i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      stfb->statts[i] = ST_ATTACHMENT_INVALID;
+
    for (idx = 0; idx < BUFFER_COUNT; idx++) {
       struct st_renderbuffer *strb;
       enum st_attachment_type statt;
@@ -303,13 +307,13 @@ st_framebuffer_update_attachments(struct st_framebuffer *stfb)
  * Add a renderbuffer to the framebuffer.  The framebuffer is one that
  * corresponds to a window and is not a user-created FBO.
  */
-static boolean
+static bool
 st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
                                 gl_buffer_index idx, bool prefer_srgb)
 {
    struct gl_renderbuffer *rb;
    enum pipe_format format;
-   boolean sw;
+   bool sw;
 
    assert(_mesa_is_winsys_fbo(&stfb->Base));
 
@@ -320,30 +324,30 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
    switch (idx) {
    case BUFFER_DEPTH:
       format = stfb->iface->visual->depth_stencil_format;
-      sw = FALSE;
+      sw = false;
       break;
    case BUFFER_ACCUM:
       format = stfb->iface->visual->accum_format;
-      sw = TRUE;
+      sw = true;
       break;
    default:
       format = stfb->iface->visual->color_format;
       if (prefer_srgb)
          format = util_format_srgb(format);
-      sw = FALSE;
+      sw = false;
       break;
    }
 
    if (format == PIPE_FORMAT_NONE)
-      return FALSE;
+      return false;
 
    rb = st_new_renderbuffer_fb(format, stfb->iface->visual->samples, sw);
    if (!rb)
-      return FALSE;
+      return false;
 
    if (idx != BUFFER_DEPTH) {
       _mesa_attach_and_own_rb(&stfb->Base, idx, rb);
-      return TRUE;
+      return true;
    }
 
    bool rb_ownership_taken = false;
@@ -359,7 +363,7 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
          _mesa_attach_and_own_rb(&stfb->Base, BUFFER_STENCIL, rb);
    }
 
-   return TRUE;
+   return true;
 }
 
 
@@ -380,8 +384,6 @@ st_visual_to_context_mode(const struct st_visual *visual,
       mode->stereoMode = GL_TRUE;
 
    if (visual->color_format != PIPE_FORMAT_NONE) {
-      mode->rgbMode = GL_TRUE;
-
       mode->redBits =
          util_format_get_component_bits(visual->color_format,
                UTIL_FORMAT_COLORSPACE_RGB, 0);
@@ -407,14 +409,9 @@ st_visual_to_context_mode(const struct st_visual *visual,
       mode->stencilBits =
          util_format_get_component_bits(visual->depth_stencil_format,
                UTIL_FORMAT_COLORSPACE_ZS, 1);
-
-      mode->haveDepthBuffer = mode->depthBits > 0;
-      mode->haveStencilBuffer = mode->stencilBits > 0;
    }
 
    if (visual->accum_format != PIPE_FORMAT_NONE) {
-      mode->haveAccumBuffer = GL_TRUE;
-
       mode->accumRedBits =
          util_format_get_component_bits(visual->accum_format,
                UTIL_FORMAT_COLORSPACE_RGB, 0);
@@ -430,7 +427,6 @@ st_visual_to_context_mode(const struct st_visual *visual,
    }
 
    if (visual->samples > 1) {
-      mode->sampleBuffers = 1;
       mode->samples = visual->samples;
    }
 }
@@ -477,7 +473,7 @@ st_framebuffer_create(struct st_context *st,
     * is also expressed by using the same extension flag
     */
    if (_mesa_has_EXT_framebuffer_sRGB(st->ctx)) {
-      struct pipe_screen *screen = st->pipe->screen;
+      struct pipe_screen *screen = st->screen;
       const enum pipe_format srgb_format =
          util_format_srgb(stfbi->visual->color_format);
 
@@ -527,7 +523,7 @@ void
 st_framebuffer_reference(struct st_framebuffer **ptr,
                          struct st_framebuffer *stfb)
 {
-   struct gl_framebuffer *fb = &stfb->Base;
+   struct gl_framebuffer *fb = stfb ? &stfb->Base : NULL;
    _mesa_reference_framebuffer((struct gl_framebuffer **) ptr, fb);
 }
 
@@ -546,7 +542,7 @@ st_framebuffer_iface_equal(const void *a, const void *b)
 }
 
 
-static boolean
+static bool
 st_framebuffer_iface_lookup(struct st_manager *smapi,
                             const struct st_framebuffer_iface *stfbi)
 {
@@ -557,15 +553,15 @@ st_framebuffer_iface_lookup(struct st_manager *smapi,
    assert(smPriv);
    assert(smPriv->stfbi_ht);
 
-   mtx_lock(&smPriv->st_mutex);
+   simple_mtx_lock(&smPriv->st_mutex);
    entry = _mesa_hash_table_search(smPriv->stfbi_ht, stfbi);
-   mtx_unlock(&smPriv->st_mutex);
+   simple_mtx_unlock(&smPriv->st_mutex);
 
    return entry != NULL;
 }
 
 
-static boolean
+static bool
 st_framebuffer_iface_insert(struct st_manager *smapi,
                             struct st_framebuffer_iface *stfbi)
 {
@@ -576,9 +572,9 @@ st_framebuffer_iface_insert(struct st_manager *smapi,
    assert(smPriv);
    assert(smPriv->stfbi_ht);
 
-   mtx_lock(&smPriv->st_mutex);
+   simple_mtx_lock(&smPriv->st_mutex);
    entry = _mesa_hash_table_insert(smPriv->stfbi_ht, stfbi, stfbi);
-   mtx_unlock(&smPriv->st_mutex);
+   simple_mtx_unlock(&smPriv->st_mutex);
 
    return entry != NULL;
 }
@@ -595,7 +591,7 @@ st_framebuffer_iface_remove(struct st_manager *smapi,
    if (!smPriv || !smPriv->stfbi_ht)
       return;
 
-   mtx_lock(&smPriv->st_mutex);
+   simple_mtx_lock(&smPriv->st_mutex);
    entry = _mesa_hash_table_search(smPriv->stfbi_ht, stfbi);
    if (!entry)
       goto unlock;
@@ -603,7 +599,7 @@ st_framebuffer_iface_remove(struct st_manager *smapi,
    _mesa_hash_table_remove(smPriv->stfbi_ht, entry);
 
 unlock:
-   mtx_unlock(&smPriv->st_mutex);
+   simple_mtx_unlock(&smPriv->st_mutex);
 }
 
 
@@ -647,7 +643,7 @@ st_framebuffers_purge(struct st_context *st)
        * deleted.
        */
       if (!st_framebuffer_iface_lookup(smapi, stfbi)) {
-         LIST_DEL(&stfb->head);
+         list_del(&stfb->head);
          st_framebuffer_reference(&stfb, NULL);
       }
    }
@@ -656,7 +652,9 @@ st_framebuffers_purge(struct st_context *st)
 
 static void
 st_context_flush(struct st_context_iface *stctxi, unsigned flags,
-                 struct pipe_fence_handle **fence)
+                 struct pipe_fence_handle **fence,
+                 void (*before_flush_cb) (void*),
+                 void* args)
 {
    struct st_context *st = (struct st_context *) stctxi;
    unsigned pipe_flags = 0;
@@ -666,14 +664,21 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
    if (flags & ST_FLUSH_FENCE_FD)
       pipe_flags |= PIPE_FLUSH_FENCE_FD;
 
-   FLUSH_VERTICES(st->ctx, 0);
-   FLUSH_CURRENT(st->ctx, 0);
+   /* We can do these in any order because FLUSH_VERTICES will also flush
+    * the bitmap cache if there are any unflushed vertices.
+    */
+   st_flush_bitmap_cache(st);
+   FLUSH_VERTICES(st->ctx, 0, 0);
+
+   /* Notify the caller that we're ready to flush */
+   if (before_flush_cb)
+      before_flush_cb(args);
    st_flush(st, fence, pipe_flags);
 
    if ((flags & ST_FLUSH_WAIT) && fence && *fence) {
-      st->pipe->screen->fence_finish(st->pipe->screen, NULL, *fence,
+      st->screen->fence_finish(st->screen, NULL, *fence,
                                      PIPE_TIMEOUT_INFINITE);
-      st->pipe->screen->fence_reference(st->pipe->screen, fence, NULL);
+      st->screen->fence_reference(st->screen, fence, NULL);
    }
 
    if (flags & ST_FLUSH_FRONT)
@@ -690,11 +695,11 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
       st->gfx_shaders_may_be_dirty = true;
 }
 
-static boolean
+static bool
 st_context_teximage(struct st_context_iface *stctxi,
                     enum st_texture_type tex_type,
                     int level, enum pipe_format pipe_format,
-                    struct pipe_resource *tex, boolean mipmap)
+                    struct pipe_resource *tex, bool mipmap)
 {
    struct st_context *st = (struct st_context *) stctxi;
    struct gl_context *ctx = st->ctx;
@@ -778,7 +783,7 @@ st_context_teximage(struct st_context_iface *stctxi,
    _mesa_dirty_texobj(ctx, texObj);
    _mesa_unlock_texture(ctx, texObj);
 
-   return TRUE;
+   return true;
 }
 
 
@@ -793,7 +798,7 @@ st_context_copy(struct st_context_iface *stctxi,
 }
 
 
-static boolean
+static bool
 st_context_share(struct st_context_iface *stctxi,
                  struct st_context_iface *stsrci)
 {
@@ -818,17 +823,6 @@ st_start_thread(struct st_context_iface *stctxi)
    struct st_context *st = (struct st_context *) stctxi;
 
    _mesa_glthread_init(st->ctx);
-
-   /* Pin all driver threads to one L3 cache for optimal performance
-    * on AMD Zen. This is only done if glthread is enabled.
-    *
-    * If glthread is disabled, st_draw.c re-pins driver threads regularly
-    * based on the location of the app thread.
-    */
-   struct glthread_state *glthread = st->ctx->GLThread;
-   if (glthread && st->pipe->set_context_param) {
-      util_pin_driver_threads_to_random_L3(st->pipe, &glthread->queue.threads[0]);
-   }
 }
 
 
@@ -842,13 +836,30 @@ st_thread_finish(struct st_context_iface *stctxi)
 
 
 static void
+st_context_invalidate_state(struct st_context_iface *stctxi,
+                            unsigned flags)
+{
+   struct st_context *st = (struct st_context *) stctxi;
+
+   if (flags & ST_INVALIDATE_FS_SAMPLER_VIEWS)
+      st->dirty |= ST_NEW_FS_SAMPLER_VIEWS;
+   if (flags & ST_INVALIDATE_FS_CONSTBUF0)
+      st->dirty |= ST_NEW_FS_CONSTANTS;
+   if (flags & ST_INVALIDATE_VS_CONSTBUF0)
+      st->dirty |= ST_NEW_VS_CONSTANTS;
+   if (flags & ST_INVALIDATE_VERTEX_BUFFERS)
+      st->dirty |= ST_NEW_VERTEX_ARRAYS;
+}
+
+
+static void
 st_manager_destroy(struct st_manager *smapi)
 {
    struct st_manager_private *smPriv = smapi->st_manager_private;
 
    if (smPriv && smPriv->stfbi_ht) {
       _mesa_hash_table_destroy(smPriv->stfbi_ht, NULL);
-      mtx_destroy(&smPriv->st_mutex);
+      simple_mtx_destroy(&smPriv->st_mutex);
       free(smPriv);
       smapi->st_manager_private = NULL;
    }
@@ -864,8 +875,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
    struct st_context *st;
    struct pipe_context *pipe;
-   struct gl_config* mode_ptr;
-   struct gl_config mode;
+   struct gl_config mode, *mode_ptr = &mode;
    gl_api api;
    bool no_error = false;
    unsigned ctx_flags = PIPE_CONTEXT_PREFER_THREADED;
@@ -891,6 +901,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
    }
 
+   _mesa_initialize();
+
    /* Create a hash table for the framebuffer interface objects
     * if it has not been created for this st manager.
     */
@@ -898,7 +910,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       struct st_manager_private *smPriv;
 
       smPriv = CALLOC_STRUCT(st_manager_private);
-      mtx_init(&smPriv->st_mutex, mtx_plain);
+      simple_mtx_init(&smPriv->st_mutex, mtx_plain);
       smPriv->stfbi_ht = _mesa_hash_table_create(NULL,
                                                  st_framebuffer_iface_hash,
                                                  st_framebuffer_iface_equal);
@@ -927,14 +939,11 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    }
 
    st_visual_to_context_mode(&attribs->visual, &mode);
-
-   if (attribs->visual.no_config)
+   if (attribs->visual.color_format == PIPE_FORMAT_NONE)
       mode_ptr = NULL;
-   else
-      mode_ptr = &mode;
-
    st = st_create_context(api, pipe, mode_ptr, shared_ctx,
-                          &attribs->options, no_error);
+                          &attribs->options, no_error,
+                          !!smapi->validate_egl_image);
    if (!st) {
       *error = ST_CONTEXT_ERROR_NO_MEMORY;
       pipe->destroy(pipe);
@@ -979,6 +988,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       }
    }
 
+   st->can_scissor_clear = !!st->screen->get_param(st->screen, PIPE_CAP_CLEAR_SCISSORED);
+
    st->invalidate_on_gl_viewport =
       smapi->get_param(smapi, ST_MANAGER_BROKEN_INVALIDATE);
 
@@ -989,10 +1000,15 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    st->iface.share = st_context_share;
    st->iface.start_thread = st_start_thread;
    st->iface.thread_finish = st_thread_finish;
+   st->iface.invalidate_state = st_context_invalidate_state;
    st->iface.st_context_private = (void *) smapi;
    st->iface.cso_context = st->cso_context;
    st->iface.pipe = st->pipe;
    st->iface.state_manager = smapi;
+
+   if (st->ctx->IntelBlackholeRender &&
+       st->screen->get_param(st->screen, PIPE_CAP_FRONTEND_NOOP))
+      st->pipe->set_frontend_noop(st->pipe, st->ctx->IntelBlackholeRender);
 
    *error = ST_CONTEXT_SUCCESS;
    return &st->iface;
@@ -1043,7 +1059,7 @@ st_framebuffer_reuse_or_create(struct st_context *st,
          }
 
          /* add to the context's winsys buffers list */
-         LIST_ADD(&cur->head, &st->winsys_buffers);
+         list_add(&cur->head, &st->winsys_buffers);
 
          st_framebuffer_reference(&stfb, cur);
       }
@@ -1053,14 +1069,14 @@ st_framebuffer_reuse_or_create(struct st_context *st,
 }
 
 
-static boolean
+static bool
 st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
                     struct st_framebuffer_iface *stdrawi,
                     struct st_framebuffer_iface *streadi)
 {
    struct st_context *st = (struct st_context *) stctxi;
    struct st_framebuffer *stdraw, *stread;
-   boolean ret;
+   bool ret;
 
    if (st) {
       /* reuse or create the draw fb */
@@ -1077,6 +1093,10 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
          if (stdraw)
             st_framebuffer_reference(&stread, stdraw);
       }
+
+      /* If framebuffers were asked for, we'd better have allocated them */
+      if ((stdrawi && !stdraw) || (streadi && !stread))
+         return false;
 
       if (stdraw && stread) {
          st_framebuffer_validate(stdraw, st);
@@ -1148,15 +1168,22 @@ st_manager_flush_frontbuffer(struct st_context *st)
        !stfb->Base.Visual.doubleBufferMode)
       return;
 
+   /* Check front buffer used at the GL API level. */
+   enum st_attachment_type statt = ST_ATTACHMENT_FRONT_LEFT;
    strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_FRONT_LEFT].
                           Renderbuffer);
+   if (!strb) {
+       /* Check back buffer redirected by EGL_KHR_mutable_render_buffer. */
+       statt = ST_ATTACHMENT_BACK_LEFT;
+       strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_LEFT].
+                              Renderbuffer);
+   }
 
    /* Do we have a front color buffer and has it been drawn to since last
     * frontbuffer flush?
     */
-   if (strb && strb->defined) {
-      stfb->iface->flush_front(&st->iface, stfb->iface,
-                               ST_ATTACHMENT_FRONT_LEFT);
+   if (strb && strb->defined &&
+       stfb->iface->flush_front(&st->iface, stfb->iface, statt)) {
       strb->defined = GL_FALSE;
 
       /* Trigger an update of strb->defined on next draw */
@@ -1208,7 +1235,7 @@ st_manager_flush_swapbuffers(void)
  * Add a color renderbuffer on demand.  The FBO must correspond to a window,
  * not a user-created FBO.
  */
-boolean
+bool
 st_manager_add_color_renderbuffer(struct st_context *st,
                                   struct gl_framebuffer *fb,
                                   gl_buffer_index idx)
@@ -1217,12 +1244,12 @@ st_manager_add_color_renderbuffer(struct st_context *st,
 
    /* FBO */
    if (!stfb)
-      return FALSE;
+      return false;
 
    assert(_mesa_is_winsys_fbo(fb));
 
    if (stfb->Base.Attachment[idx].Renderbuffer)
-      return TRUE;
+      return true;
 
    switch (idx) {
    case BUFFER_FRONT_LEFT:
@@ -1231,17 +1258,17 @@ st_manager_add_color_renderbuffer(struct st_context *st,
    case BUFFER_BACK_RIGHT:
       break;
    default:
-      return FALSE;
+      return false;
    }
 
    if (!st_framebuffer_add_renderbuffer(stfb, idx,
                                         stfb->Base.Visual.sRGBCapable))
-      return FALSE;
+      return false;
 
    st_framebuffer_update_attachments(stfb);
 
    /*
-    * Force a call to the state tracker manager to validate the
+    * Force a call to the frontend manager to validate the
     * new renderbuffer. It might be that there is a window system
     * renderbuffer available.
     */
@@ -1250,7 +1277,7 @@ st_manager_add_color_renderbuffer(struct st_context *st,
 
    st_invalidate_buffers(st);
 
-   return TRUE;
+   return true;
 }
 
 
@@ -1271,8 +1298,9 @@ get_version(struct pipe_screen *screen,
 
    st_init_limits(screen, &consts, &extensions);
    st_init_extensions(screen, &consts, &extensions, options, api);
-
-   return _mesa_get_version(&extensions, &consts, api);
+   version = _mesa_get_version(&extensions, &consts, api);
+   free(consts.SpirVExtensions);
+   return version;
 }
 
 

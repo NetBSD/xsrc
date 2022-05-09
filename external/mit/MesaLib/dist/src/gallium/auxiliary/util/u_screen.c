@@ -35,6 +35,8 @@ int
 u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
                                  enum pipe_cap param)
 {
+   assert(param < PIPE_CAP_LAST);
+
    /* Let's keep these sorted by position in p_defines.h. */
    switch (param) {
    case PIPE_CAP_NPOT_TEXTURES:
@@ -43,6 +45,8 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_POINT_SPRITE:
       return 0;
 
+   case PIPE_CAP_GRAPHICS:
+   case PIPE_CAP_GL_CLAMP:
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 1;
 
@@ -51,16 +55,19 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TEXTURE_SWIZZLE:
       return 0;
 
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+   case PIPE_CAP_MAX_TEXTURE_2D_SIZE:
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       unreachable("driver must implement these.");
 
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-   case PIPE_CAP_SM3:
+   case PIPE_CAP_FRAGMENT_SHADER_TEXTURE_LOD:
+   case PIPE_CAP_FRAGMENT_SHADER_DERIVATIVES:
+   case PIPE_CAP_VERTEX_SHADER_SATURATE:
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS: /* enables EXT_transform_feedback */
    case PIPE_CAP_PRIMITIVE_RESTART:
+   case PIPE_CAP_PRIMITIVE_RESTART_FIXED_INDEX:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS: /* Enables GL_EXT_texture_array */
@@ -70,6 +77,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
    case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
+   case PIPE_CAP_DEPTH_CLAMP_ENABLE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
@@ -79,6 +87,10 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
    case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
       return 0;
+
+   case PIPE_CAP_SUPPORTED_PRIM_MODES_WITH_RESTART:
+   case PIPE_CAP_SUPPORTED_PRIM_MODES:
+      return BITFIELD_MASK(PIPE_PRIM_MAX);
 
    case PIPE_CAP_MIN_TEXEL_OFFSET:
       /* GL 3.x minimum value. */
@@ -108,7 +120,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
       return 120;
 
    case PIPE_CAP_ESSL_FEATURE_LEVEL:
-      /* Tell state-tracker to fallback to PIPE_CAP_GLSL_FEATURE_LEVEL */
+      /* Tell gallium frontend to fallback to PIPE_CAP_GLSL_FEATURE_LEVEL */
       return 0;
 
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
@@ -144,6 +156,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
 
    case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
    case PIPE_CAP_TGSI_TEXCOORD:
+   case PIPE_CAP_TEXTURE_BUFFER_SAMPLER:
       return 0;
 
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
@@ -210,21 +223,33 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_POLYGON_OFFSET_CLAMP:
    case PIPE_CAP_MULTISAMPLE_Z_RESOLVE:
    case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
+   case PIPE_CAP_RESOURCE_FROM_USER_MEMORY_COMPUTE_ONLY:
    case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
+   case PIPE_CAP_DEVICE_PROTECTED_CONTENT:
    case PIPE_CAP_MAX_SHADER_PATCH_VARYINGS:
    case PIPE_CAP_TEXTURE_FLOAT_LINEAR:
    case PIPE_CAP_TEXTURE_HALF_FLOAT_LINEAR:
    case PIPE_CAP_DEPTH_BOUNDS_TEST:
    case PIPE_CAP_TGSI_TXQS:
    case PIPE_CAP_FORCE_PERSAMPLE_INTERP:
+      return 0;
+
+   /* All drivers should expose this cap, as it is required for applications to
+    * be able to efficiently compile GL shaders from multiple threads during
+    * load.
+    */
    case PIPE_CAP_SHAREABLE_SHADERS:
+      return 1;
+
    case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
    case PIPE_CAP_CLEAR_TEXTURE:
+   case PIPE_CAP_CLEAR_SCISSORED:
    case PIPE_CAP_DRAW_PARAMETERS:
    case PIPE_CAP_TGSI_PACK_HALF_FLOAT:
    case PIPE_CAP_MULTI_DRAW_INDIRECT:
    case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
    case PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL:
+   case PIPE_CAP_TGSI_FS_POINT_IS_SYSVAL:
    case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
       return 0;
 
@@ -249,11 +274,12 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
    case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
    case PIPE_CAP_CULL_DISTANCE:
-   case PIPE_CAP_PRIMITIVE_RESTART_FOR_PATCHES:
    case PIPE_CAP_TGSI_VOTE:
    case PIPE_CAP_MAX_WINDOW_RECTANGLES: /* Enables EXT_window_rectangles */
    case PIPE_CAP_POLYGON_OFFSET_UNITS_UNSCALED:
    case PIPE_CAP_VIEWPORT_SUBPIXEL_BITS:
+   case PIPE_CAP_VIEWPORT_SWIZZLE:
+   case PIPE_CAP_VIEWPORT_MASK:
    case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
    case PIPE_CAP_TGSI_ARRAY_COMPONENTS:
    case PIPE_CAP_STREAM_OUTPUT_INTERLEAVE_BUFFERS:
@@ -265,12 +291,15 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
       return 4; /* GLES 2.0 minimum value */
 
    case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
+   case PIPE_CAP_PREFER_BACK_BUFFER_REUSE:
       return 1;
 
    case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
       return 0;
 
-   case PIPE_CAP_TGSI_FS_FBFETCH:
+   case PIPE_CAP_FBFETCH:
+   case PIPE_CAP_FBFETCH_COHERENT:
+   case PIPE_CAP_BLEND_EQUATION_ADVANCED:
    case PIPE_CAP_TGSI_MUL_ZERO_WINS:
    case PIPE_CAP_DOUBLES:
    case PIPE_CAP_INT64:
@@ -283,12 +312,17 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
    case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
    case PIPE_CAP_TGSI_DIV:
+   case PIPE_CAP_NIR_ATOMICS_AS_DEREF:
       return 0;
 
    case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
       /* Drivers generally support this, and it reduces GL overhead just to
        * throw an error when buffers are mapped.
        */
+      return 1;
+
+   case PIPE_CAP_PREFER_IMM_ARRAYS_AS_CONSTBUF:
+      /* Don't unset this unless your driver can do better */
       return 1;
 
    case PIPE_CAP_POST_DEPTH_COVERAGE:
@@ -327,6 +361,13 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TGSI_SKIP_SHRINK_IO_ARRAYS:
    case PIPE_CAP_IMAGE_LOAD_FORMATTED:
    case PIPE_CAP_PREFER_COMPUTE_FOR_MULTIMEDIA:
+   case PIPE_CAP_FRAGMENT_SHADER_INTERLOCK:
+   case PIPE_CAP_CS_DERIVED_SYSTEM_VALUES_SUPPORTED:
+   case PIPE_CAP_ATOMIC_FLOAT_MINMAX:
+   case PIPE_CAP_SHADER_SAMPLES_IDENTICAL:
+   case PIPE_CAP_TGSI_ATOMINC_WRAP:
+   case PIPE_CAP_TGSI_TG4_COMPONENT_IN_SWIZZLE:
+   case PIPE_CAP_GLSL_ZERO_INIT:
       return 0;
 
    case PIPE_CAP_MAX_GS_INVOCATIONS:
@@ -356,8 +397,18 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_COMPUTE_SHADER_DERIVATIVES:
       return 0;
 
-   case PIPE_CAP_MAX_FRAMES_IN_FLIGHT:
+   case PIPE_CAP_THROTTLE:
       return 1;
+
+   case PIPE_CAP_TEXTURE_SHADOW_LOD:
+      return 0;
+
+   case PIPE_CAP_GL_SPIRV:
+   case PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS:
+      return 0;
+
+   case PIPE_CAP_DEMOTE_TO_HELPER_INVOCATION:
+      return 0;
 
    case PIPE_CAP_DMABUF:
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
@@ -365,6 +416,64 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
 #else
       return 0;
 #endif
+
+   case PIPE_CAP_TEXTURE_SHADOW_MAP: /* Enables ARB_shadow */
+      return 1;
+
+   case PIPE_CAP_FLATSHADE:
+   case PIPE_CAP_ALPHA_TEST:
+   case PIPE_CAP_POINT_SIZE_FIXED:
+   case PIPE_CAP_TWO_SIDED_COLOR:
+   case PIPE_CAP_CLIP_PLANES:
+      return 1;
+
+   case PIPE_CAP_MAX_VERTEX_BUFFERS:
+      return 16;
+
+   case PIPE_CAP_OPENCL_INTEGER_FUNCTIONS:
+   case PIPE_CAP_INTEGER_MULTIPLY_32X16:
+      return 0;
+   case PIPE_CAP_NIR_IMAGES_AS_DEREF:
+      return 1;
+
+   case PIPE_CAP_FRONTEND_NOOP:
+      /* Enables INTEL_blackhole_render */
+      return 0;
+
+   case PIPE_CAP_PACKED_STREAM_OUTPUT:
+      return 1;
+
+   case PIPE_CAP_VIEWPORT_TRANSFORM_LOWERED:
+   case PIPE_CAP_PSIZ_CLAMPED:
+   case PIPE_CAP_MAP_UNSYNCHRONIZED_THREAD_SAFE:
+      return 0;
+
+   case PIPE_CAP_GL_BEGIN_END_BUFFER_SIZE:
+      return 512 * 1024;
+
+   case PIPE_CAP_SYSTEM_SVM:
+   case PIPE_CAP_ALPHA_TO_COVERAGE_DITHER_CONTROL:
+   case PIPE_CAP_NO_CLIP_ON_COPY_TEX:
+   case PIPE_CAP_MAX_TEXTURE_MB:
+   case PIPE_CAP_PREFER_REAL_BUFFER_IN_CONSTBUF0:
+      return 0;
+
+   case PIPE_CAP_TEXRECT:
+      return 1;
+
+   case PIPE_CAP_SHADER_ATOMIC_INT64:
+      return 0;
+
+   case PIPE_CAP_SAMPLER_REDUCTION_MINMAX:
+   case PIPE_CAP_SAMPLER_REDUCTION_MINMAX_ARB:
+      return 0;
+
+   case PIPE_CAP_ALLOW_DYNAMIC_VAO_FASTPATH:
+      return 1;
+
+   case PIPE_CAP_EMULATE_NONFIXED_PRIMITIVE_RESTART:
+   case PIPE_CAP_DRAW_VERTEX_STATE:
+      return 0;
 
    default:
       unreachable("bad PIPE_CAP_*");

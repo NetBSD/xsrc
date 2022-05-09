@@ -64,8 +64,13 @@ enum pb_usage_flags {
    PB_USAGE_CPU_WRITE = (1 << 1),
    PB_USAGE_GPU_READ = (1 << 2),
    PB_USAGE_GPU_WRITE = (1 << 3),
-   PB_USAGE_DONTBLOCK = (1 << 9),
-   PB_USAGE_UNSYNCHRONIZED = (1 << 10),
+   PB_USAGE_DONTBLOCK = (1 << 4),
+   PB_USAGE_UNSYNCHRONIZED = (1 << 5),
+   /* Persistent mappings may remain across a flush. Note that contrary
+    * to OpenGL persistent maps, there is no requirement at the pipebuffer
+    * api level to explicitly enforce coherency by barriers or range flushes.
+    */
+   PB_USAGE_PERSISTENT = (1 << 8)
 };
 
 /* For error checking elsewhere */
@@ -74,7 +79,8 @@ enum pb_usage_flags {
                       PB_USAGE_GPU_READ | \
                       PB_USAGE_GPU_WRITE | \
                       PB_USAGE_DONTBLOCK | \
-                      PB_USAGE_UNSYNCHRONIZED)
+                      PB_USAGE_UNSYNCHRONIZED | \
+                      PB_USAGE_PERSISTENT)
 
 #define PB_USAGE_CPU_READ_WRITE  (PB_USAGE_CPU_READ | PB_USAGE_CPU_WRITE)
 #define PB_USAGE_GPU_READ_WRITE  (PB_USAGE_GPU_READ | PB_USAGE_GPU_WRITE)
@@ -105,9 +111,24 @@ typedef uint64_t pb_size;
 struct pb_buffer
 {
    struct pipe_reference  reference;
-   unsigned               alignment;
+
+   /* For internal driver use. It's here so as not to waste space due to
+    * type alignment. (pahole)
+    */
+   uint8_t                placement;
+
+   /* Alignments are powers of two, so store only the bit position.
+    *    alignment_log2 = util_logbase2(alignment);
+    *    alignment = 1 << alignment_log2;
+    */
+   uint8_t                alignment_log2;
+
+   /**
+    * Used with pb_usage_flags or driver-specific flags, depending on drivers.
+    */
+   uint16_t               usage;
+
    pb_size                size;
-   enum pb_usage_flags    usage;
 
    /**
     * Pointer to the virtual function table.
@@ -126,7 +147,7 @@ struct pb_buffer
  */
 struct pb_vtbl
 {
-   void (*destroy)(struct pb_buffer *buf);
+   void (*destroy)(void *winsys, struct pb_buffer *buf);
 
    /**
     * Map the entire data store of a buffer object into the client's address.
@@ -229,13 +250,13 @@ pb_fence(struct pb_buffer *buf, struct pipe_fence_handle *fence)
 
 
 static inline void
-pb_destroy(struct pb_buffer *buf)
+pb_destroy(void *winsys, struct pb_buffer *buf)
 {
    assert(buf);
    if (!buf)
       return;
    assert(!pipe_is_referenced(&buf->reference));
-   buf->vtbl->destroy(buf);
+   buf->vtbl->destroy(winsys, buf);
 }
 
 
@@ -246,17 +267,28 @@ pb_reference(struct pb_buffer **dst,
    struct pb_buffer *old = *dst;
 
    if (pipe_reference(&(*dst)->reference, &src->reference))
-      pb_destroy(old);
+      pb_destroy(NULL, old);
    *dst = src;
 }
 
+static inline void
+pb_reference_with_winsys(void *winsys,
+                         struct pb_buffer **dst,
+                         struct pb_buffer *src)
+{
+   struct pb_buffer *old = *dst;
+
+   if (pipe_reference(&(*dst)->reference, &src->reference))
+      pb_destroy(winsys, old);
+   *dst = src;
+}
 
 /**
  * Utility function to check whether the provided alignment is consistent with
  * the requested or not.
  */
 static inline boolean
-pb_check_alignment(pb_size requested, pb_size provided)
+pb_check_alignment(uint32_t requested, uint32_t provided)
 {
    if (!requested)
       return TRUE;
@@ -277,16 +309,6 @@ pb_check_usage(unsigned requested, unsigned provided)
 {
    return (requested & provided) == requested ? TRUE : FALSE;
 }
-
-
-/**
- * Malloc-based buffer to store data that can't be used by the graphics
- * hardware.
- */
-struct pb_buffer *
-pb_malloc_buffer_create(pb_size size,
-                        const struct pb_desc *desc);
-
 
 #ifdef __cplusplus
 }

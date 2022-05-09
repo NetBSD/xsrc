@@ -64,6 +64,24 @@ struct st_sampler_view
    bool glsl130_or_later;
    /** Derived from the sampler's sRGBDecode state during validation */
    bool srgb_skip_decode;
+
+   /* This mechanism allows passing sampler view references to the driver
+    * without using atomics to increase the reference count.
+    *
+    * This private refcount can be decremented without atomics but only one
+    * context (st above) can use this counter (so that it's only used by
+    * 1 thread).
+    *
+    * This number is atomically added to view->reference.count at
+    * initialization. If it's never used, the same number is atomically
+    * subtracted from view->reference.count before destruction. If this
+    * number is decremented, we can pass one reference to the driver without
+    * touching reference.count with atomics. At destruction we only subtract
+    * the number of references we have not returned. This can possibly turn
+    * a million atomic increments into 1 add and 1 subtract atomic op over
+    * the whole lifetime of an app.
+    */
+   int private_refcount;
 };
 
 
@@ -76,6 +94,12 @@ struct st_sampler_views
    uint32_t max;
    uint32_t count;
    struct st_sampler_view views[0];
+};
+
+struct st_compressed_data
+{
+   struct pipe_reference reference;
+   GLubyte *ptr;
 };
 
 
@@ -101,7 +125,7 @@ struct st_texture_image
     * the original data. This is necessary for mapping/unmapping,
     * as well as image copies.
     */
-   GLubyte *compressed_data;
+   struct st_compressed_data* compressed_data;
 };
 
 
@@ -164,15 +188,15 @@ struct st_texture_object
     */
    enum pipe_format surface_format;
 
-   /* When non-zero, samplers should use this level instead of the level
+   /* When non-negative, samplers should use this level instead of the level
     * range specified by the GL state.
     *
     * This is used for EGL images, which may correspond to a single level out
     * of an imported pipe_resources with multiple mip levels.
     */
-   uint level_override;
+   int level_override;
 
-   /* When non-zero, samplers should use this layer instead of the one
+   /* When non-negative, samplers should use this layer instead of the one
     * specified by the GL state.
     *
     * This is used for EGL images and VDPAU interop, where imported
@@ -180,7 +204,7 @@ struct st_texture_object
     * with different fields in the case of VDPAU) even though the GL state
     * describes one non-array texture per field.
     */
-   uint layer_override;
+   int layer_override;
 
     /**
      * Set when the texture images of this texture object might not all be in
@@ -288,7 +312,7 @@ st_texture_match_image(struct st_context *st,
  */
 extern GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-                     enum pipe_transfer_usage usage,
+                     enum pipe_map_flags usage,
                      GLuint x, GLuint y, GLuint z,
                      GLuint w, GLuint h, GLuint d,
                      struct pipe_transfer **transfer);
@@ -323,6 +347,9 @@ void
 st_destroy_bound_image_handles(struct st_context *st);
 
 bool
+st_astc_format_fallback(const struct st_context *st, mesa_format format);
+
+bool
 st_compressed_format_fallback(struct st_context *st, mesa_format format);
 
 void
@@ -340,18 +367,24 @@ st_convert_sampler(const struct st_context *st,
                    const struct gl_texture_object *texobj,
                    const struct gl_sampler_object *msamp,
                    float tex_unit_lod_bias,
-                   struct pipe_sampler_state *sampler);
+                   struct pipe_sampler_state *sampler,
+                   bool seamless_cube_map);
 
 void
 st_convert_sampler_from_unit(const struct st_context *st,
                              struct pipe_sampler_state *sampler,
                              GLuint texUnit);
 
-void
+struct pipe_sampler_view *
 st_update_single_texture(struct st_context *st,
-                         struct pipe_sampler_view **sampler_view,
                          GLuint texUnit, bool glsl130_or_later,
-                         bool ignore_srgb_decode);
+                         bool ignore_srgb_decode, bool get_reference);
+
+unsigned
+st_get_sampler_views(struct st_context *st,
+                     enum pipe_shader_type shader_stage,
+                     const struct gl_program *prog,
+                     struct pipe_sampler_view **sampler_views);
 
 void
 st_make_bound_samplers_resident(struct st_context *st,

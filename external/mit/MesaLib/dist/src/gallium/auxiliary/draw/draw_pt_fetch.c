@@ -27,7 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
@@ -50,11 +50,6 @@ struct pt_fetch {
  * Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
  * vertex_shader->run_linear() method.
- *
- * This is used in all cases except pure passthrough
- * (draw_pt_fetch_emit.c) which has its own version to translate
- * directly to hw vertices.
- *
  */
 void
 draw_pt_fetch_prepare(struct pt_fetch *fetch,

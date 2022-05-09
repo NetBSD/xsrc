@@ -18,15 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+if dep_llvm.type_name() == 'internal'
+  _irbuilder_h = subproject('llvm').get_variable('irbuilder_h')
+else
+  _llvm_includedir = dep_llvm.get_variable(configtool : 'includedir', cmake : 'LLVM_INCLUDE_DIR')
+  _irbuilder_h = join_paths(_llvm_includedir, 'llvm', 'IR', 'IRBuilder.h')
+endif
 
 gen_builder_hpp = custom_target(
   'gen_builder.hpp',
   input : [
-    swr_gen_llvm_ir_macros_py,
-    join_paths(
-      dep_llvm.get_configtool_variable('includedir'), 'llvm', 'IR',
-      'IRBuilder.h'
-    )
+    swr_gen_llvm_ir_macros_py, _irbuilder_h,
   ],
   output : 'gen_builder.hpp',
   command : [

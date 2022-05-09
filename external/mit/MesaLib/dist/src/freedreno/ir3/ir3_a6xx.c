@@ -37,61 +37,56 @@
  * encoding compared to a4xx/a5xx.
  */
 
-
 /* src[] = { buffer_index, offset }. No const_index */
 static void
 emit_intrinsic_load_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr,
-		struct ir3_instruction **dst)
+                         struct ir3_instruction **dst)
 {
-	struct ir3_block *b = ctx->block;
-	struct ir3_instruction *offset;
-	struct ir3_instruction *ldib;
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *offset;
+   struct ir3_instruction *ldib;
 
-	/* can this be non-const buffer_index?  how do we handle that? */
-	int ibo_idx = ir3_ssbo_to_ibo(&ctx->so->image_mapping, nir_src_as_uint(intr->src[0]));
+   offset = ir3_get_src(ctx, &intr->src[2])[0];
 
-	offset = ir3_get_src(ctx, &intr->src[2])[0];
+   ldib = ir3_LDIB(b, ir3_ssbo_to_ibo(ctx, intr->src[0]), 0, offset, 0);
+   ldib->dsts[0]->wrmask = MASK(intr->num_components);
+   ldib->cat6.iim_val = intr->num_components;
+   ldib->cat6.d = 1;
+   ldib->cat6.type = intr->dest.ssa.bit_size == 16 ? TYPE_U16 : TYPE_U32;
+   ldib->barrier_class = IR3_BARRIER_BUFFER_R;
+   ldib->barrier_conflict = IR3_BARRIER_BUFFER_W;
+   ir3_handle_bindless_cat6(ldib, intr->src[0]);
+   ir3_handle_nonuniform(ldib, intr);
 
-	ldib = ir3_LDIB(b, create_immed(b, ibo_idx), 0, offset, 0);
-	ldib->regs[0]->wrmask = MASK(intr->num_components);
-	ldib->cat6.iim_val = intr->num_components;
-	ldib->cat6.d = 1;
-	ldib->cat6.type = TYPE_U32;
-	ldib->barrier_class = IR3_BARRIER_BUFFER_R;
-	ldib->barrier_conflict = IR3_BARRIER_BUFFER_W;
-
-	ir3_split_dest(b, dst, ldib, 0, intr->num_components);
+   ir3_split_dest(b, dst, ldib, 0, intr->num_components);
 }
 
 /* src[] = { value, block_index, offset }. const_index[] = { write_mask } */
 static void
 emit_intrinsic_store_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
-	struct ir3_block *b = ctx->block;
-	struct ir3_instruction *stib, *val, *offset;
-	/* TODO handle wrmask properly, see _store_shared().. but I think
-	 * it is more a PITA than that, since blob ends up loading the
-	 * masked components and writing them back out.
-	 */
-	unsigned wrmask = intr->const_index[0];
-	unsigned ncomp = ffs(~wrmask) - 1;
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *stib, *val, *offset;
+   unsigned wrmask = nir_intrinsic_write_mask(intr);
+   unsigned ncomp = ffs(~wrmask) - 1;
 
-	/* can this be non-const buffer_index?  how do we handle that? */
-	int ibo_idx = ir3_ssbo_to_ibo(&ctx->so->image_mapping, nir_src_as_uint(intr->src[1]));
+   assert(wrmask == BITFIELD_MASK(intr->num_components));
 
-	/* src0 is offset, src1 is value:
-	 */
-	val = ir3_create_collect(ctx, ir3_get_src(ctx, &intr->src[0]), ncomp);
-	offset = ir3_get_src(ctx, &intr->src[3])[0];
+   /* src0 is offset, src1 is value:
+    */
+   val = ir3_create_collect(b, ir3_get_src(ctx, &intr->src[0]), ncomp);
+   offset = ir3_get_src(ctx, &intr->src[3])[0];
 
-	stib = ir3_STIB(b, create_immed(b, ibo_idx), 0, offset, 0, val, 0);
-	stib->cat6.iim_val = ncomp;
-	stib->cat6.d = 1;
-	stib->cat6.type = TYPE_U32;
-	stib->barrier_class = IR3_BARRIER_BUFFER_W;
-	stib->barrier_conflict = IR3_BARRIER_BUFFER_R | IR3_BARRIER_BUFFER_W;
+   stib = ir3_STIB(b, ir3_ssbo_to_ibo(ctx, intr->src[1]), 0, offset, 0, val, 0);
+   stib->cat6.iim_val = ncomp;
+   stib->cat6.d = 1;
+   stib->cat6.type = intr->src[0].ssa->bit_size == 16 ? TYPE_U16 : TYPE_U32;
+   stib->barrier_class = IR3_BARRIER_BUFFER_W;
+   stib->barrier_conflict = IR3_BARRIER_BUFFER_R | IR3_BARRIER_BUFFER_W;
+   ir3_handle_bindless_cat6(stib, intr->src[1]);
+   ir3_handle_nonuniform(stib, intr);
 
-	array_insert(b, b->keeps, stib);
+   array_insert(b, b->keeps, stib);
 }
 
 /*
@@ -114,304 +109,322 @@ emit_intrinsic_store_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 static struct ir3_instruction *
 emit_intrinsic_atomic_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
-	struct ir3_block *b = ctx->block;
-	struct ir3_instruction *atomic, *ibo, *src0, *src1, *data, *dummy;
-	type_t type = TYPE_U32;
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *atomic, *ibo, *src0, *src1, *data, *dummy;
+   type_t type = TYPE_U32;
 
-	/* can this be non-const buffer_index?  how do we handle that? */
-	int ibo_idx = ir3_ssbo_to_ibo(&ctx->so->image_mapping, nir_src_as_uint(intr->src[0]));
-	ibo = create_immed(b, ibo_idx);
+   ibo = ir3_ssbo_to_ibo(ctx, intr->src[0]);
 
-	data   = ir3_get_src(ctx, &intr->src[2])[0];
+   data = ir3_get_src(ctx, &intr->src[2])[0];
 
-	/* So this gets a bit creative:
-	 *
-	 *    src0    - vecN offset/coords
-	 *    src1.x  - is actually destination register
-	 *    src1.y  - is 'data' except for cmpxchg where src2.y is 'compare'
-	 *    src1.z  - is 'data' for cmpxchg
-	 *
-	 * The combining src and dest kinda doesn't work out so well with how
-	 * scheduling and RA work.  So for now we create a dummy src2.x, and
-	 * then in a later fixup path, insert an extra MOV out of src1.x.
-	 * See ir3_a6xx_fixup_atomic_dests().
-	 *
-	 * Note that nir already multiplies the offset by four
-	 */
-	dummy = create_immed(b, 0);
+   /* So this gets a bit creative:
+    *
+    *    src0    - vecN offset/coords
+    *    src1.x  - is actually destination register
+    *    src1.y  - is 'data' except for cmpxchg where src2.y is 'compare'
+    *    src1.z  - is 'data' for cmpxchg
+    *
+    * The combining src and dest kinda doesn't work out so well with how
+    * scheduling and RA work. So we create a dummy src2 which is tied to the
+    * destination in RA (i.e. must be allocated to the same vec2/vec3
+    * register) and then immediately extract the first component.
+    *
+    * Note that nir already multiplies the offset by four
+    */
+   dummy = create_immed(b, 0);
 
-	if (intr->intrinsic == nir_intrinsic_ssbo_atomic_comp_swap_ir3) {
-		src0 = ir3_get_src(ctx, &intr->src[4])[0];
-		struct ir3_instruction *compare = ir3_get_src(ctx, &intr->src[3])[0];
-		src1 = ir3_create_collect(ctx, (struct ir3_instruction*[]){
-			dummy, compare, data
-		}, 3);
-	} else {
-		src0 = ir3_get_src(ctx, &intr->src[3])[0];
-		src1 = ir3_create_collect(ctx, (struct ir3_instruction*[]){
-			dummy, data
-		}, 2);
-	}
+   if (intr->intrinsic == nir_intrinsic_ssbo_atomic_comp_swap_ir3) {
+      src0 = ir3_get_src(ctx, &intr->src[4])[0];
+      struct ir3_instruction *compare = ir3_get_src(ctx, &intr->src[3])[0];
+      src1 = ir3_collect(b, dummy, compare, data);
+   } else {
+      src0 = ir3_get_src(ctx, &intr->src[3])[0];
+      src1 = ir3_collect(b, dummy, data);
+   }
 
-	switch (intr->intrinsic) {
-	case nir_intrinsic_ssbo_atomic_add_ir3:
-		atomic = ir3_ATOMIC_ADD_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_imin_ir3:
-		atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
-		type = TYPE_S32;
-		break;
-	case nir_intrinsic_ssbo_atomic_umin_ir3:
-		atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_imax_ir3:
-		atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
-		type = TYPE_S32;
-		break;
-	case nir_intrinsic_ssbo_atomic_umax_ir3:
-		atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_and_ir3:
-		atomic = ir3_ATOMIC_AND_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_or_ir3:
-		atomic = ir3_ATOMIC_OR_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_xor_ir3:
-		atomic = ir3_ATOMIC_XOR_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_exchange_ir3:
-		atomic = ir3_ATOMIC_XCHG_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_ssbo_atomic_comp_swap_ir3:
-		atomic = ir3_ATOMIC_CMPXCHG_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	default:
-		unreachable("boo");
-	}
+   switch (intr->intrinsic) {
+   case nir_intrinsic_ssbo_atomic_add_ir3:
+      atomic = ir3_ATOMIC_ADD_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_imin_ir3:
+      atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
+      type = TYPE_S32;
+      break;
+   case nir_intrinsic_ssbo_atomic_umin_ir3:
+      atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_imax_ir3:
+      atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
+      type = TYPE_S32;
+      break;
+   case nir_intrinsic_ssbo_atomic_umax_ir3:
+      atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_and_ir3:
+      atomic = ir3_ATOMIC_AND_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_or_ir3:
+      atomic = ir3_ATOMIC_OR_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_xor_ir3:
+      atomic = ir3_ATOMIC_XOR_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_exchange_ir3:
+      atomic = ir3_ATOMIC_XCHG_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_ssbo_atomic_comp_swap_ir3:
+      atomic = ir3_ATOMIC_CMPXCHG_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   default:
+      unreachable("boo");
+   }
 
-	atomic->cat6.iim_val = 1;
-	atomic->cat6.d = 1;
-	atomic->cat6.type = type;
-	atomic->barrier_class = IR3_BARRIER_BUFFER_W;
-	atomic->barrier_conflict = IR3_BARRIER_BUFFER_R | IR3_BARRIER_BUFFER_W;
+   atomic->cat6.iim_val = 1;
+   atomic->cat6.d = 1;
+   atomic->cat6.type = type;
+   atomic->barrier_class = IR3_BARRIER_BUFFER_W;
+   atomic->barrier_conflict = IR3_BARRIER_BUFFER_R | IR3_BARRIER_BUFFER_W;
+   ir3_handle_bindless_cat6(atomic, intr->src[0]);
 
-	/* even if nothing consume the result, we can't DCE the instruction: */
-	array_insert(b, b->keeps, atomic);
+   /* even if nothing consume the result, we can't DCE the instruction: */
+   array_insert(b, b->keeps, atomic);
 
-	return atomic;
+   atomic->dsts[0]->wrmask = src1->dsts[0]->wrmask;
+   ir3_reg_tie(atomic->dsts[0], atomic->srcs[2]);
+   struct ir3_instruction *split;
+   ir3_split_dest(b, &split, atomic, 0, 1);
+   return split;
+}
+
+/* src[] = { deref, coord, sample_index }. const_index[] = {} */
+static void
+emit_intrinsic_load_image(struct ir3_context *ctx, nir_intrinsic_instr *intr,
+                          struct ir3_instruction **dst)
+{
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *ldib;
+   struct ir3_instruction *const *coords = ir3_get_src(ctx, &intr->src[1]);
+   unsigned ncoords = ir3_get_image_coords(intr, NULL);
+
+   ldib = ir3_LDIB(b, ir3_image_to_ibo(ctx, intr->src[0]), 0,
+                   ir3_create_collect(b, coords, ncoords), 0);
+   ldib->dsts[0]->wrmask = MASK(intr->num_components);
+   ldib->cat6.iim_val = intr->num_components;
+   ldib->cat6.d = ncoords;
+   ldib->cat6.type = ir3_get_type_for_image_intrinsic(intr);
+   ldib->cat6.typed = true;
+   ldib->barrier_class = IR3_BARRIER_IMAGE_R;
+   ldib->barrier_conflict = IR3_BARRIER_IMAGE_W;
+   ir3_handle_bindless_cat6(ldib, intr->src[0]);
+   ir3_handle_nonuniform(ldib, intr);
+
+   ir3_split_dest(b, dst, ldib, 0, intr->num_components);
 }
 
 /* src[] = { deref, coord, sample_index, value }. const_index[] = {} */
 static void
 emit_intrinsic_store_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
-	struct ir3_block *b = ctx->block;
-	const nir_variable *var = nir_intrinsic_get_var(intr, 0);
-	struct ir3_instruction *stib;
-	struct ir3_instruction * const *value = ir3_get_src(ctx, &intr->src[3]);
-	struct ir3_instruction * const *coords = ir3_get_src(ctx, &intr->src[1]);
-	unsigned ncoords = ir3_get_image_coords(var, NULL);
-	unsigned slot = ir3_get_image_slot(nir_src_as_deref(intr->src[0]));
-	unsigned ibo_idx = ir3_image_to_ibo(&ctx->so->image_mapping, slot);
-	unsigned ncomp = ir3_get_num_components_for_glformat(var->data.image.format);
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *stib;
+   struct ir3_instruction *const *value = ir3_get_src(ctx, &intr->src[3]);
+   struct ir3_instruction *const *coords = ir3_get_src(ctx, &intr->src[1]);
+   unsigned ncoords = ir3_get_image_coords(intr, NULL);
+   enum pipe_format format = nir_intrinsic_format(intr);
+   unsigned ncomp = ir3_get_num_components_for_image_format(format);
 
-	/* src0 is offset, src1 is value:
-	 */
-	stib = ir3_STIB(b, create_immed(b, ibo_idx), 0,
-			ir3_create_collect(ctx, coords, ncoords), 0,
-			ir3_create_collect(ctx, value, ncomp), 0);
-	stib->cat6.iim_val = ncomp;
-	stib->cat6.d = ncoords;
-	stib->cat6.type = ir3_get_image_type(var);
-	stib->cat6.typed = true;
-	stib->barrier_class = IR3_BARRIER_IMAGE_W;
-	stib->barrier_conflict = IR3_BARRIER_IMAGE_R | IR3_BARRIER_IMAGE_W;
+   /* src0 is offset, src1 is value:
+    */
+   stib = ir3_STIB(b, ir3_image_to_ibo(ctx, intr->src[0]), 0,
+                   ir3_create_collect(b, coords, ncoords), 0,
+                   ir3_create_collect(b, value, ncomp), 0);
+   stib->cat6.iim_val = ncomp;
+   stib->cat6.d = ncoords;
+   stib->cat6.type = ir3_get_type_for_image_intrinsic(intr);
+   stib->cat6.typed = true;
+   stib->barrier_class = IR3_BARRIER_IMAGE_W;
+   stib->barrier_conflict = IR3_BARRIER_IMAGE_R | IR3_BARRIER_IMAGE_W;
+   ir3_handle_bindless_cat6(stib, intr->src[0]);
+   ir3_handle_nonuniform(stib, intr);
 
-	array_insert(b, b->keeps, stib);
+   array_insert(b, b->keeps, stib);
 }
 
 /* src[] = { deref, coord, sample_index, value, compare }. const_index[] = {} */
 static struct ir3_instruction *
 emit_intrinsic_atomic_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
-	struct ir3_block *b = ctx->block;
-	const nir_variable *var = nir_intrinsic_get_var(intr, 0);
-	struct ir3_instruction *atomic, *ibo, *src0, *src1, *dummy;
-	struct ir3_instruction * const *coords = ir3_get_src(ctx, &intr->src[1]);
-	struct ir3_instruction *value = ir3_get_src(ctx, &intr->src[3])[0];
-	unsigned ncoords = ir3_get_image_coords(var, NULL);
-	unsigned slot = ir3_get_image_slot(nir_src_as_deref(intr->src[0]));
-	unsigned ibo_idx = ir3_image_to_ibo(&ctx->so->image_mapping, slot);
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *atomic, *ibo, *src0, *src1, *dummy;
+   struct ir3_instruction *const *coords = ir3_get_src(ctx, &intr->src[1]);
+   struct ir3_instruction *value = ir3_get_src(ctx, &intr->src[3])[0];
+   unsigned ncoords = ir3_get_image_coords(intr, NULL);
 
-	ibo = create_immed(b, ibo_idx);
+   ibo = ir3_image_to_ibo(ctx, intr->src[0]);
 
-	/* So this gets a bit creative:
-	 *
-	 *    src0    - vecN offset/coords
-	 *    src1.x  - is actually destination register
-	 *    src1.y  - is 'value' except for cmpxchg where src2.y is 'compare'
-	 *    src1.z  - is 'value' for cmpxchg
-	 *
-	 * The combining src and dest kinda doesn't work out so well with how
-	 * scheduling and RA work.  So for now we create a dummy src2.x, and
-	 * then in a later fixup path, insert an extra MOV out of src1.x.
-	 * See ir3_a6xx_fixup_atomic_dests().
-	 */
-	dummy = create_immed(b, 0);
-	src0 = ir3_create_collect(ctx, coords, ncoords);
+   /* So this gets a bit creative:
+    *
+    *    src0    - vecN offset/coords
+    *    src1.x  - is actually destination register
+    *    src1.y  - is 'value' except for cmpxchg where src2.y is 'compare'
+    *    src1.z  - is 'value' for cmpxchg
+    *
+    * The combining src and dest kinda doesn't work out so well with how
+    * scheduling and RA work. So we create a dummy src2 which is tied to the
+    * destination in RA (i.e. must be allocated to the same vec2/vec3
+    * register) and then immediately extract the first component.
+    */
+   dummy = create_immed(b, 0);
+   src0 = ir3_create_collect(b, coords, ncoords);
 
-	if (intr->intrinsic == nir_intrinsic_image_deref_atomic_comp_swap) {
-		struct ir3_instruction *compare = ir3_get_src(ctx, &intr->src[4])[0];
-		src1 = ir3_create_collect(ctx, (struct ir3_instruction*[]){
-			dummy, compare, value
-		}, 3);
-	} else {
-		src1 = ir3_create_collect(ctx, (struct ir3_instruction*[]){
-			dummy, value
-		}, 2);
-	}
+   if (intr->intrinsic == nir_intrinsic_image_atomic_comp_swap ||
+       intr->intrinsic == nir_intrinsic_bindless_image_atomic_comp_swap) {
+      struct ir3_instruction *compare = ir3_get_src(ctx, &intr->src[4])[0];
+      src1 = ir3_collect(b, dummy, compare, value);
+   } else {
+      src1 = ir3_collect(b, dummy, value);
+   }
 
-	switch (intr->intrinsic) {
-	case nir_intrinsic_image_deref_atomic_add:
-		atomic = ir3_ATOMIC_ADD_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_min:
-		atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_max:
-		atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_and:
-		atomic = ir3_ATOMIC_AND_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_or:
-		atomic = ir3_ATOMIC_OR_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_xor:
-		atomic = ir3_ATOMIC_XOR_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_exchange:
-		atomic = ir3_ATOMIC_XCHG_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	case nir_intrinsic_image_deref_atomic_comp_swap:
-		atomic = ir3_ATOMIC_CMPXCHG_G(b, ibo, 0, src0, 0, src1, 0);
-		break;
-	default:
-		unreachable("boo");
-	}
+   switch (intr->intrinsic) {
+   case nir_intrinsic_image_atomic_add:
+   case nir_intrinsic_bindless_image_atomic_add:
+      atomic = ir3_ATOMIC_ADD_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_imin:
+   case nir_intrinsic_image_atomic_umin:
+   case nir_intrinsic_bindless_image_atomic_imin:
+   case nir_intrinsic_bindless_image_atomic_umin:
+      atomic = ir3_ATOMIC_MIN_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_imax:
+   case nir_intrinsic_image_atomic_umax:
+   case nir_intrinsic_bindless_image_atomic_imax:
+   case nir_intrinsic_bindless_image_atomic_umax:
+      atomic = ir3_ATOMIC_MAX_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_and:
+   case nir_intrinsic_bindless_image_atomic_and:
+      atomic = ir3_ATOMIC_AND_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_or:
+   case nir_intrinsic_bindless_image_atomic_or:
+      atomic = ir3_ATOMIC_OR_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_xor:
+   case nir_intrinsic_bindless_image_atomic_xor:
+      atomic = ir3_ATOMIC_XOR_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_exchange:
+   case nir_intrinsic_bindless_image_atomic_exchange:
+      atomic = ir3_ATOMIC_XCHG_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   case nir_intrinsic_image_atomic_comp_swap:
+   case nir_intrinsic_bindless_image_atomic_comp_swap:
+      atomic = ir3_ATOMIC_CMPXCHG_G(b, ibo, 0, src0, 0, src1, 0);
+      break;
+   default:
+      unreachable("boo");
+   }
 
-	atomic->cat6.iim_val = 1;
-	atomic->cat6.d = ncoords;
-	atomic->cat6.type = ir3_get_image_type(var);
-	atomic->cat6.typed = true;
-	atomic->barrier_class = IR3_BARRIER_IMAGE_W;
-	atomic->barrier_conflict = IR3_BARRIER_IMAGE_R | IR3_BARRIER_IMAGE_W;
+   atomic->cat6.iim_val = 1;
+   atomic->cat6.d = ncoords;
+   atomic->cat6.type = ir3_get_type_for_image_intrinsic(intr);
+   atomic->cat6.typed = true;
+   atomic->barrier_class = IR3_BARRIER_IMAGE_W;
+   atomic->barrier_conflict = IR3_BARRIER_IMAGE_R | IR3_BARRIER_IMAGE_W;
+   ir3_handle_bindless_cat6(atomic, intr->src[0]);
 
-	/* even if nothing consume the result, we can't DCE the instruction: */
-	array_insert(b, b->keeps, atomic);
+   /* even if nothing consume the result, we can't DCE the instruction: */
+   array_insert(b, b->keeps, atomic);
 
-	return atomic;
+   atomic->dsts[0]->wrmask = src1->dsts[0]->wrmask;
+   ir3_reg_tie(atomic->dsts[0], atomic->srcs[2]);
+   struct ir3_instruction *split;
+   ir3_split_dest(b, &split, atomic, 0, 1);
+   return split;
+}
+
+static void
+emit_intrinsic_image_size(struct ir3_context *ctx, nir_intrinsic_instr *intr,
+                          struct ir3_instruction **dst)
+{
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *ibo = ir3_image_to_ibo(ctx, intr->src[0]);
+   struct ir3_instruction *resinfo = ir3_RESINFO(b, ibo, 0);
+   resinfo->cat6.iim_val = 1;
+   resinfo->cat6.d = intr->num_components;
+   resinfo->cat6.type = TYPE_U32;
+   resinfo->cat6.typed = false;
+   /* resinfo has no writemask and always writes out 3 components: */
+   compile_assert(ctx, intr->num_components <= 3);
+   resinfo->dsts[0]->wrmask = MASK(3);
+   ir3_handle_bindless_cat6(resinfo, intr->src[0]);
+   ir3_handle_nonuniform(resinfo, intr);
+
+   ir3_split_dest(b, dst, resinfo, 0, intr->num_components);
+}
+
+static void
+emit_intrinsic_load_global_ir3(struct ir3_context *ctx,
+                               nir_intrinsic_instr *intr,
+                               struct ir3_instruction **dst)
+{
+   struct ir3_block *b = ctx->block;
+   unsigned dest_components = nir_intrinsic_dest_components(intr);
+   struct ir3_instruction *addr, *offset;
+
+   addr = ir3_collect(b, ir3_get_src(ctx, &intr->src[0])[0],
+                      ir3_get_src(ctx, &intr->src[0])[1]);
+
+   offset = ir3_get_src(ctx, &intr->src[1])[0];
+
+   struct ir3_instruction *load =
+      ir3_LDG_A(b, addr, 0, offset, 0, create_immed(b, 0), 0,
+                create_immed(b, 0), 0, create_immed(b, dest_components), 0);
+   load->cat6.type = TYPE_U32;
+   load->dsts[0]->wrmask = MASK(dest_components);
+
+   load->barrier_class = IR3_BARRIER_BUFFER_R;
+   load->barrier_conflict = IR3_BARRIER_BUFFER_W;
+
+   ir3_split_dest(b, dst, load, 0, dest_components);
+}
+
+static void
+emit_intrinsic_store_global_ir3(struct ir3_context *ctx,
+                                nir_intrinsic_instr *intr)
+{
+   struct ir3_block *b = ctx->block;
+   struct ir3_instruction *value, *addr, *offset;
+   unsigned ncomp = nir_intrinsic_src_components(intr, 0);
+
+   addr = ir3_collect(b, ir3_get_src(ctx, &intr->src[1])[0],
+                      ir3_get_src(ctx, &intr->src[1])[1]);
+
+   offset = ir3_get_src(ctx, &intr->src[2])[0];
+
+   value = ir3_create_collect(b, ir3_get_src(ctx, &intr->src[0]), ncomp);
+
+   struct ir3_instruction *stg =
+      ir3_STG_A(b, addr, 0, offset, 0, create_immed(b, 0), 0,
+                create_immed(b, 0), 0, value, 0, create_immed(b, ncomp), 0);
+   stg->cat6.type = TYPE_U32;
+   stg->cat6.iim_val = 1;
+
+   array_insert(b, b->keeps, stg);
+
+   stg->barrier_class = IR3_BARRIER_BUFFER_W;
+   stg->barrier_conflict = IR3_BARRIER_BUFFER_R | IR3_BARRIER_BUFFER_W;
 }
 
 const struct ir3_context_funcs ir3_a6xx_funcs = {
-		.emit_intrinsic_load_ssbo = emit_intrinsic_load_ssbo,
-		.emit_intrinsic_store_ssbo = emit_intrinsic_store_ssbo,
-		.emit_intrinsic_atomic_ssbo = emit_intrinsic_atomic_ssbo,
-		.emit_intrinsic_store_image = emit_intrinsic_store_image,
-		.emit_intrinsic_atomic_image = emit_intrinsic_atomic_image,
+   .emit_intrinsic_load_ssbo = emit_intrinsic_load_ssbo,
+   .emit_intrinsic_store_ssbo = emit_intrinsic_store_ssbo,
+   .emit_intrinsic_atomic_ssbo = emit_intrinsic_atomic_ssbo,
+   .emit_intrinsic_load_image = emit_intrinsic_load_image,
+   .emit_intrinsic_store_image = emit_intrinsic_store_image,
+   .emit_intrinsic_atomic_image = emit_intrinsic_atomic_image,
+   .emit_intrinsic_image_size = emit_intrinsic_image_size,
+   .emit_intrinsic_load_global_ir3 = emit_intrinsic_load_global_ir3,
+   .emit_intrinsic_store_global_ir3 = emit_intrinsic_store_global_ir3,
 };
-
-/*
- * Special pass to run after instruction scheduling to insert an
- * extra mov from src1.x to dst.  This way the other compiler passes
- * can ignore this quirk of the new instruction encoding.
- *
- * This might cause extra complication in the future when we support
- * spilling, as I think we'd want to re-run the scheduling pass.  One
- * possible alternative might be to do this in the RA pass after
- * ra_allocate() but before destroying the SSA links.  (Ie. we do
- * want to know if anything consumes the result of the atomic instr,
- * if there is no consumer then inserting the extra mov is pointless.
- */
-
-static struct ir3_instruction *
-get_atomic_dest_mov(struct ir3_instruction *atomic)
-{
-	/* if we've already created the mov-out, then re-use it: */
-	if (atomic->data)
-		return atomic->data;
-
-	/* extract back out the 'dummy' which serves as stand-in for dest: */
-	struct ir3_instruction *src = ssa(atomic->regs[3]);
-	debug_assert(src->opc == OPC_META_FI);
-	struct ir3_instruction *dummy = ssa(src->regs[1]);
-
-	struct ir3_instruction *mov = ir3_MOV(atomic->block, dummy, TYPE_U32);
-
-	mov->flags |= IR3_INSTR_SY;
-
-	if (atomic->regs[0]->flags & IR3_REG_ARRAY) {
-		mov->regs[0]->flags |= IR3_REG_ARRAY;
-		mov->regs[0]->array = atomic->regs[0]->array;
-	}
-
-	/* it will have already been appended to the end of the block, which
-	 * isn't where we want it, so fix-up the location:
-	 */
-	list_delinit(&mov->node);
-	list_add(&mov->node, &atomic->node);
-
-	/* And because this is after instruction scheduling, we don't really
-	 * have a good way to know if extra delay slots are needed.  For
-	 * example, if the result is consumed by an stib (storeImage()) there
-	 * would be no extra delay slots in place already, but 5 are needed.
-	 * Just plan for the worst and hope nobody looks at the resulting
-	 * code that is generated :-(
-	 */
-	struct ir3_instruction *nop = ir3_NOP(atomic->block);
-	nop->repeat = 5;
-
-	list_delinit(&nop->node);
-	list_add(&nop->node, &mov->node);
-
-	return atomic->data = mov;
-}
-
-void
-ir3_a6xx_fixup_atomic_dests(struct ir3 *ir, struct ir3_shader_variant *so)
-{
-	if (so->image_mapping.num_ibo == 0)
-		return;
-
-	list_for_each_entry (struct ir3_block, block, &ir->block_list, node) {
-		list_for_each_entry (struct ir3_instruction, instr, &block->instr_list, node) {
-			instr->data = NULL;
-		}
-	}
-
-	list_for_each_entry (struct ir3_block, block, &ir->block_list, node) {
-		list_for_each_entry_safe (struct ir3_instruction, instr, &block->instr_list, node) {
-			struct ir3_register *reg;
-
-			foreach_src(reg, instr) {
-				struct ir3_instruction *src = ssa(reg);
-
-				if (!src)
-					continue;
-
-				if (is_atomic(src->opc) && (src->flags & IR3_INSTR_G))
-					reg->instr = get_atomic_dest_mov(src);
-			}
-		}
-
-		/* we also need to fixup shader outputs: */
-		for (unsigned i = 0; i < ir->noutputs; i++) {
-			if (!ir->outputs[i])
-				continue;
-			if (is_atomic(ir->outputs[i]->opc) && (ir->outputs[i]->flags & IR3_INSTR_G))
-				ir->outputs[i] = get_atomic_dest_mov(ir->outputs[i]);
-		}
-	}
-
-}

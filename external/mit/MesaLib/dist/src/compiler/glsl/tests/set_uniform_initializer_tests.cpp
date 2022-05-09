@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <gtest/gtest.h>
-#include "main/compiler.h"
+#include "util/compiler.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "util/ralloc.h"
@@ -68,6 +68,8 @@ public:
 void
 set_uniform_initializer::SetUp()
 {
+   glsl_type_singleton_init_or_ref();
+
    this->mem_ctx = ralloc_context(NULL);
    this->prog = rzalloc(NULL, struct gl_shader_program);
    this->prog->data = rzalloc(this->prog, struct gl_shader_program_data);
@@ -84,8 +86,13 @@ set_uniform_initializer::TearDown()
    ralloc_free(this->mem_ctx);
    this->mem_ctx = NULL;
 
+   if (this->prog->UniformHash)
+      string_to_uint_map_dtor(this->prog->UniformHash);
+
    ralloc_free(this->prog);
    this->prog = NULL;
+
+   glsl_type_singleton_decref();
 }
 
 /**

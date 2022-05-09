@@ -32,7 +32,7 @@
 #include "nouveau_vp3_video.h"
 
 #include "util/u_video.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_sampler.h"
 
 static struct pipe_sampler_view **
@@ -89,7 +89,7 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
       return vl_video_buffer_create(pipe, templat);
 
    assert(templat->interlaced);
-   assert(templat->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   assert(pipe_format_to_chroma_format(templat->buffer_format) == PIPE_VIDEO_CHROMA_FORMAT_420);
 
    buffer = CALLOC_STRUCT(nouveau_vp3_video_buffer);
    if (!buffer)
@@ -98,7 +98,6 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
    buffer->base.buffer_format = templat->buffer_format;
    buffer->base.context = pipe;
    buffer->base.destroy = nouveau_vp3_video_buffer_destroy;
-   buffer->base.chroma_format = templat->chroma_format;
    buffer->base.width = templat->width;
    buffer->base.height = templat->height;
    buffer->base.get_sampler_view_planes = nouveau_vp3_video_buffer_sampler_view_planes;
@@ -437,9 +436,10 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
                                    enum pipe_video_entrypoint entrypoint,
                                    enum pipe_video_cap param)
 {
-   int chipset = nouveau_screen(pscreen)->device->chipset;
-   int vp3 = chipset < 0xa3 || chipset == 0xaa || chipset == 0xac;
-   int vp5 = chipset >= 0xd0;
+   const int chipset = nouveau_screen(pscreen)->device->chipset;
+   /* Feature Set B = vp3, C = vp4, D = vp5 */
+   const bool vp3 = chipset < 0xa3 || chipset == 0xaa || chipset == 0xac;
+   const bool vp5 = chipset >= 0xd0;
    enum pipe_video_format codec = u_reduce_video_profile(profile);
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
@@ -452,8 +452,45 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:
+      switch (codec) {
+      case PIPE_VIDEO_FORMAT_MPEG12:
+         return vp5 ? 4032 : 2048;
+      case PIPE_VIDEO_FORMAT_MPEG4:
+         return 2048;
+      case PIPE_VIDEO_FORMAT_VC1:
+         return 2048;
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC:
+         if (vp3)
+            return 2032;
+         if (vp5)
+            return 4032;
+         return 2048; /* vp4 */
+      case PIPE_VIDEO_FORMAT_UNKNOWN:
+         return vp5 ? 4032 : 2048;
+      default:
+         debug_printf("unknown video codec: %d\n", codec);
+         return 0;
+      }
    case PIPE_VIDEO_CAP_MAX_HEIGHT:
-      return vp5 ? 4096 : 2048;
+      switch (codec) {
+      case PIPE_VIDEO_FORMAT_MPEG12:
+         return vp5 ? 4048 : 2048;
+      case PIPE_VIDEO_FORMAT_MPEG4:
+         return 2048;
+      case PIPE_VIDEO_FORMAT_VC1:
+         return 2048;
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC:
+         if (vp3)
+            return 2048;
+         if (vp5)
+            return 4080;
+         return 2048; /* vp4 */
+      case PIPE_VIDEO_FORMAT_UNKNOWN:
+         return vp5 ? 4080 : 2048;
+      default:
+         debug_printf("unknown video codec: %d\n", codec);
+         return 0;
+      }
    case PIPE_VIDEO_CAP_PREFERED_FORMAT:
       return PIPE_FORMAT_NV12;
    case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
@@ -479,11 +516,30 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
       case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
          return 4;
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
+      case PIPE_VIDEO_PROFILE_MPEG4_AVC_CONSTRAINED_BASELINE:
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
          return 41;
       default:
          debug_printf("unknown video profile: %d\n", profile);
+         return 0;
+      }
+   case PIPE_VIDEO_CAP_MAX_MACROBLOCKS:
+      switch (codec) {
+      case PIPE_VIDEO_FORMAT_MPEG12:
+         return vp5 ? 65536 : 8192;
+      case PIPE_VIDEO_FORMAT_MPEG4:
+         return 8192;
+      case PIPE_VIDEO_FORMAT_VC1:
+         return 8190;
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC:
+         if (vp3)
+            return 8190;
+         if (vp5)
+            return 65536;
+         return 8192; /* vp4 */
+      default:
+         debug_printf("unknown video codec: %d\n", codec);
          return 0;
       }
    default:
@@ -492,7 +548,7 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
    }
 }
 
-boolean
+bool
 nouveau_vp3_screen_video_supported(struct pipe_screen *screen,
                                    enum pipe_format format,
                                    enum pipe_video_profile profile,

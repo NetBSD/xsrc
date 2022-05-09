@@ -37,7 +37,7 @@
 
 static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
 {
-   const struct gen_device_info *devinfo = c->func.devinfo;
+   const struct intel_device_info *devinfo = c->func.devinfo;
    GLuint i = 0,j;
 
    /* Register usage is static, precompute here:
@@ -81,7 +81,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
    c->reg.clipdistance_offset = retype(brw_vec1_grf(i, 1), BRW_REGISTER_TYPE_W);
    i++;
 
-   if (devinfo->gen == 5) {
+   if (devinfo->ver == 5) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }
