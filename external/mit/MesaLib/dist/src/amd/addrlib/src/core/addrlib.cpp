@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2018 Advanced Micro Devices, Inc.
+ * Copyright © 2007-2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -98,7 +98,6 @@ namespace Addr
 ****************************************************************************************************
 */
 Lib::Lib() :
-    m_class(BASE_ADDRLIB),
     m_chipFamily(ADDR_CHIP_FAMILY_IVLD),
     m_chipRevision(0),
     m_version(ADDRLIB_VERSION),
@@ -108,6 +107,8 @@ Lib::Lib() :
     m_rowSize(0),
     m_minPitchAlignPixels(1),
     m_maxSamples(8),
+    m_maxBaseAlign(0),
+    m_maxMetaBaseAlign(0),
     m_pElemLib(NULL)
 {
     m_configFlags.value = 0;
@@ -124,7 +125,6 @@ Lib::Lib() :
 */
 Lib::Lib(const Client* pClient) :
     Object(pClient),
-    m_class(BASE_ADDRLIB),
     m_chipFamily(ADDR_CHIP_FAMILY_IVLD),
     m_chipRevision(0),
     m_version(ADDRLIB_VERSION),
@@ -134,6 +134,8 @@ Lib::Lib(const Client* pClient) :
     m_rowSize(0),
     m_minPitchAlignPixels(1),
     m_maxSamples(8),
+    m_maxBaseAlign(0),
+    m_maxMetaBaseAlign(0),
     m_pElemLib(NULL)
 {
     m_configFlags.value = 0;
@@ -156,6 +158,7 @@ Lib::~Lib()
         m_pElemLib = NULL;
     }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                               Initialization/Helper
@@ -206,7 +209,7 @@ ADDR_E_RETURNCODE Lib::Create(
                         pLib = SiHwlInit(&client);
                         break;
                     case FAMILY_VI:
-                    case FAMILY_CZ:
+                    case FAMILY_CZ: // VI based fusion
                     case FAMILY_CI:
                     case FAMILY_KV: // CI based fusion
                         pLib = CiHwlInit(&client);
@@ -222,6 +225,11 @@ ADDR_E_RETURNCODE Lib::Create(
                     case FAMILY_AI:
                     case FAMILY_RV:
                         pLib = Gfx9HwlInit(&client);
+                        break;
+                    case FAMILY_NV:
+                    case FAMILY_VGH:
+                    case FAMILY_YC:
+                        pLib = Gfx10HwlInit(&client);
                         break;
                     default:
                         ADDR_ASSERT_ALWAYS();
@@ -246,6 +254,9 @@ ADDR_E_RETURNCODE Lib::Create(
         pLib->m_configFlags.checkLast2DLevel    = pCreateIn->createFlags.checkLast2DLevel;
         pLib->m_configFlags.useHtileSliceAlign  = pCreateIn->createFlags.useHtileSliceAlign;
         pLib->m_configFlags.allowLargeThickTile = pCreateIn->createFlags.allowLargeThickTile;
+        pLib->m_configFlags.forceDccAndTcCompat = pCreateIn->createFlags.forceDccAndTcCompat;
+        pLib->m_configFlags.nonPower2MemConfig  = pCreateIn->createFlags.nonPower2MemConfig;
+        pLib->m_configFlags.enableAltTiling     = pCreateIn->createFlags.enableAltTiling;
         pLib->m_configFlags.disableLinearOpt    = FALSE;
 
         pLib->SetChipFamily(pCreateIn->chipFamily, pCreateIn->chipRevision);
@@ -383,14 +394,14 @@ Lib* Lib::GetLib(
 ****************************************************************************************************
 */
 ADDR_E_RETURNCODE Lib::GetMaxAlignments(
-    ADDR_GET_MAX_ALINGMENTS_OUTPUT* pOut    ///< [out] output structure
+    ADDR_GET_MAX_ALIGNMENTS_OUTPUT* pOut    ///< [out] output structure
     ) const
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
     if (GetFillSizeFieldsFlags() == TRUE)
     {
-        if (pOut->size != sizeof(ADDR_GET_MAX_ALINGMENTS_OUTPUT))
+        if (pOut->size != sizeof(ADDR_GET_MAX_ALIGNMENTS_OUTPUT))
         {
             returnCode = ADDR_PARAMSIZEMISMATCH;
         }
@@ -423,14 +434,14 @@ ADDR_E_RETURNCODE Lib::GetMaxAlignments(
 ****************************************************************************************************
 */
 ADDR_E_RETURNCODE Lib::GetMaxMetaAlignments(
-    ADDR_GET_MAX_ALINGMENTS_OUTPUT* pOut    ///< [out] output structure
+    ADDR_GET_MAX_ALIGNMENTS_OUTPUT* pOut    ///< [out] output structure
     ) const
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
     if (GetFillSizeFieldsFlags() == TRUE)
     {
-        if (pOut->size != sizeof(ADDR_GET_MAX_ALINGMENTS_OUTPUT))
+        if (pOut->size != sizeof(ADDR_GET_MAX_ALIGNMENTS_OUTPUT))
         {
             returnCode = ADDR_PARAMSIZEMISMATCH;
         }
@@ -485,9 +496,11 @@ UINT_32 Lib::Bits2Number(
     return number;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                               Element lib
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 /**
 ****************************************************************************************************
@@ -603,6 +616,7 @@ ADDR_E_RETURNCODE Lib::Flt32ToColorPixel(
 
     return returnCode;
 }
+
 
 /**
 ****************************************************************************************************
