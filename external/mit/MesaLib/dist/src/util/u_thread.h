@@ -169,7 +169,9 @@ util_set_thread_affinity(thrd_t thread,
                          unsigned num_mask_bits)
 {
 #if defined(HAVE_PTHREAD_SETAFFINITY)
+#if !defined(__NetBSD__)
    cpu_set_t cpuset;
+#endif
 
    if (old_mask) {
       if (pthread_getaffinity_np(thread, sizeof(cpuset), &cpuset) != 0)
@@ -182,12 +184,25 @@ util_set_thread_affinity(thrd_t thread,
       }
    }
 
+#if defined(__NetBSD__)
+   cpuset_t *cpuset;
+   cpuset = cpuset_create();
+   if (cpuset != NULL) {
+      cpuset_zero(cpuset);
+      for (unsigned i = 0; i < cpuset_size(cpuset); i++)
+         cpuset_set(i, cpuset);
+
+      pthread_setaffinity_np(pthread_self(), cpuset_size(cpuset), cpuset);
+      cpuset_destroy(cpuset);
+   }
+#else
    CPU_ZERO(&cpuset);
    for (unsigned i = 0; i < num_mask_bits && i < CPU_SETSIZE; i++) {
       if (mask[i / 32] & (1u << (i % 32)))
          CPU_SET(i, &cpuset);
    }
    return pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset) == 0;
+#endif
 
 #elif defined(_WIN32) && !defined(__CYGWIN__)
    DWORD_PTR m = mask[0];

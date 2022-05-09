@@ -429,15 +429,14 @@ static void compute_memory_move_item(struct compute_memory_pool *pool,
 	struct r600_context *rctx = (struct r600_context *)pipe;
 	struct pipe_box box;
 
-	MAYBE_UNUSED struct compute_memory_item *prev;
-
 	COMPUTE_DBG(pool->screen, "* compute_memory_move_item()\n"
 			"  + Moving item %"PRIi64" from %"PRIi64" (%"PRIi64" bytes) to %"PRIu64" (%"PRIu64" bytes)\n",
 			item->id, item->start_in_dw, item->start_in_dw * 4,
 			new_start_in_dw, new_start_in_dw * 4);
 
 	if (pool->item_list != item->link.prev) {
-		prev = container_of(item->link.prev, item, link);
+		ASSERTED struct compute_memory_item *prev;
+		prev = container_of(item->link.prev, struct compute_memory_item, link);
 		assert(prev->start_in_dw + prev->size_in_dw <= new_start_in_dw);
 	}
 
@@ -480,7 +479,7 @@ static void compute_memory_move_item(struct compute_memory_pool *pool,
 
 			u_box_1d(new_start_in_dw * 4, (offset + item->size_in_dw) * 4, &box);
 
-			map = pipe->transfer_map(pipe, src, 0, PIPE_TRANSFER_READ_WRITE,
+			map = pipe->buffer_map(pipe, src, 0, PIPE_MAP_READ_WRITE,
 				&box, &trans);
 
 			assert(map);
@@ -488,7 +487,7 @@ static void compute_memory_move_item(struct compute_memory_pool *pool,
 
 			memmove(map, map + offset, item->size_in_dw * 4);
 
-			pipe->transfer_unmap(pipe, trans);
+			pipe->buffer_unmap(pipe, trans);
 		}
 	}
 
@@ -496,7 +495,7 @@ static void compute_memory_move_item(struct compute_memory_pool *pool,
 }
 
 /**
- * Frees the memory asociated to the item with id \a id from the pool.
+ * Frees the memory associated to the item with id \a id from the pool.
  * \param id	The id of the item to be freed.
  */
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
@@ -615,20 +614,20 @@ static void compute_memory_transfer(
 		offset_in_chunk, size);
 
 	if (device_to_host) {
-		map = pipe->transfer_map(pipe, gart, 0, PIPE_TRANSFER_READ,
+		map = pipe->buffer_map(pipe, gart, 0, PIPE_MAP_READ,
 			&(struct pipe_box) { .width = aligned_size * 4,
 			.height = 1, .depth = 1 }, &xfer);
 		assert(xfer);
 		assert(map);
 		memcpy(data, map + internal_offset, size);
-		pipe->transfer_unmap(pipe, xfer);
+		pipe->buffer_unmap(pipe, xfer);
 	} else {
-		map = pipe->transfer_map(pipe, gart, 0, PIPE_TRANSFER_WRITE,
+		map = pipe->buffer_map(pipe, gart, 0, PIPE_MAP_WRITE,
 			&(struct pipe_box) { .width = aligned_size * 4,
 			.height = 1, .depth = 1 }, &xfer);
 		assert(xfer);
 		assert(map);
 		memcpy(map + internal_offset, data, size);
-		pipe->transfer_unmap(pipe, xfer);
+		pipe->buffer_unmap(pipe, xfer);
 	}
 }

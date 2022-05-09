@@ -43,6 +43,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* for access() */
+#ifdef _WIN32
+# include <io.h>
+#endif
+
 #include "pipe/p_compiler.h"
 #include "os/os_thread.h"
 #include "util/os_time.h"
@@ -50,23 +55,61 @@
 #include "util/u_memory.h"
 #include "util/u_string.h"
 #include "util/u_math.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 
 #include "tr_dump.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
 
 
-static boolean close_stream = FALSE;
+static bool close_stream = false;
 static FILE *stream = NULL;
 static mtx_t call_mutex = _MTX_INITIALIZER_NP;
 static long unsigned call_no = 0;
-static boolean dumping = FALSE;
+static bool dumping = false;
+
+static bool trigger_active = true;
+static char *trigger_filename = NULL;
+
+
+void
+trace_dump_trigger_active(bool active)
+{
+   trigger_active = active;
+}
+
+void
+trace_dump_check_trigger(void)
+{
+   if (!trigger_filename)
+      return;
+
+   mtx_lock(&call_mutex);
+   if (trigger_active) {
+      trigger_active = false;
+   } else {
+      if (!access(trigger_filename, 2 /* W_OK but compiles on Windows */)) {
+         if (!unlink(trigger_filename)) {
+            trigger_active = true;
+         } else {
+            fprintf(stderr, "error removing trigger file\n");
+            trigger_active = false;
+         }
+      }
+   }
+   mtx_unlock(&call_mutex);
+}
+
+bool
+trace_dump_is_triggered(void)
+{
+   return trigger_active && !!trigger_filename;
+}
 
 static inline void
 trace_dump_write(const char *buf, size_t size)
 {
-   if (stream) {
+   if (stream && trigger_active) {
       fwrite(buf, size, 1, stream);
    }
 }
@@ -86,7 +129,7 @@ trace_dump_writef(const char *format, ...)
    unsigned len;
    va_list ap;
    va_start(ap, format);
-   len = util_vsnprintf(buf, sizeof(buf), format, ap);
+   len = vsnprintf(buf, sizeof(buf), format, ap);
    va_end(ap);
    trace_dump_write(buf, len);
 }
@@ -179,13 +222,15 @@ trace_dump_trace_close(void)
       return;
 
    if (stream) {
+      trigger_active = true;
       trace_dump_writes("</trace>\n");
       if (close_stream) {
          fclose(stream);
-         close_stream = FALSE;
+         close_stream = false;
          stream = NULL;
       }
       call_no = 0;
+      free(trigger_filename);
    }
 }
 
@@ -203,30 +248,30 @@ trace_dump_call_time(int64_t time)
 }
 
 
-boolean
+bool
 trace_dump_trace_begin(void)
 {
    const char *filename;
 
    filename = debug_get_option("GALLIUM_TRACE", NULL);
    if (!filename)
-      return FALSE;
+      return false;
 
    if (!stream) {
 
       if (strcmp(filename, "stderr") == 0) {
-         close_stream = FALSE;
+         close_stream = false;
          stream = stderr;
       }
       else if (strcmp(filename, "stdout") == 0) {
-         close_stream = FALSE;
+         close_stream = false;
          stream = stdout;
       }
       else {
-         close_stream = TRUE;
+         close_stream = true;
          stream = fopen(filename, "wt");
          if (!stream)
-            return FALSE;
+            return false;
       }
 
       trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
@@ -238,14 +283,21 @@ trace_dump_trace_begin(void)
        * time.
        */
       trace_dump_has_begun = TRUE;
+
+      const char *trigger = debug_get_option("GALLIUM_TRACE_TRIGGER", NULL);
+      if (trigger) {
+         trigger_filename = strdup(trigger);
+         trigger_active = false;
+      } else
+         trigger_active = true;
    }
 
-   return TRUE;
+   return true;
 }
 
-boolean trace_dump_trace_enabled(void)
+bool trace_dump_trace_enabled(void)
 {
-   return stream ? TRUE : FALSE;
+   return stream ? true : false;
 }
 
 /*
@@ -268,15 +320,15 @@ void trace_dump_call_unlock(void)
 
 void trace_dumping_start_locked(void)
 {
-   dumping = TRUE;
+   dumping = true;
 }
 
 void trace_dumping_stop_locked(void)
 {
-   dumping = FALSE;
+   dumping = false;
 }
 
-boolean trace_dumping_enabled_locked(void)
+bool trace_dumping_enabled_locked(void)
 {
    return dumping;
 }
@@ -295,9 +347,9 @@ void trace_dumping_stop(void)
    mtx_unlock(&call_mutex);
 }
 
-boolean trace_dumping_enabled(void)
+bool trace_dumping_enabled(void)
 {
-   boolean ret;
+   bool ret;
    mtx_lock(&call_mutex);
    ret = trace_dumping_enabled_locked();
    mtx_unlock(&call_mutex);

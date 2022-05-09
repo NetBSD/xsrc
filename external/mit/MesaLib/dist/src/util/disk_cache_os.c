@@ -853,7 +853,7 @@ bool
 disk_cache_enabled()
 {
    /* If running as a users other than the real user disable cache */
-   if (geteuid() != getuid())
+   if (issetugid())
       return false;
 
    /* At user request, disable shader cache entirely. */
