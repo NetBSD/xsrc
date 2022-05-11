@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.31 2022/05/11 21:10:37 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.32 2022/05/11 21:13:13 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -1359,6 +1359,11 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 						    msk, p->mskpitch,
 						    dst, dstpitch,
 						    width, height);
+						break;
+					case 0:
+						DPRINTF(X_ERROR, "%s: Over with solid %08x and no mask\n", __func__, p->fillcolour);
+						CG14PrepareSolid(pDst, GXcopy, 0xffffffff, p->fillcolour);
+						CG14Solid(pDst, dstX, dstY, width, height);
 						break;
 					default:
 						xf86Msg(X_ERROR,
