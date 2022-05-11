@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.16 2022/05/11 17:13:04 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.17 2022/05/11 19:37:52 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -44,13 +44,21 @@
 
 /*#define SX_SINGLE*/
 /*#define SX_RENDER_DEBUG*/
+/*#define SX_RENDER_VERBOSE*/
 /*#define SX_ADD_SOFTWARE*/
+/*#define SX_RENDER_TRACE*/
 
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_TRACE
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
-#define DPRINTF xf86Msg
+#define DONE xf86Msg(X_ERROR, "<%s\n", __func__);
 #else
 #define ENTER
+#define DONE
+#endif
+
+#ifdef SX_RENDER_DEBUG
+#define DPRINTF xf86Msg
+#else
 #define DPRINTF while (0) xf86Msg
 #endif
 
@@ -200,7 +208,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 #else /* SX_SINGLE */
 		for (x = 0; x < width; x++) {
 			m = *(volatile uint8_t *)(p->fb + mskx);
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 			buffer[x] = c[m >> 5];
 #endif
 			if (m == 0) {
@@ -236,13 +244,14 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 			mskx += 1;
 		}
 #endif /* SX_SINGLE */
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 		buffer[x] = 0;
 		xf86Msg(X_ERROR, "%s\n", buffer);
 #endif
 		dst += dstpitch;
 		msk += srcpitch;
 	}
+	DONE;
 }
 
 void CG14Comp_Add32(Cg14Ptr p,
@@ -297,7 +306,9 @@ void CG14Comp_Add8(Cg14Ptr p,
 	uint32_t srcx, dstx, srcoff, dstoff;
 	int pre, full, part, x;
 	uint8_t *d;
+#ifdef SX_RENDER_VERBOSE
 	char buffer[256];
+#endif
 	ENTER;
 
 	srcoff = src & 7;
@@ -345,7 +356,7 @@ void CG14Comp_Add8(Cg14Ptr p,
 			write_sx_io(p, dstx, SX_STBC(72, part - 1, dstoff));
 		}
 #endif
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 		d = (uint8_t *)(p->fb + src + srcoff);
 		for (x = 0; x < width; x++) {
 			buffer[x] = c[d[x]>>5];
@@ -368,7 +379,9 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 	uint32_t srcx, dstx, srcoff, dstoff;
 	int pre, full, part, x;
 	uint8_t *d;
+#ifdef SX_RENDER_VERBOSE
 	char buffer[256];
+#endif
 	ENTER;
 
 	srcoff = src & 7;
@@ -411,7 +424,7 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 			}
 			write_sx_io(p, dstx, SX_STUC0C(72, part - 1, dstoff));
 		}
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 		d = (uint8_t *)(p->fb + src + srcoff);
 		for (x = 0; x < width; x++) {
 			buffer[x] = c[d[x]>>5];
