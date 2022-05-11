@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.17 2022/05/11 19:37:52 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.18 2022/05/11 22:46:51 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -391,7 +391,7 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 	full = width >> 5;	/* chunks of 32 */
 	part = width & 31;	/* leftovers */
 
-#ifdef SX__RENDER_DEBUG
+#ifdef SX_RENDER_DEBUG
 	xf86Msg(X_ERROR, "%d %d, %d x %d, %d %d\n", srcpitch, dstpitch,
 	    width, height, full, part);
 #endif
