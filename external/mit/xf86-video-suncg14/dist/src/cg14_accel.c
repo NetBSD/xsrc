@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.30 2022/05/11 19:35:06 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.31 2022/05/11 21:10:37 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -42,8 +42,8 @@
 
 #include "cg14.h"
 
-//#define SX_DEBUG
-#define SX_TRACE
+/*#define SX_DEBUG*/
+/*#define SX_TRACE*/
 
 #ifdef SX_TRACE
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
@@ -103,7 +103,7 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	xf86Msg(X_ERROR, "%s bpp %d rop %x\n", __func__,
+	DPRINTF(X_ERROR, "%s bpp %d rop %x\n", __func__,
 	    pSrcPixmap->drawable.bitsPerPixel, alu);
 
 	if (planemask != p->last_mask) {
@@ -125,7 +125,7 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 			p->pExa->Copy = CG14Copy32;
 			break;
 		default:
-			xf86Msg(X_ERROR, "%s depth %d\n", __func__,
+			DPRINTF(X_ERROR, "%s depth %d\n", __func__,
 			    pSrcPixmap->drawable.bitsPerPixel);
 	}
 	p->srcpitch = exaGetPixmapPitch(pSrcPixmap);
