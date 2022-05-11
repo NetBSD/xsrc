@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.15 2021/12/24 05:22:54 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.16 2022/05/11 17:13:04 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -54,8 +54,9 @@
 #define DPRINTF while (0) xf86Msg
 #endif
 
+#ifdef SX_RENDER_DEBUG
 char c[8] = " .,:+*oX";
-
+#endif
 
 void CG14Comp_Over32Solid(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
@@ -129,7 +130,7 @@ void CG14Comp_Over32Solid(Cg14Ptr p,
 			
 				/* invert SCAM */
 				sxi(SX_XORV, 12, 8, R_SCAM, 0);
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 				sxi(SX_XORV, 12, 8, 13, 0);
 #endif
 				/* dst * (1 - alpha) + R[13:15] */
@@ -152,7 +153,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 {
 	uint32_t msk = src, mskx, dstx, m;
 	int line, x, i;
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 	char buffer[256];
 #endif
 	ENTER;
@@ -199,7 +200,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 #else /* SX_SINGLE */
 		for (x = 0; x < width; x++) {
 			m = *(volatile uint8_t *)(p->fb + mskx);
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 			buffer[x] = c[m >> 5];
 #endif
 			if (m == 0) {
@@ -224,7 +225,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 			
 				/* invert SCAM */
 				sxi(SX_XORV, 12, 8, R_SCAM, 0);
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 				sxi(SX_XORV, 12, 8, 13, 0);
 #endif
 				/* dst * (1 - alpha) + R[13:15] */
@@ -235,7 +236,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 			mskx += 1;
 		}
 #endif /* SX_SINGLE */
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 		buffer[x] = 0;
 		xf86Msg(X_ERROR, "%s\n", buffer);
 #endif
@@ -306,7 +307,7 @@ void CG14Comp_Add8(Cg14Ptr p,
 	full = width >> 5;	/* chunks of 32 */
 	part = width & 31;	/* leftovers */
 
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 	xf86Msg(X_ERROR, "%d %d, %d x %d, %d %d\n", srcpitch, dstpitch,
 	    width, height, full, part);
 #endif
@@ -344,7 +345,7 @@ void CG14Comp_Add8(Cg14Ptr p,
 			write_sx_io(p, dstx, SX_STBC(72, part - 1, dstoff));
 		}
 #endif
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 		d = (uint8_t *)(p->fb + src + srcoff);
 		for (x = 0; x < width; x++) {
 			buffer[x] = c[d[x]>>5];
@@ -377,7 +378,7 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 	full = width >> 5;	/* chunks of 32 */
 	part = width & 31;	/* leftovers */
 
-#ifdef SX_DEBUG
+#ifdef SX__RENDER_DEBUG
 	xf86Msg(X_ERROR, "%d %d, %d x %d, %d %d\n", srcpitch, dstpitch,
 	    width, height, full, part);
 #endif
@@ -410,7 +411,7 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 			}
 			write_sx_io(p, dstx, SX_STUC0C(72, part - 1, dstoff));
 		}
-#ifdef SX_DEBUG
+#ifdef SX_RENDER_DEBUG
 		d = (uint8_t *)(p->fb + src + srcoff);
 		for (x = 0; x < width; x++) {
 			buffer[x] = c[d[x]>>5];
