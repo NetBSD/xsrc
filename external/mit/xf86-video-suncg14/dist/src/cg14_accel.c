@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.29 2022/03/04 05:56:55 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.30 2022/05/11 19:35:06 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -43,12 +43,17 @@
 #include "cg14.h"
 
 //#define SX_DEBUG
+#define SX_TRACE
 
-#ifdef SX_DEBUG
+#ifdef SX_TRACE
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
-#define DPRINTF xf86Msg
 #else
 #define ENTER
+#endif
+
+#ifdef SX_DEBUG
+#define DPRINTF xf86Msg
+#else
 #define DPRINTF while (0) xf86Msg
 #endif
 
@@ -98,7 +103,7 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	DPRINTF(X_ERROR, "%s bpp %d rop %x\n", __func__,
+	xf86Msg(X_ERROR, "%s bpp %d rop %x\n", __func__,
 	    pSrcPixmap->drawable.bitsPerPixel, alu);
 
 	if (planemask != p->last_mask) {
@@ -1162,7 +1167,7 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 	 * over time and likely have to spill over into its own source file.
 	 */
 	
-	if ((op != PictOpOver) && (op != PictOpAdd) && (op != PictOpSrc)) {
+	if ((op != PictOpOver) && (op != PictOpAdd)/* && (op != PictOpSrc)*/) {
 		DPRINTF(X_ERROR, "%s: rejecting %d\n", __func__, op);
 		return FALSE;
 	}
@@ -1223,10 +1228,10 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 	p->source_is_solid = FALSE;
 
 	if (pSrcPicture->format == PICT_a1) {
-		xf86Msg(X_ERROR, "src mono, dst %x, op %d\n",
+		DPRINTF(X_ERROR, "src mono, dst %x, op %d\n",
 		    pDstPicture->format, op);
 		if (pMaskPicture != NULL) {
-			xf86Msg(X_ERROR, "msk %x\n", pMaskPicture->format);
+			DPRINTF(X_ERROR, "msk %x\n", pMaskPicture->format);
 		}
 	}
 	if (pSrcPicture->pSourcePict != NULL) {
@@ -1244,7 +1249,7 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 		    SourcePictTypeSolidFill) {
 			p->fillcolour = 
 			   pMaskPicture->pSourcePict->solidFill.color;
-			xf86Msg(X_ERROR, "%s: solid mask %08x\n",
+			DPRINTF(X_ERROR, "%s: solid mask %08x\n",
 			    __func__, p->fillcolour);
 		}
 	}
@@ -1274,6 +1279,7 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 
 		/* stuff source colour into SX registers, swap as needed */
 		temp = p->fillcolour;
+		DPRINTF(X_ERROR, "solid %08x\n", temp);
 		switch (p->srcformat) {
 			case PICT_a8r8g8b8:
 			case PICT_x8r8g8b8:
@@ -1296,6 +1302,10 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 	}
 	p->op = op;
 	if (op == PictOpSrc) {
+		if (pSrc == NULL) {
+			DPRINTF(X_ERROR, "src type %d\n", pSrcPicture->pSourcePict->type);
+			return FALSE;
+		}
 		CG14PrepareCopy(pSrc, pDst, 1, 1, GXcopy, 0xffffffff);
 	}
 #ifdef SX_DEBUG
