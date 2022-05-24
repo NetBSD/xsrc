@@ -328,7 +328,7 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define SEP_H(w)	((w)->login.inframeswidth * 2)
 
 #define PROMPT_X(w)	(2 * PROMPT_X_INC(w))
-#define PROMPT_Y(w,n) 	((SEP_Y(w) + ((n)+1) * GREET_Y_INC(w) + 2 * (w)->login.inframeswidth))
+#define PROMPT_Y(w,n) 	(SEP_Y(w) + GREET_Y_INC(w) + (n) * Y_INC(w) + (2*(n)+1) * ((w)->login.inframeswidth + VALUE_VPAD(w,n)))
 #define PROMPT_W(w)	(w->core.width - PROMPT_X(w) - 2 * TEXT_X_INC(w) - LOGO_W(w))
 #define PROMPT_H(w)	Y_INC(w)
 
