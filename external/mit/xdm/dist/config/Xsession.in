@@ -1,6 +1,6 @@
 XCOMM!SHELL_CMD
 XCOMM
-XHASH $NetBSD: Xsession.in,v 1.16 2022/05/27 17:58:54 nia Exp $
+XHASH $NetBSD: Xsession.in,v 1.17 2022/05/27 19:05:28 nia Exp $
 
 XCOMM redirect errors to a file in user's home directory if we can
 
@@ -75,7 +75,6 @@ else
 #ifdef COLOR
 *customization: -color
 #endif
-Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.foreground: grey90
 *VT100.background: black
 Bitmap*font:    -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
@@ -95,6 +94,7 @@ Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 if [ $fontsize -gt 18 ]; then
     BINDIR/xrdb -merge - <<EOF
+Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then

@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.18 2022/05/27 17:58:54 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.19 2022/05/27 19:05:28 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -44,7 +44,6 @@ else
 XHASH ifdef COLOR
 *customization: -color
 XHASH endif
-Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.foreground: grey90
 *VT100.background: black
 *SimpleMenu*font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
@@ -66,6 +65,7 @@ Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 if [ $fontsize -gt 18 ]; then
     XRDB -merge - <<EOF
+Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then
