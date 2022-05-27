@@ -1,0 +1,449 @@
+commit 28ade0ae2f0237303ca188b62fdb2bd02486ec34
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 14 18:58:18 2019 -0800
+
+    xcursor-themes 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9fefdbf23c5b8a083a3b65e7ad444eea9dbf2b35
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 25 12:41:32 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 103e7873fac379cde36611dee92f8a4cb6678da7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 23:36:41 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 96eb894910cf79ebbc29b650ee1c752bc2a379f6
+Author: Paul Hebble <pjhebble@gmail.com>
+Date:   Sat Oct 13 18:30:19 2018 -0500
+
+    Add missing symlinks for whiteglass
+    
+    GNOME Shell crashes if your active cursor theme doesn't have a dnd-none
+    cursor and you click and drag a window in the overview screen.
+    
+    This patch adds a symlink to fleur for the dnd-none cursor of
+    whiteglass. Similarly for hand, hand1, and hand2 which are used by some
+    browsers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e5bf0229d785b83344c6e6b79ff40d399d2cdcd0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 9 22:57:33 2018 -0800
+
+    xcursor-themes 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8ecbe9e1f5c4497064029124e6b6ac7073dcb467
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit f30e3da10f39dc0db4c8d933858bc01bd13a7a08
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 07ab174b50e23047552133adcb0797b1b0e246a8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit cf161dd31c255a41e6fd135f8ca75febccd70eaa
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Oct 29 13:15:05 2015 -0700
+
+    Add copyright files for redglass and whiteglass themes.
+    
+    Redglass was drawn by Keith Packard <keithp@keithp.com>
+    Whiteglass was adapted from redglass; changes were done by Jorge Criado <jorge.criado@wanadoo.es>
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 0da544f1f51a337bb69e7f317940476ac7e716cc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0c3177dd1e87d69adc02a862dfc4560a41dc0e1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f6379fec0d76470403d5726d894e6c40be17628b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Oct 26 08:13:32 2013 -0400
+
+    config: replace deprecated use of AC_OUTPUT with AC_CONFIG_FILES
+    
+    Fix Automake warning: AC_OUTPUT should be used without arguments.
+    www.gnu.org/software/autoconf/manual/autoconf.html#Configuration-Files
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 28c8615ad7525a70bb6971261f70ba1f69651362
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 16 23:37:27 2013 -0700
+
+    xcursor-themes 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1e4c11e05bdf2511c061924b065d9e8199e3182e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 2 20:18:50 2013 -0700
+
+    genmakefile.sh: split up EXTRA_DIST lines
+    
+    Single lines > 998 characters long make git send-email unhappy
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d165f4a39a9ed32a2ab518117fe3efec0681631
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 2 19:24:37 2013 -0700
+
+    Create missing symlinks for cursor animations
+    
+    Fixes https://bugs.freedesktop.org/show_bug.cgi?id=6466 which was
+    originally reported at http://bugs.gentoo.org/show_bug.cgi?id=116730
+    
+    Finally finishes the conversion of the Imakefile CursorLinkTarget rules
+    into the Makefile.cursor automake fragments generated by genmakefile.sh.
+    
+    (Since Makefile.cursor files are checked into git, the changes made in
+     the generated files are included in this commit as well.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c3faa78a736742f67da78cbbee40b433d10ad206
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 2 18:59:25 2013 -0700
+
+    genmakefile.sh: fix autogeneration of handhelds/Makefile.cursor
+    
+    Previously handhelds/Makefile.cursor was manually fixed up after running
+    genmakefile.sh, in order to get the cursor image files out of the redglass
+    directory. This fixes the script to correctly generate the Makefile.cursor
+    files without human intervention.
+    
+    After this change, the Makefile.cursor files produced in the redglass &
+    whiteglass directories by genmakefile.sh are still identical to the
+    versions currently checked into git.
+    
+    The Makefile.cursors in the handhelds directory is mostly identical to
+    what was in git - it has lost the comments about needing human edits,
+    and it has lost the dependencies on the pngs for the larger size cursors
+    that aren't used in the handhelds cursor theme .cfg files (which just use
+    the *-16.png sizes of redglass).   The newly generated version is included
+    in this commit.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ec2dabcf62f33737acbfa8ba7dcca8614a063304
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 2 18:47:43 2013 -0700
+
+    genmakefile.sh: Change echo to printf for better portability & control
+    
+    Solaris has too many echoes, some which support "-n" to not print newlines,
+    others which simply treat it as another item to echo to stdout.
+    
+    The printf command is more portable, allows us better control over newline
+    insertion and quoting, and easier to read indicators for tabs.
+    
+    After this change, when run on Solaris, the Makefile.cursors produced in
+    the redglass & whiteglass directories by genmakefile.sh are identical to
+    the versions currently checked into git.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9efb1bb60a8190ffb7b2b9389749795c2b092a6a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 19 09:24:41 2013 -0800
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 287d4bac2826de32365afcb2cbe0ec24abd2eecd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 30 08:57:22 2010 -0700
+
+    xcursor-themes 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fd7401bab073b95c2e8d4d45569f03afffda8ee2
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Oct 30 08:54:40 2010 -0700
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2c8a072222d0cbb7ccf63470af76738b33f1b11f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 1 13:33:12 2010 -0500
+
+    configure: use "$PKG_CONFIG" rather than hard coded "pkg-config"
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1eabbd976f21f5922e4a2c125c6ed51ebf936763
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Dec 19 17:35:07 2009 -0500
+
+    configure.ac: use backticks rather than $() for cmd subs
+    
+    Use "$PKG_CONFIG" rather than hard coded "pkg-config"
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c43cf46600ae8c93b85d4e3c956864691e55395e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Nov 29 19:31:54 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit 3cc6cb2fe3142b22931e411e3df5d495f3f57ff5
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Nov 29 19:29:06 2009 -0500
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Automake 'foreign' option is specified in configure.ac.
+    Remove from Makefile.am
+
+commit b6cb39282a530930672da3c58132a8cabe54a05b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:09 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit 9c250e804fbf7042acc1ab972d93f7f9cf2a128c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Oct 27 15:07:25 2009 -0400
+
+    Deploy the new XORG_DEFAULT_OPTIONS #24242
+    
+    This macro aggregate a number of existing macros that sets commmon
+    X.Org components configuration options. It shields the configuration file from
+    future changes.
+
+commit 3ece73c962880db4913100211cb9bbe4c02a6b6f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:40 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit 52f78d845879524d66e733e75ef27fec7898bc6e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:44:09 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit a0209fb0eb221bc72af78f238ad69372d3b2a8d2
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Sep 24 17:12:31 2009 -0700
+
+    xcursor-themes 1.0.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit f682dfcb3c5ef0051c96f4116d85fd54999b8fbc
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Sep 24 17:16:00 2009 -0700
+
+    Fill in COPYING and README
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 5bc5c8c768c80cf7ca8c09f6a1a0f2f4f5dfa0ae
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Sep 24 17:10:10 2009 -0700
+
+    Remove unnecessary configure steps, since no C code is compiled here
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit c734aa47795aa1bdbcbd01872a8b0d1a99cd4dd4
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Tue Jan 27 15:37:07 2009 -0200
+
+    Correct make distcheck.
+
+commit 423873fb23e4a12a9745d13d8967956db7e5b28e
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Thu Dec 6 15:51:12 2007 -0500
+
+    Add missing PHONY line for automatic ChangeLog generation
+
+commit 3d4f1cbe3f54f0acbecef5c45d8082b631b67ae4
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Apr 10 19:22:15 2007 -0700
+
+    Add a .gitignore file
+
+commit 31f21b77706a614cf1f47ee25f42848cfa5198cb
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Apr 10 19:14:13 2007 -0700
+
+    Replace static ChangeLog with dist-hook to generate from git log
+
+commit 45a939aa4c555133dc11780be1ea66887e8667ae
+Author: Marcin 'Qrczak' Kowalczyk <qrczak@knm.org.pl>
+Date:   Tue Apr 10 19:06:38 2007 -0700
+
+    Bug #10492: Redglass xcursor theme doesn't package the "watch" cursor
+    
+    X.Org Bugzilla #10492 <http://bugs.freedesktop.org/show_bug.cgi?id=10492>
+    Patch #9402 <http://bugs.freedesktop.org/attachment.cgi?id=9402>
+
+commit e7a729e215ffaca3e60e7850ea0e36d75379d1f9
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Dec 21 02:29:55 2005 +0000
+
+    Update package version for X11R7 release.
+
+commit d2c98c9221f0e3663b33d4bfa0b026646146b854
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Dec 19 16:23:39 2005 +0000
+
+    Stub COPYING files
+
+commit 2a9294b2b1ce44b0c8fe0be10515f57ac6689df8
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Dec 15 00:24:12 2005 +0000
+
+    Update package version number for final X11R7 release candidate.
+
+commit 13b59109807b4ab636a46834c7e8d39a37225cb7
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Dec 9 19:29:13 2005 +0000
+
+    Get the cursor install dir from xcursor.pc.
+
+commit 416b5c221c4cbe8697f7f9ca0aa722519f470084
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Oct 19 02:47:59 2005 +0000
+
+    Update package version number for RC1 release.
+
+commit e3326d84a18767e9b95633f59f920b60f08b0b41
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Oct 7 04:56:48 2005 +0000
+
+    Add .xcf files to dist
+    Add missing files to DIST and regenerate */Makefile.cursors
+
+commit 7531a3a643176b99cd9aacd9394e584a81b6cb68
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Jul 29 21:22:39 2005 +0000
+
+    Various changes preparing packages for RC0:
+    - Verify and update package version numbers as needed
+    - Implement versioning scheme
+    - Change bug address to point to bugzilla bug entry form
+    - Disable loadable i18n in libX11 by default (use --enable-loadable-i18n to
+        reenable it)
+    - Fix makedepend to use pkgconfig and pass distcheck
+    - Update build script to build macros first
+    - Update modular Xorg version
+
+commit 95697dbcfdbb3f44bc7497a898609ca8b00547be
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Jul 28 03:39:50 2005 +0000
+
+    Fix handhelds cursor dependencies and EXTRA_DIST
+
+commit 7d8b88a2609a95f2098e5439692443a6f5860788
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Mon Jul 11 04:09:02 2005 +0000
+
+    Initial autotooling.
+
+commit e32abb2360340093637c69c0df940cac2db7e59a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Aug 12 23:29:18 2004 +0000
+
+    Avoid gumby trademark and copyright
+
+commit 6086d0f16db9e0075b24a365f6a4aff56dbcad5d
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Tue Nov 25 19:29:11 2003 +0000
+
+    XFree86 4.3.99.16 Bring the tree up to date for the Cygwin folks
+
+commit 374c8f856a8b875d77f039001c2c4e2ada0d3d9d
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:49:21 2003 +0000
+
+    XFree86 4.3.0.1
+
+commit f818e6a5bcaecdd898824d62867a1d89283d051d
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:49:21 2003 +0000
+
+    Initial revision
