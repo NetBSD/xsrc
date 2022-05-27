@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.17 2022/05/27 14:23:23 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.18 2022/05/27 17:58:54 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -44,6 +44,7 @@ else
 XHASH ifdef COLOR
 *customization: -color
 XHASH endif
+Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.foreground: grey90
 *VT100.background: black
 *SimpleMenu*font:	-*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
