@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.16 2022/05/09 07:00:15 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.17 2022/05/27 14:23:23 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -65,27 +65,7 @@ Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 if [ $fontsize -gt 18 ]; then
     XRDB -merge - <<EOF
-*VT100.font: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-*VT100.font1: -*-spleen-medium-r-*-*-6-*-*-*-*-*-*-*
-*VT100.font2: -*-spleen-medium-r-*-*-8-*-*-*-*-*-*-*
-*VT100.font3: -*-spleen-medium-r-*-*-12-*-*-*-*-*-*-*
-*VT100.font4: -*-spleen-medium-r-*-*-16-*-*-*-*-*-*-*
-*VT100.font5: -*-spleen-medium-r-*-*-24-*-*-*-*-*-*-*
-*VT100.font6: -*-spleen-medium-r-*-*-32-*-*-*-*-*-*-*
-*VT100.font7: -*-spleen-medium-r-*-*-64-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font1: -*-spleen-medium-r-*-*-6-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font2: -*-spleen-medium-r-*-*-8-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font3: -*-spleen-medium-r-*-*-12-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font4: -*-spleen-medium-r-*-*-16-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font5: -*-spleen-medium-r-*-*-24-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font6: -*-spleen-medium-r-*-*-32-*-*-*-*-*-*-*
-*VT100.utf8Fonts.font7: -*-spleen-medium-r-*-*-64-*-*-*-*-*-*-*
-Xman*font: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-Xman*directoryFontNormal: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-Xman*manualFontNormal: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-Xman*manualFontBold: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
-Xman*manualFontItalic: -*-spleen-*-*-*-*-$fontsize-*-*-*-*-*-*-*
+*VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then
     XRDB -merge - <<EOF
@@ -93,11 +73,6 @@ elif [ $fontsize -gt 13 ]; then
 *VT100.fontBold: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso10646-1
 *VT100.utf8Fonts.font: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso10646-1
 *VT100.utf8Fonts.fontBold: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso10646-1
-Xman*font: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso8859-1
-Xman*directoryFontNormal: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso8859-1
-Xman*manualFontNormal: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso8859-1
-Xman*manualFontBold: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso8859-1
-Xman*manualFontItalic: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso8859-1
 EOF
 else
     XRDB -merge - <<EOF
@@ -105,11 +80,6 @@ else
 *VT100.fontBold: -misc-fixed-bold-r-normal-*-13-*-*-*-*-*-iso10646-1
 *VT100.utf8Fonts.font: -misc-fixed-medium-r-normal-*-13-*-*-*-*-*-iso10646-1
 *VT100.utf8Fonts.fontBold: -misc-fixed-bold-r-normal-*-13-*-*-*-*-*-iso10646-1
-Xman*font: -misc-fixed-medium-r-normal-*-13-*-*-*-*-*-iso8859-1
-Xman*directoryFontNormal: -misc-fixed-medium-r-normal-*-13-*-*-*-*-*-iso8859-1
-Xman*manualFontNormal: -misc-fixed-medium-r-normal-*-13-*-*-*-*-*-iso8859-1
-Xman*manualFontBold: -misc-fixed-bold-r-normal-*-13-*-*-*-*-*-iso8859-1
-Xman*manualFontItalic: -misc-fixed-medium-o-normal-*-13-*-*-*-*-*-iso8859-1
 EOF
 fi
 fi
