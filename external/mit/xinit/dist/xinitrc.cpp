@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.20 2022/05/29 05:53:02 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.21 2022/05/29 06:06:13 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -72,7 +72,7 @@ if [ $fontsize -gt 18 ]; then
 # of 96.
 # 
     XRDB -merge - <<EOF
-Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
+Xft.dpi: $((96 * ($fontsize / 16)))
 *VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then
