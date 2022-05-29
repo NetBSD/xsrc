@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.19 2022/05/27 19:05:28 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.20 2022/05/29 05:53:02 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -64,11 +64,23 @@ Xmessage*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 if [ $fontsize -gt 18 ]; then
+#
+# For HiDPI displays, the font size returned by ctwm_font_size will
+# generally be a multiple of 16.  96 is our standard DPI, and many
+# applications want to scale by integer increments or don't handle
+# non-integer scaling gracefully, so we want to scale by multiples
+# of 96.
+# 
     XRDB -merge - <<EOF
 Xft.dpi: $(/usr/bin/printf '96 * (%d / 16)\n' "$fontsize" | /usr/bin/bc /dev/stdin)
 *VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then
+#
+# For non-HiDPI cases, use the standard misc-fixed font in xterm
+# since it has bold variants, and seems to have caused fewer
+# complaints than alternatives in the community so far.
+#
     XRDB -merge - <<EOF
 *VT100.font: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso10646-1
 *VT100.fontBold: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso10646-1
