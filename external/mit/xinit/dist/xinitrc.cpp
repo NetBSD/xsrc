@@ -1,5 +1,5 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.21 2022/05/29 06:06:13 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.22 2022/05/29 12:40:36 nia Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
@@ -64,23 +64,26 @@ Xmessage*font:  -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 Xmh*font:       -*-spleen-medium-r-*-*-$fontsize-*-*-*-*-*-*-*
 EOF
 if [ $fontsize -gt 18 ]; then
-#
-# For HiDPI displays, the font size returned by ctwm_font_size will
-# generally be a multiple of 16.  96 is our standard DPI, and many
-# applications want to scale by integer increments or don't handle
-# non-integer scaling gracefully, so we want to scale by multiples
-# of 96.
-# 
+XCOMM
+XCOMM For HiDPI displays, the font size returned by ctwm_font_size will
+XCOMM generally be a multiple of 16.  96 is our standard DPI, and many
+XCOMM applications want to scale by integer increments or don't handle
+XCOMM non-integer scaling gracefully, so we want to scale by multiples
+XCOMM of 96.
+XCOMM
     XRDB -merge - <<EOF
-Xft.dpi: $((96 * ($fontsize / 16)))
+Xft.dpi: $((96 * (fontsize / 16)))
 *VT100.faceName: xft:Monospace:pixelsize=$fontsize
 EOF
 elif [ $fontsize -gt 13 ]; then
-#
-# For non-HiDPI cases, use the standard misc-fixed font in xterm
-# since it has bold variants, and seems to have caused fewer
-# complaints than alternatives in the community so far.
-#
+XCOMM
+XCOMM For non-HiDPI cases, use the standard misc-fixed font in xterm
+XCOMM since it has bold variants, and seems to have caused fewer
+XCOMM complaints than alternatives in the community so far.
+XCOMM
+XCOMM Using bitmap instead of TrueType fonts offers us some minor
+XCOMM performance gains on very slow machines.
+XCOMM
     XRDB -merge - <<EOF
 *VT100.font: -misc-fixed-medium-r-normal-*-18-*-*-*-*-*-iso10646-1
 *VT100.fontBold: -misc-fixed-bold-r-normal-*-18-*-*-*-*-*-iso10646-1
