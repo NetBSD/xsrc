@@ -121,6 +121,8 @@ static Bool WsfbScreenInit(SCREEN_INIT_ARGS_DECL);
 static Bool WsfbCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static void *WsfbWindowLinear(ScreenPtr, CARD32, CARD32, int, CARD32 *,
 			      void *);
+static void *WsfbWindowAfb(ScreenPtr, CARD32, CARD32, int, CARD32 *,
+			      void *);
 static void WsfbPointerMoved(SCRN_ARG_TYPE, int, int);
 static Bool WsfbEnterVT(VT_FUNC_ARGS_DECL);
 static void WsfbLeaveVT(VT_FUNC_ARGS_DECL);
@@ -211,6 +213,7 @@ static const char *shadowSymbols[] = {
 	"shadowUpdatePackedWeak",
 	"shadowUpdateRotatePacked",
 	"shadowUpdateRotatePackedWeak",
+	"shadowUpdateAfb8",
 	NULL
 };
 
@@ -444,6 +447,13 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
 	}
 
+	if (ioctl(fPtr->fd, WSDISPLAYIO_GTYPE, &wstype) == -1) {
+		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+			   "ioctl WSDISPLAY_GTYPE: %s\n",
+			   strerror(errno));
+		wstype = WSDISPLAY_TYPE_UNKNOWN;
+	}
+
 	if (ioctl(fPtr->fd, WSDISPLAYIO_GET_FBINFO, &fPtr->fbi) != 0) {
 		struct wsdisplay_fbinfo info;
 		struct wsdisplayio_fbinfo *fbi = &fPtr->fbi;
@@ -454,12 +464,6 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		if (ioctl(fPtr->fd, WSDISPLAYIO_GINFO, &info) == -1) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 				   "ioctl WSDISPLAY_GINFO: %s\n",
-				   strerror(errno));
-			return FALSE;
-		}
-		if (ioctl(fPtr->fd, WSDISPLAYIO_GTYPE, &wstype) == -1) {
-			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-				   "ioctl WSDISPLAY_GTYPE: %s\n",
 				   strerror(errno));
 			return FALSE;
 		}
@@ -573,6 +577,25 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		bitsperpixel = 1;
 	}
 #endif
+#if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_AMIGACC)
+	if (wstype == WSDISPLAY_TYPE_AMIGACC)
+	{
+		/*
+		 * Video memory is organized in bitplanes.
+		 * 8bpp or 1bpp supported in this driver.
+		 * With 8bpp conversion to bitplane format
+		 * is done in shadow update proc.
+		 * With 1bpp no conversion needed.
+		 */
+		if (bitsperpixel == 8) {
+			fPtr->planarAfb = TRUE;
+		} else {
+			default_depth = 1;
+			bitsperpixel = 1;
+		}
+	}
+#endif
+
 	if (!xf86SetDepthBpp(pScrn, default_depth, default_depth,
 		bitsperpixel,
 		bitsperpixel >= 24 ? Support24bppFb|Support32bppFb : 0))
@@ -826,6 +849,7 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	PixmapPtr pPixmap;
 	Bool ret;
 	void (*shadowproc)(ScreenPtr, shadowBufPtr);
+	ShadowWindowProc windowproc = WsfbWindowLinear;
 
 	pScreen->CreateScreenResources = fPtr->CreateScreenResources;
 	ret = pScreen->CreateScreenResources(pScreen);
@@ -841,11 +865,14 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 		shadowproc = WsfbShadowUpdateSwap32;
 	} else if (fPtr->rotate) {
 		shadowproc = shadowUpdateRotatePacked;
+	} else if (fPtr->planarAfb) {
+		shadowproc = shadowUpdateAfb8;
+		windowproc = WsfbWindowAfb;
 	} else
 		shadowproc = shadowUpdatePacked;
 	
 	if (!shadowAdd(pScreen, pPixmap, shadowproc,
-		WsfbWindowLinear, fPtr->rotate, NULL)) {
+		windowproc, fPtr->rotate, NULL)) {
 		return FALSE;
 	}
 	return TRUE;
@@ -987,6 +1014,9 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 			 */
 			len = pScrn->virtualX * pScrn->virtualY *
 			    (pScrn->bitsPerPixel >> 3);
+		} else if (fPtr->planarAfb) {
+			/* always 8bpp */
+			len = pScrn->virtualX * pScrn->virtualY;
 		} else {
 			len = fPtr->fbi.fbi_stride * pScrn->virtualY;
 		}
@@ -1005,6 +1035,8 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	 * per xorg/xserver/tree/fb/fbscreen.c.
 	 */
 	if (fPtr->rotate) {
+		width = pScrn->displayWidth;
+	} else if (fPtr->planarAfb) {
 		width = pScrn->displayWidth;
 	} else {
 		if (pScrn->bitsPerPixel > 8) {
@@ -1229,6 +1261,23 @@ WsfbWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 			return NULL;
 		fPtr->fbi.fbi_stride = *size;
 	}
+	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
+}
+
+/**
+ * For use with shadowUpdateAfb8
+ *
+ * For video memory layout with non-interleaved bitplanes.
+ */
+static void *
+WsfbWindowAfb(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
+		CARD32 *size, void *closure)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+
+	/* size is offset from start of bitplane to next bitplane */
+	*size = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
 	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
 }
 
