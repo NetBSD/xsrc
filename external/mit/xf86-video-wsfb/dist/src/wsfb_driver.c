@@ -213,7 +213,9 @@ static const char *shadowSymbols[] = {
 	"shadowUpdatePackedWeak",
 	"shadowUpdateRotatePacked",
 	"shadowUpdateRotatePackedWeak",
+#if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
 	"shadowUpdateAfb8",
+#endif
 	NULL
 };
 
