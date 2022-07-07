@@ -578,8 +578,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 #endif
 #if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_AMIGACC)
-	if (wstype == WSDISPLAY_TYPE_AMIGACC)
-	{
+	if (wstype == WSDISPLAY_TYPE_AMIGACC) {
 		/*
 		 * Video memory is organized in bitplanes.
 		 * 8bpp or 1bpp supported in this driver.
@@ -1264,7 +1263,7 @@ WsfbWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
 }
 
-/**
+/*
  * For use with shadowUpdateAfb8
  *
  * For video memory layout with non-interleaved bitplanes.
