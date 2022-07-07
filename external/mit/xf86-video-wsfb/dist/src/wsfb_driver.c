@@ -577,7 +577,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		bitsperpixel = 1;
 	}
 #endif
-#if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_AMIGACC)
+#ifdef WSDISPLAY_TYPE_AMIGACC
 	if (wstype == WSDISPLAY_TYPE_AMIGACC) {
 		/*
 		 * Video memory is organized in bitplanes.
