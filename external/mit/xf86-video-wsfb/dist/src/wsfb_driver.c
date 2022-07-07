@@ -579,6 +579,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
 #ifdef WSDISPLAY_TYPE_AMIGACC
 	if (wstype == WSDISPLAY_TYPE_AMIGACC) {
+#  if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
 		/*
 		 * Video memory is organized in bitplanes.
 		 * 8bpp or 1bpp supported in this driver.
@@ -588,7 +589,9 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		 */
 		if (bitsperpixel == 8) {
 			fPtr->planarAfb = TRUE;
-		} else {
+		} else
+#  endif
+		{
 			default_depth = 1;
 			bitsperpixel = 1;
 		}
@@ -865,7 +868,13 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	} else if (fPtr->rotate) {
 		shadowproc = shadowUpdateRotatePacked;
 	} else if (fPtr->planarAfb) {
+#if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
 		shadowproc = shadowUpdateAfb8;
+#else
+		xf86Msg(X_ERROR,
+		    "Planar fb requires xorg-server 1.20 or higher.");
+		return FALSE;
+#endif
 		windowproc = WsfbWindowAfb;
 	} else
 		shadowproc = shadowUpdatePacked;
