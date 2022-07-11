@@ -1,7 +1,7 @@
-/* $XTermId: misc.c,v 1.1007 2021/11/12 09:28:19 tom Exp $ */
+/* $XTermId: misc.c,v 1.1015 2022/02/18 09:08:10 tom Exp $ */
 
 /*
- * Copyright 1999-2020,2021 by Thomas E. Dickey
+ * Copyright 1999-2021,2022 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -1844,18 +1844,20 @@ xtermIsIconified(XtermWidget xw)
 			    &actual_format_return,
 			    &nitems_return,
 			    &bytes_after_return,
-			    &prop_return)
-	    && prop_return != 0
-	    && actual_return_type == requested_type
-	    && actual_format_return == 32) {
-	    unsigned long n;
-	    for (n = 0; n < nitems_return; ++n) {
-		unsigned long check = (((unsigned long *)
-					(void *) prop_return)[n]);
-		if (check == is_hidden) {
-		    result = True;
-		    break;
+			    &prop_return)) {
+	    if (prop_return != 0
+		&& actual_return_type == requested_type
+		&& actual_format_return == 32) {
+		unsigned long n;
+		for (n = 0; n < nitems_return; ++n) {
+		    unsigned long check = (((unsigned long *)
+					    (void *) prop_return)[n]);
+		    if (check == is_hidden) {
+			result = True;
+			break;
+		    }
 		}
+		XFree(prop_return);
 	    }
 	}
     }
@@ -2746,7 +2748,6 @@ Boolean
 AllocOneColor(XtermWidget xw, XColor *def)
 {
     TScreen *screen = TScreenOf(xw);
-    XVisualInfo *visInfo;
     Boolean result = True;
 
 #define MaskIt(name,nn) \
@@ -2754,7 +2755,7 @@ AllocOneColor(XtermWidget xw, XColor *def)
 	             << xw->rgb_shifts[nn]) \
 	 & xw->visInfo->name ##_mask)
 
-    if ((visInfo = getVisualInfo(xw)) != NULL && xw->has_rgb) {
+    if (getVisualInfo(xw) != NULL && xw->has_rgb) {
 	def->pixel = MaskIt(red, 0) | MaskIt(green, 1) | MaskIt(blue, 2);
     } else {
 	Display *dpy = screen->display;
@@ -2783,7 +2784,6 @@ AllocOneColor(XtermWidget xw, XColor *def)
 Boolean
 QueryOneColor(XtermWidget xw, XColor *def)
 {
-    XVisualInfo *visInfo;
     Boolean result = True;
 
 #define UnMaskIt(name,nn) \
@@ -2792,7 +2792,7 @@ QueryOneColor(XtermWidget xw, XColor *def)
 	(unsigned short)((((UnMaskIt(name,nn) << 8) \
 			   |UnMaskIt(name,nn))) << (8 - xw->rgb_widths[nn]))
 
-    if ((visInfo = getVisualInfo(xw)) != NULL && xw->has_rgb) {
+    if (getVisualInfo(xw) != NULL && xw->has_rgb) {
 	/* *INDENT-EQLS* */
 	def->red   = UnMaskIt2(red, 0);
 	def->green = UnMaskIt2(green, 1);
@@ -3966,7 +3966,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
     Char *cp;
     int state = 0;
     char *buf = 0;
-    char temp[2];
+    char temp[20];
 #if OPT_ISO_COLORS
     int ansi_colors = 0;
 #endif
@@ -4101,11 +4101,20 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
      */
     if (IsEmpty(buf)) {
 	if (need_data) {
-	    TRACE(("do_osc found no data\n"));
-	    return;
+	    switch (mode) {
+	    case 0:
+	    case 1:
+	    case 2:
+		buf = strcpy(temp, "xterm");
+		break;
+	    default:
+		TRACE(("do_osc found no data\n"));
+		return;
+	    }
+	} else {
+	    temp[0] = '\0';
+	    buf = temp;
 	}
-	temp[0] = '\0';
-	buf = temp;
     } else if (!need_data && !optional_data) {
 	TRACE(("do_osc found unwanted data\n"));
 	return;
@@ -4766,7 +4775,21 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		sprintf(reply, "%d%s",
 			((xw->flags & IN132COLUMNS) ? 132 : 80),
 			cp);
-	    } else if (!strcmp(cp, "*|")) {	/* DECSNLS */
+	    } else
+#if OPT_STATUS_LINE
+	    if (!strcmp(cp, "$}")) {	/* DECSASD */
+		TRACE(("reply DECSASD\n"));
+		sprintf(reply, "%d%s",
+			screen->status_active,
+			cp);
+	    } else if (!strcmp(cp, "$~")) {	/* DECSSDT */
+		TRACE(("reply DECSASD\n"));
+		sprintf(reply, "%d%s",
+			screen->status_type,
+			cp);
+	    } else
+#endif
+	    if (!strcmp(cp, "*|")) {	/* DECSNLS */
 		TRACE(("reply DECSNLS\n"));
 		sprintf(reply, "%d%s",
 			screen->max_row + 1,
@@ -5856,13 +5879,15 @@ ChangeGroup(XtermWidget xw, const char *attribute, char *value)
 					&actual_format,
 					&nitems,
 					&bytes_after,
-					&prop)
-			&& actual_type == requested_type
-			&& actual_format == 8
-			&& prop != 0
-			&& nitems == strlen(value)
-			&& memcmp(value, prop, nitems) == 0) {
-			changed = False;
+					&prop)) {
+			if (actual_type == requested_type
+			    && actual_format == 8
+			    && prop != 0
+			    && nitems == strlen(value)
+			    && memcmp(value, prop, nitems) == 0) {
+			    changed = False;
+			}
+			XFree(prop);
 		    }
 		}
 #endif /* OPT_SAME_NAME */
@@ -6767,19 +6792,6 @@ sortedOpts(OptionHelp * options, XrmOptionDescRec * descs, Cardinal numDescs)
 			} else {
 			    mesg = "turn off/on";
 			}
-			if (strncmp(mesg, opt_array[j].desc, strlen(mesg))) {
-			    if (strncmp(opt_array[j].desc, "turn ", (size_t) 5)) {
-				char *s = malloc(strlen(mesg)
-						 + strlen(opt_array[j].desc)
-						 + 2);
-				if (s != 0) {
-				    sprintf(s, "%s %s", mesg, opt_array[j].desc);
-				    opt_array[j].desc = s;
-				}
-			    } else {
-				TRACE(("OOPS "));
-			    }
-			}
 			TRACE(("%s: %s %s: %s (%s)\n",
 			       mesg,
 			       res_array[k].option,
@@ -7444,7 +7456,7 @@ free_string(String value)
 
 /* Set tty's idea of window size, using the given file descriptor 'fd'. */
 int
-update_winsize(int fd, int rows, int cols, int height, int width)
+update_winsize(TScreen *screen, int rows, int cols, int height, int width)
 {
     int code = -1;
 #ifdef TTYSIZE_STRUCT
@@ -7467,8 +7479,16 @@ update_winsize(int fd, int rows, int cols, int height, int width)
 	last_cols = cols;
 	last_high = height;
 	last_wide = width;
+#if OPT_STATUS_LINE
+	if (IsStatusShown(screen)) {
+	    ++rows;
+	    height += FontHeight(screen);
+	    TRACE(("... account for status-line -> %dx%d (%dx%d)\n",
+		   rows, cols, height, width));
+	}
+#endif
 	setup_winsize(ts, rows, cols, height, width);
-	TRACE_RC(code, SET_TTYSIZE(fd, ts));
+	TRACE_RC(code, SET_TTYSIZE(screen->respond, ts));
 	trace_winsize(ts, "from SET_TTYSIZE");
     }
 #endif
@@ -7495,7 +7515,7 @@ xtermSetWinSize(XtermWidget xw)
 	    TScreen *screen = TScreenOf(xw);
 
 	    TRACE(("xtermSetWinSize\n"));
-	    update_winsize(screen->respond,
+	    update_winsize(screen,
 			   MaxRows(screen),
 			   MaxCols(screen),
 			   Height(screen),

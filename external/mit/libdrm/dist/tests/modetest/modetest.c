@@ -376,7 +376,7 @@ static void dump_prop(struct device *dev, drmModePropertyPtr prop,
 		printf("\t\tenums:");
 		for (i = 0; i < prop->count_enums; i++)
 			printf(" %s=%"PRIu64, prop->enums[i].name,
-			       prop->enums[i].value);
+			       (uint64_t)prop->enums[i].value);
 		printf("\n");
 	} else if (drm_property_type_is(prop, DRM_MODE_PROP_BITMASK)) {
 		printf("\t\tvalues:");
@@ -656,7 +656,7 @@ static struct resources *get_resources(struct device *dev)
 		int num;
 
 		num = asprintf(&connector->name, "%s-%u",
-			 util_lookup_connector_type_name(conn->connector_type),
+			 drmModeGetConnectorTypeName(conn->connector_type),
 			 conn->connector_type_id);
 		if (num < 0)
 			goto error;
