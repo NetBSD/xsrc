@@ -22,7 +22,9 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "CUnit/Basic.h"
 
@@ -32,9 +34,26 @@
 #include "amdgpu_drm.h"
 #include "amdgpu_internal.h"
 #include "decode_messages.h"
+#include "frame.h"
 
 #define IB_SIZE		4096
 #define MAX_RESOURCES	16
+
+#define H264_NAL_TYPE_NON_IDR_SLICE 1
+#define H264_NAL_TYPE_DP_A_SLICE 2
+#define H264_NAL_TYPE_DP_B_SLICE 3
+#define H264_NAL_TYPE_DP_C_SLICE 0x4
+#define H264_NAL_TYPE_IDR_SLICE 0x5
+#define H264_NAL_TYPE_SEI 0x6
+#define H264_NAL_TYPE_SEQ_PARAM 0x7
+#define H264_NAL_TYPE_PIC_PARAM 0x8
+#define H264_NAL_TYPE_ACCESS_UNIT 0x9
+#define H264_NAL_TYPE_END_OF_SEQ 0xa
+#define H264_NAL_TYPE_END_OF_STREAM 0xb
+#define H264_NAL_TYPE_FILLER_DATA 0xc
+#define H264_NAL_TYPE_SEQ_EXTENSION 0xd
+
+#define H264_START_CODE 0x000001
 
 struct amdgpu_vcn_bo {
 	amdgpu_bo_handle handle;
@@ -52,6 +71,23 @@ struct amdgpu_vcn_reg {
 	uint32_t cntl;
 };
 
+typedef struct BufferInfo_t {
+	uint32_t numOfBitsInBuffer;
+	const uint8_t *decBuffer;
+	uint8_t decData;
+	uint32_t decBufferSize;
+	const uint8_t *end;
+} bufferInfo;
+
+typedef struct h264_decode_t {
+	uint8_t profile;
+	uint8_t level_idc;
+	uint8_t nal_ref_idc;
+	uint8_t nal_unit_type;
+	uint32_t pic_width, pic_height;
+	uint32_t slice_type;
+} h264_decode;
+
 static amdgpu_device_handle device_handle;
 static uint32_t major_version;
 static uint32_t minor_version;
@@ -60,7 +96,9 @@ static uint32_t chip_rev;
 static uint32_t chip_id;
 static uint32_t asic_id;
 static uint32_t chip_rev;
-static uint32_t chip_id;
+static struct amdgpu_vcn_bo enc_buf;
+static struct amdgpu_vcn_bo cpb_buf;
+static uint32_t enc_task_id;
 
 static amdgpu_context_handle context_handle;
 static amdgpu_bo_handle ib_handle;
@@ -70,7 +108,16 @@ static uint32_t *ib_cpu;
 
 static amdgpu_bo_handle resources[MAX_RESOURCES];
 static unsigned num_resources;
-static struct amdgpu_vcn_reg reg;
+
+static uint8_t vcn_reg_index;
+static struct amdgpu_vcn_reg reg[] = {
+	{0x81c4, 0x81c5, 0x81c3, 0x81ff, 0x81c6},
+	{0x504, 0x505, 0x503, 0x53f, 0x506},
+	{0x10, 0x11, 0xf, 0x29, 0x26d},
+};
+
+uint32_t gWidth, gHeight, gSliceType;
+struct drm_amdgpu_info_hw_ip einfo;
 
 static void amdgpu_cs_vcn_dec_create(void);
 static void amdgpu_cs_vcn_dec_decode(void);
@@ -80,6 +127,20 @@ static void amdgpu_cs_vcn_enc_create(void);
 static void amdgpu_cs_vcn_enc_encode(void);
 static void amdgpu_cs_vcn_enc_destroy(void);
 
+static void h264_check_0s (bufferInfo * bufInfo, int count);
+static int32_t h264_se (bufferInfo * bufInfo);
+static inline uint32_t bs_read_u1(bufferInfo *bufinfo);
+static inline int bs_eof(bufferInfo *bufinfo);
+static inline uint32_t bs_read_u(bufferInfo* bufinfo, int n);
+static inline uint32_t bs_read_ue(bufferInfo* bufinfo);
+static uint32_t remove_03 (uint8_t *bptr, uint32_t len);
+static void scaling_list (uint32_t ix, uint32_t sizeOfScalingList, bufferInfo *bufInfo);
+static void h264_parse_sequence_parameter_set (h264_decode * dec, bufferInfo *bufInfo);
+static void h264_slice_header (h264_decode *dec, bufferInfo *bufInfo);
+static uint8_t h264_parse_nal (h264_decode *dec, bufferInfo *bufInfo);
+static uint32_t h264_find_next_start_code (uint8_t *pBuf, uint32_t bufLen);
+static int verify_checksum(uint8_t *buffer, uint32_t buffer_size);
+
 CU_TestInfo vcn_tests[] = {
 
 	{ "VCN DEC create",  amdgpu_cs_vcn_dec_create },
@@ -87,7 +148,7 @@ CU_TestInfo vcn_tests[] = {
 	{ "VCN DEC destroy",  amdgpu_cs_vcn_dec_destroy },
 
 	{ "VCN ENC create",  amdgpu_cs_vcn_enc_create },
-	{ "VCN ENC decode",  amdgpu_cs_vcn_enc_encode },
+	{ "VCN ENC encode",  amdgpu_cs_vcn_enc_encode },
 	{ "VCN ENC destroy",  amdgpu_cs_vcn_enc_destroy },
 	CU_TEST_INFO_NULL,
 };
@@ -95,7 +156,7 @@ CU_TestInfo vcn_tests[] = {
 CU_BOOL suite_vcn_tests_enable(void)
 {
 	struct drm_amdgpu_info_hw_ip info;
-	int r;
+	int r, ret;
 
 	if (amdgpu_device_initialize(drm_amdgpu[0], &major_version,
 				   &minor_version, &device_handle))
@@ -107,9 +168,10 @@ CU_BOOL suite_vcn_tests_enable(void)
 	chip_id = device_handle->info.chip_external_rev;
 
 	r = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_DEC, 0, &info);
+	ret = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_ENC, 0, &einfo);
 
 	if (amdgpu_device_deinitialize(device_handle))
-			return CU_FALSE;
+		return CU_FALSE;
 
 	if (r != 0 || !info.available_rings ||
 	    (family_id < AMDGPU_FAMILY_RV &&
@@ -119,50 +181,21 @@ CU_BOOL suite_vcn_tests_enable(void)
 		return CU_FALSE;
 	}
 
-	if (family_id == AMDGPU_FAMILY_AI) {
+	if (family_id == AMDGPU_FAMILY_AI || (ret != 0) ||
+	    (!einfo.available_rings)) {
 		amdgpu_set_test_active("VCN Tests", "VCN ENC create", CU_FALSE);
-		amdgpu_set_test_active("VCN Tests", "VCN ENC decode", CU_FALSE);
+		amdgpu_set_test_active("VCN Tests", "VCN ENC encode", CU_FALSE);
 		amdgpu_set_test_active("VCN Tests", "VCN ENC destroy", CU_FALSE);
 	}
 
-	if (family_id == AMDGPU_FAMILY_RV) {
-		if (chip_id >= (chip_rev + 0x91)) {
-			reg.data0 = 0x504;
-			reg.data1 = 0x505;
-			reg.cmd = 0x503;
-			reg.nop = 0x53f;
-			reg.cntl = 0x506;
-		} else {
-			reg.data0 = 0x81c4;
-			reg.data1 = 0x81c5;
-			reg.cmd = 0x81c3;
-			reg.nop = 0x81ff;
-			reg.cntl = 0x81c6;
-		}
-	} else if (family_id == AMDGPU_FAMILY_NV) {
-		if (chip_id == (chip_rev + 0x28) ||
-		    chip_id == (chip_rev + 0x32) ||
-		    chip_id == (chip_rev + 0x3c)) {
-			reg.data0 = 0x10;
-			reg.data1 = 0x11;
-			reg.cmd = 0xf;
-			reg.nop = 0x29;
-			reg.cntl = 0x26d;
-		}
-		else {
-			reg.data0 = 0x504;
-			reg.data1 = 0x505;
-			reg.cmd = 0x503;
-			reg.nop = 0x53f;
-			reg.cntl = 0x506;
-		}
-	} else if (family_id == AMDGPU_FAMILY_AI) {
-		reg.data0 = 0x10;
-		reg.data1 = 0x11;
-		reg.cmd = 0xf;
-		reg.nop = 0x29;
-		reg.cntl = 0x26d;
-	} else
+	if (info.hw_ip_version_major == 1)
+		vcn_reg_index = 0;
+	else if (info.hw_ip_version_major == 2 && info.hw_ip_version_minor == 0)
+		vcn_reg_index = 1;
+	else if ((info.hw_ip_version_major == 2 && info.hw_ip_version_minor >= 5) ||
+		  info.hw_ip_version_major == 3)
+		vcn_reg_index = 2;
+	else
 		return CU_FALSE;
 
 	return CU_TRUE;
@@ -306,11 +339,11 @@ static void free_resource(struct amdgpu_vcn_bo *vcn_bo)
 
 static void vcn_dec_cmd(uint64_t addr, unsigned cmd, int *idx)
 {
-	ib_cpu[(*idx)++] = reg.data0;
+	ib_cpu[(*idx)++] = reg[vcn_reg_index].data0;
 	ib_cpu[(*idx)++] = addr;
-	ib_cpu[(*idx)++] = reg.data1;
+	ib_cpu[(*idx)++] = reg[vcn_reg_index].data1;
 	ib_cpu[(*idx)++] = addr >> 32;
-	ib_cpu[(*idx)++] = reg.cmd;
+	ib_cpu[(*idx)++] = reg[vcn_reg_index].cmd;
 	ib_cpu[(*idx)++] = cmd << 1;
 }
 
@@ -331,14 +364,14 @@ static void amdgpu_cs_vcn_dec_create(void)
 	memcpy(msg_buf.ptr, vcn_dec_create_msg, sizeof(vcn_dec_create_msg));
 
 	len = 0;
-	ib_cpu[len++] = reg.data0;
+	ib_cpu[len++] = reg[vcn_reg_index].data0;
 	ib_cpu[len++] = msg_buf.addr;
-	ib_cpu[len++] = reg.data1;
+	ib_cpu[len++] = reg[vcn_reg_index].data1;
 	ib_cpu[len++] = msg_buf.addr >> 32;
-	ib_cpu[len++] = reg.cmd;
+	ib_cpu[len++] = reg[vcn_reg_index].cmd;
 	ib_cpu[len++] = 0;
 	for (; len % 16; ) {
-		ib_cpu[len++] = reg.nop;
+		ib_cpu[len++] = reg[vcn_reg_index].nop;
 		ib_cpu[len++] = 0;
 	}
 
@@ -363,7 +396,7 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	size += ALIGN(dpb_size, 4*1024);
 	size += ALIGN(dt_size, 4*1024);
 
-	num_resources  = 0;
+	num_resources = 0;
 	alloc_resource(&dec_buf, size, AMDGPU_GEM_DOMAIN_GTT);
 	resources[num_resources++] = dec_buf.handle;
 	resources[num_resources++] = ib_handle;
@@ -406,10 +439,10 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	vcn_dec_cmd(it_addr, 0x204, &len);
 	vcn_dec_cmd(ctx_addr, 0x206, &len);
 
-	ib_cpu[len++] = reg.cntl;
+	ib_cpu[len++] = reg[vcn_reg_index].cntl;
 	ib_cpu[len++] = 0x1;
 	for (; len % 16; ) {
-		ib_cpu[len++] = reg.nop;
+		ib_cpu[len++] = reg[vcn_reg_index].nop;
 		ib_cpu[len++] = 0;
 	}
 
@@ -429,7 +462,7 @@ static void amdgpu_cs_vcn_dec_destroy(void)
 	struct amdgpu_vcn_bo msg_buf;
 	int len, r;
 
-	num_resources  = 0;
+	num_resources = 0;
 	alloc_resource(&msg_buf, 1024, AMDGPU_GEM_DOMAIN_GTT);
 	resources[num_resources++] = msg_buf.handle;
 	resources[num_resources++] = ib_handle;
@@ -441,14 +474,14 @@ static void amdgpu_cs_vcn_dec_destroy(void)
 	memcpy(msg_buf.ptr, vcn_dec_destroy_msg, sizeof(vcn_dec_destroy_msg));
 
 	len = 0;
-	ib_cpu[len++] = reg.data0;
+	ib_cpu[len++] = reg[vcn_reg_index].data0;
 	ib_cpu[len++] = msg_buf.addr;
-	ib_cpu[len++] = reg.data1;
+	ib_cpu[len++] = reg[vcn_reg_index].data1;
 	ib_cpu[len++] = msg_buf.addr >> 32;
-	ib_cpu[len++] = reg.cmd;
+	ib_cpu[len++] = reg[vcn_reg_index].cmd;
 	ib_cpu[len++] = 0;
 	for (; len % 16; ) {
-		ib_cpu[len++] = reg.nop;
+		ib_cpu[len++] = reg[vcn_reg_index].nop;
 		ib_cpu[len++] = 0;
 	}
 
@@ -460,15 +493,884 @@ static void amdgpu_cs_vcn_dec_destroy(void)
 
 static void amdgpu_cs_vcn_enc_create(void)
 {
-	/* TODO */
+	int len, r;
+	uint32_t *p_task_size = NULL;
+	uint32_t task_offset = 0, st_offset;
+	uint32_t *st_size = NULL;
+	unsigned width = 160, height = 128, buf_size;
+	uint32_t fw_maj = 1, fw_min = 9;
+
+	if (einfo.hw_ip_version_major == 2) {
+		fw_maj = 1;
+		fw_min = 1;
+	} else if (einfo.hw_ip_version_major == 3) {
+		fw_maj = 1;
+		fw_min = 0;
+	}
+
+	gWidth = width;
+	gHeight = height;
+	buf_size = ALIGN(width, 256) * ALIGN(height, 32) * 3 / 2;
+	enc_task_id = 1;
+
+	num_resources = 0;
+	alloc_resource(&enc_buf, 128 * 1024, AMDGPU_GEM_DOMAIN_GTT);
+	alloc_resource(&cpb_buf, buf_size * 2, AMDGPU_GEM_DOMAIN_GTT);
+	resources[num_resources++] = enc_buf.handle;
+	resources[num_resources++] = cpb_buf.handle;
+	resources[num_resources++] = ib_handle;
+
+	r = amdgpu_bo_cpu_map(enc_buf.handle, (void**)&enc_buf.ptr);
+	memset(enc_buf.ptr, 0, 128 * 1024);
+	r = amdgpu_bo_cpu_unmap(enc_buf.handle);
+
+	r = amdgpu_bo_cpu_map(cpb_buf.handle, (void**)&enc_buf.ptr);
+	memset(enc_buf.ptr, 0, buf_size * 2);
+	r = amdgpu_bo_cpu_unmap(cpb_buf.handle);
+
+	len = 0;
+	/* session info */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000001;	/* RENCODE_IB_PARAM_SESSION_INFO */
+	ib_cpu[len++] = ((fw_maj << 16) | (fw_min << 0));
+	ib_cpu[len++] = enc_buf.addr >> 32;
+	ib_cpu[len++] = enc_buf.addr;
+	ib_cpu[len++] = 1;	/* RENCODE_ENGINE_TYPE_ENCODE; */
+	*st_size = (len - st_offset) * 4;
+
+	/* task info */
+	task_offset = len;
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000002;	/* RENCODE_IB_PARAM_TASK_INFO */
+	p_task_size = &ib_cpu[len++];
+	ib_cpu[len++] = enc_task_id++;	/* task_id */
+	ib_cpu[len++] = 0;	/* feedback */
+	*st_size = (len - st_offset) * 4;
+
+	/* op init */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x01000001;	/* RENCODE_IB_OP_INITIALIZE */
+	*st_size = (len - st_offset) * 4;
+
+	/* session_init */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000003;	/* RENCODE_IB_PARAM_SESSION_INIT */
+	ib_cpu[len++] = 1;	/* RENCODE_ENCODE_STANDARD_H264 */
+	ib_cpu[len++] = width;
+	ib_cpu[len++] = height;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 0;	/* pre encode mode */
+	ib_cpu[len++] = 0;	/* chroma enabled : false */
+	*st_size = (len - st_offset) * 4;
+
+	/* slice control */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00200001;	/* RENCODE_H264_IB_PARAM_SLICE_CONTROL */
+	ib_cpu[len++] = 0;	/* RENCODE_H264_SLICE_CONTROL_MODE_FIXED_MBS */
+	ib_cpu[len++] = ALIGN(width, 16) / 16 * ALIGN(height, 16) / 16;
+	*st_size = (len - st_offset) * 4;
+
+	/* enc spec misc */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00200002;	/* RENCODE_H264_IB_PARAM_SPEC_MISC */
+	ib_cpu[len++] = 0;	/* constrained intra pred flag */
+	ib_cpu[len++] = 0;	/* cabac enable */
+	ib_cpu[len++] = 0;	/* cabac init idc */
+	ib_cpu[len++] = 1;	/* half pel enabled */
+	ib_cpu[len++] = 1;	/* quarter pel enabled */
+	ib_cpu[len++] = 100;	/* BASELINE profile */
+	ib_cpu[len++] = 11;	/* level */
+	if (einfo.hw_ip_version_major == 3) {
+		ib_cpu[len++] = 0;	/* b_picture_enabled */
+		ib_cpu[len++] = 0;	/* weighted_bipred_idc */
+	}
+	*st_size = (len - st_offset) * 4;
+
+	/* deblocking filter */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00200004;	/* RENCODE_H264_IB_PARAM_DEBLOCKING_FILTER */
+	ib_cpu[len++] = 0;	/* disable deblocking filter idc */
+	ib_cpu[len++] = 0;	/* alpha c0 offset */
+	ib_cpu[len++] = 0;	/* tc offset */
+	ib_cpu[len++] = 0;	/* cb offset */
+	ib_cpu[len++] = 0;	/* cr offset */
+	*st_size = (len - st_offset) * 4;
+
+	/* layer control */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000004;	/* RENCODE_IB_PARAM_LAYER_CONTROL */
+	ib_cpu[len++] = 1;	/* max temporal layer */
+	ib_cpu[len++] = 1;	/* no of temporal layer */
+	*st_size = (len - st_offset) * 4;
+
+	/* rc_session init */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000006;	/* RENCODE_IB_PARAM_RATE_CONTROL_SESSION_INIT */
+	ib_cpu[len++] = 0;	/* rate control */
+	ib_cpu[len++] = 48;	/* vbv buffer level */
+	*st_size = (len - st_offset) * 4;
+
+	/* quality params */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000009;	/* RENCODE_IB_PARAM_QUALITY_PARAMS */
+	ib_cpu[len++] = 0;	/* vbaq mode */
+	ib_cpu[len++] = 0;	/* scene change sensitivity */
+	ib_cpu[len++] = 0;	/* scene change min idr interval */
+	ib_cpu[len++] = 0;
+	if (einfo.hw_ip_version_major == 3)
+		ib_cpu[len++] = 0;
+	*st_size = (len - st_offset) * 4;
+
+	/* layer select */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000005;	/* RENCODE_IB_PARAM_LAYER_SELECT */
+	ib_cpu[len++] = 0;	/* temporal layer */
+	*st_size = (len - st_offset) * 4;
+
+	/* rc layer init */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000007;	/* RENCODE_IB_PARAM_RATE_CONTROL_LAYER_INIT */
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 25;
+	ib_cpu[len++] = 1;
+	ib_cpu[len++] = 0x01312d00;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 0;
+	*st_size = (len - st_offset) * 4;
+
+	/* layer select */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000005;	/* RENCODE_IB_PARAM_LAYER_SELECT */
+	ib_cpu[len++] = 0;	/* temporal layer */
+	*st_size = (len - st_offset) * 4;
+
+	/* rc per pic */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000008;	/* RENCODE_IB_PARAM_RATE_CONTROL_PER_PICTURE */
+	ib_cpu[len++] = 20;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 51;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 1;
+	ib_cpu[len++] = 0;
+	ib_cpu[len++] = 1;
+	*st_size = (len - st_offset) * 4;
+
+	/* op init rc */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x01000004;	/* RENCODE_IB_OP_INIT_RC */
+	*st_size = (len - st_offset) * 4;
+
+	/* op init rc vbv */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x01000005;	/* RENCODE_IB_OP_INIT_RC_VBV_BUFFER_LEVEL */
+	*st_size = (len - st_offset) * 4;
+
+	*p_task_size = (len - task_offset) * 4;
+
+	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
+	CU_ASSERT_EQUAL(r, 0);
+}
+
+static int32_t h264_se (bufferInfo * bufInfo)
+{
+	uint32_t ret;
+
+	ret = bs_read_ue (bufInfo);
+	if ((ret & 0x1) == 0) {
+		ret >>= 1;
+		int32_t temp = 0 - ret;
+		return temp;
+	}
+
+	return (ret + 1) >> 1;
+}
+
+static void h264_check_0s (bufferInfo * bufInfo, int count)
+{
+	uint32_t val;
+
+	val = bs_read_u (bufInfo, count);
+	if (val != 0) {
+		printf ("field error - %d bits should be 0 is %x\n", count, val);
+	}
+}
+
+static inline int bs_eof(bufferInfo * bufinfo)
+{
+	if (bufinfo->decBuffer >= bufinfo->end)
+		return 1;
+	else
+		return 0;
+}
+
+static inline uint32_t bs_read_u1(bufferInfo *bufinfo)
+{
+	uint32_t r = 0;
+	uint32_t temp = 0;
+
+	bufinfo->numOfBitsInBuffer--;
+	if (! bs_eof(bufinfo)) {
+		temp = (((bufinfo->decData)) >> bufinfo->numOfBitsInBuffer);
+		r = temp & 0x01;
+	}
+
+	if (bufinfo->numOfBitsInBuffer == 0) {
+		bufinfo->decBuffer++;
+		bufinfo->decData = *bufinfo->decBuffer;
+		bufinfo->numOfBitsInBuffer = 8;
+	}
+
+	return r;
+}
+
+static inline uint32_t bs_read_u(bufferInfo* bufinfo, int n)
+{
+	uint32_t r = 0;
+	int i;
+
+	for (i = 0; i < n; i++) {
+		r |= ( bs_read_u1(bufinfo) << ( n - i - 1 ) );
+	}
+
+	return r;
+}
+
+static inline uint32_t bs_read_ue(bufferInfo* bufinfo)
+{
+	int32_t r = 0;
+	int i = 0;
+
+	while( (bs_read_u1(bufinfo) == 0) && (i < 32) && (!bs_eof(bufinfo))) {
+		i++;
+	}
+	r = bs_read_u(bufinfo, i);
+	r += (1 << i) - 1;
+	return r;
+}
+
+static uint32_t remove_03 (uint8_t * bptr, uint32_t len)
+{
+	uint32_t nal_len = 0;
+	while (nal_len + 2 < len) {
+		if (bptr[0] == 0 && bptr[1] == 0 && bptr[2] == 3) {
+			bptr += 2;
+			nal_len += 2;
+			len--;
+			memmove (bptr, bptr + 1, len - nal_len);
+		} else {
+			bptr++;
+			nal_len++;
+		}
+	}
+	return len;
+}
+
+static void scaling_list (uint32_t ix, uint32_t sizeOfScalingList, bufferInfo * bufInfo)
+{
+	uint32_t lastScale = 8, nextScale = 8;
+	uint32_t jx;
+	int deltaScale;
+
+	for (jx = 0; jx < sizeOfScalingList; jx++) {
+		if (nextScale != 0) {
+			deltaScale = h264_se (bufInfo);
+			nextScale = (lastScale + deltaScale + 256) % 256;
+		}
+		if (nextScale == 0) {
+			lastScale = lastScale;
+		} else {
+			lastScale = nextScale;
+		}
+	}
+}
+
+static void h264_parse_sequence_parameter_set (h264_decode * dec, bufferInfo * bufInfo)
+{
+	uint32_t temp;
+
+	dec->profile = bs_read_u (bufInfo, 8);
+	bs_read_u (bufInfo, 1);		/* constaint_set0_flag */
+	bs_read_u (bufInfo, 1);		/* constaint_set1_flag */
+	bs_read_u (bufInfo, 1);		/* constaint_set2_flag */
+	bs_read_u (bufInfo, 1);		/* constaint_set3_flag */
+	bs_read_u (bufInfo, 1);		/* constaint_set4_flag */
+	bs_read_u (bufInfo, 1);		/* constaint_set5_flag */
+
+
+	h264_check_0s (bufInfo, 2);
+	dec->level_idc = bs_read_u (bufInfo, 8);
+	bs_read_ue (bufInfo);	/* SPS id*/
+
+	if (dec->profile == 100 || dec->profile == 110 ||
+		dec->profile == 122 || dec->profile == 144) {
+		uint32_t chroma_format_idc = bs_read_ue (bufInfo);
+		if (chroma_format_idc == 3) {
+			bs_read_u (bufInfo, 1);	/* residual_colour_transform_flag */
+		}
+		bs_read_ue (bufInfo);	/* bit_depth_luma_minus8 */
+		bs_read_ue (bufInfo);	/* bit_depth_chroma_minus8 */
+		bs_read_u (bufInfo, 1);	/* qpprime_y_zero_transform_bypass_flag */
+		uint32_t seq_scaling_matrix_present_flag = bs_read_u (bufInfo, 1);
+
+		if (seq_scaling_matrix_present_flag) {
+			for (uint32_t ix = 0; ix < 8; ix++) {
+				temp = bs_read_u (bufInfo, 1);
+				if (temp) {
+					scaling_list (ix, ix < 6 ? 16 : 64, bufInfo);
+				}
+			}
+		}
+	}
+
+	bs_read_ue (bufInfo);	/* log2_max_frame_num_minus4 */
+	uint32_t pic_order_cnt_type = bs_read_ue (bufInfo);
+
+	if (pic_order_cnt_type == 0) {
+		bs_read_ue (bufInfo);	/* log2_max_pic_order_cnt_lsb_minus4 */
+	} else if (pic_order_cnt_type == 1) {
+		bs_read_u (bufInfo, 1);	/* delta_pic_order_always_zero_flag */
+		h264_se (bufInfo);	/* offset_for_non_ref_pic */
+		h264_se (bufInfo);	/* offset_for_top_to_bottom_field */
+		temp = bs_read_ue (bufInfo);
+		for (uint32_t ix = 0; ix < temp; ix++) {
+			 h264_se (bufInfo);	/* offset_for_ref_frame[index] */
+		}
+	}
+	bs_read_ue (bufInfo);	/* num_ref_frames */
+	bs_read_u (bufInfo, 1);	/* gaps_in_frame_num_flag */
+	uint32_t PicWidthInMbs = bs_read_ue (bufInfo) + 1;
+
+	dec->pic_width = PicWidthInMbs * 16;
+	uint32_t PicHeightInMapUnits = bs_read_ue (bufInfo) + 1;
+
+	dec->pic_height = PicHeightInMapUnits * 16;
+	uint32_t frame_mbs_only_flag = bs_read_u (bufInfo, 1);
+	if (!frame_mbs_only_flag) {
+		bs_read_u (bufInfo, 1);	/* mb_adaptive_frame_field_flag */
+	}
+	bs_read_u (bufInfo, 1);	/* direct_8x8_inference_flag */
+	temp = bs_read_u (bufInfo, 1);
+	if (temp) {
+		bs_read_ue (bufInfo);	/* frame_crop_left_offset */
+		bs_read_ue (bufInfo);	/* frame_crop_right_offset */
+		bs_read_ue (bufInfo);	/* frame_crop_top_offset */
+		bs_read_ue (bufInfo);	/* frame_crop_bottom_offset */
+	}
+	temp = bs_read_u (bufInfo, 1);	/* VUI Parameters  */
+}
+
+static void h264_slice_header (h264_decode * dec, bufferInfo * bufInfo)
+{
+	uint32_t temp;
+
+	bs_read_ue (bufInfo);	/* first_mb_in_slice */
+	temp = bs_read_ue (bufInfo);
+	dec->slice_type = ((temp > 5) ? (temp - 5) : temp);
+}
+
+static uint8_t h264_parse_nal (h264_decode * dec, bufferInfo * bufInfo)
+{
+	uint8_t type = 0;
+
+	h264_check_0s (bufInfo, 1);
+	dec->nal_ref_idc = bs_read_u (bufInfo, 2);
+	dec->nal_unit_type = type = bs_read_u (bufInfo, 5);
+	switch (type)
+	{
+	case H264_NAL_TYPE_NON_IDR_SLICE:
+	case H264_NAL_TYPE_IDR_SLICE:
+		h264_slice_header (dec, bufInfo);
+		break;
+	case H264_NAL_TYPE_SEQ_PARAM:
+		h264_parse_sequence_parameter_set (dec, bufInfo);
+		break;
+	case H264_NAL_TYPE_PIC_PARAM:
+	case H264_NAL_TYPE_SEI:
+	case H264_NAL_TYPE_ACCESS_UNIT:
+	case H264_NAL_TYPE_SEQ_EXTENSION:
+		/* NOP */
+		break;
+	default:
+		printf ("Nal type unknown %d \n ", type);
+		break;
+	}
+	return type;
+}
+
+static uint32_t h264_find_next_start_code (uint8_t * pBuf, uint32_t bufLen)
+{
+	uint32_t val;
+	uint32_t offset, startBytes;
+
+	offset = startBytes = 0;
+	if (pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 0 && pBuf[3] == 1) {
+		pBuf += 4;
+		offset = 4;
+		startBytes = 1;
+	} else if (pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 1) {
+		pBuf += 3;
+		offset = 3;
+		startBytes = 1;
+	}
+	val = 0xffffffff;
+	while (offset < bufLen - 3) {
+		val <<= 8;
+		val |= *pBuf++;
+		offset++;
+		if (val == H264_START_CODE)
+			return offset - 4;
+
+		if ((val & 0x00ffffff) == H264_START_CODE)
+			return offset - 3;
+	}
+	if (bufLen - offset <= 3 && startBytes == 0) {
+		startBytes = 0;
+		return 0;
+	}
+
+	return offset;
+}
+
+static int verify_checksum(uint8_t *buffer, uint32_t buffer_size)
+{
+	uint32_t buffer_pos = 0;
+	int done = 0;
+	h264_decode dec;
+
+	memset(&dec, 0, sizeof(h264_decode));
+	do {
+		uint32_t ret;
+
+		ret = h264_find_next_start_code (buffer + buffer_pos,
+				 buffer_size - buffer_pos);
+		if (ret == 0) {
+			done = 1;
+			if (buffer_pos == 0) {
+				fprintf (stderr,
+				 "couldn't find start code in buffer from 0\n");
+			}
+		} else {
+		/* have a complete NAL from buffer_pos to end */
+			if (ret > 3) {
+				uint32_t nal_len;
+				bufferInfo bufinfo;
+
+				nal_len = remove_03 (buffer + buffer_pos, ret);
+				bufinfo.decBuffer = buffer + buffer_pos + (buffer[buffer_pos + 2] == 1 ? 3 : 4);
+				bufinfo.decBufferSize = (nal_len - (buffer[buffer_pos + 2] == 1 ? 3 : 4)) * 8;
+				bufinfo.end = buffer + buffer_pos + nal_len;
+				bufinfo.numOfBitsInBuffer = 8;
+				bufinfo.decData = *bufinfo.decBuffer;
+				h264_parse_nal (&dec, &bufinfo);
+			}
+			buffer_pos += ret;	/*  buffer_pos points to next code */
+		}
+	} while (done == 0);
+
+	if ((dec.pic_width == gWidth) &&
+		(dec.pic_height == gHeight) &&
+		(dec.slice_type == gSliceType))
+	    return 0;
+	else
+		return -1;
+}
+
+static void check_result(struct amdgpu_vcn_bo fb_buf, struct amdgpu_vcn_bo bs_buf, int frame_type)
+{
+	uint32_t *fb_ptr;
+	uint8_t *bs_ptr;
+	uint32_t size;
+	int r;
+/* 	uint64_t s[3] = {0, 1121279001727, 1059312481445}; */
+
+	r = amdgpu_bo_cpu_map(fb_buf.handle, (void **)&fb_buf.ptr);
+	CU_ASSERT_EQUAL(r, 0);
+	fb_ptr = (uint32_t*)fb_buf.ptr;
+	size = fb_ptr[6];
+	r = amdgpu_bo_cpu_unmap(fb_buf.handle);
+	CU_ASSERT_EQUAL(r, 0);
+	r = amdgpu_bo_cpu_map(bs_buf.handle, (void **)&bs_buf.ptr);
+	CU_ASSERT_EQUAL(r, 0);
+
+	bs_ptr = (uint8_t*)bs_buf.ptr;
+	r = verify_checksum(bs_ptr, size);
+	CU_ASSERT_EQUAL(r, 0);
+	r = amdgpu_bo_cpu_unmap(bs_buf.handle);
+
+	CU_ASSERT_EQUAL(r, 0);
+}
+
+static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
+{
+	struct amdgpu_vcn_bo bs_buf, fb_buf, vbv_buf;
+	int len, r, i;
+	unsigned width = 160, height = 128, buf_size;
+	uint32_t *p_task_size = NULL;
+	uint32_t task_offset = 0, st_offset;
+	uint32_t *st_size = NULL;
+	uint32_t fw_maj = 1, fw_min = 9;
+
+	if (einfo.hw_ip_version_major == 2) {
+		fw_maj = 1;
+		fw_min = 1;
+	} else if (einfo.hw_ip_version_major == 3) {
+		fw_maj = 1;
+		fw_min = 0;
+	}
+	gSliceType = frame_type;
+	buf_size = ALIGN(width, 256) * ALIGN(height, 32) * 3 / 2;
+
+	num_resources = 0;
+	alloc_resource(&bs_buf, 4096, AMDGPU_GEM_DOMAIN_GTT);
+	alloc_resource(&fb_buf, 4096, AMDGPU_GEM_DOMAIN_GTT);
+	alloc_resource(&vbv_buf, buf_size, AMDGPU_GEM_DOMAIN_GTT);
+	resources[num_resources++] = enc_buf.handle;
+	resources[num_resources++] = cpb_buf.handle;
+	resources[num_resources++] = bs_buf.handle;
+	resources[num_resources++] = fb_buf.handle;
+	resources[num_resources++] = vbv_buf.handle;
+	resources[num_resources++] = ib_handle;
+
+
+	r = amdgpu_bo_cpu_map(bs_buf.handle, (void**)&bs_buf.ptr);
+	memset(bs_buf.ptr, 0, 4096);
+	r = amdgpu_bo_cpu_unmap(bs_buf.handle);
+
+	r = amdgpu_bo_cpu_map(fb_buf.handle, (void**)&fb_buf.ptr);
+	memset(fb_buf.ptr, 0, 4096);
+	r = amdgpu_bo_cpu_unmap(fb_buf.handle);
+
+	r = amdgpu_bo_cpu_map(vbv_buf.handle, (void **)&vbv_buf.ptr);
+	CU_ASSERT_EQUAL(r, 0);
+
+	for (int i = 0; i < ALIGN(height, 32) * 3 / 2; i++)
+		memcpy(vbv_buf.ptr + i * ALIGN(width, 256), frame + i * width, width);
+
+	r = amdgpu_bo_cpu_unmap(vbv_buf.handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	len = 0;
+	/* session info */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000001;	/* RENCODE_IB_PARAM_SESSION_INFO */
+	ib_cpu[len++] = ((fw_maj << 16) | (fw_min << 0));
+	ib_cpu[len++] = enc_buf.addr >> 32;
+	ib_cpu[len++] = enc_buf.addr;
+	ib_cpu[len++] = 1;	/* RENCODE_ENGINE_TYPE_ENCODE */;
+	*st_size = (len - st_offset) * 4;
+
+	/* task info */
+	task_offset = len;
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000002;	/* RENCODE_IB_PARAM_TASK_INFO */
+	p_task_size = &ib_cpu[len++];
+	ib_cpu[len++] = enc_task_id++;	/* task_id */
+	ib_cpu[len++] = 1;	/* feedback */
+	*st_size = (len - st_offset) * 4;
+
+	if (frame_type == 2) {
+		/* sps */
+		st_offset = len;
+		st_size = &ib_cpu[len++];	/* size */
+		if(einfo.hw_ip_version_major == 1)
+			ib_cpu[len++] = 0x00000020;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 1 */
+		else
+			ib_cpu[len++] = 0x0000000a;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 2,3 */
+		ib_cpu[len++] = 0x00000002;	/* RENCODE_DIRECT_OUTPUT_NALU_TYPE_SPS */
+		ib_cpu[len++] = 0x00000011;	/* sps len */
+		ib_cpu[len++] = 0x00000001;	/* start code */
+		ib_cpu[len++] = 0x6764440b;
+		ib_cpu[len++] = 0xac54c284;
+		ib_cpu[len++] = 0x68078442;
+		ib_cpu[len++] = 0x37000000;
+		*st_size = (len - st_offset) * 4;
+
+		/* pps */
+		st_offset = len;
+		st_size = &ib_cpu[len++];	/* size */
+		if(einfo.hw_ip_version_major == 1)
+			ib_cpu[len++] = 0x00000020;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 1*/
+		else
+			ib_cpu[len++] = 0x0000000a;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 2,3*/
+		ib_cpu[len++] = 0x00000003;	/* RENCODE_DIRECT_OUTPUT_NALU_TYPE_PPS */
+		ib_cpu[len++] = 0x00000008;	/* pps len */
+		ib_cpu[len++] = 0x00000001;	/* start code */
+		ib_cpu[len++] = 0x68ce3c80;
+		*st_size = (len - st_offset) * 4;
+	}
+
+	/* slice header */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x0000000a; /* RENCODE_IB_PARAM_SLICE_HEADER vcn 1 */
+	else
+		ib_cpu[len++] = 0x0000000b; /* RENCODE_IB_PARAM_SLICE_HEADER vcn 2,3 */
+	if (frame_type == 2) {
+		ib_cpu[len++] = 0x65000000;
+		ib_cpu[len++] = 0x11040000;
+	} else {
+		ib_cpu[len++] = 0x41000000;
+		ib_cpu[len++] = 0x34210000;
+	}
+	ib_cpu[len++] = 0xe0000000;
+	for(i = 0; i < 13; i++)
+		ib_cpu[len++] = 0x00000000;
+
+	ib_cpu[len++] = 0x00000001;
+	ib_cpu[len++] = 0x00000008;
+	ib_cpu[len++] = 0x00020000;
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = 0x00000001;
+	ib_cpu[len++] = 0x00000015;
+	ib_cpu[len++] = 0x00020001;
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = 0x00000001;
+	ib_cpu[len++] = 0x00000003;
+	for(i = 0; i < 22; i++)
+		ib_cpu[len++] = 0x00000000;
+
+	*st_size = (len - st_offset) * 4;
+
+	/* encode params */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x0000000b;	/* RENCODE_IB_PARAM_ENCODE_PARAMS vcn 1*/
+	else
+		ib_cpu[len++] = 0x0000000f;	/* RENCODE_IB_PARAM_ENCODE_PARAMS vcn 2,3*/
+	ib_cpu[len++] = frame_type;
+	ib_cpu[len++] = 0x0001f000;
+	ib_cpu[len++] = vbv_buf.addr >> 32;
+	ib_cpu[len++] = vbv_buf.addr;
+	ib_cpu[len++] = (vbv_buf.addr + ALIGN(width, 256) * ALIGN(height, 32)) >> 32;
+	ib_cpu[len++] = vbv_buf.addr + ALIGN(width, 256) * ALIGN(height, 32);
+	ib_cpu[len++] = 0x00000100;
+	ib_cpu[len++] = 0x00000080;
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = 0xffffffff;
+	ib_cpu[len++] = 0x00000000;
+	*st_size = (len - st_offset) * 4;
+
+	/* encode params h264 */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00200003;	/* RENCODE_H264_IB_PARAM_ENCODE_PARAMS */
+	if (einfo.hw_ip_version_major != 3) {
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0xffffffff;
+	} else {
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0xffffffff;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0xffffffff;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+	}
+	*st_size = (len - st_offset) * 4;
+
+	/* encode context */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x0000000d;	/* ENCODE_CONTEXT_BUFFER  vcn 1 */
+	else
+		ib_cpu[len++] = 0x00000011;	/* ENCODE_CONTEXT_BUFFER  vcn 2,3 */
+	ib_cpu[len++] = cpb_buf.addr >> 32;
+	ib_cpu[len++] = cpb_buf.addr;
+	ib_cpu[len++] = 0x00000000;	/* swizzle mode */
+	ib_cpu[len++] = 0x00000100;	/* luma pitch */
+	ib_cpu[len++] = 0x00000100;	/* chroma pitch */
+	ib_cpu[len++] = 0x00000003; /* no reconstructed picture */
+	ib_cpu[len++] = 0x00000000;	/* reconstructed pic 1 luma offset */
+	ib_cpu[len++] = ALIGN(width, 256) * ALIGN(height, 32);	/* pic1 chroma offset */
+	ib_cpu[len++] = ALIGN(width, 256) * ALIGN(height, 32) * 3 / 2;	/* pic2 luma offset */
+	ib_cpu[len++] = ALIGN(width, 256) * ALIGN(height, 32) * 5 / 2;	/* pic2 chroma offset */
+
+	for (int i = 0; i < 136; i++)
+		ib_cpu[len++] = 0x00000000;
+	*st_size = (len - st_offset) * 4;
+
+	/* bitstream buffer */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x0000000e;	/* VIDEO_BITSTREAM_BUFFER vcn 1 */
+	else
+		ib_cpu[len++] = 0x00000012;	/* VIDEO_BITSTREAM_BUFFER vcn 2,3 */
+	ib_cpu[len++] = 0x00000000;	/* mode */
+	ib_cpu[len++] = bs_buf.addr >> 32;
+	ib_cpu[len++] = bs_buf.addr;
+	ib_cpu[len++] = 0x0001f000;
+	ib_cpu[len++] = 0x00000000;
+	*st_size = (len - st_offset) * 4;
+
+	/* feedback */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x00000010;	/* FEEDBACK_BUFFER vcn 1 */
+	else
+		ib_cpu[len++] = 0x00000015;	/* FEEDBACK_BUFFER vcn 2,3 */
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = fb_buf.addr >> 32;
+	ib_cpu[len++] = fb_buf.addr;
+	ib_cpu[len++] = 0x00000010;
+	ib_cpu[len++] = 0x00000028;
+	*st_size = (len - st_offset) * 4;
+
+	/* intra refresh */
+	st_offset = len;
+	st_size = &ib_cpu[len++];
+	if(einfo.hw_ip_version_major == 1)
+		ib_cpu[len++] = 0x0000000c;	/* INTRA_REFRESH vcn 1 */
+	else
+		ib_cpu[len++] = 0x00000010;	/* INTRA_REFRESH vcn 2,3 */
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = 0x00000000;
+	ib_cpu[len++] = 0x00000000;
+	*st_size = (len - st_offset) * 4;
+
+	if(einfo.hw_ip_version_major != 1) {
+		/* Input Format */
+		st_offset = len;
+		st_size = &ib_cpu[len++];
+		ib_cpu[len++] = 0x0000000c;
+		ib_cpu[len++] = 0x00000000;	/* RENCODE_COLOR_VOLUME_G22_BT709 */
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;	/* RENCODE_COLOR_BIT_DEPTH_8_BIT */
+		ib_cpu[len++] = 0x00000000;	/* RENCODE_COLOR_PACKING_FORMAT_NV12 */
+		*st_size = (len - st_offset) * 4;
+
+		/* Output Format */
+		st_offset = len;
+		st_size = &ib_cpu[len++];
+		ib_cpu[len++] = 0x0000000d;
+		ib_cpu[len++] = 0x00000000;	/* RENCODE_COLOR_VOLUME_G22_BT709 */
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;
+		ib_cpu[len++] = 0x00000000;	/* RENCODE_COLOR_BIT_DEPTH_8_BIT */
+		*st_size = (len - st_offset) * 4;
+	}
+	/* op_speed */
+	st_offset = len;
+	st_size = &ib_cpu[len++];
+	ib_cpu[len++] = 0x01000006;	/* SPEED_ENCODING_MODE */
+	*st_size = (len - st_offset) * 4;
+
+	/* op_enc */
+	st_offset = len;
+	st_size = &ib_cpu[len++];
+	ib_cpu[len++] = 0x01000003;
+	*st_size = (len - st_offset) * 4;
+
+	*p_task_size = (len - task_offset) * 4;
+	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
+	CU_ASSERT_EQUAL(r, 0);
+
+	/* check result */
+	check_result(fb_buf, bs_buf, frame_type);
+
+	free_resource(&fb_buf);
+	free_resource(&bs_buf);
+	free_resource(&vbv_buf);
 }
 
 static void amdgpu_cs_vcn_enc_encode(void)
 {
-	/* TODO */
+	amdgpu_cs_vcn_enc_encode_frame(2);	/* IDR frame */
 }
 
 static void amdgpu_cs_vcn_enc_destroy(void)
 {
-	/* TODO */
+	int len = 0, r;
+	uint32_t *p_task_size = NULL;
+	uint32_t task_offset = 0, st_offset;
+	uint32_t *st_size = NULL;
+	uint32_t fw_maj = 1, fw_min = 9;
+
+	if (einfo.hw_ip_version_major == 2) {
+		fw_maj = 1;
+		fw_min = 1;
+	} else if (einfo.hw_ip_version_major == 3) {
+		fw_maj = 1;
+		fw_min = 0;
+	}
+
+	num_resources = 0;
+/* 	alloc_resource(&enc_buf, 128 * 1024, AMDGPU_GEM_DOMAIN_GTT); */
+	resources[num_resources++] = enc_buf.handle;
+	resources[num_resources++] = ib_handle;
+
+	/* session info */
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000001;	/* RENCODE_IB_PARAM_SESSION_INFO */
+	ib_cpu[len++] = ((fw_maj << 16) | (fw_min << 0));
+	ib_cpu[len++] = enc_buf.addr >> 32;
+	ib_cpu[len++] = enc_buf.addr;
+	ib_cpu[len++] = 1;	/* RENCODE_ENGINE_TYPE_ENCODE; */
+	*st_size = (len - st_offset) * 4;
+
+	/* task info */
+	task_offset = len;
+	st_offset = len;
+	st_size = &ib_cpu[len++];	/* size */
+	ib_cpu[len++] = 0x00000002;	/* RENCODE_IB_PARAM_TASK_INFO */
+	p_task_size = &ib_cpu[len++];
+	ib_cpu[len++] = enc_task_id++;	/* task_id */
+	ib_cpu[len++] = 0;	/* feedback */
+	*st_size = (len - st_offset) * 4;
+
+	/*  op close */
+	st_offset = len;
+	st_size = &ib_cpu[len++];
+	ib_cpu[len++] = 0x01000002;	/* RENCODE_IB_OP_CLOSE_SESSION */
+	*st_size = (len - st_offset) * 4;
+
+	*p_task_size = (len - task_offset) * 4;
+
+	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
+	CU_ASSERT_EQUAL(r, 0);
+
+	free_resource(&cpb_buf);
+	free_resource(&enc_buf);
 }

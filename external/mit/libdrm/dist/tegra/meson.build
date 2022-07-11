@@ -20,11 +20,17 @@
 
 libdrm_tegra = library(
   'drm_tegra',
-  [files('tegra.c'), config_file],
+  [
+    files(
+      'channel.c', 'job.c', 'private.h', 'pushbuf.c', 'syncpt.c', 'tegra.c'
+    ),
+    config_file
+  ],
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
   dependencies : [dep_pthread_stubs, dep_atomic_ops],
   c_args : libdrm_c_args,
+  gnu_symbol_visibility : 'hidden',
   version : '0.0.0',
   install : true,
 )
@@ -34,14 +40,16 @@ ext_libdrm_tegra = declare_dependency(
   include_directories : [inc_drm, include_directories('.')],
 )
 
+if meson.version().version_compare('>= 0.54.0')
+  meson.override_dependency('libdrm_tegra', ext_libdrm_tegra)
+endif
+
 install_headers('tegra.h', subdir : 'libdrm')
 
 pkg.generate(
+  libdrm_tegra,
   name : 'libdrm_tegra',
-  libraries : libdrm_tegra,
   subdirs : ['.', 'libdrm'],
-  version : meson.project_version(),
-  requires_private : 'libdrm',
   description : 'Userspace interface to Tegra kernel DRM services',
 )
 
