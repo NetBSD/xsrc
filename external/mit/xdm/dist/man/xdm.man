@@ -362,7 +362,7 @@ of \fBDisplayManager.randomFile\fP to generate the seed.
 A UNIX domain socket name or a TCP socket port number on local host on
 which a Pseudo-Random Number Generator Daemon, like EGD
 (http://egd.sourceforge.net) is listening, in order to generate the
-autorization keys. Either a non null port or a valid socket name must
+authorization keys. Either a non null port or a valid socket name must
 be specified. The default is to use the Unix-domain socket
 \fI/tmp/entropy\fP.
 .PP

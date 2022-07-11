@@ -1,3 +1,79 @@
+commit df5bb7f4e4039192571de75179658ee9c2ee58eb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 3 14:42:16 2022 -0700
+
+    xdm 1.1.13
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0fa51471049d427b95346dd7ffc17ff9c17b1d9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 11:46:06 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 943f2aa19005c53ee5c7c0782af382948e689af1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 11:46:02 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c84d3f77abdb5502140ba36137c25a6dd07df756
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 1 10:20:02 2020 -0800
+
+    doneAddrs: reset addrs to NULL after freeing list
+    
+    Resolves warning from Oracle Parfait static analyzer:
+    
+    Warning: Dangling pointer
+       Dangling pointer [dangling-pointer]:
+          Invalid pointer is accessible to caller via global addrs
+            at line 664 of xdm/auth.c in function 'doneAddrs'.
+            Invalid pointer accessible via global addrs at line 646
+              a accessed from addrs at line 658 in function 'doneAddrs'
+              a freed with free at line 662
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9505d391c72c90635453cc160b6f64e02da6a318
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 1 10:05:11 2020 -0800
+
+    Greeter: add parens to DRAW_STRING & TEXT_WIDTH macros for safety
+    
+    Oracle Parfait static analyser points out it wasn't clear if cast or
+    arithmetic operation in arguments at lines 410, 416, 431, & 433 was
+    intended to be done first, so we'll make it explicit.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 529ff7c9591e58c6003d7b330a80adf63fa5b736
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Wed Oct 28 21:15:14 2020 -0400
+
+    configure.ac: Link with libsystemd, not libsystemd-daemon
+    
+    libsystemd-daemon was merged into libsystemd in 2014, for systemd-209.
+    
+    Fixes: https://gitlab.freedesktop.org/xorg/app/xdm/-/issues/9
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 945a3a05e53ddd32578d5146ec4943fe9297aba4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 21 19:04:11 2020 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+      codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit a03a628e2adeac10aa0fc494a5f04f25e3b31d7e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Mar 2 14:02:19 2019 -0800
@@ -38,7 +114,7 @@ Date:   Wed May 4 17:46:15 2016 +0100
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 7a56946260616f7f5ff43ecbaac1f2ada9b0afcd
-Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
+Author: Chí-Thanh Christopher Nguyễn <c <chithanh@gentoo.org>
 Date:   Mon Jan 6 15:52:47 2014 +0000
 
     xdm uses setproctitle without proper includes for Linux libbsd
@@ -46,7 +122,7 @@ Date:   Mon Jan 6 15:52:47 2014 +0000
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 786b2c7ed39fb0cdd4c34e51f5c58f980087dcc1
-Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
+Author: Chí-Thanh Christopher Nguyễn <c <chithanh@gentoo.org>
 Date:   Mon Jan 6 15:52:00 2014 +0000
 
     xdm uses arc4random without proper includes for Linux libbsd
@@ -70,7 +146,7 @@ Date:   Fri Nov 16 21:30:06 2018 -0800
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 768a8c524642955527066ba90be6ffd511e30ed5
-Author: Björn Esser <besser82@fedoraproject.org>
+Author: Björn Esser  <besser82@fedoraproject.org>
 Date:   Thu Aug 16 15:42:34 2018 -0400
 
     glibc: Include <crypt.h> if needed, fix build with 2.28
@@ -706,7 +782,7 @@ Date:   Sat Oct 22 17:14:46 2011 +0200
     Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 8eee942be0db913511b4c53f94829e1201dfdf00
-Author: Michał Górny <mgorny@gentoo.org>
+Author: Michał Górny < <mgorny@gentoo.org>
 Date:   Wed Sep 28 21:25:17 2011 +0200
 
     Support systemd startup notification.
@@ -771,7 +847,7 @@ Date:   Tue Sep 20 17:39:34 2011 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 8016dfd9080393c23d19b1c34e81d1f544655d5a
-Author: Matěj Cepl <mcepl@redhat.com>
+Author: Matěj Cepl  <mcepl@redhat.com>
 Date:   Mon Aug 8 21:26:47 2011 +0200
 
     Use explicitly /bin/sh for running of Xwilling script via su.
@@ -785,7 +861,7 @@ Date:   Mon Aug 8 21:26:47 2011 +0200
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 0782f1c24c658c06736907dd143f8e67359ac235
-Author: Michał Górny <mgorny@gentoo.org>
+Author: Michał Górny < <mgorny@gentoo.org>
 Date:   Wed Aug 31 18:02:53 2011 +0200
 
     Support installing systemd unit file.
@@ -1118,7 +1194,7 @@ Date:   Sat Feb 19 13:15:58 2011 -0800
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit c4031966dcbc47b2cc85b83ad78efcc64455cf72
-Author: Fernando Tarlá Cardoso Lemos <fernandotcl@gmail.com>
+Author: Fernando Tarlá Cardoso Lemos  <fernandotcl@gmail.com>
 Date:   Sat Feb 19 17:53:08 2011 -0200
 
     Fix missing linking dependency on -ldl.
@@ -2591,7 +2667,7 @@ Date:   Fri Jul 17 21:17:36 2009 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
 
 commit 0c57a398cef50d13a821ad341ffb15ab0cbd2bad
-Author: Matěj Cepl <mcepl@redhat.com>
+Author: Matěj Cepl  <mcepl@redhat.com>
 Date:   Fri Jul 17 20:59:48 2009 -0700
 
     Add variable DisplayManager.authDir to xdm-config (Fedora bug 388431)
@@ -3614,7 +3690,7 @@ Date:   Sun Oct 2 19:44:42 2005 +0000
     Add Chooser app-defaults file to app/xdm
 
 commit 51a6b1de8beeb33858d3e8eb151cfad004a62ef8
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Wed Sep 28 21:13:12 2005 +0000
 
     Add Xservers.fs.
@@ -3733,7 +3809,7 @@ Date:   Thu Jul 28 01:10:49 2005 +0000
     Add -D_XOPEN_SOURCE for Linux
 
 commit ac5184384d6347ea97da5cc7f85e9687ff060641
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 22:37:02 2005 +0000
 
     Add XPROTO_CFLAGS to XDM_CFLAGS and CHOOSER_CFLAGS, also add _BSD_SOURCE to
@@ -3760,7 +3836,7 @@ Date:   Thu Jul 14 22:55:17 2005 +0000
     - Add libXdmcp to CHOOSER_LIBS
 
 commit 90b6e7d98567f77981adca5c2b9acc71d07f1442
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Fri Jul 8 20:45:03 2005 +0000
 
     Add build system for xdm

@@ -138,7 +138,7 @@ int	choiceTimeout;	/* chooser choice timeout */
 # define DEF_GREETER_LIB "/usr/lib/X11/xdm/libXdmGreet.so"
 #endif
 
-#define DEF_UDP_PORT	"177"	    /* registered XDMCP port, dont change */
+#define DEF_UDP_PORT	"177"	    /* registered XDMCP port, don't change */
 
 struct dmResources {
 	const char	*name, *class;

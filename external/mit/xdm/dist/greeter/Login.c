@@ -275,14 +275,14 @@ static XtResource resources[] = {
 # define TEXT_COLOR(f)		(w->login.f##color.pixel)
 
 # define TEXT_WIDTH(f, m, l) 	XmuXftTextWidth(XtDisplay (w), \
-					w->login.f##Face, (FcChar8 *) m, l)
+					w->login.f##Face, (FcChar8 *) (m), l)
 static int
 XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 
 # define DRAW_STRING(f, x, y, m, l) \
 	/* Debug("DRAW_STRING(%s, %d, %d, %s, %d)\n", #f, x, y, m, l); */ \
 	XftDrawString8 (w->login.draw, &w->login.f##color, w->login.f##Face, \
-			x, y, (FcChar8 *) m, l)
+			x, y, (FcChar8 *) (m), l)
 
 #else
 
@@ -1716,7 +1716,7 @@ static void Initialize (
 #ifndef USE_XFT
     /*
      * Note that the second argument is a GCid -- QueryFont accepts a GCid and
-     * returns the curently contained font.
+     * returns the currently contained font.
      */
 
     if (w->login.textFont == NULL)

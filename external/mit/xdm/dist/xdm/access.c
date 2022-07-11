@@ -613,7 +613,7 @@ ScanAccessDatabase (void)
 	datafile = fopen (accessFile, "r");
 	if (!datafile)
 	{
-	    LogError ("Cannot open access control file %s, no XDMCP reqeusts will be granted\n", accessFile);
+	    LogError ("Cannot open access control file %s, no XDMCP requests will be granted\n", accessFile);
 	    return 0;
 	}
 	ReadAccessDatabase (datafile);
