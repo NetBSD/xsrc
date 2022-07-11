@@ -65,7 +65,7 @@ copystring (const char *src, int len)
     if (!src && len != 0) return NULL;
     cp = malloc (len + 1);
     if (cp) {
-	if (src) strncpy (cp, src, len);
+	if (src) memcpy (cp, src, len);
 	cp[len] = '\0';
     }
     return cp;
@@ -175,14 +175,14 @@ parse_displayname (const char *displayname,
         strncpy(path, displayname, sizeof(path) - 1);
         path[sizeof(path) - 1] = '\0';
 #endif
-        if (0 == stat(path, &sbuf)) {
+        if (0 == stat(path, &sbuf) && S_ISSOCK(sbuf.st_mode)) {
             family = FamilyLocal;
         } else {
             char *dot = strrchr(path, '.');
             if (dot) {
                 *dot = '\0';
                 /* screen = atoi(dot + 1); */
-                if (0 == stat(path, &sbuf)) {
+                if (0 == stat(path, &sbuf) && S_ISSOCK(sbuf.st_mode)) {
                     family = FamilyLocal;
                 }
             }

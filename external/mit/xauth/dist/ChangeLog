@@ -1,3 +1,131 @@
+commit c5783216c07fa9870da1b5cce023e24d649254c3
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Tue Apr 19 19:04:26 2022 -0700
+
+    xauth 1.1.2
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit ce87ae39d5ab28733b4125a09d0a643d1581b1c8
+Author: Larry Doolittle <larry@doolittle.boa.org>
+Date:   Sat Apr 16 15:28:31 2022 -0700
+
+    Expand checks of socket file with S_ISSOCK
+    
+    Extend work done in commit 18a3c3a to earlier in the socket detection process
+    Fixes issue #6.
+
+commit 83e97b2bf683f341da177bd5df5b1297cbdc16a4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 16 13:11:36 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a5c70489f99c8259d4770aeb96524a91395b8ab9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 10 10:46:51 2022 -0700
+
+    Fix off-by-one in quote-stripping routines
+    
+    Reported by Oracle Parfait:
+    
+    Error: Buffer overrun
+       Buffer overflow [buffer-overflow] (CWE 120):
+          In pointer dereference of key[(len - 1)] with index (len - 1)
+          Array size >= 1 bytes, index >= 1
+            at line 1647 of process.c in function 'do_add'.
+    
+    Error: Buffer overrun
+       Buffer overflow [buffer-overflow] (CWE 120):
+          In pointer dereference of authdata[(authdatalen - 1)] with index (authdatalen - 1)
+          Array size is ??? bytes, index is ???
+            at line 1965 of process.c in function 'do_generate'.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 999691ffaef492d4bebea69605d274fa2023dfee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 10:29:07 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cb0ef91ea63105b0629324837a4dc752e32d6d67
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 30 17:07:42 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 25f94d50523f8967f6f22a631d462355dbd680a3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 30 17:05:46 2021 -0800
+
+    configure.ac: fail build if xtrans is not found
+    
+    Copied from libX11/configure.ac
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f17b241220fef63a32d1b7329edfbcf6f435fabe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 30 17:29:59 2021 -0800
+
+    tests: report failure if stderr has unexpected output
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6ad2fc509b55003a10fe9d973e2f8672946d4180
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 30 17:23:07 2021 -0800
+
+    tests: Fix failure to make distcheck
+    
+    Add test_xauth to EXTRA_DIST
+    Add test output files to CLEANFILES
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5598b8612b095d9f5f513ada2a4bbacaca1bfea8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 30 15:11:43 2021 -0800
+
+    tests: make tests work in out-of-tree builds
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3d6519f11867183b9698cbf8cc9515bc767b98af
+Author: Dr. Tilmann Bubeck <tilmann@bubecks.de>
+Date:   Mon Nov 29 15:05:39 2021 +0100
+
+    Fix warning -Wstringop-truncation for strncpy by using memcpy instead
+
+commit 5da9a32e638f4bce66ec92dff64ed68a1bbd6b6b
+Author: Dr. Tilmann Bubeck <tilmann@bubecks.de>
+Date:   Mon Nov 29 12:30:17 2021 +0100
+
+    Removed build requirement "cmdtest".
+    Replaced by a shell script with the needed functionality.
+
+commit d6d1423fabdaec25d4a677e794f91a91f7c09c70
+Author: Baptiste Daroussin <bapt@FreeBSD.org>
+Date:   Mon Feb 6 22:28:44 2017 +0100
+
+    Improve portability
+    
+    there is no need to hard depend on bash given almost all the code is
+    /bin/sh compliant
+    
+    Remove the function keyword from setup-source to make it /bin/sh
+    compliant
+    
+    pipe wc -l output to xargs to make the command output compatible with
+    both GNU wc and BSD wc (which prefix the output with a tab)
+
 commit 477307d00c1220f8594622e1af982fb0e4e215bf
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Nov 28 15:32:37 2021 -0800
