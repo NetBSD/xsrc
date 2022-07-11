@@ -213,7 +213,7 @@ parse_config(char *data)
 		*c = tolower(*c);
 	    c++;
 	}
-	memmove( param_name, p, min(sizeof(param_name), (int) (c - p)));
+	memcpy(param_name, p, min(sizeof(param_name), (int) (c - p)));
 	param_name[(int) (c - p)] = '\0';
 
 	/* check for junk */
@@ -530,7 +530,7 @@ config_set_catalogue(
 	fsfree((char *) font_catalogue);	/* dump any previous one */
 	b = font_catalogue = (char *) fsalloc(strlen(val) + 1);
 	if (!font_catalogue)
-	    FatalError("insufficent memory for font catalogue\n");
+	    FatalError("insufficient memory for font catalogue\n");
 	while (*val) {		/* remove all the gunk */
 	    if (!isspace(*val)) {
 		*b++ = *val;

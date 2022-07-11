@@ -124,7 +124,7 @@ CopySwap32Write(
 	while (to < toLast) {
 	    /*
 	     * can't write "cpswapl(*from++, *to++)" because cpswapl is a
-	     * macro that evaulates its args more than once
+	     * macro that evaluates its args more than once
 	     */
 	    cpswapl(*from, *to);
 	    from++;
@@ -175,7 +175,7 @@ CopySwap16Write(
 	while (to < toLast) {
 	    /*
 	     * can't write "cpswaps(*from++, *to++)" because cpswaps is a
-	     * macro that evaulates its args more than once
+	     * macro that evaluates its args more than once
 	     */
 	    cpswaps(*from, *to);
 	    from++;
@@ -441,7 +441,7 @@ WriteSConnectionInfo(
     pInfo += SIZEOF(fsConnSetup);
 
     i = (pConnSetup->vendor_len + 3) & ~3;
-    memmove( pInfoT, pInfo, i);
+    memcpy(pInfoT, pInfo, i);
 
     (void) WriteToClient(client, (int) size, (char *) pInfoTBase);
     DEALLOCATE_LOCAL(pInfoTBase);

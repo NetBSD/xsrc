@@ -164,7 +164,7 @@ ListCatalogues(const char *pattern, int patlen, int maxnames,
 	    if (!catlist)
 		goto bail;
 	    *catlist = size;
-	    memmove( &catlist[1], catalogue_name, size);
+	    memcpy(&catlist[1], catalogue_name, size);
 	    size++;		/* for length */
 	    count++;
 	}
@@ -215,7 +215,7 @@ SetAlternateServers(char *list)
 	t++;
     }
 
-    a = alts = (AlternateServerPtr) fsalloc(sizeof(AlternateServerRec) * num);
+    a = alts = (AlternateServerPtr) FScalloc(sizeof(AlternateServerRec) * num);
     if (!alts)
 	return FSBadAlloc;
 
@@ -225,10 +225,9 @@ SetAlternateServers(char *list)
 	if (*t == ',') {
 	    a->name = (char *) fsalloc(a->namelen);
 	    if (!a->name) {
-		/* XXX  -- leak */
-		return FSBadAlloc;
+		goto unwind;
 	    }
-	    memmove( a->name, st, a->namelen);
+	    memcpy(a->name, st, a->namelen);
 	    a->subset = FALSE;	/* XXX */
 	    a++;
 	    t++;
@@ -241,10 +240,9 @@ SetAlternateServers(char *list)
     }
     a->name = (char *) fsalloc(a->namelen);
     if (!a->name) {
-	/* XXX  -- leak */
-	return FSBadAlloc;
+	goto unwind;
     }
-    memmove( a->name, st, a->namelen);
+    memcpy(a->name, st, a->namelen);
     a->subset = FALSE;		/* XXX */
 
     for (i = 0; i < num_alts; i++) {
@@ -254,6 +252,13 @@ SetAlternateServers(char *list)
     num_alts = num;
     alt_servers = alts;
     return FSSuccess;
+
+  unwind:
+    for (i = 0; i < num; i++) {
+	fsfree(alts[i].name);
+    }
+    fsfree(alts);
+    return FSBadAlloc;
 }
 
 int

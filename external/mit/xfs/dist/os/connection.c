@@ -480,7 +480,7 @@ CloseDownConnection(ClientPtr client)
 /****************
  * IgnoreClient
  *    Removes one client from input masks.
- *    Must have cooresponding call to AttendClient.
+ *    Must have corresponding call to AttendClient.
  ****************/
 
 static fd_set IgnoredClientsWithInput;

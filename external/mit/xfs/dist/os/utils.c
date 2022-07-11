@@ -212,7 +212,7 @@ OsInitAllocator (void)
  *
  *     transport_id/fd/portnum[,transport_id/fd/portnum]...
  *
- * [] denotes optional and ... denotes repitition.
+ * [] denotes optional and ... denotes repetition.
  *
  * The string must be _exactly_ in the above format. 
  */

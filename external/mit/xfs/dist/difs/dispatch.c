@@ -309,9 +309,9 @@ ProcEstablishConnection(ClientPtr client)
 	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
 	}
-	memmove( authp->authname, client_auth[auth_index - 1].name, 
+	memcpy(authp->authname, client_auth[auth_index - 1].name,
 	      client_auth[auth_index - 1].namelen);
-	memmove( authp->authdata, client_auth[auth_index - 1].data, 
+	memcpy(authp->authdata, client_auth[auth_index - 1].data,
 	      client_auth[auth_index - 1].datalen);
 	/* Save it with a zero resource id...  subsequent
 	   SetAuthorizations of None will find it.  And it will be freed
@@ -362,7 +362,7 @@ ProcEstablishConnection(ClientPtr client)
 	/* WriteToClient pads, so we have to fake some things */
 	tmp[0] = altservers[i].subset;
 	tmp[1] = altservers[i].namelen;
-	memmove( (char *) &tmp[2], altservers[i].name, altservers[i].namelen);
+	memcpy(&tmp[2], altservers[i].name, altservers[i].namelen);
 	(void) WriteToClient(client, altservers[i].namelen + 2, tmp);
     }
 
@@ -520,7 +520,7 @@ ProcSetCatalogues(ClientPtr client)
 	    new_cat = (char *) fsalloc(len);
 	    if (!new_cat)
 		return FSBadAlloc;
-	    memmove( new_cat, (char *)stuff + SIZEOF(fsSetCataloguesReq), len);
+	    memcpy(new_cat, (char *)stuff + SIZEOF(fsSetCataloguesReq), len);
 	} else {
 	    SendErrToClient(client, err, (pointer) &num);
 	    return err;
@@ -657,8 +657,8 @@ ProcCreateAC(ClientPtr client)
 	    fsfree((char *) authp);
 	    goto alloc_failure;
 	}
-	memmove( authp->authname, acp[index - 1].name, acp[index - 1].namelen);
-	memmove( authp->authdata, acp[index - 1].data, acp[index - 1].datalen);
+	memcpy(authp->authname, acp[index - 1].name, acp[index - 1].namelen);
+	memcpy(authp->authdata, acp[index - 1].data, acp[index - 1].datalen);
     }
     else
 	size = 0;
@@ -763,7 +763,7 @@ ProcSetResolution(ClientPtr client)
 	return FSBadAlloc;
     }
     fsfree((char *) client->resolutions);
-    memmove( (char *) new_res, (char *)stuff + SIZEOF(fsSetResolutionReq), 
+    memcpy(new_res, (char *)stuff + SIZEOF(fsSetResolutionReq),
 	  (stuff->num_resolutions * SIZEOF(fsResolution)));
     client->resolutions = new_res;
     client->num_resolutions = stuff->num_resolutions;

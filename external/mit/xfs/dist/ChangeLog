@@ -1,3 +1,107 @@
+commit 6e84cb7dcdccdc8059aca0bfe52837b6624a3a96
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 10 15:24:00 2022 -0700
+
+    xfs 1.2.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ab6e5cc9f27109b72462073f03b4268dddbeac6d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 16 10:00:16 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cdb536d65f1898ecbd2d9ae13058703063e715f9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 16 09:59:02 2022 -0700
+
+    Use memcpy() instead of memmove() when buffers are known not to overlap
+    
+    Most of these came from a mass bcopy() -> memmove() substitution
+    in 1993 with a commit comment of "ANSIfied for R6".
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 431588f8103a886de68a7ae3fcb8cc36974ed3c5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 16 09:37:59 2022 -0700
+
+    SetAlternateServers(): avoid memory leak on allocation failure
+    
+    Reported by Oracle Parfait static analyzer:
+    
+       Memory leak [memory-leak] (CWE 401):
+          Memory leak of pointer alts allocated with FSalloc((16 * num))
+            at line 229 of app/xfs/os/osglue.c in function 'SetAlternateServers'.
+            malloc called at line 372 of app/xfs/os/utils.c in function 'FSalloc'
+            Allocated value returned to caller at line 373
+              alts allocated at line 218 of app/xfs/os/osglue.c in function 'SetAlternateServers' with FSalloc((16 * num))
+              alts leaks when (*t) == 44 at line 225.
+    
+       Memory leak [memory-leak] (CWE 401):
+          Memory leak of pointer alts allocated with FSalloc((16 * num))
+            at line 245 of app/xfs/os/osglue.c in function 'SetAlternateServers'.
+            malloc called at line 372 of app/xfs/os/utils.c in function 'FSalloc'
+            Allocated value returned to caller at line 373
+              alts allocated at line 218 of app/xfs/os/osglue.c in function 'SetAlternateServers' with FSalloc((16 * num))
+              alts leaks when (*(list + <pointer arithmetic>)) == 0 at line 224.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 01a36ae3d97e01e5c3ae3cf730fceabb66a9f235
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 9 13:33:58 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fe06632d4126013747e896df4528537fc7136396
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 6 12:32:58 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 65e5c8764ac0c00f8d3750db5eb4c90dda4c37da
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 6 12:32:55 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f759842e8f6dc1ab296d75ec9e4fc108b2ee9a43
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:03:55 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a0585a3aa4ded660a3415893d052f57b5524b8e9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 22:03:53 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 490b589ea68479bd389e6fce3ba3c203b228f615
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 10 12:52:42 2018 -0800
+
+    doc/xfs-design.xml: Remove obsolete B16 tags in struct definition
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit c0ff087474db78b91241c31c00a501782a3da31b
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Tue Nov 28 12:16:13 2017 -0500
@@ -1601,7 +1705,7 @@ Date:   Fri Oct 13 17:51:32 2006 -0400
     Bump to 1.0.3
 
 commit d68ce54e725aa332c0c74e1aa2e7e59b079fb5fe
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Mon Sep 25 18:01:48 2006 -0400
 
     Substitute config dir into man page.
@@ -1748,26 +1852,26 @@ Date:   Fri Jul 29 21:22:34 2005 +0000
     - Update modular Xorg version
 
 commit 9a118fcc0ce0e202d31fcf579daf0dc03fc2f6bb
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 22:43:18 2005 +0000
 
     Thu Jul 28 18:29:06 2005 Søren Sandmann <sandmann@redhat.com>
     Fix double free when there no valid paths.
 
 commit 9c9f67e12450035b7997c2c3bb3700ea51d8b3d2
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 22:28:21 2005 +0000
 
     Add flags to make xfs actually load fonts
 
 commit fc670eef6a29564aeddcb2e8f6b6a3fdb791b7f5
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 20:46:54 2005 +0000
 
     Create and install a config file Fix xfs DEFAULT_CONFIG_FILE
 
 commit b7901095f14ec2ea00f1cbeb57952957e9f0d5aa
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 22:48:39 2005 +0000
 
     Add -D_XOPEN_SOURCE on Linux
@@ -1799,19 +1903,19 @@ Date:   Sat Jul 16 20:52:25 2005 +0000
         4496504)
 
 commit f638b9c31aab9b90b8b9b4dbea79f8a588037498
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 22:40:15 2005 +0000
 
     Add _BSD_SOURCE to lots of applications - patch from Stefan Dirsch
 
 commit 61c45e7ae8cdcead33392c0a2affc63a00b284c3
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 12 18:49:12 2005 +0000
 
     Add include files to sources, so it will distcheck
 
 commit 2ac8a668c645746430031f7f2776e98dc0cf0b98
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 12 18:45:48 2005 +0000
 
     - lib/lbxutil/lbxutil.pc.in: link to lbxutil, not Xfixes

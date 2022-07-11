@@ -23,8 +23,8 @@ dnl Process this file with autoconf to create configure.
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xfs],
-        [1.2.0],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [1.2.1],
+        [https://gitlab.freedesktop.org/xorg/app/xfs/issues],
         [xfs])
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
 # Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
@@ -33,7 +33,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])
+AM_INIT_AUTOMAKE([foreign dist-xz subdir-objects])
 
 # Require xorg-macros minimum of 1.10 for HAVE_STYLESHEETS in XORG_CHECK_SGML_DOCTOOLS
 m4_ifndef([XORG_MACROS_VERSION],

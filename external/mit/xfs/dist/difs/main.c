@@ -184,9 +184,9 @@ create_connection_block(void)
     if (!ConnectionInfo)
 	return FALSE;
 
-    memmove( ConnectionInfo, (char *) &setup, SIZEOF(fsConnSetupAccept));
+    memcpy(ConnectionInfo, &setup, SIZEOF(fsConnSetupAccept));
     pBuf = ConnectionInfo + SIZEOF(fsConnSetupAccept);
-    memmove( pBuf, VENDOR_STRING, (int) setup.vendor_len);
+    memcpy(pBuf, VENDOR_STRING, (int) setup.vendor_len);
 
     return TRUE;
 }

@@ -523,7 +523,7 @@ OpenFont(
 	fsfree(c);
 	goto lowmem;
     }
-    memmove( c->fontname, name, namelen);
+    memcpy(c->fontname, name, namelen);
     for (i = 0; i < num_fpes; i++) {
 	c->fpe_list[i] = font_path_elements[i];
 	UseFPE(c->fpe_list[i]);
@@ -740,7 +740,7 @@ bail:
 }
 
 /*
- * expects comma seperated string
+ * expects comma separated string
  */
 int
 SetFontCatalogue(
@@ -764,7 +764,7 @@ SetFontCatalogue(
 	    end = str + strlen(str);
 	}
 	*p++ = len = end - str;
-	memmove( p, str, len);
+	memcpy(p, str, len);
 	npaths++;
 	str += len;		/* skip entry */
 	if (*str == ',')
@@ -902,7 +902,7 @@ do_list_fonts_and_aliases(ClientPtr client, pointer data)
 		 * is BadFontName, indicating the alias resolution
 		 * is complete.
 		 */
-		memmove(tmp_pattern, resolved, resolvedlen);
+		memcpy(tmp_pattern, resolved, resolvedlen);
 		if (cPtr->haveSaved)
 		{
 		    char    *tmpname;
@@ -926,7 +926,7 @@ do_list_fonts_and_aliases(ClientPtr client, pointer data)
 			fsfree(cPtr->savedName);
 		    cPtr->savedName = (char *)fsalloc(namelen + 1);
 		    if (cPtr->savedName)
-			memmove(cPtr->savedName, name, namelen + 1);
+			memcpy(cPtr->savedName, name, namelen + 1);
 		    cPtr->savedNameLen = namelen;
 		    aliascount = 20;
 		}
@@ -1202,7 +1202,7 @@ do_list_fonts_with_info(ClientPtr client, pointer data)
 		  fsfree(cPtr->savedName);
 		cPtr->savedName = (char *)fsalloc(namelen + 1);
 		if (cPtr->savedName)
-		  memmove(cPtr->savedName, name, namelen + 1);
+		  memcpy(cPtr->savedName, name, namelen + 1);
 		aliascount = 20;
 	    }
 	    memmove(cPtr->current.pattern, name, namelen);
