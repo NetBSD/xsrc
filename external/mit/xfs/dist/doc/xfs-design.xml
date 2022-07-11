@@ -551,12 +551,12 @@ int	client_died(pointer <parameter>client</parameter>, FontPathElementPtr <param
 
     <synopsis>
 typedef struct {
-	INT16	left B16,
-		right B16;
-	INT16	width B16;
-	INT16	ascent B16,
-		descent B16;
-	CARD16	attributes B16;
+	INT16	left,
+		right;
+	INT16	width;
+	INT16	ascent,
+		descent;
+	CARD16	attributes;
 }	fsCharInfo;
 
 typedef struct {
@@ -1269,7 +1269,7 @@ char	*NameForAtom(Atom atom)
         metrics or glyphs. If the glyphs are built, they will use any
         supplied <emphasis remap='I'>format hint</emphasis>.</para>
 
-      <para>Whenever a new font is successfuly opened, the font and
+      <para>Whenever a new font is successfully opened, the font and
         its name pattern will be placed in a name cache. This cache
         exists to minimize the amount of work spent searching for a
         font. It will be flushed when the font catalogue is
@@ -1373,7 +1373,7 @@ char	*NameForAtom(Atom atom)
       <varlistentry>
 	<term><literal>clone-self</literal> <type>(boolean)</type></term>
 	<listitem><para>Whether this FS should attempt to clone itself or
-		use delegates when it reachs the client-limit.</para></listitem>
+		use delegates when it reaches the client-limit.</para></listitem>
       </varlistentry>
       <varlistentry>
 	<term><literal>default-point-size</literal> <type>(cardinal)</type></term>
