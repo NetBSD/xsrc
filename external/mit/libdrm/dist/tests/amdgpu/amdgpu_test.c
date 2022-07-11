@@ -65,6 +65,7 @@
 #define CS_TESTS_STR "CS Tests"
 #define VCE_TESTS_STR "VCE Tests"
 #define VCN_TESTS_STR "VCN Tests"
+#define JPEG_TESTS_STR "JPEG Tests"
 #define UVD_ENC_TESTS_STR "UVD ENC Tests"
 #define DEADLOCK_TESTS_STR "Deadlock Tests"
 #define VM_TESTS_STR "VM Tests"
@@ -72,6 +73,7 @@
 #define SYNCOBJ_TIMELINE_TESTS_STR "SYNCOBJ TIMELINE Tests"
 #define SECURITY_TESTS_STR "Security Tests"
 #define HOTUNPLUG_TESTS_STR "Hotunplug Tests"
+#define CP_DMA_TESTS_STR "CP DMA Tests"
 
 /**
  *  Open handles for amdgpu devices
@@ -115,6 +117,12 @@ static CU_SuiteInfo suites[] = {
 		.pTests = vcn_tests,
 	},
 	{
+		.pName = JPEG_TESTS_STR,
+		.pInitFunc = suite_jpeg_tests_init,
+		.pCleanupFunc = suite_jpeg_tests_clean,
+		.pTests = jpeg_tests,
+	},
+	{
 		.pName = UVD_ENC_TESTS_STR,
 		.pInitFunc = suite_uvd_enc_tests_init,
 		.pCleanupFunc = suite_uvd_enc_tests_clean,
@@ -156,6 +164,12 @@ static CU_SuiteInfo suites[] = {
 		.pCleanupFunc = suite_hotunplug_tests_clean,
 		.pTests = hotunplug_tests,
 	},
+	{
+		.pName = CP_DMA_TESTS_STR,
+		.pInitFunc = suite_cp_dma_tests_init,
+		.pCleanupFunc = suite_cp_dma_tests_clean,
+		.pTests = cp_dma_tests,
+	},
 
 	CU_SUITE_INFO_NULL,
 };
@@ -194,6 +208,10 @@ static Suites_Active_Status suites_active_stat[] = {
 			.pActive = suite_vcn_tests_enable,
 		},
 		{
+			.pName = JPEG_TESTS_STR,
+			.pActive = suite_jpeg_tests_enable,
+		},
+		{
 			.pName = UVD_ENC_TESTS_STR,
 			.pActive = suite_uvd_enc_tests_enable,
 		},
@@ -220,6 +238,10 @@ static Suites_Active_Status suites_active_stat[] = {
 		{
 			.pName = HOTUNPLUG_TESTS_STR,
 			.pActive = suite_hotunplug_tests_enable,
+		},
+		{
+			.pName = CP_DMA_TESTS_STR,
+			.pActive = suite_cp_dma_tests_enable,
 		},
 };
 
@@ -299,6 +321,10 @@ static int amdgpu_open_devices(int open_render_node)
 	int drm_count;
 	int fd;
 	drmVersionPtr version;
+
+	for (i = 0; i < MAX_CARDS_SUPPORTED; i++) {
+		drm_amdgpu[i] = -1;
+	}
 
 	drm_count = drmGetDevices2(0, devices, MAX_CARDS_SUPPORTED);
 

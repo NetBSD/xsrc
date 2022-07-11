@@ -381,6 +381,19 @@ extern drmModeConnectorPtr drmModeGetConnectorCurrent(int fd,
 						      uint32_t connector_id);
 
 /**
+ * Get a bitmask of CRTCs a connector is compatible with.
+ *
+ * The bits reference CRTC indices. If the n-th CRTC is compatible with the
+ * connector, the n-th bit will be set. The indices are taken from the array
+ * returned by drmModeGetResources(). The indices are different from the object
+ * IDs.
+ *
+ * Zero is returned on error.
+ */
+extern uint32_t drmModeConnectorGetPossibleCrtcs(int fd,
+                                                 const drmModeConnector *connector);
+
+/**
  * Attaches the given mode to an connector.
  */
 extern int drmModeAttachMode(int fd, uint32_t connectorId, drmModeModeInfoPtr mode_info);
@@ -433,18 +446,18 @@ extern int drmModeObjectSetProperty(int fd, uint32_t object_id,
 typedef struct _drmModeAtomicReq drmModeAtomicReq, *drmModeAtomicReqPtr;
 
 extern drmModeAtomicReqPtr drmModeAtomicAlloc(void);
-extern drmModeAtomicReqPtr drmModeAtomicDuplicate(drmModeAtomicReqPtr req);
+extern drmModeAtomicReqPtr drmModeAtomicDuplicate(const drmModeAtomicReqPtr req);
 extern int drmModeAtomicMerge(drmModeAtomicReqPtr base,
-			      drmModeAtomicReqPtr augment);
+			      const drmModeAtomicReqPtr augment);
 extern void drmModeAtomicFree(drmModeAtomicReqPtr req);
-extern int drmModeAtomicGetCursor(drmModeAtomicReqPtr req);
+extern int drmModeAtomicGetCursor(const drmModeAtomicReqPtr req);
 extern void drmModeAtomicSetCursor(drmModeAtomicReqPtr req, int cursor);
 extern int drmModeAtomicAddProperty(drmModeAtomicReqPtr req,
 				    uint32_t object_id,
 				    uint32_t property_id,
 				    uint64_t value);
 extern int drmModeAtomicCommit(int fd,
-			       drmModeAtomicReqPtr req,
+			       const drmModeAtomicReqPtr req,
 			       uint32_t flags,
 			       void *user_data);
 
@@ -474,6 +487,15 @@ typedef struct drmModeObjectList {
 extern drmModeObjectListPtr drmModeGetLease(int fd);
 
 extern int drmModeRevokeLease(int fd, uint32_t lessee_id);
+
+/**
+ * Get a string describing a connector type.
+ *
+ * NULL is returned if the connector type is unsupported. Callers should handle
+ * this gracefully, e.g. by falling back to "Unknown" or printing the raw value.
+ */
+extern const char *
+drmModeGetConnectorTypeName(uint32_t connector_type);
 
 #if defined(__cplusplus)
 }

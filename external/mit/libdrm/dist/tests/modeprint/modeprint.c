@@ -113,7 +113,7 @@ static int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, ui
 
 	} else {
 		for (j = 0; j < props->count_enums; j++) {
-			printf("\t\t%" PRId64 " = %s\n", props->enums[j].value, props->enums[j].name);
+			printf("\t\t%" PRIu64" = %s\n", (uint64_t)props->enums[j].value, props->enums[j].name);
 			if (props->enums[j].value == value)
 				name = props->enums[j].name;
 		}
@@ -135,7 +135,7 @@ static int printConnector(int fd, drmModeResPtr res, drmModeConnectorPtr connect
 	drmModePropertyPtr props;
 	const char *connector_type_name = NULL;
 
-	connector_type_name = util_lookup_connector_type_name(connector->connector_type);
+	connector_type_name = drmModeGetConnectorTypeName(connector->connector_type);
 
 	if (connector_type_name)
 		printf("Connector: %s-%d\n", connector_type_name,
