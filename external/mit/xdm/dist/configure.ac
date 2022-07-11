@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xdm], [1.1.12],
+AC_INIT([xdm], [1.1.13],
         [https://gitlab.freedesktop.org/xorg/app/xdm/issues], [xdm])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -30,7 +30,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Initialize libtool
 AC_DISABLE_STATIC
@@ -168,15 +168,15 @@ AS_IF([test "x$with_systemdsystemunitdir" != "xno"], [
 AM_CONDITIONAL(HAVE_SYSTEMD, [test "x$with_systemdsystemunitdir" != "xno"])
 
 # Check whether to enable systemd startup notification.
-# This requires libsystemd-daemon.
+# This requires libsystemd.
 AC_ARG_WITH([systemd-daemon], AS_HELP_STRING([--with-systemd-daemon],
 	[Add support for systemd startup notification (default is autodetected)]),
 	[USE_SYSTEMD_DAEMON=$withval], [USE_SYSTEMD_DAEMON=auto])
 AS_IF([test "x$USE_SYSTEMD_DAEMON" != "xno"], [
-    PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd-daemon],
+    PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd],
 	[AC_DEFINE(USE_SYSTEMD_DAEMON,1,[Use systemd startup notification])],
 	[AS_IF([test "x$USE_SYSTEMD_DAEMON" = "xyes"],
-	    [AC_MSG_ERROR([systemd startup notification support requested, but libsystemd-daemon not found.])]
+	    [AC_MSG_ERROR([systemd startup notification support requested, but libsystemd not found.])]
 	)]
     )
 ])

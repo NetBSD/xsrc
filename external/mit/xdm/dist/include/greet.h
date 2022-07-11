@@ -92,7 +92,7 @@ struct dlfuncs {
 
 /*
  * Return values for GreetUser();
- * Values must be explictly defined because the greet library
+ * Values must be explicitly defined because the greet library
  * may come from a different vendor.
  * Negative values indicate an error.
  */
@@ -108,7 +108,7 @@ typedef enum {
  * should start a session.
  *
  * GreetUser is passed the xdm struct display pointer, a pointer to a
- * Display, and pointers to greet and verify structs.  If it expectes xdm
+ * Display, and pointers to greet and verify structs.  If it expects xdm
  * to run the session, it fills in the Display pointer and the fields
  * of the greet and verify structs.
  *
@@ -133,7 +133,7 @@ typedef greet_user_rtn (*GreetUserProc)(struct display *, Display **,
  * are referenced indirectly through function pointers.  The definitions
  * here, are used to hold the pointers to the functions in the main xdm
  * executable.  The pointers are filled in when the GreetUser function is
- * called, with the pointer values passed as a paramter.
+ * called, with the pointer values passed as a parameter.
  */
 
 extern	int     (*__xdm_PingServer)(struct display *d, Display *alternateDpy);

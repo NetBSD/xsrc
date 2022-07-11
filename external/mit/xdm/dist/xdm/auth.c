@@ -265,7 +265,7 @@ CleanUpFileName (char *src, char *dst, int len)
 }
 
 /* Checks to see if specified directory exists, makes it if not
- * Returns: 0 if already exists, 1 if created, < 0 if error occured
+ * Returns: 0 if already exists, 1 if created, < 0 if error occurred
  */
 static int
 CheckServerAuthDir (const char *path, struct stat *statb, int mode)
@@ -661,6 +661,7 @@ doneAddrs (void)
 		free (a->number);
 		free (a);
 	}
+	addrs = NULL;
 }
 
 static int checkEntry (Xauth *auth);
@@ -779,7 +780,7 @@ DefineLocal (FILE *file, Xauth *auth)
 #if defined(hpux)
 	/*
 	 * For HP-UX, HP's Xlib expects a fully-qualified domain name, which
-	 * is achieved by using gethostname().  For compatability, we must
+	 * is achieved by using gethostname().  For compatibility, we must
 	 * also still create the entry using uname().
 	 */
 	char	tmp_displayname[100];

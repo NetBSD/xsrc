@@ -380,7 +380,7 @@ InitXdmcpWrapper (void)
 	  randomDevice, errno);
     }
 #  endif
-    /*  Try some pseudo-random number genrator daemon next */
+    /*  Try some pseudo-random number generator daemon next */
     if (prngdSocket != NULL || prngdPort != 0) {
 	    if (get_prngd_bytes((char *)tmpkey, sizeof(tmpkey), prngdPort,
 		    prngdSocket) == 0) {
@@ -475,7 +475,7 @@ GenerateAuthData (char *auth, int len)
 	LogError("Cannot open randomDevice \"%s\", errno = %d\n",
 		 randomDevice, errno);
 #  endif /* DEV_RANDOM */
-    /*  Try some pseudo-random number genrator daemon next */
+    /*  Try some pseudo-random number generator daemon next */
     if (prngdSocket != NULL || prngdPort != 0) {
 	    if (get_prngd_bytes(auth, len, prngdPort, prngdSocket) == 0) {
 		    return 1;

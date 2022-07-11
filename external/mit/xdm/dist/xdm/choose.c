@@ -430,7 +430,7 @@ ProcessChooserSocket (int fd)
 	if (XdmcpReadARRAY8 (&buffer, &clientAddress)) {
 	    if (XdmcpReadCARD16 (&buffer, &connectionType)) {
 		if (XdmcpReadARRAY8 (&buffer, &choice)) {
-		    Debug ("Read from chooser succesfully\n");
+		    Debug ("Read from chooser successfully\n");
 		    RegisterIndirectChoice (&clientAddress, connectionType, &choice);
 		    XdmcpDisposeARRAY8 (&choice);
 		} else {
