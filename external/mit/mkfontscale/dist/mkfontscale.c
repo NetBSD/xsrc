@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -443,9 +444,9 @@ t1Weight(const char *weight)
         return "light";
     if(strcasecmp(weight, "Regular") == 0)
         return "medium";
-    if(strcasecmp(weight, "Plain") == 0)
-        return "medium";
     if(strcasecmp(weight, "Normal") == 0)
+        return "medium";
+    if(strcasecmp(weight, "Plain") == 0)
         return "medium";
     if(strcasecmp(weight, "Medium") == 0)
         return "medium";
@@ -461,9 +462,9 @@ t1Weight(const char *weight)
         return "semibold";
     else if(strcasecmp(weight, "Bold") == 0)
         return "bold";
-    else if(strcasecmp(weight, "Heavy") == 0) /* FontForge uses this for 800*/
-        return "extrabold";
     else if(strcasecmp(weight, "ExtraBold") == 0) /* freefonts uses this */
+        return "extrabold";
+    else if(strcasecmp(weight, "Heavy") == 0) /* FontForge uses this for 800*/
         return "extrabold";
     else if(strcasecmp(weight, "Black") == 0)
         return "black";
