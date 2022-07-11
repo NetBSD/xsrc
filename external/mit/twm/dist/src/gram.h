@@ -198,7 +198,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 107 "gram.y" /* yacc.c:1909  */
+#line 109 "gram.y" /* yacc.c:1909  */
 
     int num;
     char *ptr;

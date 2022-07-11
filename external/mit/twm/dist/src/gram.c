@@ -64,6 +64,7 @@
 /* Copy the first part of user declarations.  */
 #line 67 "gram.y" /* yacc.c:339  */
 
+
 #include <stdio.h>
 #include <ctype.h>
 #include "twm.h"
@@ -77,18 +78,19 @@
 #include <X11/Xos.h>
 #include <X11/Xmu/CharSet.h>
 
-static char *Action = "";
-static char *Name = "";
-static MenuRoot	*root, *pull = NULL;
+static char empty[1];
+static char *Action = empty;
+static char *Name = empty;
+static MenuRoot *root, *pull = NULL;
 
-static MenuRoot *GetRoot ( const char *name, const char *fore, const char *back );
-static void GotButton ( int butt, int func );
-static void GotKey ( char *key, int func );
-static void GotTitleButton ( char *bitmapname, int func, Bool rightside );
-static Bool CheckWarpScreenArg ( char *s );
-static Bool CheckWarpRingArg ( char *s );
-static Bool CheckColormapArg ( char *s );
-static void RemoveDQuote ( char *str );
+static MenuRoot *GetRoot(const char *name, const char *fore, const char *back);
+static void GotButton(int butt, int func);
+static void GotKey(char *key, int func);
+static void GotTitleButton(char *bitmapname, int func, Bool rightside);
+static Bool CheckWarpScreenArg(char *s);
+static Bool CheckWarpRingArg(char *s);
+static Bool CheckColormapArg(char *s);
+static void RemoveDQuote(char *str);
 
 static char *ptr;
 static name_list **list;
@@ -98,10 +100,10 @@ int mods = 0;
 unsigned int mods_used = (ShiftMask | ControlMask | Mod1Mask);
 
 extern int yylineno;
-static void yyerror ( const char *s );
+static void yyerror(const char *s);
 
 
-#line 105 "gram.c" /* yacc.c:339  */
+#line 107 "gram.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -289,12 +291,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 107 "gram.y" /* yacc.c:355  */
+#line 109 "gram.y" /* yacc.c:355  */
 
     int num;
     char *ptr;
 
-#line 298 "gram.c" /* yacc.c:355  */
+#line 300 "gram.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -311,7 +313,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 315 "gram.c" /* yacc.c:358  */
+#line 317 "gram.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -615,26 +617,26 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   136,   136,   139,   140,   143,   144,   145,   146,   147,
-     148,   150,   156,   159,   165,   167,   168,   169,   169,   171,
-     173,   176,   179,   183,   199,   200,   201,   201,   203,   203,
-     205,   206,   206,   208,   208,   210,   210,   212,   214,   214,
-     216,   218,   218,   220,   222,   222,   224,   226,   226,   228,
-     228,   230,   230,   232,   232,   235,   235,   237,   237,   239,
-     239,   241,   241,   243,   243,   245,   247,   247,   249,   265,
-     273,   273,   275,   277,   277,   282,   292,   302,   314,   317,
-     320,   321,   324,   325,   326,   327,   328,   338,   341,   342,
-     345,   346,   347,   348,   349,   350,   351,   352,   353,   356,
-     357,   360,   361,   362,   363,   364,   365,   366,   367,   368,
-     369,   373,   376,   377,   380,   384,   387,   388,   391,   393,
-     395,   397,   399,   401,   403,   405,   407,   409,   411,   413,
-     415,   417,   419,   421,   423,   425,   427,   429,   431,   433,
-     437,   441,   442,   445,   454,   454,   465,   476,   479,   480,
-     483,   484,   487,   490,   491,   494,   499,   502,   502,   507,
-     508,   508,   512,   513,   521,   524,   525,   528,   533,   541,
-     544,   545,   548,   553,   556,   557,   560,   563,   566,   567,
-     570,   576,   579,   580,   583,   588,   596,   597,   638,   639,
-     640,   643,   655,   660
+       0,   139,   139,   142,   143,   146,   147,   148,   149,   150,
+     151,   153,   159,   162,   168,   170,   171,   172,   172,   174,
+     176,   179,   182,   186,   202,   203,   204,   204,   206,   206,
+     208,   209,   209,   211,   211,   213,   213,   215,   217,   217,
+     219,   221,   221,   223,   225,   225,   227,   229,   229,   231,
+     231,   233,   233,   235,   235,   238,   238,   240,   240,   242,
+     242,   244,   244,   246,   246,   248,   250,   250,   252,   268,
+     276,   276,   278,   280,   280,   285,   294,   303,   314,   317,
+     320,   321,   324,   325,   326,   327,   328,   337,   340,   341,
+     344,   345,   346,   347,   348,   349,   350,   351,   352,   355,
+     356,   359,   360,   361,   362,   363,   364,   365,   366,   367,
+     368,   372,   375,   376,   379,   383,   386,   387,   390,   392,
+     394,   396,   398,   400,   402,   404,   406,   408,   410,   412,
+     414,   416,   418,   420,   422,   424,   426,   428,   430,   432,
+     436,   440,   441,   444,   452,   452,   462,   472,   475,   476,
+     479,   480,   483,   486,   487,   490,   495,   498,   498,   503,
+     504,   504,   508,   509,   517,   520,   521,   524,   529,   537,
+     540,   541,   544,   549,   552,   553,   556,   559,   562,   563,
+     566,   572,   575,   576,   579,   584,   592,   593,   632,   633,
+     634,   637,   649,   654
 };
 #endif
 
@@ -1634,980 +1636,971 @@ yyreduce:
   switch (yyn)
     {
         case 10:
-#line 149 "gram.y" /* yacc.c:1646  */
+#line 152 "gram.y" /* yacc.c:1646  */
     { AddIconRegion((yyvsp[-4].ptr), (yyvsp[-3].num), (yyvsp[-2].num), (yyvsp[-1].num), (yyvsp[0].num)); }
-#line 1640 "gram.c" /* yacc.c:1646  */
+#line 1642 "gram.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 150 "gram.y" /* yacc.c:1646  */
+#line 153 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						  {
-						    Scr->iconmgr.geometry=(yyvsp[-1].ptr);
-						    Scr->iconmgr.columns=(yyvsp[0].num);
-						  }
-						}
-#line 1651 "gram.c" /* yacc.c:1646  */
+                                                  {
+                                                    Scr->iconmgr.geometry=(yyvsp[-1].ptr);
+                                                    Scr->iconmgr.columns=(yyvsp[0].num);
+                                                  }
+                                                }
+#line 1653 "gram.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 156 "gram.y" /* yacc.c:1646  */
+#line 159 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						    Scr->iconmgr.geometry = (yyvsp[0].ptr);
-						}
-#line 1659 "gram.c" /* yacc.c:1646  */
+                                                    Scr->iconmgr.geometry = (yyvsp[0].ptr);
+                                                }
+#line 1661 "gram.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 159 "gram.y" /* yacc.c:1646  */
+#line 162 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-					  {
-						Scr->DoZoom = TRUE;
-						Scr->ZoomCount = (yyvsp[0].num);
-					  }
-					}
-#line 1670 "gram.c" /* yacc.c:1646  */
+                                          {
+                                                Scr->DoZoom = TRUE;
+                                                Scr->ZoomCount = (short)(yyvsp[0].num);
+                                          }
+                                        }
+#line 1672 "gram.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 165 "gram.y" /* yacc.c:1646  */
+#line 168 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						Scr->DoZoom = TRUE; }
-#line 1677 "gram.c" /* yacc.c:1646  */
+                                                Scr->DoZoom = TRUE; }
+#line 1679 "gram.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 167 "gram.y" /* yacc.c:1646  */
+#line 170 "gram.y" /* yacc.c:1646  */
     {}
-#line 1683 "gram.c" /* yacc.c:1646  */
+#line 1685 "gram.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 168 "gram.y" /* yacc.c:1646  */
+#line 171 "gram.y" /* yacc.c:1646  */
     {}
-#line 1689 "gram.c" /* yacc.c:1646  */
+#line 1691 "gram.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 169 "gram.y" /* yacc.c:1646  */
+#line 172 "gram.y" /* yacc.c:1646  */
     { list = &Scr->IconifyByUn; }
-#line 1695 "gram.c" /* yacc.c:1646  */
+#line 1697 "gram.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 171 "gram.y" /* yacc.c:1646  */
+#line 174 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-		    Scr->IconifyByUnmapping = TRUE; }
-#line 1702 "gram.c" /* yacc.c:1646  */
+                    Scr->IconifyByUnmapping = TRUE; }
+#line 1704 "gram.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 173 "gram.y" /* yacc.c:1646  */
+#line 176 "gram.y" /* yacc.c:1646  */
     {
-					  GotTitleButton ((yyvsp[-2].ptr), (yyvsp[0].num), False);
-					}
-#line 1710 "gram.c" /* yacc.c:1646  */
+                                          GotTitleButton ((yyvsp[-2].ptr), (yyvsp[0].num), False);
+                                        }
+#line 1712 "gram.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 176 "gram.y" /* yacc.c:1646  */
+#line 179 "gram.y" /* yacc.c:1646  */
     {
-					  GotTitleButton ((yyvsp[-2].ptr), (yyvsp[0].num), True);
-					}
-#line 1718 "gram.c" /* yacc.c:1646  */
+                                          GotTitleButton ((yyvsp[-2].ptr), (yyvsp[0].num), True);
+                                        }
+#line 1720 "gram.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 179 "gram.y" /* yacc.c:1646  */
+#line 182 "gram.y" /* yacc.c:1646  */
     { root = GetRoot((yyvsp[0].ptr), NULLSTR, NULLSTR);
-					  Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].func = F_MENU;
-					  Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].menu = root;
-					}
-#line 1727 "gram.c" /* yacc.c:1646  */
+                                          Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].func = F_MENU;
+                                          Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].menu = root;
+                                        }
+#line 1729 "gram.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 183 "gram.y" /* yacc.c:1646  */
+#line 186 "gram.y" /* yacc.c:1646  */
     { Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].func = (yyvsp[0].num);
-					  if ((yyvsp[0].num) == F_MENU)
-					  {
-					    pull->prev = NULL;
-					    Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].menu = pull;
-					  }
-					  else
-					  {
-					    root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
-					    Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].item =
-						AddToMenu(root,"x",Action,
-							  NULL,(yyvsp[0].num),NULLSTR,NULLSTR);
-					  }
-					  Action = "";
-					  pull = NULL;
-					}
-#line 1748 "gram.c" /* yacc.c:1646  */
+                                          if ((yyvsp[0].num) == F_MENU)
+                                          {
+                                            pull->prev = NULL;
+                                            Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].menu = pull;
+                                          }
+                                          else
+                                          {
+                                            root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
+                                            Scr->Mouse[(yyvsp[-1].num)][C_ROOT][0].item =
+                                                AddToMenu(root,"x",Action,
+                                                          NULL,(yyvsp[0].num),NULLSTR,NULLSTR);
+                                          }
+                                          Action = empty;
+                                          pull = NULL;
+                                        }
+#line 1750 "gram.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 199 "gram.y" /* yacc.c:1646  */
+#line 202 "gram.y" /* yacc.c:1646  */
     { GotKey((yyvsp[-1].ptr), (yyvsp[0].num)); }
-#line 1754 "gram.c" /* yacc.c:1646  */
+#line 1756 "gram.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 200 "gram.y" /* yacc.c:1646  */
+#line 203 "gram.y" /* yacc.c:1646  */
     { GotButton((yyvsp[-1].num), (yyvsp[0].num)); }
-#line 1760 "gram.c" /* yacc.c:1646  */
+#line 1762 "gram.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 201 "gram.y" /* yacc.c:1646  */
+#line 204 "gram.y" /* yacc.c:1646  */
     { list = &Scr->DontIconify; }
-#line 1766 "gram.c" /* yacc.c:1646  */
+#line 1768 "gram.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 203 "gram.y" /* yacc.c:1646  */
+#line 206 "gram.y" /* yacc.c:1646  */
     { list = &Scr->IconMgrNoShow; }
-#line 1772 "gram.c" /* yacc.c:1646  */
+#line 1774 "gram.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 205 "gram.y" /* yacc.c:1646  */
+#line 208 "gram.y" /* yacc.c:1646  */
     { Scr->IconManagerDontShow = TRUE; }
-#line 1778 "gram.c" /* yacc.c:1646  */
+#line 1780 "gram.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 206 "gram.y" /* yacc.c:1646  */
+#line 209 "gram.y" /* yacc.c:1646  */
     { list = &Scr->IconMgrs; }
-#line 1784 "gram.c" /* yacc.c:1646  */
+#line 1786 "gram.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 208 "gram.y" /* yacc.c:1646  */
+#line 211 "gram.y" /* yacc.c:1646  */
     { list = &Scr->IconMgrShow; }
-#line 1790 "gram.c" /* yacc.c:1646  */
+#line 1792 "gram.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 210 "gram.y" /* yacc.c:1646  */
+#line 213 "gram.y" /* yacc.c:1646  */
     { list = &Scr->NoTitleHighlight; }
-#line 1796 "gram.c" /* yacc.c:1646  */
+#line 1798 "gram.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 212 "gram.y" /* yacc.c:1646  */
+#line 215 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						Scr->TitleHighlight = FALSE; }
-#line 1803 "gram.c" /* yacc.c:1646  */
+                                                Scr->TitleHighlight = FALSE; }
+#line 1805 "gram.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 214 "gram.y" /* yacc.c:1646  */
+#line 217 "gram.y" /* yacc.c:1646  */
     { list = &Scr->NoHighlight; }
-#line 1809 "gram.c" /* yacc.c:1646  */
+#line 1811 "gram.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 216 "gram.y" /* yacc.c:1646  */
+#line 219 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						Scr->Highlight = FALSE; }
-#line 1816 "gram.c" /* yacc.c:1646  */
+                                                Scr->Highlight = FALSE; }
+#line 1818 "gram.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 218 "gram.y" /* yacc.c:1646  */
+#line 221 "gram.y" /* yacc.c:1646  */
     { list = &Scr->NoStackModeL; }
-#line 1822 "gram.c" /* yacc.c:1646  */
+#line 1824 "gram.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 220 "gram.y" /* yacc.c:1646  */
+#line 223 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						Scr->StackMode = FALSE; }
-#line 1829 "gram.c" /* yacc.c:1646  */
+                                                Scr->StackMode = FALSE; }
+#line 1831 "gram.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 222 "gram.y" /* yacc.c:1646  */
+#line 225 "gram.y" /* yacc.c:1646  */
     { list = &Scr->NoTitle; }
-#line 1835 "gram.c" /* yacc.c:1646  */
+#line 1837 "gram.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 224 "gram.y" /* yacc.c:1646  */
+#line 227 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-						Scr->NoTitlebar = TRUE; }
-#line 1842 "gram.c" /* yacc.c:1646  */
+                                                Scr->NoTitlebar = TRUE; }
+#line 1844 "gram.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 226 "gram.y" /* yacc.c:1646  */
+#line 229 "gram.y" /* yacc.c:1646  */
     { list = &Scr->MakeTitle; }
-#line 1848 "gram.c" /* yacc.c:1646  */
+#line 1850 "gram.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 228 "gram.y" /* yacc.c:1646  */
+#line 231 "gram.y" /* yacc.c:1646  */
     { list = &Scr->StartIconified; }
-#line 1854 "gram.c" /* yacc.c:1646  */
+#line 1856 "gram.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 230 "gram.y" /* yacc.c:1646  */
+#line 233 "gram.y" /* yacc.c:1646  */
     { list = &Scr->AutoRaise; }
-#line 1860 "gram.c" /* yacc.c:1646  */
+#line 1862 "gram.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 232 "gram.y" /* yacc.c:1646  */
+#line 235 "gram.y" /* yacc.c:1646  */
     {
-					root = GetRoot((yyvsp[-5].ptr), (yyvsp[-3].ptr), (yyvsp[-1].ptr)); }
-#line 1867 "gram.c" /* yacc.c:1646  */
+                                        root = GetRoot((yyvsp[-5].ptr), (yyvsp[-3].ptr), (yyvsp[-1].ptr)); }
+#line 1869 "gram.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 234 "gram.y" /* yacc.c:1646  */
+#line 237 "gram.y" /* yacc.c:1646  */
     { root->real_menu = TRUE;}
-#line 1873 "gram.c" /* yacc.c:1646  */
+#line 1875 "gram.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 235 "gram.y" /* yacc.c:1646  */
+#line 238 "gram.y" /* yacc.c:1646  */
     { root = GetRoot((yyvsp[0].ptr), NULLSTR, NULLSTR); }
-#line 1879 "gram.c" /* yacc.c:1646  */
+#line 1881 "gram.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 236 "gram.y" /* yacc.c:1646  */
+#line 239 "gram.y" /* yacc.c:1646  */
     { root->real_menu = TRUE; }
-#line 1885 "gram.c" /* yacc.c:1646  */
+#line 1887 "gram.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 237 "gram.y" /* yacc.c:1646  */
+#line 240 "gram.y" /* yacc.c:1646  */
     { root = GetRoot((yyvsp[0].ptr), NULLSTR, NULLSTR); }
-#line 1891 "gram.c" /* yacc.c:1646  */
+#line 1893 "gram.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 239 "gram.y" /* yacc.c:1646  */
+#line 242 "gram.y" /* yacc.c:1646  */
     { list = &Scr->IconNames; }
-#line 1897 "gram.c" /* yacc.c:1646  */
+#line 1899 "gram.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 241 "gram.y" /* yacc.c:1646  */
+#line 244 "gram.y" /* yacc.c:1646  */
     { color = COLOR; }
-#line 1903 "gram.c" /* yacc.c:1646  */
+#line 1905 "gram.c" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 243 "gram.y" /* yacc.c:1646  */
+#line 246 "gram.y" /* yacc.c:1646  */
     { color = GRAYSCALE; }
-#line 1909 "gram.c" /* yacc.c:1646  */
+#line 1911 "gram.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 247 "gram.y" /* yacc.c:1646  */
+#line 250 "gram.y" /* yacc.c:1646  */
     { color = MONOCHROME; }
-#line 1915 "gram.c" /* yacc.c:1646  */
+#line 1917 "gram.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 249 "gram.y" /* yacc.c:1646  */
+#line 252 "gram.y" /* yacc.c:1646  */
     { Scr->DefaultFunction.func = (yyvsp[0].num);
-					  if ((yyvsp[0].num) == F_MENU)
-					  {
-					    pull->prev = NULL;
-					    Scr->DefaultFunction.menu = pull;
-					  }
-					  else
-					  {
-					    root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
-					    Scr->DefaultFunction.item =
-						AddToMenu(root,"x",Action,
-							  NULL,(yyvsp[0].num), NULLSTR, NULLSTR);
-					  }
-					  Action = "";
-					  pull = NULL;
-					}
-#line 1936 "gram.c" /* yacc.c:1646  */
+                                          if ((yyvsp[0].num) == F_MENU)
+                                          {
+                                            pull->prev = NULL;
+                                            Scr->DefaultFunction.menu = pull;
+                                          }
+                                          else
+                                          {
+                                            root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
+                                            Scr->DefaultFunction.item =
+                                                AddToMenu(root,"x",Action,
+                                                          NULL,(yyvsp[0].num), NULLSTR, NULLSTR);
+                                          }
+                                          Action = empty;
+                                          pull = NULL;
+                                        }
+#line 1938 "gram.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 265 "gram.y" /* yacc.c:1646  */
+#line 268 "gram.y" /* yacc.c:1646  */
     { Scr->WindowFunction.func = (yyvsp[0].num);
-					   root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
-					   Scr->WindowFunction.item =
-						AddToMenu(root,"x",Action,
-							  NULL,(yyvsp[0].num), NULLSTR, NULLSTR);
-					   Action = "";
-					   pull = NULL;
-					}
-#line 1949 "gram.c" /* yacc.c:1646  */
+                                           root = GetRoot(TWM_ROOT,NULLSTR,NULLSTR);
+                                           Scr->WindowFunction.item =
+                                                AddToMenu(root,"x",Action,
+                                                          NULL,(yyvsp[0].num), NULLSTR, NULLSTR);
+                                           Action = empty;
+                                           pull = NULL;
+                                        }
+#line 1951 "gram.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 273 "gram.y" /* yacc.c:1646  */
+#line 276 "gram.y" /* yacc.c:1646  */
     { list = &Scr->WarpCursorL; }
-#line 1955 "gram.c" /* yacc.c:1646  */
+#line 1957 "gram.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 275 "gram.y" /* yacc.c:1646  */
+#line 278 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-					    Scr->WarpCursor = TRUE; }
-#line 1962 "gram.c" /* yacc.c:1646  */
+                                            Scr->WarpCursor = TRUE; }
+#line 1964 "gram.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 277 "gram.y" /* yacc.c:1646  */
+#line 280 "gram.y" /* yacc.c:1646  */
     { list = &Scr->WindowRingL; }
-#line 1968 "gram.c" /* yacc.c:1646  */
+#line 1970 "gram.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 282 "gram.y" /* yacc.c:1646  */
+#line 285 "gram.y" /* yacc.c:1646  */
     { if (!do_single_keyword ((yyvsp[0].num))) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-					"unknown singleton keyword %d\n",
-						     (yyvsp[0].num));
-					    ParseError = 1;
-					  }
-					}
-#line 1981 "gram.c" /* yacc.c:1646  */
+                                            parseWarning (
+                                                 "unknown singleton keyword %d",
+                                                 (yyvsp[0].num));
+                                            ParseError = 1;
+                                          }
+                                        }
+#line 1982 "gram.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 292 "gram.y" /* yacc.c:1646  */
+#line 294 "gram.y" /* yacc.c:1646  */
     { if (!do_string_keyword ((yyvsp[-1].num), (yyvsp[0].ptr))) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-				"unknown string keyword %d (value \"%s\")\n",
-						     (yyvsp[-1].num), (yyvsp[0].ptr));
-					    ParseError = 1;
-					  }
-					}
+                                            parseWarning (
+                                                 "unknown string keyword %d (value \"%s\")",
+                                                 (yyvsp[-1].num), (yyvsp[0].ptr));
+                                            ParseError = 1;
+                                          }
+                                        }
 #line 1994 "gram.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 302 "gram.y" /* yacc.c:1646  */
+#line 303 "gram.y" /* yacc.c:1646  */
     { if (!do_number_keyword ((yyvsp[-1].num), (yyvsp[0].num))) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-				"unknown numeric keyword %d (value %d)\n",
-						     (yyvsp[-1].num), (yyvsp[0].num));
-					    ParseError = 1;
-					  }
-					}
-#line 2007 "gram.c" /* yacc.c:1646  */
+                                            parseWarning (
+                                                 "unknown numeric keyword %d (value %d)",
+                                                 (yyvsp[-1].num), (yyvsp[0].num));
+                                            ParseError = 1;
+                                          }
+                                        }
+#line 2006 "gram.c" /* yacc.c:1646  */
     break;
 
   case 78:
 #line 314 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2013 "gram.c" /* yacc.c:1646  */
+#line 2012 "gram.c" /* yacc.c:1646  */
     break;
 
   case 79:
 #line 317 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2019 "gram.c" /* yacc.c:1646  */
+#line 2018 "gram.c" /* yacc.c:1646  */
     break;
 
   case 82:
 #line 324 "gram.y" /* yacc.c:1646  */
     { mods |= Mod1Mask; }
-#line 2025 "gram.c" /* yacc.c:1646  */
+#line 2024 "gram.c" /* yacc.c:1646  */
     break;
 
   case 83:
 #line 325 "gram.y" /* yacc.c:1646  */
     { mods |= ShiftMask; }
-#line 2031 "gram.c" /* yacc.c:1646  */
+#line 2030 "gram.c" /* yacc.c:1646  */
     break;
 
   case 84:
 #line 326 "gram.y" /* yacc.c:1646  */
     { mods |= LockMask; }
-#line 2037 "gram.c" /* yacc.c:1646  */
+#line 2036 "gram.c" /* yacc.c:1646  */
     break;
 
   case 85:
 #line 327 "gram.y" /* yacc.c:1646  */
     { mods |= ControlMask; }
-#line 2043 "gram.c" /* yacc.c:1646  */
+#line 2042 "gram.c" /* yacc.c:1646  */
     break;
 
   case 86:
 #line 328 "gram.y" /* yacc.c:1646  */
     { if ((yyvsp[0].num) < 1 || (yyvsp[0].num) > 5) {
-					     twmrc_error_prefix();
-					     fprintf (stderr,
-				"bad modifier number (%d), must be 1-5\n",
-						      (yyvsp[0].num));
-					     ParseError = 1;
-					  } else {
-					     mods |= (Mod1Mask << ((yyvsp[0].num) - 1));
-					  }
-					}
-#line 2058 "gram.c" /* yacc.c:1646  */
+                                             parseWarning (
+                                                  "bad modifier number (%d), must be 1-5",
+                                                  (yyvsp[0].num));
+                                             ParseError = 1;
+                                          } else {
+                                             mods |= (Mod1Mask << ((yyvsp[0].num) - 1));
+                                          }
+                                        }
+#line 2056 "gram.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 338 "gram.y" /* yacc.c:1646  */
+#line 337 "gram.y" /* yacc.c:1646  */
     { }
-#line 2064 "gram.c" /* yacc.c:1646  */
+#line 2062 "gram.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 345 "gram.y" /* yacc.c:1646  */
+#line 344 "gram.y" /* yacc.c:1646  */
     { cont |= C_WINDOW_BIT; }
-#line 2070 "gram.c" /* yacc.c:1646  */
+#line 2068 "gram.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 346 "gram.y" /* yacc.c:1646  */
+#line 345 "gram.y" /* yacc.c:1646  */
     { cont |= C_TITLE_BIT; }
-#line 2076 "gram.c" /* yacc.c:1646  */
+#line 2074 "gram.c" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 347 "gram.y" /* yacc.c:1646  */
+#line 346 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICON_BIT; }
-#line 2082 "gram.c" /* yacc.c:1646  */
+#line 2080 "gram.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 348 "gram.y" /* yacc.c:1646  */
+#line 347 "gram.y" /* yacc.c:1646  */
     { cont |= C_ROOT_BIT; }
-#line 2088 "gram.c" /* yacc.c:1646  */
+#line 2086 "gram.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 349 "gram.y" /* yacc.c:1646  */
+#line 348 "gram.y" /* yacc.c:1646  */
     { cont |= C_FRAME_BIT; }
-#line 2094 "gram.c" /* yacc.c:1646  */
+#line 2092 "gram.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 350 "gram.y" /* yacc.c:1646  */
+#line 349 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICONMGR_BIT; }
-#line 2100 "gram.c" /* yacc.c:1646  */
+#line 2098 "gram.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 351 "gram.y" /* yacc.c:1646  */
+#line 350 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICONMGR_BIT; }
-#line 2106 "gram.c" /* yacc.c:1646  */
+#line 2104 "gram.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 352 "gram.y" /* yacc.c:1646  */
+#line 351 "gram.y" /* yacc.c:1646  */
     { cont |= C_ALL_BITS; }
-#line 2112 "gram.c" /* yacc.c:1646  */
+#line 2110 "gram.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 353 "gram.y" /* yacc.c:1646  */
+#line 352 "gram.y" /* yacc.c:1646  */
     {  }
-#line 2118 "gram.c" /* yacc.c:1646  */
+#line 2116 "gram.c" /* yacc.c:1646  */
     break;
 
   case 101:
-#line 360 "gram.y" /* yacc.c:1646  */
+#line 359 "gram.y" /* yacc.c:1646  */
     { cont |= C_WINDOW_BIT; }
-#line 2124 "gram.c" /* yacc.c:1646  */
+#line 2122 "gram.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 361 "gram.y" /* yacc.c:1646  */
+#line 360 "gram.y" /* yacc.c:1646  */
     { cont |= C_TITLE_BIT; }
-#line 2130 "gram.c" /* yacc.c:1646  */
+#line 2128 "gram.c" /* yacc.c:1646  */
     break;
 
   case 103:
-#line 362 "gram.y" /* yacc.c:1646  */
+#line 361 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICON_BIT; }
-#line 2136 "gram.c" /* yacc.c:1646  */
+#line 2134 "gram.c" /* yacc.c:1646  */
     break;
 
   case 104:
-#line 363 "gram.y" /* yacc.c:1646  */
+#line 362 "gram.y" /* yacc.c:1646  */
     { cont |= C_ROOT_BIT; }
-#line 2142 "gram.c" /* yacc.c:1646  */
+#line 2140 "gram.c" /* yacc.c:1646  */
     break;
 
   case 105:
-#line 364 "gram.y" /* yacc.c:1646  */
+#line 363 "gram.y" /* yacc.c:1646  */
     { cont |= C_FRAME_BIT; }
-#line 2148 "gram.c" /* yacc.c:1646  */
+#line 2146 "gram.c" /* yacc.c:1646  */
     break;
 
   case 106:
-#line 365 "gram.y" /* yacc.c:1646  */
+#line 364 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICONMGR_BIT; }
-#line 2154 "gram.c" /* yacc.c:1646  */
+#line 2152 "gram.c" /* yacc.c:1646  */
     break;
 
   case 107:
-#line 366 "gram.y" /* yacc.c:1646  */
+#line 365 "gram.y" /* yacc.c:1646  */
     { cont |= C_ICONMGR_BIT; }
-#line 2160 "gram.c" /* yacc.c:1646  */
+#line 2158 "gram.c" /* yacc.c:1646  */
     break;
 
   case 108:
-#line 367 "gram.y" /* yacc.c:1646  */
+#line 366 "gram.y" /* yacc.c:1646  */
     { cont |= C_ALL_BITS; }
-#line 2166 "gram.c" /* yacc.c:1646  */
+#line 2164 "gram.c" /* yacc.c:1646  */
     break;
 
   case 109:
-#line 368 "gram.y" /* yacc.c:1646  */
+#line 367 "gram.y" /* yacc.c:1646  */
     { }
-#line 2172 "gram.c" /* yacc.c:1646  */
+#line 2170 "gram.c" /* yacc.c:1646  */
     break;
 
   case 110:
-#line 369 "gram.y" /* yacc.c:1646  */
+#line 368 "gram.y" /* yacc.c:1646  */
     { Name = (yyvsp[0].ptr); cont |= C_NAME_BIT; }
-#line 2178 "gram.c" /* yacc.c:1646  */
+#line 2176 "gram.c" /* yacc.c:1646  */
     break;
 
   case 114:
-#line 380 "gram.y" /* yacc.c:1646  */
+#line 379 "gram.y" /* yacc.c:1646  */
     { SetHighlightPixmap ((yyvsp[0].ptr)); }
-#line 2184 "gram.c" /* yacc.c:1646  */
+#line 2182 "gram.c" /* yacc.c:1646  */
     break;
 
   case 118:
-#line 391 "gram.y" /* yacc.c:1646  */
+#line 390 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->FrameCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2191 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->FrameCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2189 "gram.c" /* yacc.c:1646  */
     break;
 
   case 119:
-#line 393 "gram.y" /* yacc.c:1646  */
+#line 392 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->FrameCursor, (yyvsp[0].ptr)); }
-#line 2198 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->FrameCursor, (yyvsp[0].ptr)); }
+#line 2196 "gram.c" /* yacc.c:1646  */
     break;
 
   case 120:
-#line 395 "gram.y" /* yacc.c:1646  */
+#line 394 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->TitleCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2205 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->TitleCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2203 "gram.c" /* yacc.c:1646  */
     break;
 
   case 121:
-#line 397 "gram.y" /* yacc.c:1646  */
+#line 396 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->TitleCursor, (yyvsp[0].ptr)); }
-#line 2212 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->TitleCursor, (yyvsp[0].ptr)); }
+#line 2210 "gram.c" /* yacc.c:1646  */
     break;
 
   case 122:
-#line 399 "gram.y" /* yacc.c:1646  */
+#line 398 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->IconCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2219 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->IconCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2217 "gram.c" /* yacc.c:1646  */
     break;
 
   case 123:
-#line 401 "gram.y" /* yacc.c:1646  */
+#line 400 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->IconCursor, (yyvsp[0].ptr)); }
-#line 2226 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->IconCursor, (yyvsp[0].ptr)); }
+#line 2224 "gram.c" /* yacc.c:1646  */
     break;
 
   case 124:
-#line 403 "gram.y" /* yacc.c:1646  */
+#line 402 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->IconMgrCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2233 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->IconMgrCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2231 "gram.c" /* yacc.c:1646  */
     break;
 
   case 125:
-#line 405 "gram.y" /* yacc.c:1646  */
+#line 404 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->IconMgrCursor, (yyvsp[0].ptr)); }
-#line 2240 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->IconMgrCursor, (yyvsp[0].ptr)); }
+#line 2238 "gram.c" /* yacc.c:1646  */
     break;
 
   case 126:
-#line 407 "gram.y" /* yacc.c:1646  */
+#line 406 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->ButtonCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2247 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->ButtonCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2245 "gram.c" /* yacc.c:1646  */
     break;
 
   case 127:
-#line 409 "gram.y" /* yacc.c:1646  */
+#line 408 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->ButtonCursor, (yyvsp[0].ptr)); }
-#line 2254 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->ButtonCursor, (yyvsp[0].ptr)); }
+#line 2252 "gram.c" /* yacc.c:1646  */
     break;
 
   case 128:
-#line 411 "gram.y" /* yacc.c:1646  */
+#line 410 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->MoveCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2261 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->MoveCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2259 "gram.c" /* yacc.c:1646  */
     break;
 
   case 129:
-#line 413 "gram.y" /* yacc.c:1646  */
+#line 412 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->MoveCursor, (yyvsp[0].ptr)); }
-#line 2268 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->MoveCursor, (yyvsp[0].ptr)); }
+#line 2266 "gram.c" /* yacc.c:1646  */
     break;
 
   case 130:
-#line 415 "gram.y" /* yacc.c:1646  */
+#line 414 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->ResizeCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2275 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->ResizeCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2273 "gram.c" /* yacc.c:1646  */
     break;
 
   case 131:
-#line 417 "gram.y" /* yacc.c:1646  */
+#line 416 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->ResizeCursor, (yyvsp[0].ptr)); }
-#line 2282 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->ResizeCursor, (yyvsp[0].ptr)); }
+#line 2280 "gram.c" /* yacc.c:1646  */
     break;
 
   case 132:
-#line 419 "gram.y" /* yacc.c:1646  */
+#line 418 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->WaitCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2289 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->WaitCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2287 "gram.c" /* yacc.c:1646  */
     break;
 
   case 133:
-#line 421 "gram.y" /* yacc.c:1646  */
+#line 420 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->WaitCursor, (yyvsp[0].ptr)); }
-#line 2296 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->WaitCursor, (yyvsp[0].ptr)); }
+#line 2294 "gram.c" /* yacc.c:1646  */
     break;
 
   case 134:
-#line 423 "gram.y" /* yacc.c:1646  */
+#line 422 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->MenuCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2303 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->MenuCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2301 "gram.c" /* yacc.c:1646  */
     break;
 
   case 135:
-#line 425 "gram.y" /* yacc.c:1646  */
+#line 424 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->MenuCursor, (yyvsp[0].ptr)); }
-#line 2310 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->MenuCursor, (yyvsp[0].ptr)); }
+#line 2308 "gram.c" /* yacc.c:1646  */
     break;
 
   case 136:
-#line 427 "gram.y" /* yacc.c:1646  */
+#line 426 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->SelectCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2317 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->SelectCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2315 "gram.c" /* yacc.c:1646  */
     break;
 
   case 137:
-#line 429 "gram.y" /* yacc.c:1646  */
+#line 428 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->SelectCursor, (yyvsp[0].ptr)); }
-#line 2324 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->SelectCursor, (yyvsp[0].ptr)); }
+#line 2322 "gram.c" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 431 "gram.y" /* yacc.c:1646  */
+#line 430 "gram.y" /* yacc.c:1646  */
     {
-			NewBitmapCursor(&Scr->DestroyCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2331 "gram.c" /* yacc.c:1646  */
+                        NewBitmapCursor(&Scr->DestroyCursor, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2329 "gram.c" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 433 "gram.y" /* yacc.c:1646  */
+#line 432 "gram.y" /* yacc.c:1646  */
     {
-			NewFontCursor(&Scr->DestroyCursor, (yyvsp[0].ptr)); }
-#line 2338 "gram.c" /* yacc.c:1646  */
+                        NewFontCursor(&Scr->DestroyCursor, (yyvsp[0].ptr)); }
+#line 2336 "gram.c" /* yacc.c:1646  */
     break;
 
   case 143:
-#line 445 "gram.y" /* yacc.c:1646  */
+#line 444 "gram.y" /* yacc.c:1646  */
     { if (!do_colorlist_keyword ((yyvsp[-1].num), color,
-								     (yyvsp[0].ptr))) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-			"unhandled list color keyword %d (string \"%s\")\n",
-						     (yyvsp[-1].num), (yyvsp[0].ptr));
-					    ParseError = 1;
-					  }
-					}
-#line 2352 "gram.c" /* yacc.c:1646  */
+                                                                     (yyvsp[0].ptr))) {
+                                            parseWarning (
+                                                 "unhandled list color keyword %d (string \"%s\")",
+                                                 (yyvsp[-1].num), (yyvsp[0].ptr));
+                                            ParseError = 1;
+                                          }
+                                        }
+#line 2349 "gram.c" /* yacc.c:1646  */
     break;
 
   case 144:
-#line 454 "gram.y" /* yacc.c:1646  */
+#line 452 "gram.y" /* yacc.c:1646  */
     { list = do_colorlist_keyword((yyvsp[-1].num),color,
-								      (yyvsp[0].ptr));
-					  if (!list) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-			"unhandled color list keyword %d (string \"%s\")\n",
-						     (yyvsp[-1].num), (yyvsp[0].ptr));
-					    ParseError = 1;
-					  }
-					}
-#line 2367 "gram.c" /* yacc.c:1646  */
+                                                                      (yyvsp[0].ptr));
+                                          if (!list) {
+                                            parseWarning (
+                                                 "unhandled color list keyword %d (string \"%s\")",
+                                                 (yyvsp[-1].num), (yyvsp[0].ptr));
+                                            ParseError = 1;
+                                          }
+                                        }
+#line 2363 "gram.c" /* yacc.c:1646  */
     break;
 
   case 145:
-#line 464 "gram.y" /* yacc.c:1646  */
+#line 461 "gram.y" /* yacc.c:1646  */
     { /* No action */; }
-#line 2373 "gram.c" /* yacc.c:1646  */
+#line 2369 "gram.c" /* yacc.c:1646  */
     break;
 
   case 146:
-#line 465 "gram.y" /* yacc.c:1646  */
+#line 462 "gram.y" /* yacc.c:1646  */
     { if (!do_color_keyword ((yyvsp[-1].num), color,
-								 (yyvsp[0].ptr))) {
-					    twmrc_error_prefix();
-					    fprintf (stderr,
-			"unhandled color keyword %d (string \"%s\")\n",
-						     (yyvsp[-1].num), (yyvsp[0].ptr));
-					    ParseError = 1;
-					  }
-					}
-#line 2387 "gram.c" /* yacc.c:1646  */
+                                                                 (yyvsp[0].ptr))) {
+                                            parseWarning (
+                                                 "unhandled color keyword %d (string \"%s\")",
+                                                 (yyvsp[-1].num), (yyvsp[0].ptr));
+                                            ParseError = 1;
+                                          }
+                                        }
+#line 2382 "gram.c" /* yacc.c:1646  */
     break;
 
   case 150:
-#line 483 "gram.y" /* yacc.c:1646  */
+#line 479 "gram.y" /* yacc.c:1646  */
     { do_string_savecolor(color, (yyvsp[0].ptr)); }
-#line 2393 "gram.c" /* yacc.c:1646  */
+#line 2388 "gram.c" /* yacc.c:1646  */
     break;
 
   case 151:
-#line 484 "gram.y" /* yacc.c:1646  */
+#line 480 "gram.y" /* yacc.c:1646  */
     { do_var_savecolor((yyvsp[0].num)); }
-#line 2399 "gram.c" /* yacc.c:1646  */
+#line 2394 "gram.c" /* yacc.c:1646  */
     break;
 
   case 155:
-#line 494 "gram.y" /* yacc.c:1646  */
+#line 490 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime &&
-					      color == Scr->Monochrome)
-					    AddToList(list, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2407 "gram.c" /* yacc.c:1646  */
+                                              color == Scr->Monochrome)
+                                            AddToList(list, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
+#line 2402 "gram.c" /* yacc.c:1646  */
     break;
 
   case 156:
-#line 499 "gram.y" /* yacc.c:1646  */
+#line 495 "gram.y" /* yacc.c:1646  */
     {
-				    if (HasShape) Scr->SqueezeTitle = TRUE;
-				}
-#line 2415 "gram.c" /* yacc.c:1646  */
+                                    if (HasShape) Scr->SqueezeTitle = TRUE;
+                                }
+#line 2410 "gram.c" /* yacc.c:1646  */
     break;
 
   case 157:
-#line 502 "gram.y" /* yacc.c:1646  */
+#line 498 "gram.y" /* yacc.c:1646  */
     { list = &Scr->SqueezeTitleL;
-				  if (HasShape && Scr->SqueezeTitle == -1)
-				    Scr->SqueezeTitle = TRUE;
-				}
-#line 2424 "gram.c" /* yacc.c:1646  */
+                                  if (HasShape && Scr->SqueezeTitle == -1)
+                                    Scr->SqueezeTitle = TRUE;
+                                }
+#line 2419 "gram.c" /* yacc.c:1646  */
     break;
 
   case 159:
-#line 507 "gram.y" /* yacc.c:1646  */
+#line 503 "gram.y" /* yacc.c:1646  */
     { Scr->SqueezeTitle = FALSE; }
-#line 2430 "gram.c" /* yacc.c:1646  */
+#line 2425 "gram.c" /* yacc.c:1646  */
     break;
 
   case 160:
-#line 508 "gram.y" /* yacc.c:1646  */
+#line 504 "gram.y" /* yacc.c:1646  */
     { list = &Scr->DontSqueezeTitleL; }
-#line 2436 "gram.c" /* yacc.c:1646  */
+#line 2431 "gram.c" /* yacc.c:1646  */
     break;
 
   case 163:
-#line 513 "gram.y" /* yacc.c:1646  */
+#line 509 "gram.y" /* yacc.c:1646  */
     {
-				if (Scr->FirstTime) {
-				   do_squeeze_entry (list, (yyvsp[-3].ptr), (yyvsp[-2].num), (yyvsp[-1].num), (yyvsp[0].num));
-				}
-			}
-#line 2446 "gram.c" /* yacc.c:1646  */
+                                if (Scr->FirstTime) {
+                                   do_squeeze_entry (list, (yyvsp[-3].ptr), (yyvsp[-2].num), (yyvsp[-1].num), (yyvsp[0].num));
+                                }
+                        }
+#line 2441 "gram.c" /* yacc.c:1646  */
     break;
 
   case 167:
-#line 528 "gram.y" /* yacc.c:1646  */
+#line 524 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-					    AddToList(list, (yyvsp[-2].ptr), (char *)
-						AllocateIconManager((yyvsp[-2].ptr), NULLSTR,
-							(yyvsp[-1].ptr),(yyvsp[0].num)));
-					}
-#line 2456 "gram.c" /* yacc.c:1646  */
+                                            AddToList(list, (yyvsp[-2].ptr), (char *)
+                                                AllocateIconManager((yyvsp[-2].ptr), NULLSTR,
+                                                        (yyvsp[-1].ptr),(yyvsp[0].num)));
+                                        }
+#line 2451 "gram.c" /* yacc.c:1646  */
     break;
 
   case 168:
-#line 534 "gram.y" /* yacc.c:1646  */
+#line 530 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-					    AddToList(list, (yyvsp[-3].ptr), (char *)
-						AllocateIconManager((yyvsp[-3].ptr),(yyvsp[-2].ptr),
-						(yyvsp[-1].ptr), (yyvsp[0].num)));
-					}
-#line 2466 "gram.c" /* yacc.c:1646  */
+                                            AddToList(list, (yyvsp[-3].ptr), (char *)
+                                                AllocateIconManager((yyvsp[-3].ptr),(yyvsp[-2].ptr),
+                                                (yyvsp[-1].ptr), (yyvsp[0].num)));
+                                        }
+#line 2461 "gram.c" /* yacc.c:1646  */
     break;
 
   case 172:
-#line 548 "gram.y" /* yacc.c:1646  */
+#line 544 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime)
-					    AddToList(list, (yyvsp[0].ptr), 0);
-					}
-#line 2474 "gram.c" /* yacc.c:1646  */
+                                            AddToList(list, (yyvsp[0].ptr), 0);
+                                        }
+#line 2469 "gram.c" /* yacc.c:1646  */
     break;
 
   case 176:
-#line 560 "gram.y" /* yacc.c:1646  */
+#line 556 "gram.y" /* yacc.c:1646  */
     { if (Scr->FirstTime) AddToList(list, (yyvsp[-1].ptr), (yyvsp[0].ptr)); }
-#line 2480 "gram.c" /* yacc.c:1646  */
+#line 2475 "gram.c" /* yacc.c:1646  */
     break;
 
   case 180:
-#line 570 "gram.y" /* yacc.c:1646  */
-    { AddToMenu(root, "", Action, NULL, (yyvsp[0].num),
-						NULLSTR, NULLSTR);
-					  Action = "";
-					}
-#line 2489 "gram.c" /* yacc.c:1646  */
+#line 566 "gram.y" /* yacc.c:1646  */
+    { AddToMenu(root, empty, Action, NULL, (yyvsp[0].num),
+                                                NULLSTR, NULLSTR);
+                                          Action = empty;
+                                        }
+#line 2484 "gram.c" /* yacc.c:1646  */
     break;
 
   case 184:
-#line 583 "gram.y" /* yacc.c:1646  */
+#line 579 "gram.y" /* yacc.c:1646  */
     { AddToMenu(root, (yyvsp[-1].ptr), Action, pull, (yyvsp[0].num),
-						NULLSTR, NULLSTR);
-					  Action = "";
-					  pull = NULL;
-					}
-#line 2499 "gram.c" /* yacc.c:1646  */
+                                                NULLSTR, NULLSTR);
+                                          Action = empty;
+                                          pull = NULL;
+                                        }
+#line 2494 "gram.c" /* yacc.c:1646  */
     break;
 
   case 185:
-#line 588 "gram.y" /* yacc.c:1646  */
+#line 584 "gram.y" /* yacc.c:1646  */
     {
-					  AddToMenu(root, (yyvsp[-6].ptr), Action, pull, (yyvsp[0].num),
-						(yyvsp[-4].ptr), (yyvsp[-2].ptr));
-					  Action = "";
-					  pull = NULL;
-					}
-#line 2510 "gram.c" /* yacc.c:1646  */
+                                          AddToMenu(root, (yyvsp[-6].ptr), Action, pull, (yyvsp[0].num),
+                                                (yyvsp[-4].ptr), (yyvsp[-2].ptr));
+                                          Action = empty;
+                                          pull = NULL;
+                                        }
+#line 2505 "gram.c" /* yacc.c:1646  */
     break;
 
   case 186:
-#line 596 "gram.y" /* yacc.c:1646  */
+#line 592 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2516 "gram.c" /* yacc.c:1646  */
+#line 2511 "gram.c" /* yacc.c:1646  */
     break;
 
   case 187:
-#line 597 "gram.y" /* yacc.c:1646  */
+#line 593 "gram.y" /* yacc.c:1646  */
     {
-				(yyval.num) = (yyvsp[-1].num);
-				Action = (yyvsp[0].ptr);
-				switch ((yyvsp[-1].num)) {
-				  case F_MENU:
-				    pull = GetRoot ((yyvsp[0].ptr), NULLSTR,NULLSTR);
-				    pull->prev = root;
-				    break;
-				  case F_WARPRING:
-				    if (!CheckWarpRingArg (Action)) {
-					twmrc_error_prefix();
-					fprintf (stderr,
-			"ignoring invalid f.warptoring argument \"%s\"\n",
-						 Action);
-					(yyval.num) = F_NOP;
-				    }
-				  case F_WARPTOSCREEN:
-				    if (!CheckWarpScreenArg (Action)) {
-					twmrc_error_prefix();
-					fprintf (stderr,
-			"ignoring invalid f.warptoscreen argument \"%s\"\n",
-					         Action);
-					(yyval.num) = F_NOP;
-				    }
-				    break;
-				  case F_COLORMAP:
-				    if (CheckColormapArg (Action)) {
-					(yyval.num) = F_COLORMAP;
-				    } else {
-					twmrc_error_prefix();
-					fprintf (stderr,
-			"ignoring invalid f.colormap argument \"%s\"\n",
-						 Action);
-					(yyval.num) = F_NOP;
-				    }
-				    break;
-				} /* end switch */
-				   }
-#line 2559 "gram.c" /* yacc.c:1646  */
+                                (yyval.num) = (yyvsp[-1].num);
+                                Action = (yyvsp[0].ptr);
+                                switch ((yyvsp[-1].num)) {
+                                  case F_MENU:
+                                    pull = GetRoot ((yyvsp[0].ptr), NULLSTR,NULLSTR);
+                                    pull->prev = root;
+                                    break;
+                                  case F_WARPRING:
+                                    if (!CheckWarpRingArg (Action)) {
+                                        parseWarning (
+                                             "ignoring invalid f.warptoring argument \"%s\"",
+                                             Action);
+                                        (yyval.num) = F_NOP;
+                                    }
+                                    break;
+                                  case F_WARPTOSCREEN:
+                                    if (!CheckWarpScreenArg (Action)) {
+                                        parseWarning (
+                                             "ignoring invalid f.warptoscreen argument \"%s\"",
+                                             Action);
+                                        (yyval.num) = F_NOP;
+                                    }
+                                    break;
+                                  case F_COLORMAP:
+                                    if (CheckColormapArg (Action)) {
+                                        (yyval.num) = F_COLORMAP;
+                                    } else {
+                                        parseWarning (
+                                             "ignoring invalid f.colormap argument \"%s\"",
+                                             Action);
+                                        (yyval.num) = F_NOP;
+                                    }
+                                    break;
+                                } /* end switch */
+                                   }
+#line 2552 "gram.c" /* yacc.c:1646  */
     break;
 
   case 188:
-#line 638 "gram.y" /* yacc.c:1646  */
+#line 632 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2565 "gram.c" /* yacc.c:1646  */
+#line 2558 "gram.c" /* yacc.c:1646  */
     break;
 
   case 189:
-#line 639 "gram.y" /* yacc.c:1646  */
+#line 633 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2571 "gram.c" /* yacc.c:1646  */
+#line 2564 "gram.c" /* yacc.c:1646  */
     break;
 
   case 190:
-#line 640 "gram.y" /* yacc.c:1646  */
+#line 634 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = -((yyvsp[0].num)); }
-#line 2577 "gram.c" /* yacc.c:1646  */
+#line 2570 "gram.c" /* yacc.c:1646  */
     break;
 
   case 191:
-#line 643 "gram.y" /* yacc.c:1646  */
+#line 637 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num);
-					  if ((yyvsp[0].num) == 0)
-						yyerror("bad button 0");
+                                          if ((yyvsp[0].num) == 0)
+                                                yyerror("bad button 0");
 
-					  if ((yyvsp[0].num) > MAX_BUTTONS)
-					  {
-						(yyval.num) = 0;
-						yyerror("button number too large");
-					  }
-					}
-#line 2592 "gram.c" /* yacc.c:1646  */
+                                          if ((yyvsp[0].num) > MAX_BUTTONS)
+                                          {
+                                                (yyval.num) = 0;
+                                                yyerror("button number too large");
+                                          }
+                                        }
+#line 2585 "gram.c" /* yacc.c:1646  */
     break;
 
   case 192:
-#line 655 "gram.y" /* yacc.c:1646  */
+#line 649 "gram.y" /* yacc.c:1646  */
     { ptr = strdup((yyvsp[0].ptr));
-					  RemoveDQuote(ptr);
-					  (yyval.ptr) = ptr;
-					}
-#line 2601 "gram.c" /* yacc.c:1646  */
+                                          RemoveDQuote(ptr);
+                                          (yyval.ptr) = ptr;
+                                        }
+#line 2594 "gram.c" /* yacc.c:1646  */
     break;
 
   case 193:
-#line 660 "gram.y" /* yacc.c:1646  */
+#line 654 "gram.y" /* yacc.c:1646  */
     { (yyval.num) = (yyvsp[0].num); }
-#line 2607 "gram.c" /* yacc.c:1646  */
+#line 2600 "gram.c" /* yacc.c:1646  */
     break;
 
 
-#line 2611 "gram.c" /* yacc.c:1646  */
+#line 2604 "gram.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2835,13 +2828,13 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 663 "gram.y" /* yacc.c:1906  */
+#line 657 "gram.y" /* yacc.c:1906  */
+
 
 static void
 yyerror(const char *s)
 {
-    twmrc_error_prefix();
-    fprintf (stderr, "error in input file:  %s\n", s ? s : "");
+    parseWarning("error in input file:  %s", s ? s : "");
     ParseError = 1;
 }
 
@@ -2852,207 +2845,198 @@ RemoveDQuote(char *str)
     register int n;
     register int count;
 
-    for (i=str+1, o=str; *i && *i != '\"'; o++)
-    {
-	if (*i == '\\')
-	{
-	    switch (*++i)
-	    {
-	    case 'n':
-		*o = '\n';
-		i++;
-		break;
-	    case 'b':
-		*o = '\b';
-		i++;
-		break;
-	    case 'r':
-		*o = '\r';
-		i++;
-		break;
-	    case 't':
-		*o = '\t';
-		i++;
-		break;
-	    case 'f':
-		*o = '\f';
-		i++;
-		break;
-	    case '0':
-		if (*++i == 'x')
-		    goto hex;
-		else
-		    --i;
-	    case '1': case '2': case '3':
-	    case '4': case '5': case '6': case '7':
-		n = 0;
-		count = 0;
-		while (*i >= '0' && *i <= '7' && count < 3)
-		{
-		    n = (n<<3) + (*i++ - '0');
-		    count++;
-		}
-		*o = n;
-		break;
-	    hex:
-	    case 'x':
-		n = 0;
-		count = 0;
-		while (i++, count++ < 2)
-		{
-		    if (*i >= '0' && *i <= '9')
-			n = (n<<4) + (*i - '0');
-		    else if (*i >= 'a' && *i <= 'f')
-			n = (n<<4) + (*i - 'a') + 10;
-		    else if (*i >= 'A' && *i <= 'F')
-			n = (n<<4) + (*i - 'A') + 10;
-		    else
-			break;
-		}
-		*o = n;
-		break;
-	    case '\n':
-		i++;	/* punt */
-		o--;	/* to account for o++ at end of loop */
-		break;
-	    case '\"':
-	    case '\'':
-	    case '\\':
-	    default:
-		*o = *i++;
-		break;
-	    }
-	}
-	else
-	    *o = *i++;
+    for (i = str + 1, o = str; *i && *i != '\"'; o++) {
+        if (*i == '\\') {
+            switch (*++i) {
+            case 'n':
+                *o = '\n';
+                i++;
+                break;
+            case 'b':
+                *o = '\b';
+                i++;
+                break;
+            case 'r':
+                *o = '\r';
+                i++;
+                break;
+            case 't':
+                *o = '\t';
+                i++;
+                break;
+            case 'f':
+                *o = '\f';
+                i++;
+                break;
+            case '0':
+                if (*++i == 'x')
+                    goto hex;
+                else
+                    --i;
+                /* FALLTHRU */
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+                n = 0;
+                count = 0;
+                while (*i >= '0' && *i <= '7' && count < 3) {
+                    n = (n << 3) + (*i++ - '0');
+                    count++;
+                }
+                *o = (char) n;
+                break;
+              hex:
+            case 'x':
+                n = 0;
+                count = 0;
+                while (i++, count++ < 2) {
+                    if (*i >= '0' && *i <= '9')
+                        n = (n << 4) + (*i - '0');
+                    else if (*i >= 'a' && *i <= 'f')
+                        n = (n << 4) + (*i - 'a') + 10;
+                    else if (*i >= 'A' && *i <= 'F')
+                        n = (n << 4) + (*i - 'A') + 10;
+                    else
+                        break;
+                }
+                *o = (char) n;
+                break;
+            case '\n':
+                i++;            /* punt */
+                o--;            /* to account for o++ at end of loop */
+                break;
+            case '\"':
+            case '\'':
+            case '\\':
+            default:
+                *o = *i++;
+                break;
+            }
+        }
+        else
+            *o = *i++;
     }
     *o = '\0';
 }
 
-static MenuRoot *GetRoot(const char *name, const char* fore, const char *back)
+static MenuRoot *
+GetRoot(const char *name, const char *fore, const char *back)
 {
     MenuRoot *tmp;
 
     tmp = FindMenuRoot(name);
     if (tmp == NULL)
-	tmp = NewMenuRoot(name);
+        tmp = NewMenuRoot(name);
 
-    if (fore)
-    {
-	int save;
+    if (fore) {
+        int save;
 
-	save = Scr->FirstTime;
-	Scr->FirstTime = TRUE;
-	GetColor(COLOR, &tmp->hi_fore, fore);
-	GetColor(COLOR, &tmp->hi_back, back);
-	Scr->FirstTime = save;
+        save = Scr->FirstTime;
+        Scr->FirstTime = TRUE;
+        GetColor(COLOR, &tmp->hi_fore, fore);
+        GetColor(COLOR, &tmp->hi_back, back);
+        Scr->FirstTime = (short) save;
     }
 
     return tmp;
 }
 
-static void GotButton(int butt, int func)
+static void
+GotButton(int butt, int func)
 {
     int i;
 
-    for (i = 0; i < NUM_CONTEXTS; i++)
-    {
-	if ((cont & (1 << i)) == 0)
-	    continue;
+    for (i = 0; i < NUM_CONTEXTS; i++) {
+        if ((cont & (1 << i)) == 0)
+            continue;
 
-	Scr->Mouse[butt][i][mods].func = func;
-	if (func == F_MENU)
-	{
-	    pull->prev = NULL;
-	    Scr->Mouse[butt][i][mods].menu = pull;
-	}
-	else
-	{
-	    root = GetRoot(TWM_ROOT, NULLSTR, NULLSTR);
-	    Scr->Mouse[butt][i][mods].item = AddToMenu(root,"x",Action,
-		    NULL, func, NULLSTR, NULLSTR);
-	}
+        Scr->Mouse[butt][i][mods].func = func;
+        if (func == F_MENU) {
+            pull->prev = NULL;
+            Scr->Mouse[butt][i][mods].menu = pull;
+        }
+        else {
+            root = GetRoot(TWM_ROOT, NULLSTR, NULLSTR);
+            Scr->Mouse[butt][i][mods].item = AddToMenu(root, "x", Action,
+                                                       NULL, func, NULLSTR, NULLSTR);
+        }
     }
-    Action = "";
+    Action = empty;
     pull = NULL;
     cont = 0;
-    mods_used |= mods;
+    mods_used |= (unsigned) mods;
     mods = 0;
 }
 
-static void GotKey(char *key, int func)
+static void
+GotKey(char *key, int func)
 {
     int i;
 
-    for (i = 0; i < NUM_CONTEXTS; i++)
-    {
-	if ((cont & (1 << i)) == 0)
-	  continue;
-	if (!AddFuncKey(key, i, mods, func, Name, Action))
-	  break;
+    for (i = 0; i < NUM_CONTEXTS; i++) {
+        if ((cont & (1 << i)) == 0)
+            continue;
+        if (!AddFuncKey(key, i, mods, func, Name, Action))
+            break;
     }
 
-    Action = "";
+    Action = empty;
     pull = NULL;
     cont = 0;
-    mods_used |= mods;
+    mods_used |= (unsigned) mods;
     mods = 0;
 }
 
-
-static void GotTitleButton (char *bitmapname, int func, Bool rightside)
+static void
+GotTitleButton(char *bitmapname, int func, Bool rightside)
 {
-    if (!CreateTitleButton (bitmapname, func, Action, pull, rightside, True)) {
-	twmrc_error_prefix();
-	fprintf (stderr,
-		 "unable to create %s titlebutton \"%s\"\n",
-		 rightside ? "right" : "left", bitmapname);
+    if (!CreateTitleButton(bitmapname, func, Action, pull, rightside, True)) {
+        parseWarning("unable to create %s titlebutton \"%s\"",
+                     rightside ? "right" : "left", bitmapname);
     }
-    Action = "";
+    Action = empty;
     pull = NULL;
 }
 
-static Bool CheckWarpScreenArg (char *s)
+static Bool
+CheckWarpScreenArg(char *s)
 {
-    XmuCopyISOLatin1Lowered (s, s);
+    XmuCopyISOLatin1Lowered(s, s);
 
-    if (strcmp (s,  WARPSCREEN_NEXT) == 0 ||
-	strcmp (s,  WARPSCREEN_PREV) == 0 ||
-	strcmp (s,  WARPSCREEN_BACK) == 0)
-      return True;
+    if (strcmp(s, WARPSCREEN_NEXT) == 0 ||
+        strcmp(s, WARPSCREEN_PREV) == 0 ||
+        strcmp(s, WARPSCREEN_BACK) == 0)
+        return True;
 
-    for (; *s && isascii(*s) && isdigit(*s); s++) ; /* SUPPRESS 530 */
+    for (; *s && isascii(*s) && isdigit(*s); s++);      /* SUPPRESS 530 */
     return (*s ? False : True);
 }
 
-
-static Bool CheckWarpRingArg (char *s)
+static Bool
+CheckWarpRingArg(char *s)
 {
-    XmuCopyISOLatin1Lowered (s, s);
+    XmuCopyISOLatin1Lowered(s, s);
 
-    if (strcmp (s,  WARPSCREEN_NEXT) == 0 ||
-	strcmp (s,  WARPSCREEN_PREV) == 0)
-      return True;
+    if (strcmp(s, WARPSCREEN_NEXT) == 0 ||
+        strcmp(s, WARPSCREEN_PREV) == 0)
+        return True;
 
     return False;
 }
 
-
-static Bool CheckColormapArg (char *s)
+static Bool
+CheckColormapArg(char *s)
 {
-    XmuCopyISOLatin1Lowered (s, s);
+    XmuCopyISOLatin1Lowered(s, s);
 
-    if (strcmp (s, COLORMAP_NEXT) == 0 ||
-	strcmp (s, COLORMAP_PREV) == 0 ||
-	strcmp (s, COLORMAP_DEFAULT) == 0)
-      return True;
+    if (strcmp(s, COLORMAP_NEXT) == 0 ||
+        strcmp(s, COLORMAP_PREV) == 0 ||
+        strcmp(s, COLORMAP_DEFAULT) == 0)
+        return True;
 
     return False;
-}
-
-
-void
-twmrc_error_prefix (void)
-{
-    fprintf (stderr, "%s:  line %d:  ", ProgramName, yylineno);
 }

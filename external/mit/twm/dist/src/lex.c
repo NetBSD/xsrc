@@ -462,6 +462,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lex.l"
 #line 2 "lex.l"
+
 /*****************************************************************************/
 /*
 
@@ -519,12 +520,14 @@ in this Software without prior written authorization from The Open Group.
  *
  * .twmrc lex file
  *
- * 12-Nov-87 Thomas E. LaStrange		File created
+ * 12-Nov-87 Thomas E. LaStrange                File created
  *
  ***********************************************************************/
 /* $XFree86: xc/programs/twm/lex.l,v 3.13 2001/08/27 21:11:39 dawes Exp $ */
 
-/* #include <stdio.h> */		/* lex already includes stdio.h */
+#define YY_NO_INPUT	/* we have our own! */
+
+/* #include <stdio.h> */ /* lex already includes stdio.h */
 #include "twm.h"
 #include "gram.h"
 #include "list.h"
@@ -535,24 +538,27 @@ int yylineno;
 
 #undef YY_INPUT
 #define YY_INPUT(buf,result,size) ((result) = doinput((buf),(size)))
-static int doinput (char *buf, int size)
+static int
+doinput(char *buf, int size)
 {
-	int c;
+    int c;
 
-	if (size == 0)
-		return (0);
+    if (size == 0)
+        return (0);
 
-	if ((c = (*twmInputFunc)()) <= 0)
-		return (0);
+    if ((c = (*twmInputFunc) ()) <= 0)
+        return (0);
 
-	buf[0] = c;
-	return (1);
+    buf[0] = (char) c;
+    if (c == '\n')
+        ++yylineno;
+    return (1);
 }
 #define YY_NO_UNPUT
 #endif
 
-#line 554 "lex.c"
-#line 555 "lex.c"
+#line 560 "lex.c"
+#line 561 "lex.c"
 
 #define INITIAL 0
 
@@ -769,9 +775,9 @@ YY_DECL
 		}
 
 	{
-#line 95 "lex.l"
+#line 101 "lex.l"
 
-#line 774 "lex.c"
+#line 780 "lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -830,116 +836,114 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 96 "lex.l"
+#line 102 "lex.l"
 { return (LB); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 97 "lex.l"
+#line 103 "lex.l"
 { return (RB); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 98 "lex.l"
+#line 104 "lex.l"
 { return (LP); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 99 "lex.l"
+#line 105 "lex.l"
 { return (RP); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 100 "lex.l"
+#line 106 "lex.l"
 { return (EQUALS); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 101 "lex.l"
+#line 107 "lex.l"
 { return (COLON); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 102 "lex.l"
+#line 108 "lex.l"
 { return PLUS; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 103 "lex.l"
+#line 109 "lex.l"
 { return MINUS; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 104 "lex.l"
+#line 110 "lex.l"
 { return OR; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 106 "lex.l"
+#line 112 "lex.l"
 { int token = parse_keyword ((char *)yytext,
-							     &yylval.num);
-				  if (token == ERRORTOKEN) {
-				      twmrc_error_prefix();
-				      fprintf (stderr,
-				       "ignoring unknown keyword:  %s\n",
-					       yytext);
-				      ParseError = 1;
-				  } else
-				    return token;
-				}
+                                                             &yylval.num);
+                                  if (token == ERRORTOKEN) {
+                                      parseWarning (
+                                           "ignoring unknown keyword: %s",
+                                           yytext);
+                                      ParseError = 1;
+                                  } else
+                                    return token;
+                                }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 118 "lex.l"
+#line 123 "lex.l"
 { yylval.num = F_EXEC; return FSKEYWORD; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 119 "lex.l"
+#line 124 "lex.l"
 { yylval.num = F_CUT; return FSKEYWORD; }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 121 "lex.l"
+#line 126 "lex.l"
 { yylval.ptr = (char *)yytext; return STRING; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 122 "lex.l"
+#line 127 "lex.l"
 { (void)sscanf((char *)yytext, "%d", &yylval.num);
-				  return (NUMBER);
-				}
+                                  return (NUMBER);
+                                }
 	YY_BREAK
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 125 "lex.l"
+#line 130 "lex.l"
 {;}
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 126 "lex.l"
+#line 131 "lex.l"
 {;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 127 "lex.l"
+#line 132 "lex.l"
 {
-				  twmrc_error_prefix();
-				  fprintf (stderr,
-					   "ignoring character \"%s\"\n",
-					   yytext);
-				  ParseError = 1;
-				}
+                                  parseWarning (
+                                       "ignoring character \"%s\"",
+                                       yytext);
+                                  ParseError = 1;
+                                }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 134 "lex.l"
+#line 138 "lex.l"
 ECHO;
 	YY_BREAK
-#line 942 "lex.c"
+#line 946 "lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1944,18 +1948,23 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 134 "lex.l"
+#line 138 "lex.l"
+
 
 #ifndef yywrap
-int yywrap() { return(1);}
+int
+yywrap()
+{
+    return (1);
+}
 #endif
 
 #undef unput
 #undef input
 #undef output
 #undef feof
-#define unput(c)	twmUnput(c)
-#define input()		(*twmInputFunc)()
-#define output(c)	TwmOutput(c)
-#define feof()		(1)
+#define unput(c)        twmUnput(c)
+#define input()         (*twmInputFunc)()
+#define output(c)       TwmOutput(c)
+#define feof()          (1)
 
