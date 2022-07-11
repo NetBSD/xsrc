@@ -1,8 +1,8 @@
-dnl $XTermId: aclocal.m4,v 1.491 2021/09/07 00:26:55 tom Exp $
+dnl $XTermId: aclocal.m4,v 1.496 2022/02/24 22:10:29 tom Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
-dnl Copyright 1997-2020,2021 by Thomas E. Dickey
+dnl Copyright 1997-2021,2022 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -809,7 +809,7 @@ AC_DEFUN([CF_ERRNO],
 CF_CHECK_ERRNO(errno)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FIX_WARNINGS version: 3 updated: 2020/12/31 18:40:20
+dnl CF_FIX_WARNINGS version: 4 updated: 2021/12/16 18:22:31
 dnl ---------------
 dnl Warning flags do not belong in CFLAGS, CPPFLAGS, etc.  Any of gcc's
 dnl "-Werror" flags can interfere with configure-checks.  Those go into
@@ -821,11 +821,13 @@ if test "$GCC" = yes || test "$GXX" = yes
 then
 	case [$]$1 in
 	(*-Werror=*)
-		CF_VERBOSE(repairing $1: [$]$1)
 		cf_temp_flags=
 		for cf_temp_scan in [$]$1
 		do
 			case "x$cf_temp_scan" in
+			(x-Werror=format*)
+				CF_APPEND_TEXT(cf_temp_flags,$cf_temp_scan)
+				;;
 			(x-Werror=*)
 				CF_APPEND_TEXT(EXTRA_CFLAGS,$cf_temp_scan)
 				;;
@@ -834,9 +836,13 @@ then
 				;;
 			esac
 		done
-		$1="$cf_temp_flags"
-		CF_VERBOSE(... fixed [$]$1)
-		CF_VERBOSE(... extra $EXTRA_CFLAGS)
+		if test "x[$]$1" != "x$cf_temp_flags"
+		then
+			CF_VERBOSE(repairing $1: [$]$1)
+			$1="$cf_temp_flags"
+			CF_VERBOSE(... fixed [$]$1)
+			CF_VERBOSE(... extra $EXTRA_CFLAGS)
+		fi
 		;;
 	esac
 fi
@@ -2049,9 +2055,11 @@ case ".[$]$1" in
 esac
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PKG_CONFIG version: 11 updated: 2021/01/01 13:31:04
+dnl CF_PKG_CONFIG version: 12 updated: 2021/10/10 20:18:09
 dnl -------------
 dnl Check for the package-config program, unless disabled by command-line.
+dnl
+dnl Sets $PKG_CONFIG to the pathname of the pkg-config program.
 AC_DEFUN([CF_PKG_CONFIG],
 [
 AC_MSG_CHECKING(if you want to use pkg-config)
@@ -4078,7 +4086,7 @@ AC_SUBST(ICON_LIST)
 AC_SUBST(ICON_NAME)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_IMAKE_CFLAGS version: 10 updated: 2015/04/12 15:39:00
+dnl CF_WITH_IMAKE_CFLAGS version: 12 updated: 2022/02/24 17:10:03
 dnl --------------------
 dnl xterm and similar programs build more readily when propped up with imake's
 dnl hand-tuned definitions.  If we do not use imake, provide fallbacks for the
@@ -4144,6 +4152,23 @@ else
 	(irix[[56]].*)
 		# these are needed to make SIGWINCH work in xterm
 		IMAKE_CFLAGS="-DSYSV -DSVR4 $IMAKE_CFLAGS"
+		;;
+	esac
+
+	# "modern" systems install X applications in /usr/bin.  Other systems may
+	# use one of the X release-based directories.
+	case "$CFLAGS $CPPFLAGS $IMAKE_CFLAGS" in
+	(*-DPROJECTROOT*)
+		;;
+	(*)
+		for cf_dir in /usr/X11R7 /usr/X11R6 /usr/X11R5
+		do
+			if test -d "$cf_dir/bin"
+			then
+				IMAKE_CFLAGS="$IMAKE_CFLAGS -DPROJECTROOT=\\\"$cf_dir\\\""
+				break
+			fi
+		done
 		;;
 	esac
 
