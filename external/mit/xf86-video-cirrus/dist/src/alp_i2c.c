@@ -16,6 +16,11 @@
 #define _ALP_PRIVATE_
 #include "alp.h"
 
+
+static char strI2CBus1[]	= "I2C bus 1";
+static char strI2CBus2[]	= "I2C bus 2";
+
+
 /*
  * Switch between internal I2C bus and external (DDC) bus.
  * There is one I2C port controlled bu SR08 and the programmable
@@ -99,7 +104,7 @@ AlpI2CInit(ScrnInfoPtr pScrn)
 
 	pCir->I2CPtr1 = I2CPtr;
 
-	I2CPtr->BusName    = "I2C bus 1";
+	I2CPtr->BusName    = strI2CBus1;
 	I2CPtr->scrnIndex  = pScrn->scrnIndex;
 	I2CPtr->I2CPutBits = AlpI2CPutBits;
 	I2CPtr->I2CGetBits = AlpI2CGetBits;
@@ -113,7 +118,7 @@ AlpI2CInit(ScrnInfoPtr pScrn)
 
 	pCir->I2CPtr2 = I2CPtr;
 
-	I2CPtr->BusName    = "I2C bus 2";
+	I2CPtr->BusName    = strI2CBus2;
 	I2CPtr->scrnIndex  = pScrn->scrnIndex;
 	I2CPtr->I2CPutBits = AlpI2CPutBits;
 	I2CPtr->I2CGetBits = AlpI2CGetBits;

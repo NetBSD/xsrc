@@ -400,7 +400,7 @@ AlpSubsequentCPUToScreenColorExpandFill(
 
 	/* source = CPU ; description of bit 2 of GR30 in the 7548 manual
 	   says that if we do color expansion we must zero the source
-	   adress registers (GR2C, GR2D, GR2E) */
+	   address registers (GR2C, GR2D, GR2E) */
 	outw(pCir->PIOReg, 0x2C);
 	outw(pCir->PIOReg, 0x2D);
 	outw(pCir->PIOReg, 0x2E);
@@ -537,7 +537,7 @@ AlpSubsequentColorExpandScanline(
 
 	/* source = CPU ; description of bit 2 of GR30 in the 7548 manual
 	   says that if we do color expansion we must zero the source
-	   adress registers (GR2C, GR2D, GR2E) */
+	   address registers (GR2C, GR2D, GR2E) */
 	outw(pCir->PIOReg, 0x2C);
 	outw(pCir->PIOReg, 0x2D);
 	outw(pCir->PIOReg, 0x2E);

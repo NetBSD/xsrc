@@ -31,8 +31,6 @@ enum {
 	/* SR regs */
 	SR07,
 	SR0E,
-	SR12,
-	SR13,
 	SR1E,
 	/* Must be last! */
 	LG_LAST_REG
@@ -46,6 +44,7 @@ typedef struct {
 	/* Laguna regs */
 	CARD8 TILE, BCLK;
 	CARD16 FORMAT, DTTC, TileCtrl, CONTROL;
+	CARD16 RIFCtrl, RACCtrl;
 	CARD32 VSC;
 } LgRegRec, *LgRegPtr;
 

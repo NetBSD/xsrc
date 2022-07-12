@@ -248,7 +248,7 @@ LgSetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir,
 
 	/* We set the rop up here because the LgSETROP macro conveniently
 	   (really -- it is convenient!) clears the transparency bits
-	   in DRAWDEF.  We'll set those bits appropriatly later. */
+	   in DRAWDEF.  We'll set those bits appropriately later. */
 	LgSETROP(lgRop[rop]);
 
 	if (ydir < 0)

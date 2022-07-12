@@ -166,12 +166,12 @@ static void LgLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *bits)
   LgSETMODE(HOST2SCR);       /* Host-to-screen blit */
   LgSETROP(0x00CC);          /* Source copy */
 
-  /* First, copy our transparent cursor image to the next 1/2 tile boundry */
+  /* First, copy our transparent cursor image to the next 1/2 tile boundary */
   /* Destination */
   LgSETMDSTXY(pLg->HWCursorImageX+pLg->HWCursorTileWidth, pLg->HWCursorImageY);
 
   /* Set the source pitch.  0 means that, worst case, the source is 
-     alligned only on a byte boundry */
+     aligned only on a byte boundary */
   LgSETMPHASE1(0);
 
   LgSETMEXTENTSNOMONOQW(pLg->HWCursorTileWidth, pLg->HWCursorTileHeight);
@@ -191,7 +191,7 @@ static void LgLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *bits)
   LgSETMDSTXY(pLg->HWCursorImageX, pLg->HWCursorImageY);
 
   /* Set the source pitch.  0 means that, worst case, the source is 
-     alligned only on a byte boundry */
+     aligned only on a byte boundary */
   LgSETMPHASE1(0);
 
   /* Always copy an entire cursor image to the card. */
@@ -264,7 +264,7 @@ LgFindCursorTile(ScrnInfoPtr pScrn, int *x, int *y, int *width, int *height,
 
 		if (PCI_CHIP_GD5465 == pCir->Chipset) {
       /* The Where's The Cursor formula changed for the 5465.  It's really 
- 	 kinda wierd now. */
+	 kinda weird now. */
       unsigned long page, bank;
       unsigned int nX, nY;
       

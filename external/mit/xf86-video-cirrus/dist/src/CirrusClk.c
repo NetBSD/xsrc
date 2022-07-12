@@ -11,7 +11,7 @@
  *
  * Minor changes and cleanup Itai Nahshon.
  *
- * Made this completly chipset independent,  and moved chipset dependent parts
+ * Made this completely chipset independent,  and moved chipset dependent parts
  * into the specific sub-drivers.  Derek Fawcus <derek@spider.com>
  */
 
