@@ -37,7 +37,7 @@ will *NOT* work with XFree86 3.3.2.
 The only problem that I found so far is with
 memory configuration initialization. My bios
 does not initialize the secondary display adapter.
-This results in a currupted display.
+This results in a corrupted display.
 
 Here are the options:
 1. warm booting from Windows 98 may work. I have

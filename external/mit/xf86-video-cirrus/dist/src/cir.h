@@ -20,60 +20,60 @@ struct lgRec;
 struct alpRec;
 
 typedef struct {
-	ScrnInfoPtr		pScrn;
-	CARD32			properties;
-	pciVideoPtr		PciInfo;
+    ScrnInfoPtr pScrn;
+    CARD32 properties;
+    pciVideoPtr PciInfo;
 #ifndef XSERVER_LIBPCIACCESS
-	PCITAG			PciTag;
+    PCITAG PciTag;
 #endif
-	unsigned long		PIOReg;
+    unsigned long PIOReg;
     union {
-	struct lgRec		*lg;
-	struct alpRec		*alp;
+        struct lgRec *lg;
+        struct alpRec *alp;
     } chip;
-	EntityInfoPtr		pEnt;
-	int			Chipset;
-	int			ChipRev;
-	int			Rounding;
-	int			BppShift;
-	Bool			HasFBitBlt;
-	CARD32			IOAddress;
-	CARD32			FbAddress;
-	void *			IOBase;
-	void *			FbBase;
-	long			FbMapSize;
-	long			IoMapSize;
-	int			MinClock;
-	int			MaxClock;
-	Bool			NoAccel;
-	Bool			HWCursor;
-	Bool			UseMMIO;
+    EntityInfoPtr pEnt;
+    int Chipset;
+    int ChipRev;
+    int Rounding;
+    int BppShift;
+    Bool HasFBitBlt;
+    CARD32 IOAddress;
+    CARD32 FbAddress;
+    unsigned char *IOBase;
+    unsigned char *FbBase;
+    long FbMapSize;
+    long IoMapSize;
+    int MinClock;
+    int MaxClock;
+    Bool NoAccel;
+    Bool HWCursor;
+    Bool UseMMIO;
 #ifdef HAVE_XAA_H
-	XAAInfoRecPtr		AccelInfoRec;
+    XAAInfoRecPtr AccelInfoRec;
 #endif
-	xf86CursorInfoPtr	CursorInfoRec;
-	int			DGAnumModes;
-	DGAModePtr		DGAModes;
-	Bool			DGAactive;
-	Bool			(*DGAModeInit)(ScrnInfoPtr, DisplayModePtr);
-	int			DGAViewportStatus;
-	I2CBusPtr		I2CPtr1;
-	I2CBusPtr		I2CPtr2;
-	CloseScreenProcPtr	CloseScreen;
+    xf86CursorInfoPtr CursorInfoRec;
+    int DGAnumModes;
+    DGAModePtr DGAModes;
+    Bool DGAactive;
+    Bool (*DGAModeInit)(ScrnInfoPtr, DisplayModePtr);
+    int DGAViewportStatus;
+    I2CBusPtr I2CPtr1;
+    I2CBusPtr I2CPtr2;
+    CloseScreenProcPtr CloseScreen;
 
-	Bool			CursorIsSkewed;
-	Bool			shadowFB;
-	int			rotate;
-	int			ShadowPitch;
-	unsigned char *		ShadowPtr;
-	void			(*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
-	int			pitch;
+    Bool CursorIsSkewed;
+    Bool shadowFB;
+    int rotate;
+    int ShadowPitch;
+    unsigned char * ShadowPtr;
+    void (*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
+    int pitch;
 
-	unsigned char **	ScanlineColorExpandBuffers;
-	void			(*InitAccel)(ScrnInfoPtr);
-	int			offscreen_size;
-	int			offscreen_offset;
-	OptionInfoPtr		Options;
+    unsigned char ** ScanlineColorExpandBuffers;
+    void (*InitAccel)(ScrnInfoPtr);
+    int offscreen_size;
+    int offscreen_offset;
+    OptionInfoPtr Options;
 } CirRec, *CirPtr;
 
 /* CirrusClk.c */

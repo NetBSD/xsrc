@@ -21,7 +21,7 @@
 SUBDIRS = src man
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
-EXTRA_DIST = README.multihead
+EXTRA_DIST = README.multihead README.md
 
 .PHONY: ChangeLog INSTALL
 

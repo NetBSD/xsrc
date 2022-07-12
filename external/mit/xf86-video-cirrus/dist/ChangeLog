@@ -1,3 +1,335 @@
+commit adb5a2b7503541e6cf87e4a704df7a1123ab4997
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 10 16:47:22 2022 -0700
+
+    xf86-video-cirrus 1.6.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bd34f56e204f20963065e9e8609ea5f07460d585
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 10:08:43 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dcb341816e49d5c2fcc745c248d4885a85d3bfd8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 10:07:44 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6d66293961c0993eb8ee93e4f85c150b84456249
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 10:03:43 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit df543b5ff67259fb16b25ee287fee9e224995cfc
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Aug 2 19:47:31 2019 -0700
+
+    Save and restore RIF Control and RAC Control registers
+    
+    While the standby resume from ACPI S3 State still fails (i.e., hard
+    system freeze), saving and restoring Rambus RIF (Rambus Interface)
+    Control and RAC (Rambus ASIC Cell) Control registers prevents weird
+    artifacts from being displayed after standby resume (i.e., merely a
+    blank screen after standby resume).
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 226b6f9a3f59785296f29623c4cbabe85e7d1cba
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Jul 30 16:37:57 2019 -0700
+
+    Stop accessing SR12 and SR13
+    
+    The access to these extended VGA sequencer registers appears to come
+    from the code for Cirrus Logic Alpine family.  Laguna family does not
+    use these registers according to Laguna VisualMedia Accelerators Family
+    CL-GD546X Software Technical Reference Manual, Second Edition.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c474c463fbcbe1b20a69547ddd0fd621b8950f4b
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 17 19:55:16 2019 -0700
+
+    Declare an I2C bus name string as a static type for alp_i2c.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit d5f71611d9a5375d63a8f027b52335d3de8b6e89
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 17 19:54:09 2019 -0700
+
+    Declare an I2C bus name string as a static type for lg_i2c.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ad8486b4e9e0dc64171d515a2c096c0f4b545dd9
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon May 6 17:30:44 2019 -0700
+
+    Fix indentation of lg_i2c.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ac84f687e3b62a6cbfe2905f6dfcb0d3f7803b2d
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu May 2 18:08:38 2019 -0700
+
+    Tab to spaces conversion for lg_i2c.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ebd5feef7c743ecbf0d0eb5d295f2b27ceabb334
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 16:08:43 2019 -0700
+
+    Activate I2C bus for Laguna based devices
+    
+    There is really no good reason for I2C bus based automatic display
+    detection to not be turned on by default.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 22c611d52fc33058c03ad44c43ce3bd687849315
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 16:08:25 2019 -0700
+
+    Check for a successful transmission of EDID for Laguna I2C bus code
+    
+    The existing code can potentially cause a null pointer crash if EDID
+    was not obtained successfully.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6e59935a7b93135e23e2b81f4c6e5c1ec9da369d
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 16:07:49 2019 -0700
+
+    Fix for Laguna I2C bus code compilation error
+    
+    When commit 9a5e19597be4f5ee4c1030e4a716207789e78668 (cirrus: convert
+    to compat server API.) updated the code, it did not update Laguna I2C
+    bus code to handle newer X Servers.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 9d679b9820124cde179e4c6d4139dbfbf12b4a07
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 16:06:13 2019 -0700
+
+    Make adjustments to code comments of lg_driver.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit bd5ed38076e90fed9572ffcec9294b65b57c4cfb
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 16:02:40 2019 -0700
+
+    Fix indentation of lg_driver.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 95c16ca9f1e14328503b665701f2b41d934cd6cd
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Apr 17 15:56:31 2019 -0700
+
+    Tab to spaces conversion for lg_driver.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 13f8f978e8cca30633244e30a494b2f8edf5a073
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Apr 11 17:47:40 2019 -0700
+
+    Eliminate pointer arithmetic compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 5d8d7bcbb1dce839b604b7ee63c29782152a6438
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Apr 11 17:36:09 2019 -0700
+
+    Tab to spaces conversion for cir.h
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ee3504d959ccd08614e2f12037525ba07d03bef2
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Feb 20 09:33:31 2019 -0800
+
+    Fix for a compilation error when compiling XAA related files
+    
+    When commit 27f85fc523102f89c3fc1546ae500816ccbffc8a (Don't build
+    split alpine and laguna support) merged Alpine and Laguna support,
+    it missed a backslash ('\') to denote the next line for XAA related
+    files.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit a4a45b7a29d8ab8dc67b9b5c9c0833a1a4492130
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 08:37:45 2018 -0600
+
+    Suppress unused label compilation warning
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b32b125e91ceb40964c006aec135a79294611b59
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 08:34:30 2018 -0600
+
+    Use const char for xf86GetOptValString return type
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1069d52aa49e5e32e3371399bc97b9b7e4873df7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 08:30:08 2018 -0600
+
+    Eliminate unused variable compilation warning
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit d1139bd2febe5282cb2ac8887ec944470921d04c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 25 13:08:00 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4f0d349f5497d1e9b7ee19fe46818ffa1a272d52
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 12:24:32 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b47b3632fb694ba79ffab48f6f0398d4695c8a8c
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 71580d0188af7c183d3ac18bc19134be2245ab41
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit b91628997dc27873cc8640ec20cacae7cf46b40d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit c6f5096252923b1a344291e8045a15045e98dd27
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Dec 8 09:39:26 2016 -0500
+
+    alpine: Default to 16bpp
+    
+    24bpp support is going away, so since we can't do 32bpp and these cards
+    have basically no VRAM to begin with, drop to 16bpp.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 27f85fc523102f89c3fc1546ae500816ccbffc8a
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Apr 13 17:05:55 2016 -0400
+
+    Don't build split alpine and laguna support
+    
+    Before:
+    
+       text    data     bss     dec     hex filename
+      25772    2040      16   27828    6cb4 src/.libs/cirrus_alpine.so
+      11429    1552     112   13093    3325 src/.libs/cirrus_drv.so
+      21968    2016      16   24000    5dc0 src/.libs/cirrus_laguna.so
+      59169    5608     114   64921    fd99 (TOTALS)
+    
+    After:
+    
+       text    data     bss     dec     hex filename
+      47831    3840     112   51783    ca47 src/.libs/cirrus_drv.so
+    
+    So, in the worst case, you're using roughly two more pages for (clean,
+    evictable) text, but two fewer (dirty) pages for data and bss. Fixing
+    this also allows the X server to clean up module loading a bit by
+    enforcing the _drv.so suffix, and since this is the only driver pulling
+    such shenanigans...
+    
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit adaf1fe744df8d37acdb8b157abc5034b8ea1073
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Apr 13 16:37:38 2016 -0400
+
+    Remove (almost) no-op setup functions
+    
+    These became practical no-ops when I removed reference to the loader
+    symbol lists. gcc will still emit code (and bss) for them though. No
+    functional change, just doing it to prove that nothing special happens
+    at submodule load.
+    
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 82db44fe8a726a4a1192b1b93992b642d0ec17b3
+Author: Frederic Crozat <fcrozat@suse.com>
+Date:   Tue Apr 26 13:57:52 2016 +0200
+
+    Use 16bpp when running in virt and on XenSource gfx
+    
+    Due to graphics corruption default to 16bpp in virt instead of 24 (Fedora).
+    Do the same on XenSource gfx, which suffers from the same issue.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 23da6073369ef6a99d1789de967e57359d1fe3b0
+Author: Stefan Dirsch <sndirsch@suse.de>
+Date:   Tue Apr 26 16:26:49 2016 +0200
+
+    Disable "acceleration" under qemu
+    
+    Disable "acceleration" under qemu, since taking the hypercall trap
+    is really quite expensive and you're better off doing noaccel. Patch
+    is based on the one by "Adam Jackson" <ajax@redhat.com>
+    
+    http://pkgs.fedoraproject.org/cgit/rpms/xorg-x11-drv-cirrus.git/tree/cirrus-1.2.0-qemu.patch?id=daccd1c8174623500eddfa297d8ea76a86d3c5d9
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
 commit 3a2e2d9ef8512c265e3fc3311a69120d03a888b3
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Wed May 6 22:46:51 2015 +0200
@@ -772,7 +1104,7 @@ Date:   Mon Oct 17 00:09:02 2005 +0000
     Use sed & cpp to substitute variables in driver man pages
 
 commit 96c957a338d3aca2756b86680c052f602fee1e10
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Sep 27 20:53:19 2005 +0000
 
     Update build system for apm, chips, cirrus, glint, i740, mga, neomagic,
@@ -799,19 +1131,19 @@ Date:   Fri Jul 29 21:22:43 2005 +0000
     - Update modular Xorg version
 
 commit 269bb85534031d11bd008b530e39e52b86734832
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Mon Jul 25 23:46:27 2005 +0000
 
     src/Makefile.am
 
 commit 6ced8240c5d328b1edc2ba54d49f3d362e596244
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Mon Jul 25 23:46:15 2005 +0000
 
     man/Makefile.am
 
 commit c8160cf29932bef0a9b850c068587d1f1ad579ba
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Mon Jul 25 23:45:41 2005 +0000
 
     Build system for Cirrus driver

@@ -14,7 +14,7 @@
  * of XFree86.
  */
 
-/* This header file defines the necessary structures, contstants, and
+/* This header file defines the necessary structures, constants, and
    variables for using the bitBLT engine on a Laguna family graphics
    accelerator.  */
 
