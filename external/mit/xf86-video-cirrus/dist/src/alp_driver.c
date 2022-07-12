@@ -5,7 +5,7 @@
  * Support for the CL-GD7548: David Monniaux
  *
  * This is mainly a cut & paste from the MGA driver.
- * Original autors and contributors list include:
+ * Original authors and contributors list include:
  *    Radoslaw Kapitan, Andrew Vanderstock, Dirk Hohndel,
  *    David Dawes, Andrew E. Mileski, Leonard N. Zubkoff,
  *    Guy DESBIEF
@@ -159,8 +159,6 @@ static int gd7556_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
 #define ALP_MINOR_VERSION 0
 #define ALP_PATCHLEVEL 0
 
-static MODULESETUPPROTO(alpSetup);
-
 static XF86ModuleVersionInfo alpVersRec =
 {
 	"cirrus_alpine",
@@ -181,19 +179,9 @@ static XF86ModuleVersionInfo alpVersRec =
  */
 _X_EXPORT XF86ModuleData cirrus_alpineModuleData = {
     &alpVersRec,
-    alpSetup,
+    NULL,
     NULL
 };
-
-static pointer
-alpSetup(pointer module, pointer opts, int *errmaj, int *errmin)
-{
-	static Bool setupDone = FALSE;
-	if (!setupDone) {
-		setupDone = TRUE;
-	}
-	return (pointer)1;
-}
 
 #endif /* XFree86LOADER */
 
@@ -551,11 +539,12 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	    depth_flags |= Support32bppFb |
 			   SupportConvert32to24 |
 			   PreferConvert32to24;
+
 	/*
 	 * The first thing we should figure out is the depth, bpp, etc.
 	 * We support both 24bpp and 32bpp layouts, so indicate that.
 	 */
-	if (!xf86SetDepthBpp(pScrn, 0, 0, 24, depth_flags)) {
+	if (!xf86SetDepthBpp(pScrn, 0, 0, 16, depth_flags)) {
 		return FALSE;
 	} else {
 		/* Check that the returned depth is one we support */
@@ -774,6 +763,16 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
      else
  	xf86SetDDCproperties(pScrn,xf86PrintEDID(
 		 xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn),pCir->I2CPtr1)));
+
+#ifdef XSERVER_LIBPCIACCESS
+     #ifndef PCI_CHIP_QEMU
+     #define PCI_CHIP_QEMU 0x1af4
+     #endif
+     if (!pScrn->monitor->DDC &&
+	((pCir->PciInfo->subvendor_id & 0xffff) == PCI_CHIP_QEMU)) {
+	pCir->NoAccel = TRUE;
+     }
+#endif
  
      /* Probe the possible LCD display */
      AlpProbeLCD(pScrn);

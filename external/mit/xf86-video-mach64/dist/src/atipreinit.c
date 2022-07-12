@@ -2290,6 +2290,7 @@ ATIPreInit
          * the bit is ignored.
          */
         ATIClockRange.doubleScanAllowed = FALSE;
+
     }
 
     maxPitch = minPitch * MaxBits(CRTC_PITCH);
