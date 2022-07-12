@@ -240,7 +240,7 @@ ATIMach64SetupMemXAA
 	scanlines = total / widthBytes;
 	if (scanlines > ATIMach64MaxY) scanlines = ATIMach64MaxY;
 
-	/* Recalculate the texture offset and size to accomodate any
+	/* Recalculate the texture offset and size to accommodate any
 	 * rounding to a whole number of scanlines.
 	 * FIXME: Is this actually needed?
 	 */
@@ -395,8 +395,7 @@ ATIScreenInit(SCREEN_INIT_ARGS_DECL)
 #ifdef XF86DRI_DEVEL
 
     /* Setup DRI after visuals have been established, but before
-     * fbScreenInit is called.  fbScreenInit will eventually call the
-     * driver's InitGLXVisuals call back.
+     * fbScreenInit is called.
      */
 
     /* According to atiregs.h, GTPro (3D Rage Pro) is the first chip type with
