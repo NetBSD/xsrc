@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.16.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.16.4 -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -14,8 +14,8 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.69],,
-[m4_warning([this file was generated for autoconf 2.69.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.71],,
+[m4_warning([this file was generated for autoconf 2.71.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
@@ -1090,7 +1090,7 @@ _LT_EOF
 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
 	10.[[012]][[,.]]*)
 	  _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
-	10.*)
+	10.*|11.*)
 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
       esac
     ;;
@@ -1431,10 +1431,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*linux*)
+	  powerpcle-*linux*|powerpc64le-*linux*)
 	    LD="${LD-ld} -m elf64lppc"
 	    ;;
-	  powerpc-*linux*)
+	  powerpc-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -1714,6 +1714,11 @@ AC_CACHE_VAL([lt_cv_sys_max_cmd_len], [dnl
     # the test eventually succeeds (with a max line length of 256k).
     # Instead, let's just punt: use the minimum linelength reported by
     # all of the supported platforms: 8192 (on NT/2K/XP).
+    lt_cv_sys_max_cmd_len=8192;
+    ;;
+
+  mint*)
+    # On MiNT this can take a long time and run out of memory.
     lt_cv_sys_max_cmd_len=8192;
     ;;
 
@@ -2650,11 +2655,11 @@ darwin* | rhapsody*)
   version_type=darwin
   need_lib_prefix=no
   need_version=no
-  library_names_spec='$libname$release$major$shared_ext $libname$shared_ext'
+  library_names_spec='$libname$release$versuffix$shared_ext $libname$release$major$shared_ext $libname$shared_ext'
   soname_spec='$libname$release$major$shared_ext'
   shlibpath_overrides_runpath=yes
   shlibpath_var=DYLD_LIBRARY_PATH
-  shrext_cmds='`test .$module = .yes && echo .so || echo .dylib`'
+  shrext_cmds='`test .$module = .yes && echo .bundle || echo .dylib`'
 m4_if([$1], [],[
   sys_lib_search_path_spec="$sys_lib_search_path_spec /usr/local/lib"])
   sys_lib_dlsearch_path_spec='/usr/local/lib /lib /usr/lib'
@@ -2680,7 +2685,14 @@ freebsd* | dragonfly*)
     *) objformat=elf ;;
     esac
   fi
-  version_type=freebsd-$objformat
+  # Handle Gentoo/FreeBSD as it was Linux
+  case $host_vendor in
+    gentoo)
+      version_type=linux ;;
+    *)
+      version_type=freebsd-$objformat ;;
+  esac
+
   case $version_type in
     freebsd-elf*)
       library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
@@ -2691,6 +2703,12 @@ freebsd* | dragonfly*)
     freebsd-*)
       library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
       need_version=yes
+      ;;
+    linux)
+      library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+      soname_spec='${libname}${release}${shared_ext}$major'
+      need_lib_prefix=no
+      need_version=no
       ;;
   esac
   shlibpath_var=LD_LIBRARY_PATH
@@ -2881,9 +2899,6 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Add ABI-specific directories to the system library path.
-  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
-
   # Ideally, we could use ldconfig to report *all* directores which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
@@ -2892,7 +2907,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   # appending ld.so.conf contents (and includes) to the search path.
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -9435,7 +9450,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.2])
+m4_define([vers_have], [1.19.3])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -9455,7 +9470,7 @@ m4_undefine([maj_needed])
 # such as man pages and config files
 AC_DEFUN([XORG_PROG_RAWCPP],[
 AC_REQUIRE([AC_PROG_CPP])
-AC_PATH_PROGS(RAWCPP, [cpp], [${CPP}],
+AC_PATH_TOOL(RAWCPP, [cpp], [${CPP}],
    [$PATH:/bin:/usr/bin:/usr/lib:/usr/libexec:/usr/ccs/lib:/usr/ccs/lbin:/lib])
 
 # Check for flag to avoid builtin definitions - assumes unix is predefined,
@@ -11315,7 +11330,7 @@ echo 'git failed to create ChangeLog: installing empty ChangeLog.' >&2))"
 AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
+# Copyright (C) 2002-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11330,7 +11345,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.16'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.16.1], [],
+m4_if([$1], [1.16.4], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -11346,14 +11361,14 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.16.1])dnl
+[AM_AUTOMAKE_VERSION([1.16.4])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11405,7 +11420,7 @@ am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
-# Copyright (C) 1997-2018 Free Software Foundation, Inc.
+# Copyright (C) 1997-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11436,7 +11451,7 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.]])
 fi])])
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11627,7 +11642,7 @@ _AM_SUBST_NOTMAKE([am__nodep])dnl
 
 # Generate code to set up dependency tracking.              -*- Autoconf -*-
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11666,7 +11681,9 @@ AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
   done
   if test $am_rc -ne 0; then
     AC_MSG_FAILURE([Something went wrong bootstrapping makefile fragments
-    for automatic dependency tracking.  Try re-running configure with the
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE="gmake" (or whatever is
+    necessary).  You can also try re-running configure with the
     '--disable-dependency-tracking' option to at least be able to build
     the package (albeit without support for automatic dependency tracking).])
   fi
@@ -11693,7 +11710,7 @@ AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
 
 # Do all the work for Automake.                             -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11757,7 +11774,7 @@ m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
 [_AM_SET_OPTIONS([$1])dnl
 dnl Diagnose old-style AC_INIT with new-style AM_AUTOMAKE_INIT.
 m4_if(
-  m4_ifdef([AC_PACKAGE_NAME], [ok]):m4_ifdef([AC_PACKAGE_VERSION], [ok]),
+  m4_ifset([AC_PACKAGE_NAME], [ok]):m4_ifset([AC_PACKAGE_VERSION], [ok]),
   [ok:ok],,
   [m4_fatal([AC_INIT should be called with package and version arguments])])dnl
  AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
@@ -11809,6 +11826,20 @@ AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
 		  [m4_define([AC_PROG_OBJCXX],
 			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
 ])
+# Variables for tags utilities; see am/tags.am
+if test -z "$CTAGS"; then
+  CTAGS=ctags
+fi
+AC_SUBST([CTAGS])
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
+if test -z "$CSCOPE"; then
+  CSCOPE=cscope
+fi
+AC_SUBST([CSCOPE])
+
 AC_REQUIRE([AM_SILENT_RULES])dnl
 dnl The testsuite driver may need to know about EXEEXT, so add the
 dnl 'am__EXEEXT' conditional if _AM_COMPILER_EXEEXT was seen.  This
@@ -11890,7 +11921,7 @@ for _am_header in $config_headers :; do
 done
 echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_count])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11911,7 +11942,7 @@ if test x"${install_sh+set}" != xset; then
 fi
 AC_SUBST([install_sh])])
 
-# Copyright (C) 2003-2018 Free Software Foundation, Inc.
+# Copyright (C) 2003-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11932,7 +11963,7 @@ AC_SUBST([am__leading_dot])])
 
 # Check to see how 'make' treats includes.	            -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11975,7 +12006,7 @@ AC_SUBST([am__quote])])
 
 # Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
 
-# Copyright (C) 1997-2018 Free Software Foundation, Inc.
+# Copyright (C) 1997-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11996,12 +12027,7 @@ AC_DEFUN([AM_MISSING_HAS_RUN],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([missing])dnl
 if test x"${MISSING+set}" != xset; then
-  case $am_aux_dir in
-  *\ * | *\	*)
-    MISSING="\${SHELL} \"$am_aux_dir/missing\"" ;;
-  *)
-    MISSING="\${SHELL} $am_aux_dir/missing" ;;
-  esac
+  MISSING="\${SHELL} '$am_aux_dir/missing'"
 fi
 # Use eval to expand $SHELL
 if eval "$MISSING --is-lightweight"; then
@@ -12014,7 +12040,7 @@ fi
 
 # Helper functions for option handling.                     -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12043,7 +12069,7 @@ AC_DEFUN([_AM_SET_OPTIONS],
 AC_DEFUN([_AM_IF_OPTION],
 [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12090,7 +12116,7 @@ AC_LANG_POP([C])])
 # For backward compatibility.
 AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12109,7 +12135,7 @@ AC_DEFUN([AM_RUN_LOG],
 
 # Check to make sure that the build environment is sane.    -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12190,7 +12216,7 @@ AC_CONFIG_COMMANDS_PRE(
 rm -f conftest.file
 ])
 
-# Copyright (C) 2009-2018 Free Software Foundation, Inc.
+# Copyright (C) 2009-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12250,7 +12276,7 @@ AC_SUBST([AM_BACKSLASH])dnl
 _AM_SUBST_NOTMAKE([AM_BACKSLASH])dnl
 ])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12278,7 +12304,7 @@ fi
 INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
 
-# Copyright (C) 2006-2018 Free Software Foundation, Inc.
+# Copyright (C) 2006-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12297,7 +12323,7 @@ AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
 
 # Check how to create a tarball.                            -*- Autoconf -*-
 
-# Copyright (C) 2004-2018 Free Software Foundation, Inc.
+# Copyright (C) 2004-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
