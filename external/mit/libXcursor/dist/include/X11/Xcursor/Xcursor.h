@@ -24,11 +24,12 @@
 #ifndef _XCURSOR_H_
 #define _XCURSOR_H_
 #include <stdio.h>
+#include <stdint.h>
 #include <X11/Xfuncproto.h>
 #include <X11/Xlib.h>
 
 typedef int		XcursorBool;
-typedef unsigned int	XcursorUInt;
+typedef uint32_t	XcursorUInt;
 
 typedef XcursorUInt	XcursorDim;
 typedef XcursorUInt	XcursorPixel;
@@ -76,7 +77,7 @@ typedef XcursorUInt	XcursorPixel;
 
 #define XCURSOR_LIB_MAJOR 1
 #define XCURSOR_LIB_MINOR 2
-#define XCURSOR_LIB_REVISION 0
+#define XCURSOR_LIB_REVISION 1
 #define XCURSOR_LIB_VERSION	((XCURSOR_LIB_MAJOR * 10000) + \
 				 (XCURSOR_LIB_MINOR * 100) + \
 				 (XCURSOR_LIB_REVISION))
