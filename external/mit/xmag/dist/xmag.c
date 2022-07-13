@@ -534,7 +534,7 @@ SelectCB(Widget w, XtPointer clientData, XtPointer callData)
 
 
 /*
- * PasteCB() -- Paste from the primary selectin into xmag.
+ * PasteCB() -- Paste from the primary selection into xmag.
  */
 static void			/* ARGSUSED */
 PasteCB(Widget w, XtPointer clientData, XtPointer callData)
