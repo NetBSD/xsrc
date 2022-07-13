@@ -32,8 +32,12 @@
 
 #define throw_thread_fail_assert(_message, _var) { \
 	fprintf(stderr, "[xcb] " _message "\n"); \
-	fprintf(stderr, "[xcb] Most likely this is a multi-threaded client " \
-	                "and XInitThreads has not been called\n"); \
+        if (_Xglobal_lock) { \
+            fprintf(stderr, "[xcb] You called XInitThreads, this is not your fault\n"); \
+        } else { \
+            fprintf(stderr, "[xcb] Most likely this is a multi-threaded client " \
+                            "and XInitThreads has not been called\n"); \
+        } \
 	xcb_fail_assert(_message, _var); \
 }
 
@@ -214,7 +218,12 @@ static int handle_error(Display *dpy, xError *err, Bool in_XReply)
 static void widen(uint64_t *wide, unsigned int narrow)
 {
 	uint64_t new = (*wide & ~((uint64_t)0xFFFFFFFFUL)) | narrow;
-	*wide = new + (((uint64_t)(new < *wide)) << 32);
+	/* If just copying the upper dword of *wide makes the number
+	 * go down by more than 2^31, then it means that the lower
+	 * dword has wrapped (or we have skipped 2^31 requests, which
+	 * is hopefully improbable), so we add a carry. */
+	uint64_t wraps = new + (1UL << 31) < *wide;
+	*wide = new + (wraps << 32);
 }
 
 /* Thread-safety rules:
@@ -704,18 +713,14 @@ Status _XReply(Display *dpy, xReply *rep, int extra, Bool discard)
 		if(dpy->xcb->event_owner == XlibOwnsEventQueue)
 		{
 			xcb_generic_reply_t *event;
-			/* If some thread is already waiting for events,
-			 * it will get the first one. That thread must
-			 * process that event before we can continue. */
-			/* FIXME: That event might be after this reply,
-			 * and might never even come--or there might be
-			 * multiple threads trying to get events. */
-			while(dpy->xcb->event_waiter)
-			{ /* need braces around ConditionWait */
-				ConditionWait(dpy, dpy->xcb->event_notify);
-			}
-			while((event = poll_for_event(dpy, True)))
-				handle_response(dpy, event, True);
+
+			/* Assume event queue is empty if another thread is blocking
+			 * waiting for event. */
+			if(!dpy->xcb->event_waiter)
+			{
+				while((event = poll_for_response(dpy)))
+					handle_response(dpy, event, True);
+                        }
 		}
 
 		req->reply_waiter = 0;

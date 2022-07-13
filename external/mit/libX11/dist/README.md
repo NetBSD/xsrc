@@ -31,6 +31,41 @@ For patch submission instructions, see:
 
   https://www.x.org/wiki/Development/Documentation/SubmittingPatches
 
+## Release 1.8.1
+
+ * Fix --enable-thread-safety-constructor configure option
+
+## Release 1.8
+
+ * Add --enable-thread-safety-constructor configure option (default: enabled)
+   to call XInitThreads() from the library's constructor, thus enabling
+   thread-safety and locking by default.  This may expose bugs in clients
+   which did not follow documented rules for calling libX11 functions.
+ * Fix Ethopian (am_ET.UTF-8) compose sequences.
+ * Remove 8 compose sequences that generated the input symbols.
+ * Add compose seuences for abovedot (\<period\> \<space\>),
+   diaeresis (\<quotedbl\> \<space\>), and ogonek (\<semicolon\> \<space\>).
+
+## Release 1.7.5
+
+ * Avoids a segfault when an invalid name is used for opening a display.
+
+## Release 1.7.4
+
+ * Fixes the "Unknown sequence number" error by allowing backward jumps
+   in the sequence number when widening it.
+ * Any changes to virtual modifiers get propagated properly.
+ * Greek case-conversion tables were updated to Unicode Data 14.0.
+ * Compose sequences for  ☮  🄯  ⇐  ⇑  ⇓  were added,
+   being the following: OY, ()), =<, =^, and =v.
+ * Hammer-and-sickle can be composed with question mark plus backslash.
+
+## Release 1.7.3
+
+ * Fixes a hanging issue in _XReply() where the replying thread would
+   wait for an event when another thread was already waiting for one.
+ * Avoids a crash when the X connection gets broken while closing down.
+
 ## Release 1.7.2
 
 This is a bug fix release, correcting a regression introduced by and
@@ -57,10 +92,11 @@ to 1.7:
    to recover from I/O error conditions instead of being forced to
    exit. Thanks to Carlos Garnacho for this.
 
-This release includes a bunch of bug fixes, some which have been pending for over three years:
+This release includes a bunch of bug fixes, some of which have been
+pending for over three years:
 
  * A bunch of nls cleanups to remove obsolete entries and clean up
-   formatting of the ist. Thanks to Benno Schulenberg for these.
+   formatting of the list. Thanks to Benno Schulenberg for these.
 
  * Warning fixes and other cleanups across a huge swath of the
    library. Thanks to Alan Coopersmith for these.
@@ -83,7 +119,7 @@ Version 1.7.0 includes a couple of new locales:
 There are also numerous compose entries added, including:
 
  * |^ or ^| for ↑, |v or v| for ↓, ~~ for ≈. Thanks to Antti
-    Savolainen for this.
+   Savolainen for this.
 
  * Allowing use of 'v' for caron, in addition to 'c', so things like
    vC for Č, vc for č. Thanks to Benno Schulenberg for this.
