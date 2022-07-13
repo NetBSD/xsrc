@@ -1,3 +1,80 @@
+commit 2ef6b22ad908c024b6c2fbde5c1de62123f82dc2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 12 11:28:17 2022 -0700
+
+    font-util 1.3.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 88bd16463e59455cda7e45e563867988c7e70d8d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jul 12 11:26:05 2022 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aaddab088412777ffea435e83847f8aac9b9ce81
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 8 14:11:58 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e1a2c79b4edea2af1a82db24b2dc993a6e530d5a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 8 14:11:54 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 564adb96f10a0bf43d67401b05ba0fcafe7c0a83
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 16 18:22:23 2020 -0800
+
+    ucs2any: handle NULL returns from zquotedcpy()
+    
+    bdf file for testing:
+    
+    STARTFONT 2.1
+    FONT "Bad quotes test font-ISO10646-1
+    SIZE 7 75 75
+    FONTBOUNDINGBOX 5 7 0 -1
+    STARTPROPERTIES 3
+    SPACING "C
+    SLANT "R
+    ENDPROPERTIES
+    CHARS 0
+    ENDFONT
+    
+    Before this fix, the above segfaults when the NULL return from
+    zquotedcpy() is passed to other functions expecting a string.
+    
+    Fixes: 21063_61 & 21063_86 from https://cyber-itl.org/2020/10/28/citl-7000-defects.html
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f78cd55ccd913855cc5569dfe2a9213e217bc469
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 15 17:06:26 2020 -0800
+
+    ucs2any: avoid segfaults if SLANT property is missing
+    
+    Test case:
+     grep -v SLANT ../../misc-misc/5x7.bdf > 5x7-noslant.bdf
+     ucs2any 5x7-noslant.bdf ../map-ISO8859-1 -d
+    
+    Before this fix, the above segfaults in strcmp with a NULL slant pointer.
+    
+    Fixes: 21063_131 from https://cyber-itl.org/2020/10/28/citl-7000-defects.html
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit d45011b8324fecebb4fc79e57491d341dd96e325
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Aug 25 15:23:33 2019 -0700
@@ -364,7 +441,7 @@ Date:   Wed Oct 6 16:59:20 2010 -0700
     Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 62529733e57b6d6c775b1bcf584260b1cff6af5c
-Author: Michał Górny <mgorny@gentoo.org>
+Author: Michał Górny < <mgorny@gentoo.org>
 Date:   Thu Oct 7 17:31:06 2010 +0200
 
     fontutil.m4: Add a shorthand --disable-all-encodings option.
