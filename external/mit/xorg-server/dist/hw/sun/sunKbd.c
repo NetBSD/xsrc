@@ -907,10 +907,3 @@ sunChangeKbdTranslation(int fd, Bool makeTranslated)
 #endif /* } */
     return 0;
 }
-
-/*ARGSUSED*/
-Bool
-LegalModifier(unsigned int key, DeviceIntPtr pDev)
-{
-    return TRUE;
-}

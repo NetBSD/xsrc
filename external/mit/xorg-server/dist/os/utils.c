@@ -787,6 +787,7 @@ ProcessCommandLine(int argc, char *argv[])
                 UseMsg();
         }
         else if (strcmp(argv[i], "-fakescreenfps") == 0) {
+#ifdef PRESENT
             if (++i < argc) {
                 FakeScreenFps = (uint32_t) atoi(argv[i]);
                 if (FakeScreenFps < 1 || FakeScreenFps > 600)
@@ -794,6 +795,10 @@ ProcessCommandLine(int argc, char *argv[])
             }
             else
                 UseMsg();
+#else
+            FatalError("fakescreenfps not available without PRESENT\n");
+            UseMsg();
+#endif
         }
         else if (strcmp(argv[i], "-fp") == 0) {
             if (++i < argc) {

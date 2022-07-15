@@ -158,7 +158,7 @@ sunEnqueueEvents(void)
 /*
  * DDX - specific abort routine.  Called by AbortServer().
  */
-void
+static void
 AbortDDX(enum ExitCode error)
 {
     int		i;

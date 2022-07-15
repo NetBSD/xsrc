@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.12 2021/03/17 15:02:27 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.13 2022/07/15 19:10:11 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -401,12 +401,6 @@ x68kSetLeds(X68kKbdPrivPtr pPriv, uint8_t data)
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)
         ErrorF("Failed to set keyboard lights\n");
-}
-
-Bool
-LegalModifier(unsigned int key, DeviceIntPtr pDev)
-{
-    return TRUE;
 }
 
 /* EOF x68kKbd.c */

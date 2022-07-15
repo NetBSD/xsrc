@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.10 2020/12/08 10:33:47 mrg Exp $ */
+/* $NetBSD: x68kInit.c,v 1.11 2022/07/15 19:10:11 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -188,7 +188,7 @@ CloseInput(void)
  *  argument: ExitCode
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
-void
+static void
 AbortDDX(enum ExitCode error)
 {
     int i;
