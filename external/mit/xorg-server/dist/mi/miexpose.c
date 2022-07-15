@@ -112,10 +112,6 @@ the region package can call this.
 non-existent areas to non-obscured areas of the destination.  Paint the
 background for the region, if the destination is a window.
 
-NOTE:
-     this should generally be called, even if graphicsExposures is false,
-because this is where bits get recovered from backing store.
-
 */
 
 RegionPtr
@@ -140,10 +136,7 @@ miHandleExposures(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
     Bool extents;
 
     /* avoid work if we can */
-    if (!pGC->graphicsExposures &&
-        (pDstDrawable->type == DRAWABLE_PIXMAP) &&
-        ((pSrcDrawable->type == DRAWABLE_PIXMAP) ||
-         (((WindowPtr) pSrcDrawable)->backStorage == 0)))
+    if (!pGC->graphicsExposures && pDstDrawable->type == DRAWABLE_PIXMAP)
         return NULL;
 
     srcBox.x1 = srcx;
@@ -411,7 +404,7 @@ miPaintWindow(WindowPtr pWin, RegionPtr prgn, int what)
     int i;
     BoxPtr pbox;
     xRectangle *prect;
-    int numRects;
+    int numRects, regionnumrects;
 
     /*
      * Distance from screen to destination drawable, use this
@@ -515,7 +508,10 @@ miPaintWindow(WindowPtr pWin, RegionPtr prgn, int what)
         gcmask |= GCFillStyle | GCTile | GCTileStipXOrigin | GCTileStipYOrigin;
     }
 
-    prect = xallocarray(RegionNumRects(prgn), sizeof(xRectangle));
+    regionnumrects = RegionNumRects(prgn);
+    if (regionnumrects == 0)
+        return;
+    prect = xallocarray(regionnumrects, sizeof(xRectangle));
     if (!prect)
         return;
 

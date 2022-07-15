@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -32,8 +35,6 @@
 #include "dixstruct.h"
 
 #include "tests-common.h"
-
-extern ScreenInfo screenInfo;
 
 static void
 dix_version_compare(void)

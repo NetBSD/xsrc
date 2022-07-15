@@ -26,7 +26,6 @@ srcs_xorg_common = [
 
 xorg_sdk_headers = [
     'compiler.h',
-    'fourcc.h',
     'xf86.h',
     'xf86Module.h',
     'xf86Opt.h',
@@ -47,6 +46,15 @@ xorg_sdk_headers = [
     'xaarop.h',
 ]
 
+fallback_driver = get_option('fallback_input_driver')
+if fallback_driver == 'auto'
+    if host_machine.system() == 'linux'
+        fallback_driver = 'libinput'
+    else
+        fallback_driver = ''
+    endif
+endif
+
 if build_dga
     srcs_xorg_common += 'xf86DGA.c'
     xorg_sdk_headers += 'dgaproc.h'
@@ -63,12 +71,11 @@ endif
 
 if get_option('pciaccess')
     srcs_xorg_common += ['xf86pciBus.c', 'xf86VGAarbiter.c']
-endif
 
-srcs_xorg_common += configure_file(
-    output: 'xf86Build.h',
-    command: ['sh', join_paths(meson.current_source_dir(), 'xf86Build.sh'), '@OUTPUT@'],
-)
+    if host_machine.cpu() == 'sparc' or host_machine.cpu() == 'sparc64'
+        srcs_xorg_common += 'xf86sbusBus.c'
+    endif
+endif
 
 srcs_xorg_common += custom_target(
     'xf86DefModeSet.c',
@@ -80,14 +87,17 @@ srcs_xorg_common += custom_target(
 
 xorg_common = static_library('xorg_common',
     srcs_xorg_common,
-    include_directories: [inc, xorg_inc],
+    include_directories: [inc, xorg_inc, top_dir_inc],
     dependencies: [
         common_dep,
         dbus_dep,
         pciaccess_dep,
         libdrm_dep,
     ],
-    c_args: xorg_c_args,
+    c_args: [
+        xorg_c_args,
+        '-DFALLBACK_INPUT_DRIVER="@0@"'.format(fallback_driver)
+    ],
 )
 
 install_data(xorg_sdk_headers, install_dir: xorgsdkdir)

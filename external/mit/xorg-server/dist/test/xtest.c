@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -61,7 +64,7 @@ xtest_init_devices(void)
 {
     ScreenRec screen = {0};
     ClientRec server_client = {0};
-    WindowRec root = {0};
+    WindowRec root = {{0}};
     WindowOptRec optional = {0};
 
     /* random stuff that needs initialization */

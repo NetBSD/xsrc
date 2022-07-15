@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*\
-  $Id: xserver_poll.c,v 1.1.1.1 2018/12/31 09:36:12 mrg Exp $
+  $Id: xserver_poll.c,v 1.1.1.2 2022/07/15 02:12:50 mrg Exp $
 
   NAME
 
@@ -83,6 +83,10 @@
 #include <assert.h>                          /* assertion macros */
 #include <string.h>                          /* string functions */
 #include "xserver_poll.h"
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include <X11/Xwinsock.h>
+#endif
 
 /*---------------------------------------------------------------------------*\
 				  Macros

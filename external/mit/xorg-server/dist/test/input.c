@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -1105,7 +1108,8 @@ cmp_attr_fields(InputAttributes * attr1, InputAttributes * attr2)
 {
     char **tags1, **tags2;
 
-    assert(attr1 && attr2);
+    assert(attr1);
+    assert(attr2);
     assert(attr1 != attr2);
     assert(attr1->flags == attr2->flags);
 

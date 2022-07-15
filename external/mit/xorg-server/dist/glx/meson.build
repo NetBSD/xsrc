@@ -38,6 +38,7 @@ if build_glx
         dependencies: [
             common_dep,
             dl_dep,
+            dri_dep,
             dependency('glproto', version: '>= 1.4.17'),
             dependency('gl', version: '>= 1.2'),
         ],
@@ -65,7 +66,7 @@ hdrs_vnd = [
     'vndserver.h',
 ]
 
-libglxvnd = ''
+libglxvnd = []
 if build_glx
     libglxvnd = static_library('libglxvnd',
     srcs_vnd,
@@ -78,5 +79,7 @@ if build_glx
         ],
     )
 
-    install_data(hdrs_vnd, install_dir : xorgsdkdir)
+    if build_xorg
+        install_data(hdrs_vnd, install_dir : xorgsdkdir)
+    endif
 endif

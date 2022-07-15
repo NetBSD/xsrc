@@ -3,10 +3,12 @@ project('xserver', 'c',
             'buildtype=debugoptimized',
             'c_std=gnu99',
         ],
-        version: '1.20.13',
-        meson_version: '>= 0.42.0',
+        version: '21.1.3',
+        meson_version: '>= 0.47.0',
 )
-add_project_arguments('-DHAVE_DIX_CONFIG_H', language: 'c')
+release_date = '2022-01-02'
+
+add_project_arguments('-DHAVE_DIX_CONFIG_H', language: ['c', 'objc'])
 cc = meson.get_compiler('c')
 
 add_global_arguments('-fno-strict-aliasing', language : 'c')
@@ -56,34 +58,41 @@ foreach wflag: test_wflags
     endif
 endforeach
 
-add_global_arguments(common_wflags, language : 'c')
+add_global_arguments(common_wflags, language : ['c', 'objc'])
 
-xproto_dep = dependency('xproto', version: '>= 7.0.31')
-randrproto_dep = dependency('randrproto', version: '>= 1.6.0')
-renderproto_dep = dependency('renderproto', version: '>= 0.11')
-xextproto_dep = dependency('xextproto', version: '>= 7.2.99.901')
-inputproto_dep = dependency('inputproto', version: '>= 2.3')
-kbproto_dep = dependency('kbproto', version: '>= 1.0.3')
-fontsproto_dep = dependency('fontsproto', version: '>= 2.1.3')
-fixesproto_dep = dependency('fixesproto', version: '>= 5.0')
-damageproto_dep = dependency('damageproto', version: '>= 1.1')
-xcmiscproto_dep = dependency('xcmiscproto', version: '>= 1.2.0')
-bigreqsproto_dep = dependency('bigreqsproto', version: '>= 1.1.0')
+libdrm_req = '>= 2.4.89'
+libselinux_req = '>= 2.0.86'
+xext_req = '>= 1.0.99.4'
+wayland_req = '>= 1.5.0'
+wayland_protocols_req = '>= 1.18'
+gbm_req = '>= 10.2'
+xf86dgaproto_req = '>= 2.0.99.1'
+
+xproto_dep = dependency('xproto', version: '>= 7.0.31', fallback: ['xorgproto', 'ext_xorgproto'])
+randrproto_dep = dependency('randrproto', version: '>= 1.6.0', fallback: ['xorgproto', 'ext_xorgproto'])
+renderproto_dep = dependency('renderproto', version: '>= 0.11', fallback: ['xorgproto', 'ext_xorgproto'])
+xextproto_dep = dependency('xextproto', version: '>= 7.2.99.901', fallback: ['xorgproto', 'ext_xorgproto'])
+inputproto_dep = dependency('inputproto', version: '>= 2.3.99.1', fallback: ['xorgproto', 'ext_xorgproto'])
+kbproto_dep = dependency('kbproto', version: '>= 1.0.3', fallback: ['xorgproto', 'ext_xorgproto'])
+fontsproto_dep = dependency('fontsproto', version: '>= 2.1.3', fallback: ['xorgproto', 'ext_xorgproto'])
+fixesproto_dep = dependency('fixesproto', version: '>= 6.0', fallback: ['xorgproto', 'ext_xorgproto'])
+damageproto_dep = dependency('damageproto', version: '>= 1.1', fallback: ['xorgproto', 'ext_xorgproto'])
+xcmiscproto_dep = dependency('xcmiscproto', version: '>= 1.2.0', fallback: ['xorgproto', 'ext_xorgproto'])
+bigreqsproto_dep = dependency('bigreqsproto', version: '>= 1.1.0', fallback: ['xorgproto', 'ext_xorgproto'])
 xtrans_dep = dependency('xtrans', version: '>= 1.3.5')
 
-videoproto_dep = dependency('videoproto')
-compositeproto_dep = dependency('compositeproto', version: '>= 0.4')
-recordproto_dep = dependency('recordproto', version: '>= 1.13.99.1')
-scrnsaverproto_dep = dependency('scrnsaverproto', version: '>= 1.1')
-resourceproto_dep = dependency('resourceproto', version: '>= 1.2.0')
-xf86driproto_dep = dependency('xf86driproto', version: '>= 2.1.0', required: get_option('dri1') == 'true')
-dri2proto_dep = dependency('dri2proto', version: '>= 2.8', required: get_option('dri2') == 'true')
-dri3proto_dep = dependency('dri3proto', version: '>= 1.2', required: get_option('dri3') == 'true')
-xineramaproto_dep = dependency('xineramaproto')
-xf86bigfontproto_dep = dependency('xf86bigfontproto', version: '>= 1.2.0')
-xf86vidmodeproto_dep = dependency('xf86vidmodeproto', version: '>= 2.2.99.1', required: false)
-windowswmproto_dep = dependency('windowswmproto', required: false)
-applewmproto_dep = dependency('applewmproto', version: '>= 1.4', required: false)
+videoproto_dep = dependency('videoproto', fallback: ['xorgproto', 'ext_xorgproto'])
+compositeproto_dep = dependency('compositeproto', version: '>= 0.4', fallback: ['xorgproto', 'ext_xorgproto'])
+recordproto_dep = dependency('recordproto', version: '>= 1.13.99.1', fallback: ['xorgproto', 'ext_xorgproto'])
+scrnsaverproto_dep = dependency('scrnsaverproto', version: '>= 1.1', fallback: ['xorgproto', 'ext_xorgproto'])
+resourceproto_dep = dependency('resourceproto', version: '>= 1.2.0', fallback: ['xorgproto', 'ext_xorgproto'])
+xf86driproto_dep = dependency('xf86driproto', version: '>= 2.1.0', fallback: ['xorgproto', 'ext_xorgproto'], required: get_option('dri1') == 'true')
+dri2proto_dep = dependency('dri2proto', version: '>= 2.8', fallback: ['xorgproto', 'ext_xorgproto'], required: get_option('dri2') == 'true')
+dri3proto_dep = dependency('dri3proto', version: '>= 1.2', fallback: ['xorgproto', 'ext_xorgproto'], required: get_option('dri3') == 'true')
+xineramaproto_dep = dependency('xineramaproto', fallback: ['xorgproto', 'ext_xorgproto'])
+xf86bigfontproto_dep = dependency('xf86bigfontproto', version: '>= 1.2.0', fallback: ['xorgproto', 'ext_xorgproto'], required: get_option('xf86bigfont'))
+xf86vidmodeproto_dep = dependency('xf86vidmodeproto', version: '>= 2.2.99.1', fallback: ['xorgproto', 'ext_xorgproto'])
+applewmproto_dep = dependency('applewmproto', version: '>= 1.4', fallback: ['xorgproto', 'ext_xorgproto'], required: false)
 xshmfence_dep = dependency('xshmfence', version: '>= 1.1', required: false)
 
 pixman_dep = dependency('pixman-1')
@@ -91,17 +100,24 @@ libbsd_dep = dependency('libbsd', required: false)
 xkbcomp_dep = dependency('xkbcomp', required: false)
 xkbfile_dep = dependency('xkbfile')
 xfont2_dep = dependency('xfont2', version: '>= 2.0')
-nettle_dep = dependency('nettle')
 
 dbus_required = get_option('systemd_logind') == 'true'
 dbus_dep = dependency('dbus-1', version: '>= 1.0', required: dbus_required)
+
+# libsystemd-daemon was moved into libsystemd in version 209
+libsystemd_daemon_dep = dependency('libsystemd', version: '>= 209', required: false)
+if not libsystemd_daemon_dep.found()
+    libsystemd_daemon_dep = dependency('libsystemd-daemon', required: false)
+endif
 
 build_hashtable = false
 
 # Resolve default values of some options
 xkb_dir = get_option('xkb_dir')
 if xkb_dir == ''
-    xkb_dir = xkbcomp_dep.get_pkgconfig_variable('xkbconfigdir')
+    if xkbcomp_dep.found() and xkbcomp_dep.type_name() == 'pkgconfig'
+        xkb_dir = xkbcomp_dep.get_pkgconfig_variable('xkbconfigdir')
+    endif
     if xkb_dir == ''
         xkb_dir = join_paths(get_option('prefix'), 'share/X11/xkb')
     endif
@@ -114,7 +130,9 @@ endif
 
 xkb_bin_dir = get_option('xkb_bin_dir')
 if xkb_bin_dir == ''
-    xkb_bin_dir = xkbcomp_dep.get_pkgconfig_variable('bindir')
+    if xkbcomp_dep.found() and xkbcomp_dep.type_name() == 'pkgconfig'
+        xkb_bin_dir = xkbcomp_dep.get_pkgconfig_variable('bindir')
+    endif
     if xkb_bin_dir == ''
         xkb_bin_dir = join_paths(get_option('prefix'), get_option('bindir'))
     endif
@@ -124,14 +142,21 @@ dfp = get_option('default_font_path')
 if dfp == ''
     fontutil_dep = dependency('fontutil')
     fontrootdir = fontutil_dep.get_pkgconfig_variable('fontrootdir')
-    default_font_path = ','.join([
+    dfp_elements = [
         join_paths(fontrootdir, 'misc'),
         join_paths(fontrootdir, 'TTF'),
         join_paths(fontrootdir, 'OTF'),
         join_paths(fontrootdir, 'Type1'),
         join_paths(fontrootdir, '100dpi'),
         join_paths(fontrootdir, '75dpi'),
-    ])
+    ]
+    if host_machine.system() == 'darwin'
+       dfp_elements += [
+       '/Library/Fonts',
+       '/System/Library/Fonts',
+    ]
+    endif
+    default_font_path = ','.join(dfp_elements)
 else
     default_font_path = dfp
 endif
@@ -140,15 +165,22 @@ hal_option = get_option('hal')
 glamor_option = get_option('glamor')
 
 build_udev = get_option('udev')
-if host_machine.system() == 'windows'
+build_udev_kms = get_option('udev_kms')
+if ['windows',  'darwin', 'cygwin'].contains(host_machine.system())
     build_udev = false
+    build_udev_kms = false
     hal_option = 'false'
 endif
 
 if get_option('systemd_logind') == 'auto'
-    build_systemd_logind = build_udev and dbus_dep.found()
+    build_systemd_logind = build_udev_kms and dbus_dep.found()
 else
     build_systemd_logind = get_option('systemd_logind') == 'true'
+endif
+
+with_dtrace = get_option('dtrace')
+if with_dtrace
+    dtrace = find_program('dtrace', required: true)
 endif
 
 build_xorg = false
@@ -162,29 +194,7 @@ if (host_machine.system() != 'darwin' and
     endif
 endif
 xorgsdkdir = join_paths(get_option('prefix'), get_option('includedir'), 'xorg')
-
-build_xwayland = false
-if (host_machine.system() != 'darwin' and
-    host_machine.system() != 'windows')
-    if get_option('xwayland') != 'false'
-        xwayland_required = get_option('xwayland') == 'true'
-
-        xwayland_dep = [
-            dependency('wayland-client', version: '>= 1.3.0', required: xwayland_required),
-            dependency('wayland-protocols', version: '>= 1.10', required: xwayland_required),
-            dependency('libdrm', version: '>= 2.4.89', required: xwayland_required),
-            dependency('epoxy', required: xwayland_required),
-        ]
-
-        build_xwayland = true
-        # check for all the deps being found, to handle 'auto' mode.
-        foreach d: xwayland_dep
-            if not d.found()
-                build_xwayland = false
-            endif
-        endforeach
-    endif
-endif
+libxcvt_dep = dependency('libxcvt', required: build_xorg)
 
 build_xnest = false
 if (host_machine.system() != 'darwin' and
@@ -193,7 +203,7 @@ if (host_machine.system() != 'darwin' and
         xnest_required = get_option('xnest') == 'true'
 
         xnest_dep = [
-            dependency('xext', version: '>= 1.0.99.4', required: xnest_required),
+            dependency('xext', version: xext_req, required: xnest_required),
             dependency('x11', required: xnest_required),
             dependency('xau', required: xnest_required),
         ]
@@ -218,8 +228,19 @@ else
     build_xwin = get_option('xwin') == 'true'
 endif
 
-# XXX: Finish these.
 build_xquartz = false
+if get_option('xquartz') == 'auto'
+    if host_machine.system() == 'darwin'
+            build_xquartz = true
+    endif
+else
+    build_xquartz = get_option('xquartz') == 'true'
+endif
+
+build_rootless = false
+if build_xquartz
+    build_rootless = true
+endif
 
 if get_option('ipv6') == 'auto'
     build_ipv6 = cc.has_function('getaddrinfo')
@@ -260,7 +281,7 @@ endif
 build_dbus = build_hal or build_systemd_logind
 
 udev_dep = dependency('', required:false)
-if build_udev
+if build_udev or build_udev_kms
     udev_dep = dependency('libudev', version: '>= 143')
 endif
 
@@ -272,35 +293,107 @@ endif
 module_dir = join_paths(get_option('libdir'), get_option('module_dir'))
 
 if glamor_option == 'auto'
-    build_glamor = build_xorg or build_xwayland
+    build_glamor = build_xorg
 else
-    build_glamor = get_option('glamor') == 'true'
+    build_glamor = glamor_option == 'true'
 endif
 
 gbm_dep = dependency('', required: false)
 epoxy_dep = dependency('', required: false)
 if build_glamor
-    gbm_dep = dependency('gbm', version: '>= 10.2', required: false)
+    gbm_dep = dependency('gbm', version: gbm_req, required: false)
     epoxy_dep = dependency('epoxy', required: false)
 endif
 
-eglstream_option = get_option('xwayland_eglstream')
-if build_xwayland and build_glamor
-    eglstream_dep = dependency('wayland-eglstream-protocols', required:false)
-    if eglstream_option == 'auto'
-        build_eglstream = eglstream_dep.found()
-    else
-        build_eglstream = eglstream_option == 'true'
-        if build_eglstream and not eglstream_dep.found()
-            error('glamor EGLStream support requested, but wayland-eglstream-protocols not found')
-        endif
-    endif
-else
-    build_eglstream = false
+# Lots of sha1 options, because Linux is about choice :)
+
+# The idea behind the ordering here is that we should first prefer system
+# builtin providers, and then smaller implementations of over larger ones.
+test_sha1 = [
+    'libc',          # libmd API is in libc on some BSDs
+    'CommonCrypto',  # darwin API
+    'CryptoAPI',     # windows API
+    'libmd',         # other BSDs & Solaris
+    'libsha1',       # "a tiny library providing a SHA1 implementation, created for facilitating X server compilation on embedded devices where larger libraries containing SHA1 implementations are not needed"
+    'libnettle',
+    'libgcrypt',     # in debian base system
+    'libcrypto',
+]
+
+if get_option('sha1') != 'auto'
+    test_sha1 = [get_option('sha1')]
 endif
 
-# XXX: Add more sha1 options, because Linux is about choice
-sha1_dep = nettle_dep
+sha1_found = false
+foreach t : test_sha1
+    if t == 'libc'
+        if cc.has_function('SHA1Init')
+            sha1_found = true
+            sha1_dep = dependency('', required: false)
+        endif
+    elif t == 'CommonCrypto'
+        if cc.has_function('CC_SHA1_Init')
+            sha1_found = true
+            sha1_dep = dependency('', required: false)
+        endif
+    elif t == 'CryptoAPI'
+        if cc.has_header('wincrypt.h')
+            sha1_found = true
+            sha1_dep = dependency('', required: false)
+        endif
+    elif t == 'libmd'
+        md_dep = cc.find_library('md', required: false)
+        if md_dep.found()
+            sha1_found = true
+            sha1_dep = md_dep
+        endif
+    elif t == 'libsha1'
+        libsha1_dep = dependency('libsha1', required: false)
+        if libsha1_dep.found()
+            sha1_found = true
+            sha1_dep = libsha1_dep
+        endif
+    elif t == 'libnettle'
+        nettle_dep = dependency('nettle', required: false)
+        if nettle_dep.found()
+            sha1_found = true
+            sha1_dep = nettle_dep
+        endif
+    elif t == 'libgcrypt'
+        gcrypt_dep = dependency('libgcrypt', required: false)
+        if gcrypt_dep.found()
+            sha1_found = true
+            sha1_dep = gcrypt_dep
+        endif
+    elif t == 'libcrypto'
+        # we don't need all of OpenSSL, just libcrypto
+        libcrypto_dep = cc.find_library('crypto', required: false)
+        openssl_dep = dependency('openssl', required: false)
+        if libcrypto_dep.found() or openssl_dep.found()
+            sha1_found = true
+            if libcrypto_dep.found()
+               sha1_dep = libcrypto_dep
+            else
+               sha1_dep = openssl_dep
+            endif
+        endif
+    endif
+
+    if sha1_found
+        sha1 = t
+        break
+    endif
+endforeach
+
+if sha1_found
+    message('Using @0@ SHA1 functions'.format(sha1))
+else
+    if get_option('sha1') != 'auto'
+        error('@0@ SHA1 requested, but not found'.format(get_option('sha1')))
+    else
+        error('No suitable SHA1 implementation found')
+    endif
+endif
 
 xdmcp_dep = dependency('', required : false)
 if get_option('xdmcp')
@@ -318,7 +411,7 @@ if build_glx
     build_hashtable = true
 endif
 
-libdrm_dep = dependency('libdrm', version: '>= 2.4.89', required: false)
+libdrm_dep = dependency('libdrm', version: libdrm_req, required: false)
 
 if get_option('dri1') == 'auto'
     build_dri1 = xf86driproto_dep.found() and libdrm_dep.found()
@@ -343,23 +436,12 @@ else
     endif
 endif
 
-libdrm_required = build_dri1 or build_dri2 or build_dri3
+libdrm_required = (build_dri1 or build_dri2 or build_dri3) and get_option('drm') == true
 if not libdrm_dep.found() and libdrm_required
     error('DRI requested, but LIBDRM not found')
 endif
 
 build_modesetting = libdrm_dep.found() and dri2proto_dep.found()
-
-build_vbe = false
-if get_option('vbe') == 'auto'
-    if (host_machine.system() != 'darwin' and
-        host_machine.system() != 'windows' and
-        host_machine.system() != 'cygwin')
-        build_vbe = true
-    endif
-else
-    build_vbe = get_option('vbe') == 'true'
-endif
 
 build_vgahw = false
 if get_option('vgahw') == 'auto'
@@ -401,13 +483,14 @@ if not build_xv
 endif
 
 build_dga = false
+xf86dgaproto_dep = dependency('', required: false)
 if get_option('dga') == 'auto'
-    xf86dgaproto_dep = dependency('xf86dgaproto', version: '>= 2.0.99.1', required: false)
+    xf86dgaproto_dep = dependency('xf86dgaproto', version: xf86dgaproto_req, required: false)
     if xf86dgaproto_dep.found()
         build_dga = true
     endif
 elif get_option('dga') == 'true'
-    xf86dgaproto_dep = dependency('xf86dgaproto', version: '>= 2.0.99.1', required: true)
+    xf86dgaproto_dep = dependency('xf86dgaproto', version: xf86dgaproto_req, required: true)
     build_dga = true
 endif
 
@@ -436,10 +519,6 @@ elif get_option('mitshm') == 'true'
     build_mitshm = true
 endif
 
-# XXX: Allow configuration of these.
-build_xselinux = false
-build_xf86vidmode = xf86vidmodeproto_dep.found()
-
 m_dep = cc.find_library('m', required : false)
 dl_dep = cc.find_library('dl', required : false)
 
@@ -456,6 +535,7 @@ common_dep = [
     xcmiscproto_dep,
     bigreqsproto_dep,
     xtrans_dep,
+    libsystemd_daemon_dep,
 
     videoproto_dep,
     compositeproto_dep,
@@ -469,7 +549,6 @@ common_dep = [
     xf86bigfontproto_dep,
     xf86dgaproto_dep,
     xf86vidmodeproto_dep,
-    windowswmproto_dep,
     applewmproto_dep,
 
     pixman_dep,
@@ -500,11 +579,38 @@ inc = include_directories(
     'xfixes',
 )
 
+build_xselinux = false
+if get_option('xselinux') != 'false'
+    dep_selinux = dependency('libselinux', version: libselinux_req,
+			     required: get_option('xselinux') == 'true')
+    dep_audit = dependency('audit', required: get_option('xselinux') == 'true')
+    if get_option('xselinux') == 'true'
+        build_xselinux = true
+    else
+        build_xselinux = dep_selinux.found() and dep_audit.found()
+    endif
+
+    if build_xselinux
+        common_dep += dep_selinux
+        common_dep += dep_audit
+    endif
+endif
+
+socket_dep = []
+if host_machine.system() == 'windows'
+    socket_dep = meson.get_compiler('c').find_library('ws2_32')
+    common_dep += socket_dep
+endif
+
+if get_option('libunwind')
+    common_dep += dependency('libunwind', required: true)
+endif
+
 glx_inc = include_directories('glx')
 
-top_srcdir_inc = include_directories('.')
+top_dir_inc = include_directories('.')
 
-serverconfigdir = join_paths(get_option('libdir'), 'xorg')
+serverconfigdir = join_paths(get_option('prefix'), get_option('libdir'), 'xorg')
 
 manpage_config = configuration_data()
 manpage_config.set('vendorversion', '"xorg-server @0@" "X Version 11"'.format(meson.project_version()))
@@ -537,6 +643,50 @@ manpage_config.set('modulepath', module_dir)
 manpage_config.set('suid_wrapper_dir', join_paths(get_option('prefix'), 'libexec'))
 manpage_config.set('default_font_path', default_font_path)
 
+require_docs = get_option('docs') == 'true'
+require_devel_docs = get_option('devel-docs') == 'true'
+require_docs_pdf = (require_docs or require_devel_docs) and get_option('docs-pdf') == 'true'
+
+sgml_doctools_dep = dependency('xorg-sgml-doctools',
+                               required: require_docs or require_devel_docs)
+xmlto = find_program('xmlto', required: require_docs or require_devel_docs)
+xsltproc = find_program('xsltproc', required: require_docs or require_devel_docs)
+fop = find_program('fop', required: require_docs_pdf)
+
+build_docs = (get_option('docs') != 'false' and
+    sgml_doctools_dep.found() and
+    xmlto.found())
+
+build_docs_devel = (get_option('devel-docs') != 'false' and
+    sgml_doctools_dep.found() and
+    xmlto.found())
+
+build_docs_pdf = (get_option('docs-pdf') != 'false' and
+    (build_docs or build_docs_devel) and
+    fop.found())
+
+if build_docs or build_docs_devel
+    doc_sgml_path = sgml_doctools_dep.get_pkgconfig_variable('sgmlrootdir')
+    doc_stylesheet_srcdir = join_paths(doc_sgml_path, 'X11')
+
+    # once we bump meson dependency to 0.56.0 we can use
+    # meson.project_build_root() instead of meson.build_root()
+
+    # Meson does not and will not support functions so we are copy-pasting
+    # documentation build code around which is unfortunate
+    # See https://mesonbuild.com/FAQ.html#why-doesnt-meson-have-user-defined-functionsmacros
+
+    docs_xmlto_search_flags = [
+        '--searchpath', doc_stylesheet_srcdir,
+        '--searchpath', meson.build_root(),
+    ]
+
+    docs_xslt_search_flags = [
+        '--path', doc_stylesheet_srcdir,
+        '--path', meson.build_root(),
+    ]
+endif
+
 # Include must come first, as it sets up dix-config.h
 subdir('include')
 
@@ -555,6 +705,9 @@ subdir('dbe')
 subdir('miext/damage')
 subdir('miext/shadow')
 subdir('miext/sync')
+if build_rootless
+    subdir('miext/rootless')
+endif
 subdir('present')
 if build_xwin or build_xquartz
     subdir('pseudoramiX')
@@ -573,6 +726,7 @@ endif
 if build_xorg or get_option('xephyr')
     subdir('exa')
 endif
+subdir('doc')
 
 # Common static libraries of all X servers
 libxserver = [
@@ -599,7 +753,10 @@ libxserver = [
 libxserver += libxserver_dri3
 
 subdir('hw')
-subdir('test')
+
+if host_machine.system() != 'windows'
+    subdir('test')
+endif
 
 install_man(configure_file(
     input: 'man/Xserver.man',
@@ -663,7 +820,18 @@ if build_xorg
                                 get_option('libdir'),
                                 'pkgconfig'),
     )
+
+    install_data('xorg-server.m4',
+                 install_dir: join_paths(get_option('datadir'), 'aclocal'))
 endif
 
-install_data('xorg-server.m4',
-             install_dir: join_paths(get_option('datadir'), 'aclocal'))
+if build_docs or build_docs_devel
+    docxmlconfig = configuration_data()
+    docxmlconfig.set('PACKAGE_VERSION', meson.project_version())
+    docxmlconfig.set('RELEASE_DATE', release_date)
+    configure_file(
+        input: 'xserver.ent.in',
+        output: 'xserver.ent',
+        configuration: docxmlconfig
+    )
+endif

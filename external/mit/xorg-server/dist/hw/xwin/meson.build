@@ -24,6 +24,8 @@ srcs_windows = [
 ]
 subdir('winclipboard')
 
+xwin_glx = []
+xwin_windowsdri = []
 if build_glx
     if build_windowsdri
         xwin_c_args += '-DXWIN_WINDOWS_DRI'
@@ -42,7 +44,7 @@ srcs_windows += [
      'propertystore.h',
      'winSetAppUserModelID.c',
 ]
-xwin_sys_libs += ['-lshlwapi', '-lole32']
+xwin_sys_libs += ['-lshlwapi', '-lole32', '-ldwmapi']
 
 srcs_windows += [
      'winrandr.c',
@@ -102,6 +104,7 @@ srcs_windows += [
     'windisplay.c',
     'windisplay.h',
     '../../mi/miinitext.c',
+    '../../mi/miinitext.h',
 ]
 
 rsrc = windows.compile_resources('XWin.rc', include_directories: include_directories('../../include/'))
@@ -130,17 +133,17 @@ srcs_windows += pfiles
 
 xwin_dep = [
     common_dep,
-    dependency('x11-xcb'),
     dependency('xcb-aux'),
     dependency('xcb-image'),
     dependency('xcb-ewmh'),
     dependency('xcb-icccm'),
+    dependency('xcb-composite'),
 ]
 
 executable(
     server_name,
     srcs_windows,
-    include_directories: [inc, top_srcdir_inc],
+    include_directories: [inc, top_dir_inc],
     dependencies: xwin_dep,
     link_with: [
         xwin_windowsdri,

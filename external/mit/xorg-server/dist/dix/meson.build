@@ -12,6 +12,7 @@ srcs_dix = [
     'eventconvert.c',
     'extension.c',
     'gc.c',
+    'gestures.c',
     'getevents.c',
     'globals.c',
     'glyphcurs.c',
@@ -33,10 +34,22 @@ srcs_dix = [
     'window.c',
 ]
 
+dtrace_src = []
+if with_dtrace
+    dtrace_object = generator(dtrace,
+        output: '@BASENAME@.o',
+        arguments: ['-G', '-s', '@INPUT@', '-o', '@OUTPUT@']
+    )
+
+    dtrace_src += dtrace_object.process(dtrace_tmpl)
+endif
+
+dtrace_dep = declare_dependency(sources: [dtrace_src, dtrace_hdr])
+
 libxserver_dix = static_library('libxserver_dix',
     srcs_dix,
     include_directories: inc,
-    dependencies: common_dep,
+    dependencies: [ dtrace_dep, common_dep, ]
 )
 
 libxserver_main = static_library('libxserver_main',

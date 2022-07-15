@@ -51,15 +51,11 @@
 #include "servermd.h"
 #include "windowstr.h"
 #include "scrnintstr.h"
-#include "site.h"
 #include "mi.h"
 #include "dbus-core.h"
 #include "systemd-logind.h"
 
 #include "loaderProcs.h"
-#ifdef XFreeXDGA
-#include "dgaproc.h"
-#endif
 
 #define XF86_OS_PRIVS
 #include "xf86.h"
@@ -68,7 +64,6 @@
 #include "xf86_OSlib.h"
 #include "xf86cmap.h"
 #include "xorgVersion.h"
-#include "xf86Build.h"
 #include "mipointer.h"
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
@@ -76,9 +71,9 @@
 #include "xf86DDC.h"
 #include "xf86Xinput.h"
 #include "xf86InPriv.h"
+#include "xf86Crtc.h"
 #include "picturestr.h"
 #include "randrstr.h"
-#include "glxvndabi.h"
 #include "xf86Bus.h"
 #ifdef XSERVER_LIBPCIACCESS
 #include "xf86VGAarbiter.h"
@@ -90,11 +85,14 @@
 #include <X11/extensions/dpmsconst.h>
 #include "dpmsproc.h"
 #endif
+
+#ifdef __linux__
+#include <linux/major.h>
+#include <sys/sysmacros.h>
+#endif
 #include <hotplug.h>
 
-#ifdef XF86PM
 void (*xf86OSPMClose) (void) = NULL;
-#endif
 static Bool xorgHWOpenConsole = FALSE;
 
 /* Common pixmap formats */
@@ -112,29 +110,10 @@ static PixmapFormatRec formats[MAXFORMATS] = {
 static int numFormats = 7;
 static Bool formatsDone = FALSE;
 
-#ifndef OSNAME
-#define OSNAME " unknown"
-#endif
-#ifndef OSVENDOR
-#define OSVENDOR ""
-#endif
-#ifndef PRE_RELEASE
-#define PRE_RELEASE XORG_VERSION_SNAP
-#endif
 
 static void
 xf86PrintBanner(void)
 {
-#if PRE_RELEASE
-    xf86ErrorFVerb(0, "\n"
-                   "This is a pre-release version of the X server from "
-                   XVENDORNAME ".\n" "It is not supported in any way.\n"
-                   "Bugs may be filed in the bugzilla at http://bugs.freedesktop.org/.\n"
-                   "Select the \"xorg\" product for bugs you find in this release.\n"
-                   "Before reporting bugs in pre-release versions please check the\n"
-                   "latest version in the X.Org Foundation git repository.\n"
-                   "See http://wiki.x.org/wiki/GitPage for git access instructions.\n");
-#endif
     xf86ErrorFVerb(0, "\nX.Org X Server %d.%d.%d",
                    XORG_VERSION_MAJOR, XORG_VERSION_MINOR, XORG_VERSION_PATCH);
 #if XORG_VERSION_SNAP > 0
@@ -167,7 +146,6 @@ xf86PrintBanner(void)
 #endif
     xf86ErrorFVerb(0, "\nX Protocol Version %d, Revision %d\n",
                    X_PROTOCOL, X_PROTOCOL_REVISION);
-    xf86ErrorFVerb(0, "Build Operating System: %s %s\n", OSNAME, OSVENDOR);
 #ifdef HAS_UTSNAME
     {
         struct utsname name;
@@ -199,28 +177,6 @@ xf86PrintBanner(void)
         }
     }
 #endif
-#if defined(BUILD_DATE) && (BUILD_DATE > 19000000)
-    {
-        struct tm t;
-        char buf[100];
-
-        memset(&t, 0, sizeof(t));
-        memset(buf, 0, sizeof(buf));
-        t.tm_mday = BUILD_DATE % 100;
-        t.tm_mon = (BUILD_DATE / 100) % 100 - 1;
-        t.tm_year = BUILD_DATE / 10000 - 1900;
-#if defined(BUILD_TIME)
-        t.tm_sec = BUILD_TIME % 100;
-        t.tm_min = (BUILD_TIME / 100) % 100;
-        t.tm_hour = (BUILD_TIME / 10000) % 100;
-        if (strftime(buf, sizeof(buf), "%d %B %Y  %I:%M:%S%p", &t))
-            xf86ErrorFVerb(0, "Build Date: %s\n", buf);
-#else
-        if (strftime(buf, sizeof(buf), "%d %B %Y", &t))
-            xf86ErrorFVerb(0, "Build Date: %s\n", buf);
-#endif
-    }
-#endif
 #if defined(BUILDERSTRING)
     xf86ErrorFVerb(0, "%s \n", BUILDERSTRING);
 #endif
@@ -237,21 +193,29 @@ xf86PrivsElevated(void)
     return PrivsElevated();
 }
 
-static void
-TrapSignals(void)
+Bool
+xf86HasTTYs(void)
 {
-    if (xf86Info.notrapSignals) {
-        OsSignal(SIGSEGV, SIG_DFL);
-        OsSignal(SIGABRT, SIG_DFL);
-        OsSignal(SIGILL, SIG_DFL);
-#ifdef SIGEMT
-        OsSignal(SIGEMT, SIG_DFL);
+#ifdef __linux__
+    struct stat tty0devAttributes;
+    return (stat("/dev/tty0", &tty0devAttributes) == 0 && major(tty0devAttributes.st_rdev) == TTY_MAJOR);
+#else
+    return TRUE;
 #endif
-        OsSignal(SIGFPE, SIG_DFL);
-        OsSignal(SIGBUS, SIG_DFL);
-        OsSignal(SIGSYS, SIG_DFL);
-        OsSignal(SIGXCPU, SIG_DFL);
-        OsSignal(SIGXFSZ, SIG_DFL);
+}
+
+static void
+xf86AutoConfigOutputDevices(void)
+{
+    int i;
+
+    if (!xf86Info.autoBindGPU)
+        return;
+
+    for (i = 0; i < xf86NumGPUScreens; i++) {
+        int scrnum = xf86GPUScreens[i]->confScreen->screennum;
+        RRProviderAutoConfigGpuScreen(xf86ScrnToScreen(xf86GPUScreens[i]),
+                                      xf86ScrnToScreen(xf86Screens[scrnum]));
     }
 }
 
@@ -335,11 +299,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
     config_pre_init();
 
     if (serverGeneration == 1) {
-        if ((xf86ServerName = strrchr(argv[0], '/')) != 0)
-            xf86ServerName++;
-        else
-            xf86ServerName = argv[0];
-
         xf86PrintBanner();
         LogPrintMarkers();
         if (xf86LogFile) {
@@ -365,8 +324,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
                 break;
             }
         }
-
-        TrapSignals();
 
         /* Initialise the loader */
         LoaderInit();
@@ -397,9 +354,7 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
             }
         }
 
-#ifdef XF86PM
         xf86OSPMClose = xf86OSPMOpen();
-#endif
 
         xf86ExtensionInit();
 
@@ -473,7 +428,7 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
                 want_hw_access = TRUE;
 
             /* Non-seat0 X servers should not open console */
-            if (!(flags & HW_SKIP_CONSOLE) && !ServerIsNotSeat0())
+            if (!(flags & HW_SKIP_CONSOLE) && !ServerIsNotSeat0() && xf86HasTTYs())
                 xorgHWOpenConsole = TRUE;
         }
 
@@ -550,17 +505,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
             return;
         }
 
-        for (i = 0; i < xf86NumScreens; i++) {
-            if (xf86Screens[i]->name == NULL) {
-                char *tmp;
-                XNFasprintf(&tmp, "screen%d", i);
-                xf86Screens[i]->name = tmp;
-                xf86MsgVerb(X_WARNING, 0,
-                            "Screen driver %d has no name set, using `%s'.\n",
-                            i, xf86Screens[i]->name);
-            }
-        }
-
         /* Remove (unload) drivers that are not required */
         for (i = 0; i < xf86NumDrivers; i++)
             if (xf86DriverList[i] && xf86DriverList[i]->refCount <= 0)
@@ -626,7 +570,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
         if (xorgHWOpenConsole)
             xf86OpenConsole();
 
-#ifdef XF86PM
         /*
            should we reopen it here? We need to deal with an already opened
            device. We could leave this to the OS layer. For now we simply
@@ -636,7 +579,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
             xf86OSPMClose();
         if ((xf86OSPMClose = xf86OSPMOpen()) != NULL)
             xf86MsgVerb(X_INFO, 3, "APM registered successfully\n");
-#endif
 
         /* Make sure full I/O access is enabled */
         if (xorgHWAccess)
@@ -692,11 +634,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
 #ifdef XFreeXDGA
         xf86Screens[i]->SetDGAMode = xf86SetDGAMode;
 #endif
-        xf86Screens[i]->DPMSSet = NULL;
-        xf86Screens[i]->LoadPalette = NULL;
-        xf86Screens[i]->SetOverscan = NULL;
-        xf86Screens[i]->DriverFunc = NULL;
-        xf86Screens[i]->pScreen = NULL;
         scr_index = AddScreen(xf86ScreenInit, argc, argv);
         xf86VGAarbiterUnlock(xf86Screens[i]);
         if (scr_index == i) {
@@ -714,11 +651,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
             /* This shouldn't normally happen */
             FatalError("AddScreen/ScreenInit failed for driver %d\n", i);
         }
-
-        DebugF("InitOutput - xf86Screens[%d]->pScreen = %p\n",
-               i, xf86Screens[i]->pScreen);
-        DebugF("xf86Screens[%d]->pScreen->CreateWindow = %p\n",
-               i, xf86Screens[i]->pScreen->CreateWindow);
 
         if (PictureGetSubpixelOrder(xf86Screens[i]->pScreen) == SubPixelUnknown) {
             xf86MonPtr DDC = (xf86MonPtr) (xf86Screens[i]->monitor->DDC);
@@ -749,11 +681,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
 #ifdef XFreeXDGA
         pScrn->SetDGAMode = xf86SetDGAMode;
 #endif
-        pScrn->DPMSSet = NULL;
-        pScrn->LoadPalette = NULL;
-        pScrn->SetOverscan = NULL;
-        pScrn->DriverFunc = NULL;
-        pScrn->pScreen = NULL;
         scr_index = AddGPUScreen(xf86ScreenInit, argc, argv);
         xf86VGAarbiterUnlock(pScrn);
         if (scr_index == i) {
@@ -767,8 +694,12 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char **argv)
         }
     }
 
-    for (i = 0; i < xf86NumGPUScreens; i++)
-        AttachUnboundGPU(xf86Screens[0]->pScreen, xf86GPUScreens[i]->pScreen);
+    for (i = 0; i < xf86NumGPUScreens; i++) {
+        int scrnum = xf86GPUScreens[i]->confScreen->screennum;
+        AttachUnboundGPU(xf86Screens[scrnum]->pScreen, xf86GPUScreens[i]->pScreen);
+    }
+
+    xf86AutoConfigOutputDevices();
 
     xf86VGAarbiterWrapFunctions();
     if (sigio_blocked)
@@ -876,13 +807,34 @@ ddxGiveUp(enum ExitCode error)
 {
     int i;
 
+    if (error == EXIT_ERR_ABORT) {
+        input_lock();
+
+        /* try to restore the original video state */
+#ifdef DPMSExtension            /* Turn screens back on */
+        if (DPMSPowerLevel != DPMSModeOn)
+            DPMSSet(serverClient, DPMSModeOn);
+#endif
+        if (xf86Screens) {
+            for (i = 0; i < xf86NumScreens; i++)
+                if (xf86Screens[i]->vtSema) {
+                    /*
+                     * if we are aborting before ScreenInit() has finished we
+                     * might not have been wrapped yet. Therefore enable screen
+                     * explicitly.
+                     */
+                    xf86VGAarbiterLock(xf86Screens[i]);
+                    (xf86Screens[i]->LeaveVT) (xf86Screens[i]);
+                    xf86VGAarbiterUnlock(xf86Screens[i]);
+                }
+        }
+    }
+
     xf86VGAarbiterFini();
 
-#ifdef XF86PM
     if (xf86OSPMClose)
         xf86OSPMClose();
     xf86OSPMClose = NULL;
-#endif
 
     for (i = 0; i < xf86NumScreens; i++) {
         /*
@@ -892,10 +844,6 @@ ddxGiveUp(enum ExitCode error)
         xf86Screens[i]->vtSema = FALSE;
     }
 
-#ifdef XFreeXDGA
-    DGAShutdown();
-#endif
-
     if (xorgHWOpenConsole)
         xf86CloseConsole();
 
@@ -903,48 +851,6 @@ ddxGiveUp(enum ExitCode error)
     dbus_core_fini();
 
     xf86CloseLog(error);
-}
-
-/*
- * AbortDDX --
- *      DDX - specific abort routine.  Called by AbortServer(). The attempt is
- *      made to restore all original setting of the displays. Also all devices
- *      are closed.
- */
-
-void
-AbortDDX(enum ExitCode error)
-{
-    int i;
-
-    input_lock();
-
-    /*
-     * try to restore the original video state
-     */
-#ifdef DPMSExtension            /* Turn screens back on */
-    if (DPMSPowerLevel != DPMSModeOn)
-        DPMSSet(serverClient, DPMSModeOn);
-#endif
-    if (xf86Screens) {
-        for (i = 0; i < xf86NumScreens; i++)
-            if (xf86Screens[i]->vtSema) {
-                /*
-                 * if we are aborting before ScreenInit() has finished
-                 * we might not have been wrapped yet. Therefore enable
-                 * screen explicitely.
-                 */
-                xf86VGAarbiterLock(xf86Screens[i]);
-                (xf86Screens[i]->LeaveVT) (xf86Screens[i]);
-                xf86VGAarbiterUnlock(xf86Screens[i]);
-            }
-    }
-
-    /*
-     * This is needed for an abnormal server exit, since the normal exit stuff
-     * MUST also be performed (i.e. the vt must be left in a defined state)
-     */
-    ddxGiveUp(error);
 }
 
 void
@@ -1017,16 +923,9 @@ xf86CheckPrivs(const char *option, const char *arg)
 int
 ddxProcessArgument(int argc, char **argv, int i)
 {
-#define CHECK_FOR_REQUIRED_ARGUMENT() \
-    if (((i + 1) >= argc) || (!argv[i + 1])) { 				\
-      ErrorF("Required argument to %s not specified\n", argv[i]); 	\
-      UseMsg(); 							\
-      FatalError("Required argument to %s not specified\n", argv[i]);	\
-    }
-
     /* First the options that are not allowed with elevated privileges */
     if (!strcmp(argv[i], "-modulepath")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (xf86PrivsElevated())
               FatalError("\nInvalid argument -modulepath "
                 "with elevated privileges\n");
@@ -1035,7 +934,7 @@ ddxProcessArgument(int argc, char **argv, int i)
         return 2;
     }
     if (!strcmp(argv[i], "-logfile")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (xf86PrivsElevated())
               FatalError("\nInvalid argument -logfile "
                 "with elevated privileges\n");
@@ -1044,20 +943,16 @@ ddxProcessArgument(int argc, char **argv, int i)
         return 2;
     }
     if (!strcmp(argv[i], "-config") || !strcmp(argv[i], "-xf86config")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86CheckPrivs(argv[i], argv[i + 1]);
         xf86ConfigFile = argv[i + 1];
         return 2;
     }
     if (!strcmp(argv[i], "-configdir")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86CheckPrivs(argv[i], argv[i + 1]);
         xf86ConfigDir = argv[i + 1];
         return 2;
-    }
-    if (!strcmp(argv[i], "-flipPixels")) {
-        xf86FlipPixels = TRUE;
-        return 1;
     }
 #ifdef XF86VIDMODE
     if (!strcmp(argv[i], "-disableVidMode")) {
@@ -1148,7 +1043,7 @@ ddxProcessArgument(int argc, char **argv, int i)
     if (!strcmp(argv[i], "-fbbpp")) {
         int bpp;
 
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (sscanf(argv[++i], "%d", &bpp) == 1) {
             xf86FbBpp = bpp;
             return 2;
@@ -1161,7 +1056,7 @@ ddxProcessArgument(int argc, char **argv, int i)
     if (!strcmp(argv[i], "-depth")) {
         int depth;
 
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (sscanf(argv[++i], "%d", &depth) == 1) {
             xf86Depth = depth;
             return 2;
@@ -1174,7 +1069,7 @@ ddxProcessArgument(int argc, char **argv, int i)
     if (!strcmp(argv[i], "-weight")) {
         int red, green, blue;
 
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (sscanf(argv[++i], "%1d%1d%1d", &red, &green, &blue) == 3) {
             xf86Weight.red = red;
             xf86Weight.green = green;
@@ -1190,7 +1085,7 @@ ddxProcessArgument(int argc, char **argv, int i)
         !strcmp(argv[i], "-ggamma") || !strcmp(argv[i], "-bgamma")) {
         double gamma;
 
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (sscanf(argv[++i], "%lf", &gamma) == 1) {
             if (gamma < GAMMA_MIN || gamma > GAMMA_MAX) {
                 ErrorF("gamma out of range, only  %.2f <= gamma_value <= %.1f"
@@ -1209,22 +1104,22 @@ ddxProcessArgument(int argc, char **argv, int i)
         }
     }
     if (!strcmp(argv[i], "-layout")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86LayoutName = argv[++i];
         return 2;
     }
     if (!strcmp(argv[i], "-screen")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86ScreenName = argv[++i];
         return 2;
     }
     if (!strcmp(argv[i], "-pointer")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86PointerName = argv[++i];
         return 2;
     }
     if (!strcmp(argv[i], "-keyboard")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         xf86KeyboardName = argv[++i];
         return 2;
     }
@@ -1257,7 +1152,7 @@ ddxProcessArgument(int argc, char **argv, int i)
     }
 #ifdef XSERVER_LIBPCIACCESS
     if (!strcmp(argv[i], "-isolateDevice")) {
-        CHECK_FOR_REQUIRED_ARGUMENT();
+        CHECK_FOR_REQUIRED_ARGUMENTS(1);
         if (strncmp(argv[++i], "PCI:", 4)) {
             FatalError("Bus types other than PCI not yet isolable\n");
         }
@@ -1281,6 +1176,10 @@ ddxProcessArgument(int argc, char **argv, int i)
     if (!strcmp(argv[i], "-iglx") || !strcmp(argv[i], "+iglx")) {
         xf86Info.iglxFrom = X_CMDLINE;
         return 0;
+    }
+    if (!strcmp(argv[i], "-noautoBindGPU")) {
+        xf86AutoBindGPUDisabled = TRUE;
+        return 1;
     }
 
     /* OS-specific processing */
@@ -1334,7 +1233,6 @@ ddxUseMsg(void)
     ErrorF
         ("-pointer name          specify the core pointer InputDevice name\n");
     ErrorF("-nosilk                disable Silken Mouse\n");
-    ErrorF("-flipPixels            swap default black/white Pixel values\n");
 #ifdef XF86VIDMODE
     ErrorF("-disableVidMode        disable mode adjustments with xvidtune\n");
     ErrorF
