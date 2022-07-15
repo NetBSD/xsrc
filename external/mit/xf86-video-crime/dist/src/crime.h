@@ -1,4 +1,4 @@
-/* $NetBSD: crime.h,v 1.7 2009/09/29 20:41:21 macallan Exp $ */
+/* $NetBSD: crime.h,v 1.8 2022/07/15 04:30:05 mrg Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -38,7 +38,11 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86RamDac.h"
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2) 
+#include "xf86RamDac.h" 
+#else  
+#include "xf86Cursor.h"  
+#endif
 #include "xaa.h"
 
 #ifndef CRIME_H

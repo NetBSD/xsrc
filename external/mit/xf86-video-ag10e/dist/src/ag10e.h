@@ -27,7 +27,11 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86RamDac.h"
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2) 
+#include "xf86RamDac.h" 
+#else  
+#include "xf86Cursor.h"  
+#endif
 #include "Xmd.h"
 #include "gcstruct.h"
 #include "ag10e_regs.h"

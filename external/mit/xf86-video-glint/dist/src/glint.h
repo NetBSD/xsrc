@@ -41,7 +41,11 @@
 #include "exa.h"
 
 #include "xf86fbman.h"
-#include "xf86RamDac.h"
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2) 
+#include "xf86RamDac.h" 
+#else  
+#include "xf86Cursor.h"  
+#endif
 #include "xf86cmap.h"
 #include "xf86i2c.h"
 #include "xf86DDC.h"

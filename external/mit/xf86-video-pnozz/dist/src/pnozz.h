@@ -20,14 +20,18 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz.h,v 1.2 2021/05/27 04:48:10 jdc Exp $ */
+/* $NetBSD: pnozz.h,v 1.3 2022/07/15 04:30:05 mrg Exp $ */
 
 #ifndef PNOZZ_H
 #define PNOZZ_H
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86RamDac.h"
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2) 
+#include "xf86RamDac.h" 
+#else  
+#include "xf86Cursor.h"  
+#endif
 #include <X11/Xmd.h>
 #include <dev/sun/fbio.h>
 #include "gcstruct.h"
