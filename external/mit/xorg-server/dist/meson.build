@@ -3,10 +3,10 @@ project('xserver', 'c',
             'buildtype=debugoptimized',
             'c_std=gnu99',
         ],
-        version: '21.1.3',
+        version: '21.1.4',
         meson_version: '>= 0.47.0',
 )
-release_date = '2022-01-02'
+release_date = '2022-07-12'
 
 add_project_arguments('-DHAVE_DIX_CONFIG_H', language: ['c', 'objc'])
 cc = meson.get_compiler('c')
@@ -184,8 +184,7 @@ if with_dtrace
 endif
 
 build_xorg = false
-if (host_machine.system() != 'darwin' and
-    host_machine.system() != 'windows')
+if (host_machine.system() != 'windows')
     if get_option('xorg') == 'auto'
         build_xorg = (host_machine.system() != 'darwin' and
                       host_machine.system() != 'windows')
@@ -197,8 +196,7 @@ xorgsdkdir = join_paths(get_option('prefix'), get_option('includedir'), 'xorg')
 libxcvt_dep = dependency('libxcvt', required: build_xorg)
 
 build_xnest = false
-if (host_machine.system() != 'darwin' and
-    host_machine.system() != 'windows')
+if (host_machine.system() != 'windows')
     if get_option('xnest') != 'false'
         xnest_required = get_option('xnest') == 'true'
 
