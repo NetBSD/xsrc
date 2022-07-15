@@ -670,7 +670,7 @@ ReplaceCursor(CursorPtr pCursor, TestCursorFunc testCursor, void *closure)
                                         ReplaceCursorLookup, (void *) &rcl);
         }
     }
-    /* this "knows" that WindowHasNewCursor doesn't depend on it's argument */
+    /* this "knows" that WindowHasNewCursor doesn't depend on its argument */
     WindowHasNewCursor(screenInfo.screens[0]->root);
 }
 
@@ -1010,7 +1010,8 @@ ProcXFixesCreatePointerBarrier(ClientPtr client)
 {
     REQUEST(xXFixesCreatePointerBarrierReq);
 
-    REQUEST_FIXED_SIZE(xXFixesCreatePointerBarrierReq, pad_to_int32(stuff->num_devices));
+    REQUEST_FIXED_SIZE(xXFixesCreatePointerBarrierReq,
+                       pad_to_int32(stuff->num_devices * sizeof(CARD16)));
     LEGAL_NEW_RESOURCE(stuff->barrier, client);
 
     return XICreatePointerBarrier(client, stuff);
@@ -1027,7 +1028,8 @@ SProcXFixesCreatePointerBarrier(ClientPtr client)
 
     swaps(&stuff->length);
     swaps(&stuff->num_devices);
-    REQUEST_FIXED_SIZE(xXFixesCreatePointerBarrierReq, pad_to_int32(stuff->num_devices));
+    REQUEST_FIXED_SIZE(xXFixesCreatePointerBarrierReq,
+                       pad_to_int32(stuff->num_devices * sizeof(CARD16)));
 
     swapl(&stuff->barrier);
     swapl(&stuff->window);

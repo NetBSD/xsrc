@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -251,7 +254,8 @@ reply_XIQueryDevice_data(ClientPtr client, int len, char *data, void *closure)
                     }
 
                     assert(vi->length == 11);
-                    assert(vi->number >= 0 && vi->number < 4);
+                    assert(vi->number >= 0);
+                    assert(vi->number < 4);
                     if (info->deviceid == 2)    /* VCP */
                         assert(vi->number < 2);
 

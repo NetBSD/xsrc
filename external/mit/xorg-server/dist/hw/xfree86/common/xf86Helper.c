@@ -39,6 +39,7 @@
 #endif
 
 #include <X11/X.h>
+#include "mi.h"
 #include "os.h"
 #include "servermd.h"
 #include "pixmapstr.h"
@@ -729,9 +730,9 @@ xf86SetWeight(ScrnInfoPtr scrp, rgb weight, rgb mask)
         scrp->mask.red = mask.red;
         scrp->mask.green = mask.green;
         scrp->mask.blue = mask.blue;
-        scrp->offset.red = ffs(mask.red);
-        scrp->offset.green = ffs(mask.green);
-        scrp->offset.blue = ffs(mask.blue);
+        scrp->offset.red = ffs(mask.red) - 1;
+        scrp->offset.green = ffs(mask.green) - 1;
+        scrp->offset.blue = ffs(mask.blue) - 1;
     }
     return TRUE;
 }
@@ -812,8 +813,8 @@ xf86SetGamma(ScrnInfoPtr scrp, Gamma gamma)
         scrp->gamma.red = SET_GAMMA(DDC->features.gamma);
         scrp->gamma.green = SET_GAMMA(DDC->features.gamma);
         scrp->gamma.blue = SET_GAMMA(DDC->features.gamma);
-        /* EDID structure version 2 gives optional seperate red, green & blue gamma values
-         * in bytes 0x57-0x59 */
+        /* EDID structure version 2 gives optional separate red, green & blue
+         * gamma values in bytes 0x57-0x59 */
 #endif
     }
     else if (TEST_GAMMA(gamma)) {
@@ -951,14 +952,8 @@ xf86SetDpi(ScrnInfoPtr pScrn, int x, int y)
 void
 xf86SetBlackWhitePixels(ScreenPtr pScreen)
 {
-    if (xf86FlipPixels) {
-        pScreen->whitePixel = 0;
-        pScreen->blackPixel = 1;
-    }
-    else {
-        pScreen->whitePixel = 1;
-        pScreen->blackPixel = 0;
-    }
+    pScreen->whitePixel = 1;
+    pScreen->blackPixel = 0;
 }
 
 /*
@@ -1400,18 +1395,6 @@ xf86GetGamma(void)
 }
 
 Bool
-xf86GetFlipPixels(void)
-{
-    return xf86FlipPixels;
-}
-
-const char *
-xf86GetServerName(void)
-{
-    return xf86ServerName;
-}
-
-Bool
 xf86ServerIsExiting(void)
 {
     return (dispatchException & DE_TERMINATE) == DE_TERMINATE;
@@ -1756,4 +1739,17 @@ void
 xf86UpdateDesktopDimensions(void)
 {
     update_desktop_dimensions();
+}
+
+
+void
+xf86AddInputEventDrainCallback(CallbackProcPtr callback, void *param)
+{
+    mieqAddCallbackOnDrained(callback, param);
+}
+
+void
+xf86RemoveInputEventDrainCallback(CallbackProcPtr callback, void *param)
+{
+    mieqRemoveCallbackOnDrained(callback, param);
 }

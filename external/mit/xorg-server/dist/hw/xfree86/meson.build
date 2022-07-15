@@ -10,7 +10,6 @@ xorg_inc = include_directories(
     'os-support/bus',
     'parser',
     'ramdac',
-    'vbe',
     'vgahw',
 )
 
@@ -41,7 +40,8 @@ subdir('ramdac')
 subdir('xkb')
 
 srcs_xorg = [
-    '../../mi/miinitext.c'
+    '../../mi/miinitext.c',
+    '../../mi/miinitext.h',
 ]
 
 # Extract all the objects so that all symbols get brought into the
@@ -61,6 +61,7 @@ xorg_link = [
     xorg_os_support,
     xorg_parser,
     xorg_ramdac,
+    libxserver_fb,
     libxserver_xext_vidmode,
     libxserver_main,
     libxserver_config,
@@ -74,6 +75,8 @@ endif
 
 if host_machine.system() == 'cygwin' or host_machine.system() == 'windows'
     linker_export_flags = '-Wl,--export-all-symbols'
+elif host_machine.system() == 'sunos'
+    linker_export_flags = []
 else
     linker_export_flags = '-Wl,--export-dynamic'
 endif
@@ -125,15 +128,21 @@ if int10 != 'false'
     subdir('int10')
 endif
 subdir('shadowfb')
-if build_vbe
-    subdir('vbe')
-endif
 if build_vgahw
     subdir('vgahw')
 endif
 if build_modesetting
    subdir('drivers/modesetting')
 endif
+if get_option('xf86-input-inputtest')
+    subdir('drivers/inputtest')
+endif
+
+meson.add_install_script(
+    'sh', '-c',
+    'ln -fs Xorg @0@@1@'.format(
+        '${DESTDIR}',
+        join_paths(get_option('prefix'), get_option('bindir'), 'X')))
 
 if get_option('suid_wrapper')
     executable('Xorg.wrap',
@@ -143,24 +152,24 @@ if get_option('suid_wrapper')
         c_args: xorg_c_args,
         install: true,
         install_dir: get_option('libexecdir'),
-        # install_mode: ['r-sr-xr-x', 0, 0],
+        install_mode: ['r-sr-xr-x', 0, 0],
     )
-    configure_file(
+
+    # meson gets confused when there are two targets of the same name
+    # within the same directory, so we use a different intermediate name.
+    xorg_sh = configure_file(
         input: 'Xorg.sh.in',
-        output: 'Xorg',
+        output: 'Xorg.sh',
         configuration: conf_data,
+    )
+
+    install_data(
+        xorg_sh,
+        install_mode: 'rwxr-xr-x',
         install_dir: join_paths(get_option('prefix'), get_option('bindir')),
+        rename: ['Xorg']
     )
 endif
-
-executable('cvt',
-    ['utils/cvt/cvt.c', 'modes/xf86cvt.c'],
-    include_directories: [inc, xorg_inc],
-    dependencies: xorg_deps,
-    link_with: libxserver_os,
-    c_args: xorg_c_args,
-    install: true,
-)
 
 executable('gtf',
     'utils/gtf/gtf.c',
@@ -217,13 +226,9 @@ install_man(configure_file(
 ))
 
 install_man(configure_file(
-    input: 'utils/man/cvt.man',
-    output: 'cvt.1',
-    configuration: manpage_config,
-))
-
-install_man(configure_file(
     input: 'utils/man/gtf.man',
     output: 'gtf.1',
     configuration: manpage_config,
 ))
+
+subdir('doc')

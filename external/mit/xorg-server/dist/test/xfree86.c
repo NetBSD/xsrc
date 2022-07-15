@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -69,7 +72,8 @@ xfree86_option_list_duplicate(void)
 
     a = xf86FindOption(options, o_null);
     b = xf86FindOption(duplicate, o_null);
-    assert(a && b);
+    assert(a);
+    assert(b);
 }
 
 static void

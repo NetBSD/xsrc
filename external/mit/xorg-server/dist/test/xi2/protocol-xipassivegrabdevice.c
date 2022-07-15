@@ -21,6 +21,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* Test relies on assert() */
+#undef NDEBUG
+
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -194,7 +197,7 @@ test_XIPassiveGrabDevice(void)
     request->deviceid = XIAllMasterDevices;
 
     printf("Testing invalid grab types\n");
-    for (i = XIGrabtypeTouchBegin + 1; i < 0xFF; i++) {
+    for (i = XIGrabtypeGestureSwipeBegin + 1; i < 0xFF; i++) {
         request->grab_type = i;
         request_XIPassiveGrabDevice(&client_request, request, BadValue,
                                     request->grab_type);
