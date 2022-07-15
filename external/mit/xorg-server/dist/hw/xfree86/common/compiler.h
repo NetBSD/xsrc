@@ -519,7 +519,6 @@ xf86WriteMmio32Le(__volatile__ void *base, const unsigned long offset,
 }
 
 #elif defined(__mips__) || ((defined(__arm__) || defined(__arm32__)) && !defined(__linux__))
-#if defined(__arm__) || defined(__arm32__) || defined(__mips64)
 #define PORT_SIZE long
 
 extern _X_EXPORT unsigned int IOPortBase;      /* Memory mapped I/O port area */
