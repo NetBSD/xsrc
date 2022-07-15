@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.5.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -34,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -41,14 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30705
 
-/* Identify Bison output.  */
-#define YYBISON 1
-
-/* Bison version.  */
-#define YYBISON_VERSION "3.5.1"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.7.5"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -155,7 +156,7 @@ extern int yylineno;
 extern int yylex(void);
 
 
-#line 159 "winprefsyacc.c"
+#line 160 "winprefsyacc.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -178,14 +179,6 @@ extern int yylex(void);
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
 /* Use api.header.include to #include this header
    instead of duplicating it here.  */
 #ifndef YY_YY_WINPREFSYACC_H_INCLUDED
@@ -198,43 +191,52 @@ extern int yylex(void);
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    NEWLINE = 258,
-    MENU = 259,
-    LB = 260,
-    RB = 261,
-    ICONDIRECTORY = 262,
-    DEFAULTICON = 263,
-    ICONS = 264,
-    STYLES = 265,
-    TOPMOST = 266,
-    MAXIMIZE = 267,
-    MINIMIZE = 268,
-    BOTTOM = 269,
-    NOTITLE = 270,
-    OUTLINE = 271,
-    NOFRAME = 272,
-    DEFAULTSYSMENU = 273,
-    SYSMENU = 274,
-    ROOTMENU = 275,
-    SEPARATOR = 276,
-    ATSTART = 277,
-    ATEND = 278,
-    EXEC = 279,
-    ALWAYSONTOP = 280,
-    DEBUGOUTPUT = 281,
-    RELOAD = 282,
-    TRAYICON = 283,
-    FORCEEXIT = 284,
-    SILENTEXIT = 285,
-    STRING = 286
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    NEWLINE = 258,                 /* NEWLINE  */
+    MENU = 259,                    /* MENU  */
+    LB = 260,                      /* LB  */
+    RB = 261,                      /* RB  */
+    ICONDIRECTORY = 262,           /* ICONDIRECTORY  */
+    DEFAULTICON = 263,             /* DEFAULTICON  */
+    ICONS = 264,                   /* ICONS  */
+    STYLES = 265,                  /* STYLES  */
+    TOPMOST = 266,                 /* TOPMOST  */
+    MAXIMIZE = 267,                /* MAXIMIZE  */
+    MINIMIZE = 268,                /* MINIMIZE  */
+    BOTTOM = 269,                  /* BOTTOM  */
+    NOTITLE = 270,                 /* NOTITLE  */
+    OUTLINE = 271,                 /* OUTLINE  */
+    NOFRAME = 272,                 /* NOFRAME  */
+    DEFAULTSYSMENU = 273,          /* DEFAULTSYSMENU  */
+    SYSMENU = 274,                 /* SYSMENU  */
+    ROOTMENU = 275,                /* ROOTMENU  */
+    SEPARATOR = 276,               /* SEPARATOR  */
+    ATSTART = 277,                 /* ATSTART  */
+    ATEND = 278,                   /* ATEND  */
+    EXEC = 279,                    /* EXEC  */
+    ALWAYSONTOP = 280,             /* ALWAYSONTOP  */
+    DEBUGOUTPUT = 281,             /* "DEBUG"  */
+    RELOAD = 282,                  /* RELOAD  */
+    TRAYICON = 283,                /* TRAYICON  */
+    FORCEEXIT = 284,               /* FORCEEXIT  */
+    SILENTEXIT = 285,              /* SILENTEXIT  */
+    STRING = 286                   /* STRING  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define NEWLINE 258
 #define MENU 259
 #define LB 260
@@ -275,7 +277,7 @@ union YYSTYPE
   unsigned long uVal;
   int iVal;
 
-#line 279 "winprefsyacc.c"
+#line 281 "winprefsyacc.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -289,6 +291,78 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 #endif /* !YY_YY_WINPREFSYACC_H_INCLUDED  */
+/* Symbol kind.  */
+enum yysymbol_kind_t
+{
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_NEWLINE = 3,                    /* NEWLINE  */
+  YYSYMBOL_MENU = 4,                       /* MENU  */
+  YYSYMBOL_LB = 5,                         /* LB  */
+  YYSYMBOL_RB = 6,                         /* RB  */
+  YYSYMBOL_ICONDIRECTORY = 7,              /* ICONDIRECTORY  */
+  YYSYMBOL_DEFAULTICON = 8,                /* DEFAULTICON  */
+  YYSYMBOL_ICONS = 9,                      /* ICONS  */
+  YYSYMBOL_STYLES = 10,                    /* STYLES  */
+  YYSYMBOL_TOPMOST = 11,                   /* TOPMOST  */
+  YYSYMBOL_MAXIMIZE = 12,                  /* MAXIMIZE  */
+  YYSYMBOL_MINIMIZE = 13,                  /* MINIMIZE  */
+  YYSYMBOL_BOTTOM = 14,                    /* BOTTOM  */
+  YYSYMBOL_NOTITLE = 15,                   /* NOTITLE  */
+  YYSYMBOL_OUTLINE = 16,                   /* OUTLINE  */
+  YYSYMBOL_NOFRAME = 17,                   /* NOFRAME  */
+  YYSYMBOL_DEFAULTSYSMENU = 18,            /* DEFAULTSYSMENU  */
+  YYSYMBOL_SYSMENU = 19,                   /* SYSMENU  */
+  YYSYMBOL_ROOTMENU = 20,                  /* ROOTMENU  */
+  YYSYMBOL_SEPARATOR = 21,                 /* SEPARATOR  */
+  YYSYMBOL_ATSTART = 22,                   /* ATSTART  */
+  YYSYMBOL_ATEND = 23,                     /* ATEND  */
+  YYSYMBOL_EXEC = 24,                      /* EXEC  */
+  YYSYMBOL_ALWAYSONTOP = 25,               /* ALWAYSONTOP  */
+  YYSYMBOL_DEBUGOUTPUT = 26,               /* "DEBUG"  */
+  YYSYMBOL_RELOAD = 27,                    /* RELOAD  */
+  YYSYMBOL_TRAYICON = 28,                  /* TRAYICON  */
+  YYSYMBOL_FORCEEXIT = 29,                 /* FORCEEXIT  */
+  YYSYMBOL_SILENTEXIT = 30,                /* SILENTEXIT  */
+  YYSYMBOL_STRING = 31,                    /* STRING  */
+  YYSYMBOL_YYACCEPT = 32,                  /* $accept  */
+  YYSYMBOL_input = 33,                     /* input  */
+  YYSYMBOL_line = 34,                      /* line  */
+  YYSYMBOL_newline_or_nada = 35,           /* newline_or_nada  */
+  YYSYMBOL_command = 36,                   /* command  */
+  YYSYMBOL_trayicon = 37,                  /* trayicon  */
+  YYSYMBOL_rootmenu = 38,                  /* rootmenu  */
+  YYSYMBOL_defaultsysmenu = 39,            /* defaultsysmenu  */
+  YYSYMBOL_defaulticon = 40,               /* defaulticon  */
+  YYSYMBOL_icondirectory = 41,             /* icondirectory  */
+  YYSYMBOL_menuline = 42,                  /* menuline  */
+  YYSYMBOL_menulist = 43,                  /* menulist  */
+  YYSYMBOL_menu = 44,                      /* menu  */
+  YYSYMBOL_45_1 = 45,                      /* $@1  */
+  YYSYMBOL_iconline = 46,                  /* iconline  */
+  YYSYMBOL_iconlist = 47,                  /* iconlist  */
+  YYSYMBOL_icons = 48,                     /* icons  */
+  YYSYMBOL_49_2 = 49,                      /* $@2  */
+  YYSYMBOL_group1 = 50,                    /* group1  */
+  YYSYMBOL_group2 = 51,                    /* group2  */
+  YYSYMBOL_stylecombo = 52,                /* stylecombo  */
+  YYSYMBOL_styleline = 53,                 /* styleline  */
+  YYSYMBOL_stylelist = 54,                 /* stylelist  */
+  YYSYMBOL_styles = 55,                    /* styles  */
+  YYSYMBOL_56_3 = 56,                      /* $@3  */
+  YYSYMBOL_atspot = 57,                    /* atspot  */
+  YYSYMBOL_sysmenuline = 58,               /* sysmenuline  */
+  YYSYMBOL_sysmenulist = 59,               /* sysmenulist  */
+  YYSYMBOL_sysmenu = 60,                   /* sysmenu  */
+  YYSYMBOL_61_4 = 61,                      /* $@4  */
+  YYSYMBOL_forceexit = 62,                 /* forceexit  */
+  YYSYMBOL_silentexit = 63,                /* silentexit  */
+  YYSYMBOL_debug = 64                      /* debug  */
+};
+typedef enum yysymbol_kind_t yysymbol_kind_t;
+
 
 
 
@@ -327,6 +401,18 @@ typedef __INT_LEAST16_TYPE__ yytype_int16;
 typedef int_least16_t yytype_int16;
 #else
 typedef short yytype_int16;
+#endif
+
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
 #endif
 
 #if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
@@ -388,6 +474,7 @@ typedef int yytype_uint16;
 
 #define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
 
+
 /* Stored state numbers (used for stacks). */
 typedef yytype_int8 yy_state_t;
 
@@ -405,6 +492,7 @@ typedef int yy_state_fast_t;
 #  define YY_(Msgid) Msgid
 # endif
 #endif
+
 
 #ifndef YY_ATTRIBUTE_PURE
 # if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
@@ -424,9 +512,9 @@ typedef int yy_state_fast_t;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -463,7 +551,7 @@ typedef int yy_state_fast_t;
 
 #define YY_ASSERT(E) ((void) (0 && (E)))
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -528,8 +616,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -605,14 +692,16 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  121
 
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   286
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
-#define YYTRANSLATE(YYX)                                                \
-  (0 <= (YYX) && (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex.  */
@@ -663,16 +752,23 @@ static const yytype_uint8 yyrline[] =
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if YYDEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "NEWLINE", "MENU", "LB", "RB",
-  "ICONDIRECTORY", "DEFAULTICON", "ICONS", "STYLES", "TOPMOST", "MAXIMIZE",
-  "MINIMIZE", "BOTTOM", "NOTITLE", "OUTLINE", "NOFRAME", "DEFAULTSYSMENU",
-  "SYSMENU", "ROOTMENU", "SEPARATOR", "ATSTART", "ATEND", "EXEC",
-  "ALWAYSONTOP", "\"DEBUG\"", "RELOAD", "TRAYICON", "FORCEEXIT",
+  "\"end of file\"", "error", "\"invalid token\"", "NEWLINE", "MENU",
+  "LB", "RB", "ICONDIRECTORY", "DEFAULTICON", "ICONS", "STYLES", "TOPMOST",
+  "MAXIMIZE", "MINIMIZE", "BOTTOM", "NOTITLE", "OUTLINE", "NOFRAME",
+  "DEFAULTSYSMENU", "SYSMENU", "ROOTMENU", "SEPARATOR", "ATSTART", "ATEND",
+  "EXEC", "ALWAYSONTOP", "\"DEBUG\"", "RELOAD", "TRAYICON", "FORCEEXIT",
   "SILENTEXIT", "STRING", "$accept", "input", "line", "newline_or_nada",
   "command", "trayicon", "rootmenu", "defaultsysmenu", "defaulticon",
   "icondirectory", "menuline", "menulist", "menu", "$@1", "iconline",
@@ -680,9 +776,15 @@ static const char *const yytname[] =
   "styleline", "stylelist", "styles", "$@3", "atspot", "sysmenuline",
   "sysmenulist", "sysmenu", "$@4", "forceexit", "silentexit", "debug", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
+#ifdef YYPRINT
 /* YYTOKNUM[NUM] -- (External) token number corresponding to the
    (internal) symbol number NUM (which must be that of a token).  */
 static const yytype_int16 yytoknum[] =
@@ -692,7 +794,7 @@ static const yytype_int16 yytoknum[] =
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286
 };
-# endif
+#endif
 
 #define YYPACT_NINF (-47)
 
@@ -755,7 +857,7 @@ static const yytype_int8 yypgoto[] =
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,    16,    56,    17,    18,    19,    20,    21,    22,
+       0,     1,    16,    56,    17,    18,    19,    20,    21,    22,
       71,    72,    23,    54,    63,    64,    24,    45,    83,    84,
       85,    66,    67,    25,    46,    49,    89,    90,    26,    59,
       27,    28,    29
@@ -836,10 +938,10 @@ static const yytype_int8 yyr2[] =
 };
 
 
+enum { YYENOMEM = -2 };
+
 #define yyerrok         (yyerrstatus = 0)
 #define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
@@ -865,10 +967,9 @@ static const yytype_int8 yyr2[] =
       }                                                           \
   while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use YYerror or YYUNDEF. */
+#define YYERRCODE YYUNDEF
 
 
 /* Enable debugging if requested.  */
@@ -886,18 +987,18 @@ do {                                            \
 } while (0)
 
 /* This macro is provided for backward compatibility. */
-#ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-#endif
+# ifndef YY_LOCATION_PRINT
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Kind, Value); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -908,18 +1009,19 @@ do {                                                                      \
 `-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
-  YYUSE (yyoutput);
+  YY_USE (yyoutput);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
+  if (yykind < YYNTOKENS)
+    YYPRINT (yyo, yytoknum[yykind], *yyvaluep);
 # endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -929,12 +1031,13 @@ yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
 `---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyo, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yytype, yyvaluep);
+  yy_symbol_value_print (yyo, yykind, yyvaluep);
   YYFPRINTF (yyo, ")");
 }
 
@@ -967,7 +1070,8 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -979,9 +1083,8 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[+yyssp[yyi + 1 - yynrhs]],
-                       &yyvsp[(yyi + 1) - (yynrhs)]
-                                              );
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)]);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -996,8 +1099,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1020,265 +1123,38 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
-#  else
-/* Return the length of YYSTR.  */
-static YYPTRDIFF_T
-yystrlen (const char *yystr)
-{
-  YYPTRDIFF_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYPTRDIFF_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYPTRDIFF_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-        switch (*++yyp)
-          {
-          case '\'':
-          case ',':
-            goto do_not_strip_quotes;
-
-          case '\\':
-            if (*++yyp != '\\')
-              goto do_not_strip_quotes;
-            else
-              goto append;
-
-          append:
-          default:
-            if (yyres)
-              yyres[yyn] = *yyp;
-            yyn++;
-            break;
-
-          case '"':
-            if (yyres)
-              yyres[yyn] = '\0';
-            return yyn;
-          }
-    do_not_strip_quotes: ;
-    }
-
-  if (yyres)
-    return yystpcpy (yyres, yystr) - yyres;
-  else
-    return yystrlen (yystr);
-}
-# endif
-
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
-
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
-static int
-yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
-                yy_state_t *yyssp, int yytoken)
-{
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat: reported tokens (one for the "unexpected",
-     one per "expected"). */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Actual size of YYARG. */
-  int yycount = 0;
-  /* Cumulated lengths of YYARG.  */
-  YYPTRDIFF_T yysize = 0;
-
-  /* There are many possibilities here to consider:
-     - If this state is a consistent state with a default action, then
-       the only way this function was invoked is if the default action
-       is an error action.  In that case, don't check for expected
-       tokens because there are none.
-     - The only way there can be no lookahead present (in yychar) is if
-       this state is a consistent state with a default action.  Thus,
-       detecting the absence of a lookahead is sufficient to determine
-       that there is no unexpected or expected token to report.  In that
-       case, just report a simple "syntax error".
-     - Don't assume there isn't a lookahead just because this state is a
-       consistent state with a default action.  There might have been a
-       previous inconsistent state, consistent state with a non-default
-       action, or user semantic action that manipulated yychar.
-     - Of course, the expected token list depends on states to have
-       correct lookahead information, and it depends on the parser not
-       to perform extra reductions after fetching a lookahead from the
-       scanner and before detecting a syntax error.  Thus, state merging
-       (from LALR or IELR) and default reductions corrupt the expected
-       token list.  However, the list is correct for canonical LR with
-       one exception: it will still contain any token that will not be
-       accepted due to an error action in a later state.
-  */
-  if (yytoken != YYEMPTY)
-    {
-      int yyn = yypact[+*yyssp];
-      YYPTRDIFF_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-      yysize = yysize0;
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYPTRDIFF_T yysize1
-                    = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-                    yysize = yysize1;
-                  else
-                    return 2;
-                }
-              }
-        }
-    }
-
-  switch (yycount)
-    {
-# define YYCASE_(N, S)                      \
-      case N:                               \
-        yyformat = S;                       \
-      break
-    default: /* Avoid compiler warnings. */
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
-    }
-
-  {
-    /* Don't count the "%s"s in the final size, but reserve room for
-       the terminator.  */
-    YYPTRDIFF_T yysize1 = yysize + (yystrlen (yyformat) - 2 * yycount) + 1;
-    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-      yysize = yysize1;
-    else
-      return 2;
-  }
-
-  if (*yymsg_alloc < yysize)
-    {
-      *yymsg_alloc = 2 * yysize;
-      if (! (yysize <= *yymsg_alloc
-             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
-        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
-    }
-
-  /* Avoid sprintf, as that infringes on the user's name space.
-     Don't have undefined behavior even if the translation
-     produced a string with the wrong number of "%s"s.  */
-  {
-    char *yyp = *yymsg;
-    int yyi = 0;
-    while ((*yyp = *yyformat) != '\0')
-      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
-        {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
-          yyformat += 2;
-        }
-      else
-        {
-          ++yyp;
-          ++yyformat;
-        }
-  }
-  return 0;
-}
-#endif /* YYERROR_VERBOSE */
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
 {
-  YYUSE (yyvaluep);
+  YY_USE (yyvaluep);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-
-
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
+
+
 
 
 /*----------.
@@ -1288,43 +1164,36 @@ int yynerrs;
 int
 yyparse (void)
 {
-    yy_state_fast_t yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
+
+    /* The state stack: array, bottom, top.  */
     yy_state_t yyssa[YYINITDEPTH];
-    yy_state_t *yyss;
-    yy_state_t *yyssp;
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
 
-    /* The semantic value stack.  */
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYPTRDIFF_T yystacksize;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYPTRDIFF_T yymsg_alloc = sizeof yymsgbuf;
-#endif
+
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
@@ -1332,15 +1201,8 @@ yyparse (void)
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
   goto yysetstate;
 
@@ -1363,6 +1225,7 @@ yysetstate:
   YY_IGNORE_USELESS_CAST_BEGIN
   *yyssp = YY_CAST (yy_state_t, yystate);
   YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
 #if !defined yyoverflow && !defined YYSTACK_RELOCATE
@@ -1408,7 +1271,7 @@ yysetstate:
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
-# undef YYSTACK_RELOCATE
+#  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
@@ -1447,17 +1310,28 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
   if (yychar == YYEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex ();
     }
 
   if (yychar <= YYEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = YYEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == YYerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = YYUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -1527,236 +1401,236 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 20:
+  case 20: /* trayicon: TRAYICON STRING NEWLINE  */
 #line 160 "winprefsyacc.y"
                                         { SetTrayIcon((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+#line 1408 "winprefsyacc.c"
+    break;
+
+  case 21: /* rootmenu: ROOTMENU STRING NEWLINE  */
+#line 163 "winprefsyacc.y"
+                                        { SetRootMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+#line 1414 "winprefsyacc.c"
+    break;
+
+  case 22: /* defaultsysmenu: DEFAULTSYSMENU STRING atspot NEWLINE  */
+#line 166 "winprefsyacc.y"
+                                                     { SetDefaultSysMenu((yyvsp[-2].sVal), (yyvsp[-1].iVal)); free((yyvsp[-2].sVal)); }
+#line 1420 "winprefsyacc.c"
+    break;
+
+  case 23: /* defaulticon: DEFAULTICON STRING NEWLINE  */
+#line 169 "winprefsyacc.y"
+                                           { SetDefaultIcon((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+#line 1426 "winprefsyacc.c"
+    break;
+
+  case 24: /* icondirectory: ICONDIRECTORY STRING NEWLINE  */
+#line 172 "winprefsyacc.y"
+                                             { SetIconDirectory((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+#line 1432 "winprefsyacc.c"
+    break;
+
+  case 25: /* menuline: SEPARATOR NEWLINE newline_or_nada  */
+#line 175 "winprefsyacc.y"
+                                                   { AddMenuLine("-", CMD_SEPARATOR, ""); }
+#line 1438 "winprefsyacc.c"
+    break;
+
+  case 26: /* menuline: STRING ALWAYSONTOP NEWLINE newline_or_nada  */
+#line 176 "winprefsyacc.y"
+                                                      { AddMenuLine((yyvsp[-3].sVal), CMD_ALWAYSONTOP, ""); free((yyvsp[-3].sVal)); }
+#line 1444 "winprefsyacc.c"
+    break;
+
+  case 27: /* menuline: STRING EXEC STRING NEWLINE newline_or_nada  */
+#line 177 "winprefsyacc.y"
+                                                      { AddMenuLine((yyvsp[-4].sVal), CMD_EXEC, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
+#line 1450 "winprefsyacc.c"
+    break;
+
+  case 28: /* menuline: STRING MENU STRING NEWLINE newline_or_nada  */
+#line 178 "winprefsyacc.y"
+                                                      { AddMenuLine((yyvsp[-4].sVal), CMD_MENU, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
+#line 1456 "winprefsyacc.c"
+    break;
+
+  case 29: /* menuline: STRING RELOAD NEWLINE newline_or_nada  */
+#line 179 "winprefsyacc.y"
+                                                 { AddMenuLine((yyvsp[-3].sVal), CMD_RELOAD, ""); free((yyvsp[-3].sVal)); }
+#line 1462 "winprefsyacc.c"
+    break;
+
+  case 32: /* $@1: %empty  */
+#line 186 "winprefsyacc.y"
+                       { OpenMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+#line 1468 "winprefsyacc.c"
+    break;
+
+  case 33: /* menu: MENU STRING LB $@1 newline_or_nada menulist RB  */
+#line 186 "winprefsyacc.y"
+                                                                               {CloseMenu();}
+#line 1474 "winprefsyacc.c"
+    break;
+
+  case 34: /* iconline: STRING STRING NEWLINE newline_or_nada  */
+#line 189 "winprefsyacc.y"
+                                                      { AddIconLine((yyvsp[-3].sVal), (yyvsp[-2].sVal)); free((yyvsp[-3].sVal)); free((yyvsp[-2].sVal)); }
+#line 1480 "winprefsyacc.c"
+    break;
+
+  case 37: /* $@2: %empty  */
+#line 196 "winprefsyacc.y"
+                 {OpenIcons();}
+#line 1486 "winprefsyacc.c"
+    break;
+
+  case 38: /* icons: ICONS LB $@2 newline_or_nada iconlist RB  */
+#line 196 "winprefsyacc.y"
+                                                            {CloseIcons();}
+#line 1492 "winprefsyacc.c"
+    break;
+
+  case 39: /* group1: TOPMOST  */
+#line 199 "winprefsyacc.y"
+                { (yyval.uVal)=STYLE_TOPMOST; }
+#line 1498 "winprefsyacc.c"
+    break;
+
+  case 40: /* group1: MAXIMIZE  */
+#line 200 "winprefsyacc.y"
+                   { (yyval.uVal)=STYLE_MAXIMIZE; }
+#line 1504 "winprefsyacc.c"
+    break;
+
+  case 41: /* group1: MINIMIZE  */
+#line 201 "winprefsyacc.y"
+                   { (yyval.uVal)=STYLE_MINIMIZE; }
+#line 1510 "winprefsyacc.c"
+    break;
+
+  case 42: /* group1: BOTTOM  */
+#line 202 "winprefsyacc.y"
+                 { (yyval.uVal)=STYLE_BOTTOM; }
+#line 1516 "winprefsyacc.c"
+    break;
+
+  case 43: /* group2: NOTITLE  */
+#line 205 "winprefsyacc.y"
+                { (yyval.uVal)=STYLE_NOTITLE; }
+#line 1522 "winprefsyacc.c"
+    break;
+
+  case 44: /* group2: OUTLINE  */
+#line 206 "winprefsyacc.y"
+                  { (yyval.uVal)=STYLE_OUTLINE; }
+#line 1528 "winprefsyacc.c"
+    break;
+
+  case 45: /* group2: NOFRAME  */
+#line 207 "winprefsyacc.y"
+                  { (yyval.uVal)=STYLE_NOFRAME; }
 #line 1534 "winprefsyacc.c"
     break;
 
-  case 21:
-#line 163 "winprefsyacc.y"
-                                        { SetRootMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+  case 46: /* stylecombo: group1  */
+#line 210 "winprefsyacc.y"
+                       { (yyval.uVal)=(yyvsp[0].uVal); }
 #line 1540 "winprefsyacc.c"
     break;
 
-  case 22:
-#line 166 "winprefsyacc.y"
-                                                     { SetDefaultSysMenu((yyvsp[-2].sVal), (yyvsp[-1].iVal)); free((yyvsp[-2].sVal)); }
+  case 47: /* stylecombo: group2  */
+#line 211 "winprefsyacc.y"
+                 { (yyval.uVal)=(yyvsp[0].uVal); }
 #line 1546 "winprefsyacc.c"
     break;
 
-  case 23:
-#line 169 "winprefsyacc.y"
-                                           { SetDefaultIcon((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+  case 48: /* stylecombo: group1 group2  */
+#line 212 "winprefsyacc.y"
+                        { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
 #line 1552 "winprefsyacc.c"
     break;
 
-  case 24:
-#line 172 "winprefsyacc.y"
-                                             { SetIconDirectory((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+  case 49: /* stylecombo: group2 group1  */
+#line 213 "winprefsyacc.y"
+                        { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
 #line 1558 "winprefsyacc.c"
     break;
 
-  case 25:
-#line 175 "winprefsyacc.y"
-                                                   { AddMenuLine("-", CMD_SEPARATOR, ""); }
+  case 50: /* styleline: STRING stylecombo NEWLINE newline_or_nada  */
+#line 216 "winprefsyacc.y"
+                                                          { AddStyleLine((yyvsp[-3].sVal), (yyvsp[-2].uVal)); free((yyvsp[-3].sVal)); }
 #line 1564 "winprefsyacc.c"
     break;
 
-  case 26:
-#line 176 "winprefsyacc.y"
-                                                      { AddMenuLine((yyvsp[-3].sVal), CMD_ALWAYSONTOP, ""); free((yyvsp[-3].sVal)); }
+  case 53: /* $@3: %empty  */
+#line 223 "winprefsyacc.y"
+                  {OpenStyles();}
 #line 1570 "winprefsyacc.c"
     break;
 
-  case 27:
-#line 177 "winprefsyacc.y"
-                                                      { AddMenuLine((yyvsp[-4].sVal), CMD_EXEC, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
+  case 54: /* styles: STYLES LB $@3 newline_or_nada stylelist RB  */
+#line 223 "winprefsyacc.y"
+                                                               {CloseStyles();}
 #line 1576 "winprefsyacc.c"
     break;
 
-  case 28:
-#line 178 "winprefsyacc.y"
-                                                      { AddMenuLine((yyvsp[-4].sVal), CMD_MENU, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
+  case 55: /* atspot: %empty  */
+#line 226 "winprefsyacc.y"
+        { (yyval.iVal)=AT_END; }
 #line 1582 "winprefsyacc.c"
     break;
 
-  case 29:
-#line 179 "winprefsyacc.y"
-                                                 { AddMenuLine((yyvsp[-3].sVal), CMD_RELOAD, ""); free((yyvsp[-3].sVal)); }
+  case 56: /* atspot: ATSTART  */
+#line 227 "winprefsyacc.y"
+                  { (yyval.iVal)=AT_START; }
 #line 1588 "winprefsyacc.c"
     break;
 
-  case 32:
-#line 186 "winprefsyacc.y"
-                       { OpenMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
+  case 57: /* atspot: ATEND  */
+#line 228 "winprefsyacc.y"
+                { (yyval.iVal)=AT_END; }
 #line 1594 "winprefsyacc.c"
     break;
 
-  case 33:
-#line 186 "winprefsyacc.y"
-                                                                               {CloseMenu();}
+  case 58: /* sysmenuline: STRING STRING atspot NEWLINE newline_or_nada  */
+#line 231 "winprefsyacc.y"
+                                                             { AddSysMenuLine((yyvsp[-4].sVal), (yyvsp[-3].sVal), (yyvsp[-2].iVal)); free((yyvsp[-4].sVal)); free((yyvsp[-3].sVal)); }
 #line 1600 "winprefsyacc.c"
     break;
 
-  case 34:
-#line 189 "winprefsyacc.y"
-                                                      { AddIconLine((yyvsp[-3].sVal), (yyvsp[-2].sVal)); free((yyvsp[-3].sVal)); free((yyvsp[-2].sVal)); }
+  case 61: /* $@4: %empty  */
+#line 238 "winprefsyacc.y"
+                                   {OpenSysMenu();}
 #line 1606 "winprefsyacc.c"
     break;
 
-  case 37:
-#line 196 "winprefsyacc.y"
-                 {OpenIcons();}
+  case 62: /* sysmenu: SYSMENU LB NEWLINE $@4 newline_or_nada sysmenulist RB  */
+#line 238 "winprefsyacc.y"
+                                                                                   {CloseSysMenu();}
 #line 1612 "winprefsyacc.c"
     break;
 
-  case 38:
-#line 196 "winprefsyacc.y"
-                                                            {CloseIcons();}
+  case 63: /* forceexit: FORCEEXIT NEWLINE  */
+#line 241 "winprefsyacc.y"
+                                  { pref.fForceExit = TRUE; }
 #line 1618 "winprefsyacc.c"
     break;
 
-  case 39:
-#line 199 "winprefsyacc.y"
-                { (yyval.uVal)=STYLE_TOPMOST; }
+  case 64: /* silentexit: SILENTEXIT NEWLINE  */
+#line 244 "winprefsyacc.y"
+                                   { pref.fSilentExit = TRUE; }
 #line 1624 "winprefsyacc.c"
     break;
 
-  case 40:
-#line 200 "winprefsyacc.y"
-                   { (yyval.uVal)=STYLE_MAXIMIZE; }
+  case 65: /* debug: "DEBUG" STRING NEWLINE  */
+#line 247 "winprefsyacc.y"
+                                   { ErrorF("LoadPreferences: %s\n", (yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
 #line 1630 "winprefsyacc.c"
     break;
 
-  case 41:
-#line 201 "winprefsyacc.y"
-                   { (yyval.uVal)=STYLE_MINIMIZE; }
-#line 1636 "winprefsyacc.c"
-    break;
 
-  case 42:
-#line 202 "winprefsyacc.y"
-                 { (yyval.uVal)=STYLE_BOTTOM; }
-#line 1642 "winprefsyacc.c"
-    break;
-
-  case 43:
-#line 205 "winprefsyacc.y"
-                { (yyval.uVal)=STYLE_NOTITLE; }
-#line 1648 "winprefsyacc.c"
-    break;
-
-  case 44:
-#line 206 "winprefsyacc.y"
-                  { (yyval.uVal)=STYLE_OUTLINE; }
-#line 1654 "winprefsyacc.c"
-    break;
-
-  case 45:
-#line 207 "winprefsyacc.y"
-                  { (yyval.uVal)=STYLE_NOFRAME; }
-#line 1660 "winprefsyacc.c"
-    break;
-
-  case 46:
-#line 210 "winprefsyacc.y"
-                       { (yyval.uVal)=(yyvsp[0].uVal); }
-#line 1666 "winprefsyacc.c"
-    break;
-
-  case 47:
-#line 211 "winprefsyacc.y"
-                 { (yyval.uVal)=(yyvsp[0].uVal); }
-#line 1672 "winprefsyacc.c"
-    break;
-
-  case 48:
-#line 212 "winprefsyacc.y"
-                        { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
-#line 1678 "winprefsyacc.c"
-    break;
-
-  case 49:
-#line 213 "winprefsyacc.y"
-                        { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
-#line 1684 "winprefsyacc.c"
-    break;
-
-  case 50:
-#line 216 "winprefsyacc.y"
-                                                          { AddStyleLine((yyvsp[-3].sVal), (yyvsp[-2].uVal)); free((yyvsp[-3].sVal)); }
-#line 1690 "winprefsyacc.c"
-    break;
-
-  case 53:
-#line 223 "winprefsyacc.y"
-                  {OpenStyles();}
-#line 1696 "winprefsyacc.c"
-    break;
-
-  case 54:
-#line 223 "winprefsyacc.y"
-                                                               {CloseStyles();}
-#line 1702 "winprefsyacc.c"
-    break;
-
-  case 55:
-#line 226 "winprefsyacc.y"
-        { (yyval.iVal)=AT_END; }
-#line 1708 "winprefsyacc.c"
-    break;
-
-  case 56:
-#line 227 "winprefsyacc.y"
-                  { (yyval.iVal)=AT_START; }
-#line 1714 "winprefsyacc.c"
-    break;
-
-  case 57:
-#line 228 "winprefsyacc.y"
-                { (yyval.iVal)=AT_END; }
-#line 1720 "winprefsyacc.c"
-    break;
-
-  case 58:
-#line 231 "winprefsyacc.y"
-                                                             { AddSysMenuLine((yyvsp[-4].sVal), (yyvsp[-3].sVal), (yyvsp[-2].iVal)); free((yyvsp[-4].sVal)); free((yyvsp[-3].sVal)); }
-#line 1726 "winprefsyacc.c"
-    break;
-
-  case 61:
-#line 238 "winprefsyacc.y"
-                                   {OpenSysMenu();}
-#line 1732 "winprefsyacc.c"
-    break;
-
-  case 62:
-#line 238 "winprefsyacc.y"
-                                                                                   {CloseSysMenu();}
-#line 1738 "winprefsyacc.c"
-    break;
-
-  case 63:
-#line 241 "winprefsyacc.y"
-                                  { pref.fForceExit = TRUE; }
-#line 1744 "winprefsyacc.c"
-    break;
-
-  case 64:
-#line 244 "winprefsyacc.y"
-                                   { pref.fSilentExit = TRUE; }
-#line 1750 "winprefsyacc.c"
-    break;
-
-  case 65:
-#line 247 "winprefsyacc.y"
-                                   { ErrorF("LoadPreferences: %s\n", (yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1756 "winprefsyacc.c"
-    break;
-
-
-#line 1760 "winprefsyacc.c"
+#line 1634 "winprefsyacc.c"
 
       default: break;
     }
@@ -1771,11 +1645,10 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
@@ -1799,49 +1672,13 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == YYEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
       yyerror (YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
-      {
-        char const *yymsgp = YY_("syntax error");
-        int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
-        if (yysyntax_error_status == 0)
-          yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
-          {
-            if (yymsg != yymsgbuf)
-              YYSTACK_FREE (yymsg);
-            yymsg = YY_CAST (char *, YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
-            if (!yymsg)
-              {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
-              }
-            else
-              {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
-              }
-          }
-        yyerror (yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
-      }
-# undef YYSYNTAX_ERROR
-#endif
     }
-
-
 
   if (yyerrstatus == 3)
     {
@@ -1891,13 +1728,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -1911,7 +1749,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1923,7 +1761,7 @@ yyerrlab1:
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -1945,20 +1783,20 @@ yyabortlab:
   goto yyreturn;
 
 
-#if !defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
   yyerror (YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
+  goto yyreturn;
 #endif
 
 
-/*-----------------------------------------------------.
-| yyreturn -- parsing is finished, return the result.  |
-`-----------------------------------------------------*/
+/*-------------------------------------------------------.
+| yyreturn -- parsing is finished, clean up and return.  |
+`-------------------------------------------------------*/
 yyreturn:
   if (yychar != YYEMPTY)
     {
@@ -1975,19 +1813,17 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[+*yyssp], yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
+
   return yyresult;
 }
+
 #line 251 "winprefsyacc.y"
 
 /*

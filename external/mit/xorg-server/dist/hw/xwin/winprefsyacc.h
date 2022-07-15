@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_YY_WINPREFSYACC_H_INCLUDED
 # define YY_YY_WINPREFSYACC_H_INCLUDED
@@ -44,43 +45,52 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    NEWLINE = 258,
-    MENU = 259,
-    LB = 260,
-    RB = 261,
-    ICONDIRECTORY = 262,
-    DEFAULTICON = 263,
-    ICONS = 264,
-    STYLES = 265,
-    TOPMOST = 266,
-    MAXIMIZE = 267,
-    MINIMIZE = 268,
-    BOTTOM = 269,
-    NOTITLE = 270,
-    OUTLINE = 271,
-    NOFRAME = 272,
-    DEFAULTSYSMENU = 273,
-    SYSMENU = 274,
-    ROOTMENU = 275,
-    SEPARATOR = 276,
-    ATSTART = 277,
-    ATEND = 278,
-    EXEC = 279,
-    ALWAYSONTOP = 280,
-    DEBUGOUTPUT = 281,
-    RELOAD = 282,
-    TRAYICON = 283,
-    FORCEEXIT = 284,
-    SILENTEXIT = 285,
-    STRING = 286
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    NEWLINE = 258,                 /* NEWLINE  */
+    MENU = 259,                    /* MENU  */
+    LB = 260,                      /* LB  */
+    RB = 261,                      /* RB  */
+    ICONDIRECTORY = 262,           /* ICONDIRECTORY  */
+    DEFAULTICON = 263,             /* DEFAULTICON  */
+    ICONS = 264,                   /* ICONS  */
+    STYLES = 265,                  /* STYLES  */
+    TOPMOST = 266,                 /* TOPMOST  */
+    MAXIMIZE = 267,                /* MAXIMIZE  */
+    MINIMIZE = 268,                /* MINIMIZE  */
+    BOTTOM = 269,                  /* BOTTOM  */
+    NOTITLE = 270,                 /* NOTITLE  */
+    OUTLINE = 271,                 /* OUTLINE  */
+    NOFRAME = 272,                 /* NOFRAME  */
+    DEFAULTSYSMENU = 273,          /* DEFAULTSYSMENU  */
+    SYSMENU = 274,                 /* SYSMENU  */
+    ROOTMENU = 275,                /* ROOTMENU  */
+    SEPARATOR = 276,               /* SEPARATOR  */
+    ATSTART = 277,                 /* ATSTART  */
+    ATEND = 278,                   /* ATEND  */
+    EXEC = 279,                    /* EXEC  */
+    ALWAYSONTOP = 280,             /* ALWAYSONTOP  */
+    DEBUGOUTPUT = 281,             /* "DEBUG"  */
+    RELOAD = 282,                  /* RELOAD  */
+    TRAYICON = 283,                /* TRAYICON  */
+    FORCEEXIT = 284,               /* FORCEEXIT  */
+    SILENTEXIT = 285,              /* SILENTEXIT  */
+    STRING = 286                   /* STRING  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define NEWLINE 258
 #define MENU 259
 #define LB 260
@@ -121,7 +131,7 @@ union YYSTYPE
   unsigned long uVal;
   int iVal;
 
-#line 125 "winprefsyacc.h"
+#line 135 "winprefsyacc.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
