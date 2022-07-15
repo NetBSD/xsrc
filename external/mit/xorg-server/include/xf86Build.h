@@ -1,2 +1,0 @@
-#define BUILD_DATE 20210823
-#define BUILD_TIME 232323

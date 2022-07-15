@@ -25,7 +25,7 @@
 #define BIGREQS 1
 
 /* Default font path */
-/* #define COMPILEDDEFAULTFONTPATH "/usr/X11R7/share/fonts/X11/misc,/usr/X11R7/share/fonts/X11/TTF,/usr/X11R7/share/fonts/X11/OTF,/usr/X11R7/share/fonts/X11/Type1,/usr/X11R7/share/fonts/X11/100dpi,/usr/X11R7/share/fonts/X11/75dpi,/usr/X11R7/share/fonts/X11/cyrillic,/usr/X11R7/lib/X11/fonts/misc,/usr/X11R7/lib/X11/fonts/TTF,/usr/X11R7/lib/X11/fonts/OTF,/usr/X11R7/lib/X11/fonts/Type1,/usr/X11R7/lib/X11/fonts/100dpi,/usr/X11R7/lib/X11/fonts/75dpi,/usr/X11R7/lib/X11/fonts/cyrillic" */
+/* #define COMPILEDDEFAULTFONTPATH "/usr/pkg/share/fonts/X11/misc/,/usr/pkg/share/fonts/X11/TTF/,/usr/pkg/share/fonts/X11/OTF/,/usr/pkg/share/fonts/X11/Type1/,/usr/pkg/share/fonts/X11/100dpi/,/usr/pkg/share/fonts/X11/75dpi/" */
 
 /* Support Composite Extension */
 #define COMPOSITE 1
@@ -46,7 +46,7 @@
 #define HAS_SHM 1
 
 /* Define to 1 if you have the `reallocarray' function. */
-/* #define HAVE_REALLOCARRAY 1 */
+#define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
@@ -75,8 +75,8 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
-#if 0
 /* Support Present extension */
+#if 0
 #define PRESENT 1
 #endif
 
@@ -140,7 +140,7 @@
 #define XORGSERVER 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((13) * 1000) + 0)
+#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 3)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -196,9 +196,9 @@
 /* System has wscons console */
 #define WSCONS_SUPPORT 1
 
-#if 0
 /* Loadable XFree86 server awesomeness */
-#define XFree86LOADER
+#if 0
+#define XFree86LOADER 1
 
 /* Use libpciaccess */
 #define XSERVER_LIBPCIACCESS 1
@@ -223,8 +223,8 @@
 /* Ask fontsproto to make font path element names const */
 #define FONT_PATH_ELEMENT_NAME_CONST    1
 
-#if 0
 /* byte order */
+#if 0
 #define X_BYTE_ORDER X_LITTLE_ENDIAN
 #endif
 

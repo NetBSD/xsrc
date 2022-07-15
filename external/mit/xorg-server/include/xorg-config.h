@@ -17,7 +17,7 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((13) * 1000) + 0)
+#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 3)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
@@ -44,7 +44,7 @@
 /* #define DEFAULT_MODULE_PATH "/usr/X11R7/lib/xorg/modules" */
 
 /* Path to installed libraries. */
-/* #define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib */
+/* #define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib" */
 
 /* Default log location */
 #define DEFAULT_LOGDIR "/var/log"
@@ -150,9 +150,6 @@
 
 /* Define to 1 if you have the `seteuid' function. */
 #define HAVE_SETEUID 1
-
-/* Support APM/ACPI power management in the server */
-/* #undef XF86PM */
 
 /* Fallback input driver if the assigned driver fails */
 #define FALLBACK_INPUT_DRIVER ""

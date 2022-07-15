@@ -8,19 +8,13 @@
 #define BIGREQS 1
 
 /* Builder address */
-/* #define BUILDERADDR "tech-x11@NetBSD.org" */
-
-/* Operating System Name */
-/* #define OSNAME "NetBSD-8.99.28-x86_64" */
-
-/* Operating System Vendor */
-/* #define OSVENDOR "The NetBSD Foundation" */
+#define BUILDERADDR "tech-x11@NetBSD.org"
 
 /* Builder string */
 #define BUILDERSTRING ""
 
 /* Default font path */
-/* #define COMPILEDDEFAULTFONTPATH "/usr/X11R7/share/fonts/X11/misc,/usr/X11R7/share/fonts/X11/TTF,/usr/X11R7/share/fonts/X11/OTF,/usr/X11R7/share/fonts/X11/Type1,/usr/X11R7/share/fonts/X11/100dpi,/usr/X11R7/share/fonts/X11/75dpi,/usr/X11R7/share/fonts/X11/cyrillic,/usr/X11R7/lib/X11/fonts/misc,/usr/X11R7/lib/X11/fonts/TTF,/usr/X11R7/lib/X11/fonts/OTF,/usr/X11R7/lib/X11/fonts/Type1,/usr/X11R7/lib/X11/fonts/100dpi,/usr/X11R7/lib/X11/fonts/75dpi,/usr/X11R7/lib/X11/fonts/cyrillic" */
+/* #define COMPILEDDEFAULTFONTPATH "/usr/pkg/share/fonts/X11/misc/,/usr/pkg/share/fonts/X11/TTF/,/usr/pkg/share/fonts/X11/OTF/,/usr/pkg/share/fonts/X11/Type1/,/usr/pkg/share/fonts/X11/100dpi/,/usr/pkg/share/fonts/X11/75dpi/" */
 
 /* Miscellaneous server configuration files path */
 #define SERVER_MISC_CONFIG_PATH "/usr/X11R7/lib/xorg"
@@ -151,7 +145,7 @@
 /* #undef HAVE_NDIR_H */
 
 /* Define to 1 if you have the `reallocarray' function. */
-/* #define HAVE_REALLOCARRAY 1 */
+#define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define HAVE_ARC4RANDOM_BUF 1
@@ -272,7 +266,9 @@
 #endif
 
 /* Overall prefix */
-/* #define PROJECTROOT "/usr/X11R7" */
+#if 0
+#define PROJECTROOT "/usr/X11R7"
+#endif
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -336,16 +332,16 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
-#if 0
 /* Support XFree86 Video Mode extension */
+#if 0
 #define XF86VIDMODE 1
 #endif
 
 /* Support XFixes extension */
 #define XFIXES 1
 
-#if 0
 /* Build XDGA support */
+#if 0
 #define XFreeXDGA 1
 #endif
 
@@ -353,7 +349,7 @@
 #define XINERAMA 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((13) * 1000) + 0)
+#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 3)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -472,7 +468,7 @@
 #define BUSFAULT 1
 
 /* Don't let Xdefs.h define 'pointer' */
-#define _XTYPEDEF_POINTER
+#define _XTYPEDEF_POINTER       1
 
 /* Don't let XIproto define 'Pointer' */
 #define _XITYPEDEF_POINTER      1
@@ -490,17 +486,22 @@
 #define GLAMOR_HAS_GBM_LINEAR 1
 
 /* GBM has modifiers support */
-/* #undef GBM_BO_WITH_MODIFIERS */
+#if 0
+#define GBM_BO_WITH_MODIFIERS 1
+#endif
 
-/* XXXMRG check this and query driver */
 /* Glamor can use eglQueryDmaBuf* functions */
-/* #undef GLAMOR_HAS_EGL_QUERY_DMABUF */
+#if 0
+#define GLAMOR_HAS_EGL_QUERY_DMABUF 1
+#endif
 
 /* Glamor can use EGL_MESA_query_driver functions */
-/* #undef GLAMOR_HAS_EGL_QUERY_DRIVER */
-
 #if 0
+#define GLAMOR_HAS_EGL_QUERY_DRIVER 1
+#endif
+
 /* byte order */
+#if 0
 #define X_BYTE_ORDER X_LITTLE_ENDIAN
 #endif
 
@@ -530,6 +531,12 @@
 
 /* Have epoll_create1() */
 /* #undef HAVE_EPOLL_CREATE1 */
+
+/* Have <sys/sysmacros.h> header */
+/* #undef HAVE_SYS_SYSMACROS_H */
+
+/* Have sigprocmask */
+#define HAVE_SIGPROCMASK 1
 
 /* Have isastream */
 /* #undef HAVE_ISASTREAM */
