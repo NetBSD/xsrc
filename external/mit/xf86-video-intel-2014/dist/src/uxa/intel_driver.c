@@ -623,6 +623,10 @@ static Bool I830PreInit(ScrnInfoPtr scrn, int flags)
 }
 
 #ifdef INTEL_PIXMAP_SHARING
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 25
+#define slave_dst secondary_dst
+#define master_pixmap primary_pixmap
+#endif
 static void
 redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 {

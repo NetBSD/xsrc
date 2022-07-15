@@ -146,7 +146,11 @@ static DisplayModePtr RADEONFPNativeMode(xf86OutputPtr output)
 	new             = xnfcalloc(1, sizeof (DisplayModeRec));
 	sprintf(stmp, "%dx%d", native_mode->PanelXRes, native_mode->PanelYRes);
 	new->name       = xnfalloc(strlen(stmp) + 1);
-	strcpy(new->name, stmp);
+	/*
+	 * XXX - expanded __UNCONST() version, new->name became const in
+	 * xorg-server 21.*
+	 */
+	strcpy((void *)(unsigned long)(const void *)new->name, stmp);
 	new->HDisplay   = native_mode->PanelXRes;
 	new->VDisplay   = native_mode->PanelYRes;
 

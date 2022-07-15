@@ -17662,6 +17662,10 @@ static bool sna_accel_do_expire(struct sna *sna)
 static void sna_accel_post_damage(struct sna *sna)
 {
 #if HAS_PIXMAP_SHARING
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 25
+#define slave_dst secondary_dst
+#define master_pixmap primary_pixmap
+#endif
 	ScreenPtr screen = to_screen_from_sna(sna);
 	PixmapDirtyUpdatePtr dirty;
 

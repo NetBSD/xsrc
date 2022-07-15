@@ -46,7 +46,11 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2)
 #include "xf86RamDac.h"
+#else
+#include "xf86Cursor.h"
+#endif
 
 #ifndef WSFB_H
 #define WSFB_H

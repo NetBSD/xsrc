@@ -38,7 +38,9 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FOURCC_XVMC (('C' << 24) + ('M' << 16) + ('V' << 8) + 'X')
 #define FOURCC_RGB565 ((16 << 24) + ('B' << 16) + ('G' << 8) + 'R')
 #define FOURCC_RGB888 ((24 << 24) + ('B' << 16) + ('G' << 8) + 'R')
+#ifndef FOURCC_NV12 /* xorg-server 21.x's fourcc.h uses raw number. */
 #define FOURCC_NV12 (('2' << 24) + ('1' << 16) + ('V' << 8) + 'N')
+#endif
 #define FOURCC_AYUV (('V' << 24) + ('U' << 16) + ('Y' << 8) + 'A')
 
 /*
@@ -72,6 +74,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 
 /* no standard define for this */
+#ifndef XVIMAGE_NV12 /* xorg-server 21.x's fourcc.h uses raw number. */
 #define XVIMAGE_NV12 { \
 	FOURCC_NV12, XvYUV, LSBFirst,				\
 	{'N','V','1','2', 0x00,0x00,0x00,0x10,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71}, \
@@ -79,6 +82,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	{'Y','U','V', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, \
 	XvTopToBottom \
 }
+#endif
 
 #define XVIMAGE_AYUV { \
 	FOURCC_AYUV, XvYUV, LSBFirst, \

@@ -190,6 +190,10 @@ radeon_master_screen(ScreenPtr screen)
     return screen;
 }
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 25
+#define slave_dst secondary_dst
+#define master_pixmap primary_pixmap
+#endif
 static inline ScreenPtr
 radeon_dirty_master(PixmapDirtyUpdatePtr dirty)
 {
