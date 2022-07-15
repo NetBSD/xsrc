@@ -254,6 +254,7 @@ typedef struct _DriverRec {
 #undef BUS_PCI
 #undef BUS_SBUS
 #undef BUS_PLATFORM
+#undef BUS_USB
 #undef BUS_last
 #endif
 
@@ -263,6 +264,7 @@ typedef enum {
     BUS_SBUS,
     BUS_ISA,
     BUS_PLATFORM,
+    BUS_USB,
     BUS_last                    /* Keep last */
 } BusType;
 
@@ -641,7 +643,6 @@ typedef struct _ScrnInfoRec {
     int videoRam;               /* amount of video ram (kb) */
     unsigned long memPhysBase;  /* Physical address of FB */
     unsigned long fbOffset;     /* Offset of FB in the above */
-    Bool flipPixels;            /* swap default black/white */
     void *options;
 
     /* Allow screens to be enabled/disabled individually */

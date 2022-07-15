@@ -130,8 +130,6 @@ extern _X_EXPORT int WriteToClient(ClientPtr /*who */ , int /*count */ ,
 
 extern _X_EXPORT void ResetOsBuffers(void);
 
-extern _X_EXPORT void InitConnectionLimits(void);
-
 extern _X_EXPORT void NotifyParentProcess(void);
 
 extern _X_EXPORT void CreateWellKnownSockets(void);
@@ -541,6 +539,13 @@ GenerateAuthorization(unsigned int /* name_length */ ,
 extern _X_EXPORT int
 ddxProcessArgument(int /*argc */ , char * /*argv */ [], int /*i */ );
 
+#define CHECK_FOR_REQUIRED_ARGUMENTS(num)  \
+    do if (((i + num) >= argc) || (!argv[i + num])) {                   \
+        UseMsg();                                                       \
+        FatalError("Required argument to %s not specified\n", argv[i]); \
+    } while (0)
+
+
 extern _X_EXPORT void
 ddxUseMsg(void);
 
@@ -565,8 +570,6 @@ enum ExitCode {
     EXIT_ERR_DRIVERS = 3,
 };
 
-extern _X_EXPORT void
-AbortDDX(enum ExitCode error);
 extern _X_EXPORT void
 ddxGiveUp(enum ExitCode error);
 extern _X_EXPORT void
@@ -730,6 +733,10 @@ extern _X_EXPORT int
 os_move_fd(int fd);
 
 #include <signal.h>
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+typedef _sigset_t sigset_t;
+#endif
 
 extern _X_EXPORT int
 xthread_sigmask(int how, const sigset_t *set, sigset_t *oldest);

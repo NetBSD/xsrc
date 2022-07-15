@@ -652,7 +652,7 @@ extern _X_EXPORT void
 extern _X_EXPORT RRCrtcPtr RRCrtcCreate(ScreenPtr pScreen, void *devPrivate);
 
 /*
- * Tests if findCrtc belongs to pScreen or slave screens
+ * Tests if findCrtc belongs to pScreen or secondary screens
  */
 extern _X_EXPORT Bool RRCrtcExists(ScreenPtr pScreen, RRCrtcPtr findCrtc);
 
@@ -1055,6 +1055,9 @@ RRProviderLookup(XID id, RRProviderPtr *provider_p);
 
 extern _X_EXPORT void
 RRDeliverProviderEvent(ClientPtr client, WindowPtr pWin, RRProviderPtr provider);
+
+extern _X_EXPORT void
+RRProviderAutoConfigGpuScreen(ScreenPtr pScreen, ScreenPtr primaryScreen);
 
 /* rrproviderproperty.c */
 

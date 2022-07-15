@@ -838,7 +838,7 @@ DoConfigure(void)
 
  bail:
     OsCleanup(TRUE);
-    AbortDDX(EXIT_ERR_CONFIGURE);
+    ddxGiveUp(EXIT_ERR_CONFIGURE);
     fflush(stderr);
     exit(0);
 }
@@ -891,7 +891,7 @@ DoShowOptions(void)
     }
  bail:
     OsCleanup(TRUE);
-    AbortDDX(EXIT_ERR_DRIVERS);
+    ddxGiveUp(EXIT_ERR_DRIVERS);
     fflush(stderr);
     exit(0);
 }
