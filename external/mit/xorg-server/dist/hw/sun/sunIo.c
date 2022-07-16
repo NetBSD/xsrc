@@ -155,11 +155,18 @@ sunEnqueueEvents(void)
     }
 }
 
-/*
- * DDX - specific abort routine.  Called by AbortServer().
- */
-static void
-AbortDDX(enum ExitCode error)
+#if INPUTTHREAD
+/** This function is called in Xserver/os/inputthread.c when starting
+    the input thread. */
+void
+ddxInputThreadInit(void)
+{
+}
+#endif
+
+/* Called by AbortServer(). */
+void
+ddxGiveUp(enum ExitCode error)
 {
     int		i;
     ScreenPtr	pScreen;
@@ -183,22 +190,6 @@ AbortDDX(enum ExitCode error)
 #endif
     }
     LogClose(error);
-}
-
-#if INPUTTHREAD
-/** This function is called in Xserver/os/inputthread.c when starting
-    the input thread. */
-void
-ddxInputThreadInit(void)
-{
-}
-#endif
-
-/* Called by GiveUp(). */
-void
-ddxGiveUp(enum ExitCode error)
-{
-    AbortDDX(error);
 }
 
 int

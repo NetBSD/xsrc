@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.11 2022/07/15 19:10:11 mrg Exp $ */
+/* $NetBSD: x68kInit.c,v 1.12 2022/07/16 00:02:18 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -182,14 +182,14 @@ CloseInput(void)
 }
 
 /*-------------------------------------------------------------------------
- * function "AbortDDX"                                 [ called by OS ]
+ * function "ddxGiveUp"                                 [ called by DIX ]
  *
  *  purpose:  free signal handler and close frame buffers
  *  argument: ExitCode
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
-static void
-AbortDDX(enum ExitCode error)
+void
+ddxGiveUp(enum ExitCode error)
 {
     int i;
     X68kScreenRec *screen;
@@ -205,19 +205,6 @@ AbortDDX(enum ExitCode error)
         (*fb->close)(screen);
     }
     LogClose(error);
-}
-
-/*-------------------------------------------------------------------------
- * function "ddxGiveUp"                                 [ called by DIX ]
- *
- *  purpose:  do nothing but call AbortDDX.
- *  argument: nothing
- *  returns:  nothing
- *-----------------------------------------------------------------------*/
-void
-ddxGiveUp(enum ExitCode error)
-{
-    AbortDDX(error);
 }
 
 /*-------------------------------------------------------------------------
