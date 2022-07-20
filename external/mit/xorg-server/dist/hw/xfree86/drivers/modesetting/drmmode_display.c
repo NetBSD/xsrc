@@ -3921,11 +3921,11 @@ drmmode_crtc_upgrade_lut(xf86CrtcPtr crtc, int num)
             crtc->gamma_blue = gamma + size * 2;
 
             xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, MS_LOGLEVEL_DEBUG,
-                           "Gamma ramp set to %ld entries on CRTC %d\n",
+                           "Gamma ramp set to %" PRIu64 " entries on CRTC %d\n",
                            size, num);
         } else {
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                       "Failed to allocate memory for %ld gamma ramp entries "
+                       "Failed to allocate memory for %" PRIu64 " gamma ramp entries "
                        "on CRTC %d.\n",
                        size, num);
             return FALSE;
