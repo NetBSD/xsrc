@@ -1933,6 +1933,8 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 
 	Mode = xf86CVTMode(pNv->fpWidth, pNv->fpHeight, 60.00, TRUE, FALSE);
 	Mode->type = M_T_DRIVER;
+	xf86SetModeDefaultName(Mode);
+
 	pScrn->monitor->Modes = NVModesAdd(pScrn->monitor->Modes, Mode);
 
 	if (!config_mon_rates) {
