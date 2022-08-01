@@ -91,6 +91,7 @@ RADEONTVModes(xf86OutputPtr output)
 
     /* just a place holder */
     new = xf86CVTMode(800, 600, 60.00, FALSE, FALSE);
+    xf86SetModeDefaultName(new);
     new->type = M_T_DRIVER | M_T_PREFERRED;
 
     return new;
@@ -109,6 +110,7 @@ RADEONATOMTVModes(xf86OutputPtr output)
 
     for (i = 0; i < 5; i++) {
 	new = xf86CVTMode(widths[i], heights[i], 60.0, FALSE, FALSE);
+	xf86SetModeDefaultName(new);
 
 	new->type       = M_T_DRIVER;
 
@@ -180,6 +182,7 @@ static DisplayModePtr RADEONFPNativeMode(xf86OutputPtr output)
 
 	if (new) {
 	    new->type       = M_T_DRIVER | M_T_PREFERRED;
+	    xf86SetModeDefaultName(new);
 
 	    new->next       = NULL;
 	    new->prev       = NULL;
@@ -295,6 +298,7 @@ static void RADEONAddScreenModes(xf86OutputPtr output, DisplayModePtr *modeList)
 	}
 
 	new = xf86CVTMode(width, height, 60.0, FALSE, FALSE);
+	xf86SetModeDefaultName(new);
 
 	new->type      |= M_T_USERDEF;
 
@@ -463,6 +467,7 @@ radeon_add_common_modes(xf86OutputPtr output, DisplayModePtr modes)
 	}
 
 	new = xf86CVTMode(widths[i], heights[i], 60.0, FALSE, FALSE);
+	xf86SetModeDefaultName(new);
 
 	new->type       = M_T_DRIVER;
 
