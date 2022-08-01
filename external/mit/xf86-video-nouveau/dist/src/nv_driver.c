@@ -1227,10 +1227,13 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	nouveau_setup_capabilities(pScrn);
 
 	if (!pScrn->modes) {
-		pScrn->modes = xf86ModesAdd(pScrn->modes,
-			xf86CVTMode(pScrn->display->virtualX,
+		DisplayModePtr m;
+
+		m = xf86CVTMode(pScrn->display->virtualX,
 				    pScrn->display->virtualY,
-				    60, 0, 0));
+				    60, 0, 0);
+		xf86SetModeDefaultName(m);
+		pScrn->modes = xf86ModesAdd(pScrn->modes, m);
 	}
 
 	/* Set the current mode to the first in the list */

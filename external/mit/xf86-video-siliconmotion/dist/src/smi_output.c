@@ -142,10 +142,13 @@ DisplayModePtr
 SMI_OutputGetModes_native(xf86OutputPtr output)
 {
     SMIPtr pSmi = SMIPTR(output->scrn);
+    DisplayModePtr m;
     ENTER();
 
 #ifdef HAVE_XMODES
-    LEAVE(xf86CVTMode(pSmi->lcdWidth, pSmi->lcdHeight, 60.0f, FALSE, FALSE));
+    m = xf86CVTMode(pSmi->lcdWidth, pSmi->lcdHeight, 60.0f, FALSE, FALSE);
+    xf86SetModeDefaultName(m);
+    LEAVE(m);
 #else
     LEAVE(NULL);
 #endif

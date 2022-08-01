@@ -948,6 +948,7 @@ SavageAddPanelMode(ScrnInfoPtr pScrn)
 
     Mode = xf86CVTMode(psav->PanelX, psav->PanelY, 60.00, TRUE, FALSE);
     Mode->type = M_T_DRIVER | M_T_PREFERRED;
+    xf86SetModeDefaultName(Mode);
     pScrn->monitor->Modes = SavageModesAdd(pScrn->monitor->Modes, Mode);
 
     if ((pScrn->monitor->nHsync == 0) && 
@@ -1042,6 +1043,7 @@ static void SavageGetPanelInfo(ScrnInfoPtr pScrn)
 	    DisplayModePtr native = xf86CVTMode(panelX, panelY, 60.0, 0, 0);
 	    if (!native)
 		break;
+	    xf86SetModeDefaultName(native);
 
 	    if (!pScrn->monitor->nHsync) {
 		pScrn->monitor->nHsync = 1;

@@ -1359,6 +1359,7 @@ via_lvds_get_modes(xf86OutputPtr output)
                 } else {
                     pDisplay_Mode = xf86CVTMode(pPanel->NativeWidth, pPanel->NativeHeight,
                                     60.0f, FALSE, FALSE);
+                    xf86SetModeDefaultName(pDisplay_Mode);
                 }
 
                 if (pDisplay_Mode) {
