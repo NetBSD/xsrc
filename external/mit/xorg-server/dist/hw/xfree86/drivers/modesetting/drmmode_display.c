@@ -1736,16 +1736,23 @@ drmmode_show_cursor(xf86CrtcPtr crtc)
 }
 
 static void
-drmmode_set_gamma_lut(drmmode_crtc_private_ptr drmmode_crtc,
+drmmode_set_gamma_lut(xf86CrtcPtr crtc,
                       uint16_t * red, uint16_t * green, uint16_t * blue,
                       int size)
 {
+    drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
     drmmode_ptr drmmode = drmmode_crtc->drmmode;
     drmmode_prop_info_ptr gamma_lut_info =
         &drmmode_crtc->props[DRMMODE_CRTC_GAMMA_LUT];
     const uint32_t crtc_id = drmmode_crtc->mode_crtc->crtc_id;
     uint32_t blob_id;
-    struct drm_color_lut lut[size];
+    struct drm_color_lut *lut = malloc(sizeof(*lut) * size);
+
+    if (lut == NULL) {
+        xf86DrvMsg(crtc->scrn->scrnIndex, X_ERROR,
+                   "Failed to allocate memory for %d LUT entries.\n", size);
+	return;
+    }
 
     assert(gamma_lut_info->prop_id != 0);
 
@@ -1755,13 +1762,14 @@ drmmode_set_gamma_lut(drmmode_crtc_private_ptr drmmode_crtc,
         lut[i].blue = blue[i];
     }
 
-    if (drmModeCreatePropertyBlob(drmmode->fd, lut, sizeof(lut), &blob_id))
-        return;
+    if (!drmModeCreatePropertyBlob(drmmode->fd, lut, sizeof(lut), &blob_id)) {
 
-    drmModeObjectSetProperty(drmmode->fd, crtc_id, DRM_MODE_OBJECT_CRTC,
-                             gamma_lut_info->prop_id, blob_id);
+        drmModeObjectSetProperty(drmmode->fd, crtc_id, DRM_MODE_OBJECT_CRTC,
+                                 gamma_lut_info->prop_id, blob_id);
 
-    drmModeDestroyPropertyBlob(drmmode->fd, blob_id);
+        drmModeDestroyPropertyBlob(drmmode->fd, blob_id);
+    }
+    free(lut);
 }
 
 static void
@@ -1772,7 +1780,7 @@ drmmode_crtc_gamma_set(xf86CrtcPtr crtc, uint16_t * red, uint16_t * green,
     drmmode_ptr drmmode = drmmode_crtc->drmmode;
 
     if (drmmode_crtc->use_gamma_lut) {
-        drmmode_set_gamma_lut(drmmode_crtc, red, green, blue, size);
+        drmmode_set_gamma_lut(crtc, red, green, blue, size);
     } else {
         drmModeCrtcSetGamma(drmmode->fd, drmmode_crtc->mode_crtc->crtc_id,
                             size, red, green, blue);
