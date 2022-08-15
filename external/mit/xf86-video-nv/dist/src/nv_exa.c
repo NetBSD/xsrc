@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: nv_exa.c,v 1.6 2021/08/22 23:11:58 macallan Exp $ */
+/* $NetBSD: nv_exa.c,v 1.7 2022/08/15 09:44:19 macallan Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -151,10 +151,13 @@ NvPrepareSolid(
 	/* 
 	 * XXX
 	 * on my 6800 Ultra the drawing engine stalls when drawing at least
-	 * rectangles into off-screen memory. Draw them by software until I
-	 * figure out what's going on
+	 * some rectangles into off-screen memory. Draw them by software until
+	 * I figure out what's going on
 	 */
-	if (off != 0) return FALSE;
+	if (pNv->Architecture >= NV_ARCH_40) {	
+		if (off != 0) return FALSE;
+	}
+
 	NVSetRopSolid(pScrn, rop, planemask);
 
 	pitch = exaGetPixmapPitch(pPixmap);
