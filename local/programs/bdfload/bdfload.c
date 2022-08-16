@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.5 2022/08/16 21:28:53 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.6 2022/08/16 21:32:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -213,8 +213,8 @@ interpret(FILE *foo)
 					l = l << 8;
 				l = l >> left;
 				if (stride == 1) {
-					*gptr = l;
-					gptr++;
+					*bptr = l;
+					bptr++;
 				} else {
 					*bptr16 = htobe16(l);
 					bptr16++;
