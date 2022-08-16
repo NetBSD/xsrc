@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.6 2022/08/16 21:32:21 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.7 2022/08/16 21:52:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -112,8 +112,8 @@ dump_line(char *gptr, int stride)
 			putchar((c & msk) != 0 ? '#' : ' ');
 			msk = msk >> 1;
 		}
-		printf("\n");
 	}
+	printf("\n");
 }
  
 void
