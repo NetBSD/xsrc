@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.3 2022/06/08 19:19:42 uwe Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.4 2022/08/16 20:27:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -97,6 +97,7 @@ const char * const encname[] = {
 
 const char *ofile = NULL;
 int encoding = -1;
+int verbose = 0;
 
 
 void
@@ -130,28 +131,29 @@ interpret(FILE *foo)
 			/* cut off quotation marks */
 			strncpy(name, arg + 1, 64);
 			name[strlen(name) - 1] = 0;
-			printf("name: %s\n", name);
+			if (verbose) printf("name: %s\n", name);
 		} else if (strcmp(line, "FONTBOUNDINGBOX") == 0) {
 			int res;
 			res = sscanf(arg, "%d %d %d %d",
 					  &width, &height, &x, &y);
 			stride = (width + 7) >> 3;
-			printf("box %d x %d\n", width, height);
+			if (verbose) printf("box %d x %d\n", width, height);
 			if (stride > 2) {
-				printf("no fonts wider than 16 work for now\n");
-				exit(1);
+				err(EXIT_FAILURE,
+				    "no fonts wider than 16 work for now\n");
 			}
 			charsize = height * stride;
 			buflen = 256 * charsize;
 			buffer = calloc(1, buflen);
 			if (buffer == NULL) {
-				printf("failed to allocate %dKB for glyphs\n",
+				err(EXIT_FAILURE, 
+				    "failed to allocate %dKB for glyphs\n",
 				    buflen);
-				exit(1);
 			}
 		} else if (strcmp(line, "CHARS") == 0) {
 			if (sscanf(arg, "%d", &num) == 1)
-				printf("number of characters: %d\n", num);
+				if (verbose) 
+				    printf("number of characters: %d\n", num);
 		} else if (strcmp(line, "STARTCHAR") == 0) {
 			in_char = 1;
 		} else if (strcmp(line, "ENDCHAR") == 0) {
@@ -202,9 +204,11 @@ interpret(FILE *foo)
 			}
 		}
 	}
-	printf("range %d to %d\n", first, last);
-	printf("encoding: %s\n", encname[encoding]);
-	printf("actual box: %d %d %d %d\n", bl, bt, br, bb);
+	if (verbose) {
+		printf("range %d to %d\n", first, last);
+		printf("encoding: %s\n", encname[encoding]);
+		printf("actual box: %d %d %d %d\n", bl, bt, br, bb);
+	}
 
 	/* now stuff it into a something wsfont understands */
 	f.fontwidth = width /*(width + 3) & ~3*/;
@@ -266,7 +270,7 @@ interpret(FILE *foo)
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-e encoding] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "usage: bdfload [-v] [-e encoding] [-o ofile.wsf] font.bdf\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -277,7 +281,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:v")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -292,6 +296,10 @@ main(int argc, char *argv[])
 			if (ofile != NULL)
 				usage();
 			ofile = optarg;
+			break;
+
+		case 'v':
+			verbose = 1;
 			break;
 
 		case '?':	/* FALLTHROUGH */
