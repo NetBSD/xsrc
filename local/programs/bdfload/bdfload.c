@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.4 2022/08/16 20:27:33 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.5 2022/08/16 21:28:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -98,8 +98,24 @@ const char * const encname[] = {
 const char *ofile = NULL;
 int encoding = -1;
 int verbose = 0;
+int dump = 0;
 
+void
+dump_line(char *gptr, int stride)
+{
+	int i, j, msk, c;
 
+	for (i = 0; i < stride; i++) {
+		c = gptr[i];
+		msk = 0x80;
+		for (j = 0; j < 8; j++) {
+			putchar((c & msk) != 0 ? '#' : ' ');
+			msk = msk >> 1;
+		}
+		printf("\n");
+	}
+}
+ 
 void
 interpret(FILE *foo)
 {
@@ -164,6 +180,7 @@ interpret(FILE *foo)
 				if (current >= 0 && current < 256) {
 					if (current < first) first = current;
 					if (current > last) last = current;
+					if (dump) printf("glyph %d\n", current);
 				}
 			}
 		} else if (strcmp(line, "BBX") == 0) {
@@ -177,6 +194,7 @@ interpret(FILE *foo)
 				if (top < bt) bt = top;
 				if ((left + cwi) > br) br = left + cwi;
 				if ((top + che) > bb) bb = top + che;
+				if(dump && verbose) printf("top %d left %d\n", top, left);
 			}
 		} else if (strcmp(line, "BITMAP") == 0) {
 			int i, j, k, l;
@@ -200,6 +218,13 @@ interpret(FILE *foo)
 				} else {
 					*bptr16 = htobe16(l);
 					bptr16++;
+				}
+			}
+			if (dump) {
+				gptr = &buffer[charsize * current];
+				for (i = 0; i < height; i++) {
+					dump_line(gptr, stride);
+					gptr += stride;
 				}
 			}
 		}
@@ -270,7 +295,7 @@ interpret(FILE *foo)
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-v] [-e encoding] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "usage: bdfload [-vd] [-e encoding] [-o ofile.wsf] font.bdf\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -281,7 +306,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:v")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:vd")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -300,6 +325,10 @@ main(int argc, char *argv[])
 
 		case 'v':
 			verbose = 1;
+			break;
+
+		case 'd':
+			dump = 1;
 			break;
 
 		case '?':	/* FALLTHROUGH */
