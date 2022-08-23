@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.9 2022/08/23 18:11:43 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.10 2022/08/23 18:28:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -100,6 +100,8 @@ int encoding = -1;
 int verbose = 0;
 int dump = 0;
 int header = 0;
+char commentbuf[2048] = "";
+int commentptr = 0;
 
 void
 dump_line(char *gptr, int stride)
@@ -172,6 +174,12 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 		fprintf(stderr, "Can't open output file %s\n", filename);
 		return -1;
 	}
+	if (commentptr > 0) {
+		fprintf(output, "/*\n");
+		fputs(commentbuf, output);
+		fprintf(output, "*/\n\n");
+	}
+
 	fprintf(output, "static u_char %s_data[];\n", fontname);
 	fprintf(output, "\n");
 	fprintf(output, "static struct wsdisplay_font %s = {\n", fontname);
@@ -246,6 +254,10 @@ interpret(FILE *foo)
 			strncpy(name, arg + 1, 64);
 			name[strlen(name) - 1] = 0;
 			if (verbose) printf("name: %s\n", name);
+		} else if (strcmp(line, "COMMENT") == 0) {
+			commentptr += snprintf(&commentbuf[commentptr],
+					      2048 - commentptr,
+					      "%s\n", arg);
 		} else if (strcmp(line, "FONTBOUNDINGBOX") == 0) {
 			int res;
 			res = sscanf(arg, "%d %d %d %d",
