@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.10 2022/08/23 18:28:14 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.11 2022/08/23 19:09:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -160,7 +160,7 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
              char *buffer, int buflen)
 {
 	FILE *output;
-	int i, j, x, y, idx;
+	int i, j, x, y, idx, pxls, left;
 	char fontname[64], c, msk;
 	
 	/* now output as a header file */
@@ -203,14 +203,17 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 				fprintf(output, "0x%02x, ",buffer[idx + x]);
 			}
 			fprintf(output, "/* ");
+			pxls = f->fontwidth;
 			for (x = 0; x < f->stride; x++) {
 				c = buffer[idx + x];
 				msk = 0x80;
-				for (j = 0; j < 8; j++) {
+				left = pxls > 8 ? 8 : pxls;
+				for (j = 0; j < left; j++) {
 					fprintf(output, "%s",
 					    (c & msk) != 0 ? "[]" : ". ");
 					msk = msk >> 1;
 				}
+				pxls -= 8;
 			}
 			fprintf(output, " */\n");
 
