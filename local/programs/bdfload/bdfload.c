@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.8 2022/08/23 13:56:04 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.9 2022/08/23 18:11:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -199,8 +199,8 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 				c = buffer[idx + x];
 				msk = 0x80;
 				for (j = 0; j < 8; j++) {
-					fprintf(output, "%c",
-					    (c & msk) != 0 ? '#' : ' ');
+					fprintf(output, "%s",
+					    (c & msk) != 0 ? "[]" : ". ");
 					msk = msk >> 1;
 				}
 			}
