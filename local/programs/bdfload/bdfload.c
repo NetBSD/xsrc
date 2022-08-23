@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.7 2022/08/16 21:52:00 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.8 2022/08/23 13:56:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -99,6 +99,7 @@ const char *ofile = NULL;
 int encoding = -1;
 int verbose = 0;
 int dump = 0;
+int header = 0;
 
 void
 dump_line(char *gptr, int stride)
@@ -116,6 +117,103 @@ dump_line(char *gptr, int stride)
 	printf("\n");
 }
  
+void
+write_wsf(const char *oname, struct wsdisplay_font *f, char *buffer, int buflen)
+{
+	struct wsfthdr h;
+
+	memset(&h, 0, sizeof(h));
+	strncpy(h.magic, "WSFT", sizeof(h.magic));
+	strncpy(h.name, f->name, sizeof(h.name));
+	h.firstchar = htole32(f->firstchar);
+	h.numchars = htole32(f->numchars);
+	h.encoding = htole32(f->encoding);
+	h.fontwidth = htole32(f->fontwidth);
+	h.fontheight = htole32(f->fontheight);
+	h.stride = htole32(f->stride);
+	h.bitorder = htole32(f->bitorder);
+	h.byteorder = htole32(f->byteorder);
+
+	int wsfd = open(ofile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (wsfd < 0)
+		err(EXIT_FAILURE, "%s", ofile);
+
+	ssize_t nwritten;
+	nwritten = write(wsfd, &h, sizeof(h));
+	if (nwritten < 0)
+		err(EXIT_FAILURE, "%s", ofile);
+	if (nwritten != sizeof(h))
+		errx(EXIT_FAILURE, "%s: partial write", ofile);
+
+	nwritten = write(wsfd, buffer, buflen);
+	if (nwritten < 0)
+		err(EXIT_FAILURE, "%s", ofile);
+	if (nwritten != buflen)
+		errx(EXIT_FAILURE, "%s: partial write", ofile);
+	close(wsfd);
+}
+
+int
+write_header(const char *filename, struct wsdisplay_font *f, char *name, 
+             char *buffer, int buflen)
+{
+	FILE *output;
+	int i, j, x, y, idx;
+	char fontname[64], c, msk;
+	
+	/* now output as a header file */
+	snprintf(fontname, sizeof(fontname), "%s_%dx%d", name, 
+	    f->fontwidth, f->fontheight);
+	for (i = 0; i < strlen(fontname); i++) {
+		if (isblank((int)fontname[i]))
+			fontname[i]='_';
+	}
+	if ((output = fopen(filename, "w")) == NULL) {
+		fprintf(stderr, "Can't open output file %s\n", filename);
+		return -1;
+	}
+	fprintf(output, "static u_char %s_data[];\n", fontname);
+	fprintf(output, "\n");
+	fprintf(output, "static struct wsdisplay_font %s = {\n", fontname);
+	fprintf(output, "\t\"%s\",\t\t\t/* typeface name */\n", name);
+	fprintf(output, "\t%d,\t\t\t\t/* firstchar */\n", f->firstchar);
+	fprintf(output, "\t%d,\t\t\t\t/* numchars */\n", f->numchars);
+	fprintf(output, "\t%d,\t\t\t\t/* encoding */\n", f->encoding);
+	fprintf(output, "\t%d,\t\t\t\t/* fontwidth */\n", f->fontwidth);
+	fprintf(output, "\t%d,\t\t\t\t/* fontheight */\n", f->fontheight);
+	fprintf(output, "\t%d,\t\t\t\t/* stride */\n", f->stride);
+	fprintf(output, "\tWSDISPLAY_FONTORDER_L2R,\t/* bit order */\n");
+	fprintf(output, "\tWSDISPLAY_FONTORDER_L2R,\t/* byte order */\n");
+	fprintf(output, "\t%s_data\t\t/* data */\n", fontname);
+	fprintf(output, "};\n\n");
+	fprintf(output, "static u_char %s_data[] = {\n", fontname);
+	for (i = f->firstchar; i < f->firstchar + f->numchars; i++) {
+		fprintf(output, "\t/* %d */\n", i);
+		idx = i * f->stride * f->fontheight;
+		for (y = 0; y < f->fontheight; y++) {
+			for (x = 0; x < f->stride; x++) {
+				fprintf(output, "0x%02x, ",buffer[idx + x]);
+			}
+			fprintf(output, "/* ");
+			for (x = 0; x < f->stride; x++) {
+				c = buffer[idx + x];
+				msk = 0x80;
+				for (j = 0; j < 8; j++) {
+					fprintf(output, "%c",
+					    (c & msk) != 0 ? '#' : ' ');
+					msk = msk >> 1;
+				}
+			}
+			fprintf(output, " */\n");
+
+			idx += f->stride;
+		}
+	}
+	fprintf(output, "};\n");
+	fclose(output);
+	return 0;
+}
+
 void
 interpret(FILE *foo)
 {
@@ -257,45 +355,17 @@ interpret(FILE *foo)
 		close(fdev);
 	}
 	else {
-		struct wsfthdr h;
-
-		memset(&h, 0, sizeof(h));
-		strncpy(h.magic, "WSFT", sizeof(h.magic));
-		strncpy(h.name, f.name, sizeof(h.name));
-		h.firstchar = htole32(f.firstchar);
-		h.numchars = htole32(f.numchars);
-		h.encoding = htole32(f.encoding);
-		h.fontwidth = htole32(f.fontwidth);
-		h.fontheight = htole32(f.fontheight);
-		h.stride = htole32(f.stride);
-		h.bitorder = htole32(f.bitorder);
-		h.byteorder = htole32(f.byteorder);
-
-		int wsfd = open(ofile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		if (wsfd < 0)
-			err(EXIT_FAILURE, "%s", ofile);
-
-		ssize_t nwritten;
-		nwritten = write(wsfd, &h, sizeof(h));
-		if (nwritten < 0)
-			err(EXIT_FAILURE, "%s", ofile);
-		if (nwritten != sizeof(h))
-			errx(EXIT_FAILURE, "%s: partial write", ofile);
-
-		nwritten = write(wsfd, buffer, buflen);
-		if (nwritten < 0)
-			err(EXIT_FAILURE, "%s", ofile);
-		if (nwritten != buflen)
-			errx(EXIT_FAILURE, "%s: partial write", ofile);
-		close(wsfd);
+		if (header == 0) {
+			write_wsf(ofile, &f, buffer, buflen);
+		} else
+			write_header(ofile, &f, name, buffer, buflen);
 	}
 }
-
 
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-vd] [-e encoding] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "usage: bdfload [-vdh] [-e encoding] [-o ofile.wsf] font.bdf\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -306,7 +376,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:vd")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:vdh")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -329,6 +399,10 @@ main(int argc, char *argv[])
 
 		case 'd':
 			dump = 1;
+			break;
+
+		case 'h':
+			header = 1;
 			break;
 
 		case '?':	/* FALLTHROUGH */
