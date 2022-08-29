@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.11 2022/08/23 19:09:15 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.12 2022/08/29 14:54:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -102,6 +102,7 @@ int dump = 0;
 int header = 0;
 char commentbuf[2048] = "";
 int commentptr = 0;
+char fontname[64] = "";
 
 void
 dump_line(char *gptr, int stride)
@@ -156,7 +157,7 @@ write_wsf(const char *oname, struct wsdisplay_font *f, char *buffer, int buflen)
 }
 
 int
-write_header(const char *filename, struct wsdisplay_font *f, char *name, 
+write_header(const char *filename, struct wsdisplay_font *f, 
              char *buffer, int buflen)
 {
 	FILE *output;
@@ -164,7 +165,7 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 	char fontname[64], c, msk;
 	
 	/* now output as a header file */
-	snprintf(fontname, sizeof(fontname), "%s_%dx%d", name, 
+	snprintf(fontname, sizeof(fontname), "%s_%dx%d", f->name, 
 	    f->fontwidth, f->fontheight);
 	for (i = 0; i < strlen(fontname); i++) {
 		if (isblank((int)fontname[i]))
@@ -183,7 +184,7 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 	fprintf(output, "static u_char %s_data[];\n", fontname);
 	fprintf(output, "\n");
 	fprintf(output, "static struct wsdisplay_font %s = {\n", fontname);
-	fprintf(output, "\t\"%s\",\t\t\t/* typeface name */\n", name);
+	fprintf(output, "\t\"%s\",\t\t\t/* typeface name */\n", f->name);
 	fprintf(output, "\t%d,\t\t\t\t/* firstchar */\n", f->firstchar);
 	fprintf(output, "\t%d,\t\t\t\t/* numchars */\n", f->numchars);
 	fprintf(output, "\t%d,\t\t\t\t/* encoding */\n", f->encoding);
@@ -228,7 +229,7 @@ write_header(const char *filename, struct wsdisplay_font *f, char *name,
 void
 interpret(FILE *foo)
 {
-	char line[128], *arg, name[64] = "foop", *buffer;
+	char line[128], *arg, name[64] = "foo", *buffer;
 	int buflen = -1;
 	int len, in_char = 0, current = -1, stride = 0, charsize = 0;
 	int width, height, x, y, num;
@@ -355,7 +356,9 @@ interpret(FILE *foo)
 	f.numchars = last - first + 1;
 	f.stride = stride;
 	f.encoding = encoding;
-	f.name = name;
+	if (fontname[0] == 0) {
+		f.name = name;
+	} else f.name = fontname;
 	f.bitorder = WSDISPLAY_FONTORDER_L2R;
 	f.byteorder = WSDISPLAY_FONTORDER_L2R;
 	f.data = &buffer[first * charsize];
@@ -373,14 +376,14 @@ interpret(FILE *foo)
 		if (header == 0) {
 			write_wsf(ofile, &f, buffer, buflen);
 		} else
-			write_header(ofile, &f, name, buffer, buflen);
+			write_header(ofile, &f, buffer, buflen);
 	}
 }
 
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-vdh] [-e encoding] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "usage: bdfload [-vdh] [-e encoding] [-N name] [-o ofile.wsf] font.bdf\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -391,7 +394,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:vdh")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:N:vdh")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -419,7 +422,10 @@ main(int argc, char *argv[])
 		case 'h':
 			header = 1;
 			break;
-
+		case 'N':
+			strncpy(fontname, optarg, 64);
+			printf("given name: %s\n", fontname);
+			break;
 		case '?':	/* FALLTHROUGH */
 		default:
 			usage();
