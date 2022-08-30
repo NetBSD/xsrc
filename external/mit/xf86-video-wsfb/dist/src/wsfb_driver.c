@@ -931,6 +931,16 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	case 4:
 	case 8:
 		len = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
+#ifdef HAVE_SHADOW_AFB
+		if (fPtr->planarAfb) {
+			/*
+			 * stride is "bytes per line" for each plane so
+			 * we need a number of planes to mmap in planar case.
+			 */
+			len *= fPtr->fbi.fbi_bitsperpixel;
+		}
+#endif
+
 		break;
 	case 15:
 	case 16:
