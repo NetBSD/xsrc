@@ -568,17 +568,31 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 #if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_LUNA)
 	if (wstype == WSDISPLAY_TYPE_LUNA) {
 		/*
-		 * XXX
 		 * LUNA's color framebuffers support 4bpp or 8bpp
 		 * but they have multiple 1bpp VRAM planes like ancient VGA.
-		 * For now, Xorg server supports only the first one plane
-		 * as 1bpp monochrome server.
-		 *
-		 * Note OpenBSD/luna88k workarounds this by switching depth
-		 * and palette settings by WSDISPLAYIO_SETGFXMODE ioctl.
 		 */
-		default_depth = 1;
-		bitsperpixel = 1;
+#ifdef HAVE_SHADOW_AFB
+		if (bitsperpixel == 8) {
+			/*
+			 * For 8bpp one, we can use the bitplane ops with
+			 * shadow update proc as amiga.
+			 */
+			fPtr->planarAfb = TRUE;
+		} else
+#endif
+		{
+			/*
+			 * For 4bpp one (or there is no planar support),
+			 * just use only the first one plane
+			 * as 1bpp monochrome server.
+			 *
+			 * Note OpenBSD/luna88k workarounds this by
+			 * switching depth and palette settings by
+			 * WSDISPLAYIO_SETGFXMODE ioctl.
+			 */
+			default_depth = 1;
+			bitsperpixel = 1;
+		}
 	}
 #endif
 #ifdef WSDISPLAY_TYPE_AMIGACC
@@ -1187,7 +1201,11 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 #if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_LUNA)
 	if (wstype == WSDISPLAY_TYPE_LUNA) {
 		ncolors = fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries;
-		if (ncolors > 0) {
+		if (ncolors > 0
+#ifdef HAVE_SHADOW_AFB
+		    && !fPtr->planarAfb
+#endif
+		) {
 			/*
 			 * Override palette to use 4bpp/8bpp framebuffers as
 			 * monochrome server by using only the first plane.
