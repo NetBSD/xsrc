@@ -121,8 +121,10 @@ static Bool WsfbScreenInit(SCREEN_INIT_ARGS_DECL);
 static Bool WsfbCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static void *WsfbWindowLinear(ScreenPtr, CARD32, CARD32, int, CARD32 *,
 			      void *);
+#ifdef HAVE_SHADOW_AFB
 static void *WsfbWindowAfb(ScreenPtr, CARD32, CARD32, int, CARD32 *,
 			      void *);
+#endif
 static void WsfbPointerMoved(SCRN_ARG_TYPE, int, int);
 static Bool WsfbEnterVT(VT_FUNC_ARGS_DECL);
 static void WsfbLeaveVT(VT_FUNC_ARGS_DECL);
@@ -213,7 +215,7 @@ static const char *shadowSymbols[] = {
 	"shadowUpdatePackedWeak",
 	"shadowUpdateRotatePacked",
 	"shadowUpdateRotatePackedWeak",
-#if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
+#ifdef HAVE_SHADOW_AFB
 	"shadowUpdateAfb8",
 #endif
 	NULL
@@ -581,7 +583,6 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
 #ifdef WSDISPLAY_TYPE_AMIGACC
 	if (wstype == WSDISPLAY_TYPE_AMIGACC) {
-#  if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
 		/*
 		 * Video memory is organized in bitplanes.
 		 * 8bpp or 1bpp supported in this driver.
@@ -589,10 +590,11 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		 * is done in shadow update proc.
 		 * With 1bpp no conversion needed.
 		 */
+#ifdef HAVE_SHADOW_AFB
 		if (bitsperpixel == 8) {
 			fPtr->planarAfb = TRUE;
 		} else
-#  endif
+#endif
 		{
 			default_depth = 1;
 			bitsperpixel = 1;
@@ -869,17 +871,16 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 		shadowproc = WsfbShadowUpdateSwap32;
 	} else if (fPtr->rotate) {
 		shadowproc = shadowUpdateRotatePacked;
-	} else if (fPtr->planarAfb) {
-#if XORG_VERSION_CURRENT >= (1) * 10000000 + (20) * 100000
+	} else
+#ifdef HAVE_SHADOW_AFB
+	if (fPtr->planarAfb) {
 		shadowproc = shadowUpdateAfb8;
-#else
-		xf86Msg(X_ERROR,
-		    "Planar fb requires xorg-server 1.20 or higher.");
-		return FALSE;
-#endif
 		windowproc = WsfbWindowAfb;
 	} else
+#endif
+	{
 		shadowproc = shadowUpdatePacked;
+	}
 	
 	if (!shadowAdd(pScreen, pPixmap, shadowproc,
 		windowproc, fPtr->rotate, NULL)) {
@@ -1024,10 +1025,14 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 			 */
 			len = pScrn->virtualX * pScrn->virtualY *
 			    (pScrn->bitsPerPixel >> 3);
-		} else if (fPtr->planarAfb) {
+		} else
+#ifdef HAVE_SHADOW_AFB
+		if (fPtr->planarAfb) {
 			/* always 8bpp */
 			len = pScrn->virtualX * pScrn->virtualY;
-		} else {
+		} else
+#endif
+		{
 			len = fPtr->fbi.fbi_stride * pScrn->virtualY;
 		}
 		fPtr->shadow = calloc(1, len);
@@ -1046,9 +1051,13 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	 */
 	if (fPtr->rotate) {
 		width = pScrn->displayWidth;
-	} else if (fPtr->planarAfb) {
+	} else
+#ifdef HAVE_SHADOW_AFB
+	if (fPtr->planarAfb) {
 		width = pScrn->displayWidth;
-	} else {
+	} else
+#endif
+	{
 		if (pScrn->bitsPerPixel > 8) {
 			width =
 			    fPtr->fbi.fbi_stride / (pScrn->bitsPerPixel >> 3);
@@ -1274,6 +1283,7 @@ WsfbWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
 }
 
+#ifdef HAVE_SHADOW_AFB
 /*
  * For use with shadowUpdateAfb8
  *
@@ -1290,6 +1300,7 @@ WsfbWindowAfb(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 	*size = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
 	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
 }
+#endif
 
 static void
 WsfbPointerMoved(SCRN_ARG_TYPE arg, int x, int y)

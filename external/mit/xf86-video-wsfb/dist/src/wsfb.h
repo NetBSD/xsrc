@@ -41,6 +41,8 @@
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 
+#include "xorgVersion.h"
+
 #include "compat-api.h"
 
 #include "xf86.h"
@@ -55,6 +57,10 @@
 #ifndef WSFB_H
 #define WSFB_H
 
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,14,99,2,0)
+#define HAVE_SHADOW_AFB
+#endif
+
 /* private data */
 typedef struct {
 	int			fd; /* file descriptor of open device */
@@ -67,7 +73,9 @@ typedef struct {
 	Bool			shadowFB;
 	Bool			HWCursor;
 	Bool			useSwap32;
+#ifdef HAVE_SHADOW_AFB
 	Bool			planarAfb;
+#endif
 	CloseScreenProcPtr	CloseScreen;
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	void                    (*PointerMoved)(SCRN_ARG_TYPE, int, int);
