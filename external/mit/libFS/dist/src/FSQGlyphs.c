@@ -93,12 +93,12 @@ FSQueryXBitmaps8(
 	return FSBadAlloc;
 #endif
 
-    offs = FSmalloc(sizeof(FSOffset) * reply.num_chars);
+    offs = FSmallocarray(reply.num_chars, sizeof(FSOffset));
     *offsets = offs;
     if (!offs)
 	return FSBadAlloc;
 #if (SIZE_MAX >> 2) <= UINT_MAX
-    /* XXX This thest is incomplete */
+    /* XXX This test is incomplete */
     if (reply.length > (SIZE_MAX >> 2)) {
 	FSfree(offs);
 	return FSBadAlloc;
@@ -160,7 +160,7 @@ FSQueryXBitmaps16(
 
 	if (str_len > SIZE_MAX/SIZEOF(fsChar2b_version1))
 	    return FSBadAlloc;
-	swapped_str = FSmalloc(SIZEOF(fsChar2b_version1) * str_len);
+	swapped_str = FSmallocarray(str_len, SIZEOF(fsChar2b_version1));
 	if (!swapped_str)
 	    return FSBadAlloc;
 	for (unsigned long i = 0; i < str_len; i++) {
@@ -182,7 +182,7 @@ FSQueryXBitmaps16(
     if(reply.num_chars > SIZE_MAX/sizeof(FSOffset))
        return FSBadAlloc;
 #endif
-    offs = FSmalloc(sizeof(FSOffset) * reply.num_chars);
+    offs = FSmallocarray(reply.num_chars, sizeof(FSOffset));
     *offsets = offs;
     if (!offs)
 	return FSBadAlloc;

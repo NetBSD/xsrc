@@ -54,6 +54,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #include <X11/Xfuncs.h>
+#include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
 
 #ifndef WIN32
@@ -270,6 +271,11 @@ typedef fd_set FdSet;
 #define UnlockDisplay(dis)
 #define FSfree(ptr) free((ptr))
 
+#ifndef HAVE_REALLOCARRAY
+extern _X_HIDDEN void *fsreallocarray(void *optr, size_t nmemb, size_t size);
+# define reallocarray(ptr, n, size) \
+    fsreallocarray((ptr), (size_t)(n), (size_t)(size))
+#endif
 
 /*
  * Note that some machines do not return a valid pointer for malloc(0), in
@@ -278,16 +284,22 @@ typedef fd_set FdSet;
  * FSlib code expects malloc(0) to return a valid pointer to storage.
  */
 
-#ifdef MALLOC_0_RETURNS_NULL
+#if defined(MALLOC_0_RETURNS_NULL) || defined(__clang_analyzer__)
 # define FSmalloc(size) malloc(((size) > 0 ? (size) : 1))
 # define FSrealloc(ptr, size) realloc((ptr), ((size) > 0 ? (size) : 1))
 # define FScalloc(nelem, elsize) calloc(((nelem) > 0 ? (nelem) : 1), (elsize))
+# define FSreallocarray(ptr, n, size) \
+    reallocarray((ptr), ((n) == 0 ? 1 : (n)), size)
 
 #else
 
 # define FSmalloc(size) malloc((size))
 # define FSrealloc(ptr, size) realloc((ptr), (size))
 # define FScalloc(nelem, elsize) calloc((nelem), (elsize))
+# define FSreallocarray(ptr, n, size) reallocarray((ptr), (n), (size))
+
 #endif
+
+#define FSmallocarray(n, size) FSreallocarray(NULL, (n), (size))
 
 #define SearchString(string, char) index((string), (char))

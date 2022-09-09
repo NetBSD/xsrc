@@ -100,7 +100,7 @@ FSQueryXExtents8(
 	return FSBadAlloc;
 #endif
 
-    ext = FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);
+    ext = FSmallocarray(reply.num_extents, sizeof(FSXCharInfo));
     *extents = ext;
     if (!ext)
 	return FSBadAlloc;
@@ -141,7 +141,7 @@ FSQueryXExtents16(
     {
 	fsChar2b_version1 *swapped_str;
 
-	swapped_str = FSmalloc(SIZEOF(fsChar2b_version1) * str_len);
+	swapped_str = FSmallocarray(str_len, SIZEOF(fsChar2b_version1));
 	if (!swapped_str)
 	    return FSBadAlloc;
 	for (unsigned long i = 0; i < str_len; i++) {
@@ -164,7 +164,7 @@ FSQueryXExtents16(
 	return FSBadAlloc;
 #endif
 
-    ext = FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);
+    ext = FSmallocarray(reply.num_extents, sizeof(FSXCharInfo));
     *extents = ext;
     if (!ext)
 	return FSBadAlloc;

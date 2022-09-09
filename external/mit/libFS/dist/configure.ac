@@ -22,13 +22,13 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libFS], [1.0.8],
-        [https://gitlab.freedesktop.org/xorg/lib/libFS/issues], [libFS])
+AC_INIT([libFS], [1.0.9],
+        [https://gitlab.freedesktop.org/xorg/lib/libfs/-/issues], [libFS])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
 # Must be called before any macros that run the compiler (like
@@ -45,7 +45,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 XORG_CHECK_MALLOC_ZERO
 
-# Obtain compiler/linker options for depedencies
+# Obtain compiler/linker options for dependencies
 PKG_CHECK_MODULES(FS, xproto >= 7.0.17 fontsproto xtrans)
 
 # Find needed libraries for TCP sockets (pre-pended in $LIBS)
@@ -53,6 +53,7 @@ XTRANS_CONNECTION_FLAGS
 
 # Checks for library functions.
 AC_CHECK_FUNCS([strlcpy strnlen])
+AC_REPLACE_FUNCS([reallocarray])
 
 # Allow checking code with lint, sparse, etc.
 XORG_WITH_LINT

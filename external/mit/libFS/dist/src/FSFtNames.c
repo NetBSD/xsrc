@@ -98,7 +98,7 @@ FSListFonts(
 	&& rep.length <= (SIZE_MAX >> 2)
 #endif
 	) {
-	flist = FSmalloc(rep.nFonts * sizeof(char *));
+	flist = FSmallocarray(rep.nFonts, sizeof(char *));
 	rlen = (rep.length << 2) - SIZEOF(fsListFontsReply);
 	c = FSmalloc(rlen + 1);
 

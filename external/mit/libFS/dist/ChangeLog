@@ -1,3 +1,63 @@
+commit 7e8120c0574ab1910f63474ff6be8de0ddc4ccac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 26 15:23:32 2022 -0700
+
+    libFS 1.0.9
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee33ecf31706877e1ab7dc257fadbb3eb535da50
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 12:35:00 2022 -0700
+
+    Convert code to use FSmallocarray() & FSreallocarray()
+    
+    Provides automatic integer overflow checking in allocation size calculations
+    (Though we already have explicit checks before using values provided
+     over the protocol in calculations, so many were already manually checked.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4a1d0977dbb6eb960ca4deedba90940bcaeecefb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 12:20:58 2022 -0700
+
+    Import reallocarray() from libX11 (originally from OpenBSD)
+    
+    Wrapper for realloc() that checks for overflow when multiplying
+    arguments together, so we don't have to add overflow checks to
+    every single call.  For documentation on usage, see:
+    http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/calloc.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8896fbce317e454e578cc80300693737e39e00fc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 12:05:16 2022 -0700
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 29f790a5c98abde13b3daa5a7b1c1f53c4574550
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 12:01:22 2022 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aea1ce86c4391ba72de4e8599f3862eccd3599f0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 12:00:23 2022 -0700
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 02de7390e58f00a3701f656a2b205dc6c8dafb58
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Mar 10 15:39:06 2019 -0700
@@ -796,7 +856,7 @@ Date:   Fri Jan 28 19:41:37 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 5895de6dedcb8603b6a415d3486395c29501868c
-Author: Cristian Rodríguez <cristian.rodriguez@opensuse.org>
+Author: Cristian Rodríguez  <cristian.rodriguez@opensuse.org>
 Date:   Tue Dec 14 15:07:34 2010 -0500
 
     Export only public API symbols
@@ -1192,7 +1252,7 @@ Date:   Sun Jul 3 07:00:55 2005 +0000
         <X11/fonts/foo.h>.
 
 commit 6847a3b405dd98a1aa7804e97e6b2ce13bbf8bd7
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jun 22 22:46:31 2005 +0000
 
     Apply these patches from Theo van Klaveren:
@@ -1214,7 +1274,7 @@ Date:   Thu Jun 9 15:52:02 2005 +0000
     Copy Xtrans.h to exports/include/X11/Xtrans only
 
 commit 6c0b06eddcffce31814cb103142f5cda2df9da91
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed May 25 22:12:21 2005 +0000
 
     - Use XTRANS_CONNECTION_FLAGS macro in lib/FS/configure.ac
@@ -1222,7 +1282,7 @@ Date:   Wed May 25 22:12:21 2005 +0000
     - instead add a new file fs_transport.c that include Xtrans/X11/transport.c
 
 commit 3a9234d968568f2009376cdb219ea47b90572c68
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed May 25 21:47:56 2005 +0000
 
     - Add FSlib to symlink.sh

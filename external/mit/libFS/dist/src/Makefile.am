@@ -38,7 +38,7 @@ AM_CFLAGS = 			\
 
 AM_CPPFLAGS = -I$(top_srcdir)/include/X11/fonts
 
-libFS_la_LIBADD = $(FS_LIBS)
+libFS_la_LIBADD = $(LTLIBOBJS) $(FS_LIBS)
 
 libFS_la_LDFLAGS = -export-symbols-regex '^FS.*' -version-number 6:0:0 -no-undefined
 

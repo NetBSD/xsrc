@@ -130,7 +130,7 @@ FSListFontsWithXInfo(
 
 	    if (fhdr) {
 #define ResizeArray(var, type) { \
-		    type **tmp = FSrealloc(var, sizeof(type *) * size); \
+		    type **tmp = FSreallocarray(var, size, sizeof(type *)); \
 		    if (tmp)						\
 			var = tmp;					\
 		    else						\
@@ -144,7 +144,7 @@ FSListFontsWithXInfo(
 		ResizeArray(pd, unsigned char)
 	    } else {
 #define InitArray(var, type) \
-		if ((var = FSmalloc(sizeof(type *) * size)) == NULL) {	\
+		if ((var = FSmallocarray(size, sizeof(type *))) == NULL) { \
 		    goto badmem;					\
 		}
 
@@ -184,7 +184,7 @@ FSListFontsWithXInfo(
 	    goto cleanpi;
 #endif
 
-	po[i] = FSmalloc(pi[i]->num_offsets * sizeof(FSPropOffset));
+	po[i] = FSmallocarray(pi[i]->num_offsets, sizeof(FSPropOffset));
 	if (!po[i])
 	    goto cleanpi;
 	pd[i] = FSmalloc(pi[i]->data_len);
