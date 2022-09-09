@@ -27,5 +27,7 @@
 # define TRANS_CLIENT
 #endif
 
+#ifdef HAVE_CONFIG_H
 #include "config.h" /* Need to know which transport types to support */
+#endif
 #include <X11/Xtrans/transport.c>
