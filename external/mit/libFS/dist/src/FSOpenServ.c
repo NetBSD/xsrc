@@ -167,7 +167,7 @@ FSOpenServer(const char *server)
     }
 #endif
 
-    alts = FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
+    alts = FSmallocarray(prefix.num_alternates, sizeof(AlternateServer));
     if (!alts) {
 	goto fail;
     }

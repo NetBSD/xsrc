@@ -183,7 +183,7 @@ typedef struct _FSQEvent {
 }           _FSQEvent;
 
 
-/* protocol-related stuctures */
+/* protocol-related structures */
 
 typedef unsigned long  FSBitmapFormat;
 typedef unsigned long  FSBitmapFormatMask;

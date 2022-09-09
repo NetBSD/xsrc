@@ -97,7 +97,7 @@ FSListCatalogues(
 	&& rep.length <= (SIZE_MAX>>2)
 #endif
 	) {
-	clist = FSmalloc(rep.num_catalogues * sizeof(char *));
+	clist = FSmallocarray(rep.num_catalogues, sizeof(char *));
 	rlen = (rep.length << 2) - SIZEOF(fsListCataloguesReply);
 	c = FSmalloc(rlen + 1);
 

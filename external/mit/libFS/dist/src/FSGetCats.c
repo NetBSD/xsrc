@@ -79,7 +79,7 @@ FSGetCatalogues(
 	&& rep.length <= (SIZE_MAX >> 2)
 #endif
 	) {
-	list = FSmalloc(rep.num_catalogues * sizeof(char *));
+	list = FSmallocarray(rep.num_catalogues, sizeof(char *));
 	rlen = (rep.length << 2) - SIZEOF(fsGetCataloguesReply);
 	c = FSmalloc(rlen + 1);
 	if ((!list) || (!c)) {

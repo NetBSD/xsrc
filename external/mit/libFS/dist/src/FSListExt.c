@@ -79,7 +79,7 @@ FSListExtensions(
 	&& rep.length <= (SIZE_MAX>>2)
 #endif
 	) {
-	list = FSmalloc(rep.nExtensions * sizeof(char *));
+	list = FSmallocarray(rep.nExtensions, sizeof(char *));
 	rlen = (rep.length << 2) - SIZEOF(fsListExtensionsReply);
 	c = FSmalloc(rlen + 1);
 	if ((!list) || (!c)) {

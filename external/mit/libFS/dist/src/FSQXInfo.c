@@ -97,7 +97,7 @@ FSQueryXInfo(
 #endif
 
     /* prepare for prop data */
-    offset_data = FSmalloc(props->num_offsets * sizeof(FSPropOffset));
+    offset_data = FSmallocarray(props->num_offsets, sizeof(FSPropOffset));
     if (!offset_data)
 	return FSBadAlloc;
     pdata = FSmalloc(props->data_len);
