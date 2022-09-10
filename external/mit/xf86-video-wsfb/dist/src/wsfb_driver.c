@@ -1094,7 +1094,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	if (fPtr->rotate) {
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		    "Enabling Driver Rotation, " "disabling RandR\n");
-#if 0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
 		xf86DisableRandR();
 #endif
 		if (pScrn->bitsPerPixel == 24)
