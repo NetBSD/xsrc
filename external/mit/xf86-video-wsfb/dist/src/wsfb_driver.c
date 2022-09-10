@@ -52,7 +52,6 @@
 /* All drivers need this. */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_OSlib.h"
 
 #include "mipointer.h"
 #include "micmap.h"
@@ -75,10 +74,6 @@
 
 #include "wsfb.h"
 
-/* #include "wsconsio.h" */
-
-#include <sys/mman.h>
-
 #ifdef X_PRIVSEP
 extern int priv_open_device(const char *);
 #else
@@ -89,12 +84,6 @@ extern int priv_open_device(const char *);
 #define WSFB_DEFAULT_DEV "/dev/ttyE0"
 #else
 #define WSFB_DEFAULT_DEV "/dev/ttyC0"
-#endif
-
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
-#define xf86LoaderReqSymLists(...) do {} while (0)
-#define LoaderRefSymLists(...) do {} while (0)
-#define xf86LoaderReqSymbols(...) do {} while (0)
 #endif
 
 #define DEBUG 0
@@ -165,13 +154,13 @@ enum { WSFB_ROTATE_NONE = 0,
  */
 static int pix24bpp = 0;
 
-#define WSFB_VERSION 		4000
+#define WSFB_VERSION		4000
 #define WSFB_NAME		"wsfb"
 #define WSFB_DRIVER_NAME	"wsfb"
 
 _X_EXPORT DriverRec WSFB = {
 	WSFB_VERSION,
-	WSFB_DRIVER_NAME,
+	(char *)WSFB_DRIVER_NAME,
 	WsfbIdentify,
 	WsfbProbe,
 	WsfbAvailableOptions,
@@ -201,34 +190,6 @@ static const OptionInfoRec WsfbOptions[] = {
 	{ -1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) <= 6
-/* Symbols needed from other modules */
-static const char *fbSymbols[] = {
-	"fbPictureInit",
-	"fbScreenInit",
-	NULL
-};
-static const char *shadowSymbols[] = {
-	"shadowAdd",
-	"shadowSetup",
-	"shadowUpdatePacked",
-	"shadowUpdatePackedWeak",
-	"shadowUpdateRotatePacked",
-	"shadowUpdateRotatePackedWeak",
-#ifdef HAVE_SHADOW_AFB
-	"shadowUpdateAfb8",
-#endif
-	NULL
-};
-
-static const char *ramdacSymbols[] = {
-	"xf86CreateCursorInfoRec",
-	"xf86DestroyCursorInfoRec",
-	"xf86InitCursor",
-	NULL
-};
-#endif
-
 static XF86ModuleVersionInfo WsfbVersRec = {
 	"wsfb",
 	MODULEVENDORSTRING,
@@ -251,19 +212,13 @@ WsfbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
 	static Bool setupDone = FALSE;
 
-#if !(defined __NetBSD__ || defined __OpenBSD__)
-	/* Check that we're being loaded on a OpenBSD or NetBSD system. */
-	if (errmaj)
-		*errmaj = LDR_BADOS;
-	if (errmin)
-		*errmin = 0;
+#if !defined(__OpenBSD__) && !defined(__NetBSD__)
 	return NULL;
 #endif
+
 	if (!setupDone) {
 		setupDone = TRUE;
 		xf86AddDriver(&WSFB, module, HaveDriverFuncs);
-		LoaderRefSymLists(fbSymbols, shadowSymbols, ramdacSymbols,
-		    NULL);
 		return (pointer)1;
 	} else {
 		if (errmaj != NULL)
@@ -360,7 +315,7 @@ static Bool
 WsfbProbe(DriverPtr drv, int flags)
 {
 	int i, fd, entity;
-       	GDevPtr *devSections;
+	GDevPtr *devSections;
 	int numDevSections;
 	const char *dev;
 	Bool foundScreen = FALSE;
@@ -375,13 +330,6 @@ WsfbProbe(DriverPtr drv, int flags)
 					      &devSections)) <= 0)
 		return FALSE;
 
-	/* Do not attach if the modesetting driver is active */
-	if (fbSlotClaimed == TRUE) {
-		DriverPtr fbSlotDrv = xf86GetEntityInfo(0)->driver;
-		if (strcmp(fbSlotDrv->driverName, "modesetting") == 0)
-			return FALSE;
-	}
-
 	for (i = 0; i < numDevSections; i++) {
 		ScrnInfoPtr pScrn = NULL;
 
@@ -393,8 +341,8 @@ WsfbProbe(DriverPtr drv, int flags)
 			if (pScrn != NULL) {
 				foundScreen = TRUE;
 				pScrn->driverVersion = WSFB_VERSION;
-				pScrn->driverName = WSFB_DRIVER_NAME;
-				pScrn->name = WSFB_NAME;
+				pScrn->driverName = (char *)WSFB_DRIVER_NAME;
+				pScrn->name = (char *)WSFB_NAME;
 				pScrn->Probe = WsfbProbe;
 				pScrn->PreInit = WsfbPreInit;
 				pScrn->ScreenInit = WsfbScreenInit;
@@ -420,9 +368,8 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	WsfbPtr fPtr;
 	int default_depth, bitsperpixel, wstype;
-	const char *dev, *s;
-	char *mod = NULL;
-	const char *reqSym = NULL;
+	const char *dev;
+	const char *s;
 	Gamma zeros = {0.0, 0.0, 0.0};
 	DisplayModePtr mode;
 	MessageType from;
@@ -772,7 +719,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 
 	pScrn->progClock = TRUE;
 	pScrn->rgbBits   = (pScrn->depth >= 8) ? 8 : pScrn->depth;
-	pScrn->chipset   = "wsfb";
+	pScrn->chipset   = (char *)"wsfb";
 	pScrn->videoRam  = fPtr->fbi.fbi_fbsize;
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Vidmem: %dk\n",
@@ -782,7 +729,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	mode = (DisplayModePtr)malloc(sizeof(DisplayModeRec));
 	mode->prev = mode;
 	mode->next = mode;
-	mode->name = "wsfb current mode";
+	mode->name = (char *)"wsfb current mode";
 	mode->status = MODE_OK;
 	mode->type = M_T_BUILTIN;
 	mode->Clock = 0;
@@ -820,15 +767,6 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		fPtr->HWCursor ? "HW" : "SW");
 
-	/* Load bpp-specific modules. */
-	switch(pScrn->bitsPerPixel) {
-	case 1:
-	case 4:
-	default:
-		mod = "fb";
-		break;
-	}
-
 
 	/* Load shadow if needed. */
 	if (fPtr->shadowFB) {
@@ -839,8 +777,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			return FALSE;
 		}
 	}
-
-	if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
+	if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 		WsfbFreeRec(pScrn);
 		return FALSE;
 	}
@@ -850,21 +787,26 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
         }
 
-	if (mod) {
-		if (reqSym) {
-			xf86LoaderReqSymbols(reqSym, NULL);
-		} else {
-			xf86LoaderReqSymLists(fbSymbols, NULL);
-		}
-	}
 	TRACE_EXIT("PreInit");
 	return TRUE;
+}
+
+static void
+wsfbUpdateRotatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    shadowUpdateRotatePacked(pScreen, pBuf);
+}
+
+static void
+wsfbUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    shadowUpdatePacked(pScreen, pBuf);
 }
 
 static Bool
 WsfbCreateScreenResources(ScreenPtr pScreen)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 	PixmapPtr pPixmap;
 	Bool ret;
@@ -884,7 +826,7 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	} else if (fPtr->useSwap32) {
 		shadowproc = WsfbShadowUpdateSwap32;
 	} else if (fPtr->rotate) {
-		shadowproc = shadowUpdateRotatePacked;
+		shadowproc = wsfbUpdateRotatePacked;
 	} else
 #ifdef HAVE_SHADOW_AFB
 	if (fPtr->planarAfb) {
@@ -893,7 +835,7 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	} else
 #endif
 	{
-		shadowproc = shadowUpdatePacked;
+		shadowproc = wsfbUpdatePacked;
 	}
 	
 	if (!shadowAdd(pScreen, pPixmap, shadowproc,
@@ -907,7 +849,7 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 static Bool
 WsfbShadowInit(ScreenPtr pScreen)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 
 	if (!shadowSetup(pScreen))
@@ -921,7 +863,7 @@ WsfbShadowInit(ScreenPtr pScreen)
 static Bool
 WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 	VisualPtr visual;
 	int ret, flags, ncolors;
@@ -959,7 +901,6 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	case 15:
 	case 16:
 		if (fPtr->fbi.fbi_stride == fPtr->fbi.fbi_width) {
-			xf86Msg(X_ERROR, "Bogus stride == width in 16bit colour\n");
 			len = fPtr->fbi.fbi_width * fPtr->fbi.fbi_height * sizeof(short);
 		} else {
 			len = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
@@ -967,7 +908,6 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		break;
 	case 24:
 		if (fPtr->fbi.fbi_stride == fPtr->fbi.fbi_width) {
-			xf86Msg(X_ERROR, "Bogus stride == width in 24bit colour\n");
 			len = fPtr->fbi.fbi_width * fPtr->fbi.fbi_height * 3;
 		} else {
 			len = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
@@ -975,7 +915,6 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		break;
 	case 32:
 		if (fPtr->fbi.fbi_stride == fPtr->fbi.fbi_width) {
-			xf86Msg(X_ERROR, "Bogus stride == width in 32bit colour\n");
 			len = fPtr->fbi.fbi_width * fPtr->fbi.fbi_height * sizeof(int);
 		} else {
 			len = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
@@ -1153,8 +1092,8 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    "disabling DGA\n");
 #endif
 	if (fPtr->rotate) {
-		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Enabling Driver Rotation, "
-		    "disabling RandR\n");
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		    "Enabling Driver Rotation, " "disabling RandR\n");
 #if 0
 		xf86DisableRandR();
 #endif
@@ -1193,7 +1132,6 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	/* On StaticGray visuals, fake a 256 entries colormap. */
 	if (ncolors == 0)
 		ncolors = 256;
-
 	if(!xf86HandleColormaps(pScreen, ncolors, 8, WsfbLoadPalette,
 				NULL, flags))
 		return FALSE;
@@ -1294,13 +1232,9 @@ static void *
 WsfbWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 		CARD32 *size, void *closure)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 
-	/*
-	 * XXX
-	 * This should never happen. Is it really necessary?
-	 */
 	if (fPtr->fbi.fbi_stride)
 		*size = fPtr->fbi.fbi_stride;
 	else {
@@ -1321,7 +1255,7 @@ static void *
 WsfbWindowAfb(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 		CARD32 *size, void *closure)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 
 	/* size is offset from start of bitplane to next bitplane */
@@ -1431,6 +1365,10 @@ WsfbLeaveVT(VT_FUNC_ARGS_DECL)
 static Bool
 WsfbSwitchMode(SWITCH_MODE_ARGS_DECL)
 {
+#if DEBUG
+	SCRN_INFO_PTR(arg);
+#endif
+
 	TRACE_ENTER("SwitchMode");
 	/* Nothing else to do. */
 	return TRUE;
@@ -1439,6 +1377,10 @@ WsfbSwitchMode(SWITCH_MODE_ARGS_DECL)
 static int
 WsfbValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
+#if DEBUG
+	SCRN_INFO_PTR(arg);
+#endif
+
 	TRACE_ENTER("ValidMode");
 	return MODE_OK;
 }
@@ -1474,7 +1416,7 @@ WsfbLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 	} else {
 		/*
 		 * Change all colors in 2 ioctls
-		 * and limit the data to be transfered.
+		 * and limit the data to be transferred.
 		 */
 		for (i = 0; i < numColors; i++) {
 			if (indices[i] < indexMin)
@@ -1506,7 +1448,7 @@ WsfbLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 static Bool
 WsfbSaveScreen(ScreenPtr pScreen, int mode)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 	int state;
 
@@ -1517,7 +1459,7 @@ WsfbSaveScreen(ScreenPtr pScreen, int mode)
 
 	if (mode != SCREEN_SAVER_FORCER) {
 		state = xf86IsUnblank(mode)?WSDISPLAYIO_VIDEO_ON:
-		                            WSDISPLAYIO_VIDEO_OFF;
+					    WSDISPLAYIO_VIDEO_OFF;
 		ioctl(fPtr->fd,
 		      WSDISPLAYIO_SVIDEO, &state);
 	}
@@ -1606,7 +1548,6 @@ static Bool
 WsfbDGASetMode(ScrnInfoPtr pScrn, DGAModePtr pDGAMode)
 {
 	DisplayModePtr pMode;
-	int scrnIdx = pScrn->pScreen->myNum;
 	int frameX0, frameY0;
 
 	if (pDGAMode) {

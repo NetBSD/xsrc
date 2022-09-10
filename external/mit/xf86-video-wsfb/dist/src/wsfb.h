@@ -65,12 +65,12 @@
 typedef struct {
 	int			fd; /* file descriptor of open device */
 	struct wsdisplayio_fbinfo fbi;
-	int			rotate;
 	unsigned char*		fbstart;
 	unsigned char*		fbmem;
 	size_t			fbmem_len;
-	void *			shadow;
+	int			rotate;
 	Bool			shadowFB;
+	void *			shadow;
 	Bool			HWCursor;
 	Bool			useSwap32;
 #ifdef HAVE_SHADOW_AFB
