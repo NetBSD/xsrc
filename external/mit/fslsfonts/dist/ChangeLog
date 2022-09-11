@@ -1,3 +1,124 @@
+commit 15c6839c0c23869a92e94109ec7310627720e841
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 09:46:21 2022 -0700
+
+    fslsfonts 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3f681d742545c922157b2fb66649ae2d12080c41
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Aug 30 15:02:04 2022 -0700
+
+    configure: Add AC_USE_SYSTEM_EXTENSIONS
+    
+    Needed on some systems to expose reallocarray() prototype in the
+    header files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7e039ed98ad9ef4083a01d3e5a03e54302706550
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 13 14:50:51 2022 -0700
+
+    Use reallocarray() if it is available in libc or libbsd
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 23fa33d7061a2bba7f0732ea0c8c324a560a65d3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 13 14:39:42 2022 -0700
+
+    Improve handling of realloc()
+    
+    Fixes cppcheck warning:
+    [fslsfonts.c:268]: (error) Common realloc mistake: 'font_list' nulled but not freed upon failure
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aac963bb2d95db0ec7aa27f0e12159ee8edbb168
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 23 12:18:01 2022 -0700
+
+    show_font_props: skip copy to temporary buffer
+    
+    Avoids risk of overflow since we weren't bounds checking and
+    may slightly improve performance.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 44c1649d2a11c89137488c53e3a1c383fe79c2c1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 10 13:25:14 2022 -0700
+
+    Add bounds checks to creation of min/max strings for -lll -m option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fd04e0c1e60315c57d32a5781fee6c3e8012f3fb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 15:17:32 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit de5ac3a07262c3ceb64b1eac61e6f35dd98b07d8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 15:03:38 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 81d02a0d873a19da1c6accb50e0a1922dd1539d4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 16:46:43 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c3e7ded5b2591059ddd26a96ad46a158722dbf48
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 19:57:31 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 63dcab1cd3f72033e67a30b827089dd38e2041d7
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:20 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 317e9b11259e5e239bff8813134ecf0cce80d91b
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 49be954631e02b44374f8f62e3c9e1c2c98b0fe6
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit edfc75e3a922888d802cf18250b3de10c62d3e86
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Dec 30 20:46:30 2014 -0800
@@ -453,7 +574,7 @@ Date:   Wed Jul 20 19:31:48 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 492cae010ee83167c662df163f37dec2ef5b8b8b
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 16:17:30 2005 +0000
 
     Build system for fslsfonts

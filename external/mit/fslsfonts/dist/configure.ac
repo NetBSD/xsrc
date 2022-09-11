@@ -23,13 +23,15 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([fslsfonts], [1.0.5],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [fslsfonts])
+AC_INIT([fslsfonts], [1.0.6],
+        [https://gitlab.freedesktop.org/xorg/app/fslsfonts/-/issues],
+        [fslsfonts])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
+AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -39,6 +41,12 @@ XORG_DEFAULT_OPTIONS
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(FSLSFONTS, [xproto >= 7.0.25 libfs])
+
+# Checks for library functions
+AC_SEARCH_LIBS([reallocarray], [bsd])
+AS_IF([test "x$ac_cv_search_reallocarray" = "x-lbsd"],
+      [AC_CHECK_HEADERS([bsd/stdlib.h])])
+AC_CHECK_FUNCS([reallocarray])
 
 AC_CONFIG_FILES([
 	Makefile
