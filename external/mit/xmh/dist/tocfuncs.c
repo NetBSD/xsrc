@@ -38,7 +38,7 @@ Boolean UserWantsAction(
     Widget	w,
     Scrn	scrn)
 {
-    /* Commands in the command menus invoke callbacks directly. 
+    /* Commands in the command menus invoke callbacks directly.
      * Keyboard accelerators use the command menus as source widgets.
      * Actions can also be specified in the translations for menu buttons.
      * Actions can also be specified in the translations for menus.
@@ -49,10 +49,10 @@ Boolean UserWantsAction(
      * after the mouse pointer has left the folder button or the when the
      * mouse button is released outside of the folder menu.
      *
-     * The side effect of this routine is that it restricts keyboard 
+     * The side effect of this routine is that it restricts keyboard
      * accelerators from originating from folder buttons or folder menus.
      */
-       
+
     if (XtIsSubclass(w, menuButtonWidgetClass) && /* w is a menu button */
 	w != LastMenuButtonPressed)		  /* pointer left the window */
 	return False;
@@ -78,11 +78,11 @@ static void NextAndPreviousView(
 
     if (toc == NULL) return;
     mlist = TocCurMsgList(toc);
-    if (mlist->nummsgs) 
+    if (mlist->nummsgs)
 	msg = (next ? mlist->msglist[0] : mlist->msglist[mlist->nummsgs - 1]);
     else {
 	msg = TocGetCurMsg(toc);
-	if (msg && msg == scrn->msg) 
+	if (msg && msg == scrn->msg)
 	    msg = (next ? TocMsgAfter(toc, msg) : TocMsgBefore(toc, msg));
 	if (msg) fate = MsgGetFate(msg, (Toc *)NULL);
 	while (msg && ((app_resources.skip_deleted && fate == Fdelete)
@@ -152,7 +152,7 @@ void DoPrevView(
     XtPointer	client_data,
     XtPointer	call_data)	/* unused */
 {
-    NextAndPreviousView((Scrn) client_data, 
+    NextAndPreviousView((Scrn) client_data,
 			(app_resources.reverse_read_order ? True : False));
 }
 
@@ -539,7 +539,7 @@ void DoPrint(
     Scrn	scrn = (Scrn) client_data;
     Cardinal	num_params = 0;
     /* The callback interface will not be entered unless the user requested
-     * the action, so pass a widget which will succeed the test in 
+     * the action, so pass a widget which will succeed the test in
      * UserWantsAction.
      */
     XmhPrint(scrn->parent, (XEvent*)NULL, (String*)NULL, &num_params);
@@ -556,7 +556,7 @@ void DoPack(
     Toc		toc = scrn->toc;
     XtCallbackRec confirms[2];
     char	**argv;
-    
+
     if (toc == NULL) return;
     confirms[0].callback = (XtCallbackProc) DoPack;
     confirms[0].closure = (XtPointer) scrn;
@@ -664,7 +664,7 @@ void DoForceRescan(
     if (app_resources.block_events_on_busy) ShowBusyCursor();
 
     TocForceRescan(toc);
-    
+
     if (app_resources.block_events_on_busy) UnshowBusyCursor();
 }
 
@@ -749,7 +749,7 @@ static void DoReplyMsg(
     }
     FreeMsgList(mlist);
 }
-    
+
 
 /*ARGSUSED*/
 void DoReply(
@@ -759,7 +759,7 @@ void DoReply(
 {
     DoReplyMsg((Scrn) client_data, (String *)NULL, (Cardinal)0);
 }
-    
+
 
 /*ARGSUSED*/
 void XmhReply(
@@ -902,7 +902,7 @@ void XmhOpenSequence(
 
 	/* The user released the mouse button.  We must distinguish between
 	 * a button release on a selectable menu entry, and a button release
-	 * occuring elsewhere.  The button releases occuring elsewhere are 
+	 * occurring elsewhere.  The button releases occurring elsewhere are
 	 * either outside of the menu, or on unselectable menu entries.
 	 */
 
@@ -912,7 +912,7 @@ void XmhOpenSequence(
 	/* Some entry in the menu was selected.  The menu entry's callback
 	 * procedure has already executed.  If a sequence name was selected,
 	 * the callback procedure has caused that sequence to become the
-	 * currently selected sequence.  If selected menu entry object's 
+	 * currently selected sequence.  If selected menu entry object's
 	 * name matches the currently selected sequence, we should open
 	 * that sequence.  Otherwise, the user must have selected a sequence
 	 * manipulation command, such as Pick.  The assumptions here are that
@@ -926,7 +926,7 @@ void XmhOpenSequence(
 	    DoOpenSeq(w, (XtPointer) scrn, (XtPointer) NULL);
 	return;
     }
-    
+
     /* An accelerator open sequence function */
 
     DoOpenSeq(w, (XtPointer) scrn, (XtPointer) NULL);

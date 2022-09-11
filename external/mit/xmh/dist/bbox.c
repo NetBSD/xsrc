@@ -26,10 +26,10 @@
  */
 /* $XFree86: xc/programs/xmh/bbox.c,v 1.2 2001/10/28 03:34:38 tsi Exp $ */
 
-/* bbox.c -- management of buttons and buttonboxes. 
+/* bbox.c -- management of buttons and buttonboxes.
  *
  * This module implements a simple interface to buttonboxes, allowing a client
- * to create new buttonboxes and manage their contents. 
+ * to create new buttonboxes and manage their contents.
  */
 
 #include "xmh.h"
@@ -47,7 +47,7 @@ void BBoxInit(void)
 
 /*
  * Create a new button box.  The widget for it will be a child of the given
- * scrn's widget, and it will be added to the scrn's pane. 
+ * scrn's widget, and it will be added to the scrn's pane.
  */
 
 ButtonBox BBoxCreate(
@@ -61,7 +61,7 @@ ButtonBox BBoxCreate(
     n = 0;
     XtSetArg(args[n], XtNallowVert, True);	n++;
     XtSetArg(args[n], XtNskipAdjust, True);	n++;
-    
+
     buttonbox->outer =
 	XtCreateManagedWidget(name, viewportWidgetClass, scrn->widget,
 			      args, n);
@@ -98,7 +98,7 @@ static void bboxAddButton(
     Arg		args[5];
 
     buttonbox->numbuttons++;
-    buttonbox->button = (Button *) 
+    buttonbox->button = (Button *)
 	XtRealloc((char *) buttonbox->button,
 		  (unsigned) buttonbox->numbuttons * sizeof(Button));
     button = buttonbox->button[buttonbox->numbuttons - 1] = XtNew(ButtonRec);
@@ -113,7 +113,7 @@ static void bboxAddButton(
 
     if (radio && kind == toggleWidgetClass) {
 	if (buttonbox->numbuttons > 1)
-	    radio_group = (button == buttonbox->button[0]) 
+	    radio_group = (button == buttonbox->button[0])
 		? (buttonbox->button[1]->widget)
 		: (buttonbox->button[0]->widget);
 	else radio_group = NULL;
@@ -142,7 +142,7 @@ void BBoxAddButton(
     Boolean	enabled)
 {
     bboxAddButton(buttonbox, name, kind, enabled, False);
-}    
+}
 
 
 void RadioBBoxAddButton(
@@ -174,7 +174,7 @@ char *RadioBBoxGetCurrent(
 
 /* Remove the given button from its buttonbox, and free all resources
  * used in association with the button.  If the button was the current
- * button in a radio buttonbox, the current button becomes the first 
+ * button in a radio buttonbox, the current button becomes the first
  * button in the box.
  */
 
@@ -183,7 +183,7 @@ void BBoxDeleteButton(
 {
     ButtonBox	buttonbox;
     int		i, found;
-    
+
     if (button == NULL) return;
     buttonbox = button->buttonbox;
     found = False;
@@ -193,7 +193,7 @@ void BBoxDeleteButton(
 	    buttonbox->button[i-1] = buttonbox->button[i];
 	else if (buttonbox->button[i] == button) {
 	    found = True;
- 
+
 	    /* Free the resources used by the given button. */
 
 	    if (button->menu != NULL && button->menu != NoMenuForButton)
@@ -201,7 +201,7 @@ void BBoxDeleteButton(
 	    XtDestroyWidget(button->widget);
 	    XtFree(button->name);
 	    XtFree((char *) button);
-	} 
+	}
     }
     if (found)
 	buttonbox->numbuttons--;
@@ -322,7 +322,7 @@ Widget	BBoxMenuOfButton(
 }
 
 
-/* Set maximum size for a bbox so that it cannot be resized any taller 
+/* Set maximum size for a bbox so that it cannot be resized any taller
  * than the space needed to stack all the buttons on top of each other.
  * Allow the user to set the minimum size.
  */

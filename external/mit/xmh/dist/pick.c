@@ -204,7 +204,7 @@ static void ChangeTextEntry(FormEntry entry, char *str)
 
     XtSetArg(arglist[0], XtNstring, &ptr);
     XtGetValues(entry->widget, arglist, (Cardinal) 1);
-    if (strcmp(str, ptr) == 0) 
+    if (strcmp(str, ptr) == 0)
         return;
 
     XtSetArg(arglist[0], XtNstring, str);
@@ -227,7 +227,7 @@ static void ExecRowOr(
     AddButton(row, "Or", ExecRowOr);
     ExecuteUpdate(form);
 }
-    
+
 
 /* ARGSUSED */
 static void ExecGroupOr(
@@ -289,25 +289,25 @@ static Boolean ParseRow(RowList row)
 		AppendArgv("-lbrace");
 	    }
 	    switch (row->type) {
-		case RTfrom: 
+		case RTfrom:
 		    AppendArgv("-from");
 		    break;
-		case RTto: 
+		case RTto:
 		    AppendArgv("-to");
 		    break;
-		case RTcc: 
+		case RTcc:
 		    AppendArgv("-cc");
 		    break;
-		case RTdate: 
+		case RTdate:
 		    AppendArgv("-date");
 		    break;
-		case RTsubject: 
+		case RTsubject:
 		    AppendArgv("-subject");
 		    break;
-		case RTsearch: 
+		case RTsearch:
 		    AppendArgv("-search");
 		    break;
-		case RTother: 
+		case RTother:
 		    XtSetArg(args[0], XtNstring, &other);
 		    XtGetValues(row->wlist[2]->widget, args, (Cardinal) 1);
 		    (void) sprintf(str, "--%s", other);
@@ -325,7 +325,7 @@ static Boolean ParseRow(RowList row)
     }
     return result;
 }
-	    
+
 
 static Boolean ParseGroup(Group group)
 {
@@ -490,11 +490,11 @@ static FormEntry CreateWidget(
     entry->widget = XtCreateManagedWidget( (String) NULL, class, row->widget,
 					   merged_args,
 					   num_args + XtNumber(arglist) );
-			
+
     XtFree((char *) merged_args);
     return entry;
 }
-    
+
 
 static void
 DeleteWidget(FormEntry entry)
@@ -614,7 +614,7 @@ AddDetailGroup(FormBox form)
     AddButton(row, "- Or -", ExecGroupOr);
     XtManageChild(row->widget);
     if (XtIsRealized(XtParent(group->widget)))
-	XtRealizeWidget(group->widget); 
+	XtRealizeWidget(group->widget);
     XtManageChild(group->widget);
 }
 

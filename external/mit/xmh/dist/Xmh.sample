@@ -51,7 +51,7 @@ Xmh*messageMenu.MenuOnScreen: True
 
 Xmh*folderTitlebar.translations: #override\n\
 <BtnDown>: XawPositionSimpleMenu(folderMenu)MenuPopup(folderMenu)\n
- 
+
 Xmh*tocTitlebar.translations: #override\n\
 <Btn2Down>: XawPositionSimpleMenu(messageMenu)MenuPopup(messageMenu)\n\
 <BtnDown>: XawPositionSimpleMenu(tocMenu)MenuPopup(tocMenu)\n

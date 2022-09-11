@@ -85,7 +85,7 @@ static void MakeSureSubfolderExists(
     *subfolder = '\0';
     subfolder++;
     MakeSureFolderExists(namelistptr, numfoldersptr, folder);
-	
+
     /* The parent folder exists.  Make sure the subfolder exists. */
 
     (void) sprintf(subfolder_path, "%s/%s", app_resources.mail_path, name);
@@ -149,7 +149,7 @@ static void LoadCheckFiles(void)
 	       *app_resources.initial_inc_file)
 	InitialFolder->incfile = app_resources.initial_inc_file;
 }
-	    
+
 
 /*	PUBLIC ROUTINES 	*/
 
@@ -312,7 +312,7 @@ void TocCheckForNewMail(
  * You can have confirm popups on different folders simultaneously.
  * However, I did not protect the user from popping up a delete confirm
  * popup on folder A, then popping up a delete confirm popup on folder
- * A/subA, then deleting A, then deleting A/subA -- which of course is 
+ * A/subA, then deleting A, then deleting A/subA -- which of course is
  * already gone, and will cause xmh to Punt.
  *
  * TocClearDeletePending is a callback from the No confirmation button
@@ -358,7 +358,7 @@ static void NukeDirectory(char *path)
 	argv[2] = path;
 	(void) DoCommand(argv, (char*)NULL, (char*)NULL);
 	XtFree((char*)argv);
-    } 
+    }
 }
 
 
@@ -485,7 +485,7 @@ void TocRemoveMsg(Toc toc, Msg msg)
     TocSetCurMsg(toc, newcurmsg);
     TUSaveTocFile(toc);
 }
-    
+
 
 
 void TocRecheckValidity(Toc toc)
@@ -678,7 +678,7 @@ void TocSetSelectedSequence(
     Toc		toc,
     Sequence	sequence)
 {
-    if (toc) 
+    if (toc)
 	toc->selectseq = sequence;
 }
 
@@ -770,7 +770,7 @@ void TocStartUpdate(Toc toc)
 
     if (toc->stopupdate && --(toc->stopupdate) == 0) {
 	for (i=0 ; i<toc->num_scrns ; i++) {
-	    if (toc->needsrepaint) 
+	    if (toc->needsrepaint)
 		TURedisplayToc(toc->scrn[i]);
 	    if (toc->needslabelupdate)
 		TUResetTocLabel(toc->scrn[i]);
@@ -848,15 +848,15 @@ static void TocCataclysmOkay(
 
 /* Doesn't make sense to have this MsgSetScrn for loop here. dmc. %%% */
     for (i=0; i < toc->nummsgs; i++)
-	MsgSetScrn(toc->msgs[i], (Scrn) NULL, (XtCallbackList) NULL, 
+	MsgSetScrn(toc->msgs[i], (Scrn) NULL, (XtCallbackList) NULL,
 		   (XtCallbackList) NULL);
 }
-	
+
 int TocConfirmCataclysm(
     Toc			toc,
     XtCallbackList	confirms,
     XtCallbackList	cancels)
-{	
+{
     register int	i;
 
     static XtCallbackRec yes_callbacks[] = {
@@ -899,21 +899,21 @@ int TocConfirmCataclysm(
 	return 0;
     }
 }
-    
+
 
 /* Commit all the changes in this toc; all messages will meet their 'fate'. */
 
 /*ARGSUSED*/
 void TocCommitChanges(
     Widget	widget,		/* unused */
-    XtPointer	client_data,	
+    XtPointer	client_data,
     XtPointer	call_data)	/* unused */
 {
     Toc toc = (Toc) client_data;
     Msg msg;
     int i, cur = 0;
     char str[100], **argv = NULL;
-    FateType curfate, fate; 
+    FateType curfate, fate;
     Toc desttoc;
     Toc curdesttoc = NULL;
     XtCallbackRec	confirms[2];
@@ -981,7 +981,7 @@ void TocCommitChanges(
 		}
 		if (cur > 40)
 		    break;	/* Do only 40 at a time, just to be safe. */
-	    } 
+	    }
 	    i++;
 	}
 	if (curfate != Fignore) {
@@ -1161,7 +1161,7 @@ Msg TocMsgFromId(Toc toc, int msgid)
     return NULL;
 }
 
-/* Sequence names are put on a stack which is specific to the folder. 
+/* Sequence names are put on a stack which is specific to the folder.
  * Sequence names are very volatile, so we make our own copies of the strings.
  */
 
@@ -1177,13 +1177,13 @@ void XmhPushSequence(
     Cardinal	i;
 
     if (! (toc = scrn->toc)) return;
-    
+
     if (*count == 0) {
 	if (toc->selectseq)
 	    Push(&toc->sequence_stack, XtNewString(toc->selectseq->name));
     }
     else
-	for (i=0; i < *count; i++) 
+	for (i=0; i < *count; i++)
 	    Push(&toc->sequence_stack, XtNewString(params[i]));
 }
 

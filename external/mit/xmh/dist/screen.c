@@ -116,7 +116,7 @@ Scrn scrn)
     BBoxAddButton(buttonbox, "print", commandWidgetClass, True);
     BBoxAddButton(buttonbox, "delete", commandWidgetClass, True);
 }
-    
+
 
 
 static void FillCompButtons(
@@ -150,7 +150,7 @@ static void MakeCommandMenu(
 	{ (XtCallbackProc) NULL, (XtPointer) NULL},
     };
 
-    /* Menus are created as childen of the Paned widget of the scrn in order
+    /* Menus are created as children of the Paned widget of the scrn in order
      * that they can be used both as pop-up and as pull-down menus.
      */
 
@@ -175,7 +175,7 @@ static void MakeCommandMenu(
 
 	    if (indent) { XtSetArg(args[n], XtNleftMargin, 18);	n++; }
 	    widgetclass = smeBSBObjectClass;
-	} else 
+	} else
 	    widgetclass = smeLineObjectClass;
 	XtCreateManagedWidget(e->name, widgetclass, menu, args, n);
     }
@@ -209,7 +209,7 @@ static void MakeTocAndView(Scrn scrn)
     scrn->folderbuttons = BBoxCreate(scrn, "folders");
     scrn->toclabel      = CreateTitleBar(scrn, "tocTitlebar");
     scrn->tocwidget	= CreateTextSW(scrn, "toc", args, XtNumber(args));
-    if (app_resources.command_button_count > 0) 
+    if (app_resources.command_button_count > 0)
 	scrn->miscbuttons = BBoxCreate(scrn, "commandBox");
     scrn->viewlabel     = CreateTitleBar(scrn, "viewTitlebar");
     scrn->viewwidget    = CreateTextSW(scrn, "view", args, (Cardinal) 0);
@@ -431,7 +431,7 @@ Scrn ScrnFromWidget(Widget w) /* heavily used, should be efficient */
     Punt("ScrnFromWidget failed!");
     return NULL;
 }
- 
+
 
 /* Figure out which buttons should and shouldn't be enabled in the given
  * screen.  This should be called whenever something major happens to the
@@ -443,7 +443,7 @@ Scrn ScrnFromWidget(Widget w) /* heavily used, should be efficient */
 static void EnableCallback(Widget w, XtPointer data, XtPointer junk)
 {
   EnableProperButtons( (Scrn) data);
-}  
+}
 
 #define SetButton(buttonbox, name, value) \
     if (value) BBoxEnable(BBoxFindButtonNamed(buttonbox, name)); \
@@ -492,10 +492,10 @@ void EnableProperButtons(Scrn scrn)
 		SetButton(scrn->viewbuttons, "insert",
 			  scrn->assocmsg != NULL ? True : False);
 
-		if (!changed) 
+		if (!changed)
 		    MsgSetCallOnChange(scrn->msg, EnableCallback,
 				       (XtPointer) scrn);
-		else 
+		else
 		    MsgSetCallOnChange(scrn->msg, (XtCallbackProc) NULL,
 				       (XtPointer) NULL);
 

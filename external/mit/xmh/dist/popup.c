@@ -46,7 +46,7 @@ static String XmhNnotice = "notice";
 static String XmhNokay = "okay";
 static String XmhNprompt = "prompt";
 static String XmhNvalue = "value";
-    
+
 /* The popups were originally parented from toplevel and neglected the
  * transientFor resource.  In order not to break existing user resource
  * settings for the popups, transientFor is set independent of the parent,
@@ -95,7 +95,7 @@ static Boolean PositionThePopup(
     Position	y)
 {
     /* Hack.  Fix up the position of the popup.  The xmh app defaults file
-     * contains an Xmh*Geometry specification; the effects of that on 
+     * contains an Xmh*Geometry specification; the effects of that on
      * popups, and the lack of any user-supplied geometry specification for
      * popups, are mitigated here, by giving the popup shell a position.
      * (Xmh*Geometry is needed in case there is no user-supplied default.)
@@ -153,7 +153,7 @@ static void CenterPopupPosition(
 	XtSetValues(popup, args, THREE);
     }
 }
-	 
+
 
 /* Insure that the popup is wholly showing on the screen.
    Optionally center the widget horizontally and/or vertically
@@ -245,7 +245,7 @@ static void TheUsual(
     XtAugmentTranslations(popup, app_resources.wm_protocols_translations);
     XtRealizeWidget(popup);
     XDefineCursor(XtDisplay(popup), XtWindow(popup), app_resources.cursor);
-    (void) XSetWMProtocols(XtDisplay(popup), XtWindow(popup), 
+    (void) XSetWMProtocols(XtDisplay(popup), XtWindow(popup),
 			   protocolList, XtNumber(protocolList));
 }
 
@@ -379,7 +379,7 @@ void PopupNotice(
 
     XawDialogAddButton( dialog, XmhNconfirm,
 		       ((callback != (XtCallbackProc) NULL)
-		          ? callback : (XtCallbackProc) FreePopupStatus), 
+		          ? callback : (XtCallbackProc) FreePopupStatus),
 		       (XtPointer) popup_status
 		      );
 
@@ -412,20 +412,20 @@ void PopupConfirm(
     XtSetArg(args[2], XtNtransientFor, transientFor);
     popup = XtCreatePopupShell(XmhNconfirm, transientShellWidgetClass,
 			       toplevel, args, THREE);
-    PositionThePopup(popup, x, y); 
+    PositionThePopup(popup, x, y);
 
     XtSetArg(args[0], XtNlabel, question);
     dialog = XtCreateManagedWidget(XmhNdialog, dialogWidgetClass, popup, args,
 				   ONE);
-    
+
     callbacks[0].closure = (XtPointer) popup;
     XtSetArg(args[0], XtNcallback, callbacks);
-    button = XtCreateManagedWidget("yes", commandWidgetClass, dialog, 
+    button = XtCreateManagedWidget("yes", commandWidgetClass, dialog,
 				   args, ONE);
     if (affirm_callbacks)
 	XtAddCallbacks(button, XtNcallback, affirm_callbacks);
 
-    button = XtCreateManagedWidget("no", commandWidgetClass, dialog, 
+    button = XtCreateManagedWidget("no", commandWidgetClass, dialog,
 				   args, ZERO);
     XtAddCallback(button, XtNcallback, DestroyPopup, (XtPointer) popup);
     if (negate_callbacks)
@@ -505,7 +505,7 @@ void PopupWarningHandler(
     }
     if (allowPopup) {
 	allowPopup = False;
-	PopupError((Widget)NULL, ptr); 
+	PopupError((Widget)NULL, ptr);
 	allowPopup = True;
     } else {
 	fprintf(stderr, ptr);

@@ -167,6 +167,6 @@ int main(int argc, char **argv)
     }
 #ifdef DEBUG_CLEANUP
     XtDestroyApplicationContext(appCtx);
-#endif    
+#endif
     exit(0);
 }

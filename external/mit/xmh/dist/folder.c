@@ -118,7 +118,7 @@ void DoClose(
 #endif
     }
     else {
-	if (MsgSetScrn((Msg) NULL, scrn, confirm_callbacks, 
+	if (MsgSetScrn((Msg) NULL, scrn, confirm_callbacks,
 		       (XtCallbackList) NULL) == NEEDS_CONFIRMATION)
 	    return;
 	DestroyScrn(scrn);	/* doesn't destroy first toc&view scrn */
@@ -169,12 +169,12 @@ void XmhOpenFolder(
      * In this case, the action will open a folder only if that folder
      * was actually selected from a folder button or menu.  If the folder
      * was selected from a folder menu, the menu entry callback procedure,
-     * which changes the selected folder, and is invoked by the "notify" 
+     * which changes the selected folder, and is invoked by the "notify"
      * action, must have already executed; and the menu entry "unhightlight"
      * action must execute after this action.
      *
      * This action does not execute if invoked as an accelerator whose
-     * source widget is a menu button or a folder menu.  However, it 
+     * source widget is a menu button or a folder menu.  However, it
      * may be invoked as a keyboard accelerator of any widget other than
      * the folder menu buttons or the folder menus.  In that case, it will
      * open the currently selected folder.
@@ -206,7 +206,7 @@ void DoComposeMessage(
     MapScrn(scrn);
 }
 
-   
+
 /*ARGSUSED*/
 void XmhComposeMessage(
     Widget	w,
@@ -232,7 +232,7 @@ void DoOpenFolderInNewWindow(
 	scrn = CreateNewScrn(STtocAndView);
 	TocSetScrn(toc, scrn);
 	MapScrn(scrn);
-    } else 
+    } else
 	PopupError(scrn->parent, "Cannot open selected folder.");
 }
 
@@ -271,13 +271,13 @@ static void CreateFolder(
     toc = TocGetNamed(name);
     if ((toc) || (i==0) || (name[0]=='/') || ((toc = TocCreateFolder(name))
 					      == NULL)) {
-	if (toc) 
+	if (toc)
 	    (void) sprintf(str, "Folder \"%s\" already exists.  Try again.",
 			   name);
 	else if (name[0]=='/')
 	    (void) sprintf(str, "Please specify folders relative to \"%s\".",
 			   app_resources.mail_path);
-	else 
+	else
 	    (void) sprintf(str, "Cannot create folder \"%s\".  Try again.",
 			   name);
 	label = XtNewString(str);
@@ -391,7 +391,7 @@ static void CheckAndConfirmDeleteFolder(
     confirms[0].closure = client_data;
     confirms[1].callback = (XtCallbackProc) NULL;
     confirms[1].closure = (XtPointer) NULL;
-    
+
     cancels[0].callback = (XtCallbackProc) CancelDeleteFolder;
     cancels[0].closure = client_data;
     cancels[1].callback = (XtCallbackProc) NULL;
@@ -422,19 +422,19 @@ static void CheckAndDeleteFolder(
     XtCallbackRec cancels[2];
     int 	i;
     char	*foldername;
-    
+
     /* Check for changes occurring after the popup was first presented. */
 
     confirms[0].callback = (XtCallbackProc) CheckAndConfirmDeleteFolder;
     confirms[0].closure = client_data;
     confirms[1].callback = (XtCallbackProc) NULL;
     confirms[1].closure = (XtPointer) NULL;
-    
+
     cancels[0].callback = (XtCallbackProc) CancelDeleteFolder;
     cancels[0].closure = client_data;
     cancels[1].callback = (XtCallbackProc) NULL;
     cancels[1].closure = (XtPointer) NULL;
-    
+
     if (TocConfirmCataclysm(toc, confirms, cancels) == NEEDS_CONFIRMATION)
 	return;
 
@@ -451,7 +451,7 @@ static void CheckAndDeleteFolder(
 		char *c = strchr( strcpy(parent_folder, foldername), '/');
 		*c = '\0';
 
-/* Since menus are built upon demand, and are a per-xmh-screen resource, 
+/* Since menus are built upon demand, and are a per-xmh-screen resource,
  * not all xmh toc & view screens will have the same menus built.
  * So the menu entry deletion routines must be able to handle a button
  * whose menu field is null.  It would be better to share folder menus
@@ -461,7 +461,7 @@ static void CheckAndDeleteFolder(
 
 		DeleteFolderMenuEntry
 		    ( BBoxFindButtonNamed( scrnList[i]->folderbuttons,
-					  parent_folder), 
+					  parent_folder),
 		     foldername);
 	    }
 	    else {
@@ -472,13 +472,13 @@ static void CheckAndDeleteFolder(
 
 	    /* If we've deleted the current folder, show the Initial Folder */
 
-	    if ((! strcmp(scrnList[i]->curfolder, foldername)) 
+	    if ((! strcmp(scrnList[i]->curfolder, foldername))
 		&& (BBoxNumButtons(scrnList[i]->folderbuttons))
 		&& (strcmp(foldername, app_resources.initial_folder_name)))
 		TocSetScrn(InitialFolder, scrnList[i]);
 	}
     XtFree(foldername);
-    if (deleteData->original_toc != NULL) 
+    if (deleteData->original_toc != NULL)
 	TocSetScrn(deleteData->original_toc, scrn);
     XtFree((char *) deleteData);
 }
@@ -503,7 +503,7 @@ void DoDeleteFolder(
 	return;
     }
 
-    /* Prevent more than one confirmation popup on the same folder. 
+    /* Prevent more than one confirmation popup on the same folder.
      * TestAndSet returns true if there is a delete pending on this folder.
      */
     if (TocTestAndSetDeletePending(toc))	{
@@ -582,7 +582,7 @@ static int IsFolder(char *name)
 static void DoSelectFolder(
     Widget 	w,		/* the menu entry object */
     XtPointer	closure,	/* foldername */
-    XtPointer	data)	
+    XtPointer	data)
 {
     Scrn	scrn = ScrnFromWidget(w);
     SetCurrentFolderName(scrn, (char *) closure);
@@ -598,7 +598,7 @@ static void FreeMenuData(
 }
 
 /* Function name:	AddFolderMenuEntry
- * Description:	
+ * Description:
  *	Add an entry to a menu.  If the menu is not already created,
  *	create it, including the (already existing) new subfolder directory.
  * 	If the menu is already created,	add the new entry.
@@ -649,17 +649,17 @@ static void AddFolderMenuEntry(
 	name = c;
     }
     XtSetArg(args[2], XtNlabel, label);				/* THREE */
-    XtCreateManagedWidget(name, smeBSBObjectClass, button->menu, 
+    XtCreateManagedWidget(name, smeBSBObjectClass, button->menu,
 			  args, THREE);
 }
 
 
 
 /* Function name:	CreateFolderMenu
- * Description:	
+ * Description:
  *	Menus are created for folder buttons if the folder has at least one
- *	subfolder.  For the directory given by the concatentation of 
- *	app_resources.mail_path, '/', and the name of the button, 
+ *	subfolder.  For the directory given by the concatenation of
+ *	app_resources.mail_path, '/', and the name of the button,
  *	CreateFolderMenu creates the menu whose entries are
  *	the subdirectories which do not begin with '.' and do not have
  *	names which are all digits, and do not have names which are a '#'
@@ -689,7 +689,7 @@ static void CreateFolderMenu(
 
     button->menu = XtCreatePopupShell("menu", simpleMenuWidgetClass,
 				      button->widget, (ArgList) NULL, ZERO);
-	
+
     /* The first entry is always the parent folder */
 
     AddFolderMenuEntry(button, button->name);
@@ -722,13 +722,13 @@ static void DeleteFolderMenuEntry(
     int		n;
     char	tmpname[300];
     Widget	entry;
-    
+
     if (button == NULL || button->menu == NULL) return;
     XtSetArg(args[0], XtNnumChildren, &n);
     XtSetArg(args[1], XtNlabel, &c);
     XtGetValues(button->menu, args, TWO);
     if ((n <= 3 && c) || n <= 2) {
-	XtDestroyWidget(button->menu);	
+	XtDestroyWidget(button->menu);
 	button->menu = NoMenuForButton;
 	return;
     }
@@ -748,11 +748,11 @@ static void DeleteFolderMenuEntry(
 }
 
 /* Function Name:	PopupFolderMenu
- * Description:		This action should alwas be taken when the user
- *	selects a folder button.  A folder button represents a folder 
+ * Description:		This action should always be taken when the user
+ *	selects a folder button.  A folder button represents a folder
  *	and zero or more subfolders.  The menu of subfolders is built upon
- *	the first reference to it, by this routine.  If there are no 
- *	subfolders, this routine will mark the folder as having no 
+ *	the first reference to it, by this routine.  If there are no
+ *	subfolders, this routine will mark the folder as having no
  *	subfolders, and no menu will be built.  In that case, the menu
  *	button emulates a command button.  When subfolders exist,
  *	the menu will popup, using the menu button action PopupMenu.
@@ -786,7 +786,7 @@ void XmhPopupFolderMenu(
 
 
 /* Function Name:	XmhSetCurrentFolder
- * Description:		This action procedure allows menu buttons to 
+ * Description:		This action procedure allows menu buttons to
  *	emulate toggle widgets in their function of folder selection.
  *	Therefore, mh folders with no subfolders can be represented
  * 	by a button instead of a menu with one entry.  Sets the currently
@@ -806,11 +806,11 @@ void XmhSetCurrentFolder(
     /* The MenuButton widget has a button grab currently active; the
      * currently selected folder will be updated if the user has released
      * the mouse button while the mouse pointer was on the same menu button
-     * widget that orginally activated the button grab.  This mechanism is
+     * widget that originally activated the button grab.  This mechanism is
      * insured by the XmhPopupFolderMenu action setting LastMenuButtonPressed.
      * The action XmhLeaveFolderButton, and it's translation in the application
      * defaults file, bound to LeaveWindow events, insures that the menu
-     * button behaves properly when the user moves the pointer out of the 
+     * button behaves properly when the user moves the pointer out of the
      * menu button window.
      *
      * This action is for menu button widgets only.
@@ -874,7 +874,7 @@ void XmhPushFolder(
     Scrn	scrn = ScrnFromWidget(w);
     Cardinal	i;
 
-    for (i=0; i < *count; i++) 
+    for (i=0; i < *count; i++)
 	Push(&scrn->folder_stack, params[i]);
 
     if (*count == 0 && scrn->curfolder)
@@ -925,7 +925,7 @@ void XmhWMProtocols(
 #define DO_DELETE_WINDOW InParams(WM_DELETE_WINDOW, params, *num_params)
 #define DO_SAVE_YOURSELF InParams(WM_SAVE_YOURSELF, params, *num_params)
 
-    /* Respond to a recognized WM protocol request iff 
+    /* Respond to a recognized WM protocol request iff
      * event type is ClientMessage and no parameters are passed, or
      * event type is ClientMessage and event data is matched to parameters, or
      * event type isn't ClientMessage and parameters make a request.
@@ -953,7 +953,7 @@ void XmhWMProtocols(
     if (sy) {
 	register int i;
 	for (i=0; i<numScrns; i++)
-	    if (scrnList[i]->msg) 
+	    if (scrnList[i]->msg)
 		MsgCheckPoint(scrnList[i]->msg);
 	if (w) /* don't generate a property notify via the checkpoint timer */
 	    XChangeProperty(XtDisplay(toplevel), XtWindow(toplevel),

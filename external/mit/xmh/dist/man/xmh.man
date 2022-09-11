@@ -680,7 +680,7 @@ Meta-Shift Backspace	Kill Previous Word
 .TE
 .sp
 In addition, the pointer may be used to copy and paste text:
-.TS 
+.TS
 l l.
 Button 1 Down	Start Selection
 Button 1 Motion	Adjust Selection
