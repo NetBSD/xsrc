@@ -167,21 +167,12 @@ show_glyphs(
     FSChar2b    last)
 {
     FSXCharInfo *extents;
-    int         err,
-                ch,
-		start;
-    int         offset = 0;
+    unsigned int   offset = 0;
     unsigned char *glyphs;
     FSOffset   *offsets;
     int         scanpad;
-    int         r,
-                b;
-    FSBitmapFormat format;
     FSChar2b    chars[2];
     int         num_chars;
-    int		row,
-		col,
-		temp_ch;
 
     if (show_all) {
 	num_chars = 0;
@@ -193,9 +184,9 @@ show_glyphs(
     FSQueryXExtents16(svr, fid, True, chars, num_chars, &extents);
 
     if (!extents_only) {
-	format = make_format();
-	err = FSQueryXBitmaps16(svr, fid, format, True, chars, num_chars,
-				&offsets, &glyphs);
+	FSBitmapFormat format = make_format();
+	int err = FSQueryXBitmaps16(svr, fid, format, True, chars, num_chars,
+				    &offsets, &glyphs);
 
 	if (err != FSSuccess) {
 	    fprintf(stderr, "QueryGlyphs failed\n");
@@ -205,17 +196,17 @@ show_glyphs(
 
     scanpad = scan_pad >> 3;
 
-    for (row = (int)first.high; row <= (int)last.high; row++) {
-	start = first.low + (row << 8);
-	for (col = (int)first.low; col <= (int)last.low; col++) {
+    for (int row = (int)first.high; row <= (int)last.high; row++) {
+	int start = first.low + (row << 8);
+	for (int col = (int)first.low; col <= (int)last.low; col++) {
 	    int		bottom,
 			bpr,
 	        	charwidth;
 
-	    ch = ((row - (int)first.high)
-		  * ((int)last.low - (int)first.low + 1))
+	    int ch = ((row - (int)first.high)
+                      * ((int)last.low - (int)first.low + 1))
 		+ (col - (int)first.low);
-	    temp_ch = start + (col - (int)first.low);
+	    int temp_ch = start + (col - (int)first.low);
 	    printf("char #%d", temp_ch);
 	    if ((temp_ch >= 0) && (temp_ch <= 127) && isprint(temp_ch))
 		printf(" '%c'\n", (char) (temp_ch));
@@ -255,16 +246,16 @@ show_glyphs(
 		continue;
 	    }
 	    bpr = GLWIDTHBYTESPADDED(charwidth, scanpad);
-	    if (offsets[ch].length != bottom * bpr) {
+	    if (offsets[ch].length != (unsigned)(bottom * bpr)) {
 		fprintf (stderr,
 			 "length mismatch: expected %d (%dx%d), got %d\n",
 			 bottom * bpr, bpr, bottom, offsets[ch].length);
 	    }
 	    offset = offsets[ch].position;
-	    for (r = 0; r < bottom; r++) {
+	    for (int r = 0; r < bottom; r++) {
 		unsigned char *rowp = glyphs + offset;
 
-		for (b = 0; b < charwidth; b++) {
+		for (int b = 0; b < charwidth; b++) {
 		    putchar((rowp[b >> 3] &
 			     (1 << (7 - (b & 7)))) ? '#' : '-');
 		}
@@ -286,12 +277,11 @@ show_props(
     FSPropOffset *po,
     unsigned char *pd)
 {
-    int         i;
     char        buf[512];
     int         num_props;
 
     num_props = pi->num_offsets;
-    for (i = 0; i < num_props; i++, po++) {
+    for (int i = 0; i < num_props; i++, po++) {
 	strncpy(buf, (char *) (pd + po->name.position), po->name.length);
 	buf[po->name.length] = '\0';
 	printf("%s\t", buf);
@@ -369,19 +359,14 @@ main(int argc, char **argv)
 {
     const char *servername = "localhost:7100"; /* -server: font server name */
     char *fontname = NULL; /* -fn: font name */
-    int         i;
     Font        fid,
                 dummy;
     FSBitmapFormat format;
     FSBitmapFormatMask fmask;
-    FSChar2b    first,
-                last;
-    FSXFontInfoHeader hdr;
-    Bool        show_all = True;
 
     ProgramName = argv[0];
 
-    for (i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 	if (!strncmp(argv[i], "-se", 3)) {
 	    if (++i < argc)
 		servername = argv[i];
@@ -460,16 +445,21 @@ main(int argc, char **argv)
 	     BitmapFormatMaskScanLineUnit);
     fid = FSOpenBitmapFont(svr, format, fmask, fontname, &dummy);
     if (fid) {
+	Bool	    show_all = True;
+	FSChar2b    first,
+		    last;
+	FSXFontInfoHeader hdr;
+
 	printf("opened font %s\n", fontname);
 	show_info(fid, &hdr, &first, &last);
 	if (first_ch != 0 &&
-		((unsigned)first_ch >= (first.low + (first.high << 8)))) {
+            ((unsigned)first_ch >= (first.low + ((unsigned)first.high << 8)))) {
 	    first.low = first_ch & 0xff;
 	    first.high = first_ch >> 8;
 	    show_all = False;
 	}
 	if (end_ch != ~0 &&
-		((unsigned)end_ch <= (last.low + (last.high << 8)))) {
+            ((unsigned)end_ch <= (last.low + ((unsigned)last.high << 8)))) {
 	    last.low = end_ch & 0xff;
 	    last.high = end_ch >> 8;
 	    show_all = False;
@@ -479,7 +469,7 @@ main(int argc, char **argv)
 					 first.low > last.low)) {
 	    last = first;
 	    fprintf(stderr,
-		    "adjusting range -- specifed first char is after end\n");
+		    "adjusting range -- specified first char is after end\n");
 	}
 	show_glyphs(fid, &hdr, show_all, first, last);
 	FSCloseFont(svr, fid);

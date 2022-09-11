@@ -1,3 +1,138 @@
+commit 7e270443d201adf2977e52f74e1cde596a78ca38
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Aug 30 17:27:56 2022 -0700
+
+    showfont 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7d35ec8371c7744359b9b63017e3851c46ad4c16
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 13 18:04:41 2022 -0700
+
+    Take care of -Wsign-compare warnings
+    
+    showfont.c: In function ‘show_glyphs’:
+    showfont.c:218:17: warning: comparison between signed and unsigned
+      integer expressions [-Wsign-compare]
+          if (offset != offsets[ch].position)
+                     ^~
+    showfont.c:249:29: warning: comparison between signed and unsigned
+      integer expressions [-Wsign-compare]
+          if (offsets[ch].length != bottom * bpr) {
+                                 ^~
+    showfont.c: In function ‘main’:
+    showfont.c:456:23: warning: comparison between signed and unsigned
+      integer expressions [-Wsign-compare]
+       ((unsigned)first_ch >= (first.low + (first.high << 8)))) {
+                           ^~
+    showfont.c:462:21: warning: comparison between signed and unsigned
+      integer expressions [-Wsign-compare]
+       ((unsigned)end_ch <= (last.low + (last.high << 8)))) {
+                         ^~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4618f9dbbcb93805b64d86fae3a1ec82f8f6849b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 13 17:22:20 2022 -0700
+
+    Reduce variable scopes as suggested by cppcheck
+    
+    [showfont.c:170]: (style) The scope of the variable 'err' can be reduced.
+    [showfont.c:172]: (style) The scope of the variable 'start' can be reduced.
+    [showfont.c:179]: (style) The scope of the variable 'format' can be reduced.
+    [showfont.c:380]: (style) The scope of the variable 'show_all' can be reduced.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ce1a1d32f1dc4220a8b6d87d270120d69ba00509
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 2 12:04:13 2022 -0700
+
+    man page: remove out-of-date COPYRIGHT section
+    
+    The information previously listed here didn't match what is present in
+    the source code or the COPYING file, and the X(7) man page doesn't list
+    any license information as this had claimed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 63114c47a54e19f628e174c33b8761fc54f5998a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 10:01:39 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8aa504ca8d933c2756ed4cbf525e8089ebf3c8ad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 10:01:31 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8256ff6160cc042565295dc0c31913515016c026
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 11:45:44 2021 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b5c6fd043c08a0c84b7b2f04a0c28322cbc6a473
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 16:57:17 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2ed2d284d36b75e4b3263e633f5e46d82ccc77a9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 20:47:12 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 680c8252ae8fc877fd99ef43116fe86a5131b07a
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:20 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit ef7f002d2877f934c99dd696ab5ff2bd895f2fe2
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit bed259f2ddfb8d2d997dad9bdffc6be580ba3dd1
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit 459ea00b62fe926fae9856b12865a536067bb68e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Dec 30 21:10:00 2014 -0800
@@ -417,7 +552,7 @@ Date:   Wed Jul 20 19:31:50 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit be7ea5c74651a911570e8c2d42c13f641c8c9f65
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jun 29 18:42:26 2005 +0000
 
     Add buildsystem for showfont

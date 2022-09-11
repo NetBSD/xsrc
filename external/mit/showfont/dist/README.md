@@ -1,0 +1,19 @@
+showfont displays data about a font from an X font server.
+The information shown includes font information, font properties,
+character metrics, and character bitmaps.
+
+All questions regarding this software should be directed at the
+Xorg mailing list:
+
+  https://lists.x.org/mailman/listinfo/xorg
+
+The primary development code repository can be found at:
+
+  https://gitlab.freedesktop.org/xorg/app/showfont
+
+Please submit bug reports and requests to merge patches there.
+
+For patch submission instructions, see:
+
+  https://www.x.org/wiki/Development/Documentation/SubmittingPatches
+
