@@ -32,20 +32,18 @@
 #include <X11/Xpoll.h>
 #include <sys/ioctl.h>
 #include <signal.h>
-#ifndef SYSV
 #include <sys/wait.h>
-#endif	/* SYSV */
-#if defined(SVR4) && !defined(DGUX)
+#if defined(SVR4)
 #include <sys/filio.h>
 #endif
 
 /* number of user input events to queue before malloc */
 #define TYPEAHEADSIZE 20
 
-#ifndef HAS_VFORK
-#define vfork() fork()
+#ifndef HAVE_WORKING_VFORK
+#define vfork fork
 #else
-#if defined(sun) && !defined(SVR4)
+#ifdef HAVE_VFORK_H
 #include <vfork.h>
 #endif
 #endif
@@ -72,7 +70,7 @@ static void CheckReadFromPipe(int, char **, int *, Bool);
 static void SystemError(char* text)
 {
     char msg[BUFSIZ];
-    sprintf( msg, "%s; errno = %d %s", text, errno, 
+    sprintf( msg, "%s; errno = %d %s", text, errno,
 	     strerror(errno));
     XtWarning( msg );
 }
@@ -278,7 +276,7 @@ static int _DoCommandToFileOrPipe(
 		if (type_ahead_count < TYPEAHEADSIZE) {
 		    if (++type_ahead_count == TYPEAHEADSIZE) {
 			altQueue = (XEvent*)XtMalloc(
-				(Cardinal)TYPEAHEADSIZE*sizeof(XEvent) );     
+				(Cardinal)TYPEAHEADSIZE*sizeof(XEvent) );
 			alt_queue_size = TYPEAHEADSIZE;
 			eventP = altQueue;
 		    }
@@ -332,7 +330,7 @@ static int _DoCommandToFileOrPipe(
 	        (strcmp(argv[1], "-c") == 0)) {
 	        status->shell_command = XtNewString(argv[2]);
             } else status->shell_command = (char*) NULL;
-	
+
 	    while (status->error_buffer[status->error_buf_size-1]  == '\0')
 		status->error_buf_size--;
 	    while (status->error_buffer[status->error_buf_size-1]  == '\n')
@@ -460,7 +458,7 @@ char *DoCommandToString(char ** argv)
     DEBUG1("('%s')\n", result)
     return result;
 }
-    
+
 
 /* Execute the command to a temporary file, and return the name of the file. */
 

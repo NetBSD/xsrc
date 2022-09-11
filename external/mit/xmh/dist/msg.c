@@ -115,7 +115,7 @@ static void ResetMsgLabel(Scrn scrn)
 }
 
 
-/* A major msg change has occured; redisplay it.  (This also should
+/* A major msg change has occurred; redisplay it.  (This also should
 work even if we now have a new source to display stuff from.)  This
 routine arranges to hide boring headers, and also will set the text
 insertion point to the proper place if this is a composition and we're
@@ -283,7 +283,7 @@ static void RemoveMsgConfirmed(Scrn scrn)
 	(void) unlink(MsgFileName(scrn->msg));
 	TocRemoveMsg(scrn->msg->toc, scrn->msg);
 	MsgFree(scrn->msg);
-    }		
+    }
 }
 
 
@@ -332,8 +332,8 @@ static void ConfirmedWithScrn(
     SetScrnNewMsg(mas->msg, mas->scrn);
     XtFree((char *) mas);
 }
-    
-    
+
+
 static int SetScrn(
     Msg		msg,
     Scrn	scrn,
@@ -421,7 +421,7 @@ int MsgSetScrn(
 
 void MsgSetScrnForComp(Msg msg, Scrn scrn)
 {
-    (void) SetScrn(msg, scrn, FALSE, (XtCallbackList) NULL, 
+    (void) SetScrn(msg, scrn, FALSE, (XtCallbackList) NULL,
 		   (XtCallbackList) NULL);
 }
 
@@ -609,7 +609,7 @@ int MsgChanged(Msg msg)
 
 /* Call the given function when the msg changes. */
 
-void 
+void
 MsgSetCallOnChange(Msg msg, void (*func)(XMH_CB_ARGS), XtPointer param)
 {
   Arg args[1];
@@ -629,7 +629,7 @@ MsgSetCallOnChange(Msg msg, void (*func)(XMH_CB_ARGS), XtPointer param)
 
 /* Send (i.e., mail) the given message as is.  First break it up into lines,
    and copy it to a new file in the process.  The new file is one of 10
-   possible draft files; we rotate amoung the 10 so that the user can have up
+   possible draft files; we rotate among the 10 so that the user can have up
    to 10 messages being sent at once.  (Using a file in /tmp is a bad idea
    because these files never actually get deleted, but renamed with some
    prefix.  Also, these should stay in an area private to the user for
@@ -796,7 +796,7 @@ void MsgLoadReply(
 
 
 
-/* Load a msg with a template of forwarding a list of messages.  Set 
+/* Load a msg with a template of forwarding a list of messages.  Set
    msg->startPos so that the text insertion point will be placed at the end
    of the first line (which is usually a "To:" field). */
 
@@ -819,7 +819,7 @@ void MsgLoadForward(
     }
     argv[2 + i] = "-nowhatnowproc";
     argv[3 + i] = "-nodraftfolder";
-    memmove( (char *)(argv + 4 + i), (char *)params, 
+    memmove( (char *)(argv + 4 + i), (char *)params,
 	  num_params * sizeof(String *));
     DoCommand(argv, (char *) NULL, (char *) NULL);
     for (i = 1; i < 2 + mlist->nummsgs; i++)
@@ -829,7 +829,7 @@ void MsgLoadForward(
     RestoreDraft();
     TocSetCacheValid(msg->toc);
     msg->source = CreateFileSource(scrn->viewlabel, MsgFileName(msg), True);
-    msg->startPos = XawTextSourceScan(msg->source, (XawTextPosition) 0, 
+    msg->startPos = XawTextSourceScan(msg->source, (XawTextPosition) 0,
 				      XawstEOL, XawsdRight, 1, False);
 }
 
@@ -922,7 +922,7 @@ void XmhInsert(
 }
 
 /*	Function Name: CreateFileSource
- *	Description: Creates an AsciiSource for a file. 
+ *	Description: Creates an AsciiSource for a file.
  *	Arguments: w - the widget to create the source for.
  *                 filename - the file to assign to this source.
  *                 edit - if TRUE then this disk source is editable.
@@ -937,12 +937,12 @@ CreateFileSource(Widget w, String filename, Boolean edit)
 
   XtSetArg(arglist[num_args], XtNtype, XawAsciiFile);  num_args++;
   XtSetArg(arglist[num_args], XtNstring, filename);    num_args++;
-  if (edit) 
+  if (edit)
       XtSetArg(arglist[num_args], XtNeditType, XawtextEdit);
   else
       XtSetArg(arglist[num_args], XtNeditType, XawtextRead);
   num_args++;
 
-  return(XtCreateWidget("textSource", asciiSrcObjectClass, w, 
+  return(XtCreateWidget("textSource", asciiSrcObjectClass, w,
 			arglist, num_args));
 }

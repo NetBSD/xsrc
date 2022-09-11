@@ -44,7 +44,7 @@
 #define Offset(field) XtOffsetOf(TocSourceRec, toc_source.field)
 
 static XtResource resources[] = {
-    {XtNtoc, XtCToc, XtRPointer, sizeof(caddr_t), 
+    {XtNtoc, XtCToc, XtRPointer, sizeof(caddr_t),
        Offset(toc), XtRPointer, NULL},
 };
 
@@ -59,7 +59,7 @@ static int Replace(Widget, XawTextPosition, XawTextPosition, XawTextBlock *);
 #define SuperClass		(&textSrcClassRec)
 TocSourceClassRec tocSourceClassRec = {
   {
-/* core_class fields */	
+/* core_class fields */
     /* superclass	  	*/	(WidgetClass) SuperClass,
     /* class_name	  	*/	"TocSrc",
     /* widget_size	  	*/	sizeof(TocSourceRec),
@@ -184,7 +184,7 @@ Read(
 /* Right now, we can only replace a piece with another piece of the same size,
    and it can't cross between lines. */
 
-static int 
+static int
 Replace(
     Widget w,
     XawTextPosition startPos,
@@ -204,7 +204,7 @@ Replace(
 /*    for (i=0 ; i<toc->numwidgets ; i++)
 	XawTextInvalidate(toc->widgets[i], startPos, endPos);
 *
-* CDP 9/1/89 
+* CDP 9/1/89
 */
     return XawEditDone;
 }
@@ -225,7 +225,7 @@ Replace(
 
 
 
-static XawTextPosition 
+static XawTextPosition
 Scan(
     Widget w,
     XawTextPosition position,
@@ -338,6 +338,6 @@ static void Initialize(
 void
 TSourceInvalid(Toc toc, XawTextPosition position, int length)
 {
-  XawTextInvalidate(XtParent(toc->source), position, 
+  XawTextInvalidate(XtParent(toc->source), position,
 		    (XawTextPosition) position+length-1);
 }

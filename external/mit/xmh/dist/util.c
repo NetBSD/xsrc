@@ -382,7 +382,7 @@ Toc SelectedToc(Scrn scrn)
 
     /* tocs of subfolders are created upon the first reference */
 
-    if ((toc = TocGetNamed(scrn->curfolder)) == NULL) 
+    if ((toc = TocGetNamed(scrn->curfolder)) == NULL)
         toc = TocCreate(scrn->curfolder);
     return toc;
 }
@@ -427,8 +427,8 @@ void InitBusyCursor(Scrn scrn)
     XSetWindowAttributes	attributes;
 
     /* the second condition is for the pick scrn */
-    if (! app_resources.block_events_on_busy || scrn->wait_window) 
-	return;	
+    if (! app_resources.block_events_on_busy || scrn->wait_window)
+	return;
 
     /* Ignore device events while the busy cursor is displayed. */
 
@@ -443,7 +443,7 @@ void InitBusyCursor(Scrn scrn)
      */
 
     scrn->wait_window =
-	XCreateWindow(XtDisplay(scrn->parent), XtWindow(scrn->parent), 0, 0, 
+	XCreateWindow(XtDisplay(scrn->parent), XtWindow(scrn->parent), 0, 0,
 		      rootwidth, rootheight, (unsigned int) 0, CopyFromParent,
 		      InputOnly, (Visual *)CopyFromParent, valuemask, &attributes);
 }
@@ -460,7 +460,7 @@ void ShowBusyCursor(void)
 void UnshowBusyCursor(void)
 {
     register int	i;
-    
+
     for (i=0; i < numScrns; i++)
 	if (scrnList[i]->mapped)
 	    XUnmapWindow(theDisplay, scrnList[i]->wait_window);

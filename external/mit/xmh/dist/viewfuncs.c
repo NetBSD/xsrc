@@ -44,13 +44,13 @@ void DoCloseView(
     confirms[0].closure = (XtPointer) scrn;
     confirms[1].callback = (XtCallbackProc) NULL;
     confirms[1].closure = (XtPointer) NULL;
-    
+
     if (MsgSetScrn((Msg) NULL, scrn, confirms, (XtCallbackList) NULL) ==
 	NEEDS_CONFIRMATION)
 	return;
     DestroyScrn(scrn);
 }
-    
+
 
 /*ARGSUSED*/
 void XmhCloseView(
@@ -161,7 +161,7 @@ void DoViewUseAsComposition(
     MsgSetScrnForComp(msg, nscrn);
     MapScrn(nscrn);
 }
-    
+
 
 /*ARGSUSED*/
 void XmhViewUseAsComposition(

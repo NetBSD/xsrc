@@ -57,7 +57,7 @@ int TUScanFileOutOfDate(Toc toc)
 }
 
 
-/* Make sure the sequence menu entries correspond exactly to the sequences 
+/* Make sure the sequence menu entries correspond exactly to the sequences
  * for this toc.
  */
 
@@ -99,7 +99,7 @@ void TUCheckSequenceMenu(Toc toc)
 
 	/* Erase the current check mark. */
 
-	for (i=(n-1); i < numChildren; i++) 
+	for (i=(n-1); i < numChildren; i++)
 	    ToggleMenuItem(children[i], False);
 
 	/* Delete any entries which should be deleted. */
@@ -109,9 +109,9 @@ void TUCheckSequenceMenu(Toc toc)
 		XtDestroyWidget(children[i]);
 
 	/* Create any entries which should be created. */
-	
+
 	callbacks[0].closure = (XtPointer) scrn;
-	for (i=1; i < toc->numsequences; i++) 
+	for (i=1; i < toc->numsequences; i++)
 	    if (! XtNameToWidget(menu, toc->seqlist[i]->name))
 		XtCreateManagedWidget(toc->seqlist[i]->name, smeBSBObjectClass,
 				      menu, args, XtNumber(args));
@@ -210,7 +210,7 @@ void TUResetTocLabel(Scrn scrn)
 }
 
 
-/* A major toc change has occured; redisplay it.  (This also should work even
+/* A major toc change has occurred; redisplay it.  (This also should work even
    if we now have a new source to display stuff from.) */
 
 void TURedisplayToc(Scrn scrn)
@@ -393,7 +393,7 @@ void TULoadTocFile(Toc toc)
 	    buf[bufsiz-2] = '\n';
 	    msg->buf = strcpy(XtMalloc((Cardinal) ++l), ptr);
 	    msg->msgid = atoi(ptr);
-	    do 
+	    do
 		ptr = fgets(buf, bufsiz, fid);
 	    while (ptr && (int) strlen(ptr) == app_resources.toc_width
 		   && buf[bufsiz-2] != '\n');
@@ -493,12 +493,8 @@ void TUSaveTocFile(Toc toc)
     if (fid < 0 && toc->length != toc->origlength)
 	fid = myopen(toc->scanfile, O_RDWR, 0666);
     if (fid >= 0) {
-#if defined(SYSV) && (defined(i386) || defined(MOTOROLA))
-	(void) ftruncate_emu(fid, toc->length, toc->scanfile);
-#else
 	(void) ftruncate(fid, toc->length);
 	myclose(fid);
-#endif
 	toc->origlength = toc->length;
     }
     toc->needscachesave = FALSE;
@@ -609,7 +605,7 @@ Msg TUAppendToc(Toc toc, char *ptr)
     TUGetFullFolderInfo(toc);
     if (toc->validity != valid)
 	return NULL;
-	    
+
     if (toc->nummsgs > 0)
 	msgid = toc->msgs[toc->nummsgs - 1]->msgid + 1;
     else

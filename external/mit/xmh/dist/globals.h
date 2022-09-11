@@ -127,7 +127,7 @@ extern Boolean	subProcessRunning; /* interlock for DoCommand/CheckMail */
 typedef struct _XmhMenuEntry {
     char	*name;			/* menu entry name */
     void   	(*function)(XMH_CB_ARGS); /* menu entry callback function */
-} XmhMenuEntryRec, *XmhMenuEntry;	
+} XmhMenuEntryRec, *XmhMenuEntry;
 
 
 typedef struct _XmhMenuButtonDesc {

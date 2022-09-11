@@ -139,7 +139,7 @@ static XtResource resources[] = {
 	 Offset(pointer_color), XtRString, XtDefaultForeground},
     {"showOnInc", "ShowOnInc", XtRBoolean, sizeof(Boolean),
 	 Offset(show_on_inc), XtRImmediate, (XtPointer)True},
-    {"stickyMenu", "StickyMenu", XtRBoolean, sizeof(Boolean), 	
+    {"stickyMenu", "StickyMenu", XtRBoolean, sizeof(Boolean),
 	 Offset(sticky_menu), XtRImmediate, (XtPointer)False},
     {"prefixWmAndIconName", "PrefixWmAndIconName", XtRBoolean, sizeof(Boolean),
 	 Offset(prefix_wm_and_icon_name), XtRImmediate, (XtPointer)True},
@@ -157,7 +157,7 @@ static XtResource resources[] = {
 	 Offset(app_defaults_version), XtRImmediate, (XtPointer)0},
     {"banner", "Banner", XtRString, sizeof(char *),
 	 Offset(banner), XtRString, XMH_VERSION},
-    {"wmProtocolsTranslations", "WMProtocolsTranslations", 
+    {"wmProtocolsTranslations", "WMProtocolsTranslations",
 	 XtRTranslationTable, sizeof(XtTranslations),
 	 Offset(wm_protocols_translations), XtRString,
 	 "<Message>WM_PROTOCOLS: XmhWMProtocols()\n"}
@@ -212,7 +212,7 @@ static int _IOErrorHandler(Display *dpy)
 
     if (errno == EPIPE) {
 	(void) fprintf (stderr,
-     "\tThe connection was probably broken by a server shutdown or KillClient.\r\n");
+     "\the connection was probably broken by a server shutdown or KillClient.\r\n");
     }
 
     Punt("Cannot continue from server error.");
@@ -353,7 +353,7 @@ void InitializeWorld(int argc, char **argv)
 	{"XmhPromptOkayAction",		XmhPromptOkayAction},
 
 	/* retained for backward compatibility with user resources */
-	
+
 	{"XmhCancelPick",		XmhWMProtocols}
     };
 
@@ -477,13 +477,13 @@ void InitializeWorld(int argc, char **argv)
     BBoxInit();
 
     XtAppAddActions(app, actions, XtNumber(actions));
-    XtRegisterGrabAction(XmhPopupFolderMenu, True, 
+    XtRegisterGrabAction(XmhPopupFolderMenu, True,
 			 ButtonPressMask | ButtonReleaseMask,
 			 GrabModeAsync, GrabModeAsync);
     wm_protocols = XInternAtom(XtDisplay(toplevel), "WM_PROTOCOLS", False);
     protocolList[0] = wm_delete_window =
 	XInternAtom(XtDisplay(toplevel), "WM_DELETE_WINDOW", False);
-    protocolList[1] = wm_save_yourself = 
+    protocolList[1] = wm_save_yourself =
 	XInternAtom(XtDisplay(toplevel), "WM_SAVE_YOURSELF", False);
 
     XtAddCallback(toplevel, XtNsaveCallback, DoSaveYourself, (XtPointer)NULL);
@@ -501,7 +501,7 @@ void InitializeWorld(int argc, char **argv)
     SetCursorColor(scrn->parent, app_resources.cursor,
 		   app_resources.pointer_color);
     if (app_resources.block_events_on_busy)
-	SetCursorColor(scrn->parent, app_resources.busy_cursor, 
+	SetCursorColor(scrn->parent, app_resources.busy_cursor,
 		       app_resources.busy_pointer_color);
 
     DEBUG(" setting toc ... ")
