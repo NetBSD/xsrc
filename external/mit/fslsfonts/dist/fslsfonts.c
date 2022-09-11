@@ -51,6 +51,15 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <X11/Xos.h>
 #include <stdlib.h>
+#include <assert.h>
+
+#ifdef HAVE_BSD_STDLIB_H
+#include <bsd/stdlib.h>
+#endif
+
+#ifndef HAVE_REALLOCARRAY
+#define reallocarray(old, num, size) realloc(old, (num) * (size))
+#endif
 
 #ifndef N_START
 #define N_START 1000		/* Maximum # of fonts to start with */
@@ -89,7 +98,8 @@ static int compare ( const void *f1, const void *f2 );
 static void show_fonts ( void );
 static void print_font_header ( void );
 static void show_font_header ( FontList *list );
-static void copy_number ( char **pp1, char **pp2, int n1, int n2 );
+static void copy_number ( char **pp1, char **pp2, char **ep1, char **ep2,
+                          int n1, int n2, char suffix );
 static void show_font_props ( FontList *list );
 
 static void _X_NORETURN _X_COLD
@@ -262,17 +272,19 @@ get_list(const char *pattern)
 		program_name, pattern);
 	return;
     }
-    if (font_list)
-	font_list = realloc(font_list, (font_cnt + (unsigned) available)
-                            * sizeof(FontList));
-    else
-	font_list = malloc((font_cnt + (unsigned) available)
-                           * sizeof(FontList));
-    if (font_list == NULL) {
-        fprintf(stderr, "%s: unable to allocate %zu bytes for font list\n",
-                program_name,
-                (font_cnt + (unsigned) available) * sizeof(FontList));
-        exit(-1);
+    else {
+	FontList *old_list = font_list;
+
+	font_list = reallocarray(old_list, (font_cnt + (unsigned) available),
+                                 sizeof(FontList));
+
+	if (font_list == NULL) {
+	    free(old_list);
+	    fprintf(stderr, "%s: unable to allocate %zu bytes for font list\n",
+		    program_name,
+		    (font_cnt + (unsigned) available) * sizeof(FontList));
+	    exit(-1);
+	}
     }
     for (i = 0; i < available; i++) {
 	font_list[font_cnt].name = fonts[i];
@@ -435,35 +447,26 @@ show_font_header(FontList *list)
 	            max[BUFSIZ];
 	char       *pmax = max,
 	           *pmin = min;
+	char       *emin = min + sizeof(min),
+	           *emax = max + sizeof(max);
 
-	strcpy(pmin, "     min(l,r,w,a,d) = (");
-	strcpy(pmax, "     max(l,r,w,a,d) = (");
-	pmin += strlen(pmin);
-	pmax += strlen(pmax);
-
-	copy_number(&pmin, &pmax,
+	copy_number(&pmin, &pmax, &emin, &emax,
 		    pfh->min_bounds.left,
-		    pfh->max_bounds.left);
-	*pmin++ = *pmax++ = ',';
-	copy_number(&pmin, &pmax,
+		    pfh->max_bounds.left, ',');
+	copy_number(&pmin, &pmax, &emin, &emax,
 		    pfh->min_bounds.right,
-		    pfh->max_bounds.right);
-	*pmin++ = *pmax++ = ',';
-	copy_number(&pmin, &pmax,
+		    pfh->max_bounds.right, ',');
+	copy_number(&pmin, &pmax, &emin, &emax,
 		    pfh->min_bounds.width,
-		    pfh->max_bounds.width);
-	*pmin++ = *pmax++ = ',';
-	copy_number(&pmin, &pmax,
+		    pfh->max_bounds.width, ',');
+	copy_number(&pmin, &pmax, &emin, &emax,
 		    pfh->min_bounds.ascent,
-		    pfh->max_bounds.ascent);
-	*pmin++ = *pmax++ = ',';
-	copy_number(&pmin, &pmax,
+		    pfh->max_bounds.ascent, ',');
+	copy_number(&pmin, &pmax, &emin, &emax,
 		    pfh->min_bounds.descent,
-		    pfh->max_bounds.descent);
-	*pmin++ = *pmax++ = ')';
-	*pmin = *pmax = '\0';
-	printf("%s\n", min);
-	printf("%s\n", max);
+		    pfh->max_bounds.descent, '\0');
+	printf("     min(l,r,w,a,d) = (%s)\n", min);
+	printf("     max(l,r,w,a,d) = (%s)\n", max);
     }
 }
 
@@ -471,29 +474,36 @@ show_font_header(FontList *list)
 #define	max(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
+/*
+ * Append string representations of n1 to pp1 and n2 to pp2,
+ * followed by the given suffix character,
+ * but not writing into or past ep1 & ep2, respectively.
+ * The string representations will be padded to the same width.
+ */
 static void
-copy_number(char **pp1, char **pp2, int n1, int n2)
+copy_number(char **pp1, char **pp2, char **ep1, char **ep2, int n1, int n2,
+    char suffix)
 {
     char       *p1 = *pp1;
     char       *p2 = *pp2;
-    int         w;
+    int         w, w1, w2;
 
-    sprintf(p1, "%d", n1);
-    sprintf(p2, "%d", n2);
-    w = (int) max(strlen(p1), strlen(p2));
-    sprintf(p1, "%*d", w, n1);
-    sprintf(p2, "%*d", w, n2);
-    p1 += strlen(p1);
-    p2 += strlen(p2);
-    *pp1 = p1;
-    *pp2 = p2;
+    w1 = snprintf(NULL, 0, "%d", n1);
+    w2 = snprintf(NULL, 0, "%d", n2);
+    w = (int) max(w1, w2);
+    assert(w > 0);
+    snprintf(p1, *ep1 - p1, "%*d%c", w, n1, suffix);
+    snprintf(p2, *ep2 - p2, "%*d%c", w, n2, suffix);
+    *pp1 = p1 + strlen(p1);
+    assert(*pp1 < *ep1);
+    *pp2 = p2 + strlen(p2);
+    assert(*pp2 < *ep2);
 }
 
 static void
 show_font_props(FontList *list)
 {
     unsigned int  i;
-    char        buf[1000];
     FSPropInfo *pi = list->pi;
     FSPropOffset *po = list->po;
     unsigned char *pd = list->pd;
@@ -501,14 +511,12 @@ show_font_props(FontList *list)
 
     num_props = pi->num_offsets;
     for (i = 0; i < num_props; i++, po++) {
-	strncpy(buf, (char *) (pd + po->name.position), po->name.length);
-	buf[po->name.length] = '\0';
-	printf("%s\t", buf);
+	fwrite(pd + po->name.position, 1, po->name.length, stdout);
+	putc('\t', stdout);
 	switch (po->type) {
 	case PropTypeString:
-	    strncpy(buf, (char *)pd + po->value.position, po->value.length);
-	    buf[po->value.length] = '\0';
-	    printf("%s\n", buf);
+	    fwrite(pd + po->value.position, 1, po->value.length, stdout);
+	    putc('\n', stdout);
 	    break;
 	case PropTypeUnsigned:
 	    printf("%lu\n", (unsigned long) po->value.position);
