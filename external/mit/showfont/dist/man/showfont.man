@@ -86,9 +86,5 @@ the default X font server to contact.  The server name must
 be specified in one of the formats defined in the
 .I Font Server Names
 section of X(__miscmansuffix__).
-.SH COPYRIGHT
-Copyright 1991, Network Computing Devices, Inc.
-.br
-See \fIX\fP(__miscmansuffix__) for a full statement of rights and permissions.
 .SH AUTHOR
 Dave Lemke, Network Computing Devices, Inc.
