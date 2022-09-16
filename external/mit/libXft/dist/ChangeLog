@@ -1,3 +1,42 @@
+commit 7d3bcd3b9ae3ffbfcd4f31c8f1db2254df90bc33
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Sep 10 09:59:49 2022 -0400
+
+    libXft 2.3.6
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 5e0ed11a43e37e50ba0937beaa40851c2d864981
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Wed Sep 7 19:25:06 2022 -0400
+
+    fix gcc12 warning about malloc size
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit ab2df0af3dc7c594d44ccccfa0e7ddeeefb1e70e
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Wed Sep 7 19:21:38 2022 -0400
+
+    revised fix for gcc 12 compiler warnings in xftextent.c
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 95284856783b824a714b7506762f4adce3bb17ce
+Author: Adam Sampson <ats@offog.org>
+Date:   Wed Sep 7 00:31:10 2022 +0100
+
+    Fix length check in XftTextExtents*.
+    
+    Commit 06a3c0ab6520e368ac936cb1ef172f19957db0fa added length checks of
+    the form "if (len <= 0) return;" to various Xft functions. However,
+    while rendering an empty string is equivalent to doing nothing, asking
+    for the extents of an empty string isn't -- it still needs to fill in
+    the extents structure. This broke text rendering in some applications
+    (e.g. xpdf's Motif GUI).
+    
+    Check for len < 0 in XftTextExtents* instead.
+
 commit c6309d4c8fcb5f4879cc25cf81b649f5eb665413
 Author: Thomas E. Dickey <dickey@invisible-island.net>
 Date:   Mon Sep 5 15:23:18 2022 -0400

@@ -123,11 +123,11 @@ XftTextExtents8 (Display	    *dpy,
     FT_UInt	    *glyphs, glyphs_local[NUM_LOCAL];
     int		    i;
 
-    if (len <= 0)
+    if (len < 0)
 	return;
 
     if (len <= NUM_LOCAL)
-	glyphs = glyphs_local;
+	*(glyphs = glyphs_local) = 0;
     else
     {
 	glyphs = AllocUIntArray (len);
@@ -154,11 +154,11 @@ XftTextExtents16 (Display	    *dpy,
     FT_UInt	    *glyphs, glyphs_local[NUM_LOCAL];
     int		    i;
 
-    if (len <= 0)
+    if (len < 0)
 	return;
 
     if (len <= NUM_LOCAL)
-	glyphs = glyphs_local;
+	*(glyphs = glyphs_local) = 0;
     else
     {
 	glyphs = AllocUIntArray (len);
@@ -185,11 +185,11 @@ XftTextExtents32 (Display	    *dpy,
     FT_UInt	    *glyphs, glyphs_local[NUM_LOCAL];
     int		    i;
 
-    if (len <= 0)
+    if (len < 0)
 	return;
 
     if (len <= NUM_LOCAL)
-	glyphs = glyphs_local;
+	*(glyphs = glyphs_local) = 0;
     else
     {
 	glyphs = AllocUIntArray (len);
@@ -219,11 +219,11 @@ XftTextExtentsUtf8 (Display	    *dpy,
     int		    l;
     int		    size;
 
-    if (len <= 0)
+    if (len < 0)
 	return;
 
     i = 0;
-    glyphs = glyphs_local;
+    *(glyphs = glyphs_local) = 0;
     size = NUM_LOCAL;
     while (len && (l = FcUtf8ToUcs4 (string, &ucs4, len)) > 0)
     {
@@ -266,11 +266,11 @@ XftTextExtentsUtf16 (Display		*dpy,
     int		    l;
     int		    size;
 
-    if (len <= 0)
+    if (len < 0)
 	return;
 
     i = 0;
-    glyphs = glyphs_local;
+    *(glyphs = glyphs_local) = 0;
     size = NUM_LOCAL;
     while (len && (l = FcUtf16ToUcs4 (string, endian, &ucs4, len)) > 0)
     {

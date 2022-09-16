@@ -88,7 +88,7 @@ XftGlyphRender (Display		*dpy,
     FT_UInt	    missing[XFT_NMISSING];
     int		    nmissing;
     FT_UInt	    g, max;
-    int		    size, width;
+    int		    width;
     int		    dstx, dsty;
     Glyph	    wire;
     XftGlyph*       glyph;
@@ -98,6 +98,8 @@ XftGlyphRender (Display		*dpy,
     unsigned int    char_local[NUM_LOCAL];
     unsigned int    *chars;
     FcBool	    glyphs_loaded;
+    size_t          size;
+    size_t          needed;
 
     if (!font->format)
 	return;
@@ -137,9 +139,12 @@ XftGlyphRender (Display		*dpy,
 	size = sizeof (unsigned int);
     }
     chars = char_local;
-    if ((size_t) (nglyphs * size) > sizeof (char_local))
+    if ((size_t)nglyphs > SIZE_MAX / size)
+	goto bail1;
+    needed = (size_t)nglyphs * size;
+    if (needed > sizeof (char_local))
     {
-	chars = malloc ((size_t)(nglyphs * size));
+	chars = malloc (needed);
 	if (!chars)
 	    goto bail1;
     }
