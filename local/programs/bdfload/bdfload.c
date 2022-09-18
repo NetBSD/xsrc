@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.12 2022/08/29 14:54:04 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.13 2022/09/18 22:04:31 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -66,6 +66,8 @@ const struct encmap {
 	{ "cp437",	WSDISPLAY_FONTENC_IBM },
 	{ "ibm",	WSDISPLAY_FONTENC_IBM },
 	{ "iso",	WSDISPLAY_FONTENC_ISO },
+	{ "iso8859",	WSDISPLAY_FONTENC_ISO },
+	{ "iso10646",	WSDISPLAY_FONTENC_ISO },
 	{ "iso-8859-1",	WSDISPLAY_FONTENC_ISO },
 	{ "iso-8859-2",	WSDISPLAY_FONTENC_ISO2 },
 	{ "iso-8859-7",	WSDISPLAY_FONTENC_ISO7 },
@@ -100,6 +102,7 @@ int encoding = -1;
 int verbose = 0;
 int dump = 0;
 int header = 0;
+int force = 0;
 char commentbuf[2048] = "";
 int commentptr = 0;
 char fontname[64] = "";
@@ -262,6 +265,18 @@ interpret(FILE *foo)
 			commentptr += snprintf(&commentbuf[commentptr],
 					      2048 - commentptr,
 					      "%s\n", arg);
+		} else if (strcmp(line, "SPACING") == 0) {
+			char spc[16];
+			int res;
+			res = sscanf(arg, "%s", spc);
+			if (res > 0) {
+				if (verbose) printf("spacing %s\n", spc);
+				if ((spc[1] == 'P') && (force == 0)) {
+					fprintf(stderr, "This is a proportional font, results are probably not suitable for console use.\n");
+					fprintf(stderr, "Use -f to override if you want to try it anyway.\n");
+					exit(1);
+				}
+			}
 		} else if (strcmp(line, "FONTBOUNDINGBOX") == 0) {
 			int res;
 			res = sscanf(arg, "%d %d %d %d",
@@ -383,7 +398,7 @@ interpret(FILE *foo)
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-vdh] [-e encoding] [-N name] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "usage: bdfload [-vdhf] [-e encoding] [-N name] [-o ofile.wsf] font.bdf\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -394,7 +409,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:N:vdh")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:N:vdhf")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -421,6 +436,9 @@ main(int argc, char *argv[])
 
 		case 'h':
 			header = 1;
+			break;
+		case 'f':
+			force = 1;
 			break;
 		case 'N':
 			strncpy(fontname, optarg, 64);
