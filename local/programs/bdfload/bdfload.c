@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.15 2022/09/27 10:57:23 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.16 2022/09/27 18:29:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -171,11 +171,11 @@ write_header(const char *filename, struct wsdisplay_font *f,
 	snprintf(name, sizeof(name), "%s_%dx%d", f->name, 
 	    f->fontwidth, f->fontheight);
 	for (i = 0; i < strlen(name); i++) {
-		if (isblank((int)name[i]))
-			name[i]='_';
+		if (isblank((unsigned char)name[i]))
+			name[i] = '_';
 	}
 	if ((output = fopen(filename, "w")) == NULL) {
-		fprintf(stderr, "Can't open output file %s\n", filename);
+		warn("Can't open output file `%s'", filename);
 		return -1;
 	}
 	if (commentptr > 0) {
@@ -234,7 +234,7 @@ interpret(FILE *foo)
 {
 	char line[128], *arg, name[64] = "foo", *buffer;
 	int buflen = -1;
-	int len, in_char = 0, current = -1, stride = 0, charsize = 0;
+	int in_char = 0, current = -1, stride = 0, charsize = 0;
 	int width, height, x, y, num;
 	int first = 255, last = 0;
 	int left, top, lines;
@@ -243,28 +243,26 @@ interpret(FILE *foo)
 	int status;
 
 	while (fgets(line, sizeof(line), foo) != NULL) {
-		int i = 0;
+		size_t i = 0, len;
 		/* separate keyword from parameters */
 		len = strlen(line);
-		while (!isspace(line[i]) && (i < len)) i++;
+		while (!isspace((unsigned char)line[i]) && i < len) i++;
 		line[i] = 0;
 		arg = &line[i + 1];
 		i = 0;
 		len = strlen(arg);
 		/* get rid of garbage */
-		while ((!iscntrl(arg[i])) && (arg[i] != 0)) {
+		while ((!iscntrl((unsigned char)arg[i])) && (arg[i] != 0)) {
 			i++;
 		}
 		arg[i] = 0;
 		if (strcmp(line, "FAMILY_NAME") == 0) {
 			/* cut off quotation marks */
-			strncpy(name, arg + 1, 64);
-			name[strlen(name) - 1] = 0;
+			strlcpy(name, arg + 1, 64);
 			if (verbose) printf("name: %s\n", name);
 		} else if (strcmp(line, "COMMENT") == 0) {
 			commentptr += snprintf(&commentbuf[commentptr],
-					      2048 - commentptr,
-					      "%s\n", arg);
+			    sizeof(commentbuf) - commentptr, "%s\n", arg);
 		} else if (strcmp(line, "SPACING") == 0) {
 			char spc[16];
 			int res;
@@ -272,9 +270,11 @@ interpret(FILE *foo)
 			if (res > 0) {
 				if (verbose) printf("spacing %s\n", spc);
 				if ((spc[1] == 'P') && (force == 0)) {
-					fprintf(stderr, "This is a proportional font, results are probably not suitable for console use.\n");
-					fprintf(stderr, "Use -f to override if you want to try it anyway.\n");
-					exit(1);
+					warnx("This is a proportional font, "
+					   "results are probably not suitable "
+					   "for console use.");
+					errx(EXIT_FAILURE, "Use -f to override "
+					    "if you want to try it anyway.");
 				}
 			}
 		} else if (strcmp(line, "FONTBOUNDINGBOX") == 0) {
@@ -284,7 +284,7 @@ interpret(FILE *foo)
 			stride = (width + 7) >> 3;
 			if (verbose) printf("box %d x %d\n", width, height);
 			if (stride > 2) {
-				err(EXIT_FAILURE,
+				errx(EXIT_FAILURE,
 				    "no fonts wider than 16 work for now\n");
 			}
 			charsize = height * stride;
@@ -323,7 +323,8 @@ interpret(FILE *foo)
 				if (top < bt) bt = top;
 				if ((left + cwi) > br) br = left + cwi;
 				if ((top + che) > bb) bb = top + che;
-				if(dump && verbose) printf("top %d left %d\n", top, left);
+				if (dump && verbose)
+					printf("top %d left %d\n", top, left);
 			}
 		} else if (strcmp(line, "BITMAP") == 0) {
 			int i, j, k, l;
@@ -388,9 +389,9 @@ interpret(FILE *foo)
 		close(fdev);
 	}
 	else {
-		if (header == 0) {
+		if (header == 0)
 			write_wsf(ofile, &f, buffer, buflen);
-		} else
+		else
 			write_header(ofile, &f, buffer, buflen);
 	}
 }
@@ -398,7 +399,8 @@ interpret(FILE *foo)
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: bdfload [-vdhf] [-e encoding] [-N name] [-o ofile.wsf] font.bdf\n");
+	fprintf(stderr, "Usage: %s [-vdhf] [-e encoding] [-N name] "
+	    "[-o ofile.wsf] font.bdf\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
