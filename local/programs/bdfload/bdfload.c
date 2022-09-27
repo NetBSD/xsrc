@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.14 2022/09/27 10:54:04 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.15 2022/09/27 10:57:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -165,14 +165,14 @@ write_header(const char *filename, struct wsdisplay_font *f,
 {
 	FILE *output;
 	int i, j, x, y, idx, pxls, left;
-	char fontname[64], c, msk;
+	char name[64], c, msk;
 	
 	/* now output as a header file */
-	snprintf(fontname, sizeof(fontname), "%s_%dx%d", f->name, 
+	snprintf(name, sizeof(name), "%s_%dx%d", f->name, 
 	    f->fontwidth, f->fontheight);
-	for (i = 0; i < strlen(fontname); i++) {
-		if (isblank((int)fontname[i]))
-			fontname[i]='_';
+	for (i = 0; i < strlen(name); i++) {
+		if (isblank((int)name[i]))
+			name[i]='_';
 	}
 	if ((output = fopen(filename, "w")) == NULL) {
 		fprintf(stderr, "Can't open output file %s\n", filename);
@@ -184,9 +184,9 @@ write_header(const char *filename, struct wsdisplay_font *f,
 		fprintf(output, "*/\n\n");
 	}
 
-	fprintf(output, "static u_char %s_data[];\n", fontname);
+	fprintf(output, "static u_char %s_data[];\n", name);
 	fprintf(output, "\n");
-	fprintf(output, "static struct wsdisplay_font %s = {\n", fontname);
+	fprintf(output, "static struct wsdisplay_font %s = {\n", name);
 	fprintf(output, "\t\"%s\",\t\t\t/* typeface name */\n", f->name);
 	fprintf(output, "\t%d,\t\t\t\t/* firstchar */\n", f->firstchar);
 	fprintf(output, "\t%d,\t\t\t\t/* numchars */\n", f->numchars);
@@ -196,9 +196,9 @@ write_header(const char *filename, struct wsdisplay_font *f,
 	fprintf(output, "\t%d,\t\t\t\t/* stride */\n", f->stride);
 	fprintf(output, "\tWSDISPLAY_FONTORDER_L2R,\t/* bit order */\n");
 	fprintf(output, "\tWSDISPLAY_FONTORDER_L2R,\t/* byte order */\n");
-	fprintf(output, "\t%s_data\t\t/* data */\n", fontname);
+	fprintf(output, "\t%s_data\t\t/* data */\n", name);
 	fprintf(output, "};\n\n");
-	fprintf(output, "static u_char %s_data[] = {\n", fontname);
+	fprintf(output, "static u_char %s_data[] = {\n", name);
 	for (i = f->firstchar; i < f->firstchar + f->numchars; i++) {
 		fprintf(output, "\t/* %d */\n", i);
 		idx = i * f->stride * f->fontheight;
