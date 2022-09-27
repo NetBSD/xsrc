@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.13 2022/09/18 22:04:31 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.14 2022/09/27 10:54:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -442,7 +442,6 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			strncpy(fontname, optarg, 64);
-			printf("given name: %s\n", fontname);
 			break;
 		case '?':	/* FALLTHROUGH */
 		default:
