@@ -725,13 +725,14 @@ parse_reply_call_callback(
     XRecordInterceptProc callback,
     XPointer		 closure)
 {
+    XRecordInterceptData *data;
     unsigned int current_index;
     int datum_bytes = 0;
 
     /* call the callback for each protocol element in the reply */
     current_index = 0;
     do {
-	XRecordInterceptData *data = alloc_inter_data(info);
+	data = alloc_inter_data(info);
 	if (!data)
 	    return Error;
 
