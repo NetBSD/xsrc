@@ -22,7 +22,8 @@
 SUBDIRS = man
 bin_PROGRAMS = bdftopcf
 
-AM_CFLAGS = $(CWARNFLAGS)
+AM_CFLAGS = $(BDFTOPCF_CFLAGS) $(CWARNFLAGS)
+bdftopcf_LDADD = $(BDFTOPCF_LIBS)
 
 bdftopcf_SOURCES = \
 	atom.c \
@@ -50,7 +51,6 @@ bdftopcf_SOURCES = \
 	pcf.h \
 	pcfwrite.c \
 	private.c \
-	stubs.h \
 	utilbitmap.c \
 	bdftopcf.c
 
@@ -73,3 +73,5 @@ ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 lint:
 	$(LINT) $(ALL_LINT_FLAGS) $(bdftopcf_SOURCES)
 endif LINT
+
+EXTRA_DIST = README.md
