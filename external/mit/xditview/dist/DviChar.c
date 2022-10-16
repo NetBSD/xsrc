@@ -26,11 +26,9 @@ static void	compute_hash(DviCharNameMap *map);
 DviCharNameMap *
 DviFindMap (const char *encoding)
 {
-	struct map_list	*m;
-
 	if (!standard_maps_loaded)
 		load_standard_maps ();
-	for (m = world; m; m=m->next)
+	for (struct map_list *m = world; m; m=m->next)
 		if (!strcmp (m->map->encoding, encoding))
 			return m->map;
 	return NULL;
@@ -60,12 +58,12 @@ static void
 dispose_hash (DviCharNameMap *map)
 {
 	DviCharNameHash	**buckets;
-	DviCharNameHash	*h, *next;
-	int		i;
 
 	buckets = map->buckets;
-	for (i = 0; i < DVI_HASH_SIZE; i++) {
-		for (h = buckets[i]; h; h=next) {
+	for (int i = 0; i < DVI_HASH_SIZE; i++) {
+		DviCharNameHash	*next;
+
+		for (DviCharNameHash *h = buckets[i]; h; h = next) {
 			next = h->next;
 			XtFree ((char *) h);
 		}
@@ -88,14 +86,15 @@ static void
 compute_hash (DviCharNameMap *map)
 {
 	DviCharNameHash	**buckets;
-	int		c, s, i;
-	DviCharNameHash	*h;
 
 	buckets = map->buckets;
-	for (i = 0; i < DVI_HASH_SIZE; i++)
+	for (int i = 0; i < DVI_HASH_SIZE; i++)
 		buckets[i] = NULL;
-	for (c = 0; c < DVI_MAP_SIZE; c++)
-		for (s = 0; s < DVI_MAX_SYNONYMS; s++) {
+	for (int c = 0; c < DVI_MAP_SIZE; c++) {
+		for (int s = 0; s < DVI_MAX_SYNONYMS; s++) {
+			DviCharNameHash	*h;
+			int		i;
+
 			if (!map->dvi_names[c][s])
 				break;
 			i = hash_name (map->dvi_names[c][s]) % DVI_HASH_SIZE;
@@ -105,7 +104,7 @@ compute_hash (DviCharNameMap *map)
 			h->name = map->dvi_names[c][s];
 			h->position = c;
 		}
-	
+	}
 }
 
 int
@@ -389,7 +388,8 @@ static DviCharNameMap ISO8859_1_map = {
 {   "Fi",	    "ffi",   },
 {   "Fl",	    "ffl",   },
 {   NULL,	    NULL,    },
-}
+},
+{}
 };
 
 static DviCharNameMap Adobe_Symbol_map = {
@@ -655,7 +655,8 @@ static DviCharNameMap Adobe_Symbol_map = {
 },
 {
 {	NULL,	    NULL	},
-}
+},
+{}
 };
 
 static void

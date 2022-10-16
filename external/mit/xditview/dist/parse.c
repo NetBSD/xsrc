@@ -47,8 +47,6 @@ static void PutCharacters(DviWidget dw, unsigned char *src, int len);
 static void push_env(DviWidget dw);
 static void pop_env(DviWidget dw);
 
-#define HorizontalMove(dw, delta)	((dw)->dvi.state->x += (delta))
-
 #ifdef USE_XFT
 static int
 charWidth (DviWidget dw, XftFont *font, char c)
@@ -162,7 +160,7 @@ ParseInput(DviWidget dw)
 			n = GetNumber(dw);
 			if (!dw->dvi.size_scale)
 			{
-			    static int	guesses[] = { 1, 4, 100, 1000, 1 };
+			    static const int guesses[] = { 1, 4, 100, 1000, 1 };
 			    int		i;
 
 			    for (i = 0; i < 4; i++)

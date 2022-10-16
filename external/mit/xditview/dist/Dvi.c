@@ -60,7 +60,7 @@ from the X Consortium.
 
 /* Private Data */
 /* Note: default_font_map was too long a token for some machines...
- *       therefor it has been split in to and assigned to resources
+ *       therefore it has been split in two and assigned to resources
  *       in the ClassInitialize routine.
  */
 static const char *default_font_map_1 =  "\
@@ -483,7 +483,6 @@ SetDeviceResolution (DviWidget dw, int resolution)
 static void
 ShowDvi (DviWidget dw)
 {
-	int	i;
 	long	file_position;
 
 	if (!dw->dvi.file) 
@@ -500,7 +499,9 @@ ShowDvi (DviWidget dw)
 		FileSeek(dw, file_position);
 		dw->dvi.current_page = dw->dvi.requested_page;
 	} else {
-		for (i=dw->dvi.requested_page; i > 0; i--) {
+		int	i;
+
+		for (i = dw->dvi.requested_page; i > 0; i--) {
 			file_position = SearchPagePosition (dw, i);
 			if (file_position != -1)
 				break;
@@ -515,7 +516,7 @@ ShowDvi (DviWidget dw)
 		while (dw->dvi.current_page != dw->dvi.requested_page) {
 			dw->dvi.current_page = ParseInput (dw);
 			/*
-			 * at EOF, seek back to the begining of this page.
+			 * at EOF, seek back to the beginning of this page.
 			 */
 			if (feof (dw->dvi.file)) {
 				file_position = SearchPagePosition (dw,

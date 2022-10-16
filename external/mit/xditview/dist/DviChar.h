@@ -6,7 +6,7 @@
  * 256 elements (actually only 256-32 are usable).
  *
  * The encoding names are taken from X -
- * case insensitive, a dash seperating the
+ * case insensitive, a dash separating the
  * CharSetRegistry from the CharSetEncoding
  */
 
