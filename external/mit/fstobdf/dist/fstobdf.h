@@ -26,14 +26,14 @@
 
 #include	<X11/fonts/FSlib.h>
 
-extern Bool EmitHeader ( FILE *outFile, FSXFontInfoHeader *fontHeader,
-			 FSPropInfo *propInfo, FSPropOffset *propOffsets,
-			 unsigned char *propData );
-extern Bool EmitProperties ( FILE *outFile, FSXFontInfoHeader *fontHeader,
-			     FSPropInfo *propInfo, FSPropOffset *propOffsets,
-			     unsigned char *propData );
-extern Bool EmitCharacters ( FILE *outFile, FSServer *fontServer,
-			     FSXFontInfoHeader *fontHeader, Font fontID );
+extern Bool EmitHeader(FILE *outFile, FSXFontInfoHeader *fontHeader,
+                       FSPropInfo *propInfo, FSPropOffset *propOffsets,
+                       unsigned char *propData);
+extern Bool EmitProperties(FILE *outFile, FSXFontInfoHeader *fontHeader,
+                           FSPropInfo *propInfo, FSPropOffset *propOffsets,
+                           unsigned char *propData);
+extern Bool EmitCharacters(FILE *outFile, FSServer *fontServer,
+                           FSXFontInfoHeader *fontHeader, Font fontID);
 
-extern unsigned long yResolution; /* intended vertical resoultion for font */
+extern unsigned long yResolution; /* intended vertical resolution for font */
 extern unsigned long pointSize;   /* font height in points */
