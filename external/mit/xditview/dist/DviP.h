@@ -243,11 +243,32 @@ typedef struct _DviRec {
     DviPart	dvi;
 } DviRec;
 
+/* previously in draw.c */
+static inline void
+HorizontalMove(DviWidget dw, int delta)
+{
+    dw->dvi.state->x += delta;
+}
+
+static inline void
+HorizontalGoto(DviWidget dw, int NewPosition)
+{
+    dw->dvi.state->x = NewPosition;
+}
+
+static inline void
+VerticalMove(DviWidget dw, int delta)
+{
+    dw->dvi.state->y += delta;
+}
+
+static inline void
+VerticalGoto(DviWidget dw, int NewPosition)
+{
+    dw->dvi.state->y = NewPosition;
+}
+
 /* draw.c */
-extern void		HorizontalMove(DviWidget, int);
-extern void		HorizontalGoto(DviWidget, int);
-extern void		VerticalMove(DviWidget, int);
-extern void		VerticalGoto(DviWidget, int);
 extern void		FlushCharCache(DviWidget);
 extern void		SetGCForDraw(DviWidget);
 extern void		DrawLine(DviWidget, int, int);

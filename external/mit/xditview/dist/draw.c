@@ -78,39 +78,14 @@ static void	InsertPoint(Point *p, Point *q);
 static void	LineApprox(Point *p1, Point *p2, Point *p3);
 static Point *	MakePoint(double x, double y);
 
-void
-HorizontalMove(DviWidget dw, int delta)
-{
-    dw->dvi.state->x += delta;
-}
-
-void
-HorizontalGoto(DviWidget dw, int NewPosition)
-{
-    dw->dvi.state->x = NewPosition;
-}
-
-void
-VerticalMove(DviWidget dw, int delta)
-{
-    dw->dvi.state->y += delta;
-}
-
-void
-VerticalGoto(DviWidget dw, int NewPosition)
-{
-    dw->dvi.state->y = NewPosition;
-}
-
 #ifdef USE_XFT
 static void
 DrawText (DviWidget dw)
 {
-    int	    i;
     XftFont *font;
 
     font = dw->dvi.cache.font;
-    for (i = 0; i <= dw->dvi.cache.index; i++)
+    for (int i = 0; i <= dw->dvi.cache.index; i++)
     {
 	if (dw->dvi.cache.cache[i].font)
 	    font = dw->dvi.cache.cache[i].font;
@@ -154,11 +129,10 @@ FlushCharCache (DviWidget dw)
 void
 SetGCForDraw (DviWidget dw)
 {
-    int	lw;
     if (dw->dvi.state->line_style != dw->dvi.line_style ||
 	dw->dvi.state->line_width != dw->dvi.line_width)
     {
-	lw = ToX(dw, dw->dvi.state->line_width);
+	int lw = ToX(dw, dw->dvi.state->line_width);
 	if (lw <= 1)
 	    lw = 0;
 	XSetLineAttributes (XtDisplay (dw), dw->dvi.normal_GC,
@@ -212,8 +186,7 @@ ConvertAngle(int theta)
 void
 DrawArc (DviWidget dw, int x0, int y0, int x1, int y1)
 {
-    int	xc, yc, x2, y2, r;
-    int	angle1, angle2;
+    int	xc, yc, x2, y2;
 
     /* centre */
     xc = dw->dvi.state->x + x0;
@@ -227,9 +200,10 @@ DrawArc (DviWidget dw, int x0, int y0, int x1, int y1)
     dw->dvi.state->y = y2;
 
     if (dw->dvi.display_enable) {
+        int	angle1, angle2;
 
 	/* radius */
-	r = (int)sqrt((float) x1 * x1 + (float) y1 * y1);
+	int	r = (int)sqrt((float) x1 * x1 + (float) y1 * y1);
 
 	/* start and finish angles */
 	if (x0 == 0) {
@@ -321,7 +295,7 @@ DrawSpline (DviWidget dw, const char *s, int len)
 static int
 GetSpline(const char *s)
 {
-    double	x, y, x1, y1;
+    double	x, y;
     int		n = 0;
     Point	*pt;
     const char	*p = s;
@@ -335,6 +309,8 @@ GetSpline(const char *s)
     x = y = 0.0;
     p = s;
     while (p && *p) {
+	double	x1, y1;
+
 	if ((p = getstr(p, d)) == (const char *)NULL)
 	    break;
 	x1 = x + atof(d);
@@ -359,7 +335,7 @@ GetSpline(const char *s)
 static void
 ApproxSpline(int n)
 {
-    int		mid, j;
+    int		mid;
     Point	*p1, *p2, *p3, *p;
 
     if (n < 3)
@@ -371,6 +347,8 @@ ApproxSpline(int n)
     /* remember original points are stored as an array of n points */
     /* so I can index it directly to calculate mid-points only.	   */
     if (mid > 0) {
+	int	j;
+
 	p = spline->next;
 	j = 1;
 	while (j < n-2) {
@@ -409,12 +387,13 @@ ApproxSpline(int n)
 static void
 LineApprox(Point *p1, Point *p2, Point *p3)
 {
-    Point	*p4, *p;
     int		reps = ITERATIONS;
 
     while (reps) {
-	for (p = p1; p != (Point *)NULL && p != p3; ) {
-	    InsertPoint(p, p4 = MakePoint( midx(p,p->next), midy(p,p->next) ));
+	for (Point *p = p1; p != (Point *)NULL && p != p3; ) {
+	    Point	*p4 = MakePoint( midx(p,p->next), midy(p,p->next) );
+
+	    InsertPoint(p, p4);
 	    if (p != p1)
 		DeletePoint(p);
 	    p = p4->next;		/* skip inserted point! */
@@ -431,13 +410,11 @@ LineApprox(Point *p1, Point *p2, Point *p3)
 static void
 DrawSplineSegments(DviWidget dw)
 {
-    Point	*p, *q;
+    Point	*p;
     double	x1, y1;
-    int		dx, dy;
     double	xpos, ypos;
 
     p = spline;
-    dx = dy = 0;
 
     /* save the start position */
 
@@ -447,8 +424,8 @@ DrawSplineSegments(DviWidget dw)
     x1 = y1 = 0.0;
 
     while (p != (Point *)NULL) {
-	dx = p->x - x1 + 0.5;
-	dy = p->y - y1 + 0.5;
+	int	dx = p->x - x1 + 0.5;
+	int	dy = p->y - y1 + 0.5;
 	DrawLine (dw, dx, dy);
 
 	x1 = p->x;
@@ -456,7 +433,7 @@ DrawSplineSegments(DviWidget dw)
 	dw->dvi.state->x = xpos + x1;
 	dw->dvi.state->y = ypos + y1;
 
-	q = p;
+	Point 	*q = p;
 	p = p->next;
 	XtFree((char *)q);
     }

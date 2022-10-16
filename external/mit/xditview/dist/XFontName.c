@@ -43,7 +43,6 @@ extractUnsignedField (
 	unsigned int	bit)
 {
 	char		buf[256];
-	char		*c;
 	unsigned int	i;
 
 	name = extractStringField (name, buf, sizeof (buf), attrp, bit);
@@ -52,7 +51,7 @@ extractUnsignedField (
 	if (!(*attrp & bit))
 		return name;
 	i = 0;
-	for (c = buf; *c; c++) {
+	for (char *c = buf; *c; c++) {
 		if (!isdigit (*c))
 			return NULL;
 		i = i * 10 + (*c - '0');

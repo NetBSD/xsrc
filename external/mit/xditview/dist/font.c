@@ -40,15 +40,14 @@ LookupFontByPosition (DviWidget dw, int position)
 static DviFontSizeList *
 LookupFontSizeBySize (DviWidget dw, DviFontList *f, int size)
 {
-    DviFontSizeList *fs, *best = NULL;
-    int		    bestdist;
-    char	    fontNameString[2048];
-    XFontName	    fontName;
-    unsigned int    fontNameAttributes;
-    int		    dist;
+    DviFontSizeList	*best = NULL;
 
     if (f->scalable)
     {
+	char		fontNameString[2048];
+	XFontName	fontName;
+	unsigned int	fontNameAttributes;
+
 	for (best = f->sizes; best; best = best->next)
 	    if (best->size == size)
 		return best;
@@ -68,7 +67,7 @@ LookupFontSizeBySize (DviWidget dw, DviFontList *f, int size)
 #ifdef USE_XFT
 	/*
 	 * Force a match of a core font for adobe-fontspecific
-	 * encodings; we dont have a scalable font in
+	 * encodings; we don't have a scalable font in
 	 * the right encoding
 	 */
 	best->core = False;
@@ -84,9 +83,10 @@ LookupFontSizeBySize (DviWidget dw, DviFontList *f, int size)
     }
     else
     {
-	bestdist = 65536;
-    	for (fs = f->sizes; fs; fs=fs->next) {
-	    dist = size - fs->size;
+	int 	bestdist = 65536;
+
+	for (DviFontSizeList *fs = f->sizes; fs; fs=fs->next) {
+	    int	dist = size - fs->size;
 	    if (dist < 0)
 		dist = -dist * 16;
 	    if (dist < bestdist)
@@ -130,8 +130,7 @@ ConvertFontNameToSize (char *n)
 static char *
 ConvertFontNameToEncoding (char *n)
 {
-        int i;
-	for (i = 0; i < EncodingPosition; i++) {
+	for (int i = 0; i < EncodingPosition; i++) {
 		n = SkipFontNameElement (n);
 		if (!n)
 			return NULL;
@@ -164,9 +163,7 @@ DisposeFontSizes (DviWidget dw, DviFontSizeList *fs)
 void
 ResetFonts (DviWidget dw)
 {
-    DviFontList	*f;
-    
-    for (f = dw->dvi.fonts; f; f = f->next)
+    for (DviFontList *f = dw->dvi.fonts; f; f = f->next)
     {
 	if (f->initialized)
 	{
@@ -191,9 +188,7 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
 #ifndef USE_XFT
     char	    fontNameString[2048];
     char	    **fonts;
-    int		    i, count;
-    int		    size;
-    DviFontSizeList *new;
+    int		    count;
     XFontName	    fontName;
     unsigned int    fontNameAttributes;
 #endif
@@ -214,8 +209,9 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
     fontName.ResolutionY = dw->dvi.screen_resolution;
     XFormatFontName (&fontName, fontNameAttributes, fontNameString);
     fonts = XListFonts (XtDisplay (dw), fontNameString, 10000000, &count);
-    for (i = 0; i < count; i++) {
-	size = ConvertFontNameToSize (fonts[i]);
+    for (int i = 0; i < count; i++) {
+	int	size = ConvertFontNameToSize (fonts[i]);
+
 	if (size == 0)
 	{
 	    DisposeFontSizes (dw, sizes);
@@ -224,7 +220,7 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
 	    break;
 	}
 	if (size != -1) {
-	    new = (DviFontSizeList *) XtMalloc (sizeof *new);
+	    DviFontSizeList *new = (DviFontSizeList *) XtMalloc (sizeof *new);
 	    new->next = sizes;
 	    new->size = size;
 	    new->x_name = savestr (fonts[i]);
@@ -242,7 +238,6 @@ static DviFontList *
 InstallFont (DviWidget dw, int position, const char *dvi_name, const char *x_name)
 {
     DviFontList	*f;
-    const char	*encoding;
 
     f = LookupFontByPosition (dw, position);
     if (f) {
@@ -269,7 +264,7 @@ InstallFont (DviWidget dw, int position, const char *dvi_name, const char *x_nam
     f->sizes = NULL;
     f->scalable = FALSE;
     if (f->x_name) {
-	encoding = ConvertFontNameToEncoding (f->x_name);
+	const char *encoding = ConvertFontNameToEncoding (f->x_name);
 	f->char_map = DviFindMap (encoding);
     } else
 	f->char_map = NULL;
@@ -304,17 +299,18 @@ MapDviNameToXName (DviWidget dw, const char *dvi_name)
 void
 ParseFontMap (DviWidget dw)
 {
-    char		dvi_name[1024];
-    char		x_name[2048];
-    char		*m, *s;
-    DviFontMap	*fm, *new;
+    char	*m;
+    DviFontMap	*fm;
 
     if (dw->dvi.font_map)
 	    DestroyFontMap (dw->dvi.font_map);
     fm = NULL;
     m = dw->dvi.font_map_string;
     while (*m) {
-	s = m;
+	char		dvi_name[1024];
+	char		x_name[2048];
+
+	char *s = m;
 	while (*m && !isspace (*m))
 	    ++m;
 	strncpy (dvi_name, s, m-s);
@@ -326,7 +322,8 @@ ParseFontMap (DviWidget dw)
 	    ++m;
 	strncpy (x_name, s, m-s);
 	x_name[m-s] = '\0';
-	new = (DviFontMap *) XtMalloc (sizeof *new);
+
+	DviFontMap	*new = (DviFontMap *) XtMalloc (sizeof *new);
 	new->x_name = savestr (x_name);
 	new->dvi_name = savestr (dvi_name);
 	new->next = fm;
@@ -429,9 +426,7 @@ QueryFontMap (DviWidget dw, int position)
 unsigned char *
 DviCharIsLigature (DviCharNameMap *map, const char *name)
 {
-    int	    i;
-
-    for (i = 0; i < DVI_MAX_LIGATURES; i++) {
+    for (int i = 0; i < DVI_MAX_LIGATURES; i++) {
 	if (!map->ligatures[i][0])
 	    break;
 	if (!strcmp (name, map->ligatures[i][0]))

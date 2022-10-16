@@ -1,3 +1,167 @@
+commit 065c42427d137053dd4490b8aaee9bf3ecd81539
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 15 10:08:17 2022 -0700
+
+    xditview 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4110fd5e57f5b42d37e821cf56ce5fa59728e3f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 13:06:48 2022 -0700
+
+    Declare guesses const
+    
+    As suggested by cppcheck:
+    
+    parse.c:163:19: style: Variable 'guesses' can be declared with const [constVariable]
+           static int guesses[] = { 1, 4, 100, 1000, 1 };
+                      ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f5cb430f246850e8213fe5cd95b4ea44228f3c3b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:55:15 2022 -0700
+
+    Avoid leak of new_file if we decide not to use it
+    
+    As warned by cppcheck:
+    xditview.c:338:13: error: Resource leak: new_file [resourceLeak]
+                return;
+                ^
+    xditview.c:342:13: error: Resource leak: new_file [resourceLeak]
+                return;
+                ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 776e7c4dae63e2541a6f3822c3e9d659f9af101e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:45:32 2022 -0700
+
+    Use standard strrchr() instead of ancient rindex()
+    
+    As suggested by cppcheck:
+    
+    xditview.c:359:32: style: Obsolescent function 'rindex' called.
+      It is recommended to use 'strrchr' instead. [rindexCalled]
+        if (name[0] != '/' && (n = rindex (name, '/')))
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d1e202f83774543aeb6e66a9dc46160e2bfff5d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:35:40 2022 -0700
+
+    Inline *Move & *Goto functions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ca9c5d01c44fe3a67389f3e6e0bcc34bac09c1c0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:28:28 2022 -0700
+
+    Delete HorizontalMove macro that shadows/duplicates HorizontalMove function
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 05987580ba303f6d25830bb45ce00229cb8118cc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:11:11 2022 -0700
+
+    Fix -Wsign-compare warnings
+    
+    xditview.c: In function ‘main’:
+    xditview.c:196:23: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (int i = 0; i < XtNumber (popupMenuEntries); i++) {
+                           ^
+    xditview.c:211:23: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (int i = 0; i < XtNumber (fileMenuEntries); i++) {
+                           ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 770fc7881a48b8d81c9b04d99d29059033234af6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:07:35 2022 -0700
+
+    Clear -Wmissing-field-initializers warnings
+    
+    DviChar.c:392:1: warning: missing initializer for field ‘buckets’ of ‘DviCharNameMap {aka struct _dviCharNameMap}’ [-Wmissing-field-initializers]
+     };
+     ^
+    In file included from DviChar.c:9:0:
+    DviChar.h:34:22: note: ‘buckets’ declared here
+         DviCharNameHash *buckets[DVI_HASH_SIZE];
+                          ^~~~~~~
+    DviChar.c:658:1: warning: missing initializer for field ‘buckets’ of ‘DviCharNameMap {aka struct _dviCharNameMap}’ [-Wmissing-field-initializers]
+     };
+     ^
+    In file included from DviChar.c:9:0:
+    DviChar.h:34:22: note: ‘buckets’ declared here
+         DviCharNameHash *buckets[DVI_HASH_SIZE];
+                          ^~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f5656f8b21291713f32d2667e4fe2d98a8771436
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 12:01:16 2022 -0700
+
+    Use _CONST_X_STRING to make libXt declare String as const char *
+    
+    Clears 42 out of 66 -Wdiscarded-qualifiers warnings from gcc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d5ec989d9d0259f1b8138ea3fe0b59e12053a796
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 11:56:06 2022 -0700
+
+    Variable scope reductions as recommended by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b6f328961cb098ac34df83052d801769fb4a7ff9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 2 12:50:33 2022 -0700
+
+    man page: remove out-of-date COPYRIGHT section
+    
+    The information previously listed here didn't match what is present in
+    the source code or the COPYING file, and the X(7) man page doesn't list
+    any license information as this had claimed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 987a18597716e83eb808fbf33e7da9d7f1503dc7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 11:35:16 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 703e442fa656a35149df3460c638f79f3d2f0b07
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 11:35:13 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2ce24da43a5f8bc7d675b3d061c80bff6172a10c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 14:08:25 2021 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 9b5e869ac505bf14b0051dbaabe0de38133f5fd5
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Mar 3 11:12:25 2019 -0800
@@ -567,7 +731,7 @@ Date:   Sat Jul 16 21:59:14 2005 +0000
         against tempfile race conditions in many places)
 
 commit a72338b2f0fef721d6388d292ece4b21f19e9def
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 19:53:30 2005 +0000
 
     Build system for xditview

@@ -158,10 +158,6 @@ Portions of this program originated in
 .I xtroff which was derived
 from
 .I suntroff.
-.SH COPYRIGHT
-Copyright 1994 X Consortium
-.br
-See \fIX\fP(__miscmansuffix__) for a full statement of rights and permissions.
 .SH AUTHORS
 Keith Packard (MIT X Consortium)
 .br

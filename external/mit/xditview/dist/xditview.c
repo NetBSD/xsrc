@@ -37,7 +37,7 @@ from the X Consortium.
 #include <X11/StringDefs.h>
 #include <X11/Xatom.h>
 #include <X11/Shell.h>
-#include <X11/Xos.h>		/* rindex declaration */
+#include <X11/Xos.h>
 #include <X11/Xaw/Paned.h>
 #include <X11/Xaw/Panner.h>
 #include <X11/Xaw/Porthole.h>
@@ -157,7 +157,6 @@ int
 main(int argc, char **argv)
 {
     char	    *file_name = NULL;
-    int		    i;
     XtAppContext    xtcontext;
     Arg		    topLevelArgs[2];
     Widget          entry;
@@ -194,7 +193,7 @@ main(int argc, char **argv)
      */
     popupMenu = XtCreatePopupShell ("popupMenu", simpleMenuWidgetClass, toplevel,
 				    NULL, 0);
-    for (i = 0; i < XtNumber (popupMenuEntries); i++) {
+    for (Cardinal i = 0; i < XtNumber (popupMenuEntries); i++) {
 	entry = XtCreateManagedWidget(popupMenuEntries[i].name, 
 				      smeBSBObjectClass, popupMenu,
 				      NULL, (Cardinal) 0);
@@ -209,7 +208,7 @@ main(int argc, char **argv)
 				    menuBar, NULL, (Cardinal) 0);
     fileMenu = XtCreatePopupShell ("fileMenu", simpleMenuWidgetClass,
 				    fileMenuButton, NULL, (Cardinal) 0);
-    for (i = 0; i < XtNumber (fileMenuEntries); i++) {
+    for (Cardinal i = 0; i < XtNumber (fileMenuEntries); i++) {
 	entry = XtCreateManagedWidget(fileMenuEntries[i].name,
 				      smeBSBObjectClass, fileMenu,
 				      NULL, (Cardinal) 0);
@@ -336,10 +335,12 @@ VisitFile (char *name, Boolean resetPage)
         /* Make sure it is a regular file */
         if (fstat(fileno(new_file), &stbuf) != 0) {
             perror(name);
+            fclose(new_file);
             return;
         }
         if (! S_ISREG(stbuf.st_mode)){
             fprintf(stderr, "%s is not a regular file.\n", name);
+            fclose(new_file);
             return;
         }
 
@@ -357,7 +358,7 @@ VisitFile (char *name, Boolean resetPage)
     }
     XtSetValues (dvi, arg, i);
     XtSetArg (arg[0], XtNtitle, name);
-    if (name[0] != '/' && (n = rindex (name, '/')))
+    if (name[0] != '/' && (n = strrchr (name, '/')))
 	n = n + 1;
     else
 	n = name;
