@@ -29,11 +29,14 @@
 /* Has libudev installed */
 #undef HAVE_LIBUDEV
 
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+/* Define to 1 if you have the `x86_64' library (-lx86_64). */
+#undef HAVE_LIBX86_64
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
@@ -59,8 +62,7 @@
 /* Has version 1.5.0 or greater of the Xserver */
 #undef HAVE_XORG_SERVER_1_5_0
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Do not include built-in mouse module fallback */
@@ -96,7 +98,9 @@
 /* Patch version of this package */
 #undef PACKAGE_VERSION_PATCHLEVEL
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
 /* BSD AMD64 iopl */
@@ -107,6 +111,9 @@
 
 /* BSD i386 iopl */
 #undef USE_I386_IOPL
+
+/* BSD X86_64 iopl */
+#undef USE_X86_64_IOPL
 
 /* Version number of package */
 #undef VERSION
