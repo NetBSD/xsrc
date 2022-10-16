@@ -48,35 +48,35 @@ in this Software without prior written authorization from The Open Group.
 #include	"fstobdf.h"
 
 static char *
-AddQuotes(unsigned char *string, unsigned int length)
+AddQuotes(const unsigned char *string, unsigned int length)
 {
     static unsigned char new[256] = "\"";
     unsigned char *cp;
-    unsigned char *end;
+    const unsigned char *end;
 
     end = string + length;
     for (cp = &new[1]; string < end; cp++, string++) {
-	*cp = *string;
-	if (*cp == '"')
-	    *++cp = '"';
+        *cp = *string;
+        if (*cp == '"')
+            *++cp = '"';
     }
     *cp++ = '"';
     *cp = '\0';
-    return (char *)(new);
+    return (char *) (new);
 }
 
 Bool
 EmitProperties(FILE *outFile,
-	       FSXFontInfoHeader *fontHeader,
-	       FSPropInfo *propInfo,
-	       FSPropOffset *propOffsets,
-	       unsigned char *propData)
+               FSXFontInfoHeader *fontHeader,
+               FSPropInfo *propInfo,
+               FSPropOffset *propOffsets,
+               unsigned char *propData)
 {
-    unsigned int  nProperties;
+    unsigned int nProperties;
     FSPropOffset *property;
-    Bool        needDefaultChar;
-    Bool        needFontAscent;
-    Bool        needFontDescent;
+    Bool needDefaultChar;
+    Bool needFontAscent;
+    Bool needFontDescent;
 
     needDefaultChar = True;
     needFontAscent = True;
@@ -84,60 +84,60 @@ EmitProperties(FILE *outFile,
 
     nProperties = propInfo->num_offsets;
     for (property = &propOffsets[0]; nProperties--; property++) {
-	char       *name;
-	unsigned int length;
+        char *name;
+        unsigned int length;
 
-	name = (char *)propData + property->name.position;
-	length = property->name.length;
+        name = (char *) propData + property->name.position;
+        length = property->name.length;
 
-	if ((length == 12) && (!strncmp(name, "DEFAULT_CHAR", 12)))
-	    needDefaultChar = False;
-	else if ((length == 11) && (!strncmp(name, "FONT_ASCENT", 11)))
-	    needFontAscent = False;
-	else if ((length == 12) && (!strncmp(name, "FONT_DESCENT", 12)))
-	    needFontDescent = False;
+        if ((length == 12) && (!strncmp(name, "DEFAULT_CHAR", 12)))
+            needDefaultChar = False;
+        else if ((length == 11) && (!strncmp(name, "FONT_ASCENT", 11)))
+            needFontAscent = False;
+        else if ((length == 12) && (!strncmp(name, "FONT_DESCENT", 12)))
+            needFontDescent = False;
     }
 
     nProperties = propInfo->num_offsets;
     fprintf(outFile, "STARTPROPERTIES %d\n", nProperties +
-	    (needDefaultChar ? 1 : 0) + (needFontAscent ? 1 : 0) +
-	    (needFontDescent ? 1 : 0));
+            (needDefaultChar ? 1 : 0) + (needFontAscent ? 1 : 0) +
+            (needFontDescent ? 1 : 0));
 
     for (property = &propOffsets[0]; nProperties--; property++) {
-	unsigned long value;
+        unsigned long value;
 
-	/* Don't emit properties that are computed by bdftosnf */
+        /* Don't emit properties that are computed by bdftosnf */
 
-	fwrite(propData + property->name.position, 1, property->name.length,
-	       outFile);
-	fputc(' ', outFile);
+        fwrite(propData + property->name.position, 1, property->name.length,
+               outFile);
+        fputc(' ', outFile);
 
-	value = property->value.position;
-	switch (property->type) {
-	case PropTypeString:
-	    fprintf(outFile, "%s\n", AddQuotes(propData + value,
-					       property->value.length));
-	    break;
-	case PropTypeUnsigned:
-	    fprintf(outFile, "%lu\n", value);
-	    break;
-	case PropTypeSigned:
-	    fprintf(outFile, "%ld\n", (signed long) value);
-	    break;
-	default:
-	    fprintf(stderr, "unknown property type\n");
-	    return (False);
-	}
+        value = property->value.position;
+        switch (property->type) {
+        case PropTypeString:
+            fprintf(outFile, "%s\n", AddQuotes(propData + value,
+                                               property->value.length));
+            break;
+        case PropTypeUnsigned:
+            fprintf(outFile, "%lu\n", value);
+            break;
+        case PropTypeSigned:
+            fprintf(outFile, "%ld\n", (signed long) value);
+            break;
+        default:
+            fprintf(stderr, "unknown property type\n");
+            return (False);
+        }
     }
     if (needDefaultChar) {
-	fprintf(outFile, "DEFAULT_CHAR %lu\n",
-		(long) (fontHeader->default_char.high << 8)
-		     | (fontHeader->default_char.low));
+        fprintf(outFile, "DEFAULT_CHAR %lu\n",
+                (long) (fontHeader->default_char.high << 8)
+                | (fontHeader->default_char.low));
     }
     if (needFontAscent)
-	fprintf(outFile, "FONT_ASCENT %d\n", fontHeader->font_ascent);
+        fprintf(outFile, "FONT_ASCENT %d\n", fontHeader->font_ascent);
     if (needFontDescent)
-	fprintf(outFile, "FONT_DESCENT %d\n", fontHeader->font_descent);
+        fprintf(outFile, "FONT_DESCENT %d\n", fontHeader->font_descent);
     fprintf(outFile, "ENDPROPERTIES\n");
     return (True);
 }

@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include	<stdio.h>
@@ -59,9 +59,8 @@ usage(const char *progName, const char *msg)
     if (msg)
         fprintf(stderr, "%s: %s\n", progName, msg);
     fprintf(stderr,
-	    "Usage: %s [-server <font server>] -fn <font name>\n"
-	    "	or: %s -version\n",
-	    progName, progName);
+            "Usage: %s [-server <font server>] -fn <font name>\n"
+            "	or: %s -version\n", progName, progName);
     exit(0);
 }
 
@@ -75,79 +74,78 @@ Fail(const char *progName)
 int
 main(int argc, char *argv[])
 {
-    FSServer   *fontServer;
-    Font        fontID,
-                dummy;
+    FSServer *fontServer;
+    Font fontID, dummy;
     FSBitmapFormat bitmapFormat;
     FSXFontInfoHeader fontHeader;
-    FSPropInfo  propInfo;
+    FSPropInfo propInfo;
     FSPropOffset *propOffsets;
     unsigned char *propData;
 
-    FILE       *outFile;
-    char       *fontName;
-    char       *serverName;
-    int         i;
+    FILE *outFile;
+    char *fontName;
+    char *serverName;
+    int i;
 
     fontName = NULL;
     serverName = NULL;
     outFile = stdout;
 
     for (i = 1; i < argc; i++) {
-	if (!strncmp(argv[i], "-s", 2)) {
-	    if (argv[++i])
-		serverName = argv[i];
-	    else
-		usage(argv[0], "-server requires an argument");
-	} else if (!strncmp(argv[i], "-fn", 3)) {
-	    if (argv[++i])
-		fontName = argv[i];
-	    else
-		usage(argv[0], "-fn requires an argument");
-	}
-	else if (!strcmp(argv[i], "-version")) {
-	    printf("%s\n", PACKAGE_STRING);
-	    exit(0);
-	}
-	else {
-	    fprintf(stderr, "%s: unrecognized option '%s'\n",
-		    argv[0], argv[i]);
-	    usage(argv[0], NULL);
-	}
+        if (!strncmp(argv[i], "-s", 2)) {
+            if (argv[++i])
+                serverName = argv[i];
+            else
+                usage(argv[0], "-server requires an argument");
+        }
+        else if (!strncmp(argv[i], "-fn", 3)) {
+            if (argv[++i])
+                fontName = argv[i];
+            else
+                usage(argv[0], "-fn requires an argument");
+        }
+        else if (!strcmp(argv[i], "-version")) {
+            printf("%s\n", PACKAGE_STRING);
+            exit(0);
+        }
+        else {
+            fprintf(stderr, "%s: unrecognized option '%s'\n", argv[0], argv[i]);
+            usage(argv[0], NULL);
+        }
     }
 
     if (fontName == NULL)
-	usage(argv[0], "No font name specified");
+        usage(argv[0], "No font name specified");
 
     fontServer = FSOpenServer(serverName);
     if (!fontServer) {
-	const char *sn = FSServerName(serverName);
-	if (sn)
-	    fprintf(stderr, "%s: can't open font server \"%s\"\n",
-	      	    argv[0], sn);
-	else
-	    usage(argv[0], "No font server specified.");
-	exit(0);
+        const char *sn = FSServerName(serverName);
+
+        if (sn)
+            fprintf(stderr, "%s: can't open font server \"%s\"\n", argv[0], sn);
+        else
+            usage(argv[0], "No font server specified.");
+        exit(0);
     }
     bitmapFormat = 0;
     fontID = FSOpenBitmapFont(fontServer, bitmapFormat, (FSBitmapFormatMask) 0,
-			      fontName, &dummy);
+                              fontName, &dummy);
     if (!fontID) {
-	printf("can't open font \"%s\"\n", fontName);
-	exit(0);
+        printf("can't open font \"%s\"\n", fontName);
+        exit(0);
     }
     FSQueryXInfo(fontServer, fontID, &fontHeader, &propInfo, &propOffsets,
-		 &propData);
+                 &propData);
 
     if (!EmitHeader(outFile, &fontHeader, &propInfo, propOffsets, propData))
-	Fail(argv[0]);
+        Fail(argv[0]);
     if (!EmitProperties(outFile, &fontHeader, &propInfo, propOffsets, propData))
-	Fail(argv[0]);
+        Fail(argv[0]);
     if (!EmitCharacters(outFile, fontServer, &fontHeader, fontID))
-	Fail(argv[0]);
+        Fail(argv[0]);
     fprintf(outFile, "ENDFONT\n");
 
     FSFree((char *) propOffsets);
     FSFree((char *) propData);
-    exit (0);
+    exit(0);
 }

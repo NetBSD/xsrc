@@ -49,53 +49,50 @@ in this Software without prior written authorization from The Open Group.
 #include	<string.h>
 #include	"fstobdf.h"
 
-unsigned long        pointSize;
-unsigned long        yResolution;
+unsigned long pointSize;
+unsigned long yResolution;
 
-static const char *warning[] =
-{
-    "COMMENT  ",
-    "COMMENT  WARNING:  This bdf file was generated from a font server using",
-    "COMMENT  fstobdf.  The resulting font is subject to the same copyright,",
-    "COMMENT  license, and trademark restrictions as the original font.  The",
-    "COMMENT  authors and distributors of fstobdf disclaim all liability for",
-    "COMMENT  misuse of the program or its output.",
-    "COMMENT  ",
-    NULL
-};
+static const char *warning =
+    "COMMENT  \n"
+    "COMMENT  WARNING:  This bdf file was generated from a font server using\n"
+    "COMMENT  fstobdf.  The resulting font is subject to the same copyright,\n"
+    "COMMENT  license, and trademark restrictions as the original font.  The\n"
+    "COMMENT  authors and distributors of fstobdf disclaim all liability for\n"
+    "COMMENT  misuse of the program or its output.\n"
+    "COMMENT  \n";
 
 static char *
 FindStringProperty(const char *propName,
-		   unsigned int *propLength,
-		   FSPropInfo *propInfo,
-		   FSPropOffset *propOffsets,
-		   unsigned char *propData)
+                   unsigned int *propLength,
+                   FSPropInfo *propInfo,
+                   FSPropOffset *propOffsets,
+                   unsigned char *propData)
 {
     FSPropOffset *propOffset;
-    unsigned int  length;
-    unsigned int  i;
+    size_t length;
 
     propOffset = &propOffsets[0];
-    length = (unsigned int) strlen(propName);
-    for (i = propInfo->num_offsets; i--; propOffset++) {
-	if (propOffset->type == PropTypeString) {
+    length = strlen(propName);
+    for (unsigned int i = propInfo->num_offsets; i--; propOffset++) {
+        if (propOffset->type == PropTypeString) {
 
 #ifdef DEBUG
-	    char        pname[256];
+            char pname[256];
 
-	    memmove( pname, propData + propOffset->name.position,
-		  propOffset->name.length);
-	    pname[propOffset->name.length] = '\0';
-	    fprintf(stderr, "prop name: %s (len %d)\n",
-		    pname, propOffset->name.length);
+            memcpy(pname, propData + propOffset->name.position,
+                   propOffset->name.length);
+            pname[propOffset->name.length] = '\0';
+            fprintf(stderr, "prop name: %s (len %d)\n",
+                    pname, propOffset->name.length);
 #endif
 
-	    if ((propOffset->name.length == length) &&
-		    !strncmp((char*)propData + propOffset->name.position, propName, length)) {
-		*propLength = propOffset->value.length;
-		return (char *)(propData + propOffset->value.position);
-	    }
-	}
+            if ((propOffset->name.length == length) &&
+                !strncmp((char *) propData + propOffset->name.position,
+                         propName, length)) {
+                *propLength = propOffset->value.length;
+                return (char *) (propData + propOffset->value.position);
+            }
+        }
     }
     *propLength = 0;
     return (NULL);
@@ -103,26 +100,26 @@ FindStringProperty(const char *propName,
 
 static int
 FindNumberProperty(const char *propName,
-		   unsigned long *propValue,
-		   FSPropInfo *propInfo,
-		   FSPropOffset *propOffsets,
-		   unsigned char *propData)
+                   unsigned long *propValue,
+                   FSPropInfo *propInfo,
+                   FSPropOffset *propOffsets,
+                   unsigned char *propData)
 {
     FSPropOffset *propOffset;
-    unsigned int  i;
-    unsigned int  length;
+    size_t length;
 
     propOffset = &propOffsets[0];
-    length = (unsigned int) strlen(propName);
-    for (i = propInfo->num_offsets; i--; propOffset++) {
-	if ((propOffset->type == PropTypeSigned) ||
-		(propOffset->type == PropTypeUnsigned)) {
-	    if ((propOffset->name.length == length) &&
-		    !strncmp((char*)propData + propOffset->name.position, propName, length)) {
-		*propValue = propOffset->value.position;
-		return (propOffset->type);
-	    }
-	}
+    length = strlen(propName);
+    for (unsigned int i = propInfo->num_offsets; i--; propOffset++) {
+        if ((propOffset->type == PropTypeSigned) ||
+            (propOffset->type == PropTypeUnsigned)) {
+            if ((propOffset->name.length == length) &&
+                !strncmp((char *) propData + propOffset->name.position,
+                         propName, length)) {
+                *propValue = propOffset->value.position;
+                return (propOffset->type);
+            }
+        }
     }
     return (-1);
 }
@@ -133,15 +130,14 @@ FindNumberProperty(const char *propName,
  */
 Bool
 EmitHeader(FILE *outFile,
-	   FSXFontInfoHeader *fontHeader,
-	   FSPropInfo *propInfo,
-	   FSPropOffset *propOffsets,
-	   unsigned char *propData)
+           FSXFontInfoHeader *fontHeader,
+           FSPropInfo *propInfo,
+           FSPropOffset *propOffsets,
+           unsigned char *propData)
 {
     unsigned int len;
-    int         type;
-    char       *cp;
-    const char **cpp;
+    int type;
+    char *cp;
     unsigned long xResolution;
 
     fprintf(outFile, "STARTFONT 2.1\n");
@@ -149,27 +145,26 @@ EmitHeader(FILE *outFile,
     /*
      * find COPYRIGHT message and print it first, followed by warning
      */
-    cp = FindStringProperty("COPYRIGHT", &len, propInfo, propOffsets,
-			    propData);
+    cp = FindStringProperty("COPYRIGHT", &len, propInfo, propOffsets, propData);
     if (cp) {
-	fprintf(outFile, "COMMENT  \nCOMMENT  ");
-	fwrite(cp, 1, len, outFile);
-	fputc('\n', outFile);
+        fprintf(outFile, "COMMENT  \nCOMMENT  ");
+        fwrite(cp, 1, len, outFile);
+        fputc('\n', outFile);
     }
-    for (cpp = warning; *cpp; cpp++)
-	fprintf(outFile, "%s\n", *cpp);
+    fputs(warning, outFile);
 
     /*
      * FONT name
      */
     cp = FindStringProperty("FONT", &len, propInfo, propOffsets, propData);
     if (cp) {
-	fprintf(outFile, "FONT ");
-	fwrite(cp, 1, len, outFile);
-	fputc('\n', outFile);
-    } else {
-	fprintf(stderr, "unable to find FONT property\n");
-	return (False);
+        fprintf(outFile, "FONT ");
+        fwrite(cp, 1, len, outFile);
+        fputc('\n', outFile);
+    }
+    else {
+        fprintf(stderr, "unable to find FONT property\n");
+        return (False);
     }
 
     /*
@@ -178,34 +173,33 @@ EmitHeader(FILE *outFile,
      * Get XLFD values if possible, else fake it
      */
     type = FindNumberProperty("RESOLUTION_X", &xResolution, propInfo,
-			      propOffsets, propData);
+                              propOffsets, propData);
     if ((type != PropTypeUnsigned) && (type != PropTypeSigned))
-	xResolution = 72;
+        xResolution = 72;
 
     type = FindNumberProperty("RESOLUTION_Y", &yResolution, propInfo,
-			      propOffsets, propData);
+                              propOffsets, propData);
     if ((type != PropTypeUnsigned) && (type != PropTypeSigned))
-	yResolution = 72;
+        yResolution = 72;
 
     type = FindNumberProperty("POINT_SIZE", &pointSize, propInfo,
-			      propOffsets, propData);
+                              propOffsets, propData);
     if ((type == PropTypeUnsigned) || (type == PropTypeSigned))
-	pointSize = (pointSize + 5) / 10;
+        pointSize = (pointSize + 5) / 10;
     else
-	pointSize = ((fontHeader->font_ascent + fontHeader->font_descent)
-		     * 72) / yResolution;
+        pointSize = ((fontHeader->font_ascent + fontHeader->font_descent)
+                     * 72) / yResolution;
 
-    fprintf(outFile, "SIZE %lu %lu %lu\n", pointSize, xResolution,
-	    yResolution);
+    fprintf(outFile, "SIZE %lu %lu %lu\n", pointSize, xResolution, yResolution);
 
     /*
      * FONTBOUNDINGBOX width height xoff yoff
      *
      */
     fprintf(outFile, "FONTBOUNDINGBOX %d %d %d %d\n",
-	    fontHeader->max_bounds.right - fontHeader->min_bounds.left,
-	    fontHeader->max_bounds.ascent + fontHeader->max_bounds.descent,
-	    fontHeader->min_bounds.left,
-	    -fontHeader->max_bounds.descent);
+            fontHeader->max_bounds.right - fontHeader->min_bounds.left,
+            fontHeader->max_bounds.ascent + fontHeader->max_bounds.descent,
+            fontHeader->min_bounds.left,
+            -fontHeader->max_bounds.descent);
     return (True);
 }

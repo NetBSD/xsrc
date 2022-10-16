@@ -1,3 +1,165 @@
+commit 0c7273fbc64041ec4f617ce77eeca49f9da4e678
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 5 18:40:55 2022 -0700
+
+    fstobdf 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3c508f4376aa6812ea27226bbe6c4584cb07c446
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 11:21:17 2022 -0700
+
+    Add .git-blame-ignore-revs to hide whitespace commits from git blame
+    
+    To use this in your local repo clone, you will need to either run
+    `git blame --ignore-revs-file .git-blame-ignore-revs`
+    or set it permanently with
+    `git config blame.ignoreRevsFile .git-blame-ignore-revs`
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 91ccaaa80d33efd5897cacf714cb14405c2988f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 11:04:56 2022 -0700
+
+    Simplify printing of warning header
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee534667c6fc9a9b3364bb753f935d5a2f6a81e3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 10:44:59 2022 -0700
+
+    Store strlen() results in size_t instead of unsigned int
+    
+    Avoids truncating to 32-bits just to re-expand to 64-bits when
+    passing the value to strncmp() later
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit beb0876af6a532d32ae70675dcd882b2e9e55fc8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 10:40:34 2022 -0700
+
+    AddQuotes: mark input as const
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f82c0ee2d491b700bb8ae38dea3cf711e6bfb176
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 10:37:23 2022 -0700
+
+    Reduce scope of some variables
+    
+    No difference seen in elf binary
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2325f84273ac846fdfc89f4655c21fd3b89da2bc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 10:25:29 2022 -0700
+
+    EmitBitmap: declare maskTab as const
+    
+    As recommended by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4d54d9ad3a46815792c094fbea82351ed61c66d7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 10:18:20 2022 -0700
+
+    Convert sources to standard X.Org code style
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 230df18221211dbbe064c561fa9bcc7ac87c0872
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 3 17:17:50 2022 -0700
+
+    Use memcpy() instead of memmove() when buffers are known not to overlap
+    
+    Most of these came from a mass bcopy() -> memmove() substitution
+    in 1993 with a commit comment of "ANSIfied for R6".
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e4188606121f82aa14516c7fcab6680df050002d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 15:26:11 2021 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d33be6f5c63df4287f1cd0353e2b820ecf62b94d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 15:24:34 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 275f28863d70e6ee6e3f2fe58e0a23f9cf0c0f34
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 15:24:28 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a70a1f71a176d62c9ff7838b78d0e02603e757b1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 16:47:05 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c6b3126998d2199375fcd9b00d0a511e3e6217d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 19:59:28 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 16e56ed860165bf1340608692c6fc4ee359968ff
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:20 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 9816024f4d346229927ae3f4656f75ddcc14f073
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit c929f828c320c6c00ee054010fbd9aa0cc117808
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit 30a982223d71d6809cc01809c71f206ce736c4ea
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Dec 30 20:57:33 2014 -0800
@@ -457,7 +619,7 @@ Date:   Wed Jul 20 19:31:48 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit d487591b670d61283aa8482817af8dac6b82badb
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 16:22:21 2005 +0000
 
     Add buildsystem for fstobdf
