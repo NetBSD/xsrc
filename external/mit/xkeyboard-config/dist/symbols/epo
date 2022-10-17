@@ -40,6 +40,9 @@ xkb_symbols "basic" {
 
   key <AE05>  { [ 5,            percent,      EuroSign,      EuroSign   ] };
 
+  key <AB08>  { [ comma,        less,        guillemotleft,  U2039      ] }; // « ‹
+  key <AB09>  { [ period,       greater,    guillemotright,  U203A      ] }; // » ›
+
   include "level3(ralt_switch)"
 };
 
