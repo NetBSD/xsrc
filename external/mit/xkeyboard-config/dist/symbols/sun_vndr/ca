@@ -56,7 +56,6 @@ xkb_symbols "sun_type6" {
 
    key <AC10> { [       semicolon, colon,           degree                     ]};
    key <AC11> { [          egrave, Egrave,          braceleft                  ]};
-   key <AC12> { [          agrave, Agrave,          braceright                 ]};
    key <BKSL> { [          agrave, Agrave,          braceright                 ]};
 
    key <LSGT> { [          uacute, Uacute                                      ]};
@@ -89,16 +88,6 @@ partial alphanumeric_keys
 partial alphanumeric_keys
 	xkb_symbols "fr-legacy" {
 	include "ca(fr-legacy)"
-};
-
-partial alphanumeric_keys
-	xkb_symbols "multi" {
-	include "ca(multi)"
-};
-
-partial alphanumeric_keys
-	xkb_symbols "multi-2gr" {
-	include "ca(multi-2gr)"
 };
 
 partial alphanumeric_keys

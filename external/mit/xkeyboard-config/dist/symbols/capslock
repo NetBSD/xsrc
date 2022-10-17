@@ -11,19 +11,6 @@ xkb_symbols "shiftlock" {
 };
 
 hidden partial modifier_keys
-xkb_symbols "grouplock" {
-    replace key <CAPS> { [ ISO_Next_Group, Caps_Lock ] };
-};
-
-hidden partial modifier_keys
-xkb_symbols "groupshift" {
-    key <CAPS> {
-        type[Group1] = "PC_ALT_LEVEL2",
-        [ Mode_switch, Caps_Lock ]
-    };
-};
-
-hidden partial modifier_keys
 xkb_symbols "swapescape" {
     key <CAPS> { [ Escape ] };
     key <ESC>  { [ Caps_Lock ] };
@@ -40,6 +27,15 @@ xkb_symbols "escape_shifted_capslock" {
         type[Group1] = "TWO_LEVEL",
         symbols[Group1] = [ Escape, Caps_Lock ],
         actions[Group1] = [ NoAction(), LockMods(modifiers = Lock) ]
+    };
+};
+
+hidden partial modifier_keys
+xkb_symbols "escape_shifted_compose" {
+    key <CAPS> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Escape, Multi_key ],
+        actions[Group1] = [ NoAction(), NoAction() ]
     };
 };
 

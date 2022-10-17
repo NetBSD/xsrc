@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xkeyboard-config 2.33.99\n"
 "Report-Msgid-Bugs-To: svu@users.sourceforge.net\n"
-"POT-Creation-Date: 2021-10-04 11:30+0100\n"
+"POT-Creation-Date: 2021-09-19 21:42+0100\n"
 "PO-Revision-Date: 2021-10-03 16:46+0300\n"
 "Last-Translator: Rimas Kudelis <rimas@kudelis.lt>\n"
 "Language-Team: Lithuanian <komp_lt@konferencijos.lt>\n"
@@ -14,8 +14,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
-"%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.0\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 
@@ -777,7 +776,7 @@ msgstr "„Chromebook“"
 #: rules/base.xml:1339 rules/base.xml:1765 rules/base.xml:2300
 #: rules/base.xml:2781 rules/base.xml:3441 rules/base.xml:5622
 #: rules/base.xml:5875 rules/base.xml:5918 rules/base.xml:6063
-#: rules/base.xml:6074 rules/base.extras.xml:352 rules/base.extras.xml:1260
+#: rules/base.xml:6074 rules/base.extras.xml:352 rules/base.extras.xml:1254
 msgid "en"
 msgstr "en"
 
@@ -1039,7 +1038,7 @@ msgstr "Armėnų (alt. Rytų)"
 #. Keyboard indicator for German layouts
 #: rules/base.xml:1740 rules/base.xml:3587 rules/base.xml:5182
 #: rules/base.xml:5200 rules/base.xml:5241 rules/base.extras.xml:95
-#: rules/base.extras.xml:1203
+#: rules/base.extras.xml:1197
 msgid "de"
 msgstr "de"
 
@@ -1098,11 +1097,11 @@ msgid "Belarusian (intl.)"
 msgstr "Baltarusių (tarpt.)"
 
 #. Keyboard indicator for Belgian layouts
-#: rules/base.xml:1832 rules/base.extras.xml:832
+#: rules/base.xml:1832 rules/base.extras.xml:826
 msgid "be"
 msgstr "be"
 
-#: rules/base.xml:1833 rules/base.extras.xml:833
+#: rules/base.xml:1833 rules/base.extras.xml:827
 msgid "Belgian"
 msgstr "Belgų"
 
@@ -1140,11 +1139,11 @@ msgid "Bangla (Probhat)"
 msgstr "Bengalų („Probhat“)"
 
 #. Keyboard indicator for Indian layouts
-#: rules/base.xml:1898 rules/base.extras.xml:1358
+#: rules/base.xml:1898 rules/base.extras.xml:1352
 msgid "in"
 msgstr "in"
 
-#: rules/base.xml:1899 rules/base.extras.xml:1359
+#: rules/base.xml:1899 rules/base.extras.xml:1353
 msgid "Indian"
 msgstr "Indų"
 
@@ -1299,7 +1298,7 @@ msgstr "Telugų („Sarala“)"
 
 #. Keyboard indicator for Urdu layouts
 #: rules/base.xml:2212 rules/base.xml:2223 rules/base.xml:2234
-#: rules/base.xml:5817 rules/base.extras.xml:1098 rules/base.extras.xml:1385
+#: rules/base.xml:5817 rules/base.extras.xml:1092 rules/base.extras.xml:1379
 msgid "ur"
 msgstr "ur"
 
@@ -1342,7 +1341,7 @@ msgid "Sanskrit (KaGaPa, phonetic)"
 msgstr "Sanskritas („KaGaPa“, fonetinis)"
 
 #. Keyboard indicator for Marathi layouts
-#: rules/base.xml:2289 rules/base.extras.xml:1365
+#: rules/base.xml:2289 rules/base.extras.xml:1359
 msgid "mr"
 msgstr "mr"
 
@@ -1388,12 +1387,12 @@ msgid "Bosnian (US)"
 msgstr "Bosnių (JAV)"
 
 #. Keyboard indicator for Portuguese layouts
-#: rules/base.xml:2368 rules/base.xml:4645 rules/base.extras.xml:847
-#: rules/base.extras.xml:1116
+#: rules/base.xml:2368 rules/base.xml:4645 rules/base.extras.xml:841
+#: rules/base.extras.xml:1110
 msgid "pt"
 msgstr "pt"
 
-#: rules/base.xml:2369 rules/base.extras.xml:848
+#: rules/base.xml:2369 rules/base.extras.xml:842
 msgid "Portuguese (Brazil)"
 msgstr "Portugalų (Brazilija)"
 
@@ -1479,7 +1478,7 @@ msgstr "Arabų (Marokas)"
 #: rules/base.xml:2518 rules/base.xml:2725 rules/base.xml:2736
 #: rules/base.xml:2744 rules/base.xml:2794 rules/base.xml:3320
 #: rules/base.xml:5208 rules/base.xml:5219 rules/base.xml:5230
-#: rules/base.xml:6052 rules/base.extras.xml:63 rules/base.extras.xml:973
+#: rules/base.xml:6052 rules/base.extras.xml:63 rules/base.extras.xml:967
 msgid "fr"
 msgstr "fr"
 
@@ -1688,11 +1687,11 @@ msgid "Croatian (US)"
 msgstr "Kroatų (JAV)"
 
 #. Keyboard indicator for Chech layouts
-#: rules/base.xml:2958 rules/base.extras.xml:862
+#: rules/base.xml:2958 rules/base.extras.xml:856
 msgid "cs"
 msgstr "cs"
 
-#: rules/base.xml:2959 rules/base.extras.xml:863
+#: rules/base.xml:2959 rules/base.extras.xml:857
 msgid "Czech"
 msgstr "Čekų"
 
@@ -1725,11 +1724,11 @@ msgid "Russian (Czech, phonetic)"
 msgstr "Rusų (Čekija, fonetinis)"
 
 #. Keyboard indicator for Danish layouts
-#: rules/base.xml:3018 rules/base.extras.xml:901
+#: rules/base.xml:3018 rules/base.extras.xml:895
 msgid "da"
 msgstr "da"
 
-#: rules/base.xml:3019 rules/base.extras.xml:902
+#: rules/base.xml:3019 rules/base.extras.xml:896
 msgid "Danish"
 msgstr "Danų"
 
@@ -1754,11 +1753,11 @@ msgid "Danish (Dvorak)"
 msgstr "Danų („Dvorak“)"
 
 #. Keyboard indicator for Dutch layouts
-#: rules/base.xml:3061 rules/base.extras.xml:916
+#: rules/base.xml:3061 rules/base.extras.xml:910
 msgid "nl"
 msgstr "nl"
 
-#: rules/base.xml:3062 rules/base.extras.xml:917
+#: rules/base.xml:3062 rules/base.extras.xml:911
 msgid "Dutch"
 msgstr "Olandų"
 
@@ -1784,11 +1783,11 @@ msgid "Dzongkha"
 msgstr "Botijų"
 
 #. Keyboard indicator for Estonian layouts
-#: rules/base.xml:3103 rules/base.extras.xml:931
+#: rules/base.xml:3103 rules/base.extras.xml:925
 msgid "et"
 msgstr "et"
 
-#: rules/base.xml:3104 rules/base.extras.xml:932
+#: rules/base.xml:3104 rules/base.extras.xml:926
 msgid "Estonian"
 msgstr "Estų"
 
@@ -1871,11 +1870,11 @@ msgid "Faroese (no dead keys)"
 msgstr "Fareriečių (be tęsties klavišų)"
 
 #. Keyboard indicator for Finnish layouts
-#: rules/base.xml:3274 rules/base.extras.xml:946
+#: rules/base.xml:3274 rules/base.extras.xml:940
 msgid "fi"
 msgstr "fi"
 
-#: rules/base.xml:3275 rules/base.extras.xml:947
+#: rules/base.xml:3275 rules/base.extras.xml:941
 msgid "Finnish"
 msgstr "Suomių"
 
@@ -1899,7 +1898,7 @@ msgstr "Šiaurės samių (Suomija)"
 msgid "Finnish (Macintosh)"
 msgstr "Suomių („Macintosh“)"
 
-#: rules/base.xml:3321 rules/base.extras.xml:974
+#: rules/base.xml:3321 rules/base.extras.xml:968
 msgid "French"
 msgstr "Prancūzų"
 
@@ -2147,11 +2146,11 @@ msgid "German (dead tilde)"
 msgstr "Vokiečių (tęsties klavišas – tildė)"
 
 #. Keyboard indicator for Greek layouts
-#: rules/base.xml:3734 rules/base.extras.xml:1000
+#: rules/base.xml:3734 rules/base.extras.xml:994
 msgid "gr"
 msgstr "gr"
 
-#: rules/base.xml:3735 rules/base.extras.xml:1001
+#: rules/base.xml:3735 rules/base.extras.xml:995
 msgid "Greek"
 msgstr "Graikų"
 
@@ -2178,8 +2177,7 @@ msgstr "hu"
 
 #: rules/base.xml:3772 rules/base.extras.xml:212
 msgid "Hungarian"
-msgstr ""
-"Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, be tęsties klavišų)"
+msgstr "Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, be tęsties klavišų)"
 
 #: rules/base.xml:3781
 msgid "Hungarian (standard)"
@@ -2195,18 +2193,15 @@ msgstr "Vengrų (QWERTY)"
 
 #: rules/base.xml:3799
 msgid "Hungarian (QWERTZ, 101-key, comma, dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 101 klavišas, dešimtainis kablelis, su tęsties klavišais)"
+msgstr "Vengrų (QWERTZ, 101 klavišas, dešimtainis kablelis, su tęsties klavišais)"
 
 #: rules/base.xml:3805
 msgid "Hungarian (QWERTZ, 101-key, comma, no dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 101 klavišas, dešimtainis kablelis, be tęsties klavišų)"
+msgstr "Vengrų (QWERTZ, 101 klavišas, dešimtainis kablelis, be tęsties klavišų)"
 
 #: rules/base.xml:3811
 msgid "Hungarian (QWERTZ, 101-key, dot, dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 101 klavišas, dešimtainis taškas, su tęsties klavišais)"
+msgstr "Vengrų (QWERTZ, 101 klavišas, dešimtainis taškas, su tęsties klavišais)"
 
 #: rules/base.xml:3817
 msgid "Hungarian (QWERTZ, 101-key, dot, no dead keys)"
@@ -2214,18 +2209,15 @@ msgstr "Vengrų (QWERTZ, 101 klavišas, dešimtainis taškas, be tęsties klavi�
 
 #: rules/base.xml:3823
 msgid "Hungarian (QWERTY, 101-key, comma, dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 101 klavišas, dešimtainis kablelis, su tęsties klavišais)"
+msgstr "Vengrų (QWERTY, 101 klavišas, dešimtainis kablelis, su tęsties klavišais)"
 
 #: rules/base.xml:3829
 msgid "Hungarian (QWERTY, 101-key, comma, no dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 101 klavišas, dešimtainis kablelis, be tęsties klavišų)"
+msgstr "Vengrų (QWERTY, 101 klavišas, dešimtainis kablelis, be tęsties klavišų)"
 
 #: rules/base.xml:3835
 msgid "Hungarian (QWERTY, 101-key, dot, dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 101 klavišas, dešimtainis taškas, su tęsties klavišais)"
+msgstr "Vengrų (QWERTY, 101 klavišas, dešimtainis taškas, su tęsties klavišais)"
 
 #: rules/base.xml:3841
 msgid "Hungarian (QWERTY, 101-key, dot, no dead keys)"
@@ -2233,18 +2225,15 @@ msgstr "Vengrų (QWERTY, 101 klavišas, dešimtainis taškas, be tęsties klavi�
 
 #: rules/base.xml:3847
 msgid "Hungarian (QWERTZ, 102-key, comma, dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, su tęsties klavišais)"
+msgstr "Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, su tęsties klavišais)"
 
 #: rules/base.xml:3853
 msgid "Hungarian (QWERTZ, 102-key, comma, no dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, be tęsties klavišais)"
+msgstr "Vengrų (QWERTZ, 102 klavišai, dešimtainis kablelis, be tęsties klavišais)"
 
 #: rules/base.xml:3859
 msgid "Hungarian (QWERTZ, 102-key, dot, dead keys)"
-msgstr ""
-"Vengrų (QWERTZ, 102 klavišai, dešimtainis taškas, su tęsties klavišais)"
+msgstr "Vengrų (QWERTZ, 102 klavišai, dešimtainis taškas, su tęsties klavišais)"
 
 #: rules/base.xml:3865
 msgid "Hungarian (QWERTZ, 102-key, dot, no dead keys)"
@@ -2252,18 +2241,15 @@ msgstr "Vengrų (QWERTZ, 102 klavišai, dešimtainis taškas, be tęsties klavi�
 
 #: rules/base.xml:3871
 msgid "Hungarian (QWERTY, 102-key, comma, dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 102 klavišai, dešimtainis kablelis, su tęsties klavišais)"
+msgstr "Vengrų (QWERTY, 102 klavišai, dešimtainis kablelis, su tęsties klavišais)"
 
 #: rules/base.xml:3877
 msgid "Hungarian (QWERTY, 102-key, comma, no dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 102 klavišai, dešimtainis kablelis, be tęsties klavišų)"
+msgstr "Vengrų (QWERTY, 102 klavišai, dešimtainis kablelis, be tęsties klavišų)"
 
 #: rules/base.xml:3883
 msgid "Hungarian (QWERTY, 102-key, dot, dead keys)"
-msgstr ""
-"Vengrų (QWERTY, 102 klavišai, dešimtainis taškas, su tęsties klavišais)"
+msgstr "Vengrų (QWERTY, 102 klavišai, dešimtainis taškas, su tęsties klavišais)"
 
 #: rules/base.xml:3889
 msgid "Hungarian (QWERTY, 102-key, dot, no dead keys)"
@@ -2312,11 +2298,11 @@ msgid "Hebrew (Biblical, Tiro)"
 msgstr "Hebrajų (biblinė, Tiro)"
 
 #. Keyboard indicator for Italian layouts
-#: rules/base.xml:3960 rules/base.extras.xml:1021
+#: rules/base.xml:3960 rules/base.extras.xml:1015
 msgid "it"
 msgstr "it"
 
-#: rules/base.xml:3961 rules/base.extras.xml:1022
+#: rules/base.xml:3961 rules/base.extras.xml:1016
 msgid "Italian"
 msgstr "Italų"
 
@@ -2357,11 +2343,11 @@ msgid "Friulian (Italy)"
 msgstr "Friulų (Italija)"
 
 #. Keyboard indicator for Japaneses
-#: rules/base.xml:4047 rules/base.xml:5757 rules/base.extras.xml:1056
+#: rules/base.xml:4047 rules/base.xml:5757 rules/base.extras.xml:1050
 msgid "ja"
 msgstr "ja"
 
-#: rules/base.xml:4048 rules/base.extras.xml:1057
+#: rules/base.xml:4048 rules/base.extras.xml:1051
 msgid "Japanese"
 msgstr "Japonų"
 
@@ -2447,7 +2433,7 @@ msgid "Lao (STEA)"
 msgstr "Laosiečių (STEA)"
 
 #. Keyboard indicator for Spanish layouts
-#: rules/base.xml:4196 rules/base.xml:5030 rules/base.extras.xml:1158
+#: rules/base.xml:4196 rules/base.xml:5030 rules/base.extras.xml:1152
 msgid "es"
 msgstr "es"
 
@@ -2636,11 +2622,11 @@ msgid "Mongolian"
 msgstr "Mongolų"
 
 #. Keyboard indicator for Norwegian layouts
-#: rules/base.xml:4498 rules/base.extras.xml:1083
+#: rules/base.xml:4498 rules/base.extras.xml:1077
 msgid "no"
 msgstr "no"
 
-#: rules/base.xml:4499 rules/base.extras.xml:1084
+#: rules/base.xml:4499 rules/base.extras.xml:1078
 msgid "Norwegian"
 msgstr "Norvegų"
 
@@ -2721,7 +2707,7 @@ msgstr "Rusų (Lenkija, fonetinis „Dvorak“)"
 msgid "Polish (programmer Dvorak)"
 msgstr "Lenkų (programuotojų „Dvorak“)"
 
-#: rules/base.xml:4646 rules/base.extras.xml:1117
+#: rules/base.xml:4646 rules/base.extras.xml:1111
 msgid "Portuguese"
 msgstr "Portugalų"
 
@@ -2916,11 +2902,11 @@ msgid "Slovenian (US)"
 msgstr "Slovėnų (JAV)"
 
 #. Keyboard indicator for Slovak layouts
-#: rules/base.xml:4999 rules/base.extras.xml:1137
+#: rules/base.xml:4999 rules/base.extras.xml:1131
 msgid "sk"
 msgstr "sk"
 
-#: rules/base.xml:5000 rules/base.extras.xml:1138
+#: rules/base.xml:5000 rules/base.extras.xml:1132
 msgid "Slovak"
 msgstr "Slovakų"
 
@@ -2936,7 +2922,7 @@ msgstr "Slovakų (QWERTY)"
 msgid "Slovak (QWERTY, extended backslash)"
 msgstr "Slovakų (QWERTY, išplėstasis kairinis brūkšnys)"
 
-#: rules/base.xml:5031 rules/base.extras.xml:1159
+#: rules/base.xml:5031 rules/base.extras.xml:1153
 msgid "Spanish"
 msgstr "Ispanų"
 
@@ -2977,11 +2963,11 @@ msgid "Spanish (Macintosh)"
 msgstr "Ispanų („Macintosh“)"
 
 #. Keyboard indicator for Swedish layouts
-#: rules/base.xml:5093 rules/base.extras.xml:1173
+#: rules/base.xml:5093 rules/base.extras.xml:1167
 msgid "sv"
 msgstr "sv"
 
-#: rules/base.xml:5094 rules/base.extras.xml:1174
+#: rules/base.xml:5094 rules/base.extras.xml:1168
 msgid "Swedish"
 msgstr "Švedų"
 
@@ -3025,7 +3011,7 @@ msgstr "Švedų (JAV)"
 msgid "Swedish Sign Language"
 msgstr "Švedų gestų kalba"
 
-#: rules/base.xml:5183 rules/base.extras.xml:1204
+#: rules/base.xml:5183 rules/base.extras.xml:1198
 msgid "German (Switzerland)"
 msgstr "Vokiečių (Šveicarija)"
 
@@ -3139,11 +3125,11 @@ msgid "Thai (Pattachote)"
 msgstr "Tajų („Pattachote“)"
 
 #. Keyboard indicator for Turkish layouts
-#: rules/base.xml:5398 rules/base.extras.xml:1224
+#: rules/base.xml:5398 rules/base.extras.xml:1218
 msgid "tr"
 msgstr "tr"
 
-#: rules/base.xml:5399 rules/base.extras.xml:1225
+#: rules/base.xml:5399 rules/base.extras.xml:1219
 msgid "Turkish"
 msgstr "Turkų"
 
@@ -3197,7 +3183,7 @@ msgstr "Otomanų"
 msgid "Ottoman (F)"
 msgstr "Otomanų (F)"
 
-#: rules/base.xml:5504 rules/base.extras.xml:1237
+#: rules/base.xml:5504 rules/base.extras.xml:1231
 msgid "Old Turkic"
 msgstr "Senovės tiurkų"
 
@@ -3223,11 +3209,11 @@ msgid "Saisiyat (Taiwan)"
 msgstr "Siaisijatų (Taivanas)"
 
 #. Keyboard indicator for Ukranian layouts
-#: rules/base.xml:5567 rules/base.extras.xml:1245
+#: rules/base.xml:5567 rules/base.extras.xml:1239
 msgid "uk"
 msgstr "uk"
 
-#: rules/base.xml:5568 rules/base.extras.xml:1246
+#: rules/base.xml:5568 rules/base.extras.xml:1240
 msgid "Ukrainian"
 msgstr "Ukrainiečių"
 
@@ -3259,7 +3245,7 @@ msgstr "Rusų (Ukraina, standartinis RSTU)"
 msgid "Ukrainian (homophonic)"
 msgstr "Ukrainiečių (homofoninis)"
 
-#: rules/base.xml:5623 rules/base.extras.xml:1261
+#: rules/base.xml:5623 rules/base.extras.xml:1255
 msgid "English (UK)"
 msgstr "Anglų (JK)"
 
@@ -3308,11 +3294,11 @@ msgid "Uzbek (Latin)"
 msgstr "Uzbekų (lotyniški rašmenys)"
 
 #. Keyboard indicator for Vietnamese layouts
-#: rules/base.xml:5713 rules/base.extras.xml:1291
+#: rules/base.xml:5713 rules/base.extras.xml:1285
 msgid "vi"
 msgstr "vi"
 
-#: rules/base.xml:5714 rules/base.extras.xml:1292
+#: rules/base.xml:5714 rules/base.extras.xml:1286
 msgid "Vietnamese"
 msgstr "Vietnamiečių"
 
@@ -3325,11 +3311,11 @@ msgid "Vietnamese (French)"
 msgstr "Vietnamiečių (Prancūzija)"
 
 #. Keyboard indicator for Korean layouts
-#: rules/base.xml:5738 rules/base.extras.xml:1275
+#: rules/base.xml:5738 rules/base.extras.xml:1269
 msgid "ko"
 msgstr "ko"
 
-#: rules/base.xml:5739 rules/base.extras.xml:1276
+#: rules/base.xml:5739 rules/base.extras.xml:1270
 msgid "Korean"
 msgstr "Korėjiečių"
 
@@ -3366,7 +3352,7 @@ msgstr "Ogham"
 msgid "Ogham (IS434)"
 msgstr "Ogham (IS434)"
 
-#: rules/base.xml:5818 rules/base.extras.xml:1099
+#: rules/base.xml:5818 rules/base.extras.xml:1093
 msgid "Urdu (Pakistan)"
 msgstr "Urdu (Pakistanas)"
 
@@ -3693,8 +3679,7 @@ msgid "Menu (while pressed), Shift+Menu for Menu"
 msgstr "Meniu (kol nuspaustas), meniu iškviečiamas, paspaudnžiant Lyg2+Meniu"
 
 #: rules/base.xml:6429
-msgid ""
-"Caps Lock (while pressed), Alt+Caps Lock for the original Caps Lock action"
+msgid "Caps Lock (while pressed), Alt+Caps Lock for the original Caps Lock action"
 msgstr "Didž (kol nuspaustas); Alt+Didž atlieka pirminę Didž klavišo funkciją"
 
 #: rules/base.xml:6435
@@ -3724,13 +3709,11 @@ msgstr "Didž į pirmąjį išdėstymą, Lyg2+Didž į paskutinį išdėstymą"
 
 #: rules/base.xml:6471
 msgid "Left Win to first layout; Right Win/Menu to last layout"
-msgstr ""
-"Kairysis Win į pirmąjį išdėstymą, dešinysis Win / Meniu į paskutinį išdėstymą"
+msgstr "Kairysis Win į pirmąjį išdėstymą, dešinysis Win / Meniu į paskutinį išdėstymą"
 
 #: rules/base.xml:6477
 msgid "Left Ctrl to first layout; Right Ctrl to last layout"
-msgstr ""
-"Kairysis Vald į pirmąjį išdėstymą, dešinysis Vald į paskutinį išdėstymą"
+msgstr "Kairysis Vald į pirmąjį išdėstymą, dešinysis Vald į paskutinį išdėstymą"
 
 #: rules/base.xml:6483
 msgid "Alt+Caps Lock"
@@ -3814,9 +3797,7 @@ msgstr "Ekrano slinkimas"
 
 #: rules/base.xml:6603
 msgid "Left Ctrl+Left Win to first layout; Right Ctrl+Menu to second layout"
-msgstr ""
-"Kairysis Vald+Kairysis Win į pirmąjį išdėstymą, Dešinysis Vald+Meniu į "
-"antrąjį išdėstymą"
+msgstr "Kairysis Vald+Kairysis Win į pirmąjį išdėstymą, Dešinysis Vald+Meniu į antrąjį išdėstymą"
 
 #: rules/base.xml:6609
 msgid "Left Ctrl+Left Win"
@@ -3830,7 +3811,7 @@ msgstr "Klavišas antrajam lygiui pasirinkti"
 msgid "The \"&lt; &gt;\" key"
 msgstr "Klavišas „&lt; &gt;“"
 
-#: rules/base.xml:6631 rules/base.extras.xml:1401
+#: rules/base.xml:6631 rules/base.extras.xml:1395
 msgid "Key to choose the 3rd level"
 msgstr "Klavišas trečiajam lygiui pasirinkti"
 
@@ -3859,28 +3840,16 @@ msgid "Backslash"
 msgstr "Kairinis brūkšnys"
 
 #: rules/base.xml:6720
-msgid ""
-"Caps Lock; acts as onetime lock when pressed together with another 3rd-level "
-"chooser"
-msgstr ""
-"Didž klavišas; veikia kaip tęsties klavišas, kai naudojamas kartu su kitu "
-"trečiojo lygio parinkimo klavišu"
+msgid "Caps Lock; acts as onetime lock when pressed together with another 3rd-level chooser"
+msgstr "Didž klavišas; veikia kaip tęsties klavišas, kai naudojamas kartu su kitu trečiojo lygio parinkimo klavišu"
 
 #: rules/base.xml:6726
-msgid ""
-"Backslash; acts as onetime lock when pressed together with another 3rd level "
-"chooser"
-msgstr ""
-"Kairinio brūkšnio klavišas; veikia kaip tęsties klavišas, kai naudojamas "
-"kartu su kitu trečiojo lygio parinkimo klavišu"
+msgid "Backslash; acts as onetime lock when pressed together with another 3rd level chooser"
+msgstr "Kairinio brūkšnio klavišas; veikia kaip tęsties klavišas, kai naudojamas kartu su kitu trečiojo lygio parinkimo klavišu"
 
 #: rules/base.xml:6732
-msgid ""
-"The \"&lt; &gt;\" key; acts as onetime lock when pressed together with "
-"another 3rd level chooser"
-msgstr ""
-"Klavišas „&lt; &gt;“; veikia kaip tęsties klavišas, kai naudojamas kartu su "
-"kitu trečiojo lygio parinkimo klavišu"
+msgid "The \"&lt; &gt;\" key; acts as onetime lock when pressed together with another 3rd level chooser"
+msgstr "Klavišas „&lt; &gt;“; veikia kaip tęsties klavišas, kai naudojamas kartu su kitu trečiojo lygio parinkimo klavišu"
 
 #: rules/base.xml:6740
 msgid "Ctrl position"
@@ -3932,9 +3901,7 @@ msgstr "Sukeisti dešinįjį Win klavišą su dešiniuoju Vald klavišu"
 
 #: rules/base.xml:6810
 msgid "Left Alt as Ctrl, Left Ctrl as Win, Left Win as Left Alt"
-msgstr ""
-"Kairiajam Alt suteikti Vald funkciją, kairiajam Vald – Win f-ją, kairiajam "
-"Win – kairiojo Alt f-ją"
+msgstr "Kairiajam Alt suteikti Vald funkciją, kairiajam Vald – Win f-ją, kairiajam Win – kairiojo Alt f-ją"
 
 #: rules/base.xml:6818
 msgid "Use keyboard LED to show alternative layout"
@@ -3974,15 +3941,11 @@ msgstr "Senasis „Wang 724“"
 
 #: rules/base.xml:6885
 msgid "Wang 724 keypad with Unicode arrows and math operators"
-msgstr ""
-"„Wang 724“ skaitmenų sritis su unikodinėmis rodyklėmis ir matematiniais "
-"operatoriais"
+msgstr "„Wang 724“ skaitmenų sritis su unikodinėmis rodyklėmis ir matematiniais operatoriais"
 
 #: rules/base.xml:6891
 msgid "Wang 724 keypad with Unicode arrows and math operators on default level"
-msgstr ""
-"„Wang 724“ skaitmenų sritis su unikodinėmis rodyklėmis ir matematiniais "
-"operatoriais pagrindiniame lygyje"
+msgstr "„Wang 724“ skaitmenų sritis su unikodinėmis rodyklėmis ir matematiniais operatoriais pagrindiniame lygyje"
 
 #: rules/base.xml:6897
 msgid "Hexadecimal"
@@ -4037,15 +4000,11 @@ msgstr "Didžiųjų raidžių klavišo veiksena"
 
 #: rules/base.xml:6978
 msgid "Caps Lock uses internal capitalization; Shift \"pauses\" Caps Lock"
-msgstr ""
-"Didž įjungia įtaisytąjį raidžių vertimą didžiosiomis; Lyg2 pristabdo Didž "
-"klavišo veikimą"
+msgstr "Didž įjungia įtaisytąjį raidžių vertimą didžiosiomis; Lyg2 pristabdo Didž klavišo veikimą"
 
 #: rules/base.xml:6984
 msgid "Caps Lock uses internal capitalization; Shift does not affect Caps Lock"
-msgstr ""
-"Didž įjungia įtaisytąjį raidžių vertimą didžiosiomis; Lyg2 nedaro įtakos "
-"Didž klavišo veikimui"
+msgstr "Didž įjungia įtaisytąjį raidžių vertimą didžiosiomis; Lyg2 nedaro įtakos Didž klavišo veikimui"
 
 #: rules/base.xml:6990
 msgid "Caps Lock acts as Shift with locking; Shift \"pauses\" Caps Lock"
@@ -4053,8 +4012,7 @@ msgstr "Didž klavišas veikia Lyg2 su fiksavimu; Lyg2 pristabdo Didž veikimą"
 
 #: rules/base.xml:6996
 msgid "Caps Lock acts as Shift with locking; Shift does not affect Caps Lock"
-msgstr ""
-"Didž klavišas veikia kaip nuolat nuspaustas Lyg2; Lyg2 neįtakoja Didž veikimo"
+msgstr "Didž klavišas veikia kaip nuolat nuspaustas Lyg2; Lyg2 neįtakoja Didž veikimo"
 
 #: rules/base.xml:7002
 msgid "Caps Lock toggles normal capitalization of alphabetic characters"
@@ -4062,8 +4020,7 @@ msgstr "Didž klavišas įjungia įprastą raidžių vertimą didžiosiomis"
 
 #: rules/base.xml:7008
 msgid "Caps Lock toggles Shift Lock (affects all keys)"
-msgstr ""
-"Didž klavišas veikia kaip nuolat nuspaustas Lyg2 (įtakoja visus klavišus)"
+msgstr "Didž klavišas veikia kaip nuolat nuspaustas Lyg2 (įtakoja visus klavišus)"
 
 #: rules/base.xml:7014
 msgid "Swap Esc and Caps Lock"
@@ -4074,12 +4031,8 @@ msgid "Make Caps Lock an additional Esc"
 msgstr "Didž klavišą paversti papildomu Gr klavišu"
 
 #: rules/base.xml:7026
-msgid ""
-"Make Caps Lock an additional Esc, but Shift + Caps Lock is the regular Caps "
-"Lock"
-msgstr ""
-"Didž klavišą paversti papildomu Gr klavišu; Lyg2+Didž atlieka įprastinę Didž "
-"funkciją"
+msgid "Make Caps Lock an additional Esc, but Shift + Caps Lock is the regular Caps Lock"
+msgstr "Didž klavišą paversti papildomu Gr klavišu; Lyg2+Didž atlieka įprastinę Didž funkciją"
 
 #: rules/base.xml:7032
 msgid "Make Caps Lock an additional Backspace"
@@ -4135,8 +4088,7 @@ msgstr "Vald funkciją priskirti Win klavišams ir įprastiems Vald klavišams"
 
 #: rules/base.xml:7111
 msgid "Ctrl is mapped to Right Win and the usual Ctrl"
-msgstr ""
-"Vald funkciją priskirti dešiniajam Win klavišui ir įprastiems Vald klavišams"
+msgstr "Vald funkciją priskirti dešiniajam Win klavišui ir įprastiems Vald klavišams"
 
 #: rules/base.xml:7117
 msgid "Ctrl is mapped to Alt, Alt to Win"
@@ -4156,9 +4108,7 @@ msgstr "Win klavišams priskirti Hyper funkciją"
 
 #: rules/base.xml:7141
 msgid "Alt is mapped to Right Win, Super to Menu"
-msgstr ""
-"Dešiniajam Win klavišui priskirti Alt funkciją, o Meniu klavišui – Super "
-"funkciją"
+msgstr "Dešiniajam Win klavišui priskirti Alt funkciją, o Meniu klavišui – Super funkciją"
 
 #: rules/base.xml:7147
 msgid "Left Alt is swapped with Left Win"
@@ -4225,11 +4175,8 @@ msgid "Numeric keypad always enters digits (as in macOS)"
 msgstr "Skaitmenų srities klavišais visuomet įvedami skaitmenys (kaip „macOS“)"
 
 #: rules/base.xml:7298
-msgid ""
-"Num Lock on: digits; Shift for arrows. Num Lock off: arrows (as in Windows)"
-msgstr ""
-"Kai skaitmenys įjungti, įvedami skaitmenys, o su Lyg2 – rodyklės; kai "
-"skaitmenys išjungti – rodyklės (kaip „Windows“)"
+msgid "Num Lock on: digits; Shift for arrows. Num Lock off: arrows (as in Windows)"
+msgstr "Kai skaitmenys įjungti, įvedami skaitmenys, o su Lyg2 – rodyklės; kai skaitmenys išjungti – rodyklės (kaip „Windows“)"
 
 #: rules/base.xml:7304
 msgid "Shift does not cancel Num Lock, chooses 3rd level instead"
@@ -4241,9 +4188,7 @@ msgstr "Specialiosios sekos (Vald+Alt+&lt;klavišas&gt;) apdorojamos serveryje"
 
 #: rules/base.xml:7316
 msgid "Apple Aluminium emulates Pause, PrtSc, Scroll Lock"
-msgstr ""
-"„Apple Aluminium“ klaviatūra: emuliuoti Pauzės, Ekrano spausdinimo ir "
-"Slinkimo klavišus"
+msgstr "„Apple Aluminium“ klaviatūra: emuliuoti Pauzės, Ekrano spausdinimo ir Slinkimo klavišus"
 
 #: rules/base.xml:7322
 msgid "Shift cancels Caps Lock"
@@ -4263,9 +4208,7 @@ msgstr "Abu Lyg2 klavišai nuspausti kartu įjungia didžiąsias raides"
 
 #: rules/base.xml:7346
 msgid "Both Shift together enable Caps Lock; one Shift key disables it"
-msgstr ""
-"Abu Lyg2 klavišai nuspausti kartu įjungia didžiąsias raides, nuspaustas "
-"vienas Lyg2 jas išjungia"
+msgstr "Abu Lyg2 klavišai nuspausti kartu įjungia didžiąsias raides, nuspaustas vienas Lyg2 jas išjungia"
 
 #: rules/base.xml:7352
 msgid "Both Shift together enable Shift Lock"
@@ -4273,15 +4216,11 @@ msgstr "Abu Lyg2 klavišai nuspausti kartu įjungia antrąjį lygį"
 
 #: rules/base.xml:7358
 msgid "Shift + Num Lock enables PointerKeys"
-msgstr ""
-"Lyg2+Skaitm įjungia / išjungia pelės žymeklio valdymą skaitmenų srities "
-"klavišais"
+msgstr "Lyg2+Skaitm įjungia / išjungia pelės žymeklio valdymą skaitmenų srities klavišais"
 
 #: rules/base.xml:7364
 msgid "Allow breaking grabs with keyboard actions (warning: security risk)"
-msgstr ""
-"Leisti klaviatūros veiksmais nutraukti jos užvaldymą (įspėjame: saugumo "
-"spraga)"
+msgstr "Leisti klaviatūros veiksmais nutraukti jos užvaldymą (įspėjame: saugumo spraga)"
 
 #: rules/base.xml:7370
 msgid "Allow grab and window tree logging"
@@ -4328,36 +4267,20 @@ msgid "Menu chooses 5th level"
 msgstr "Meniu klavišas įjungia penktąjį lygį"
 
 #: rules/base.xml:7437
-msgid ""
-"The \"&lt; &gt;\" key chooses 5th level and acts as a one-time lock if "
-"pressed with another 5th level chooser"
-msgstr ""
-"Klavišas „&lt; &gt;“ įjungia penktąjį lygį ir veikia kaip tęsties klavišas, "
-"kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+msgid "The \"&lt; &gt;\" key chooses 5th level and acts as a one-time lock if pressed with another 5th level chooser"
+msgstr "Klavišas „&lt; &gt;“ įjungia penktąjį lygį ir veikia kaip tęsties klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
 #: rules/base.xml:7443
-msgid ""
-"Right Alt chooses 5th level and acts as a one-time lock if pressed with "
-"another 5th level chooser"
-msgstr ""
-"Dešinysis Alt klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, "
-"kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+msgid "Right Alt chooses 5th level and acts as a one-time lock if pressed with another 5th level chooser"
+msgstr "Dešinysis Alt klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
 #: rules/base.xml:7449
-msgid ""
-"Left Win chooses 5th level and acts as a one-time lock if pressed with "
-"another 5th level chooser"
-msgstr ""
-"Kairysis Win klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, "
-"kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+msgid "Left Win chooses 5th level and acts as a one-time lock if pressed with another 5th level chooser"
+msgstr "Kairysis Win klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
 #: rules/base.xml:7455
-msgid ""
-"Right Win chooses 5th level and acts as a one-time lock if pressed with "
-"another 5th level chooser"
-msgstr ""
-"Dešinysis Win klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, "
-"kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+msgid "Right Win chooses 5th level and acts as a one-time lock if pressed with another 5th level chooser"
+msgstr "Dešinysis Win klavišas įjungia penktąjį lyg ir viekia kaip tęsties klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
 #: rules/base.xml:7501
 msgid "Non-breaking space input"
@@ -4380,87 +4303,52 @@ msgid "Non-breaking space at the 3rd level, nothing at the 4th level"
 msgstr "Jungiamasis tarpas trečiajame lygyje, ketvirtajame lygyje nieko"
 
 #: rules/base.xml:7530
-msgid ""
-"Non-breaking space at the 3rd level, thin non-breaking space at the 4th level"
-msgstr ""
-"Jungiamasis tarpas trečiajame lygyje, siauras jungiamasis tarpas "
-"ketvirtajame lygyje"
+msgid "Non-breaking space at the 3rd level, thin non-breaking space at the 4th level"
+msgstr "Jungiamasis tarpas trečiajame lygyje, siauras jungiamasis tarpas ketvirtajame lygyje"
 
 #: rules/base.xml:7536
 msgid "Non-breaking space at the 4th level"
 msgstr "Jungiamasis tarpas ketvirtajame lygyje"
 
 #: rules/base.xml:7542
-msgid ""
-"Non-breaking space at the 4th level, thin non-breaking space at the 6th level"
-msgstr ""
-"Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas šeštajame "
-"lygyje"
+msgid "Non-breaking space at the 4th level, thin non-breaking space at the 6th level"
+msgstr "Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas šeštajame lygyje"
 
 #: rules/base.xml:7548
-msgid ""
-"Non-breaking space at the 4th level, thin non-breaking space at the 6th "
-"level (via Ctrl+Shift)"
-msgstr ""
-"Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas šeštajame "
-"lygyje (per Vald+Lyg2)"
+msgid "Non-breaking space at the 4th level, thin non-breaking space at the 6th level (via Ctrl+Shift)"
+msgstr "Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas šeštajame lygyje (per Vald+Lyg2)"
 
 #: rules/base.xml:7554
 msgid "Zero-width non-joiner at the 2nd level"
 msgstr "Nulinio pločio skirtukas antrajame lygyje"
 
 #: rules/base.xml:7560
-msgid ""
-"Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas "
-"trečiajame lygyje"
+msgid "Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas trečiajame lygyje"
 
 #: rules/base.xml:7566
-msgid ""
-"Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level, "
-"non-breaking space at the 4th level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas "
-"trečiajame lygyje, jungiamasis tarpas ketvirtajame lygyje"
+msgid "Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level, non-breaking space at the 4th level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas trečiajame lygyje, jungiamasis tarpas ketvirtajame lygyje"
 
 #: rules/base.xml:7572
-msgid ""
-"Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame "
-"lygyje"
+msgid "Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame lygyje"
 
 #: rules/base.xml:7578
-msgid ""
-"Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, "
-"nothing at the 4th level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame "
-"lygyje, ketvirtajame lygyje nieko"
+msgid "Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, nothing at the 4th level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame lygyje, ketvirtajame lygyje nieko"
 
 #: rules/base.xml:7584
-msgid ""
-"Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, "
-"zero-width joiner at the 4th level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame "
-"lygyje, nulinio pločio jungtukas ketvirtajame lygyje"
+msgid "Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, zero-width joiner at the 4th level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame lygyje, nulinio pločio jungtukas ketvirtajame lygyje"
 
 #: rules/base.xml:7590
-msgid ""
-"Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, "
-"thin non-breaking space at the 4th level"
-msgstr ""
-"Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame "
-"lygyje, siauras jungiamasis tarpas ketvirtajame lygyje"
+msgid "Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, thin non-breaking space at the 4th level"
+msgstr "Nulinio pločio skirtukas antrajame lygyje, jungiamasis tarpas trečiajame lygyje, siauras jungiamasis tarpas ketvirtajame lygyje"
 
 #: rules/base.xml:7596
-msgid ""
-"Zero-width non-joiner at the 3rd level, zero-width joiner at the 4th level"
-msgstr ""
-"Nulinio pločio skirtukas trečiajame lygyje, nulinio pločio jungtukas "
-"ketvirtajame lygyje"
+msgid "Zero-width non-joiner at the 3rd level, zero-width joiner at the 4th level"
+msgstr "Nulinio pločio skirtukas trečiajame lygyje, nulinio pločio jungtukas ketvirtajame lygyje"
 
 #: rules/base.xml:7603
 msgid "Japanese keyboard options"
@@ -4780,8 +4668,7 @@ msgstr "Anglų („Carpalx“, tarpt., su tęsties klavišais)"
 
 #: rules/base.extras.xml:460
 msgid "English (Carpalx, intl., with AltGr dead keys)"
-msgstr ""
-"Anglų („Carpalx“, tarpt., tęsties klavišai pasiekiami per Lyg3 klavišą)"
+msgstr "Anglų („Carpalx“, tarpt., tęsties klavišai pasiekiami per Lyg3 klavišą)"
 
 #: rules/base.extras.xml:466
 msgid "English (Carpalx, full optimization)"
@@ -4793,9 +4680,7 @@ msgstr "Anglų („Carpalx“, visiška optimizacija, tarpt., su tęsties klavi�
 
 #: rules/base.extras.xml:478
 msgid "English (Carpalx, full optimization, intl., with AltGr dead keys)"
-msgstr ""
-"Anglų („Carpalx“, visiška optimizacija, tarpt., tęsties klavišai pasiekiami "
-"per Lyg3 klavišą)"
+msgstr "Anglų („Carpalx“, visiška optimizacija, tarpt., tęsties klavišai pasiekiami per Lyg3 klavišą)"
 
 #: rules/base.extras.xml:484
 msgid "English (3l)"
@@ -4913,230 +4798,225 @@ msgstr "Arabų (Rytų arabų skaitmenys, papildymai ketvirtajame lygyje)"
 msgid "Ugaritic instead of Arabic"
 msgstr "Ugaritų vietoj arabų"
 
-#: rules/base.extras.xml:824
-#, fuzzy
-msgid "Arabic (Ergoarabic)"
-msgstr "Arabų (Alžyras)"
-
-#: rules/base.extras.xml:839
+#: rules/base.extras.xml:833
 msgid "Belgian (Sun Type 6/7)"
 msgstr "Belgų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:854
+#: rules/base.extras.xml:848
 msgid "Portuguese (Brazil, Sun Type 6/7)"
 msgstr "Portugalų (Brazilija, „Sun Type 6/7“)"
 
-#: rules/base.extras.xml:869
+#: rules/base.extras.xml:863
 msgid "Czech (Sun Type 6/7)"
 msgstr "Čekų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:875
+#: rules/base.extras.xml:869
 msgid "Czech (programming)"
 msgstr "Čekų (programuotojų)"
 
-#: rules/base.extras.xml:881
+#: rules/base.extras.xml:875
 msgid "Czech (typographic)"
 msgstr "Čekų (tipografinis)"
 
-#: rules/base.extras.xml:887
+#: rules/base.extras.xml:881
 msgid "Czech (coder)"
 msgstr "Čekų („coder“)"
 
-#: rules/base.extras.xml:893
+#: rules/base.extras.xml:887
 msgid "Czech (programming, typographic)"
 msgstr "Čekų (programuotojų, tipografinis)"
 
-#: rules/base.extras.xml:908
+#: rules/base.extras.xml:902
 msgid "Danish (Sun Type 6/7)"
 msgstr "Ispanų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:923
+#: rules/base.extras.xml:917
 msgid "Dutch (Sun Type 6/7)"
 msgstr "Olandų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:938
+#: rules/base.extras.xml:932
 msgid "Estonian (Sun Type 6/7)"
 msgstr "Estų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:953
+#: rules/base.extras.xml:947
 msgid "Finnish (Sun Type 6/7)"
 msgstr "Suomių („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:959
+#: rules/base.extras.xml:953
 msgid "Finnish (DAS)"
 msgstr "Suomių (DAS)"
 
-#: rules/base.extras.xml:965
+#: rules/base.extras.xml:959
 msgid "Finnish (Dvorak)"
 msgstr "Suomių („Dvorak“)"
 
-#: rules/base.extras.xml:980
+#: rules/base.extras.xml:974
 msgid "French (Sun Type 6/7)"
 msgstr "Prancūzų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:986
+#: rules/base.extras.xml:980
 msgid "French (US with dead keys, alt.)"
 msgstr "Prancūzų (JAV su tęsties klavišais, alt.)"
 
-#: rules/base.extras.xml:992
+#: rules/base.extras.xml:986
 msgid "French (US, AZERTY)"
 msgstr "Prancūzų (JAV, AZERTY)"
 
-#: rules/base.extras.xml:1007
+#: rules/base.extras.xml:1001
 msgid "Greek (Sun Type 6/7)"
 msgstr "Graikų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1013
+#: rules/base.extras.xml:1007
 msgid "Greek (Colemak)"
 msgstr "Graikų („Colemak“)"
 
-#: rules/base.extras.xml:1028
+#: rules/base.extras.xml:1022
 msgid "Italian (Sun Type 6/7)"
 msgstr "Italų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1034
+#: rules/base.extras.xml:1028
 msgid "it_lld"
 msgstr "it_lld"
 
-#: rules/base.extras.xml:1035
+#: rules/base.extras.xml:1029
 msgid "Italian (Ladin)"
 msgstr "Italų (Ladynų)"
 
-#: rules/base.extras.xml:1045
+#: rules/base.extras.xml:1039
 msgid "Italian (Dvorak)"
 msgstr "Italų („Dvorak“)"
 
-#: rules/base.extras.xml:1063
+#: rules/base.extras.xml:1057
 msgid "Japanese (Sun Type 6)"
 msgstr "Japonų („Sun Type 6“)"
 
-#: rules/base.extras.xml:1069
+#: rules/base.extras.xml:1063
 msgid "Japanese (Sun Type 7, PC-compatible)"
 msgstr "Japonų („Sun Type 7“, suderinamas su PC)"
 
-#: rules/base.extras.xml:1075
+#: rules/base.extras.xml:1069
 msgid "Japanese (Sun Type 7, Sun-compatible)"
 msgstr "Japonų („Sun Type 7“, suderinamas su „Sun“)"
 
-#: rules/base.extras.xml:1090
+#: rules/base.extras.xml:1084
 msgid "Norwegian (Sun Type 6/7)"
 msgstr "Norvegų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1105
+#: rules/base.extras.xml:1099
 msgid "Urdu (Navees, Pakistan)"
 msgstr "Urdu („Navees“, Pakistanas)"
 
-#: rules/base.extras.xml:1123
+#: rules/base.extras.xml:1117
 msgid "Portuguese (Sun Type 6/7)"
 msgstr "Portugalų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1129
+#: rules/base.extras.xml:1123
 msgid "Portuguese (Colemak)"
 msgstr "Portugalų („Colemak“)"
 
-#: rules/base.extras.xml:1144
+#: rules/base.extras.xml:1138
 msgid "Slovak (ACC layout, only accented letters)"
 msgstr "Slovakų (ACC išdėstymas, tik raidės su diakritikais)"
 
-#: rules/base.extras.xml:1150
+#: rules/base.extras.xml:1144
 msgid "Slovak (Sun Type 6/7)"
 msgstr "Slovakų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1165
+#: rules/base.extras.xml:1159
 msgid "Spanish (Sun Type 6/7)"
 msgstr "Ispanų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1180
+#: rules/base.extras.xml:1174
 msgid "Swedish (Dvorak A5)"
 msgstr "Švedų („Dvorak“ A5)"
 
-#: rules/base.extras.xml:1186
+#: rules/base.extras.xml:1180
 msgid "Swedish (Sun Type 6/7)"
 msgstr "Švedų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1192
+#: rules/base.extras.xml:1186
 msgid "Elfdalian (Swedish, with combining ogonek)"
 msgstr "Elfdalio (Švedų, su kombinacine nosine)"
 
-#: rules/base.extras.xml:1210
+#: rules/base.extras.xml:1204
 msgid "German (Switzerland, Sun Type 6/7)"
 msgstr "Vokiečių (Šveicarija, „Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1216
+#: rules/base.extras.xml:1210
 msgid "French (Switzerland, Sun Type 6/7)"
 msgstr "Prancūzų (Šveicarija, „Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1231
+#: rules/base.extras.xml:1225
 msgid "Turkish (Sun Type 6/7)"
 msgstr "Turkų („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1252
+#: rules/base.extras.xml:1246
 msgid "Ukrainian (Sun Type 6/7)"
 msgstr "Ukrainiečių („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1267
+#: rules/base.extras.xml:1261
 msgid "English (UK, Sun Type 6/7)"
 msgstr "Anglų (JK, „Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1282
+#: rules/base.extras.xml:1276
 msgid "Korean (Sun Type 6/7)"
 msgstr "Korėjiečių („Sun Type 6/7“)"
 
-#: rules/base.extras.xml:1301
+#: rules/base.extras.xml:1295
 msgid "Vietnamese (AÐERTY)"
 msgstr "Vietnamiečių (AÐERTY)"
 
-#: rules/base.extras.xml:1307
+#: rules/base.extras.xml:1301
 msgid "Vietnamese (QĐERTY)"
 msgstr "Vietnamiečių (QÐERTY)"
 
 #. Keyboard indicator for European layouts
-#: rules/base.extras.xml:1316
+#: rules/base.extras.xml:1310
 msgid "eu"
 msgstr "eu"
 
-#: rules/base.extras.xml:1317
+#: rules/base.extras.xml:1311
 msgid "EurKEY (US)"
 msgstr "„EurKEY“ (JAV)"
 
 #. Keyboard layouts for transcription and transliteration systems
-#: rules/base.extras.xml:1343
+#: rules/base.extras.xml:1337
 msgid "International Phonetic Alphabet"
 msgstr "Tarptautinė fonetinė abėcėlė"
 
-#: rules/base.extras.xml:1349
+#: rules/base.extras.xml:1343
 msgid "International Phonetic Alphabet (QWERTY)"
 msgstr "Tarptautinė fonetinė abėcėlė (QWERTY)"
 
-#: rules/base.extras.xml:1366
+#: rules/base.extras.xml:1360
 msgid "Modi (KaGaPa phonetic)"
 msgstr "Modi („KaGaPa“ fonetinis)"
 
-#: rules/base.extras.xml:1375
+#: rules/base.extras.xml:1369
 msgid "sas"
 msgstr "sas"
 
-#: rules/base.extras.xml:1376
+#: rules/base.extras.xml:1370
 msgid "Sanskrit symbols"
 msgstr "Sanskrito rašmenys"
 
-#: rules/base.extras.xml:1386
+#: rules/base.extras.xml:1380
 msgid "Urdu (Navees)"
 msgstr "Urdu („Navees“)"
 
-#: rules/base.extras.xml:1406
+#: rules/base.extras.xml:1400
 msgid "Number key 4 when pressed in isolation"
 msgstr "Skaitmenų eilės klavišas 4, kai nuspaudžiamas pavieniui"
 
-#: rules/base.extras.xml:1412
+#: rules/base.extras.xml:1406
 msgid "Number key 9 when pressed in isolation"
 msgstr "Skaitmenų eilės klavišas 9, kai nuspaudžiamas pavieniui"
 
-#: rules/base.extras.xml:1420
+#: rules/base.extras.xml:1414
 msgid "Parentheses position"
 msgstr "Skliaustų pozicijos"
 
-#: rules/base.extras.xml:1425
+#: rules/base.extras.xml:1419
 msgid "Swap with square brackets"
 msgstr "Sukeisti su laužtiniais skliaustais"
 
@@ -5156,8 +5036,7 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "„Compaq“ skreitinio kompiuterio (pvz., „Armada“) klaviatūra"
 
 #~ msgid "Laptop/notebook Compaq (eg. Presario) Internet Keyboard"
-#~ msgstr ""
-#~ "„Compaq“ skreitinio kompiuterio (pvz., „Presario“) internetinė klaviatūra"
+#~ msgstr "„Compaq“ skreitinio kompiuterio (pvz., „Presario“) internetinė klaviatūra"
 
 #~ msgid "Dell Laptop/notebook Inspiron 6xxx/8xxx"
 #~ msgstr "„Dell Inspiron 6xxx/8xxx“ skreitinis kompiuteris"
@@ -5181,8 +5060,7 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "„Logitech Cordless Desktop“ (alternatyvus variantas)"
 
 #~ msgid "Microsoft Natural Keyboard Pro / Microsoft Internet Keyboard Pro"
-#~ msgstr ""
-#~ "„Microsoft Natural Keyboard Pro“ / „Microsoft Internet Keyboard Pro“"
+#~ msgstr "„Microsoft Natural Keyboard Pro“ / „Microsoft Internet Keyboard Pro“"
 
 #~ msgid "Microsoft Natural Keyboard Elite"
 #~ msgstr "„Microsoft Natural Keyboard Elite“"
@@ -5323,52 +5201,40 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "Vokiečių (QWERTY)"
 
 #~ msgid "Hungarian (101/qwertz/comma/dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTZ, dešimtainis kablelis, su tęsties klavišais)"
+#~ msgstr "Vengrų (101 klavišo, QWERTZ, dešimtainis kablelis, su tęsties klavišais)"
 
 #~ msgid "Hungarian (101/qwertz/comma/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTZ, dešimtainis kablelis, be tęsties klavišų)"
+#~ msgstr "Vengrų (101 klavišo, QWERTZ, dešimtainis kablelis, be tęsties klavišų)"
 
 #~ msgid "Hungarian (101/qwertz/dot/dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTZ, dešimtainis taškas, su tęsties klavišais)"
+#~ msgstr "Vengrų (101 klavišo, QWERTZ, dešimtainis taškas, su tęsties klavišais)"
 
 #~ msgid "Hungarian (101/qwertz/dot/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTZ, dešimtainis taškas, be tęsties klavišų)"
+#~ msgstr "Vengrų (101 klavišo, QWERTZ, dešimtainis taškas, be tęsties klavišų)"
 
 #~ msgid "Hungarian (101/qwerty/comma/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTY, dešimtainis kablelis, be tęsties klavišų)"
+#~ msgstr "Vengrų (101 klavišo, QWERTY, dešimtainis kablelis, be tęsties klavišų)"
 
 #~ msgid "Hungarian (101/qwerty/dot/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (101 klavišo, QWERTY, dešimtainis taškas, be tęsties klavišų)"
+#~ msgstr "Vengrų (101 klavišo, QWERTY, dešimtainis taškas, be tęsties klavišų)"
 
 #~ msgid "Hungarian (102/qwertz/comma/dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTZ, dešimtainis kablelis, su tęsties klavišais)"
+#~ msgstr "Vengrų (102 klavišų, QWERTZ, dešimtainis kablelis, su tęsties klavišais)"
 
 #~ msgid "Hungarian (102/qwertz/comma/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTZ, dešimtainis kablelis, be tęsties klavišų)"
+#~ msgstr "Vengrų (102 klavišų, QWERTZ, dešimtainis kablelis, be tęsties klavišų)"
 
 #~ msgid "Hungarian (102/qwertz/dot/dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTZ, dešimtainis taškas, su tęsties klavišais)"
+#~ msgstr "Vengrų (102 klavišų, QWERTZ, dešimtainis taškas, su tęsties klavišais)"
 
 #~ msgid "Hungarian (102/qwertz/dot/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTZ, dešimtainis taškas, be tęsties klavišų)"
+#~ msgstr "Vengrų (102 klavišų, QWERTZ, dešimtainis taškas, be tęsties klavišų)"
 
 #~ msgid "Hungarian (102/qwerty/comma/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTY, dešimtainis kablelis, be tęsties klavišų)"
+#~ msgstr "Vengrų (102 klavišų, QWERTY, dešimtainis kablelis, be tęsties klavišų)"
 
 #~ msgid "Hungarian (102/qwerty/dot/eliminate dead keys)"
-#~ msgstr ""
-#~ "Vengrų (102 klavišų, QWERTY, dešimtainis taškas, be tęsties klavišų)"
+#~ msgstr "Vengrų (102 klavišų, QWERTY, dešimtainis taškas, be tęsties klavišų)"
 
 #~ msgid "Icelandic (Sun dead keys)"
 #~ msgstr "Islandų (su „Sun“ tęsties klavišais)"
@@ -5458,18 +5324,13 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "Bankomato/telefono tipo"
 
 #~ msgid "Shift with numeric keypad keys works as in MS Windows"
-#~ msgstr ""
-#~ "Lyg2 su skaitmenų srities klavišais veikia kaip MS Windows sistemoje"
+#~ msgstr "Lyg2 su skaitmenų srities klavišais veikia kaip MS Windows sistemoje"
 
 #~ msgid "Adding currency signs to certain keys"
 #~ msgstr "Valiutų simbolių įvedimas pasirinktais klavišais"
 
-#~ msgid ""
-#~ "&lt;Less/Greater&gt; chooses 5th level, locks when pressed together with "
-#~ "another 5th-level-chooser"
-#~ msgstr ""
-#~ "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį, arba jį užfiksuoja, "
-#~ "jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+#~ msgid "&lt;Less/Greater&gt; chooses 5th level, locks when pressed together with another 5th-level-chooser"
+#~ msgstr "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
 #~ msgid "Using space key to input non-breakable space character"
 #~ msgstr "Tarpo klavišo naudojimas jungiamajam tarpui įvesti"
@@ -5477,19 +5338,11 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgid "Non-breakable space character at fourth level"
 #~ msgstr "Jungiamasis tarpas ketvirtajame lygyje"
 
-#~ msgid ""
-#~ "Non-breakable space character at fourth level, thin non-breakable space "
-#~ "character at sixth level"
-#~ msgstr ""
-#~ "Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas "
-#~ "šeštajame lygyje"
+#~ msgid "Non-breakable space character at fourth level, thin non-breakable space character at sixth level"
+#~ msgstr "Jungiamasis tarpas ketvirtajame lygyje, siauras jungiamasis tarpas šeštajame lygyje"
 
-#~ msgid ""
-#~ "Zero-width non-joiner character at second level, zero-width joiner "
-#~ "character at third level"
-#~ msgstr ""
-#~ "Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas "
-#~ "trečiajame lygyje"
+#~ msgid "Zero-width non-joiner character at second level, zero-width joiner character at third level"
+#~ msgstr "Nulinio pločio skirtukas antrajame lygyje, nulinio pločio jungtukas trečiajame lygyje"
 
 #~ msgid "Adding Esperanto supersigned letters"
 #~ msgstr "Esperanto raidžių su diakritikais įvedimas"
@@ -5516,9 +5369,7 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "Latvių (programuotojų JAV Dvorako, Y variantas)"
 
 #~ msgid "English (US, international AltGr Unicode combining, alternative)"
-#~ msgstr ""
-#~ "Anglų (JAV, tarptautinis, unikodo ženklai kombinuojami Lyg3 klavišu, "
-#~ "alternatyvus)"
+#~ msgstr "Anglų (JAV, tarptautinis, unikodo ženklai kombinuojami Lyg3 klavišu, alternatyvus)"
 
 #~ msgid "EurKEY (US based layout with european letters)"
 #~ msgstr "„EurKEY“ (JAV klaviatūra su Europos kalbų raidėmis)"
@@ -5542,60 +5393,28 @@ msgstr "Sukeisti su laužtiniais skliaustais"
 #~ msgstr "Komponavimo klavišo pozicija"
 
 #~ msgid "Toggle PointerKeys with Shift + NumLock."
-#~ msgstr ""
-#~ "Lyg2+Skaitm įjungia / išjungia pelės žymeklio valdymą skaitmenų srities "
-#~ "klavišais."
+#~ msgstr "Lyg2+Skaitm įjungia / išjungia pelės žymeklio valdymą skaitmenų srities klavišais."
 
-#~ msgid ""
-#~ "&lt;Less/Greater&gt; chooses 5th level and activates level5-Lock when "
-#~ "pressed together with another 5th-level-chooser, one press releases the "
-#~ "lock"
-#~ msgstr ""
-#~ "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį; veikia kaip tęsties "
-#~ "klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
+#~ msgid "&lt;Less/Greater&gt; chooses 5th level and activates level5-Lock when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį; veikia kaip tęsties klavišas, kai naudojamas kartu su kitu penktojo lygio parinkimo klavišu"
 
-#~ msgid ""
-#~ "&lt;Less/Greater&gt; chooses 5th level, locks when pressed together with "
-#~ "another 5th-level-chooser, one press releases the lock"
-#~ msgstr ""
-#~ "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį, arba jį užfiksuoja, "
-#~ "jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno "
-#~ "klavišo spustelėjimas nutraukia fiksavimą"
+#~ msgid "&lt;Less/Greater&gt; chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Klavišas „Mažiau/Daugiau“ įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo spustelėjimas nutraukia fiksavimą"
 
 #~ msgid "Catalan"
 #~ msgstr "Katalonų"
 
-#~ msgid ""
-#~ "Left Win chooses 5th level, locks when pressed together with another 5th-"
-#~ "level-chooser, one press releases the lock"
-#~ msgstr ""
-#~ "Kairysis Win įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas "
-#~ "kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo "
-#~ "spustelėjimas nutraukia fiksavimą"
+#~ msgid "Left Win chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Kairysis Win įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo spustelėjimas nutraukia fiksavimą"
 
-#~ msgid ""
-#~ "Right Alt chooses 5th level and activates level5-Lock when pressed "
-#~ "together with another 5th-level-chooser, one press releases the lock"
-#~ msgstr ""
-#~ "Dešinysis Alt įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas "
-#~ "kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo "
-#~ "spustelėjimas nutraukia fiksavimą"
+#~ msgid "Right Alt chooses 5th level and activates level5-Lock when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Dešinysis Alt įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo spustelėjimas nutraukia fiksavimą"
 
-#~ msgid ""
-#~ "Right Alt chooses 5th level, locks when pressed together with another 5th-"
-#~ "level-chooser, one press releases the lock"
-#~ msgstr ""
-#~ "Dešinysis Alt įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas "
-#~ "kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo "
-#~ "spustelėjimas nutraukia fiksavimą"
+#~ msgid "Right Alt chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Dešinysis Alt įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo spustelėjimas nutraukia fiksavimą"
 
-#~ msgid ""
-#~ "Right Win chooses 5th level, locks when pressed together with another 5th-"
-#~ "level-chooser, one press releases the lock"
-#~ msgstr ""
-#~ "Dešinysis Win įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas "
-#~ "kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo "
-#~ "spustelėjimas nutraukia fiksavimą"
+#~ msgid "Right Win chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock"
+#~ msgstr "Dešinysis Win įjungia penktąjį lygį, arba jį užfiksuoja, jeigu naudojamas kartu su kitu penktojo lygio parinkimo klavišu. Vieno klavišo spustelėjimas nutraukia fiksavimą"
 
 #~ msgid "Serbian (Z and ZHE swapped)"
 #~ msgstr "Serbų (raidės Z ir Ž sukeistos)"
