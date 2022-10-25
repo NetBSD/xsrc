@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.17 2022/10/25 12:55:04 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.18 2022/10/25 13:31:58 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -106,6 +106,7 @@ int force = 0;
 char commentbuf[2048] = "";
 int commentptr = 0;
 char fontname[64] = "";
+char *names[256];
 
 void
 dump_line(char *gptr, int stride)
@@ -200,7 +201,10 @@ write_header(const char *filename, struct wsdisplay_font *f,
 	fprintf(output, "};\n\n");
 	fprintf(output, "static u_char %s_data[] = {\n", name);
 	for (i = f->firstchar; i < f->firstchar + f->numchars; i++) {
-		fprintf(output, "\t/* %d */\n", i);
+		if (names[i] != NULL) {
+			fprintf(output, "\t/* %d %s */\n", i, names[i]);
+		} else			
+			fprintf(output, "\t/* %d */\n", i);
 		idx = i * f->stride * f->fontheight;
 		for (y = 0; y < f->fontheight; y++) {
 			for (x = 0; x < f->stride; x++) {
@@ -233,7 +237,8 @@ void
 interpret(FILE *foo)
 {
 	char line[128], *arg, name[64] = "foo", *buffer, *cbitmap;
-	int buflen = -1;
+	char charname[65], *charnamebuf;
+	int buflen = -1, charnamebufptr = 0, j;
 	int in_char = 0, current = -1, stride = 0, charsize = 0;
 	int width, height, x, y, num;
 	int first = 255, last = 0;
@@ -241,6 +246,11 @@ interpret(FILE *foo)
 	int bl = 255, bt = 255, br = -1, bb = -1;
 	struct wsdisplay_font f;
 	int status;
+
+	charnamebuf = malloc(64 * 256);
+	if (charnamebuf == 0) err(EXIT_FAILURE, "failed to allocate memory\n");
+	memset(charnamebuf, 0, 64 * 256);
+	for (j = 0; j < 256; j++) names[j] = NULL;
 
 	while (fgets(line, sizeof(line), foo) != NULL) {
 		size_t i = 0, len;
@@ -305,12 +315,24 @@ interpret(FILE *foo)
 			if (charsize <= 1) err(EXIT_FAILURE,
 			    "syntax error - no valid FONTBOUNDINGBOX\n");
 			memset(cbitmap, 0, charsize);
+			strlcpy(charname, arg, 64);
 		} else if (strcmp(line, "ENDCHAR") == 0) {
 			in_char = 0;
 			/* only commit the glyph if it's in range */
 			if ((current >= 0) && (current < 256)) {
 				memcpy(&buffer[charsize * current],
 				    cbitmap, charsize);
+				if ((strlen(charname) > 0) &&
+				    (charnamebufptr < 255 * 64)) {
+				    	char *cur;
+					int len;
+					/* copy name into buffer, keep a
+					 * pointer to it for later */
+					cur = &charnamebuf[charnamebufptr];					
+					len = strlcpy(cur, charname, 64);
+					charnamebufptr += len + 1;
+					names[current] = cur;
+				}
 			}
 			current = -1;
 		} else if (strcmp(line, "ENCODING") == 0) {
