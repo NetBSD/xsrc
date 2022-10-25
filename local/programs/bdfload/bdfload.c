@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.16 2022/09/27 18:29:08 christos Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.17 2022/10/25 12:55:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -232,7 +232,7 @@ write_header(const char *filename, struct wsdisplay_font *f,
 void
 interpret(FILE *foo)
 {
-	char line[128], *arg, name[64] = "foo", *buffer;
+	char line[128], *arg, name[64] = "foo", *buffer, *cbitmap;
 	int buflen = -1;
 	int in_char = 0, current = -1, stride = 0, charsize = 0;
 	int width, height, x, y, num;
@@ -288,21 +288,30 @@ interpret(FILE *foo)
 				    "no fonts wider than 16 work for now\n");
 			}
 			charsize = height * stride;
-			buflen = 256 * charsize;
+			buflen = 257 * charsize;
 			buffer = calloc(1, buflen);
 			if (buffer == NULL) {
 				err(EXIT_FAILURE, 
 				    "failed to allocate %dKB for glyphs\n",
 				    buflen);
 			}
+			cbitmap = buffer + 256 * charsize;
 		} else if (strcmp(line, "CHARS") == 0) {
 			if (sscanf(arg, "%d", &num) == 1)
 				if (verbose) 
 				    printf("number of characters: %d\n", num);
 		} else if (strcmp(line, "STARTCHAR") == 0) {
 			in_char = 1;
+			if (charsize <= 1) err(EXIT_FAILURE,
+			    "syntax error - no valid FONTBOUNDINGBOX\n");
+			memset(cbitmap, 0, charsize);
 		} else if (strcmp(line, "ENDCHAR") == 0) {
 			in_char = 0;
+			/* only commit the glyph if it's in range */
+			if ((current >= 0) && (current < 256)) {
+				memcpy(&buffer[charsize * current],
+				    cbitmap, charsize);
+			}
 			current = -1;
 		} else if (strcmp(line, "ENCODING") == 0) {
 			if (sscanf(arg, "%d", &current) == 1) {
@@ -329,7 +338,7 @@ interpret(FILE *foo)
 		} else if (strcmp(line, "BITMAP") == 0) {
 			int i, j, k, l;
 			char num[32];
-			char *gptr = &buffer[charsize * current];
+			char *gptr = cbitmap;
 			char *bptr = gptr + top;
 			uint16_t *bptr16 = (uint16_t *)gptr;
 			bptr16 += top;
@@ -351,7 +360,7 @@ interpret(FILE *foo)
 				}
 			}
 			if (dump) {
-				gptr = &buffer[charsize * current];
+				gptr = cbitmap;
 				for (i = 0; i < height; i++) {
 					dump_line(gptr, stride);
 					gptr += stride;
