@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.18 2022/10/25 13:31:58 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.19 2022/10/25 13:36:35 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -267,8 +267,12 @@ interpret(FILE *foo)
 		}
 		arg[i] = 0;
 		if (strcmp(line, "FAMILY_NAME") == 0) {
+			char *q;
 			/* cut off quotation marks */
 			strlcpy(name, arg + 1, 64);
+			/* remove trailing " */
+			if ((q = strnstr(name, "\"", 64)) != NULL)
+				*q = 0;
 			if (verbose) printf("name: %s\n", name);
 		} else if (strcmp(line, "COMMENT") == 0) {
 			commentptr += snprintf(&commentbuf[commentptr],
