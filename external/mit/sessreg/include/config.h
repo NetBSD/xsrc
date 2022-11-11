@@ -59,7 +59,7 @@
 #define PACKAGE_NAME "sessreg"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "sessreg 1.1.1"
+#define PACKAGE_STRING "sessreg 1.1.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "sessreg"
@@ -68,7 +68,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.1"
+#define PACKAGE_VERSION "1.1.3"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -105,7 +105,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.1.0"
+#define VERSION "1.1.3"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
