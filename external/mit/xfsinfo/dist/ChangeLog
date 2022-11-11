@@ -1,3 +1,62 @@
+commit 78e1db4719b33d0fb31e6876b30f95ffb0afaa70
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 21 17:58:25 2022 -0700
+
+    xfsinfo 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9f5a8e5a38488b5badad1464d9964a6fb9a76af1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 16 11:30:26 2022 -0700
+
+    Cleanup README.md
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5a138aef6e44130c9fdfb8539443693797b64f54
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4b467a246c625be565cb18fdd302f5f61bced5f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 15:34:12 2022 -0700
+
+    Mark usage() as _X_COLD
+    
+    Raises minimum xproto requirement to 7.0.25 from Nov. 2013
+    to get the _X_COLD definition in <X11/Xfuncproto.h>
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2f80557c9dfbf8c5ef8eceee54a5a346d89400ee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 11 15:27:47 2022 -0700
+
+    Variable scope reductions as recommended by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bac7165659d728deb0f32ec7d81171bb2f1162b3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 6 12:34:55 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 09926b452f46a4706d52141e68b24413f616fe56
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 6 12:34:51 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 213f67bac941815d6fb076ac9fdeddfd42eeaa58
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Feb 19 14:38:48 2019 -0800
@@ -493,7 +552,7 @@ Date:   Wed Jul 20 19:31:56 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit dddb0fc49f851443d9aea595c7c98c109256f407
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 14:54:15 2005 +0000
 
     Build system for xfsinfo

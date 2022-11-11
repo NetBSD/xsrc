@@ -72,7 +72,7 @@ static void print_alternate_info(FSServer *svr);
 
 static char *progname;
 
-static void _X_NORETURN
+static void _X_NORETURN _X_COLD
 usage(void)
 {
     fprintf(stderr, "usage:  %s [-server server_name] [-version]\n", progname);
@@ -84,11 +84,10 @@ main(int argc, char *argv[])
 {
     FSServer   *svr;
     char       *servername = NULL;
-    int         i;
 
     progname = argv[0];
 
-    for (i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 	if (strncmp(argv[i], "-s", 2) == 0) {
 	    if (++i >= argc) {
 		fprintf (stderr, "%s: %s requires an argument\n",
@@ -159,9 +158,7 @@ print_catalogue_info(FSServer *svr)
 
     printf("number of catalogues:	%d\n", n);
     if (cats) {
-	int         i;
-
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 	    printf("	%s\n", cats[i]);
 	}
 	FSFreeCatalogues(cats);
@@ -176,9 +173,7 @@ print_extension_info(FSServer *svr)
 
     printf("number of extensions:	%d\n", n);
     if (extlist) {
-	int         i;
-
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 	    printf("	%s\n", extlist[i]);
 	}
 	FSFreeExtensionList(extlist);
@@ -188,15 +183,14 @@ print_extension_info(FSServer *svr)
 static void
 print_alternate_info(FSServer *svr)
 {
-    AlternateServer *alts;
-    int         i,
-                num;
+    int         num;
 
     num = FSNumAlternateServers(svr);
     printf("Number of alternate servers: %d\n", num);
     if (num) {
-	alts = FSAlternateServers(svr);
-	for (i = 0; i < num; i++) {
+	AlternateServer *alts = FSAlternateServers(svr);
+
+	for (int i = 0; i < num; i++) {
 	    printf("    #%1d\t%s%s\n", i, alts[i].name,
 		   (alts[i].subset) ? "(subset)" : "");
 	}
