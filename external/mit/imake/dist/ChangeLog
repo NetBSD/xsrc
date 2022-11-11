@@ -1,3 +1,160 @@
+commit d9b33435847e27b44b8e357327728cb3e39d5822
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 10:29:38 2022 -0700
+
+    imake 1.0.9
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 323bc318e9bfb5cea24dfca0a47031d1861506dd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:44:37 2022 -0700
+
+    Add .git-blame-ignore-revs to hide whitespace commits from git blame
+    
+    To use this in your local repo clone, you will need to either run
+    `git blame --ignore-revs-file .git-blame-ignore-revs`
+    or set it permanently with
+    `git config blame.ignoreRevsFile .git-blame-ignore-revs`
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 187945b6f93f193d7b8a4580191a040186de0f18
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:36:45 2022 -0700
+
+    unifdef SIGNALRETURNSINT
+    
+    Signal handlers have been required to have a void return, not int,
+    since C89.  This #define hadn't been set in many years.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a511600f0391e7ecc2fa55e5cda222b5535422e8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:30:20 2022 -0700
+
+    Simplify HAVE_MKSTEMP block
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4945a09e914c48a2a55dacdb24ffe2806378641b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:24:18 2022 -0700
+
+    Make Emalloc() argument a size_t to match malloc()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8c0dfb819569baf3c388bf9915fea1d332a29908
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:18:31 2022 -0700
+
+    Fix -Wshadow warnings
+    
+    imake.c: In function ‘FindImakefile’:
+    imake.c:662:27: warning: declaration of ‘Imakefile’ shadows a global declaration [-Wshadow]
+     FindImakefile(const char *Imakefile)
+                               ^~~~~~~~~
+    imake.c:319:13: note: shadowed declaration is here
+     const char *Imakefile = NULL;
+                 ^~~~~~~~~
+    
+    imake.c: In function ‘define_os_defaults’:
+    imake.c:1636:9: warning: declaration of ‘name’ shadows a previous local [-Wshadow]
+        char name[PATH_MAX];
+             ^~~~
+    imake.c:1430:18: note: shadowed declaration is here
+      struct utsname *name = NULL;
+                      ^~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0db44a83b2bb9b74a266d41e8b7d2731713d7eac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 17 09:11:05 2022 -0700
+
+    Fix -Wsign-compare warnings
+    
+    imake.c: In function ‘ask_sun_compiler_for_versions’:
+    imake.c:1200:11: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+       if (len < sizeof(cmdtorun)) {
+               ^
+    imake.c: In function ‘get_gcc’:
+    imake.c:1380:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (i = 0; i < sizeof (gcc_path) / sizeof gcc_path[0]; i++) {
+                    ^
+    imake.c: In function ‘writetmpfile’:
+    imake.c:2027:41: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      if (fwrite(buf, sizeof(char), cnt, fd) == -1)
+                                             ^~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 793d9d83620c50308f128e0a635224a2fbb14a62
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3cee0855e54d539e042177a1ff64e08cc29c34b7
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 279d6a683ceed4e07a00acce2d122f48a6428dac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jun 18 09:38:25 2022 -0700
+
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters
+    
+    configure.ac:130: warning: AC_OUTPUT should be used without arguments.
+    configure.ac:130: You should run autoupdate.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eebb170e09a82982027ed50acf6f48e82f90a29e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 16:10:21 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9b3cb72304be1d79b865890a9bd05765806a05a5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 15:18:43 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6861335df1bc9483a077bc81c4b327e009b63626
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 15:16:26 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 5d1d5150e5863f019e407d572556a8a08e834c1e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Mar 16 16:25:02 2019 -0700

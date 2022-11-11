@@ -22,13 +22,13 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([imake], [1.0.8],
-        [https://gitlab.freedesktop.org/xorg/util/imake/issues], [imake])
+AC_INIT([imake], [1.0.9],
+        [https://gitlab.freedesktop.org/xorg/util/imake/-/issues], [imake])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -127,4 +127,5 @@ AM_CONDITIONAL([BUILD_MKHTMLINDEX], [test "x$BUILD_MKHTMLINDEX" = xyes])
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XPROTO, xproto)
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
