@@ -1,5 +1,5 @@
 '\" t
-.\" Copyright 1999 Oracle and/or its affiliates. All rights reserved.
+.\" Copyright (c) 1999, Oracle and/or its affiliates.
 .\"
 .\" Permission is hereby granted, free of charge, to any person obtaining a
 .\" copy of this software and associated documentation files (the "Software"),
@@ -33,13 +33,13 @@ XkbAllocDeviceInfo \- Obtain an XkbDeviceInfoRec structure
 .if t .ti +.5i
 .SH ARGUMENTS
 .TP
-.I \- device_spec
+.I device_spec
 device ID with which structure will be used
 .TP
-.I \- n_buttons
+.I n_buttons
 number of button actions to allocate space for
 .TP
-.I \- sz_leds
+.I sz_leds
 number of LED feedbacks to allocate space for
 .SH DESCRIPTION
 .LP

@@ -1,3 +1,482 @@
+commit b4f24b272c6ef888b6fcfcf80670c196b2e8f755
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 10 12:18:17 2022 -0800
+
+    libX11 1.8.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 77629ea5e79fa9b1596438bc36cfc7e0c631af43
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 3 13:00:50 2022 -0700
+
+    README.md: Add 1.8.2 changes
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d1baf2ec4869dea3732d6fe13ba4935cb6caad01
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 3 11:22:37 2022 -0700
+
+    Remove NEWS file which only covered 2006 & 2007 releases
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1294bfa487bdecfd32621822922fec03203ee188
+Author: Po Lu <luangruo@yahoo.com>
+Date:   Mon Oct 3 08:44:59 2022 +0800
+
+    specs: document change in XIMPreeditCallbacks
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1a7e54609ce4dc0f2d3b933502437a413cf3dea8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 3 14:44:22 2022 -0700
+
+    man pages: document XCloseIM frees its argument
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a04b84f0f7bb3a78088756759f4b9b8bb363251e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 3 20:31:31 2022 +0000
+
+    Copyright & license cleanup
+
+commit 5e41119d9611504ff7e61c6aa4da1df708096801
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Mon Oct 31 12:42:51 2022 +0100
+
+    nls: reshuffle a few compose sequences, to have similar ones together
+    
+    It makes more sense to have similar sequences grouped together
+    than to rigidly follow the order of ascending Unicode codes.
+
+commit 65d89342f59cfc2eac9bf8010076b937f22554e8
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Mon Oct 31 12:50:11 2022 +0100
+
+    nls: remove two compose sequences that use deprecated symbols
+    
+    The last few occurrences of `leftcaret` and `rightcaret` were replaced
+    with `less` and `greater` in xkeyboard-config half a year ago.
+
+commit 6baccbae5324e7342cb5176cae82f463a6b34eae
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Mon Oct 31 12:40:12 2022 +0100
+
+    nls: let `<Multi_key> <minus> <underscore>` compose U+2212 (MINUS SIGN)
+    
+    There was not yet any way to compose the Unicode minus sign, U+2212.
+
+commit 79775575418fd6f8ee1c5e5bbe403df4606fb5b6
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri Aug 5 15:19:08 2022 -0400
+
+    Allow X*IfEvent() to reenter libX11
+    
+    The documentation for this family of functions very clearly says not to
+    call into xlib in your predicate function, but historically single
+    threaded apps could get away with it just fine, and now that we've
+    forced thread-safety on the world such apps will now deadlock instead.
+    That's not an acceptable regression even if the app is technically
+    broken. This has been reported with XFCE and FVWM, and Motif's
+    cut-and-paste code has the same bug by inspection, so this does need to
+    be addressed.
+    
+    This change nerfs LockDisplay/UnlockDisplay while inside the critical
+    bit of an IfEvent function. This is still safe in the sense that the
+    display remains locked and no other thread should be able to change it
+    from under us, but the loop that scans the event queue might not be
+    robust against it being modified as a side effect of protocol emitted by
+    the predicate callback. But that's not new, non-XInitThreads'd xlib
+    would have the same caveat.
+    
+    Closes: xorg/lib/libx11#157
+
+commit 0d1d65bdd98966f52bcac4077f94827b20b229dd
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Oct 21 12:18:25 2022 +0200
+
+    nls: change <Compose> <^> <-> to mean superscript minus instead of macron
+    
+    Several other `<Multi_key> <asciicircum> <symbol>` sequences
+    produce the superscript equivalent of the given symbol.  So,
+    let `<Multi_key> <asciicircum> <minus>` do the same.
+    
+    Also, add two other sequences for producing a plain macron,
+    to compensate a bit the loss of the above sequence.
+    
+    Additionally, make `<Multi_key> <underscore> <minus>` produce
+    a subscript minus, for consistency.
+    
+    This fixes issue #165.
+    
+    Requested-by: J. McWilliams
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 310898270787c1a3a6ab50221324f8654dddce8e
+Author: Jan Tojnar <jtojnar@gmail.com>
+Date:   Thu Oct 20 07:10:58 2022 +0000
+
+    nls: Map sr locales to sr_RS compose files
+    
+    Serbian used sr_YU (Yugoslavia) code in the past.
+    Then it was succeeded by sr_CS (Serbia and Montenegro).
+    Finally, it was split into sr_RS (Serbia) and sr_ME (Montenegro).
+    
+    https://gitlab.freedesktop.org/xorg/lib/libx11/-/commit/da95ecbbdcacc483cd0b5fd7db1fb2e2543341bd
+    introduced the modern sr_RS and sr_ME codes.
+    
+    Next, https://gitlab.freedesktop.org/xorg/lib/libx11/-/commit/40761898692e5063957bfa2518cca3d35b2e354a
+    added the Serbian compose table but only for the legacy sr_CS entry.
+    
+    https://gitlab.freedesktop.org/xorg/lib/libx11/-/commit/5cd60398b7787297008b13a848ed3cfbd7ef178d
+    removed the legacy sr_CS entry, the only one pointing to the correct compose file.
+    It also renamed the file to sr_RS, but did not update the compose mapping.
+    
+    Let’s point all Serbian locales to the Compose file again.
+
+commit a35d706cd8dc7b498bca2a3fc4a3732047439ed7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 14 13:40:37 2022 -0700
+
+    COPYING: remove notice for the removed UIThrStubs.c
+    
+    Fixes: 701e9e9a ("Use same pthread-stubs as libxcb")
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3b1750e982fedce0d61bface68aadcd5b1ea1fae
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Oct 14 09:28:42 2022 +0200
+
+    nls: delete two compose sequences with an anomalous post-fixed breve
+    
+    Two years ago, commit b126bfd7fe allowed using also a lowercase `u`
+    wherever an uppercase `U` was used to represent a breve.  But the
+    commit should have limited itself to only the prefixed uses of `U`,
+    as that is how most letters with a breve are composed.
+    
+    Also, group the two compose sequences with an uppercase post-fixed `U`
+    together with the corresponding other post-fixed sequences.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 701e9e9afb88bdc68c84a4611adc533400a3df36
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Oct 4 11:24:57 2022 -0700
+
+    Use same pthread-stubs as libxcb
+    
+    Avoid conflicts when libX11 calls libxcb and gets its pthread functions
+    overriding our ancient stubs.
+    
+    v2: Keep linking with real threads libraries when thread safety
+        constructor is enabled.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d11822601fd24a396b354fa616b04ed3df8b4ef
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Oct 4 18:26:17 2022 -0400
+
+    fix a memory leak in XRegisterIMInstantiateCallback
+    
+    Analysis:
+    
+        _XimRegisterIMInstantiateCallback() opens an XIM and closes it using
+        the internal function pointers, but the internal close function does
+        not free the pointer to the XIM (this would be done in XCloseIM()).
+    
+    Report/patch:
+    
+        Date: Mon, 03 Oct 2022 18:47:32 +0800
+        From: Po Lu <luangruo@yahoo.com>
+        To: xorg-devel@lists.x.org
+        Subject: Re: Yet another leak in Xlib
+    
+        For reference, here's how I'm calling XRegisterIMInstantiateCallback:
+    
+        XSetLocaleModifiers ("");
+        XRegisterIMInstantiateCallback (compositor.display,
+                                        XrmGetDatabase (compositor.display),
+                                        (char *) compositor.resource_name,
+                                        (char *) compositor.app_name,
+                                        IMInstantiateCallback, NULL);
+    
+        and XMODIFIERS is:
+    
+            @im=ibus
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 1f8fd7ff1cf688ec1d3b34397c6d58110bb0cae5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Sep 26 16:01:40 2022 -0700
+
+    If thread-safety-constructor is enabled, link against pthreads not stubs
+    
+    Only really makes a difference if pthreads is not in libc.
+    
+    Fixes: #162
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit bfe5d2dd98f705438b0cdddbbf9c12882da89bae
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Sep 11 11:44:41 2022 -0400
+
+    reduce compiler warnings with casts (no object change)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 926f2454bca9a7a7d1f4cf0648b0c193f5cef644
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sun Sep 11 10:35:31 2022 -0400
+
+    use casts to reduce compiler warnings (no object change)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit dc553ff908f10832c71dc2b5ba5af7e68589218e
+Author: Mike FABIAN <mfabian@redhat.com>
+Date:   Fri Jul 22 11:39:01 2022 +0200
+
+    Remove KOI8-R character set from en_US.UTF-8/XLC_LOCALE
+    
+    https://gitlab.freedesktop.org/xorg/lib/libx11/-/blob/master/src/xlibi18n/lcCT.c#L58
+    has no escape sequence for KOI8-R.
+    That makes Xutf8TextListToTextProperty() sometimes fail when trying to
+    convert to COMPOUND_TEXT and when the KOI8-R charset is tried.
+    
+    This is the cause for this bug:
+    
+    https://github.com/ibus/ibus/issues/2422
+    
+    Removing the KOI8-R charset entry fixes the problem.
+    
+    This commit also fixes a few wrong texts in comments.
+    
+    Signed-off-by: Mike FABIAN <mfabian@redhat.com>
+
+commit 1c04ac514196db5e2255d99635fb6e3c36be330d
+Author: Adam Sampson <ats@offog.org>
+Date:   Sun Jul 4 23:02:04 2021 +0100
+
+    xkb: Fix off-by-one error in XKeycodeToKeysym
+    
+    The code here that made indexes greater than 3 refer to XKB symbol
+    groups had an off-by-one error, so it would always leave out the symbol
+    that should have been at index 4. Rewrite the code to fix this and
+    simplify the logic a bit.
+    
+    Signed-off-by: Adam Sampson <ats@offog.org>
+
+commit ddaacd219609104f138006db6a8f708226db3874
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Fri Sep 9 20:17:35 2022 -0400
+
+    reduce compiler warnings for macros BufAlloc, Data and Data32 using casts
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 62c3337d89d31e0d3ed807004e73ad711fad3342
+Author: Kirill Chibisov <contact@kchibisov.com>
+Date:   Thu Sep 8 22:50:30 2022 +0000
+
+    ximcp/imRm.c: allow XNSpotLocation with OnTheSpot
+
+commit 1272879074ad9612314858a75cf844783c1963b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 38033b073f393564acf6a04501927002b2b4aa86
+Author: David H. Gutteridge <david@gutteridge.ca>
+Date:   Mon Jul 25 19:30:19 2022 -0400
+
+    configure.ac: report thread safety constructor build status
+    
+    Signed-off-by: David H. Gutteridge <david@gutteridge.ca>
+
+commit 9a90b3a63d02da92dc8692ed3f6269d3e0c7c8cc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 10 11:55:11 2022 -0700
+
+    doc: Document possible return values for XkbGetKeyboard()
+    
+    Fixes: #160
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0beb0cf46ae48b0d4322ff8a0221f47bdb7d2296
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 10 11:42:19 2022 -0700
+
+    xkb: set num_keys when filling in keys in _XkbReadGetNamesReply()
+    
+    Fixes: #160
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 487e9489d1e086cc62c53045206ab6d6d9d02031
+Author: Jon Turney <jon.turney@dronecode.org.uk>
+Date:   Wed Jun 22 16:15:37 2022 +0100
+
+    Fix Win32 build with -fno-common
+    
+    /work/xorg/lib/libX11/src/XlibInt.c:1968: multiple definition of `_Xdebug_p'; .libs/globals.o:globals.c:(.bss+0xc): first defined here
+    
+    Avoid redundant definition of _Xdebug_p in globals.c (which is under the
+    influence of _Xdebug being #defined to _Xdebug_p.
+    
+    This appears to be an ancient hack to work around data exports resolving
+    to the address of the import stub, not the import. (See [1]).
+    
+    (This is probably no longer needed or can be done in a better way, as
+    per the discussion under --enable-auto-import in the ld manpage.)
+    
+    [1] https://cygwin.com/pipermail/cygwin-xfree/2001-May/004606.html
+    
+    Signed-off-by: Jon Turney <jon.turney@dronecode.org.uk>
+
+commit 35ad99fad2f65ec2c69bd84bdeb8138329092b57
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Jul 15 11:29:46 2022 +0200
+
+    nls: add four sequences for the Samogitian E with dot above and macron
+    
+    These sequences each produce two code points: the E-with-dot-above and
+    a combining macron.  The XIM input method is required for this to work.
+    
+    (Also add a missing comment for a Unicode block.)
+    
+    This fixes issue #54.
+    
+    Requested-by: Arns Udovīčė
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 2732dd20cc2694dd5c32fef292e1f48626011032
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Wed Jul 6 16:44:50 2022 +0200
+
+    nls: delete eight sequences that pointlessly mix upper and lower case
+    
+    Typing a compose sequence requires some care -- surely the user is able
+    to either keep holding the Shift key or not touch it at all while typing
+    the sequence.  Also, compose sequences are not an infinite resource AND
+    take up space and time -- defining redundant ones is a waste.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit ea3cc474e1acfed47b9fb856ea151008fa6cfd30
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Wed Jul 6 16:36:48 2022 +0200
+
+    nls: add compose sequences for the double-struck capitals ℕ ℤ ℚ ℝ ℂ
+    
+    This allows the user to type the symbols for the five number systems.
+    
+    This fixes the reasonable part of issue #159.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 95a03cde434c447fdb41d8cccbbdd41f20750f32
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Jul 14 12:00:45 2022 +0200
+
+    nls: delete some pointless and wrong compose sequences meant for Bépo
+    
+    Fourteen years ago, commit 7302984642 added some four hundred compose
+    sequences for the benefit of the French Bépo layout.  But among these
+    four hundred there are several that use symbols that are not available
+    in the Bépo layout and are thus impossible to type.  Some of the used
+    symbols, like Ahook, Ehook and Ohook, are not even present in *any*
+    layout, making these sequences a dead weight in the Compose file.
+    
+    The Amacron and Omacron are available only in the Latvian, Hawaiian,
+    and Maori layouts, and the Omacron also in the Silesian layout.  But
+    the Latvian layouts and the Hawaiian do not contain any dead keys.
+    Only in the Maori and Silesian layouts these sequences with Amacron
+    and Omacron could be typed, but that was not why they were added.
+    
+    More importantly, as James Cloos noted in issue #54, sequences like
+    `<dead_abovedot> <amacron>` for generating `ǡ` (that is: the macron
+    above the dot) are questionable, as in compose sequences generally
+    the first accent typed is the uppermost in the composed character.
+    
+    Reference:
+      https://gitlab.freedesktop.org/xorg/lib/libx11/-/issues/54#note_17321
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 9702b836862da6838d725f555e7a1d83faf51740
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Fri Jul 1 11:13:13 2022 +0200
+
+    Mention that the predicate function is called with the display lock
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit a5d00f889fadad3f5b11e53fd5c04cf5343fa8a2
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Jun 24 16:20:52 2022 +0200
+
+    docs: replace three placeholders with something that makes sense
+    
+    Also, uncapitalize two arguments, to match the style of all others.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 9ff8502040e94cb172426d59df722cefa752a401
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Jun 24 16:07:22 2022 +0200
+
+    docs: remove the unsightly dashes from the overviews of arguments
+    
+    Seventeen months ago, commits 78027fdb7a and 4f15cfc645 removed
+    these dashes from two of the man pages.  Now, remove them all.
+    They are unhelpful and just make one wonder why they are there
+    (probably to function as improvised bullet points).
+    
+    Also remove four leading spaces and a trailing comma.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit a7968c47e35703446d67d070234fd9adf07f34b0
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Jun 23 15:48:05 2022 +0200
+
+    docs: hard-wrap some items so that Table 2 fits within 80 characters
+    
+    (Table 1 hard-wraps the first-column items in the same way.)
+    
+    Also, correct the formatting of the subsequent paragraph.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit c601c779ca8f46dc4335180ec2829851fb8bbc13
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Wed Jun 15 10:55:38 2022 +0200
+
+    nls: delete compose sequences that mix top-row digits with numpad digits
+    
+    Compose sequences for circled numbers, like ⑫  or ㉑, are nice to have,
+    but allowing them to be composed by typing one digit on the top row and
+    the other on the numerical keypad (or the other way around) is over the
+    top.  Remove these absurd sequences.  Keep only the sequences where both
+    digits are either on the top row or on the numerical keypad.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
 commit 3a30ada60c5217ada37b143b541c8e6f6284c7fa
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Jun 8 17:30:14 2022 -0700

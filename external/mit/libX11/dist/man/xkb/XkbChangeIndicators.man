@@ -1,4 +1,4 @@
-.\" Copyright 1999 Oracle and/or its affiliates. All rights reserved.
+.\" Copyright (c) 1999, Oracle and/or its affiliates.
 .\"
 .\" Permission is hereby granted, free of charge, to any person obtaining a
 .\" copy of this software and associated documentation files (the "Software"),
@@ -34,16 +34,16 @@ entire keyboard description
 .if t .ti +.5i
 .SH ARGUMENTS
 .TP
-.I \- dpy
+.I dpy
 connection to the X server 
 .TP
-.I \- xkb
+.I xkb
 keyboard description from which names are to be taken. 
 .TP
-.I \- changes
+.I changes
 indicators to be updated on the server
 .TP
-.I \- state
+.I state
 new state of indicators listed in changes->state_changes
 .SH DESCRIPTION
 .LP
