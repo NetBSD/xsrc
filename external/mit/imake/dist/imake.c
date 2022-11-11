@@ -66,11 +66,11 @@ in this Software without prior written authorization from The Open Group.
  *				found by searching the $PATH variable.
  * Other features:
  *	imake reads the entire cpp output into memory and then scans it
- *	for occurences of "@@".  If it encounters them, it replaces it with
+ *	for occurrences of "@@".  If it encounters them, it replaces it with
  *	a newline.  It also trims any trailing white space on output lines
  *	(because make gets upset at them).  This helps when cpp expands
  *	multi-line macros but you want them to appear on multiple lines.
- *	It also changes occurences of "XCOMM" to "#", to avoid problems
+ *	It also changes occurrences of "XCOMM" to "#", to avoid problems
  *	with treating commands as invalid preprocessor commands.
  *
  *	The macros MAKEFILE and MAKE are provided as macros
@@ -327,7 +327,7 @@ const char	*FindImakefile(const char *Imakefile);
 char	*ReadLine(FILE *tmpfd, const char *tmpfname);
 const char	*CleanCppInput(const char *imakefile);
 char	*Strdup(const char *cp);
-char	*Emalloc(int size);
+char	*Emalloc(size_t size);
 void	LogFatal(const char *x0, ...) _X_ATTRIBUTE_PRINTF(1, 2);
 void	LogMsg(const char *x0, ...) _X_ATTRIBUTE_PRINTF(1, 2);
 
@@ -346,12 +346,8 @@ void	cppit(const char *imakefile, const char *template, const char *masterc,
 void	makeit(void);
 void	CleanCppOutput(FILE *tmpfd, const char *tmpfname);
 boolean isempty(char *line);
-void	writetmpfile(FILE *fd, const char *buf, int cnt, const char *fname);
-#ifdef SIGNALRETURNSINT
-int	catch(int sig);
-#else
+void	writetmpfile(FILE *fd, const char *buf, size_t cnt, const char *fname);
 void	catch(int sig);
-#endif
 void	showargs(const char **argv);
 boolean optional_include(FILE *inFile, const char *defsym, const char *fname);
 void	  doit(FILE *outfd, const char *cmd, const char **argv);
@@ -399,17 +395,16 @@ main(int argc, char *argv[])
 		if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
 		   LogFatal("Cannot create temporary file %s.", tmpMakefile);
 	} else {
-#ifdef HAVE_MKSTEMP
-		int fd;
-#endif
 		char *tmpMakefileName = Strdup(tmpMakefileTemplate);
+
 #ifndef HAVE_MKSTEMP
 		if (mktemp(tmpMakefileName) == NULL ||
 		    (tmpfd = fopen(tmpMakefileName, "w+")) == NULL) {
 		   LogFatal("Cannot create temporary file %s.", tmpMakefileName);
 		}
 #else
-		fd = mkstemp(tmpMakefileName);
+		int fd = mkstemp(tmpMakefileName);
+
 		if (fd == -1 || (tmpfd = fdopen(fd, "w+")) == NULL) {
 		   if (fd != -1) {
 		      unlink(tmpMakefileName); close(fd);
@@ -442,12 +437,12 @@ void
 showit(FILE *fd)
 {
 	char	buf[ BUFSIZ ];
-	int	red;
+	size_t	red;
 
 	fseek(fd, 0, SEEK_SET);
 	while ((red = fread(buf, 1, BUFSIZ, fd)) > 0)
 		writetmpfile(stdout, buf, red, "stdout");
-	if (red < 0)
+	if (ferror(fd))
 	    LogFatal("Cannot read %s.", tmpMakefile);
 }
 
@@ -462,11 +457,7 @@ wrapup(void)
 		unlink(ImakefileC);
 }
 
-#ifdef SIGNALRETURNSINT
-int
-#else
 void
-#endif
 catch(int sig)
 {
 	errno = 0;
@@ -500,7 +491,7 @@ init(void)
 		static char argument[512];
 
 		/*
-		 * Sharable imake configurations require a
+		 * Shareable imake configurations require a
 		 * machine identifier.
 		 */
 		if (uname(&uts) != 0)
@@ -659,21 +650,21 @@ SetOpts(int argc, char **argv)
 }
 
 const char *
-FindImakefile(const char *Imakefile)
+FindImakefile(const char *filename)
 {
-	if (Imakefile) {
-		if (access(Imakefile, R_OK) < 0)
-			LogFatal("Cannot find %s.", Imakefile);
+	if (filename) {
+		if (access(filename, R_OK) < 0)
+			LogFatal("Cannot find %s.", filename);
 	} else {
 		if (access("Imakefile", R_OK) < 0) {
 			if (access("imakefile", R_OK) < 0)
 				LogFatal("No description file.");
 			else
-				Imakefile = "imakefile";
+				filename = "imakefile";
 		} else
-			Imakefile = "Imakefile";
+			filename = "Imakefile";
 	}
-	return(Imakefile);
+	return(filename);
 }
 
 static void _X_ATTRIBUTE_PRINTF(1, 0)
@@ -1191,7 +1182,7 @@ ask_sun_compiler_for_versions(const char *cmd, const char *path,
   const char vflag[] = " -V 2>&1";
   int retval = -1;
 
-  int len = strlen(cmd) + sizeof(vflag);
+  size_t len = strlen(cmd) + sizeof(vflag);
 
   if (path != NULL) {
       len += strlen(path) + 1;
@@ -1363,7 +1354,7 @@ get_gcc(char *cmd)
     };
 
     if (CrossCompiling) {
-	int i;
+	unsigned int i;
 	for (i = 0; i < sizeof (cross_cc_name) / sizeof cross_cc_name[0]; i++){
 	    strcpy (cmd, CrossCompileDir);
 	    strcat (cmd, "/");
@@ -1376,7 +1367,7 @@ get_gcc(char *cmd)
     } else
 #endif
       {
-	int i;
+	unsigned int i;
 	for (i = 0; i < sizeof (gcc_path) / sizeof gcc_path[0]; i++) {
 	    if (lstat (gcc_path[i], &sb) == 0) {
 		strcpy (cmd, gcc_path[i]);
@@ -1633,12 +1624,12 @@ define_os_defaults(FILE *inFile)
       if (gnu_c)
 #  endif
 	{
-	  char name[PATH_MAX];
-	  if (get_gcc(name)) {
-	      get_gcc_version (inFile,name);
+	  char gcc_name[PATH_MAX];
+	  if (get_gcc(gcc_name)) {
+	      get_gcc_version (inFile, gcc_name);
 #  if defined CROSSCOMPILE
 	      if (sys != emx)
-		  get_gcc_incdir(inFile,name);
+		  get_gcc_incdir(inFile, gcc_name);
 #  endif
 	  }
 	}
@@ -1745,7 +1736,7 @@ CleanCppInput(const char *imakefile)
 		LogFatal("Cannot open %s for input.", imakefile);
 	if (fstat(fileno(inFile), &st) < 0)
 		LogFatal("Cannot stat %s for size.", imakefile);
-	buf = Emalloc((int)st.st_size+3);
+	buf = Emalloc(st.st_size + 3);
 	count = fread(buf + 2, 1, st.st_size, inFile);
 	if (count == 0 && st.st_size != 0)
 		LogFatal("Cannot read %s:", imakefile);
@@ -1967,7 +1958,7 @@ ReadLine(FILE *tmpfd, const char *tmpfname)
 		fseek(tmpfd, 0, SEEK_SET);
 		if (fstat(fileno(tmpfd), &st) < 0)
 			LogFatal("cannot stat %s for size", tmpMakefile);
-		pline = buf = Emalloc((int)st.st_size+1);
+		pline = buf = Emalloc(st.st_size + 1);
 		total_red = fread(buf, 1, st.st_size, tmpfd);
 		if (total_red == 0 && st.st_size != 0)
 			LogFatal("cannot read %s", tmpMakefile);
@@ -2022,19 +2013,19 @@ ReadLine(FILE *tmpfd, const char *tmpfname)
 }
 
 void
-writetmpfile(FILE *fd, const char *buf, int cnt, const char *fname)
+writetmpfile(FILE *fd, const char *buf, size_t cnt, const char *fname)
 {
-	if (fwrite(buf, sizeof(char), cnt, fd) == -1)
+	if (fwrite(buf, sizeof(char), cnt, fd) < cnt)
 		LogFatal("Cannot write to %s.", fname);
 }
 
 char *
-Emalloc(int size)
+Emalloc(size_t size)
 {
 	char	*p;
 
 	if ((p = malloc(size)) == NULL)
-		LogFatal("Cannot allocate %d bytes", size);
+		LogFatal("Cannot allocate %ld bytes", (long) size);
 	return(p);
 }
 
@@ -2158,7 +2149,7 @@ char*
 CrossCompileCPP(void)
 {
     char *cpp, *c;
-    int len ;
+    size_t len;
     if (crosscompile_use_cc_e)
 	AddCppArg("-E");
 
