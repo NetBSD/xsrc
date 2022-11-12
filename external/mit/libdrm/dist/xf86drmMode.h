@@ -497,6 +497,38 @@ extern int drmModeRevokeLease(int fd, uint32_t lessee_id);
 extern const char *
 drmModeGetConnectorTypeName(uint32_t connector_type);
 
+/**
+ * Create a dumb buffer.
+ *
+ * Given a width, height and bits-per-pixel, the kernel will return a buffer
+ * handle, pitch and size. The flags must be zero.
+ *
+ * Returns 0 on success, negative errno on error.
+ */
+extern int
+drmModeCreateDumbBuffer(int fd, uint32_t width, uint32_t height, uint32_t bpp,
+                        uint32_t flags, uint32_t *handle, uint32_t *pitch,
+                        uint64_t *size);
+
+/**
+ * Destroy a dumb buffer.
+ *
+ * Returns 0 on success, negative errno on error.
+ */
+extern int
+drmModeDestroyDumbBuffer(int fd, uint32_t handle);
+
+/**
+ * Prepare a dumb buffer for mapping.
+ *
+ * The kernel returns an offset which can be used as an argument to mmap(2) on
+ * the DRM FD.
+ *
+ * Returns 0 on success, negative errno on error.
+ */
+extern int
+drmModeMapDumbBuffer(int fd, uint32_t handle, uint64_t *offset);
+
 #if defined(__cplusplus)
 }
 #endif

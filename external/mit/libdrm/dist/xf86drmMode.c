@@ -1823,3 +1823,52 @@ drmModeGetConnectorTypeName(uint32_t connector_type)
 		return NULL;
 	}
 }
+
+drm_public int
+drmModeCreateDumbBuffer(int fd, uint32_t width, uint32_t height, uint32_t bpp,
+                        uint32_t flags, uint32_t *handle, uint32_t *pitch,
+                        uint64_t *size)
+{
+	int ret;
+	struct drm_mode_create_dumb create = {
+		.width = width,
+		.height = height,
+		.bpp = bpp,
+		.flags = flags,
+	};
+
+	ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_CREATE_DUMB, &create);
+	if (ret != 0)
+		return ret;
+
+	*handle = create.handle;
+	*pitch = create.pitch;
+	*size = create.size;
+	return 0;
+}
+
+drm_public int
+drmModeDestroyDumbBuffer(int fd, uint32_t handle)
+{
+	struct drm_mode_destroy_dumb destroy = {
+		.handle = handle,
+	};
+
+	return DRM_IOCTL(fd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy);
+}
+
+drm_public int
+drmModeMapDumbBuffer(int fd, uint32_t handle, uint64_t *offset)
+{
+	int ret;
+	struct drm_mode_map_dumb map = {
+		.handle = handle,
+	};
+
+	ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_MAP_DUMB, &map);
+	if (ret != 0)
+		return ret;
+
+	*offset = map.offset;
+	return 0;
+}
