@@ -28,6 +28,7 @@
 
 #include "CUnit/Basic.h"
 
+#include <unistd.h>
 #include "util_math.h"
 
 #include "amdgpu_test.h"
@@ -38,6 +39,31 @@
 
 #define IB_SIZE		4096
 #define MAX_RESOURCES	16
+
+#define DECODE_CMD_MSG_BUFFER                              0x00000000
+#define DECODE_CMD_DPB_BUFFER                              0x00000001
+#define DECODE_CMD_DECODING_TARGET_BUFFER                  0x00000002
+#define DECODE_CMD_FEEDBACK_BUFFER                         0x00000003
+#define DECODE_CMD_PROB_TBL_BUFFER                         0x00000004
+#define DECODE_CMD_SESSION_CONTEXT_BUFFER                  0x00000005
+#define DECODE_CMD_BITSTREAM_BUFFER                        0x00000100
+#define DECODE_CMD_IT_SCALING_TABLE_BUFFER                 0x00000204
+#define DECODE_CMD_CONTEXT_BUFFER                          0x00000206
+
+#define DECODE_IB_PARAM_DECODE_BUFFER                      (0x00000001)
+
+#define DECODE_CMDBUF_FLAGS_MSG_BUFFER                     (0x00000001)
+#define DECODE_CMDBUF_FLAGS_DPB_BUFFER                     (0x00000002)
+#define DECODE_CMDBUF_FLAGS_BITSTREAM_BUFFER               (0x00000004)
+#define DECODE_CMDBUF_FLAGS_DECODING_TARGET_BUFFER         (0x00000008)
+#define DECODE_CMDBUF_FLAGS_FEEDBACK_BUFFER                (0x00000010)
+#define DECODE_CMDBUF_FLAGS_IT_SCALING_BUFFER              (0x00000200)
+#define DECODE_CMDBUF_FLAGS_CONTEXT_BUFFER                 (0x00000800)
+#define DECODE_CMDBUF_FLAGS_PROB_TBL_BUFFER                (0x00001000)
+#define DECODE_CMDBUF_FLAGS_SESSION_CONTEXT_BUFFER         (0x00100000)
+
+static bool vcn_dec_sw_ring = false;
+static bool vcn_unified_ring = false;
 
 #define H264_NAL_TYPE_NON_IDR_SLICE 1
 #define H264_NAL_TYPE_DP_A_SLICE 2
@@ -62,6 +88,48 @@ struct amdgpu_vcn_bo {
 	uint64_t size;
 	uint8_t *ptr;
 };
+
+typedef struct rvcn_decode_buffer_s {
+	unsigned int valid_buf_flag;
+	unsigned int msg_buffer_address_hi;
+	unsigned int msg_buffer_address_lo;
+	unsigned int dpb_buffer_address_hi;
+	unsigned int dpb_buffer_address_lo;
+	unsigned int target_buffer_address_hi;
+	unsigned int target_buffer_address_lo;
+	unsigned int session_contex_buffer_address_hi;
+	unsigned int session_contex_buffer_address_lo;
+	unsigned int bitstream_buffer_address_hi;
+	unsigned int bitstream_buffer_address_lo;
+	unsigned int context_buffer_address_hi;
+	unsigned int context_buffer_address_lo;
+	unsigned int feedback_buffer_address_hi;
+	unsigned int feedback_buffer_address_lo;
+	unsigned int luma_hist_buffer_address_hi;
+	unsigned int luma_hist_buffer_address_lo;
+	unsigned int prob_tbl_buffer_address_hi;
+	unsigned int prob_tbl_buffer_address_lo;
+	unsigned int sclr_coeff_buffer_address_hi;
+	unsigned int sclr_coeff_buffer_address_lo;
+	unsigned int it_sclr_table_buffer_address_hi;
+	unsigned int it_sclr_table_buffer_address_lo;
+	unsigned int sclr_target_buffer_address_hi;
+	unsigned int sclr_target_buffer_address_lo;
+	unsigned int cenc_size_info_buffer_address_hi;
+	unsigned int cenc_size_info_buffer_address_lo;
+	unsigned int mpeg2_pic_param_buffer_address_hi;
+	unsigned int mpeg2_pic_param_buffer_address_lo;
+	unsigned int mpeg2_mb_control_buffer_address_hi;
+	unsigned int mpeg2_mb_control_buffer_address_lo;
+	unsigned int mpeg2_idct_coeff_buffer_address_hi;
+	unsigned int mpeg2_idct_coeff_buffer_address_lo;
+} rvcn_decode_buffer_t;
+
+typedef struct rvcn_decode_ib_package_s {
+	unsigned int package_size;
+	unsigned int package_type;
+} rvcn_decode_ib_package_t;
+
 
 struct amdgpu_vcn_reg {
 	uint32_t data0;
@@ -105,6 +173,10 @@ static amdgpu_bo_handle ib_handle;
 static amdgpu_va_handle ib_va_handle;
 static uint64_t ib_mc_address;
 static uint32_t *ib_cpu;
+static uint32_t *ib_checksum;
+static uint32_t *ib_size_in_dw;
+
+static rvcn_decode_buffer_t *decode_buffer;
 
 static amdgpu_bo_handle resources[MAX_RESOURCES];
 static unsigned num_resources;
@@ -117,8 +189,8 @@ static struct amdgpu_vcn_reg reg[] = {
 };
 
 uint32_t gWidth, gHeight, gSliceType;
-struct drm_amdgpu_info_hw_ip einfo;
-
+static uint32_t vcn_ip_version_major;
+static uint32_t vcn_ip_version_minor;
 static void amdgpu_cs_vcn_dec_create(void);
 static void amdgpu_cs_vcn_dec_decode(void);
 static void amdgpu_cs_vcn_dec_destroy(void);
@@ -127,6 +199,8 @@ static void amdgpu_cs_vcn_enc_create(void);
 static void amdgpu_cs_vcn_enc_encode(void);
 static void amdgpu_cs_vcn_enc_destroy(void);
 
+static void amdgpu_cs_sq_head(uint32_t *base, int *offset, bool enc);
+static void amdgpu_cs_sq_ib_tail(uint32_t *end);
 static void h264_check_0s (bufferInfo * bufInfo, int count);
 static int32_t h264_se (bufferInfo * bufInfo);
 static inline uint32_t bs_read_u1(bufferInfo *bufinfo);
@@ -156,7 +230,8 @@ CU_TestInfo vcn_tests[] = {
 CU_BOOL suite_vcn_tests_enable(void)
 {
 	struct drm_amdgpu_info_hw_ip info;
-	int r, ret;
+	bool enc_ring, dec_ring;
+	int r;
 
 	if (amdgpu_device_initialize(drm_amdgpu[0], &major_version,
 				   &minor_version, &device_handle))
@@ -167,13 +242,31 @@ CU_BOOL suite_vcn_tests_enable(void)
 	chip_rev = device_handle->info.chip_rev;
 	chip_id = device_handle->info.chip_external_rev;
 
-	r = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_DEC, 0, &info);
-	ret = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_ENC, 0, &einfo);
+	r = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_ENC, 0, &info);
+	if (!r) {
+		vcn_ip_version_major = info.hw_ip_version_major;
+		vcn_ip_version_minor = info.hw_ip_version_minor;
+		enc_ring = !!info.available_rings;
+		/* in vcn 4.0 it re-uses encoding queue as unified queue */
+		if (vcn_ip_version_major >= 4) {
+			vcn_unified_ring = true;
+			vcn_dec_sw_ring = true;
+			dec_ring = enc_ring;
+		} else {
+			r = amdgpu_query_hw_ip_info(device_handle, AMDGPU_HW_IP_VCN_DEC, 0, &info);
+			dec_ring = !!info.available_rings;
+		}
+	}
 
 	if (amdgpu_device_deinitialize(device_handle))
 		return CU_FALSE;
 
-	if (r != 0 || !info.available_rings ||
+	if (r) {
+		printf("\n\nASIC query hw info failed\n");
+		return CU_FALSE;
+	}
+
+	if (!(dec_ring || enc_ring) ||
 	    (family_id < AMDGPU_FAMILY_RV &&
 	     (family_id == AMDGPU_FAMILY_AI &&
 	      (chip_id - chip_rev) < 0x32))) {  /* Arcturus */
@@ -181,22 +274,25 @@ CU_BOOL suite_vcn_tests_enable(void)
 		return CU_FALSE;
 	}
 
-	if (family_id == AMDGPU_FAMILY_AI || (ret != 0) ||
-	    (!einfo.available_rings)) {
+	if (!dec_ring) {
+		amdgpu_set_test_active("VCN Tests", "VCN DEC create", CU_FALSE);
+		amdgpu_set_test_active("VCN Tests", "VCN DEC decode", CU_FALSE);
+		amdgpu_set_test_active("VCN Tests", "VCN DEC destroy", CU_FALSE);
+	}
+
+	if (family_id == AMDGPU_FAMILY_AI || !enc_ring) {
 		amdgpu_set_test_active("VCN Tests", "VCN ENC create", CU_FALSE);
 		amdgpu_set_test_active("VCN Tests", "VCN ENC encode", CU_FALSE);
 		amdgpu_set_test_active("VCN Tests", "VCN ENC destroy", CU_FALSE);
 	}
 
-	if (info.hw_ip_version_major == 1)
+	if (vcn_ip_version_major == 1)
 		vcn_reg_index = 0;
-	else if (info.hw_ip_version_major == 2 && info.hw_ip_version_minor == 0)
+	else if (vcn_ip_version_major == 2 && vcn_ip_version_minor == 0)
 		vcn_reg_index = 1;
-	else if ((info.hw_ip_version_major == 2 && info.hw_ip_version_minor >= 5) ||
-		  info.hw_ip_version_major == 3)
+	else if ((vcn_ip_version_major == 2 && vcn_ip_version_minor >= 5) ||
+				vcn_ip_version_major == 3)
 		vcn_reg_index = 2;
-	else
-		return CU_FALSE;
 
 	return CU_TRUE;
 }
@@ -244,6 +340,43 @@ int suite_vcn_tests_clean(void)
 		return CUE_SCLEAN_FAILED;
 
 	return CUE_SUCCESS;
+}
+
+static void amdgpu_cs_sq_head(uint32_t *base, int *offset, bool enc)
+{
+	/* signature */
+	*(base + (*offset)++) = 0x00000010;
+	*(base + (*offset)++) = 0x30000002;
+	ib_checksum = base + (*offset)++;
+	ib_size_in_dw = base + (*offset)++;
+
+	/* engine info */
+	*(base + (*offset)++) = 0x00000010;
+	*(base + (*offset)++) = 0x30000001;
+	*(base + (*offset)++) = enc ? 2 : 3;
+	*(base + (*offset)++) = 0x00000000;
+}
+
+static void amdgpu_cs_sq_ib_tail(uint32_t *end)
+{
+	uint32_t size_in_dw;
+	uint32_t checksum = 0;
+
+	/* if the pointers are invalid, no need to process */
+	if (ib_checksum == NULL || ib_size_in_dw == NULL)
+		return;
+
+	size_in_dw = end - ib_size_in_dw - 1;
+	*ib_size_in_dw = size_in_dw;
+	*(ib_size_in_dw + 4) = size_in_dw * sizeof(uint32_t);
+
+	for (int i = 0; i < size_in_dw; i++)
+		checksum += *(ib_checksum + 2 + i);
+
+	*ib_checksum = checksum;
+
+	ib_checksum = NULL;
+	ib_size_in_dw = NULL;
 }
 
 static int submit(unsigned ndw, unsigned ip)
@@ -339,17 +472,91 @@ static void free_resource(struct amdgpu_vcn_bo *vcn_bo)
 
 static void vcn_dec_cmd(uint64_t addr, unsigned cmd, int *idx)
 {
-	ib_cpu[(*idx)++] = reg[vcn_reg_index].data0;
-	ib_cpu[(*idx)++] = addr;
-	ib_cpu[(*idx)++] = reg[vcn_reg_index].data1;
-	ib_cpu[(*idx)++] = addr >> 32;
-	ib_cpu[(*idx)++] = reg[vcn_reg_index].cmd;
-	ib_cpu[(*idx)++] = cmd << 1;
+	if (vcn_dec_sw_ring == false) {
+		ib_cpu[(*idx)++] = reg[vcn_reg_index].data0;
+		ib_cpu[(*idx)++] = addr;
+		ib_cpu[(*idx)++] = reg[vcn_reg_index].data1;
+		ib_cpu[(*idx)++] = addr >> 32;
+		ib_cpu[(*idx)++] = reg[vcn_reg_index].cmd;
+		ib_cpu[(*idx)++] = cmd << 1;
+		return;
+	}
+
+	/* Support decode software ring message */
+	if (!(*idx)) {
+		rvcn_decode_ib_package_t *ib_header;
+
+		if (vcn_unified_ring)
+			amdgpu_cs_sq_head(ib_cpu, idx, false);
+
+		ib_header = (rvcn_decode_ib_package_t *)&ib_cpu[*idx];
+		ib_header->package_size = sizeof(struct rvcn_decode_buffer_s) +
+			sizeof(struct rvcn_decode_ib_package_s);
+
+		(*idx)++;
+		ib_header->package_type = (DECODE_IB_PARAM_DECODE_BUFFER);
+		(*idx)++;
+
+		decode_buffer = (rvcn_decode_buffer_t *)&(ib_cpu[*idx]);
+		*idx += sizeof(struct rvcn_decode_buffer_s) / 4;
+		memset(decode_buffer, 0, sizeof(struct rvcn_decode_buffer_s));
+	}
+
+	switch(cmd) {
+		case DECODE_CMD_MSG_BUFFER:
+			decode_buffer->valid_buf_flag |= DECODE_CMDBUF_FLAGS_MSG_BUFFER;
+			decode_buffer->msg_buffer_address_hi = (addr >> 32);
+			decode_buffer->msg_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_DPB_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_DPB_BUFFER);
+			decode_buffer->dpb_buffer_address_hi = (addr >> 32);
+			decode_buffer->dpb_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_DECODING_TARGET_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_DECODING_TARGET_BUFFER);
+			decode_buffer->target_buffer_address_hi = (addr >> 32);
+			decode_buffer->target_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_FEEDBACK_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_FEEDBACK_BUFFER);
+			decode_buffer->feedback_buffer_address_hi = (addr >> 32);
+			decode_buffer->feedback_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_PROB_TBL_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_PROB_TBL_BUFFER);
+			decode_buffer->prob_tbl_buffer_address_hi = (addr >> 32);
+			decode_buffer->prob_tbl_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_SESSION_CONTEXT_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_SESSION_CONTEXT_BUFFER);
+			decode_buffer->session_contex_buffer_address_hi = (addr >> 32);
+			decode_buffer->session_contex_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_BITSTREAM_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_BITSTREAM_BUFFER);
+			decode_buffer->bitstream_buffer_address_hi = (addr >> 32);
+			decode_buffer->bitstream_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_IT_SCALING_TABLE_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_IT_SCALING_BUFFER);
+			decode_buffer->it_sclr_table_buffer_address_hi = (addr >> 32);
+			decode_buffer->it_sclr_table_buffer_address_lo = (addr);
+		break;
+		case DECODE_CMD_CONTEXT_BUFFER:
+			decode_buffer->valid_buf_flag |= (DECODE_CMDBUF_FLAGS_CONTEXT_BUFFER);
+			decode_buffer->context_buffer_address_hi = (addr >> 32);
+			decode_buffer->context_buffer_address_lo = (addr);
+		break;
+		default:
+			printf("Not Support!\n");
+	}
 }
 
 static void amdgpu_cs_vcn_dec_create(void)
 {
 	struct amdgpu_vcn_bo msg_buf;
+	unsigned ip;
 	int len, r;
 
 	num_resources  = 0;
@@ -364,18 +571,29 @@ static void amdgpu_cs_vcn_dec_create(void)
 	memcpy(msg_buf.ptr, vcn_dec_create_msg, sizeof(vcn_dec_create_msg));
 
 	len = 0;
-	ib_cpu[len++] = reg[vcn_reg_index].data0;
-	ib_cpu[len++] = msg_buf.addr;
-	ib_cpu[len++] = reg[vcn_reg_index].data1;
-	ib_cpu[len++] = msg_buf.addr >> 32;
-	ib_cpu[len++] = reg[vcn_reg_index].cmd;
-	ib_cpu[len++] = 0;
-	for (; len % 16; ) {
-		ib_cpu[len++] = reg[vcn_reg_index].nop;
+	if (vcn_dec_sw_ring == true)
+		vcn_dec_cmd(msg_buf.addr, 0, &len);
+	else {
+		ib_cpu[len++] = reg[vcn_reg_index].data0;
+		ib_cpu[len++] = msg_buf.addr;
+		ib_cpu[len++] = reg[vcn_reg_index].data1;
+		ib_cpu[len++] = msg_buf.addr >> 32;
+		ib_cpu[len++] = reg[vcn_reg_index].cmd;
 		ib_cpu[len++] = 0;
+		for (; len % 16; ) {
+			ib_cpu[len++] = reg[vcn_reg_index].nop;
+			ib_cpu[len++] = 0;
+		}
 	}
 
-	r = submit(len, AMDGPU_HW_IP_VCN_DEC);
+	if (vcn_unified_ring) {
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
+		ip = AMDGPU_HW_IP_VCN_ENC;
+	} else
+		ip = AMDGPU_HW_IP_VCN_DEC;
+
+	r = submit(len, ip);
+
 	CU_ASSERT_EQUAL(r, 0);
 
 	free_resource(&msg_buf);
@@ -387,6 +605,7 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	uint64_t msg_addr, fb_addr, bs_addr, dpb_addr, ctx_addr, dt_addr, it_addr, sum;
 	struct amdgpu_vcn_bo dec_buf;
 	int size, len, i, r;
+	unsigned ip;
 	uint8_t *dec;
 
 	size = 4*1024; /* msg */
@@ -439,14 +658,22 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	vcn_dec_cmd(it_addr, 0x204, &len);
 	vcn_dec_cmd(ctx_addr, 0x206, &len);
 
-	ib_cpu[len++] = reg[vcn_reg_index].cntl;
-	ib_cpu[len++] = 0x1;
-	for (; len % 16; ) {
-		ib_cpu[len++] = reg[vcn_reg_index].nop;
-		ib_cpu[len++] = 0;
+	if (vcn_dec_sw_ring == false) {
+		ib_cpu[len++] = reg[vcn_reg_index].cntl;
+		ib_cpu[len++] = 0x1;
+		for (; len % 16; ) {
+			ib_cpu[len++] = reg[vcn_reg_index].nop;
+			ib_cpu[len++] = 0;
+		}
 	}
 
-	r = submit(len, AMDGPU_HW_IP_VCN_DEC);
+	if (vcn_unified_ring) {
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
+		ip = AMDGPU_HW_IP_VCN_ENC;
+	} else
+		ip = AMDGPU_HW_IP_VCN_DEC;
+
+	r = submit(len, ip);
 	CU_ASSERT_EQUAL(r, 0);
 
 	for (i = 0, sum = 0; i < dt_size; ++i)
@@ -460,6 +687,7 @@ static void amdgpu_cs_vcn_dec_decode(void)
 static void amdgpu_cs_vcn_dec_destroy(void)
 {
 	struct amdgpu_vcn_bo msg_buf;
+	unsigned ip;
 	int len, r;
 
 	num_resources = 0;
@@ -474,18 +702,28 @@ static void amdgpu_cs_vcn_dec_destroy(void)
 	memcpy(msg_buf.ptr, vcn_dec_destroy_msg, sizeof(vcn_dec_destroy_msg));
 
 	len = 0;
-	ib_cpu[len++] = reg[vcn_reg_index].data0;
-	ib_cpu[len++] = msg_buf.addr;
-	ib_cpu[len++] = reg[vcn_reg_index].data1;
-	ib_cpu[len++] = msg_buf.addr >> 32;
-	ib_cpu[len++] = reg[vcn_reg_index].cmd;
-	ib_cpu[len++] = 0;
-	for (; len % 16; ) {
-		ib_cpu[len++] = reg[vcn_reg_index].nop;
+	if (vcn_dec_sw_ring == true)
+		vcn_dec_cmd(msg_buf.addr, 0, &len);
+	else {
+		ib_cpu[len++] = reg[vcn_reg_index].data0;
+		ib_cpu[len++] = msg_buf.addr;
+		ib_cpu[len++] = reg[vcn_reg_index].data1;
+		ib_cpu[len++] = msg_buf.addr >> 32;
+		ib_cpu[len++] = reg[vcn_reg_index].cmd;
 		ib_cpu[len++] = 0;
+		for (; len % 16; ) {
+			ib_cpu[len++] = reg[vcn_reg_index].nop;
+			ib_cpu[len++] = 0;
+		}
 	}
 
-	r = submit(len, AMDGPU_HW_IP_VCN_DEC);
+	if (vcn_unified_ring) {
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
+		ip = AMDGPU_HW_IP_VCN_ENC;
+	} else
+		ip = AMDGPU_HW_IP_VCN_DEC;
+
+	r = submit(len, ip);
 	CU_ASSERT_EQUAL(r, 0);
 
 	free_resource(&msg_buf);
@@ -500,10 +738,10 @@ static void amdgpu_cs_vcn_enc_create(void)
 	unsigned width = 160, height = 128, buf_size;
 	uint32_t fw_maj = 1, fw_min = 9;
 
-	if (einfo.hw_ip_version_major == 2) {
+	if (vcn_ip_version_major == 2) {
 		fw_maj = 1;
 		fw_min = 1;
-	} else if (einfo.hw_ip_version_major == 3) {
+	} else if (vcn_ip_version_major == 3) {
 		fw_maj = 1;
 		fw_min = 0;
 	}
@@ -529,6 +767,10 @@ static void amdgpu_cs_vcn_enc_create(void)
 	r = amdgpu_bo_cpu_unmap(cpb_buf.handle);
 
 	len = 0;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_head(ib_cpu, &len, true);
+
 	/* session info */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
@@ -587,7 +829,7 @@ static void amdgpu_cs_vcn_enc_create(void)
 	ib_cpu[len++] = 1;	/* quarter pel enabled */
 	ib_cpu[len++] = 100;	/* BASELINE profile */
 	ib_cpu[len++] = 11;	/* level */
-	if (einfo.hw_ip_version_major == 3) {
+	if (vcn_ip_version_major == 3) {
 		ib_cpu[len++] = 0;	/* b_picture_enabled */
 		ib_cpu[len++] = 0;	/* weighted_bipred_idc */
 	}
@@ -628,7 +870,7 @@ static void amdgpu_cs_vcn_enc_create(void)
 	ib_cpu[len++] = 0;	/* scene change sensitivity */
 	ib_cpu[len++] = 0;	/* scene change min idr interval */
 	ib_cpu[len++] = 0;
-	if (einfo.hw_ip_version_major == 3)
+	if (vcn_ip_version_major == 3)
 		ib_cpu[len++] = 0;
 	*st_size = (len - st_offset) * 4;
 
@@ -686,6 +928,9 @@ static void amdgpu_cs_vcn_enc_create(void)
 	*st_size = (len - st_offset) * 4;
 
 	*p_task_size = (len - task_offset) * 4;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
 
 	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
 	CU_ASSERT_EQUAL(r, 0);
@@ -1030,10 +1275,10 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	uint32_t *st_size = NULL;
 	uint32_t fw_maj = 1, fw_min = 9;
 
-	if (einfo.hw_ip_version_major == 2) {
+	if (vcn_ip_version_major == 2) {
 		fw_maj = 1;
 		fw_min = 1;
-	} else if (einfo.hw_ip_version_major == 3) {
+	} else if (vcn_ip_version_major == 3) {
 		fw_maj = 1;
 		fw_min = 0;
 	}
@@ -1070,6 +1315,10 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	CU_ASSERT_EQUAL(r, 0);
 
 	len = 0;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_head(ib_cpu, &len, true);
+
 	/* session info */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
@@ -1094,7 +1343,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 		/* sps */
 		st_offset = len;
 		st_size = &ib_cpu[len++];	/* size */
-		if(einfo.hw_ip_version_major == 1)
+		if(vcn_ip_version_major == 1)
 			ib_cpu[len++] = 0x00000020;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 1 */
 		else
 			ib_cpu[len++] = 0x0000000a;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 2,3 */
@@ -1110,7 +1359,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 		/* pps */
 		st_offset = len;
 		st_size = &ib_cpu[len++];	/* size */
-		if(einfo.hw_ip_version_major == 1)
+		if(vcn_ip_version_major == 1)
 			ib_cpu[len++] = 0x00000020;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 1*/
 		else
 			ib_cpu[len++] = 0x0000000a;	/* RENCODE_IB_PARAM_DIRECT_OUTPUT_NALU vcn 2,3*/
@@ -1124,7 +1373,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* slice header */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x0000000a; /* RENCODE_IB_PARAM_SLICE_HEADER vcn 1 */
 	else
 		ib_cpu[len++] = 0x0000000b; /* RENCODE_IB_PARAM_SLICE_HEADER vcn 2,3 */
@@ -1157,7 +1406,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* encode params */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x0000000b;	/* RENCODE_IB_PARAM_ENCODE_PARAMS vcn 1*/
 	else
 		ib_cpu[len++] = 0x0000000f;	/* RENCODE_IB_PARAM_ENCODE_PARAMS vcn 2,3*/
@@ -1178,7 +1427,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
 	ib_cpu[len++] = 0x00200003;	/* RENCODE_H264_IB_PARAM_ENCODE_PARAMS */
-	if (einfo.hw_ip_version_major != 3) {
+	if (vcn_ip_version_major != 3) {
 		ib_cpu[len++] = 0x00000000;
 		ib_cpu[len++] = 0x00000000;
 		ib_cpu[len++] = 0x00000000;
@@ -1207,7 +1456,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* encode context */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x0000000d;	/* ENCODE_CONTEXT_BUFFER  vcn 1 */
 	else
 		ib_cpu[len++] = 0x00000011;	/* ENCODE_CONTEXT_BUFFER  vcn 2,3 */
@@ -1229,7 +1478,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* bitstream buffer */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x0000000e;	/* VIDEO_BITSTREAM_BUFFER vcn 1 */
 	else
 		ib_cpu[len++] = 0x00000012;	/* VIDEO_BITSTREAM_BUFFER vcn 2,3 */
@@ -1243,7 +1492,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* feedback */
 	st_offset = len;
 	st_size = &ib_cpu[len++];	/* size */
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x00000010;	/* FEEDBACK_BUFFER vcn 1 */
 	else
 		ib_cpu[len++] = 0x00000015;	/* FEEDBACK_BUFFER vcn 2,3 */
@@ -1257,7 +1506,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	/* intra refresh */
 	st_offset = len;
 	st_size = &ib_cpu[len++];
-	if(einfo.hw_ip_version_major == 1)
+	if(vcn_ip_version_major == 1)
 		ib_cpu[len++] = 0x0000000c;	/* INTRA_REFRESH vcn 1 */
 	else
 		ib_cpu[len++] = 0x00000010;	/* INTRA_REFRESH vcn 2,3 */
@@ -1266,7 +1515,7 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	ib_cpu[len++] = 0x00000000;
 	*st_size = (len - st_offset) * 4;
 
-	if(einfo.hw_ip_version_major != 1) {
+	if(vcn_ip_version_major != 1) {
 		/* Input Format */
 		st_offset = len;
 		st_size = &ib_cpu[len++];
@@ -1303,6 +1552,10 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	*st_size = (len - st_offset) * 4;
 
 	*p_task_size = (len - task_offset) * 4;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
+
 	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
 	CU_ASSERT_EQUAL(r, 0);
 
@@ -1327,10 +1580,10 @@ static void amdgpu_cs_vcn_enc_destroy(void)
 	uint32_t *st_size = NULL;
 	uint32_t fw_maj = 1, fw_min = 9;
 
-	if (einfo.hw_ip_version_major == 2) {
+	if (vcn_ip_version_major == 2) {
 		fw_maj = 1;
 		fw_min = 1;
-	} else if (einfo.hw_ip_version_major == 3) {
+	} else if (vcn_ip_version_major == 3) {
 		fw_maj = 1;
 		fw_min = 0;
 	}
@@ -1339,6 +1592,9 @@ static void amdgpu_cs_vcn_enc_destroy(void)
 /* 	alloc_resource(&enc_buf, 128 * 1024, AMDGPU_GEM_DOMAIN_GTT); */
 	resources[num_resources++] = enc_buf.handle;
 	resources[num_resources++] = ib_handle;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_head(ib_cpu, &len, true);
 
 	/* session info */
 	st_offset = len;
@@ -1367,6 +1623,9 @@ static void amdgpu_cs_vcn_enc_destroy(void)
 	*st_size = (len - st_offset) * 4;
 
 	*p_task_size = (len - task_offset) * 4;
+
+	if (vcn_unified_ring)
+		amdgpu_cs_sq_ib_tail(ib_cpu + len);
 
 	r = submit(len, AMDGPU_HW_IP_VCN_ENC);
 	CU_ASSERT_EQUAL(r, 0);
