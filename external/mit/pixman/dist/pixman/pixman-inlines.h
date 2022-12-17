@@ -231,7 +231,7 @@ bilinear_interpolation_float (argb_t tl, argb_t tr,
     argb_t r;
 
     distxy = distx * disty;
-    distxiy = distx * (1.f - disty);
+    distxiy = distx - (1.f - distxy);
     distixy = (1.f - distx) * disty;
     distixiy = (1.f - distx) * (1.f - disty);
 
