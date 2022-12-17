@@ -387,10 +387,8 @@ in_over (__m64 src, __m64 srca, __m64 mask, __m64 dest)
 static force_inline __m64 ldq_u(__m64 *p)
 {
 #ifdef USE_X86_MMX
-    /* x86's alignment restrictions are very relaxed, but that's no excuse */
-    __m64 r;
-    memcpy(&r, p, sizeof(__m64));
-    return r;
+    /* x86's alignment restrictions are very relaxed. */
+    return *(__m64 *)p;
 #elif defined USE_ARM_IWMMXT
     int align = (uintptr_t)p & 7;
     __m64 *aligned_p;
@@ -409,9 +407,7 @@ static force_inline uint32_t ldl_u(const uint32_t *p)
 {
 #ifdef USE_X86_MMX
     /* x86's alignment restrictions are very relaxed. */
-    uint32_t r;
-    memcpy(&r, p, sizeof(uint32_t));
-    return r;
+    return *p;
 #else
     struct __una_u32 { uint32_t x __attribute__((packed)); };
     const struct __una_u32 *ptr = (const struct __una_u32 *) p;
@@ -3954,7 +3950,7 @@ mmx_fetch_a8 (pixman_iter_t *iter, const uint32_t *mask)
 
     while (w && (((uintptr_t)dst) & 15))
     {
-        *dst++ = (uint32_t)*(src++) << 24;
+        *dst++ = *(src++) << 24;
         w--;
     }
 
@@ -3981,7 +3977,7 @@ mmx_fetch_a8 (pixman_iter_t *iter, const uint32_t *mask)
 
     while (w)
     {
-	*dst++ = (uint32_t)*(src++) << 24;
+	*dst++ = *(src++) << 24;
 	w--;
     }
 
