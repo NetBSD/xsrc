@@ -202,14 +202,6 @@ XkbKeysymToModifiers(Display *dpy, KeySym ks)
     return mods;
 }
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
 KeySym
 XLookupKeysym(register XKeyEvent * event, int col)
 {
@@ -219,14 +211,21 @@ XLookupKeysym(register XKeyEvent * event, int col)
         return _XLookupKeysym(event, col);
     _XkbCheckPendingRefresh(dpy, dpy->xkb_info);
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     return XKeycodeToKeysym(dpy, event->keycode, col);
-}
-
 #ifdef __clang__
 #pragma clang diagnostic pop
 #elif defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+}
 
    /*
     * Not a public entry point -- XkbTranslateKey is an obsolete name
