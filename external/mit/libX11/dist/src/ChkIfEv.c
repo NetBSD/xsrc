@@ -49,8 +49,8 @@ Bool XCheckIfEvent (
 	unsigned long qe_serial = 0;
 	int n;			/* time through count */
 
-	dpy->in_ifevent++;
-	LockDisplay(dpy);
+        LockDisplay(dpy);
+        dpy->in_ifevent = True;
 	prev = NULL;
 	for (n = 3; --n >= 0;) {
 	    for (qelt = prev ? prev->next : dpy->head;
@@ -61,7 +61,7 @@ Bool XCheckIfEvent (
 		    *event = qelt->event;
 		    _XDeq(dpy, prev, qelt);
 		    _XStoreEventCookie(dpy, event);
-		    dpy->in_ifevent--;
+                    dpy->in_ifevent = False;
 		    UnlockDisplay(dpy);
 		    return True;
 		}
@@ -80,7 +80,7 @@ Bool XCheckIfEvent (
 		/* another thread has snatched this event */
 		prev = NULL;
 	}
-	dpy->in_ifevent--;
+        dpy->in_ifevent = False;
 	UnlockDisplay(dpy);
 	return False;
 }
