@@ -1,5 +1,5 @@
 
-#line 3 "winprefslex.c"
+#line 2 "winprefslex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -687,9 +687,9 @@ static char *makestr(char *str)
   return ptr;
 }
 
-#line 691 "winprefslex.c"
+#line 690 "winprefslex.c"
 #define YY_NO_INPUT 1
-#line 693 "winprefslex.c"
+#line 692 "winprefslex.c"
 
 #define INITIAL 0
 
@@ -906,7 +906,7 @@ YY_DECL
 	{
 #line 63 "winprefslex.l"
 
-#line 910 "winprefslex.c"
+#line 909 "winprefslex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1145,7 +1145,7 @@ YY_RULE_SETUP
 #line 100 "winprefslex.l"
 ECHO;
 	YY_BREAK
-#line 1149 "winprefslex.c"
+#line 1148 "winprefslex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
