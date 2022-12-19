@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
 #include <sys/stat.h>
 
 #define MAXDEFINES	512
-#define MAXFILES	4096
+#define MAXFILES	2048
 #define MAXINCFILES	128	/* "-include" files */
 #define MAXDIRS		512	/* -I flags */
 #define PATHMAX		4096    /* realpath */
