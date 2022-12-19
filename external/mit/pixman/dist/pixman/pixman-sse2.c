@@ -518,8 +518,7 @@ core_combine_over_u_pixel_sse2 (uint32_t src, uint32_t dst)
 static force_inline uint32_t
 combine1 (const uint32_t *ps, const uint32_t *pm)
 {
-    uint32_t s;
-    memcpy(&s, ps, sizeof(uint32_t));
+    uint32_t s = *ps;
 
     if (pm)
     {
@@ -3202,7 +3201,7 @@ sse2_composite_over_n_8_8888 (pixman_implementation_t *imp,
     uint8_t *mask_line, *mask;
     int dst_stride, mask_stride;
     int32_t w;
-    uint32_t d;
+    uint32_t m, d;
 
     __m128i xmm_src, xmm_alpha, xmm_def;
     __m128i xmm_dst, xmm_dst_lo, xmm_dst_hi;
@@ -3257,8 +3256,7 @@ sse2_composite_over_n_8_8888 (pixman_implementation_t *imp,
 
 	while (w >= 4)
 	{
-            uint32_t m;
-            memcpy(&m, mask, sizeof(uint32_t));
+	    m = *((uint32_t*)mask);
 
 	    if (srca == 0xff && m == 0xffffffff)
 	    {
@@ -3335,8 +3333,8 @@ sse2_fill (pixman_implementation_t *imp,
 
     if (bpp == 8)
     {
-	uint32_t b;
-	uint32_t w;
+	uint8_t b;
+	uint16_t w;
 
 	stride = stride * (int) sizeof (uint32_t) / 1;
 	byte_line = (uint8_t *)(((uint8_t *)bits) + stride * y + x);
@@ -3478,6 +3476,7 @@ sse2_composite_src_n_8_8888 (pixman_implementation_t *imp,
     uint8_t     *mask_line, *mask;
     int dst_stride, mask_stride;
     int32_t w;
+    uint32_t m;
 
     __m128i xmm_src, xmm_def;
     __m128i xmm_mask, xmm_mask_lo, xmm_mask_hi;
@@ -3529,8 +3528,7 @@ sse2_composite_src_n_8_8888 (pixman_implementation_t *imp,
 
 	while (w >= 4)
 	{
-            uint32_t m;
-            memcpy(&m, mask, sizeof(uint32_t));
+	    m = *((uint32_t*)mask);
 
 	    if (srca == 0xff && m == 0xffffffff)
 	    {
@@ -3596,6 +3594,7 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
     uint8_t     *mask_line, *mask;
     int dst_stride, mask_stride;
     int32_t w;
+    uint32_t m;
     __m128i mmx_src, mmx_alpha, mmx_mask, mmx_dest;
 
     __m128i xmm_src, xmm_alpha;
@@ -3627,7 +3626,7 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
 
 	while (w && (uintptr_t)dst & 15)
 	{
-	    uint8_t m = *mask++;
+	    m = *mask++;
 
 	    if (m)
 	    {
@@ -3647,13 +3646,11 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
 
 	while (w >= 8)
 	{
-            uint32_t m;
-
 	    xmm_dst = load_128_aligned ((__m128i*) dst);
 	    unpack_565_128_4x128 (xmm_dst,
 				  &xmm_dst0, &xmm_dst1, &xmm_dst2, &xmm_dst3);
 
-            memcpy(&m, mask, sizeof(uint32_t));
+	    m = *((uint32_t*)mask);
 	    mask += 4;
 
 	    if (m)
@@ -3673,7 +3670,7 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
 			       &xmm_dst0, &xmm_dst1);
 	    }
 
-            memcpy(&m, mask, sizeof(uint32_t));
+	    m = *((uint32_t*)mask);
 	    mask += 4;
 
 	    if (m)
@@ -3702,7 +3699,7 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
 
 	while (w)
 	{
-	    uint8_t m = *mask++;
+	    m = *mask++;
 
 	    if (m)
 	    {
@@ -4064,7 +4061,7 @@ sse2_composite_in_n_8_8 (pixman_implementation_t *imp,
     uint8_t     *dst_line, *dst;
     uint8_t     *mask_line, *mask;
     int dst_stride, mask_stride;
-    uint32_t d;
+    uint32_t d, m;
     uint32_t src;
     int32_t w;
 
@@ -4091,7 +4088,7 @@ sse2_composite_in_n_8_8 (pixman_implementation_t *imp,
 
 	while (w && ((uintptr_t)dst & 15))
 	{
-	    uint8_t m = *mask++;
+	    m = (uint32_t) *mask++;
 	    d = (uint32_t) *dst;
 
 	    *dst++ = (uint8_t) pack_1x128_32 (
@@ -4128,7 +4125,7 @@ sse2_composite_in_n_8_8 (pixman_implementation_t *imp,
 
 	while (w)
 	{
-	    uint8_t m = *mask++;
+	    m = (uint32_t) *mask++;
 	    d = (uint32_t) *dst;
 
 	    *dst++ = (uint8_t) pack_1x128_32 (
@@ -4305,7 +4302,7 @@ sse2_composite_add_n_8_8 (pixman_implementation_t *imp,
     int dst_stride, mask_stride;
     int32_t w;
     uint32_t src;
-    uint32_t d;
+    uint32_t m, d;
 
     __m128i xmm_alpha;
     __m128i xmm_mask, xmm_mask_lo, xmm_mask_hi;
@@ -4330,7 +4327,7 @@ sse2_composite_add_n_8_8 (pixman_implementation_t *imp,
 
 	while (w && ((uintptr_t)dst & 15))
 	{
-	    uint8_t m = *mask++;
+	    m = (uint32_t) *mask++;
 	    d = (uint32_t) *dst;
 
 	    *dst++ = (uint8_t) pack_1x128_32 (
@@ -4366,7 +4363,7 @@ sse2_composite_add_n_8_8 (pixman_implementation_t *imp,
 
 	while (w)
 	{
-	    uint8_t m = (uint32_t) *mask++;
+	    m = (uint32_t) *mask++;
 	    d = (uint32_t) *dst;
 
 	    *dst++ = (uint8_t) pack_1x128_32 (
@@ -4639,9 +4636,7 @@ sse2_composite_add_n_8_8888 (pixman_implementation_t *imp,
 
 	while (w >= 4)
 	{
-	    uint32_t m;
-            memcpy(&m, mask, sizeof(uint32_t));
-
+	    uint32_t m = *(uint32_t*)mask;
 	    if (m)
 	    {
 		__m128i xmm_mask_lo, xmm_mask_hi;
@@ -4748,7 +4743,7 @@ sse2_blt (pixman_implementation_t *imp,
 
 	while (w >= 2 && ((uintptr_t)d & 3))
 	{
-            memmove(d, s, 2);
+	    *(uint16_t *)d = *(uint16_t *)s;
 	    w -= 2;
 	    s += 2;
 	    d += 2;
@@ -4756,7 +4751,7 @@ sse2_blt (pixman_implementation_t *imp,
 
 	while (w >= 4 && ((uintptr_t)d & 15))
 	{
-            memmove(d, s, 4);
+	    *(uint32_t *)d = *(uint32_t *)s;
 
 	    w -= 4;
 	    s += 4;
@@ -4793,7 +4788,7 @@ sse2_blt (pixman_implementation_t *imp,
 
 	while (w >= 4)
 	{
-            memmove(d, s, 4);
+	    *(uint32_t *)d = *(uint32_t *)s;
 
 	    w -= 4;
 	    s += 4;
@@ -4802,7 +4797,7 @@ sse2_blt (pixman_implementation_t *imp,
 
 	if (w >= 2)
 	{
-            memmove(d, s, 2);
+	    *(uint16_t *)d = *(uint16_t *)s;
 	    w -= 2;
 	    s += 2;
 	    d += 2;
@@ -4834,6 +4829,7 @@ sse2_composite_over_x888_8_8888 (pixman_implementation_t *imp,
     uint32_t    *src, *src_line, s;
     uint32_t    *dst, *dst_line, d;
     uint8_t         *mask, *mask_line;
+    uint32_t m;
     int src_stride, mask_stride, dst_stride;
     int32_t w;
     __m128i ms;
@@ -4862,8 +4858,8 @@ sse2_composite_over_x888_8_8888 (pixman_implementation_t *imp,
 
         while (w && (uintptr_t)dst & 15)
         {
-            uint8_t m = *mask++;
             s = 0xff000000 | *src++;
+            m = (uint32_t) *mask++;
             d = *dst;
             ms = unpack_32_1x128 (s);
 
@@ -4881,8 +4877,7 @@ sse2_composite_over_x888_8_8888 (pixman_implementation_t *imp,
 
         while (w >= 4)
         {
-            uint32_t m;
-            memcpy(&m, mask, sizeof(uint32_t));
+            m = *(uint32_t*) mask;
             xmm_src = _mm_or_si128 (
 		load_128_unaligned ((__m128i*)src), mask_ff000000);
 
@@ -4918,7 +4913,7 @@ sse2_composite_over_x888_8_8888 (pixman_implementation_t *imp,
 
         while (w)
         {
-            uint8_t m = *mask++;
+            m = (uint32_t) *mask++;
 
             if (m)
             {
@@ -4959,6 +4954,7 @@ sse2_composite_over_8888_8_8888 (pixman_implementation_t *imp,
     uint32_t    *src, *src_line, s;
     uint32_t    *dst, *dst_line, d;
     uint8_t         *mask, *mask_line;
+    uint32_t m;
     int src_stride, mask_stride, dst_stride;
     int32_t w;
 
@@ -4987,9 +4983,9 @@ sse2_composite_over_8888_8_8888 (pixman_implementation_t *imp,
         while (w && (uintptr_t)dst & 15)
         {
 	    uint32_t sa;
-            uint8_t m = *mask++;
 
             s = *src++;
+            m = (uint32_t) *mask++;
             d = *dst;
 
 	    sa = s >> 24;
@@ -5020,8 +5016,7 @@ sse2_composite_over_8888_8_8888 (pixman_implementation_t *imp,
 
         while (w >= 4)
         {
-            uint32_t m;
-            memcpy(&m, mask, sizeof(uint32_t));
+            m = *(uint32_t *) mask;
 
 	    if (m)
 	    {
@@ -5060,9 +5055,9 @@ sse2_composite_over_8888_8_8888 (pixman_implementation_t *imp,
         while (w)
         {
 	    uint32_t sa;
-            uint8_t m = *mask++;
 
             s = *src++;
+            m = (uint32_t) *mask++;
             d = *dst;
 
 	    sa = s >> 24;
@@ -5929,11 +5924,13 @@ scaled_bilinear_scanline_sse2_8888_8_8888_OVER (uint32_t *       dst,
     intptr_t unit_x = unit_x_;
     BILINEAR_DECLARE_VARIABLES;
     uint32_t pix1, pix2;
+    uint32_t m;
 
     while (w && ((uintptr_t)dst & 15))
     {
 	uint32_t sa;
-	uint8_t m = *mask++;
+
+	m = (uint32_t) *mask++;
 
 	if (m)
 	{
@@ -5969,13 +5966,11 @@ scaled_bilinear_scanline_sse2_8888_8_8888_OVER (uint32_t *       dst,
 
     while (w >= 4)
     {
-        uint32_t m;
-
 	__m128i xmm_src, xmm_src_lo, xmm_src_hi, xmm_srca_lo, xmm_srca_hi;
 	__m128i xmm_dst, xmm_dst_lo, xmm_dst_hi;
 	__m128i xmm_mask, xmm_mask_lo, xmm_mask_hi;
 
-        memcpy(&m, mask, sizeof(uint32_t));
+	m = *(uint32_t*)mask;
 
 	if (m)
 	{
@@ -6017,7 +6012,8 @@ scaled_bilinear_scanline_sse2_8888_8_8888_OVER (uint32_t *       dst,
     while (w)
     {
 	uint32_t sa;
-	uint8_t m = *mask++;
+
+	m = (uint32_t) *mask++;
 
 	if (m)
 	{
@@ -6414,7 +6410,7 @@ sse2_fetch_a8 (pixman_iter_t *iter, const uint32_t *mask)
 
     while (w && (((uintptr_t)dst) & 15))
     {
-        *dst++ = (uint32_t)(*(src++)) << 24;
+        *dst++ = *(src++) << 24;
         w--;
     }
 
@@ -6441,7 +6437,7 @@ sse2_fetch_a8 (pixman_iter_t *iter, const uint32_t *mask)
 
     while (w)
     {
-	*dst++ = (uint32_t)(*(src++)) << 24;
+	*dst++ = *(src++) << 24;
 	w--;
     }
 

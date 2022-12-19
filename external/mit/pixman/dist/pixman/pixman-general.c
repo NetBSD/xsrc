@@ -141,8 +141,7 @@ general_composite_rect  (pixman_implementation_t *imp,
     if ((src_image->common.flags & FAST_PATH_NARROW_FORMAT)		     &&
 	(!mask_image || mask_image->common.flags & FAST_PATH_NARROW_FORMAT)  &&
 	(dest_image->common.flags & FAST_PATH_NARROW_FORMAT)		     &&
-	!(operator_needs_division (op))                                      &&
-	(dest_image->bits.dither == PIXMAN_DITHER_NONE))
+	!(operator_needs_division (op)))
     {
 	width_flag = ITER_NARROW;
 	Bpp = 4;
@@ -165,12 +164,6 @@ general_composite_rect  (pixman_implementation_t *imp,
 
 	if (!scanline_buffer)
 	    return;
-
-	memset (scanline_buffer, 0, width * Bpp * 3 + 15 * 3);
-    }
-    else
-    {
-	memset (stack_scanline_buffer, 0, sizeof (stack_scanline_buffer));
     }
 
     src_buffer = ALIGN (scanline_buffer);

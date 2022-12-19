@@ -47,8 +47,4 @@
 	PIXMAN_VERSION_MINOR,			\
 	PIXMAN_VERSION_MICRO)
 
-#ifndef PIXMAN_API
-# define PIXMAN_API
-#endif
-
 #endif /* PIXMAN_VERSION_H__ */

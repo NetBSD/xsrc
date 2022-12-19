@@ -2,7 +2,6 @@ EXTRA_DIST =		\
      parrot.c		\
      parrot.jpg		\
      scale.ui		\
-     dither.ui		\
      meson.build	\
      $(NULL)
 
@@ -34,8 +33,7 @@ DEMOS =				\
 	checkerboard		\
 	srgb-trap-test		\
 	srgb-test		\
-	scale			\
-	dither
+	scale
 
 gradient_test_SOURCES = gradient-test.c $(GTK_UTILS)
 alpha_test_SOURCES = alpha-test.c $(GTK_UTILS)
@@ -53,7 +51,6 @@ checkerboard_SOURCES = checkerboard.c $(GTK_UTILS)
 srgb_test_SOURCES = srgb-test.c $(GTK_UTILS)
 srgb_trap_test_SOURCES = srgb-trap-test.c $(GTK_UTILS)
 scale_SOURCES = scale.c $(GTK_UTILS)
-dither_SOURCES = dither.c $(GTK_UTILS)
 
 noinst_PROGRAMS = $(DEMOS)
 

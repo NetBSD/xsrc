@@ -176,31 +176,6 @@ detect_cpu_features (void)
     return features;
 }
 
-#elif defined (_3DS) /* 3DS homebrew (devkitARM) */
-
-static arm_cpu_features_t
-detect_cpu_features (void)
-{
-    arm_cpu_features_t features = 0;
-
-    features |= ARM_V6;
-
-    return features;
-}
-
-#elif defined (PSP2) || defined (__SWITCH__)
-/* Vita (VitaSDK) or Switch (devkitA64) homebrew */
-
-static arm_cpu_features_t
-detect_cpu_features (void)
-{
-    arm_cpu_features_t features = 0;
-
-    features |= ARM_NEON;
-
-    return features;
-}
-
 #elif defined (__NetBSD__) /* NetBSD */
 
 #include <sys/sysctl.h>
@@ -277,12 +252,6 @@ _pixman_arm_get_implementations (pixman_implementation_t *imp)
 #ifdef USE_ARM_NEON
     if (!_pixman_disabled ("arm-neon") && have_feature (ARM_NEON))
 	imp = _pixman_implementation_create_arm_neon (imp);
-#endif
-
-#ifdef USE_ARM_A64_NEON
-    /* neon is a part of aarch64 */
-    if (!_pixman_disabled ("arm-neon"))
-        imp = _pixman_implementation_create_arm_neon (imp);
 #endif
 
     return imp;

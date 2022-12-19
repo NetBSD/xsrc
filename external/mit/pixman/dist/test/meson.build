@@ -34,6 +34,7 @@ tests = [
   'scaling-crash-test',
   'alpha-loop',
   'scaling-helpers-test',
+  'thread-test',
   'rotate-test',
   'alphamap',
   'gradient-crash-test',
@@ -52,12 +53,6 @@ tests = [
   'composite',
   'tolerance-test',
 ]
-
-# Remove/update this once thread-test.c supports threading methods
-# other than PThreads and Windows threads
-if pthreads_found or host_machine.system() == 'windows'
-  tests += 'thread-test'
-endif
 
 progs = [
   'lowlevel-blt-bench',

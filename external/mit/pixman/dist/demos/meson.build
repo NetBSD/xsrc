@@ -18,11 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-extra_demo_cflags = []
-if cc.get_argument_syntax() == 'msvc'
-  extra_demo_cflags = ['-D_USE_MATH_DEFINES']
-endif
-
 demos = [
   'gradient-test',
   'alpha-test',
@@ -39,7 +34,6 @@ demos = [
   'srgb-test',
   'srgb-trap-test',
   'scale',
-  'dither',
 ]
 
 if dep_gtk.found()
@@ -56,7 +50,6 @@ if dep_gtk.found()
       executable(
         d,
         [d + '.c', config_h, version_h],
-        c_args : extra_demo_cflags,
         link_with : [libdemo, libtestutils],
         dependencies : [dep_glib, dep_gtk, dep_openmp, idep_pixman],
       )
