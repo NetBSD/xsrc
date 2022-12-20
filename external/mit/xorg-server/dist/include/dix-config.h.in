@@ -149,9 +149,6 @@
 /* Define to 1 if you have the `arc4random_buf' function. */
 #undef HAVE_ARC4RANDOM_BUF
 
-/* Define to 1 if you have the `arc4random_buf' function. */
-#undef HAVE_ARC4RANDOM_BUF
-
 /* Define to use libc SHA1 functions */
 #undef HAVE_SHA1_IN_LIBC
 

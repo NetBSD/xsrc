@@ -225,16 +225,6 @@ extern _X_EXPORT int set_font_authorizations(char **authorizations,
                                              int *authlen,
                                              void *client);
 
-#if 0
-/*
- * These causes all sorts of warnings->errors in the xsrc build.
- */
-#ifdef __NetBSD__
-#undef _X_DEPRECATED
-#define _X_DEPRECATED
-#endif
-#endif
-
 /*
  * This function malloc(3)s buffer, terminating the server if there is not
  * enough memory.

@@ -262,12 +262,6 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
                            strerror(err));
                 goto error1;
             }
-#if 0 // XXXMRG was there in xorg-server 1.10
-	    if (!int10_check_bios(screen, bios_location >> 4, vbiosMem)) {
-	        xf86Msg(X_INFO, "No BIOS found\n");
-		goto error1;
-	    }
-#endif
         }
     }
 
