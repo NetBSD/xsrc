@@ -1,3 +1,101 @@
+commit d1fa470810d781e0d685afe4b9f8f80da2d32c16
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:33:15 2022 -0800
+
+    xf86-video-sunleo 1.2.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 66bc54b459141d5b5a7d1af2ef64b28968cd2339
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:31:10 2022 -0800
+
+    leo_accel: Resolve -Wempty-body compiler warning
+    
+    leo_accel.c: In function ‘LeoAccelInit’:
+    leo_accel.c:119:43: warning: suggest braces around empty body in an ‘if’ statement [-Wempty-body]
+      if (!pLeo->NoAccel) /* XXX do nothing */ ;
+                                               ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e1c6705e95b432cdf7d69babccd9f745975a6899
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:29:56 2022 -0800
+
+    README: Add supported device info
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3f64f3647e459d5564878089b19f87b0b182eefa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f58ba53e6b6fe1b6e21d6aa3901a11e6130b95b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:29:17 2022 -0800
+
+    Include xf86Cursor.h instead of xf86RamDac.h
+    
+    ramdac drivers have been removed from xserver since version 21.0.99.1
+    and xorg/xserver@f0385fb4 resulting in the following build failure:
+    
+    In file included from ../../src/leo_accel.c:39:
+    ../../src/leo.h:29:10: fatal error: xf86RamDac.h: No such file or directory
+       29 | #include "xf86RamDac.h"
+          |          ^~~~~~~~~~~~~~
+    
+    but xf86RamDac.h in turn included xf86Cursor.h which we still need.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ebdd4d9b95cf7a7106c5616cbafd7744811035e4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:13:17 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d38540c4a9799829de79987608f3c4b150a28677
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:12:59 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9a68369a3a2bab4671d9d27709bfcc58d4e8eb77
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:12:26 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e5cf6ddd40e269b60422acffeb8cab9a3c2f0773
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:11:35 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 50bf3222f07f7d558909512e63fd62294f8fc52c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:31:31 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit c4043adcd42665f294540036b43dcd1b201f4c8c
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 24 07:55:55 2017 -0800
@@ -461,7 +559,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 38992a849dd82d3bf0907bc675d38cb1fe304544
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:44:54 2005 +0000
 
     Build system for sunleo
