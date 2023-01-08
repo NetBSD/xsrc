@@ -1,3 +1,121 @@
+commit 022b959f5f26e6b70d2ab6524ca39b5934e4c42e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 3 13:34:29 2022 -0800
+
+    xdm 1.1.14
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 968b9c0b390f15f44ab4f3ee5fce23a9cec60720
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 5 10:37:33 2022 -0700
+
+    Only link with libbsd if needed for arc4random() or setproctitle()
+    
+    Avoid unnecessary library dependency when using a libc with these
+    functions included.
+    
+    Also only links to the binary that needs them (xdm, not chooser or greeter)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8a10c98d29d0ff2028f109b5671dfae2910df051
+Author: Guillem Jover <guillem@hadrons.org>
+Date:   Thu Oct 6 00:11:18 2022 +0000
+
+    Switch from libbsd to libbsd-overlay
+    
+    This is the preferred usage form for libbsd, as it makes the code more
+    portable and requires no special includes for libbsd, by transparently
+    injects the needed standard headers that would be used on a BSD.
+    
+    Signed-off-by: Guillem Jover <guillem@hadrons.org>
+
+commit 468b76023a2dfb750c4d5e9b184f230c5b6ec670
+Author: Callum Farmer <gmbr3@opensuse.org>
+Date:   Sun Sep 11 12:57:05 2022 +0100
+
+    genauth: fix build with arc4random in glibc 2.36
+    
+    HAVE_ARC4RANDOM is defined under glibc 2.36 but this will attempt to include
+    <bsd/stdlib.h> from libbsd instead of <stdlib.h> from glibc
+    
+    Signed-off-by: Callum Farmer <gmbr3@opensuse.org>
+
+commit 0f46b67b45ef40854ad7924e836134bf3f920e09
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 30 11:59:31 2022 -0700
+
+    chooser: avoid free of uninitialized pointer in allocation failure cleanup
+    
+    Resolves issue found by Oracle Parfait static analyzer:
+    
+    Error: Uninitialised memory
+       Uninitialised memory [uninitialised-mem] (CWE 456):
+          Possible access to uninitialised memory referenced by 'new->fullname'
+          Memory 'new->fullname' accessed at byte offset '8'
+            at line 357 of app/xdm/chooser/chooser.c in function 'AddHostname'.
+            Write does not overlap at line 355
+              new allocated at line 329
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3544fa9ec2e17e481785382317ef93ec2ac32ddf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 10 11:58:38 2022 -0700
+
+    Use memcpy() instead of memmove() when buffers are known not to overlap
+    
+    Most of these came from a mass bcopy() -> memmove() substitution
+    in 1993 with a commit comment of "ANSIfied for R6".
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f01b28cf76d641881fa1c5bf7f9dd2487b9ced6b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 10 11:33:38 2022 -0700
+
+    all_query_respond(): handle ConvertAddr failure sooner
+    
+    Don't try to process returned data values that may not be set
+    
+    Resolves Oracle Parfait issue:
+    
+    Error: Uninitialised memory
+       Uninitialised memory variable [uninitialised-mem-var] (CWE 457):
+          Possible access to uninitialised memory referenced by variable 'length'
+            at line 238 of xdm/xdmcp.c in function 'all_query_respond'.
+            Path in callee avoiding write at line 237
+              length allocated at line 231
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 00e0b3ae11bb1d4681b0206c341f57fc46ea98b1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 10 11:14:50 2022 -0700
+
+    GetChooserAddr(): verify socket address fit in provided buffer
+    
+    Should never happen, but makes Oracle Parfait stop warning:
+    
+    Error: Buffer overrun
+       Read Outside Array Bounds in STD C function [read-outside-array-bounds-call-stdc]:
+          Read outside array bounds in call to memmove. Buffer ((int8*)&in_addr) of size 256 is read at an offset of len
+          Array size is 256 bytes, index <= 1024
+            at line 130 of xdm/socket.c in function 'GetChooserAddr'.
+            called at line 197 of xdm/choose.c in function 'FormatChooserArgument' with lenp = &addr_len.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c7daccd105a74fe97adb2c8e2842e3b19d5dd34c
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Sun Apr 10 12:40:13 2022 -0700
+
+    configure.ac: Add option to disable Xinerama
+    
+    Bug: https://bugs.gentoo.org/384371
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
 commit df5bb7f4e4039192571de75179658ee9c2ee58eb
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Apr 3 14:42:16 2022 -0700

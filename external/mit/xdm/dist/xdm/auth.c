@@ -683,7 +683,7 @@ saveEntry (Xauth *auth)
 			free (new);
 			return;
 		}
-		memmove( new->address, auth->address, (int) auth->address_length);
+		memcpy(new->address, auth->address, (int) auth->address_length);
 	} else
 		new->address = NULL;
 	if ((new->number_length = auth->number_length) > 0) {
@@ -694,7 +694,7 @@ saveEntry (Xauth *auth)
 			free (new);
 			return;
 		}
-		memmove( new->number, auth->number, (int) auth->number_length);
+		memcpy(new->number, auth->number, (int) auth->number_length);
 	} else
 		new->number = NULL;
 	if ((new->name_length = auth->name_length) > 0) {
@@ -706,7 +706,7 @@ saveEntry (Xauth *auth)
 			free (new);
 			return;
 		}
-		memmove( new->name, auth->name, (int) auth->name_length);
+		memcpy(new->name, auth->name, (int) auth->name_length);
 	} else
 		new->name = NULL;
 	new->family = auth->family;
@@ -1052,7 +1052,7 @@ DefineSelf (int fd, int file, int auth)
     if (hp != NULL) {
 	saddr.sa.sa_family = hp->h_addrtype;
 	inetaddr = (struct sockaddr_in *) (&(saddr.sa));
-	memmove( (char *) &(inetaddr->sin_addr), (char *) hp->h_addr, (int) hp->h_length);
+	memcpy(&(inetaddr->sin_addr), hp->h_addr, hp->h_length);
 	family = ConvertAddr ( &(saddr.sa), &len, &addr);
 	if ( family >= 0) {
 	    writeAddr (FamilyInternet, sizeof (inetaddr->sin_addr),

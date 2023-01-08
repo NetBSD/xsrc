@@ -161,7 +161,7 @@ Willing (
     if (!status->data)
 	status->length = 0;
     else
-	memmove( status->data, statusBuf, status->length);
+	memcpy(status->data, statusBuf, status->length);
     return ret;
 }
 

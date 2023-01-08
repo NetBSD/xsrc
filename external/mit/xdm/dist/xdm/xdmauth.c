@@ -111,7 +111,7 @@ XdmGetAuthHelper (unsigned short namelen, char *name, int includeRho)
 	free (new);
 	return (Xauth *) 0;
     }
-    memmove( (char *)new->name, name, namelen);
+    memcpy(new->name, name, namelen);
     new->name_length = namelen;
     if (!GenerateAuthData ((char *)new->data, new->data_length))
     {
@@ -172,9 +172,9 @@ XdmGetXdmcpAuth (struct protoDisplay *pdpy,
      * which is simply the number we've been passing back and
      * forth via XDMCP
      */
-    memmove( fileauth->name, xdmcpauth->name, xdmcpauth->name_length);
-    memmove( fileauth->data, pdpy->authenticationData.data, 8);
-    memmove( fileauth->data + 8, xdmcpauth->data, 8);
+    memcpy(fileauth->name, xdmcpauth->name, xdmcpauth->name_length);
+    memcpy(fileauth->data, pdpy->authenticationData.data, 8);
+    memcpy(fileauth->data + 8, xdmcpauth->data, 8);
     XdmPrintDataHex ("Accept packet auth", xdmcpauth->data, xdmcpauth->data_length);
     XdmPrintDataHex ("Auth file auth", fileauth->data, fileauth->data_length);
     /* encrypt the session key for its trip back to the server */
@@ -245,7 +245,7 @@ XdmGetKey(struct protoDisplay *pdpy, ARRAY8Ptr displayID)
 	    while (keylen < 7)
 		key[keylen++] = '\0';
 	    pdpy->key.data[0] = '\0';
-	    memmove( pdpy->key.data + 1, key, 7);
+	    memcpy(pdpy->key.data + 1, key, 7);
 	    bzero(key, sizeof(key));
 	    fclose (keys);
 	    return TRUE;

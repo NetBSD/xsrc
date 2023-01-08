@@ -132,7 +132,7 @@ Krb5GetAuthFor(unsigned short namelen, char *name, char *dname)
 	free (new);
 	return (Xauth *) 0;
     }
-    memmove( new->name, name, namelen);
+    memcpy(new->name, name, namelen);
     new->name_length = namelen;
     return new;
 }

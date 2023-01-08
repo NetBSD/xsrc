@@ -116,6 +116,8 @@ GetChooserAddr (
 	return -1;	/* TODO check other listening sockets */
     if (getsockname (chooserFd, (struct sockaddr *)&in_addr, (void *)&len) < 0)
 	return -1;
+    if (len > sizeof in_addr)
+        return -1;
 # if defined(IPv6) && defined(AF_INET6)
     if (((struct sockaddr *)&in_addr)->sa_family == AF_INET6)
 	Debug ("Chooser socket port: %d (IPv6)\n",
@@ -127,7 +129,7 @@ GetChooserAddr (
     if (*lenp < len)
 	retval = -2;
     else
-	memmove( addr, (char *) &in_addr, len);
+	memcpy(addr, &in_addr, len);
     *lenp = len;
 
     return retval;
