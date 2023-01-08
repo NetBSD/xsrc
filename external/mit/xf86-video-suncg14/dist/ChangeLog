@@ -1,3 +1,101 @@
+commit 302c058b4a8193780b06650dcb281083e6765d0e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 14:56:20 2022 -0800
+
+    xf86-video-suncg14 1.1.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e748b42fa65817d8beb744733aef00b6734be148
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 11:04:54 2022 -0800
+
+    Add supported hardware info to README and man page
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5105aedd667f5a338840272a27f433ae692d9e34
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 09:44:53 2022 -0800
+
+    Add include of unistd.h for ioctl() definition on Solaris
+    
+    Clears gcc warning:
+    cg14_driver.c: In function ‘CG14InitCplane24’:
+    cg14_driver.c:669:3: warning: implicit declaration of function ‘ioctl’;
+      did you mean ‘iscntrl’? [-Wimplicit-function-declaration]
+       ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
+       ^~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit de90578cd0bdc69dbd74dbc96bde2ec1cae6d239
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8608e7f4efa2625130a1bbe0ba41a5f9fe55c932
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 09:58:24 2022 -0800
+
+    Stop including xf86RamDac.h
+    
+    ramdac drivers have been removed from xserver since version 21.0.99.1
+    and xorg/xserver@f0385fb4 resulting in the following build failure:
+    
+    In file included from ../../src/cg14_driver.c:38:
+    ../../src/cg14.h:29:10: fatal error: xf86RamDac.h: No such file or directory
+       29 | #include "xf86RamDac.h"
+          |          ^~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d1846852901b42f2e5b1a5baa897dd691ac03e6f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 09:50:08 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7b994b444327cd8b780269d2c199cf9d940ff7f6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 09:48:57 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f4fa38688dc01d1b368a649b184f2dcad82850c9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 09:48:08 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d549c78e21a41803ee1c55a6fff40ca8fea2a59
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:10:12 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 60ab990f7ed2df6c943d3e307eee641f6ba7701f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:20:20 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 997931ea1b6182584566d1cf90a6ac88e627a9fd
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Mon Jan 21 22:37:01 2013 -0800
@@ -396,7 +494,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 30a6797409b856a32adc00266080cc10f8d89663
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:06:30 2005 +0000
 
     Build system for suncg14
