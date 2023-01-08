@@ -1,3 +1,252 @@
+commit 1f20df4fd7c132f55e924dc5ec3f270cd54704d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 4 15:09:13 2022 -0800
+
+    libXdamage 1.1.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4adcd841e3e09982272b2f79ef3aadfb257814e3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 17 11:14:53 2022 -0800
+
+    Handle -Wshorten-64-to-32 warnings from clang
+    
+    Xdamage.c:265:28: warning: implicit conversion loses integer precision: 'Drawable' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+            awire->drawable = aevent->drawable;
+                            ~ ~~~~~~~~^~~~~~~~
+    Xdamage.c:266:26: warning: implicit conversion loses integer precision: 'Damage' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+            awire->damage = aevent->damage;
+                          ~ ~~~~~~~~^~~~~~
+    Xdamage.c:268:29: warning: implicit conversion loses integer precision: 'Time' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+            awire->timestamp = aevent->timestamp;
+                             ~ ~~~~~~~~^~~~~~~~~
+    Xdamage.c:326:26: warning: implicit conversion loses integer precision: 'Damage' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->damage = damage = XAllocID (dpy);
+                    ~ ~~~~~~~^~~~~~~~~~~~~~~~
+    Xdamage.c:327:21: warning: implicit conversion loses integer precision: 'Drawable' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->drawable = drawable;
+                      ~ ^~~~~~~~
+    Xdamage.c:345:19: warning: implicit conversion loses integer precision: 'Damage' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->damage = damage;
+                    ~ ^~~~~~
+    Xdamage.c:362:19: warning: implicit conversion loses integer precision: 'Damage' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->damage = damage;
+                    ~ ^~~~~~
+    Xdamage.c:363:19: warning: implicit conversion loses integer precision: 'XserverRegion' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->repair = repair;
+                    ~ ^~~~~~
+    Xdamage.c:364:18: warning: implicit conversion loses integer precision: 'XserverRegion' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->parts = parts;
+                   ~ ^~~~~
+    Xdamage.c:380:21: warning: implicit conversion loses integer precision: 'Drawable' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->drawable = drawable;
+                      ~ ^~~~~~~~
+    Xdamage.c:381:19: warning: implicit conversion loses integer precision: 'XserverRegion' (aka 'unsigned long') to 'CARD32' (aka 'unsigned int') [-Wshorten-64-to-32]
+        req->region = region;
+                    ~ ^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ba46dd91f2b2248e459911b38acd49a776c748f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 17 11:07:10 2022 -0800
+
+    Handle -Wconversion warnings from clang
+    
+    Xdamage.c:81:30: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+            req->reqType = info->codes->major_opcode;
+                         ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+    Xdamage.c:264:29: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+            awire->type = aevent->type | (aevent->send_event ? 0x80 : 0);
+                        ~ ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xdamage.c:267:31: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+            awire->level = aevent->level | (aevent->more ? DamageNotifyMore : 0);
+                         ~ ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xdamage.c:324:33: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+        req->reqType = info->codes->major_opcode;
+                     ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+    Xdamage.c:328:18: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+        req->level = level;
+                   ~ ^~~~~
+    Xdamage.c:343:33: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+        req->reqType = info->codes->major_opcode;
+                     ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+    Xdamage.c:360:33: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+        req->reqType = info->codes->major_opcode;
+                     ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+    Xdamage.c:378:33: warning: implicit conversion loses integer precision: 'int' to 'CARD8' (aka 'unsigned char') [-Wconversion]
+        req->reqType = info->codes->major_opcode;
+                     ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 90bb47685ed92df1eb5bbb9b6875a40f3e98bb43
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Nov 17 10:55:07 2022 -0800
+
+    Remove unnecessary casts from malloc() and free() calls
+    
+    Not needed in C89 and later
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6e16a274610317abc3956291aa498b1ecdccc900
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 16 19:18:18 2022 -0800
+
+    XDamageCloseDisplay: Mark codes as unused
+    
+    Quiets clang warning:
+    
+    Xdamage.c:207:47: warning: unused parameter 'codes' [-Wunused-parameter]
+    XDamageCloseDisplay (Display *dpy, XExtCodes *codes)
+                                                  ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 14ecba28e2d2846d0690ee86d3d01a1389558fd6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 16 19:14:34 2022 -0800
+
+    Mark two dpy parameters const as suggested by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 98c179ea912e9e420451adeb9bab4b462cab836c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 16 19:13:03 2022 -0800
+
+    Variable scope reduction as recommended by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 51cbd370a2fc0d671398d7572c29f00cae34a86f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 12:01:38 2022 -0700
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2f1ee1fd079391d239a7c0e4dbb34d80e227ab0f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 11:59:53 2022 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 691f0a8d1f6c4eebe0191c29b31598f63dba2f77
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 11:59:20 2022 -0700
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fea0f32d268753bb0f322a26d73b31ec9aca80f4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 16 12:37:57 2019 -0700
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 977b04cd69738806e0b48fcf5c725763d065f06d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 10 18:08:06 2019 -0700
+
+    libXdamage 1.1.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cd8ddea98992b54b2806c4c36e7460ea5b3a5fd3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 19 21:50:10 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8c8f9c1e356e9481fdf5a7bd1927dbfdac196310
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 13:52:49 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 8a647594fbd71b1ad26fa2a6caf69ffff91b6e2b
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit e758765e6c943d968a781efc9992813a2c3fb918
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 41cc41d5deee6b4f79ddaebbb058951a5a9f1f7f
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Thu Jan 2 01:23:12 2014 -0800
+
+    Use Xfree rather than XFree for consistency
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 0d35761dc39409b70e04dd0786aef6537f92976a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 19 08:19:07 2013 -0800
+
+    Replace deprecated Automake INCLUDES variable with AM_CPPFLAGS
+    
+    Excerpt https://lists.gnu.org/archive/html/automake/2012-12/msg00038.html
+    
+      - Support for the long-deprecated INCLUDES variable will be removed
+        altogether in Automake 1.14.  The AM_CPPFLAGS variable should be
+        used instead.
+    
+    This variable was deprecated in Automake releases prior to 1.10, which is
+    the current minimum level required to build X.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c9fa3ec1a7c9847ccf98377b48c674f1d32c635d
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit d545f97ace8a2842a8e5ac49c8c955fb3252e873
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jan 15 14:28:48 2013 -0500
+
+    configure: Remove AM_MAINTAINER_MODE
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 0c7f26ab7fb41873c2e68d8b136ef098ed663aff
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Jan 2 21:45:11 2013 -0800
@@ -437,13 +686,13 @@ Date:   Thu May 19 00:10:07 2005 +0000
     Require automake 1.7 in AM_INIT_AUTOMAKE
 
 commit 4b9f6d209d2833afb58c2f2e648907f460d1be95
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue May 17 17:02:24 2005 +0000
 
     Conditionally include config.h in xc/lib/Xdamage and xc/lib/Xfixes
 
 commit daa2ab8a2deff5730713c38322be53ed8facae74
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue May 17 16:47:59 2005 +0000
 
     Add Xdamage build system
