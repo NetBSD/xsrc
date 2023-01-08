@@ -1,3 +1,59 @@
+commit ea263607d3fbe4eca3319a3824c3f641dade4871
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 3 16:19:36 2022 -0800
+
+    xstdcmap 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e2eb705935f1cb557cb4af7af4cbc71a92e889e6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 13 12:47:57 2022 -0800
+
+    Remove unneeded variable initializations
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d07746403f9fbdb9e29764e685b4b7552d4115d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 13 12:42:51 2022 -0800
+
+    Remove unnecessary cast of XFree() argument
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 02517a9c7b706ceaca97d34413debb829e23389c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 13 12:41:41 2022 -0800
+
+    Use C99 loop variable declarations
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 75bfd01910347d18e461529bc99ad17d1f82a464
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fd5ebda0246ef1239775ef8cf29fe3a43f2c1fae
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 14:24:38 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3f2e061a1c9d30b61ad143f2420953cc16b24352
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 14:24:36 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 73884c24e367ab074af49a8e6168cbded6f4f382
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Feb 19 16:07:44 2019 -0800
@@ -94,7 +150,7 @@ Date:   Tue Jun 3 23:29:48 2014 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 16959f67461cb3bceb5d9428759bc6f8925aa1ee
-Author: Stéphane Aulery <lkppo@free.fr>
+Author: Stéphane Aulery  <lkppo@free.fr>
 Date:   Thu Jul 4 00:40:01 2013 +0200
 
     Use the same parameter names in the help.
@@ -446,13 +502,13 @@ Date:   Wed Jul 20 19:32:04 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 1b024ee5c3ddf09fb5d900cc8e1733d2ba0679d1
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 22:40:16 2005 +0000
 
     Add _BSD_SOURCE to lots of applications - patch from Stefan Dirsch
 
 commit 8b9becb78c06d7d99e00750a18ccf9bceb5d2b2b
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Fri Jul 1 20:09:09 2005 +0000
 
     xtrap.pc.in: s/Xfixes/XTrap/ xi.pc.in: s/Xt/Xi/ Xv/src/Makefile.am: remove
