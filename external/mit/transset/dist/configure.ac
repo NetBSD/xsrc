@@ -1,14 +1,14 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([transset], [1.0.2],
-	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [transset])
-RELEASE_DATE="2018-03-09"
+AC_INIT([transset], [1.0.3],
+	[https://gitlab.freedesktop.org/xorg/app/transset/-/issues], [transset])
+RELEASE_DATE="2022-12-03"
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require xorg-macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],

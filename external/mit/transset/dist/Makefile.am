@@ -1,5 +1,5 @@
 SUBDIRS = man
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh README.md
 
 bin_PROGRAMS = transset
 

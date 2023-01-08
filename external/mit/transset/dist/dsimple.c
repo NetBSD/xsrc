@@ -53,13 +53,13 @@
  */
 
 
-/* This stuff is defined in the calling program by just_display.h */
+/* This stuff is defined in the calling program by dsimple.h */
 const char *program_name = "unknown_program";
 Display *dpy;
 int screen;
 
 /*
- * Get_Display_Name (argc, argv) Look for -display, -d, or host:dpy (obselete)
+ * Get_Display_Name (argc, argv) Look for -display, -d, or host:dpy (obsolete)
  * If found, remove it from command line.  Don't go past a lone -.
  */
 static char *
@@ -221,7 +221,7 @@ Get_Window_Under_Cursor (Display *disp)
     /* Make the target cursor */
     cursor = XCreateFontCursor (disp, XC_crosshair);
 
-    /* Grab the pointer using target cursor, letting it room all over */
+    /* Grab the pointer using target cursor, letting it roam all over */
     status = XGrabPointer (disp, root, False,
                            ButtonPressMask|ButtonReleaseMask, GrabModeSync,
                            GrabModeAsync, root, cursor, CurrentTime);
@@ -264,7 +264,7 @@ Window_With_Name (Display *disp, Window top, char *name)
             break;
     }
     if (children)
-        XFree ((char *) children);
+        XFree (children);
     return (w);
 }
 
@@ -297,7 +297,7 @@ Window_With_Name_Regex_Recurse (Display *disp, Window top,
             break;
     }
     if (children)
-        XFree ((char *) children);
+        XFree (children);
     return (w);
 }
 
@@ -308,7 +308,7 @@ Window_With_Name_Regex (Display *disp, Window top, char *name)
     int err_no = 0;
     regex_t *regexp_name;
     Window target_win;
-    regexp_name = (regex_t *) malloc (sizeof (regex_t));
+    regexp_name = malloc (sizeof (regex_t));
     if ((err_no = regcomp (regexp_name, name, 0)) != 0) {
         size_t length;
         char *buffer;
