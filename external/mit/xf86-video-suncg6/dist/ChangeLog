@@ -1,3 +1,80 @@
+commit 965ab478ee7725840dccf9728c7a0c70bd507c4b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:08:42 2022 -0800
+
+    xf86-video-suncg6 1.1.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 91baf16b64eca532d23fc48818b2de7b4f7913de
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 14392504de04841fa2cbb5cdf8d9c9c7c4eb2ed8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 10:27:01 2022 -0800
+
+    Include xf86Cursor.h instead of xf86RamDac.h
+    
+    ramdac drivers have been removed from xserver since version 21.0.99.1
+    and xorg/xserver@f0385fb4 resulting in the following build failure:
+    
+    In file included from ../../src/cg6_cursor.c:31:
+    ../../src/cg6.h:29:10: fatal error: xf86RamDac.h: No such file or directory
+       29 | #include "xf86RamDac.h"
+          |          ^~~~~~~~~~~~~~
+    
+    but xf86RamDac.h in turn included xf86Cursor.h which we still need.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3718002bbebf468632e18d59546d74d6e1b77bc8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 10:20:27 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e5ac3c9c162da0a0529fce65c141ccc60fa29b1e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 10:20:09 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 39b14e487fadf20709c30aeb4c204f3b963c9d97
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 10:19:46 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3762661116fa535a8fcb7c2eab5c08a20358a3fc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:10:39 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f1da29c42967f9045778138aadbcc69ac963da75
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:23:30 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit ee1cfb2f37416f6efbdb93c1d1b566fcdd0a655f
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Mon Jan 21 22:46:03 2013 -0800
@@ -401,7 +478,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 98c493ad161fc0e1ee9ff22d7bda71ceb1a6771e
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:43:00 2005 +0000
 
     Build system for suncg6
