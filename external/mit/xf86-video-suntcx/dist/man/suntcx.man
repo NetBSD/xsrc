@@ -18,7 +18,8 @@ THIS MAN PAGE NEEDS TO BE FILLED IN.
 .SH SUPPORTED HARDWARE
 The
 .B suntcx
-driver supports...
+driver supports the S24 24-Bit Color Frame Buffer which
+used a unique "AFX" connector only found in the Sun SPARCstation 5.
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this
