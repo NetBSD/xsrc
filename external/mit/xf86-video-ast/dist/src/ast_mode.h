@@ -85,7 +85,7 @@
 #define DAC_NUM_EGA		64
 #define DAC_NUM_VGA		256
 
-/* Data Structure decalration for internal use */
+/* Data Structure declaration for internal use */
 typedef struct {
 
     UCHAR MISC;

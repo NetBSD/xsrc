@@ -432,11 +432,27 @@ ASTGetDRAMInfo(ScrnInfoPtr pScrn)
     *(ULONG *) (pAST->MMIOVirtualAddr + 0xF004) = 0x1e6e0000;
     *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000) = 0x1;
 
-    *(ULONG *) (pAST->MMIOVirtualAddr + 0x10000) = 0xFC600309;
-    do {
-       ;
-    } while (*(volatile ULONG *) (pAST->MMIOVirtualAddr + 0x10000) != 0x01);
+    /* Based on the Linux DRM driver we might not be able to access this
+     * If we can't just use some sane defaults.
+     *
+     * See drm/drivers/gpu/drm/ast/ast_main.c line 295.
+     */
 
+    *(ULONG *) (pAST->MMIOVirtualAddr + 0x10000) = 0xFC600309;
+    for (ulData = 10000; ulData > 0; ulData--)
+	if (*(volatile ULONG *) (pAST->MMIOVirtualAddr + 0x10000) == 0x01)
+	    break;
+
+    if (ulData == 0) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Unable to read DRAM information, using defaults\n");
+	pAST->ulDRAMBusWidth = 16;
+	pAST->jDRAMType = DRAMTYPE_1Gx16;
+	if (pAST->jChipType == AST2500)
+	    pAST->ulMCLK = 800;
+	else
+	    pAST->ulMCLK = 396;
+	return;
+    }
     ulData = *(volatile ULONG *) (pAST->MMIOVirtualAddr + 0x10004);
 
     /* Get BusWidth */
@@ -673,21 +689,21 @@ ASTGetScratchOptions(ScrnInfoPtr pScrn)
    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST2500))
    {
        GetIndexRegMask(CRTC_PORT, 0xD1, 0x0E, jReg);
-	   switch (jReg)
-	   {
-	   case 0x04:
-	       pAST->jTxChipType = Tx_Sil164;
-	       break;
+       switch (jReg)
+       {
+       case 0x04:
+           pAST->jTxChipType = Tx_Sil164;
+           break;
        case 0x08:
-	        pAST->pDP501FWBufferVirtualAddress = (UCHAR*) calloc(1, 32*1024);
-	        if	(pAST->pDP501FWBufferVirtualAddress)
-	        {
-                if (BackupM68KFW(pScrn, pAST->pDP501FWBufferVirtualAddress, 32*1024) == FALSE)
-		        {
-                    free(pAST->pDP501FWBufferVirtualAddress);
-                    pAST->pDP501FWBufferVirtualAddress = NULL;
-		        }
-            } /* Backup DP501 FW */
+           pAST->pDP501FWBufferVirtualAddress = (UCHAR*) calloc(1, 32*1024);
+           if	(pAST->pDP501FWBufferVirtualAddress)
+           {
+               if (BackupM68KFW(pScrn, pAST->pDP501FWBufferVirtualAddress, 32*1024) == FALSE)
+               {
+                   free(pAST->pDP501FWBufferVirtualAddress);
+                   pAST->pDP501FWBufferVirtualAddress = NULL;
+               }
+           } /* Backup DP501 FW */
        case 0x0c:
            pAST->jTxChipType = Tx_DP501;
            break;
@@ -3397,7 +3413,7 @@ static void vInitAST2500DRAMReg(ScrnInfoPtr pScrn)
 
 } /* vInitAST2500DRAMReg */
 
-void static vGetDefaultSettings(ScrnInfoPtr pScrn)
+static void vGetDefaultSettings(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulData;
