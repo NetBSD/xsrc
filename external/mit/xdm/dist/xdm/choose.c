@@ -47,13 +47,8 @@ in this Software without prior written authorization from The Open Group.
 # include <ctype.h>
 # include <errno.h>
 
-
 # ifdef HAVE_SETPROCTITLE
-#  ifdef __linux__
-#   include <bsd/unistd.h>
-#  else
-#   include <unistd.h>
-#  endif
+#  include <unistd.h>
 # endif
 
 # include <time.h>
@@ -227,8 +222,7 @@ FormatChooserArgument (char *buf, int len)
 	    result_buf[1] = netfamily & 0xFF;
 	    result_buf[2] = port[0];
 	    result_buf[3] = port[1];
-	    memmove( (char *)result_buf+4, (char *)localAddress->data,
-	      localAddress->length);
+	    memcpy(result_buf+4, localAddress->data, localAddress->length);
 	    result_len = 4 + localAddress->length;
 	}
 	break;

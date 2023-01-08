@@ -326,7 +326,7 @@ AddHostname (ARRAY8Ptr hostname, ARRAY8Ptr status, struct sockaddr *addr, int wi
     }
     if (!*names)
     {
-	new = malloc (sizeof (HostName));
+	new = calloc (1, sizeof (HostName));
 	if (!new)
 	    return 0;
 	if (hostname->length)
@@ -347,18 +347,17 @@ AddHostname (ARRAY8Ptr hostname, ARRAY8Ptr status, struct sockaddr *addr, int wi
 			XdmcpDisposeARRAY8 (hostname);
 			host = (char *)hostent->h_name;
 			XdmcpAllocARRAY8 (hostname, strlen (host));
-			memmove( hostname->data, host, hostname->length);
+			memcpy(hostname->data, host, hostname->length);
 		    }
 		}
 	    }
 	}
 	if (!XdmcpAllocARRAY8 (&new->hostaddr, hostAddr.length))
 	{
-	    free (new->fullname);
 	    free (new);
 	    return 0;
 	}
-	memmove( new->hostaddr.data, hostAddr.data, hostAddr.length);
+	memcpy(new->hostaddr.data, hostAddr.data, hostAddr.length);
 	new->connectionType = connectionType;
 	new->hostname = *hostname;
 
@@ -498,7 +497,7 @@ RegisterHostaddr (struct sockaddr *addr, int len, xdmOpCode type)
 	free (host);
 	return;
     }
-    memmove( (char *) host->addr, (char *) addr, len);
+    memcpy(host->addr, addr, len);
     host->addrlen = len;
     host->type = type;
     for (prev = &hostAddrdb; *prev; prev = &(*prev)->next)
@@ -638,7 +637,7 @@ RegisterHostname (char *name)
 	    if (hostent->h_addrtype != AF_INET || hostent->h_length != 4)
 		return;
 	    in_addr.sin_family = hostent->h_addrtype;
-	    memmove( &in_addr.sin_addr, hostent->h_addr, 4);
+	    memcpy(&in_addr.sin_addr, hostent->h_addr, 4);
 	}
 	in_addr.sin_port = htons (XDM_UDP_PORT);
 # ifdef BSD44SOCKETS
@@ -727,8 +726,8 @@ Choose (HostName *h)
 	    in_addr.sin_len = sizeof(in_addr);
 #endif
 	    in_addr.sin_family = family;
-	    memmove( &in_addr.sin_port, xdm + 2, 2);
-	    memmove( &in_addr.sin_addr, xdm + 4, 4);
+	    memcpy(&in_addr.sin_port, xdm + 2, 2);
+	    memcpy(&in_addr.sin_addr, xdm + 4, 4);
 	    addr = (struct sockaddr *) &in_addr;
 	    len = sizeof (in_addr);
 	    break;
@@ -739,8 +738,8 @@ Choose (HostName *h)
 	    in6_addr.sin6_len = sizeof(in6_addr);
 # endif
 	    in6_addr.sin6_family = family;
-	    memmove( &in6_addr.sin6_port, xdm + 2, 2);
-	    memmove( &in6_addr.sin6_addr, xdm + 4, 16);
+	    memcpy(&in6_addr.sin6_port, xdm + 2, 2);
+	    memcpy(&in6_addr.sin6_addr, xdm + 4, 16);
 	    addr = (struct sockaddr *) &in6_addr;
 	    len = sizeof (in6_addr);
 	    break;

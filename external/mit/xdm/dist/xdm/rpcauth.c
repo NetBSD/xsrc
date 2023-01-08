@@ -82,8 +82,8 @@ SecureRPCGetAuth (
 	free (new);
 	return (Xauth *) 0;
     }
-    memmove( new->name, name, namelen);
+    memcpy(new->name, name, namelen);
     new->name_length = namelen;
-    memmove( new->data, key, new->data_length);
+    memcpy(new->data, key, new->data_length);
     return new;
 }

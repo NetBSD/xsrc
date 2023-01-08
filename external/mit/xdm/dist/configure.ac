@@ -22,8 +22,8 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xdm], [1.1.13],
-        [https://gitlab.freedesktop.org/xorg/app/xdm/issues], [xdm])
+AC_INIT([xdm], [1.1.14],
+        [https://gitlab.freedesktop.org/xorg/app/xdm/-/issues], [xdm])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
@@ -58,6 +58,28 @@ AM_CONDITIONAL(HAVE_MKTEMP_COMMAND, test x$MKTEMP_COMMAND != x)
 #                 pre-pends the found library to $LIBS.
 #
 #------------------------------------------------------------------------------
+
+PKG_CHECK_MODULES([XDM], [xmu x11 xau xproto >= 7.0.17])
+PKG_CHECK_MODULES([LIBBSD], [libbsd-overlay], [:], [:])
+
+dnl Check in libbsd for functions that might be there if not already found
+dnl XDM_SEARCH_LIBBSD(FUNCTION, PROGRAM, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+AC_DEFUN([XDM_SEARCH_LIBBSD],[
+if test "x$ac_cv_search_$1" = "xno"; then
+    if test "x$LIBBSD_LIBS" != "x"; then
+        AC_MSG_CHECKING([for $1 in libbsd])
+        xdm_save_LIBS="$LIBS"
+        LIBS="$LIBS $[$2]_LIBS $LIBBSD_LIBS"
+        AC_LINK_IFELSE([AC_LANG_CALL([], [$1])], [xdm_res="yes"], [xdm_res="no"])
+        LIBS="$xdm_save_LIBS"
+        AS_IF([test "x$xdm_res" = "xyes"], [
+            $2_CFLAGS="$[$2]_CFLAGS $LIBBSD_CFLAGS"
+            $2_LIBS="$[$2]_LIBS $LIBBSD_LIBS"
+            [$3]], [$4])
+        AC_MSG_RESULT([$xdm_res])
+    fi
+fi])
+
 # Function getifaddrs() comes from the C library, Solaris 11 -lsocket, or
 # the -lnsl name service library
 AC_SEARCH_LIBS([getifaddrs], [socket nsl])
@@ -67,13 +89,15 @@ AC_SEARCH_LIBS([getifaddrs], [socket nsl])
 AC_SEARCH_LIBS([getspnam], [sec gen shadow])
 
 # Function setproctitle() is in BSD -lutil or GNU systems -lbsd but N/A on Solaris
-AC_SEARCH_LIBS([setproctitle], [util bsd])
+AC_SEARCH_LIBS([setproctitle], [util])
+XDM_SEARCH_LIBBSD([setproctitle], [XDM])
 
 # Function setusercontext() is in BSD -lutil but N/A on Solaris or GNU systems
 AC_SEARCH_LIBS([setusercontext], [util])
 
-# Function arc4random() is in BSD standard C or GNU systems -lbsd
-AC_SEARCH_LIBS([arc4random], [bsd], [HAVE_ARC4RANDOM="yes"])
+# Function arc4random() is in BSD standard C, glibc 2.36+, or GNU systems -lbsd
+AC_SEARCH_LIBS([arc4random], [], [HAVE_ARC4RANDOM="yes"])
+XDM_SEARCH_LIBBSD([arc4random], [XDM], [HAVE_ARC4RANDOM="yes"])
 AC_SUBST(HAVE_ARC4RANDOM)
 AM_CONDITIONAL(HAVE_ARC4RANDOM, test x$HAVE_ARC4RANDOM = xyes)
 
@@ -97,12 +121,11 @@ AC_CHECK_DECL(key_setnet,
 # Check for system library functions
 # Required system libraries have been searched for and are listed in $LIBS
 AC_FUNC_FORK
+xdm_save_LIBS="$LIBS"
+LIBS="$LIBS $XDM_LIBS"
 AC_CHECK_FUNCS([daemon sigaction openlog asprintf setproctitle setusercontext \
                 mkstemp getifaddrs getspnam arc4random])
-
-XDM_CFLAGS="$XDM_CFLAGS"
-GREETER_CFLAGS="$GREETER_CFLAGS"
-CHOOSER_CFLAGS="$CHOOSER_CFLAGS"
+LIBS="$xdm_save_LIBS"
 
 # Find needed libraries for TCP sockets (pre-pended in $LIBS)
 XTRANS_CONNECTION_FLAGS
@@ -328,9 +351,13 @@ AC_SUBST(SHELL_CMD)
 
 # Checks for pkg-config packages
 
-PKG_CHECK_MODULES(XDM, [xmu x11 xau xproto >= 7.0.17])
+AC_ARG_WITH(xinerama,
+	AS_HELP_STRING([--with-xinerama],
+			[Use Xinerama (default is YES if installed)]),
+	[USE_XINERAMA="$withval"],
+	PKG_CHECK_EXISTS(xinerama, [USE_XINERAMA="yes"], [USE_XINERAMA="no"]))
 
-PKG_CHECK_EXISTS(xinerama, [
+if test "x$USE_XINERAMA" = "xyes" ; then
 	AC_DEFINE([USE_XINERAMA], 1,
 		[Define to 1 to use XINERAMA in greeter & chooser])
 	PKG_CHECK_MODULES(XINERAMA, xinerama)
@@ -338,7 +365,7 @@ PKG_CHECK_EXISTS(xinerama, [
 	CHOOSER_LIBS="$CHOOSER_LIBS $XINERAMA_LIBS"
 	GREETER_CFLAGS="$GREETER_CFLAGS $XINERAMA_CFLAGS"
 	GREETER_LIBS="$GREETER_LIBS $XINERAMA_LIBS"
-])
+fi
 
 # Xft text drawing for the greeter screen
 AC_ARG_WITH(xft,

@@ -165,7 +165,7 @@ getLocalAddress (void)
 	hostent = gethostbyname (localHostname());
 	if (hostent != NULL) {
 	    if (XdmcpAllocARRAY8 (&localAddress, hostent->h_length)) {
-		memmove(localAddress.data, hostent->h_addr, hostent->h_length);
+		memcpy(localAddress.data, hostent->h_addr, hostent->h_length);
 		haveLocalAddress = 1;
 	    }
 	} else {
@@ -403,7 +403,7 @@ tryagain:
 # endif
 	    return NULL;
 	}
-	memmove( h->entry.hostAddress.data, addr, addr_length);
+	memcpy(h->entry.hostAddress.data, addr, addr_length);
 # if defined(IPv6) && defined(AF_INET6)
 	if (ai)
 	    freeaddrinfo(ai);
@@ -528,7 +528,7 @@ tryagain:
 # endif
 		return NULL;
 	    }
-	    memmove( display->clientAddress.data, addr, addr_length);
+	    memcpy(display->clientAddress.data, addr, addr_length);
 # if defined(IPv6) && defined(AF_INET6)
 	    if (ai)
 		freeaddrinfo(ai);

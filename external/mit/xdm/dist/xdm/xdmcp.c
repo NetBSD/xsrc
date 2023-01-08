@@ -163,7 +163,7 @@ sendForward (
 	in_addr.sin_port = htons ((short) XDM_UDP_PORT);
 	if (address->length != 4)
 	    return;
-	memmove( (char *) &in_addr.sin_addr, address->data, address->length);
+	memcpy(&in_addr.sin_addr, address->data, address->length);
 	addrlen = sizeof (struct sockaddr_in);
 	break;
 # endif
@@ -178,7 +178,7 @@ sendForward (
 	in6_addr.sin6_port = htons ((short) XDM_UDP_PORT);
 	if (address->length != 16)
 	    return;
-	memmove( (char *) &in6_addr.sin6_addr, address->data, address->length);
+	memcpy(&in6_addr.sin6_addr, address->data, address->length);
 	addrlen = sizeof (struct sockaddr_in6);
 	break;
 # endif
@@ -204,12 +204,12 @@ ClientAddress (
 
     data = NetaddrPort((XdmcpNetaddr) from, &length);
     XdmcpAllocARRAY8 (port, length);
-    memmove( port->data, data, length);
+    memcpy(port->data, data, length);
     port->length = length;
 
     family = ConvertAddr((XdmcpNetaddr) from, &length, &data);
     XdmcpAllocARRAY8 (addr, length);
-    memmove( addr->data, data, length);
+    memcpy(addr->data, data, length);
     addr->length = length;
 
     *type = family;
@@ -235,6 +235,10 @@ all_query_respond (
 # endif
 
     family = ConvertAddr((XdmcpNetaddr) from, &length, (char **)&(addr.data));
+    if (family < 0) {
+	Debug("all_query_respond: ConvertAddr failed: conntype=%d\n", family);
+	return;
+    }
     addr.length = length;	/* convert int to short */
     if (debugLevel > 0) {
 # if defined(IPv6) && defined(AF_INET6)
@@ -254,8 +258,6 @@ all_query_respond (
 	Debug("all_query_respond: conntype=%d, addr=%s, len=%d\n",
 	    family, addrstring, addr.length);
     }
-    if (family < 0)
-	return;
     connectionType = family;
 
     if (type == INDIRECT_QUERY)
@@ -743,8 +745,8 @@ forward_respond (
 		    in_addr.sin_len = sizeof(in_addr);
 #  endif
 		    in_addr.sin_family = AF_INET;
-		    memmove( &in_addr.sin_addr, clientAddress.data, 4);
-		    memmove( (char *) &in_addr.sin_port, clientPort.data, 2);
+		    memcpy(&in_addr.sin_addr, clientAddress.data, 4);
+		    memcpy(&in_addr.sin_port, clientPort.data, 2);
 		    client = (struct sockaddr *) &in_addr;
 		    clientlen = sizeof (in_addr);
 		    all_query_respond (client, clientlen, &authenticationNames,
@@ -768,7 +770,7 @@ forward_respond (
 #  endif
 		    in6_addr.sin6_family = AF_INET6;
 		    if (clientAddress.length == 16) {
-			memmove(in6_addr.sin6_addr.s6_addr, clientAddress.data, 16);
+			memcpy(in6_addr.sin6_addr.s6_addr, clientAddress.data, 16);
 		    } else {
 			/* If the client wants to forward the xdm server to an
 			   ipv4 hosts it sends an ipv4 address in the forward
@@ -783,9 +785,10 @@ forward_respond (
 			*/
 			in6_addr.sin6_addr.s6_addr[10] = 0xff;
 			in6_addr.sin6_addr.s6_addr[11] = 0xff;
-			memmove(in6_addr.sin6_addr.s6_addr + 12, clientAddress.data, 4);
+			memcpy(in6_addr.sin6_addr.s6_addr + 12,
+                               clientAddress.data, 4);
 		    }
-		    memmove((char *) &in6_addr.sin6_port, clientPort.data, 2);
+		    memcpy(&in6_addr.sin6_port, clientPort.data, 2);
 		    client = (struct sockaddr *) &in6_addr;
 		    clientlen = sizeof (in6_addr);
 		    all_query_respond (client, clientlen, &authenticationNames,
@@ -802,7 +805,8 @@ forward_respond (
 			goto badAddress;
 		    bzero ((char *) &un_addr, sizeof (un_addr));
 		    un_addr.sun_family = AF_UNIX;
-		    memmove( un_addr.sun_path, clientAddress.data, clientAddress.length);
+		    memcpy(un_addr.sun_path, clientAddress.data,
+                           clientAddress.length);
 		    un_addr.sun_path[clientAddress.length] = '\0';
 		    client = (struct sockaddr *) &un_addr;
 #  if defined(BSD44SOCKETS) && defined(UNIXCONN)
@@ -1190,7 +1194,7 @@ manage (
 	    }
 	    if (displayClass.length)
 	    {
-		memmove( class, displayClass.data, displayClass.length);
+		memcpy(class, displayClass.data, displayClass.length);
 		class[displayClass.length] = '\0';
 	    }
 	    else
@@ -1205,7 +1209,7 @@ manage (
 		  "out of memory", fd);
 		goto abort;
 	    }
-	    memmove( from_save, from, fromlen);
+	    memcpy(from_save, from, fromlen);
 	    d = NewDisplay (name, class);
 	    if (!d)
 	    {
