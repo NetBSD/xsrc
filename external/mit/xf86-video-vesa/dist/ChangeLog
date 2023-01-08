@@ -1,3 +1,97 @@
+commit f6f1013dec5fcef1dfb0f9ad4878e8af364e2c42
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 12:24:33 2022 -0800
+
+    xf86-video-vesa 2.6.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f1895cc6dfdfcb0ac3b1250e88596938a5a664be
+Author: Jocelyn Falempe <jfalempe@redhat.com>
+Date:   Thu Apr 14 14:39:37 2022 +0200
+
+    Refuse to run if framebuffer or dri devices are present
+    
+    The simpledrm driver, introduced in kernel 5.14,
+    can replace efifb to provide the efi framebuffer.
+    
+    This fixes a bug on Fedora 36 (first version to use simpledrm driver):
+    https://bugzilla.redhat.com/show_bug.cgi?id=2074789
+    
+    v2: check for framebuffer or dri devices instead of efi framebuffer interface.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Javier Martinez Canillas <javierm@redhat.com>
+    Signed-off-by: Jocelyn Falempe <jfalempe@redhat.com>
+
+commit e285658e60d9cf772dda4b2c713ad2a0d4cef569
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Oct 17 11:48:57 2022 -0700
+
+    VESAValidMode: remove duplicate call to VESAGetRec
+    
+    Found by cppcheck:
+    
+    src/vesa.c:356:11: style: Redundant initialization for 'pVesa'. The initialized value is overwritten before it is read. [redundantInitialization]
+        pVesa = VESAGetRec(pScrn);
+              ^
+    src/vesa.c:350:19: note: pVesa is initialized
+        VESAPtr pVesa = VESAGetRec(pScrn);
+                      ^
+    src/vesa.c:356:11: note: pVesa is overwritten
+        pVesa = VESAGetRec(pScrn);
+              ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2f2436b4fe70a1f1a47c4ed112e8aefba3c8efe3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Oct 17 11:36:55 2022 -0700
+
+    VESADGASetMode: remove unused variable scrnIdx
+    
+    vesa.c: In function ‘VESADGASetMode’:
+    vesa.c:1790:9: warning: unused variable ‘scrnIdx’ [-Wunused-variable]
+         int scrnIdx = pScrn->pScreen->myNum;
+             ^~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5dee3ce85addc06f5f051158c768b993ace86baa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 942499a7510a4df645d4de29f634e33118f44109
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 30 08:57:14 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5e8eb2d8c9e9a51a8015a15d268578482589549d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 30 08:53:56 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 782c9800be3d2d9973fe2131c10556d9971f2d00
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 30 08:52:56 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 68f2589c687c132fc9abfd1501930bf191701165
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Sep 10 18:01:44 2020 -0400
@@ -1212,7 +1306,7 @@ Date:   Thu Aug 18 09:03:55 2005 +0000
     Update autogen.sh to one that does objdir != srcdir.
 
 commit 3251a5e09646f88a80b40385d2bb8e5417bdc388
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Aug 10 14:07:25 2005 +0000
 
     Don\'t lose existing CFLAGS in all the input drivers and some of the video
@@ -1233,19 +1327,19 @@ Date:   Fri Jul 29 21:22:46 2005 +0000
     - Update modular Xorg version
 
 commit dfe2847e4720793b4ff80d717aba31079a065392
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 21:51:06 2005 +0000
 
     add Makefile.am
 
 commit 8100f70d79c0d1a405eeb576898a182cef8d4c3b
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 21:50:33 2005 +0000
 
     add Makefile.am
 
 commit be230c6144ff1dd12b0d7acce4a2a478c0be3527
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 21:46:36 2005 +0000
 
     Build system for vesa video driver
