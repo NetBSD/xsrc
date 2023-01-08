@@ -13,12 +13,14 @@ suncg14 \- CG14 video driver
 .fi
 .SH DESCRIPTION
 .B suncg14
-is an __xservername__ driver for Sun CG14 video cards.
+is an __xservername__ driver for Sun CG14 frame buffers.
 THIS MAN PAGE NEEDS TO BE FILLED IN.
 .SH SUPPORTED HARDWARE
 The
 .B suncg14
-driver supports...
+driver supports the built-in frame buffer in the SPARCstation 10SX
+and SPARCstation 20 workstations.  This frame buffer requires the
+installation of one or more VSIMMs in the workstation to be operational.
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this

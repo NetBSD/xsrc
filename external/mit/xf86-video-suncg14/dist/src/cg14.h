@@ -26,7 +26,6 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86RamDac.h"
 #include <X11/Xmd.h>
 #include "gcstruct.h"
 #include "xf86sbusBus.h"
