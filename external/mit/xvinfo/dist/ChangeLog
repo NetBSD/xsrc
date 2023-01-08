@@ -1,3 +1,56 @@
+commit 55e8dbb999ccad9378adf9410fc9c299f259a998
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 3 16:29:33 2022 -0800
+
+    xvinfo 1.1.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit abb8797e12c3c3e5fc86ae6b36391a3334026aa0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 13 14:11:58 2022 -0800
+
+    Handle -Wdouble-promotion warning from clang
+    
+    xvinfo.c:217:73: warning: implicit conversion increases floating-point
+          precision: 'float' to 'double' [-Wdouble-promotion]
+                                        (float) encodings[n].rate.numerator /
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6d9bdc10f349090e092887222e0e03202b1b0d55
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 13 14:08:40 2022 -0800
+
+    Variable scope reduction
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d1022529af4baba0a123cafd97c83644c6067f53
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ad7c1c33da9ca2604d762ca49ae74561d3cc3612
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 14:32:22 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 31f90fcc66d9b07b920dea3da8f10bcfb31b07b4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 14:32:19 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit bb4630116ae96299b10fae177c6d048cf7173a28
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Feb 19 16:18:41 2019 -0800
@@ -184,7 +237,7 @@ Date:   Sun Jul 7 10:47:47 2013 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit af9ea390e95320e683c761cbd61eaf1c0dbaefed
-Author: Stéphane Aulery <lkppo@free.fr>
+Author: Stéphane Aulery  <lkppo@free.fr>
 Date:   Sun Jul 7 03:15:39 2013 +0200
 
     Use real program name for help message
@@ -478,7 +531,7 @@ Date:   Thu May 24 18:05:52 2007 -0700
     Debian bug #350313 <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=350313>
 
 commit 29190804b219bf3e6289426a832b32ad2f4c53a4
-Author: Michel Dänzer <michel@tungstengraphics.com>
+Author: Michel Dänzer  <michel@tungstengraphics.com>
 Date:   Mon Jan 15 17:14:56 2007 +0100
 
     Fix FourCC name output on big endian platforms.
@@ -486,13 +539,13 @@ Date:   Mon Jan 15 17:14:56 2007 +0100
     Fixes https://bugs.freedesktop.org/show_bug.cgi?id=9665 .
 
 commit 69758559c5ddb85bbf6501ea8e58c0896c7c1f11
-Author: Michel Dänzer <michel@tungstengraphics.com>
+Author: Michel Dänzer  <michel@tungstengraphics.com>
 Date:   Mon Jan 15 17:13:51 2007 +0100
 
     Make git ignore object files and Emacs style backup files.
 
 commit f4363bef8760521d07a2b90d81dd85d19192bcf2
-Author: Michel Dänzer <michel@tungstengraphics.com>
+Author: Michel Dänzer  <michel@tungstengraphics.com>
 Date:   Mon Jan 15 17:12:57 2007 +0100
 
     Rename .cvsignore to .gitignore.
@@ -594,7 +647,7 @@ Date:   Wed Jul 20 19:32:05 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit d5c7c5891a774190d3a1fbf1727bfb8238be0f23
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Fri Jul 1 20:09:10 2005 +0000
 
     xtrap.pc.in: s/Xfixes/XTrap/ xi.pc.in: s/Xt/Xi/ Xv/src/Makefile.am: remove
