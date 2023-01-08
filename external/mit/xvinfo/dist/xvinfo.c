@@ -25,13 +25,7 @@ main(int argc, char *argv[])
 {
     Display *dpy;
     unsigned int ver, rev, eventB, reqB, errorB;
-    unsigned int nencode, nadaptors;
-    int nscreens, nattr, numImages;
-    XvAdaptorInfo *ainfo;
-    XvAttribute *attributes;
-    XvEncodingInfo *encodings;
-    XvFormat *format;
-    XvImageFormatValues *formats;
+    int nscreens;
     char *disname = NULL;
     char shortmode = 0;
 
@@ -82,6 +76,9 @@ main(int argc, char *argv[])
     nscreens = ScreenCount(dpy);
 
     for (int i = 0; i < nscreens; i++) {
+        unsigned int nadaptors;
+        XvAdaptorInfo *ainfo;
+
         fprintf(stdout, "screen #%i\n", i);
         if (Success != XvQueryAdaptors(dpy, RootWindow(dpy, i), &nadaptors,
                                        &ainfo)) {
@@ -96,6 +93,12 @@ main(int argc, char *argv[])
         }
 
         for (unsigned int j = 0; j < nadaptors; j++) {
+            XvFormat *format;
+            int  nattr;
+            XvAttribute *attributes;
+            unsigned int nencode;
+            XvEncodingInfo *encodings;
+
             fprintf(stdout, "  Adaptor #%i: \"%s\"\n", j, ainfo[j].name);
             fprintf(stdout, "    number of ports: %li\n", ainfo[j].num_ports);
             fprintf(stdout, "    port base: %li\n", ainfo[j].base_id);
@@ -211,13 +214,16 @@ main(int argc, char *argv[])
                             fprintf(stdout, "        size: %li x %li\n",
                                     encodings[n].width, encodings[n].height);
                             fprintf(stdout, "        rate: %f\n",
-                                    (float) encodings[n].rate.numerator /
-                                    (float) encodings[n].rate.denominator);
+                                    (double) encodings[n].rate.numerator /
+                                    (double) encodings[n].rate.denominator);
                         }
                     }
                 }
 
                 if (ImageEncodings && (ainfo[j].type & XvImageMask)) {
+                    int numImages;
+                    XvImageFormatValues *formats;
+
                     for (unsigned int n = 0; n < nencode; n++) {
                         if (!strcmp(encodings[n].name, "XV_IMAGE")) {
                             fprintf(stdout,
