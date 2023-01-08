@@ -387,7 +387,7 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    MessageType from;
    int maxPitch, maxHeight;
 
-   /* Suport one adapter only now */
+   /* Support one adapter only now */
    if (pScrn->numEntities != 1)
        return FALSE;
 
@@ -705,7 +705,7 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
 			 pScrn->display->virtualX, pScrn->display->virtualY,
 			 pAST->FbMapSize, LOOKUP_BEST_REFRESH);
 
-   /* fixed some monitors can't get propery validate modes using estimated ratio modes */
+   /* fixed some monitors can't get properly validated modes using estimated ratio modes */
    if (i < 2)		/* validate modes are too few */
    {
        i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
@@ -737,7 +737,7 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
 
    xf86SetDpi(pScrn, 0, 0);
 
-   /* Accelaration Check */
+   /* Acceleration Check */
    pAST->noAccel = TRUE;
    pAST->pCMDQPtr = NULL;
    pAST->CMDQInfo.ulCMDQSize 		= 0;
