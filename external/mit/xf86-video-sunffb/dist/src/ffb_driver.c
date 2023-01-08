@@ -762,17 +762,19 @@ FFBScreenInit(SCREEN_INIT_ARGS_DECL)
 #endif
 	if (xf86NameCmp(optstr, "EXA") == 0) {
 	    xf86Msg(X_INFO, "using EXA\n");
-	    if (xf86LoadSubModule(pScrn, "exa") != NULL) {
-		if (!FFBInitEXA(pScreen))
-		    return FALSE;
+	    if (xf86LoadSubModule(pScrn, "exa") == NULL ||
+		!FFBInitEXA(pScreen)) {
+		pFfb->NoAccel = TRUE;
+		return FALSE;
     	    }
     	}
 #ifdef HAVE_XAA_H
     	  else if (xf86NameCmp(optstr, "XAA") == 0) {
 	    xf86Msg(X_INFO, "using XAA\n");
-	    if (xf86LoadSubModule(pScrn, "xaa") != NULL) {
-		if (!FFBAccelInit(pScreen, pFfb))
-		    return FALSE;
+	    if (xf86LoadSubModule(pScrn, "xaa") == NULL ||
+		!FFBAccelInit(pScreen, pFfb)) {
+		pFfb->NoAccel = TRUE;
+		return FALSE;
 	    }
 	}
 #endif

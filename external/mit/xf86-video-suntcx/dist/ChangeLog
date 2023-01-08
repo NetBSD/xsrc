@@ -1,3 +1,88 @@
+commit 66e3f631a52dfe423fd99a19f59c41adf2b8f48e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:50:07 2022 -0800
+
+    xf86-video-suntcx 1.1.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6da3b83ea89e4325c3a91d0abaebd328dc98b129
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 10:45:50 2022 -0800
+
+    Add supported hardware info to README and man page
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b97b49a3861815f9f2c250e8c741b7800239bb26
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f93c9fd759f98833311b6d7738bc9c59f88ec193
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:47:36 2022 -0800
+
+    Include xf86Cursor.h instead of xf86RamDac.h
+    
+    ramdac drivers have been removed from xserver since version 21.0.99.1
+    and xorg/xserver@f0385fb4 resulting in the following build failure:
+    
+    In file included from ../../src/tcx_cursor.c:31:
+    ../../src/tcx.h:29:10: fatal error: xf86RamDac.h: No such file or directory
+       29 | #include "xf86RamDac.h"
+          |          ^~~~~~~~~~~~~~
+    
+    but xf86RamDac.h in turn included xf86Cursor.h which we still need.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 211f8163b0eb669567ec92b44857c1c96f22208f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:38:11 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b466faaf416b176ae149962e40f679c540603d70
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:37:18 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6b810a3ab235713e9128105b5e39db29b0b47ea8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 11:36:41 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 20cb365fd1b9e35d5e5e6e6b7f2e55a0b1bf73cf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:13:10 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0500fe74b4af573cd088e54f01b6d8828a873ddb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:33:05 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit b30b17be6ee46594759e58ffc5efb7ee7ec70604
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Mon Jan 21 22:53:05 2013 -0800
@@ -388,7 +473,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 52b9af8285107d48b3d41a2a915a2417978c3510
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:45:57 2005 +0000
 
     Build system for suntcx
