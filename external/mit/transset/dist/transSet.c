@@ -40,7 +40,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-Window target_win;
+static Window target_win;
 
 /* needed by dsimple.c */
 
@@ -83,7 +83,7 @@ Get_Top_Window (Display *disp, Window child) {
                      &num_children))
         Fatal_Error ("Can't query window tree.");
 
-    XFree ((void *) child_list);
+    XFree (child_list);
     if (parent == root)
         return child;
 
@@ -92,7 +92,7 @@ Get_Top_Window (Display *disp, Window child) {
         if (!XQueryTree (disp, child, &root, &parent, &child_list,
                          &num_children))
             Fatal_Error ("Can't query window tree.");
-        XFree ((void *) child_list);
+        XFree (child_list);
     }
     return child;
 }
@@ -296,7 +296,7 @@ main (int argc, char **argv)
                              &left, &data) == Success)
         && (data != None)) {
         memcpy (&current_opacity, data, sizeof (unsigned int));
-        XFree ((void *) data);
+        XFree (data);
         if (flag_verbose)
             printf ("Found transparency: %g\n",
                     (double) current_opacity / OPAQUE);

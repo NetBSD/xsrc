@@ -1,3 +1,95 @@
+commit a962ae522f28ca644ad0b757eae660cd2e504922
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 3 11:54:51 2022 -0800
+
+    transset 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2a08d291a44d840b08c37516604d9f6e966ca0ac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1e8c563f178ce5083b76b98126c359e91a6cedd9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 29 11:23:05 2022 -0700
+
+    Remove unnecessary casts from malloc() and XFree() calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aa3c53eeaf9ea57e2c29ae6955cff598d0d51ffa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 29 11:15:10 2022 -0700
+
+    dsimple.c: Correct comments
+    
+    Fix typos and list correct header name
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 21006cca527457db048b04e964d998c87e57e34c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 29 11:02:31 2022 -0700
+
+    Declare target_win static
+    
+    Clears clang warning:
+    transSet.c:43:8: warning: no previous extern declaration for non-static
+      variable 'target_win' [-Wmissing-variable-declarations]
+    Window target_win;
+           ^
+    transSet.c:43:1: note: declare 'static' if the variable is not intended
+      to be used outside of this translation unit
+    Window target_win;
+    ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6d8a9a224313764358b184a709c643cf042f45ed
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 19 11:10:05 2022 -0800
+
+    transset.man: Update bug reporting URL from bugzilla to gitlab
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee3b7ee3b53cd4ac560383818d55f63ac2c8af28
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 10:10:35 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ebc3a034e9526b541bec8db3a38fb7861380164c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 10:10:31 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3677587612a9bc3a2590827394052b82248b4183
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 16:57:53 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cb3cd7642952b53a5fdca46e5db021a005100eba
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 20:51:20 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit f250616a10ef8bbefc2fc62df6a3afb461fedcdd
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Mar 9 21:30:15 2018 -0800

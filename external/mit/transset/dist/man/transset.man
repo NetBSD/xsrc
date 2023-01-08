@@ -108,6 +108,7 @@ This option prints some additional debug info as the program operates.
 .BR -V ", " --version
 This option prints the program version number and exits.
 .SH BUGS
-Probably.  Please report any you find to https://bugs.freedesktop.org/enter_bug.cgi?product=xorg.
+Probably.  Please report any you find to
+https://gitlab.freedesktop.org/xorg/app/transset/.
 .SH AUTHORS
 Matthew Hawn
