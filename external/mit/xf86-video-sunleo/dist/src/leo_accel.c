@@ -116,7 +116,7 @@ Bool LeoAccelInit (ScreenPtr pScreen, LeoPtr pLeo)
 	pLeo->lc0 = lc0 = (LeoCommand0 *) ((char *)pLeo->fb + LEO_LC0_VOFF);
 	pLeo->ld0 = ld0 = (LeoDraw *) ((char *)pLeo->fb + LEO_LD0_VOFF);
 
-	if (!pLeo->NoAccel) /* XXX do nothing */ ;
+	if (!pLeo->NoAccel) { /* XXX do nothing */ }
 
 	/* We will now clear the screen: we'll draw a rectangle covering all the
 	 * viewscreen, using a 'blackness' ROP.
