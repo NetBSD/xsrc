@@ -148,8 +148,7 @@ parse(int argc, char **argv)
 
     snprintf(option, sizeof(option), "%s%s", program_name, ".delete");
     if (XrmGetResource(database, option, (char *) NULL, &type, &value)) {
-	unsigned int i;
-	for (i=0; i < NPROPERTIES; i++) {
+	for (unsigned int i = 0; i < NPROPERTIES; i++) {
 	    if (strcmp((char *) value.addr, propertyTable[i].nickname) == 0) {
 		propertyTable[i].delete++;
 		break;
@@ -212,16 +211,16 @@ getDeepestVisual(int visual_class,   /* specifies the desired visual class */
 		 XVisualInfo *vinfo, /* specifies all visuals for a screen */
 		 int nvisuals)	/* specifies number of visuals in the list */
 {
-    register int	i;
     int			maxdepth = 0;
     XVisualInfo		*v = NULL;
     
-    for (i=0; i < nvisuals; i++, vinfo++)
+    for (int i = 0; i < nvisuals; i++, vinfo++) {
 	if (vinfo->class == visual_class && vinfo->depth > maxdepth)
 	{
 	    maxdepth = vinfo->depth;
 	    v = vinfo;
 	}
+    }
     return(v);
 }
 
@@ -233,10 +232,10 @@ getBestVisual(Atom property,	/* specifies the standard colormap */
 	      XVisualInfo *vinfo, /* specifies all visuals of the screen */
 	      int nvisuals)	/* specifies number of visuals of screen */
 {	
-    XVisualInfo	*v1 = NULL, *v2 = NULL;
+    XVisualInfo	*v1, *v2;
 
     if (vinfo == NULL)		 /* unexpected: a screen with no visuals */
-	return v1;
+	return NULL;
     v1 = getDeepestVisual(DirectColor, vinfo, nvisuals);
     v2 = getDeepestVisual(PseudoColor, vinfo, nvisuals);
     if (v2 && (!v1 || (v2->colormap_size >=
@@ -276,17 +275,16 @@ visualStringFromClass(int class)
 static int 
 doIndividualColormaps(void)
 {
-    unsigned int	i;
     int			screen, nvisuals;
     Status		status = -1;
-    XVisualInfo		*vinfo = NULL, *v = NULL, template;
+    XVisualInfo		*vinfo, *v = NULL, template;
     
     screen = DefaultScreen(dpy);
     template.screen = screen;
     vinfo = XGetVisualInfo(dpy, VisualScreenMask, &template, &nvisuals);
 
     /* check for individual standard colormap requests */
-    for (i=0; i < NPROPERTIES; i++) {
+    for (unsigned int i = 0; i < NPROPERTIES; i++) {
 
 	if (propertyTable[i].delete) {
 	    XmuDeleteStandardColormap(dpy, screen, propertyTable[i].property);
@@ -328,7 +326,7 @@ doIndividualColormaps(void)
 	if (!status)
 	    break;
     }
-    XFree((char *) vinfo);
+    XFree(vinfo);
     return status;
 }
 
