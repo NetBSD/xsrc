@@ -129,7 +129,7 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
 	return NULL;
     }
 
-    if (rep.length > (INT_MAX >> 2)
+    if (rep.length > (INT_MAX >> 2))
     {
 	_XEatDataWords (dpy, rep.length);
 	UnlockDisplay (dpy);
