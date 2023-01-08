@@ -1,3 +1,190 @@
+commit ca7786249d4f0cb1b0ef2c3694dfb89d6c9962a9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 4 16:01:42 2022 -0800
+
+    lndir 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c7f46ebed5d731361ce96ce0745a7b59a53f32ff
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 16:53:57 2022 -0700
+
+    Use strlcat and strlcpy if available
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f8c6c99000e4677ac2d0aab79b8e0ed561f170bc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 12:28:41 2022 -0700
+
+    Use memmove instead of strcpy for overlapping strings
+    
+    strcpy is not guaranteed to work with overlapping arguments.
+    Fortunately this code is only called on paths with multiple
+    consecutive '/' characters.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 719f5b869d21794aeaab6101ed62242626e95f52
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 11:32:41 2022 -0700
+
+    Reduce number of strcmp calls to check directory names for revision control
+    
+    Group directory names to match depending on whether they start
+    with a "." or not, when not using -withrevinfo.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d95bc26cd3686d345136b34462cc77b591b459ba
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 11:13:56 2022 -0700
+
+    Fix -Wsign-conversion warning from clang
+    
+    lndir.c:174:18: warning: implicit conversion changes signedness: 'nlink_t' (aka 'unsigned int') to 'int' [-Wsign-conversion]
+        n_dirs = fs->st_nlink;
+               ~ ~~~~^~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e0ca083dada62cff23b58e9c55b48c854a436ff8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 11:10:52 2022 -0700
+
+    Fix -Wshorten-64-to-32 warnings from clang
+    
+    lndir.c:252:11: warning: implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int' [-Wshorten-64-to-32]
+            symlen = readlink (dp->d_name, symbuf, sizeof(symbuf) - 1);
+                   ~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    lndir.c:261:19: warning: implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int' [-Wshorten-64-to-32]
+                basesymlen = readlink(buf, basesym, sizeof(basesym) - 1);
+                           ~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bc75934a8912b237a7f4658d7cf28ddd9a766d41
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 11:07:29 2022 -0700
+
+    Mark global variables as static
+    
+    Clears -Wmissing-variable-declarations warnings from clang
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2cddd8041cf5b6369d2216d0ffbdfa2821869215
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 19 11:01:50 2022 -0700
+
+    constify a couple more function arguments
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6f4cd1fc5bbfc64f3998d245b163d8300fae746b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d57c95444ef1fee86003e942bdd4b0d9a0e6849c
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 46864fc31ec956c43a1f867e598aba971ed035c4
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a8a14a9dae71ba66148cc405fab3c1439a5dbc1a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jun 18 09:44:26 2022 -0700
+
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters
+    
+    configure.ac:47: warning: AC_OUTPUT should be used without arguments.
+    configure.ac:47: You should run autoupdate.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 223844cf48ed5d889ba224a94503a7e412cdfbb4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 15:30:03 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 531d393f8a541565dcdf06269f139a5a1d705861
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 15:26:00 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3fa00f11025e84365ac7f02ebd632a83911a4de2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 20:29:29 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9030aab24e50943703bf6162b9a00151ca9598fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 19 23:36:31 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8b1b35bffe2cc6f6f2e2a8255fc8b0a977054516
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit a3665433034b12c18b8040ffb0fe422139caeb89
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 4 18:15:27 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 01e615030ce4e6c9a8eb3316bb072eb1f7d18a10
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 4 18:15:27 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 70ac3aeac918c916fffb6b2ee09514f50beb0ce9
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Mar 7 21:50:44 2012 -0800

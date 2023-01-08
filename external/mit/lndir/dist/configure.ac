@@ -1,4 +1,3 @@
-
 dnl  Copyright 2005 Red Hat, Inc.
 dnl 
 dnl  Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,15 +22,14 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([lndir], [1.0.3],
-	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [lndir])
+AC_INIT([lndir], [1.0.4],
+	[https://gitlab.freedesktop.org/xorg/util/lndir/-/issues], [lndir])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -45,4 +43,13 @@ AC_SYS_LARGEFILE
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XPROTO, xproto >= 7.0.17)
 
-AC_OUTPUT([Makefile])
+# Checks for non-standard functions and fallback to libbsd if we can
+AC_LINK_IFELSE([AC_LANG_CALL([], [strlcpy])],
+               [TRY_LIBBSD="no"], [TRY_LIBBSD="yes"])
+AS_IF([test "x$TRY_LIBBSD" = "xyes"],
+      [PKG_CHECK_MODULES([LIBBSD], [libbsd-overlay],
+          [CFLAGS="$CFLAGS $LIBBSD_CFLAGS" ; LIBS="$LIBS $LIBBSD_LIBS"], [:])])
+AC_CHECK_FUNCS([strlcat strlcpy])
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

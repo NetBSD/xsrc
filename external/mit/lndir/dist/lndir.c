@@ -58,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include <sys/param.h>
 #include <errno.h>
 #include <dirent.h>
+#include <string.h>
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 2048
@@ -65,12 +66,12 @@ in this Software without prior written authorization from The Open Group.
 
 #include <stdarg.h>
 
-int silent = 0;			/* -silent */
-int ignore_links = 0;		/* -ignorelinks */
-int with_revinfo = 0;		/* -withrevinfo */
+static int silent = 0;			/* -silent */
+static int ignore_links = 0;		/* -ignorelinks */
+static int with_revinfo = 0;		/* -withrevinfo */
 
-char *rcurdir;
-char *curdir;
+static char *rcurdir;
+static char *curdir;
 
 static void _X_ATTRIBUTE_PRINTF(2,3) _X_NORETURN
 quit (int code, const char * fmt, ...)
@@ -105,7 +106,7 @@ msg (const char * fmt, ...)
 }
 
 static void
-mperror (char *s)
+mperror (const char *s)
 {
     if (curdir) {
 	fprintf (stderr, "%s:\n", curdir);
@@ -116,7 +117,7 @@ mperror (char *s)
 
 
 static int 
-equivalent(char *lname, char *rname, char **p)
+equivalent(char *lname, const char *rname, char **p)
 {
     char *s;
 
@@ -124,7 +125,8 @@ equivalent(char *lname, char *rname, char **p)
 	return 1;
     for (s = lname; *s && (s = strchr(s, '/')); s++) {
 	while (s[1] == '/') {
-	    strcpy(s+1, s+2);
+	    size_t len = strlen(s+2);
+	    memmove(s+1, s+2, len+1);
 	    if (*p) (*p)--;
 	}
     }
@@ -147,9 +149,9 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
     char symbuf[MAXPATHLEN + 1];
     char basesym[MAXPATHLEN + 1];
     struct stat sb, sc;
-    int n_dirs;
-    int symlen;
-    int basesymlen = -1;
+    unsigned int n_dirs;
+    ssize_t symlen;
+    ssize_t basesymlen = -1;
     char *ocurdir;
 
     if ((fs->st_dev == ts->st_dev) && (fs->st_ino == ts->st_ino)) {
@@ -158,10 +160,19 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
     }
 
     if (rel)
+#ifdef HAVE_STRLCPY
+	strlcpy (buf, "../", sizeof(buf));
+#else
 	strcpy (buf, "../");
+#endif
     else
 	buf[0] = '\0';
+#ifdef HAVE_STRLCAT
+    if (strlcat (buf, fn, sizeof(buf)) >= sizeof(buf))
+        quit(1, "Pathname too long: %s", fn);
+#else
     strcat (buf, fn);
+#endif
     
     if (!(df = opendir (buf))) {
 	msg ("%s: Cannot opendir", buf);
@@ -183,7 +194,16 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
 	    !strcmp(dp->d_name, "._.DS_Store")) 
 	    continue;
 #endif
+
+#ifdef HAVE_STRLCAT
+	*p = '\0';
+	if (strlcat (buf, dp->d_name, sizeof(buf)) >= sizeof(buf)) {
+	    *p = '\0';
+	    quit(1, "Pathname too long: %s%s", buf, dp->d_name);
+	}
+#else
 	strcpy (p, dp->d_name);
+#endif
 
 	if (n_dirs > 0) {
 	    if (lstat (buf, &sb) < 0) {
@@ -200,23 +220,26 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
 					       dp->d_name[2] == '\0')))
 		    continue;
 		if (!with_revinfo) {
-		    if (!strcmp (dp->d_name, ".git"))
-			continue;
-		    if (!strcmp (dp->d_name, ".hg"))
-			continue;
-		    if (!strcmp (dp->d_name, "BitKeeper"))
-			continue;
-		    if (!strcmp (dp->d_name, "RCS"))
-			continue;
-		    if (!strcmp (dp->d_name, "SCCS"))
-			continue;
-		    if (!strcmp (dp->d_name, "CVS"))
-			continue;
-		    if (!strcmp (dp->d_name, "CVS.adm"))
-			continue;
-		    if (!strcmp (dp->d_name, ".svn"))
-			continue;
-		}
+                    if (dp->d_name[0] == '.') {
+                        if (!strcmp (dp->d_name, ".git"))
+                            continue;
+                        if (!strcmp (dp->d_name, ".hg"))
+                            continue;
+                        if (!strcmp (dp->d_name, ".svn"))
+                            continue;
+                    } else {
+                        if (!strcmp (dp->d_name, "BitKeeper"))
+                            continue;
+                        if (!strcmp (dp->d_name, "RCS"))
+                            continue;
+                        if (!strcmp (dp->d_name, "SCCS"))
+                            continue;
+                        if (!strcmp (dp->d_name, "CVS"))
+                            continue;
+                        if (!strcmp (dp->d_name, "CVS.adm"))
+                            continue;
+                    }
+                }
 		ocurdir = rcurdir;
 		rcurdir = buf;
 		curdir = silent ? buf : (char *)0;
@@ -283,7 +306,12 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
 		    int i;
 		    char *start, *end;
 
+#ifdef HAVE_STRLCPY
+		    if (strlcpy (symbuf, buf, sizeof(symbuf)) >= sizeof(symbuf))
+			quit(1, "Pathname too long: %s", buf);
+#else
 		    strcpy (symbuf, buf);
+#endif
 		    /* Find the first char after "../" in symbuf.  */
 		    start = symbuf;
 		    do {
@@ -308,7 +336,16 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
 		    }
 		    if (*end == '/')
 			end++;
+#ifdef HAVE_STRLCPY
+		    *end = '\0';
+		    if (strlcat (symbuf, &basesym[i], sizeof(symbuf)) >=
+			sizeof(symbuf)) {
+			*end = '\0';
+			quit(1, "Pathname too long: %s%s", symbuf, &basesym[i]);
+		    }
+#else
 		    strcpy (end, &basesym[i]);
+#endif
 		    sympath = symbuf;
 		}
 		else

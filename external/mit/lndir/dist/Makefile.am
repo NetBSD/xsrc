@@ -42,7 +42,7 @@ SUFFIXES = .$(APP_MAN_SUFFIX) .man
 .man.$(APP_MAN_SUFFIX):
 	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 
-EXTRA_DIST = $(appman_PRE)
+EXTRA_DIST = $(appman_PRE) README.md
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
