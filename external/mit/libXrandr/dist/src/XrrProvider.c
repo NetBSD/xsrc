@@ -67,7 +67,7 @@ XRRGetProviderResources(Display *dpy, Window window)
 
 	rbytes = (sizeof(XRRProviderResources) + rep.nProviders *
 		  sizeof(RRProvider));
-	xrpr = (XRRProviderResources *) Xmalloc(rbytes);
+	xrpr = Xmalloc(rbytes);
     } else {
 	nbytes = 0;
 	nbytesRead = 0;
@@ -104,8 +104,6 @@ XRRFreeProviderResources(XRRProviderResources *provider_resources)
     free(provider_resources);
 }
 
-#define ProviderInfoExtra	(SIZEOF(xRRGetProviderInfoReply) - 32)
-#define ProviderInfoExtraWords	(ProviderInfoExtra >> 2)
 XRRProviderInfo *
 XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provider)
 {
@@ -124,7 +122,7 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
     req->provider = provider;
     req->configTimestamp = resources->configTimestamp;
 
-    if (!_XReply (dpy, (xReply *) &rep, ProviderInfoExtraWords, xFalse))
+    if (!_XReply (dpy, (xReply *) &rep, 0, xFalse))
     {
 	UnlockDisplay (dpy);
 	SyncHandle ();
@@ -132,23 +130,14 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
     }
 
     if (rep.length > (INT_MAX >> 2)
-#if ProviderInfoExtraWords > 0
-	|| rep.length < ProviderInfoExtraWords
-#endif
-    )
     {
-#if ProviderInfoExtraWords > 0
-	if (rep.length < ProviderInfoExtraWords)
-	    _XEatDataWords (dpy, rep.length);
-	else
-#endif
-	    _XEatDataWords (dpy, rep.length - ProviderInfoExtraWords);
+	_XEatDataWords (dpy, rep.length);
 	UnlockDisplay (dpy);
 	SyncHandle ();
 	return NULL;
     }
 
-    nbytes = ((long) rep.length << 2) - ProviderInfoExtra;
+    nbytes = ((long) rep.length << 2);
 
     nbytesRead = (long)(rep.nCrtcs * 4 +
 			rep.nOutputs * 4 +
@@ -161,9 +150,9 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
 	      rep.nAssociatedProviders * (sizeof(RRProvider) + sizeof(unsigned int))+
 	      rep.nameLength + 1);
 
-    xpi = (XRRProviderInfo *)Xmalloc(rbytes);
+    xpi = Xmalloc(rbytes);
     if (xpi == NULL) {
-	_XEatDataWords (dpy, rep.length - (ProviderInfoExtra >> 2));
+	_XEatDataWords (dpy, rep.length);
 	UnlockDisplay (dpy);
 	SyncHandle ();
 	return NULL;
