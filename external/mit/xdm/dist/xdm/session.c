@@ -53,11 +53,7 @@ from The Open Group.
 
 # ifdef HAVE_SETPROCTITLE
 #  include <sys/types.h>
-#  ifdef __linux__
-#   include <bsd/unistd.h>
-#  else
-#   include <unistd.h>
-#  endif
+#  include <unistd.h>
 # endif
 
 #ifndef USE_PAM        /* PAM modules should handle these */
