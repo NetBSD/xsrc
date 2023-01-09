@@ -29,6 +29,7 @@
 #include <X11/Xmd.h>
 #include "gcstruct.h"
 #include "xf86sbusBus.h"
+#include "xf86Cursor.h"
 #include "exa.h"
 #include <sparc/sxreg.h>
 
