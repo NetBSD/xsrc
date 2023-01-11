@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.18 2022/05/11 22:46:51 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.19 2023/01/11 09:23:57 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -62,7 +62,7 @@
 #define DPRINTF while (0) xf86Msg
 #endif
 
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 char c[8] = " .,:+*oX";
 #endif
 
@@ -161,7 +161,7 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 {
 	uint32_t msk = src, mskx, dstx, m;
 	int line, x, i;
-#ifdef SX_RENDER_DEBUG
+#ifdef SX_RENDER_VERBOSE
 	char buffer[256];
 #endif
 	ENTER;
