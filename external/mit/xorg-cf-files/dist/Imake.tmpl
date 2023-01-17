@@ -1078,7 +1078,7 @@ TCLIBDIR = TclLibDir
 #define ArCmdBase ar
 #endif
 #ifndef ArCmd
-#if HasLargeTmp || SystemV4 || LinuxBinUtilsMajorVersion
+#if HasLargeTmp || SystemV4 || LinuxBinUtilsMajorVersion || defined(NetBSDArchitecture)
 #define ArCmd ArCmdBase cq
 #else
 #define ArCmd ArCmdBase clq
