@@ -1,3 +1,185 @@
+commit ddd8339e262cbb7b25993599299ad40e0c95ccf6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 17 08:19:26 2023 -0800
+
+    libXpm 3.5.15
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8178eb0834d82242e1edbc7d4fb0d1b397569c68
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Jan 16 19:44:52 2023 +1000
+
+    Use gzip -d instead of gunzip
+    
+    GNU gunzip [1] is a shell script that exec's `gzip -d`. Even if we call
+    /usr/bin/gunzip with the correct built-in path, the actual gzip call
+    will use whichever gzip it finds first, making our patch pointless.
+    
+    Fix this by explicitly calling gzip -d instead.
+    
+    https://git.savannah.gnu.org/cgit/gzip.git/tree/gunzip.in
+    
+    [Part of the fix for CVE-2022-4883]
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit c5ab17bcc34914c0b0707d2135dbebe9a367c5f0
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Thu Jan 12 15:05:39 2023 +1000
+
+    Prevent a double free in the error code path
+    
+    xpmParseDataAndCreate() calls XDestroyImage() in the error path.
+    Reproducible with sxpm "zero-width.xpm", that file is in the test/
+    directory.
+    
+    The same approach is needed in the bytes_per_line == 0 condition though
+    here it just plugs a memory leak.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 515294bb8023a45ff916696d0a14308ff4f3a376
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 6 12:50:48 2023 -0800
+
+    Fix CVE-2022-4883: compression commands depend on $PATH
+    
+    By default, on all platforms except MinGW, libXpm will detect if a
+    filename ends in .Z or .gz, and will when reading such a file fork off
+    an uncompress or gunzip command to read from via a pipe, and when
+    writing such a file will fork off a compress or gzip command to write
+    to via a pipe.
+    
+    In libXpm 3.5.14 or older these are run via execlp(), relying on $PATH
+    to find the commands.  If libXpm is called from a program running with
+    raised privileges, such as via setuid, then a malicious user could set
+    $PATH to include programs of their choosing to be run with those
+    privileges.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f80fa6ae47ad4a5beacb287c0030c9913b046643
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 7 12:44:28 2023 -0800
+
+    Fix CVE-2022-44617: Runaway loop with width of 0 and enormous height
+    
+    When reading XPM images from a file with libXpm 3.5.14 or older, if a
+    image has a width of 0 and a very large height, the ParsePixels() function
+    will loop over the entire height calling getc() and ungetc() repeatedly,
+    or in some circumstances, may loop seemingly forever, which may cause a
+    denial of service to the calling program when given a small crafted XPM
+    file to parse.
+    
+    Closes: #2
+    
+    Reported-by: Martin Ettl <ettl.martin78@googlemail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f7fbbb92f6d383b21dd1587c3703a5de37c625b5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 3 17:23:58 2023 -0800
+
+    test: add test cases for CVE-2022-44617 (zero-width w/enormous height)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a3a7c6dcc3b629d765014816c566c63165c63ca8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 17 12:23:45 2022 -0800
+
+    Fix CVE-2022-46285: Infinite loop on unclosed comments
+    
+    When reading XPM images from a file with libXpm 3.5.14 or older, if a
+    comment in the file is not closed (i.e. a C-style comment starts with
+    "/*" and is missing the closing "*/"), the ParseComment() function will
+    loop forever calling getc() to try to read the rest of the comment,
+    failing to notice that it has returned EOF, which may cause a denial of
+    service to the calling program.
+    
+    Reported-by: Marco Ivaldi <raptor@0xdeadbeef.info>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f7a167a48a950b89b91f5123a0ec8d9a7cb97495
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 17 12:18:24 2022 -0800
+
+    test: add test case for CVE-2022-46285 (unclosed comments)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0ff2c6af823ce7712c06150c43c9b403846a035f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 7 15:43:20 2023 -0800
+
+    cxpm: getc/ungetc wrappers should not adjust position when c == EOF
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 501494c6c68a84114fdd0b44d4b67ef9cde776c9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 7 13:39:56 2023 -0800
+
+    test: Add unit tests using glib framework
+    
+    Includes rudimentary tests for XpmReadFileToXpmImage, XpmReadFileToData,
+    XpmReadFileToBuffer, XpmCreateXpmImageFromData, XpmCreateXpmImageFromBuffer,
+    XpmWriteFileFromXpmImage, XpmWriteFileFromData, XpmWriteFileFromBuffer,
+    XpmAttributesSize, XpmGetErrorString, XpmLibraryVersion
+    
+    Includes test cases for CVE-2004-0687
+    
+    Tests .Z and .gz files if --enable-open-zfile is active
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4841039e5385f264d12757903894f47c64f59361
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 5 15:42:36 2023 -0800
+
+    configure: add --disable-open-zfile instead of requiring -DNO_ZPIPE
+    
+    Documents the two compression options in the README, makes their
+    configure options reflect the interdependency of their implementation,
+    and makes the configure script report their configuration.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aef0c8dd129838ac35b3cf8a7cdf04c7fd67dff1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 1 14:19:17 2023 -0800
+
+    man pages: Apply standard man page style/formatting
+    
+    Function & macro names in bold, argument names in italics.
+    
+    In the man page body, bold function names followed by plain ()
+    for functions defined in this page, plain (3) for functions defined
+    in other man pages.
+    
+    New paragraphs start with .PP, not just a blank line.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d55a0be3f8a8d3e53c65c286878fc3224fce135
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 1 10:48:01 2023 -0800
+
+    man pages: Replace "See Also" entries with more useful ones
+    
+    "See Also" entries in man pages should list other man pages to
+    look at, not the alternate names for the current man page.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 392cb8fb444ae632176829076f412cb4029dbdbc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 1 10:21:38 2023 -0800
+
+    man pages: Fix typos and other minor editing
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 08bc174f28af028b6ebaa9edeccd3ff56c396e92
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Nov 19 12:23:53 2022 -0800
