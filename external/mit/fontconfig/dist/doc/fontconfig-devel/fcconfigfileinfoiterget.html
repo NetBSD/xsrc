@@ -68,7 +68,7 @@ NAME="FCCONFIGFILEINFOITERGET"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN3818"
+NAME="AEN3855"
 ></A
 ><H2
 >Name</H2
@@ -76,7 +76,7 @@ NAME="AEN3818"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN3821"
+NAME="AEN3858"
 ></A
 ><H2
 >Synopsis</H2
@@ -85,7 +85,7 @@ CLASS="FUNCSYNOPSIS"
 ><P
 ></P
 ><A
-NAME="AEN3822"
+NAME="AEN3859"
 ></A
 ><TABLE
 BORDER="0"
@@ -142,7 +142,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3837"
+NAME="AEN3874"
 ></A
 ><H2
 >Description</H2
@@ -150,12 +150,26 @@ NAME="AEN3837"
 >Obtain the filename, the description and the flag whether it is enabled or not
 for 'iter' where points to current configuration file information.
 If the iterator is invalid, FcFalse is returned.
+    </P
+><P
+>This function isn't MT-safe. <TT
+CLASS="FUNCTION"
+>FcConfigReference</TT
+> must be called
+before using <TT
+CLASS="FUNCTION"
+>FcConfigFileInfoIterInit</TT
+> and then
+<TT
+CLASS="FUNCTION"
+>FcConfigDestroy</TT
+> when the relevant values are no longer referenced.
 	    </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3840"
+NAME="AEN3881"
 ></A
 ><H2
 >Since</H2

@@ -75,7 +75,7 @@ NAME="FCCONFIGFILEINFOITERINIT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN3770"
+NAME="AEN3799"
 ></A
 ><H2
 >Name</H2
@@ -83,7 +83,7 @@ NAME="AEN3770"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN3773"
+NAME="AEN3802"
 ></A
 ><H2
 >Synopsis</H2
@@ -92,7 +92,7 @@ CLASS="FUNCSYNOPSIS"
 ><P
 ></P
 ><A
-NAME="AEN3774"
+NAME="AEN3803"
 ></A
 ><TABLE
 BORDER="0"
@@ -134,18 +134,33 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3783"
+NAME="AEN3812"
 ></A
 ><H2
 >Description</H2
 ><P
 >Initialize 'iter' with the first iterator in the config file information list.
+    </P
+><P
+>The config file information list is stored in numerical order for filenames
+i.e. how fontconfig actually read them.
+    </P
+><P
+>This function isn't MT-safe. <TT
+CLASS="FUNCTION"
+>FcConfigReference</TT
+> must be called
+before using this and then <TT
+CLASS="FUNCTION"
+>FcConfigDestroy</TT
+> when the relevant
+values are no longer referenced.
 	    </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3786"
+NAME="AEN3819"
 ></A
 ><H2
 >Since</H2

@@ -75,7 +75,7 @@ NAME="FCCONFIGGETSYSROOT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN3724"
+NAME="AEN3750"
 ></A
 ><H2
 >Name</H2
@@ -83,7 +83,7 @@ NAME="AEN3724"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN3727"
+NAME="AEN3753"
 ></A
 ><H2
 >Synopsis</H2
@@ -92,7 +92,7 @@ CLASS="FUNCSYNOPSIS"
 ><P
 ></P
 ><A
-NAME="AEN3728"
+NAME="AEN3754"
 ></A
 ><TABLE
 BORDER="0"
@@ -129,18 +129,31 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3735"
+NAME="AEN3761"
 ></A
 ><H2
 >Description</H2
 ><P
->Obtrains the system root directory in 'config' if available.
+>Obtains the system root directory in 'config' if available. All files
+(including file properties in patterns) obtained from this 'config' are
+relative to this system root directory.
+    </P
+><P
+>This function isn't MT-safe. <TT
+CLASS="FUNCTION"
+>FcConfigReference</TT
+> must be called
+before using this and then <TT
+CLASS="FUNCTION"
+>FcConfigDestroy</TT
+> when
+the return value is no longer referenced.
 	    </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3738"
+NAME="AEN3767"
 ></A
 ><H2
 >Since</H2
