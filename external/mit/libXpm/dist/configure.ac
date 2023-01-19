@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libXpm], [3.5.14],
+AC_INIT([libXpm], [3.5.15],
         [https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues], [libXpm])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -13,10 +13,10 @@ AM_INIT_AUTOMAKE([foreign dist-xz])
 # Initialize libtool
 AC_PROG_LIBTOOL
 
-# Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
+# Require X.Org macros 1.16 or later for XORG_MEMORY_CHECK_FLAGS
 m4_ifndef([XORG_MACROS_VERSION],
-          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.8)
+          [m4_fatal([must install xorg-macros 1.16 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.16)
 XORG_DEFAULT_OPTIONS
 
 # Checks for library functions
@@ -49,24 +49,54 @@ if test "x$USE_GETTEXT" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_GETTEXT, test "x$USE_GETTEXT" = "xyes")
 
-# Optional feature: When ___.xpm is requested, also look for ___.xpm.Z & .gz
-# Replaces ZFILEDEF = -DSTAT_ZFILE in old Imakefile
-AC_ARG_ENABLE(stat-zfile,
-	AS_HELP_STRING([--enable-stat-zfile],
-			[Search for files with .Z & .gz extensions automatically @<:@default=yes@:>@]),
-              [STAT_ZFILE=$enableval], [STAT_ZFILE=yes])
-if test x$STAT_ZFILE = xyes ; then
-	AC_DEFINE(STAT_ZFILE, 1, [Define to 1 to automatically look for files with .Z & .gz extensions])
+dnl Helper macro to find absolute path to program and add a #define for it
+AC_DEFUN([XPM_PATH_PROG],[
+AC_PATH_PROG([$1], [$2], [])
+AS_IF([test "x$$1" = "x"],
+      [AC_MSG_ERROR([$2 not found, set $1 or use --disable-stat-zfile])])
+AC_DEFINE_UNQUOTED([$1], ["$$1"], [Path to $2])
+]) dnl End of AC_DEFUN([XPM_PATH_PROG]...
+
+# Optional feature: When a filename ending in .Z or .gz is requested,
+# open a pipe to a newly forked compress/uncompress/gzip command to
+# handle it.
+AC_MSG_CHECKING([whether to handle compressed pixmaps])
+case $host_os in
+        *mingw*)        zpipe_default="no" ;;
+        *)              zpipe_default="yes" ;;
+esac
+AC_ARG_ENABLE(open-zfile,
+        AS_HELP_STRING([--enable-open-zfile],
+                        [Search for files with .Z & .gz extensions automatically @<:@default=auto@:>@]),
+              [OPEN_ZFILE=$enableval], [OPEN_ZFILE=yes])
+AC_MSG_RESULT([$OPEN_ZFILE])
+AM_CONDITIONAL(COMPRESSED_PIXMAPS, test "x$OPEN_ZFILE" = "xyes")
+if test x$OPEN_ZFILE = xno ; then
+        AC_DEFINE(NO_ZPIPE, 1, [Define to 1 to disable decompression via pipes])
+else
+        XPM_PATH_PROG([XPM_PATH_COMPRESS], [compress])
+        XPM_PATH_PROG([XPM_PATH_UNCOMPRESS], [uncompress])
+        XPM_PATH_PROG([XPM_PATH_GZIP], [gzip])
+        AC_CHECK_FUNCS([closefrom close_range], [break])
 fi
 
+# Optional feature: When ___.xpm is requested, also look for ___.xpm.Z & .gz
+# Replaces ZFILEDEF = -DSTAT_ZFILE in old Imakefile
+AC_MSG_CHECKING([whether to search for compressed pixmaps])
+AC_ARG_ENABLE(stat-zfile,
+        AS_HELP_STRING([--enable-stat-zfile],
+                        [Search for files with .Z & .gz extensions automatically @<:@default=auto@:>@]),
+              [STAT_ZFILE=$enableval], [STAT_ZFILE=$OPEN_ZFILE])
+AC_MSG_RESULT([$STAT_ZFILE])
+if test x$STAT_ZFILE = xyes ; then
+        AC_DEFINE(STAT_ZFILE, 1, [Define to 1 to automatically look for files with .Z & .gz extensions])
+fi
 
-case $host_os in
-	*mingw*)
-                AC_DEFINE(NO_ZPIPE, 1, [Define to 1 to disable decompression via pipes])
-	;;
-	*)
-	;;
-esac
+# --enable-unit-tests
+AC_REQUIRE_AUX_FILE([tap-driver.sh])
+XORG_ENABLE_UNIT_TESTS
+XORG_WITH_GLIB([2.46])
+XORG_MEMORY_CHECK_FLAGS
 
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
@@ -75,5 +105,6 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  sxpm/Makefile
                  cxpm/Makefile
+                 test/Makefile
                  xpm.pc])
 AC_OUTPUT
