@@ -153,6 +153,17 @@ CLASS="PARAMETER"
 >config</I
 ></TT
 > is NULL, the current configuration is used.
+    </P
+><P
+>This function isn't MT-safe. <TT
+CLASS="FUNCTION"
+>FcConfigReference</TT
+> must be called
+before using this and then <TT
+CLASS="FUNCTION"
+>FcConfigDestroy</TT
+> when
+the return value is no longer referenced.
 	    </P
 ></DIV
 ><DIV

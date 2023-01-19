@@ -52,8 +52,8 @@ typedef int		FcBool;
  */
 
 #define FC_MAJOR	2
-#define FC_MINOR	13
-#define FC_REVISION	1
+#define FC_MINOR	14
+#define FC_REVISION	0
 
 #define FC_VERSION	((FC_MAJOR * 10000) + (FC_MINOR * 100) + (FC_REVISION))
 
@@ -67,7 +67,7 @@ typedef int		FcBool;
  * it means multiple copies of the font information.
  */
 
-#define FC_CACHE_VERSION_NUMBER	7
+#define FC_CACHE_VERSION_NUMBER	8
 #define _FC_STRINGIFY_(s)    	#s
 #define _FC_STRINGIFY(s)    	_FC_STRINGIFY_(s)
 #define FC_CACHE_VERSION    	_FC_STRINGIFY(FC_CACHE_VERSION_NUMBER)
@@ -108,7 +108,7 @@ typedef int		FcBool;
 #define FC_MINSPACE	    "minspace"		/* Bool use minimum line spacing */
 #define FC_SOURCE	    "source"		/* String (deprecated) */
 #define FC_CHARSET	    "charset"		/* CharSet */
-#define FC_LANG		    "lang"		/* String RFC 3066 langs */
+#define FC_LANG		    "lang"		/* LangSet Set of RFC 3066 langs */
 #define FC_FONTVERSION	    "fontversion"	/* Int from 'head' table */
 #define FC_FULLNAME	    "fullname"		/* String */
 #define FC_FAMILYLANG	    "familylang"	/* String RFC 3066 langs */
@@ -126,6 +126,8 @@ typedef int		FcBool;
 #define FC_PRGNAME	    "prgname"		/* String */
 #define FC_HASH		    "hash"		/* String (deprecated) */
 #define FC_POSTSCRIPT_NAME  "postscriptname"	/* String */
+#define FC_FONT_HAS_HINT    "fonthashint"	/* Bool - true if font has hinting */
+#define FC_ORDER	    "order"		/* Integer */
 
 #define FC_CACHE_SUFFIX		    ".cache-" FC_CACHE_VERSION
 #define FC_DIR_CACHE_FILE	    "fonts.cache-" FC_CACHE_VERSION
@@ -374,7 +376,7 @@ FcPublic FcBool
 FcDirCacheClean (const FcChar8 *cache_dir, FcBool verbose);
 
 FcPublic void
-FcCacheCreateTagFile (const FcConfig *config);
+FcCacheCreateTagFile (FcConfig *config);
 
 FcPublic FcBool
 FcDirCacheCreateUUID (FcChar8  *dir,
@@ -391,6 +393,10 @@ FcConfigHome (void);
 
 FcPublic FcBool
 FcConfigEnableHome (FcBool enable);
+
+FcPublic FcChar8 *
+FcConfigGetFilename (FcConfig      *config,
+		     const FcChar8 *url);
 
 FcPublic FcChar8 *
 FcConfigFilename (const FcChar8 *url);
@@ -432,7 +438,7 @@ FcPublic FcBlanks *
 FcConfigGetBlanks (FcConfig *config);
 
 FcPublic FcStrList *
-FcConfigGetCacheDirs (const FcConfig	*config);
+FcConfigGetCacheDirs (FcConfig	*config);
 
 FcPublic int
 FcConfigGetRescanInterval (FcConfig *config);
@@ -1075,6 +1081,10 @@ FcUtf16Len (const FcChar8   *string,
 	    int		    len,	    /* in bytes */
 	    int		    *nchar,
 	    int		    *wchar);
+
+FcPublic FcChar8 *
+FcStrBuildFilename (const FcChar8 *path,
+		    ...);
 
 FcPublic FcChar8 *
 FcStrDirname (const FcChar8 *file);

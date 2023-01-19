@@ -1,4 +1,4 @@
-                Fontconfig Developers Reference, Version 2.13.1
+                Fontconfig Developers Reference, Version 2.14.0
 
    Copyright © 2002 Keith Packard
 
@@ -102,8 +102,8 @@ FUNCTIONAL OVERVIEW
     slant          FC_SLANT               Int     Italic, oblique or roman
     weight         FC_WEIGHT              Int     Light, medium, demibold,
                                                   bold or black
-    size           FC_SIZE                Double  Point size
     width          FC_WIDTH               Int     Condensed, normal or expanded
+    size           FC_SIZE                Double  Point size
     aspect         FC_ASPECT              Double  Stretches glyphs horizontally
                                                   before hinting
     pixelsize      FC_PIXEL_SIZE          Double  Pixel size
@@ -112,14 +112,15 @@ FUNCTIONAL OVERVIEW
     foundry        FC_FOUNDRY             String  Font foundry name
     antialias      FC_ANTIALIAS           Bool    Whether glyphs can be
                                                   antialiased
+    hintstyle      FC_HINT_STYLE          Int     Automatic hinting style
     hinting        FC_HINTING             Bool    Whether the rasterizer should
                                                   use hinting
-    hintstyle      FC_HINT_STYLE          Int     Automatic hinting style
     verticallayout FC_VERTICAL_LAYOUT     Bool    Use vertical layout
     autohint       FC_AUTOHINT            Bool    Use autohinter instead of
                                                   normal hinter
     globaladvance  FC_GLOBAL_ADVANCE      Bool    Use font global advance data (deprecated)
     file           FC_FILE                String  The filename holding the font
+                                                  relative to the config's sysroot
     index          FC_INDEX               Int     The index of the font within
                                                   the file
     ftface         FC_FT_FACE             FT_Face Use the specified FreeType
@@ -127,14 +128,11 @@ FUNCTIONAL OVERVIEW
     rasterizer     FC_RASTERIZER          String  Which rasterizer is in use (deprecated)
     outline        FC_OUTLINE             Bool    Whether the glyphs are outlines
     scalable       FC_SCALABLE            Bool    Whether glyphs can be scaled
-    scale          FC_SCALE               Double  Scale factor for point->pixel
-                                                  conversions (deprecated)
-    symbol         FC_SYMBOL              Bool    Whether font uses MS symbol-font encoding
-    color          FC_COLOR               Bool    Whether any glyphs have color
     dpi            FC_DPI                 Double  Target dots per inch
     rgba           FC_RGBA                Int     unknown, rgb, bgr, vrgb,
                                                   vbgr, none - subpixel geometry
-    lcdfilter      FC_LCD_FILTER          Int     Type of LCD filter
+    scale          FC_SCALE               Double  Scale factor for point->pixel
+                                                  conversions (deprecated)
     minspace       FC_MINSPACE            Bool    Eliminate leading from line
                                                   spacing
     charset        FC_CHARSET             CharSet Unicode chars encoded by
@@ -151,15 +149,22 @@ FUNCTIONAL OVERVIEW
                                                   of the outline
     decorative     FC_DECORATIVE          Bool    Whether the style is a decorative
                                                   variant
-    fontfeatures   FC_FONT_FEATURES       String  List of extra feature tags in
-                                                  OpenType to be enabled
+    lcdfilter      FC_LCD_FILTER          Int     Type of LCD filter
     namelang       FC_NAMELANG            String  Language name to be used for the
                                                   default value of familylang,
                                                   stylelang and fullnamelang
+    fontfeatures   FC_FONT_FEATURES       String  List of extra feature tags in
+                                                  OpenType to be enabled
     prgname        FC_PRGNAME             String  Name of the running program
     hash           FC_HASH                String  SHA256 hash value of the font data
                                                   with "sha256:" prefix (deprecated)
     postscriptname FC_POSTSCRIPT_NAME     String  Font name in PostScript
+    symbol         FC_SYMBOL              Bool    Whether font uses MS symbol-font encoding
+    color          FC_COLOR               Bool    Whether any glyphs have color
+    fontvariations FC_FONT_VARIATIONS     String  comma-separated string of axes in variable font
+    variable       FC_VARIABLE            Bool    Whether font is Variable Font
+    fonthashint    FC_FONT_HAS_HINT       Bool    Whether font has hinting
+    order          FC_ORDER               Int     Order number of the font
 
 
    --------------------------------------------------------------------------
@@ -243,6 +248,7 @@ Datatypes
                            const FcCharSet *c;
                            void *f;
                            const FcLangSet *l;
+                           const FcRange   *r;
                    } u;
            } FcValue;
 
@@ -260,17 +266,19 @@ Datatypes
            FcTypeCharSet   c               FcCharSet *
            FcTypeFTFace    f               void * (FT_Face)
            FcTypeLangSet   l               FcLangSet *
+           FcTypeRange     r               FcRange *
 
 
    --------------------------------------------------------------------------
 
-  FcPattern
+  FcPattern, FcPatternIter
 
-   holds a set of names with associated value lists; each name refers to a
-   property of a font. FcPatterns are used as inputs to the matching code as
-   well as holding information about specific fonts. Each property can hold
-   one or more values; conventionally all of the same type, although the
-   interface doesn't demand that.
+   An FcPattern holds a set of names with associated value lists; each name
+   refers to a property of a font. FcPatterns are used as inputs to the
+   matching code as well as holding information about specific fonts. Each
+   property can hold one or more values; conventionally all of the same type,
+   although the interface doesn't demand that. An FcPatternIter is used
+   during iteration to access properties in FcPattern.
 
    --------------------------------------------------------------------------
 
@@ -796,7 +804,7 @@ Synopsis
    #include <fontconfig/fontconfig.h>
 
 
-   FcPattern * FcPatternFilter(FcPattern *p, const FcObjectSet *);
+   FcPattern * FcPatternFilter(FcPattern *p, const FcObjectSet *os);
 
 Description
 
@@ -1714,8 +1722,8 @@ Synopsis
    #include <fontconfig/fontconfig.h>
 
 
-   FcFontSetSort(FcConfig *config, FcFontSet **sets, intnsets, FcPattern
-   *pattern, FcBool trim, FcCharSet **csp, FcResult *result);
+   FcFontSet * FcFontSetSort(FcConfig *config, FcFontSet **sets, intnsets,
+   FcPattern *pattern, FcBool trim, FcCharSet **csp, FcResult *result);
 
 Description
 
@@ -1746,7 +1754,7 @@ Synopsis
    #include <fontconfig/fontconfig.h>
 
 
-   FcFontSetSortDestroy(FcFontSet *set);
+   void FcFontSetSortDestroy(FcFontSet *set);
 
 Description
 
@@ -2451,7 +2459,7 @@ Description
    points on the page) because map[0] and map[1] both have all their bits
    set. It also contains code points 0x343 (0x300 + 32*2 + (4-1)) and 0x35e
    (0x300 + 32*2 + (31-1)) because map[2] has the 4th and 31st bits set. The
-   code points represented by map[3] and later are left as an excercise for
+   code points represented by map[3] and later are left as an exercise for
    the reader ;).
 
                                FcCharSetNextPage
@@ -3238,20 +3246,22 @@ Since
 
    [140]FcConfigFilename -- Find a config file
 
-   [141]FcConfigParseAndLoad -- load a configuration file
+   [141]FcConfigGetFilename -- Find a config file
 
-   [142]FcConfigParseAndLoadFromMemory -- load a configuration from memory
+   [142]FcConfigParseAndLoad -- load a configuration file
 
-   [143]FcConfigGetSysRoot -- Obtain the system root directory
+   [143]FcConfigParseAndLoadFromMemory -- load a configuration from memory
 
-   [144]FcConfigSetSysRoot -- Set the system root directory
+   [144]FcConfigGetSysRoot -- Obtain the system root directory
 
-   [145]FcConfigFileInfoIterInit -- Initialize the iterator
+   [145]FcConfigSetSysRoot -- Set the system root directory
 
-   [146]FcConfigFileInfoIterNext -- Set the iterator to point to the next
+   [146]FcConfigFileInfoIterInit -- Initialize the iterator
+
+   [147]FcConfigFileInfoIterNext -- Set the iterator to point to the next
    list
 
-   [147]FcConfigFileInfoIterGet -- Obtain the configuration file information
+   [148]FcConfigFileInfoIterGet -- Obtain the configuration file information
 
    An FcConfig object holds the internal representation of a configuration.
    There is a default configuration which applications may use by passing 0
@@ -3544,6 +3554,10 @@ Description
    by set. This font set is owned by the library and must not be modified or
    freed. If config is NULL, the current configuration is used.
 
+   This function isn't MT-safe. FcConfigReference must be called before using
+   this and then FcConfigDestroy when the return value is no longer
+   referenced.
+
                                FcConfigGetBlanks
 
 Name
@@ -3813,6 +3827,23 @@ Synopsis
 
 Description
 
+   This function is deprecated and is replaced by FcConfigGetFilename.
+
+                              FcConfigGetFilename
+
+Name
+
+   FcConfigGetFilename -- Find a config file
+
+Synopsis
+
+   #include <fontconfig/fontconfig.h>
+
+
+   FcChar8 * FcConfigGetFilename(FcConfig *config, const FcChar8 *name);
+
+Description
+
    Given the specified external entity name, return the associated filename.
    This provides applications a way to convert various configuration file
    references into filename form.
@@ -3824,6 +3855,9 @@ Description
    name doesn't start with '/', it refers to a file in the default
    configuration directory; the built-in default directory can be overridden
    with the FONTCONFIG_PATH environment variable.
+
+   The result of this function is affected by the FONTCONFIG_SYSROOT
+   environment variable or equivalent functionality.
 
                               FcConfigParseAndLoad
 
@@ -3892,7 +3926,13 @@ Synopsis
 
 Description
 
-   Obtrains the system root directory in 'config' if available.
+   Obtains the system root directory in 'config' if available. All files
+   (including file properties in patterns) obtained from this 'config' are
+   relative to this system root directory.
+
+   This function isn't MT-safe. FcConfigReference must be called before using
+   this and then FcConfigDestroy when the return value is no longer
+   referenced.
 
 Since
 
@@ -3913,10 +3953,13 @@ Synopsis
 
 Description
 
-   Set 'sysroot' as the system root directory. fontconfig prepend 'sysroot'
-   to the cache directories in order to allow people to generate caches at
-   the build time. Note that this causes changing current config. i.e. this
-   function calls FcConfigSetCurrent() internally.
+   Set 'sysroot' as the system root directory. All file paths used or created
+   with this 'config' (including file properties in patterns) will be
+   considered or made relative to this 'sysroot'. This allows a host to
+   generate caches for targets at build time. This also allows a cache to be
+   re-targeted to a different base directory if 'FcConfigGetSysRoot' is used
+   to resolve file paths. When setting this on the current config this causes
+   changing current config (calls FcConfigSetCurrent()).
 
 Since
 
@@ -3941,6 +3984,13 @@ Description
    Initialize 'iter' with the first iterator in the config file information
    list.
 
+   The config file information list is stored in numerical order for
+   filenames i.e. how fontconfig actually read them.
+
+   This function isn't MT-safe. FcConfigReference must be called before using
+   this and then FcConfigDestroy when the relevant values are no longer
+   referenced.
+
 Since
 
    version 2.12.91
@@ -3963,6 +4013,10 @@ Description
 
    Set 'iter' to point to the next node in the config file information list.
    If there is no next node, FcFalse is returned.
+
+   This function isn't MT-safe. FcConfigReference must be called before using
+   FcConfigFileInfoIterInit and then FcConfigDestroy when the relevant values
+   are no longer referenced.
 
 Since
 
@@ -3988,6 +4042,10 @@ Description
    not for 'iter' where points to current configuration file information. If
    the iterator is invalid, FcFalse is returned.
 
+   This function isn't MT-safe. FcConfigReference must be called before using
+   FcConfigFileInfoIterInit and then FcConfigDestroy when the relevant values
+   are no longer referenced.
+
 Since
 
    version 2.12.91
@@ -3998,11 +4056,11 @@ Since
 
    Table of Contents
 
-   [148]FcNameRegisterObjectTypes -- Register object types
+   [149]FcNameRegisterObjectTypes -- Register object types
 
-   [149]FcNameUnregisterObjectTypes -- Unregister object types
+   [150]FcNameUnregisterObjectTypes -- Unregister object types
 
-   [150]FcNameGetObjectType -- Lookup an object type
+   [151]FcNameGetObjectType -- Lookup an object type
 
    Provides for application-specified font name object types so that new
    pattern elements can be generated from font names.
@@ -4064,13 +4122,13 @@ Description
 
    Table of Contents
 
-   [151]FcNameRegisterConstants -- Register symbolic constants
+   [152]FcNameRegisterConstants -- Register symbolic constants
 
-   [152]FcNameUnregisterConstants -- Unregister symbolic constants
+   [153]FcNameUnregisterConstants -- Unregister symbolic constants
 
-   [153]FcNameGetConstant -- Lookup symbolic constant
+   [154]FcNameGetConstant -- Lookup symbolic constant
 
-   [154]FcNameConstant -- Get the value for a symbolic constant
+   [155]FcNameConstant -- Get the value for a symbolic constant
 
    Provides for application-specified symbolic constants for font names.
 
@@ -4149,16 +4207,16 @@ Description
 
    Table of Contents
 
-   [155]FcWeightFromOpenTypeDouble -- Convert from OpenType weight values to
+   [156]FcWeightFromOpenTypeDouble -- Convert from OpenType weight values to
    fontconfig ones
 
-   [156]FcWeightToOpenTypeDouble -- Convert from fontconfig weight values to
+   [157]FcWeightToOpenTypeDouble -- Convert from fontconfig weight values to
    OpenType ones
 
-   [157]FcWeightFromOpenType -- Convert from OpenType weight values to
+   [158]FcWeightFromOpenType -- Convert from OpenType weight values to
    fontconfig ones
 
-   [158]FcWeightToOpenType -- Convert from fontconfig weight values to
+   [159]FcWeightToOpenType -- Convert from fontconfig weight values to
    OpenType ones
 
    Maps weights to and from OpenType weights.
@@ -4183,7 +4241,7 @@ Description
    from an double in the 1..1000 range, resembling the numbers from OpenType
    specification's OS/2 usWeight numbers, which are also similar to CSS
    font-weight numbers. If input is negative, zero, or greater than 1000,
-   returns -1. This function linearly doubleerpolates between various
+   returns -1. This function linearly interpolates between various
    FC_WEIGHT_* constants. As such, the returned value does not necessarily
    match any of the predefined constants.
 
@@ -4267,13 +4325,13 @@ Since
 
    Table of Contents
 
-   [159]FcBlanksCreate -- Create an FcBlanks
+   [160]FcBlanksCreate -- Create an FcBlanks
 
-   [160]FcBlanksDestroy -- Destroy and FcBlanks
+   [161]FcBlanksDestroy -- Destroy and FcBlanks
 
-   [161]FcBlanksAdd -- Add a character to an FcBlanks
+   [162]FcBlanksAdd -- Add a character to an FcBlanks
 
-   [162]FcBlanksIsMember -- Query membership in an FcBlanks
+   [163]FcBlanksIsMember -- Query membership in an FcBlanks
 
    An FcBlanks object holds a list of Unicode chars which are expected to be
    blank when drawn. When scanning new fonts, any glyphs which are empty and
@@ -4359,21 +4417,21 @@ Description
 
    Table of Contents
 
-   [163]FcAtomicCreate -- create an FcAtomic object
+   [164]FcAtomicCreate -- create an FcAtomic object
 
-   [164]FcAtomicLock -- lock a file
+   [165]FcAtomicLock -- lock a file
 
-   [165]FcAtomicNewFile -- return new temporary file name
+   [166]FcAtomicNewFile -- return new temporary file name
 
-   [166]FcAtomicOrigFile -- return original file name
+   [167]FcAtomicOrigFile -- return original file name
 
-   [167]FcAtomicReplaceOrig -- replace original with new
+   [168]FcAtomicReplaceOrig -- replace original with new
 
-   [168]FcAtomicDeleteNew -- delete new file
+   [169]FcAtomicDeleteNew -- delete new file
 
-   [169]FcAtomicUnlock -- unlock a file
+   [170]FcAtomicUnlock -- unlock a file
 
-   [170]FcAtomicDestroy -- destroy an FcAtomic object
+   [171]FcAtomicDestroy -- destroy an FcAtomic object
 
    These functions provide a safe way to update configuration files, allowing
    ongoing reading of the old configuration file while locked for writing and
@@ -4530,27 +4588,27 @@ Description
 
    Table of Contents
 
-   [171]FcFileScan -- scan a font file
+   [172]FcFileScan -- scan a font file
 
-   [172]FcFileIsDir -- check whether a file is a directory
+   [173]FcFileIsDir -- check whether a file is a directory
 
-   [173]FcDirScan -- scan a font directory without caching it
+   [174]FcDirScan -- scan a font directory without caching it
 
-   [174]FcDirSave -- DEPRECATED: formerly used to save a directory cache
+   [175]FcDirSave -- DEPRECATED: formerly used to save a directory cache
 
-   [175]FcDirCacheUnlink -- Remove all caches related to dir
+   [176]FcDirCacheUnlink -- Remove all caches related to dir
 
-   [176]FcDirCacheValid -- check directory cache
+   [177]FcDirCacheValid -- check directory cache
 
-   [177]FcDirCacheLoad -- load a directory cache
+   [178]FcDirCacheLoad -- load a directory cache
 
-   [178]FcDirCacheRescan -- Re-scan a directory cache
+   [179]FcDirCacheRescan -- Re-scan a directory cache
 
-   [179]FcDirCacheRead -- read or construct a directory cache
+   [180]FcDirCacheRead -- read or construct a directory cache
 
-   [180]FcDirCacheLoadFile -- load a cache file
+   [181]FcDirCacheLoadFile -- load a cache file
 
-   [181]FcDirCacheUnload -- unload a cache file
+   [182]FcDirCacheUnload -- unload a cache file
 
    These routines work with font files and directories, including font
    directory cache files.
@@ -4783,23 +4841,23 @@ Description
 
    Table of Contents
 
-   [182]FcCacheDir -- Return directory of cache
+   [183]FcCacheDir -- Return directory of cache
 
-   [183]FcCacheCopySet -- Returns a copy of the fontset from cache
+   [184]FcCacheCopySet -- Returns a copy of the fontset from cache
 
-   [184]FcCacheSubdir -- Return the i'th subdirectory.
+   [185]FcCacheSubdir -- Return the i'th subdirectory.
 
-   [185]FcCacheNumSubdir -- Return the number of subdirectories in cache.
+   [186]FcCacheNumSubdir -- Return the number of subdirectories in cache.
 
-   [186]FcCacheNumFont -- Returns the number of fonts in cache.
+   [187]FcCacheNumFont -- Returns the number of fonts in cache.
 
-   [187]FcDirCacheClean -- Clean up a cache directory
+   [188]FcDirCacheClean -- Clean up a cache directory
 
-   [188]FcCacheCreateTagFile -- Create CACHEDIR.TAG at cache directory.
+   [189]FcCacheCreateTagFile -- Create CACHEDIR.TAG at cache directory.
 
-   [189]FcDirCacheCreateUUID -- Create .uuid file at a directory
+   [190]FcDirCacheCreateUUID -- Create .uuid file at a directory
 
-   [190]FcDirCacheDeleteUUID -- Delete .uuid file
+   [191]FcDirCacheDeleteUUID -- Delete .uuid file
 
    These routines work with font directory caches, accessing their contents
    in limited ways. It is not expected that normal applications will need to
@@ -4953,9 +5011,7 @@ Synopsis
 
 Description
 
-   This is to create .uuid file containing an UUID at a font directory of
-   dir. The UUID will be used to identify the font directory and is used to
-   determine the cache filename if available.
+   This function is deprecated. it doesn't take any effects.
 
 Since
 
@@ -4989,27 +5045,27 @@ Since
 
    Table of Contents
 
-   [191]FcStrSetCreate -- create a string set
+   [192]FcStrSetCreate -- create a string set
 
-   [192]FcStrSetMember -- check set for membership
+   [193]FcStrSetMember -- check set for membership
 
-   [193]FcStrSetEqual -- check sets for equality
+   [194]FcStrSetEqual -- check sets for equality
 
-   [194]FcStrSetAdd -- add to a string set
+   [195]FcStrSetAdd -- add to a string set
 
-   [195]FcStrSetAddFilename -- add a filename to a string set
+   [196]FcStrSetAddFilename -- add a filename to a string set
 
-   [196]FcStrSetDel -- delete from a string set
+   [197]FcStrSetDel -- delete from a string set
 
-   [197]FcStrSetDestroy -- destroy a string set
+   [198]FcStrSetDestroy -- destroy a string set
 
-   [198]FcStrListCreate -- create a string iterator
+   [199]FcStrListCreate -- create a string iterator
 
-   [199]FcStrListFirst -- get first string in iteration
+   [200]FcStrListFirst -- get first string in iteration
 
-   [200]FcStrListNext -- get next string in iteration
+   [201]FcStrListNext -- get next string in iteration
 
-   [201]FcStrListDone -- destroy a string iterator
+   [202]FcStrListDone -- destroy a string iterator
 
    A data structure for enumerating strings, used to list directories while
    scanning the configuration as directories are added while scanning.
@@ -5214,43 +5270,45 @@ Description
 
    Table of Contents
 
-   [202]FcUtf8ToUcs4 -- convert UTF-8 to UCS4
+   [203]FcUtf8ToUcs4 -- convert UTF-8 to UCS4
 
-   [203]FcUcs4ToUtf8 -- convert UCS4 to UTF-8
+   [204]FcUcs4ToUtf8 -- convert UCS4 to UTF-8
 
-   [204]FcUtf8Len -- count UTF-8 encoded chars
+   [205]FcUtf8Len -- count UTF-8 encoded chars
 
-   [205]FcUtf16ToUcs4 -- convert UTF-16 to UCS4
+   [206]FcUtf16ToUcs4 -- convert UTF-16 to UCS4
 
-   [206]FcUtf16Len -- count UTF-16 encoded chars
+   [207]FcUtf16Len -- count UTF-16 encoded chars
 
-   [207]FcIsLower -- check for lower case ASCII character
+   [208]FcIsLower -- check for lower case ASCII character
 
-   [208]FcIsUpper -- check for upper case ASCII character
+   [209]FcIsUpper -- check for upper case ASCII character
 
-   [209]FcToLower -- convert upper case ASCII to lower case
+   [210]FcToLower -- convert upper case ASCII to lower case
 
-   [210]FcStrCopy -- duplicate a string
+   [211]FcStrCopy -- duplicate a string
 
-   [211]FcStrDowncase -- create a lower case translation of a string
+   [212]FcStrDowncase -- create a lower case translation of a string
 
-   [212]FcStrCopyFilename -- create a complete path from a filename
+   [213]FcStrCopyFilename -- create a complete path from a filename
 
-   [213]FcStrCmp -- compare UTF-8 strings
+   [214]FcStrCmp -- compare UTF-8 strings
 
-   [214]FcStrCmpIgnoreCase -- compare UTF-8 strings ignoring case
+   [215]FcStrCmpIgnoreCase -- compare UTF-8 strings ignoring case
 
-   [215]FcStrStr -- locate UTF-8 substring
+   [216]FcStrStr -- locate UTF-8 substring
 
-   [216]FcStrStrIgnoreCase -- locate UTF-8 substring ignoring ASCII case
+   [217]FcStrStrIgnoreCase -- locate UTF-8 substring ignoring case
 
-   [217]FcStrPlus -- concatenate two strings
+   [218]FcStrPlus -- concatenate two strings
 
-   [218]FcStrFree -- free a string
+   [219]FcStrFree -- free a string
 
-   [219]FcStrDirname -- directory part of filename
+   [220]FcStrBuildFilename -- Concatenate strings as a file path
 
-   [220]FcStrBasename -- last component of filename
+   [221]FcStrDirname -- directory part of filename
+
+   [222]FcStrBasename -- last component of filename
 
    Fontconfig manipulates many UTF-8 strings represented with the FcChar8
    type. These functions are exposed to help applications deal with these
@@ -5521,7 +5579,7 @@ Description
 
 Name
 
-   FcStrStrIgnoreCase -- locate UTF-8 substring ignoring ASCII case
+   FcStrStrIgnoreCase -- locate UTF-8 substring ignoring case
 
 Synopsis
 
@@ -5572,6 +5630,26 @@ Description
    This is just a wrapper around free(3) which helps track memory usage of
    strings within the fontconfig library.
 
+                               FcStrBuildFilename
+
+Name
+
+   FcStrBuildFilename -- Concatenate strings as a file path
+
+Synopsis
+
+   #include <fontconfig/fontconfig.h>
+
+
+   FcChar8 * FcStrBuildFilename(const FcChar8 *path, ...);
+
+Description
+
+   Creates a filename from the given elements of strings as file paths and
+   concatenate them with the appropriate file separator. Arguments must be
+   null-terminated. This returns a newly-allocated memory which should be
+   freed when no longer needed.
+
                                   FcStrDirname
 
 Name
@@ -5612,223 +5690,225 @@ Description
 References
 
    Visible links
-   1. file:///tmp/html-am902r#AEN16
-   2. file:///tmp/html-am902r#AEN19
-   3. file:///tmp/html-am902r#AEN31
-   4. file:///tmp/html-am902r#AEN103
-   5. file:///tmp/html-am902r#FCINITLOADCONFIG
-   6. file:///tmp/html-am902r#FCINITLOADCONFIGANDFONTS
-   7. file:///tmp/html-am902r#FCINIT
-   8. file:///tmp/html-am902r#FCFINI
-   9. file:///tmp/html-am902r#FCGETVERSION
-  10. file:///tmp/html-am902r#FCINITREINITIALIZE
-  11. file:///tmp/html-am902r#FCINITBRINGUPTODATE
-  12. file:///tmp/html-am902r#FCPATTERNCREATE
-  13. file:///tmp/html-am902r#FCPATTERNDUPLICATE
-  14. file:///tmp/html-am902r#FCPATTERNREFERENCE
-  15. file:///tmp/html-am902r#FCPATTERNDESTROY
-  16. file:///tmp/html-am902r#FCPATTERNOBJECTCOUNT
-  17. file:///tmp/html-am902r#FCPATTERNEQUAL
-  18. file:///tmp/html-am902r#FCPATTERNEQUALSUBSET
-  19. file:///tmp/html-am902r#FCPATTERNFILTER
-  20. file:///tmp/html-am902r#FCPATTERNHASH
-  21. file:///tmp/html-am902r#FCPATTERNADD
-  22. file:///tmp/html-am902r#FCPATTERNADDWEAK
-  23. file:///tmp/html-am902r#FCPATTERNADD-TYPE
-  24. file:///tmp/html-am902r#FCPATTERNGETWITHBINDING
-  25. file:///tmp/html-am902r#FCPATTERNGET
-  26. file:///tmp/html-am902r#FCPATTERNGET-TYPE
-  27. file:///tmp/html-am902r#FCPATTERNBUILD
-  28. file:///tmp/html-am902r#FCPATTERNDEL
-  29. file:///tmp/html-am902r#FCPATTERNREMOVE
-  30. file:///tmp/html-am902r#FCPATTERNITERSTART
-  31. file:///tmp/html-am902r#FCPATTERNITERNEXT
-  32. file:///tmp/html-am902r#FCPATTERNITEREQUAL
-  33. file:///tmp/html-am902r#FCPATTERNFINDITER
-  34. file:///tmp/html-am902r#FCPATTERNITERISVALID
-  35. file:///tmp/html-am902r#FCPATTERNITERGETOBJECT
-  36. file:///tmp/html-am902r#FCPATTERNITERVALUECOUNT
-  37. file:///tmp/html-am902r#FCPATTERNITERGETVALUE
-  38. file:///tmp/html-am902r#FCPATTERNPRINT
-  39. file:///tmp/html-am902r#FCDEFAULTSUBSTITUTE
-  40. file:///tmp/html-am902r#FCNAMEPARSE
-  41. file:///tmp/html-am902r#FCNAMEUNPARSE
-  42. file:///tmp/html-am902r#FCPATTERNFORMAT
-  43. file:///tmp/html-am902r#FCFONTSETCREATE
-  44. file:///tmp/html-am902r#FCFONTSETDESTROY
-  45. file:///tmp/html-am902r#FCFONTSETADD
-  46. file:///tmp/html-am902r#FCFONTSETLIST
-  47. file:///tmp/html-am902r#FCFONTSETMATCH
-  48. file:///tmp/html-am902r#FCFONTSETPRINT
-  49. file:///tmp/html-am902r#FCFONTSETSORT
-  50. file:///tmp/html-am902r#FCFONTSETSORTDESTROY
-  51. file:///tmp/html-am902r#FCOBJECTSETCREATE
-  52. file:///tmp/html-am902r#FCOBJECTSETADD
-  53. file:///tmp/html-am902r#FCOBJECTSETDESTROY
-  54. file:///tmp/html-am902r#FCOBJECTSETBUILD
-  55. file:///tmp/html-am902r#FCFREETYPECHARINDEX
-  56. file:///tmp/html-am902r#FCFREETYPECHARSET
-  57. file:///tmp/html-am902r#FCFREETYPECHARSETANDSPACING
-  58. file:///tmp/html-am902r#FCFREETYPEQUERY
-  59. file:///tmp/html-am902r#FCFREETYPEQUERYALL
-  60. file:///tmp/html-am902r#FCFREETYPEQUERYFACE
-  61. file:///tmp/html-am902r#FCVALUEDESTROY
-  62. file:///tmp/html-am902r#FCVALUESAVE
-  63. file:///tmp/html-am902r#FCVALUEPRINT
-  64. file:///tmp/html-am902r#FCVALUEEQUAL
-  65. file:///tmp/html-am902r#FCCHARSETCREATE
-  66. file:///tmp/html-am902r#FCCHARSETDESTROY
-  67. file:///tmp/html-am902r#FCCHARSETADDCHAR
-  68. file:///tmp/html-am902r#FCCHARSETDELCHAR
-  69. file:///tmp/html-am902r#FCCHARSETCOPY
-  70. file:///tmp/html-am902r#FCCHARSETEQUAL
-  71. file:///tmp/html-am902r#FCCHARSETINTERSECT
-  72. file:///tmp/html-am902r#FCCHARSETUNION
-  73. file:///tmp/html-am902r#FCCHARSETSUBTRACT
-  74. file:///tmp/html-am902r#FCCHARSETMERGE
-  75. file:///tmp/html-am902r#FCCHARSETHASCHAR
-  76. file:///tmp/html-am902r#FCCHARSETCOUNT
-  77. file:///tmp/html-am902r#FCCHARSETINTERSECTCOUNT
-  78. file:///tmp/html-am902r#FCCHARSETSUBTRACTCOUNT
-  79. file:///tmp/html-am902r#FCCHARSETISSUBSET
-  80. file:///tmp/html-am902r#FCCHARSETFIRSTPAGE
-  81. file:///tmp/html-am902r#FCCHARSETNEXTPAGE
-  82. file:///tmp/html-am902r#FCCHARSETCOVERAGE
-  83. file:///tmp/html-am902r#FCCHARSETNEW
-  84. file:///tmp/html-am902r#FCLANGSETCREATE
-  85. file:///tmp/html-am902r#FCLANGSETDESTROY
-  86. file:///tmp/html-am902r#FCLANGSETCOPY
-  87. file:///tmp/html-am902r#FCLANGSETADD
-  88. file:///tmp/html-am902r#FCLANGSETDEL
-  89. file:///tmp/html-am902r#FCLANGSETUNION
-  90. file:///tmp/html-am902r#FCLANGSETSUBTRACT
-  91. file:///tmp/html-am902r#FCLANGSETCOMPARE
-  92. file:///tmp/html-am902r#FCLANGSETCONTAINS
-  93. file:///tmp/html-am902r#FCLANGSETEQUAL
-  94. file:///tmp/html-am902r#FCLANGSETHASH
-  95. file:///tmp/html-am902r#FCLANGSETHASLANG
-  96. file:///tmp/html-am902r#FCGETDEFAULTLANGS
-  97. file:///tmp/html-am902r#FCLANGSETGETLANGS
-  98. file:///tmp/html-am902r#FCGETLANGS
-  99. file:///tmp/html-am902r#FCLANGNORMALIZE
- 100. file:///tmp/html-am902r#FCLANGGETCHARSET
- 101. file:///tmp/html-am902r#FCMATRIXINIT
- 102. file:///tmp/html-am902r#FCMATRIXCOPY
- 103. file:///tmp/html-am902r#FCMATRIXEQUAL
- 104. file:///tmp/html-am902r#FCMATRIXMULTIPLY
- 105. file:///tmp/html-am902r#FCMATRIXROTATE
- 106. file:///tmp/html-am902r#FCMATRIXSCALE
- 107. file:///tmp/html-am902r#FCMATRIXSHEAR
- 108. file:///tmp/html-am902r#FCRANGECOPY
- 109. file:///tmp/html-am902r#FCRANGECREATEDOUBLE
- 110. file:///tmp/html-am902r#FCRANGECREATEINTEGER
- 111. file:///tmp/html-am902r#FCRANGEDESTROY
- 112. file:///tmp/html-am902r#FCRANGEGETDOUBLE
- 113. file:///tmp/html-am902r#FCCONFIGCREATE
- 114. file:///tmp/html-am902r#FCCONFIGREFERENCE
- 115. file:///tmp/html-am902r#FCCONFIGDESTROY
- 116. file:///tmp/html-am902r#FCCONFIGSETCURRENT
- 117. file:///tmp/html-am902r#FCCONFIGGETCURRENT
- 118. file:///tmp/html-am902r#FCCONFIGUPTODATE
- 119. file:///tmp/html-am902r#FCCONFIGHOME
- 120. file:///tmp/html-am902r#FCCONFIGENABLEHOME
- 121. file:///tmp/html-am902r#FCCONFIGBUILDFONTS
- 122. file:///tmp/html-am902r#FCCONFIGGETCONFIGDIRS
- 123. file:///tmp/html-am902r#FCCONFIGGETFONTDIRS
- 124. file:///tmp/html-am902r#FCCONFIGGETCONFIGFILES
- 125. file:///tmp/html-am902r#FCCONFIGGETCACHE
- 126. file:///tmp/html-am902r#FCCONFIGGETCACHEDIRS
- 127. file:///tmp/html-am902r#FCCONFIGGETFONTS
- 128. file:///tmp/html-am902r#FCCONFIGGETBLANKS
- 129. file:///tmp/html-am902r#FCCONFIGGETRESCANINTERVAL
- 130. file:///tmp/html-am902r#FCCONFIGSETRESCANINTERVAL
- 131. file:///tmp/html-am902r#FCCONFIGAPPFONTADDFILE
- 132. file:///tmp/html-am902r#FCCONFIGAPPFONTADDDIR
- 133. file:///tmp/html-am902r#FCCONFIGAPPFONTCLEAR
- 134. file:///tmp/html-am902r#FCCONFIGSUBSTITUTEWITHPAT
- 135. file:///tmp/html-am902r#FCCONFIGSUBSTITUTE
- 136. file:///tmp/html-am902r#FCFONTMATCH
- 137. file:///tmp/html-am902r#FCFONTSORT
- 138. file:///tmp/html-am902r#FCFONTRENDERPREPARE
- 139. file:///tmp/html-am902r#FCFONTLIST
- 140. file:///tmp/html-am902r#FCCONFIGFILENAME
- 141. file:///tmp/html-am902r#FCCONFIGPARSEANDLOAD
- 142. file:///tmp/html-am902r#FCCONFIGPARSEANDLOADFROMMEMORY
- 143. file:///tmp/html-am902r#FCCONFIGGETSYSROOT
- 144. file:///tmp/html-am902r#FCCONFIGSETSYSROOT
- 145. file:///tmp/html-am902r#FCCONFIGFILEINFOITERINIT
- 146. file:///tmp/html-am902r#FCCONFIGFILEINFOITERNEXT
- 147. file:///tmp/html-am902r#FCCONFIGFILEINFOITERGET
- 148. file:///tmp/html-am902r#FCNAMEREGISTEROBJECTTYPES
- 149. file:///tmp/html-am902r#FCNAMEUNREGISTEROBJECTTYPES
- 150. file:///tmp/html-am902r#FCNAMEGETOBJECTTYPE
- 151. file:///tmp/html-am902r#FCNAMEREGISTERCONSTANTS
- 152. file:///tmp/html-am902r#FCNAMEUNREGISTERCONSTANTS
- 153. file:///tmp/html-am902r#FCNAMEGETCONSTANT
- 154. file:///tmp/html-am902r#FCNAMECONSTANT
- 155. file:///tmp/html-am902r#FCWEIGHTFROMOPENTYPEDOUBLE
- 156. file:///tmp/html-am902r#FCWEIGHTTOOPENTYPEDOUBLE
- 157. file:///tmp/html-am902r#FCWEIGHTFROMOPENTYPE
- 158. file:///tmp/html-am902r#FCWEIGHTTOOPENTYPE
- 159. file:///tmp/html-am902r#FCBLANKSCREATE
- 160. file:///tmp/html-am902r#FCBLANKSDESTROY
- 161. file:///tmp/html-am902r#FCBLANKSADD
- 162. file:///tmp/html-am902r#FCBLANKSISMEMBER
- 163. file:///tmp/html-am902r#FCATOMICCREATE
- 164. file:///tmp/html-am902r#FCATOMICLOCK
- 165. file:///tmp/html-am902r#FCATOMICNEWFILE
- 166. file:///tmp/html-am902r#FCATOMICORIGFILE
- 167. file:///tmp/html-am902r#FCATOMICREPLACEORIG
- 168. file:///tmp/html-am902r#FCATOMICDELETENEW
- 169. file:///tmp/html-am902r#FCATOMICUNLOCK
- 170. file:///tmp/html-am902r#FCATOMICDESTROY
- 171. file:///tmp/html-am902r#FCFILESCAN
- 172. file:///tmp/html-am902r#FCFILEISDIR
- 173. file:///tmp/html-am902r#FCDIRSCAN
- 174. file:///tmp/html-am902r#FCDIRSAVE
- 175. file:///tmp/html-am902r#FCDIRCACHEUNLINK
- 176. file:///tmp/html-am902r#FCDIRCACHEVALID
- 177. file:///tmp/html-am902r#FCDIRCACHELOAD
- 178. file:///tmp/html-am902r#FCDIRCACHERESCAN
- 179. file:///tmp/html-am902r#FCDIRCACHEREAD
- 180. file:///tmp/html-am902r#FCDIRCACHELOADFILE
- 181. file:///tmp/html-am902r#FCDIRCACHEUNLOAD
- 182. file:///tmp/html-am902r#FCCACHEDIR
- 183. file:///tmp/html-am902r#FCCACHECOPYSET
- 184. file:///tmp/html-am902r#FCCACHESUBDIR
- 185. file:///tmp/html-am902r#FCCACHENUMSUBDIR
- 186. file:///tmp/html-am902r#FCCACHENUMFONT
- 187. file:///tmp/html-am902r#FCDIRCACHECLEAN
- 188. file:///tmp/html-am902r#FCCACHECREATETAGFILE
- 189. file:///tmp/html-am902r#FCDIRCACHECREATEUUID
- 190. file:///tmp/html-am902r#FCDIRCACHEDELETEUUID
- 191. file:///tmp/html-am902r#FCSTRSETCREATE
- 192. file:///tmp/html-am902r#FCSTRSETMEMBER
- 193. file:///tmp/html-am902r#FCSTRSETEQUAL
- 194. file:///tmp/html-am902r#FCSTRSETADD
- 195. file:///tmp/html-am902r#FCSTRSETADDFILENAME
- 196. file:///tmp/html-am902r#FCSTRSETDEL
- 197. file:///tmp/html-am902r#FCSTRSETDESTROY
- 198. file:///tmp/html-am902r#FCSTRLISTCREATE
- 199. file:///tmp/html-am902r#FCSTRLISTFIRST
- 200. file:///tmp/html-am902r#FCSTRLISTNEXT
- 201. file:///tmp/html-am902r#FCSTRLISTDONE
- 202. file:///tmp/html-am902r#FCUTF8TOUCS4
- 203. file:///tmp/html-am902r#FCUCS4TOUTF8
- 204. file:///tmp/html-am902r#FCUTF8LEN
- 205. file:///tmp/html-am902r#FCUTF16TOUCS4
- 206. file:///tmp/html-am902r#FCUTF16LEN
- 207. file:///tmp/html-am902r#FCISLOWER
- 208. file:///tmp/html-am902r#FCISUPPER
- 209. file:///tmp/html-am902r#FCTOLOWER
- 210. file:///tmp/html-am902r#FCSTRCOPY
- 211. file:///tmp/html-am902r#FCSTRDOWNCASE
- 212. file:///tmp/html-am902r#FCSTRCOPYFILENAME
- 213. file:///tmp/html-am902r#FCSTRCMP
- 214. file:///tmp/html-am902r#FCSTRCMPIGNORECASE
- 215. file:///tmp/html-am902r#FCSTRSTR
- 216. file:///tmp/html-am902r#FCSTRSTRIGNORECASE
- 217. file:///tmp/html-am902r#FCSTRPLUS
- 218. file:///tmp/html-am902r#FCSTRFREE
- 219. file:///tmp/html-am902r#FCSTRDIRNAME
- 220. file:///tmp/html-am902r#FCSTRBASENAME
+   1. file:///tmp/html-aqrcjl#AEN16
+   2. file:///tmp/html-aqrcjl#AEN19
+   3. file:///tmp/html-aqrcjl#AEN31
+   4. file:///tmp/html-aqrcjl#AEN103
+   5. file:///tmp/html-aqrcjl#FCINITLOADCONFIG
+   6. file:///tmp/html-aqrcjl#FCINITLOADCONFIGANDFONTS
+   7. file:///tmp/html-aqrcjl#FCINIT
+   8. file:///tmp/html-aqrcjl#FCFINI
+   9. file:///tmp/html-aqrcjl#FCGETVERSION
+  10. file:///tmp/html-aqrcjl#FCINITREINITIALIZE
+  11. file:///tmp/html-aqrcjl#FCINITBRINGUPTODATE
+  12. file:///tmp/html-aqrcjl#FCPATTERNCREATE
+  13. file:///tmp/html-aqrcjl#FCPATTERNDUPLICATE
+  14. file:///tmp/html-aqrcjl#FCPATTERNREFERENCE
+  15. file:///tmp/html-aqrcjl#FCPATTERNDESTROY
+  16. file:///tmp/html-aqrcjl#FCPATTERNOBJECTCOUNT
+  17. file:///tmp/html-aqrcjl#FCPATTERNEQUAL
+  18. file:///tmp/html-aqrcjl#FCPATTERNEQUALSUBSET
+  19. file:///tmp/html-aqrcjl#FCPATTERNFILTER
+  20. file:///tmp/html-aqrcjl#FCPATTERNHASH
+  21. file:///tmp/html-aqrcjl#FCPATTERNADD
+  22. file:///tmp/html-aqrcjl#FCPATTERNADDWEAK
+  23. file:///tmp/html-aqrcjl#FCPATTERNADD-TYPE
+  24. file:///tmp/html-aqrcjl#FCPATTERNGETWITHBINDING
+  25. file:///tmp/html-aqrcjl#FCPATTERNGET
+  26. file:///tmp/html-aqrcjl#FCPATTERNGET-TYPE
+  27. file:///tmp/html-aqrcjl#FCPATTERNBUILD
+  28. file:///tmp/html-aqrcjl#FCPATTERNDEL
+  29. file:///tmp/html-aqrcjl#FCPATTERNREMOVE
+  30. file:///tmp/html-aqrcjl#FCPATTERNITERSTART
+  31. file:///tmp/html-aqrcjl#FCPATTERNITERNEXT
+  32. file:///tmp/html-aqrcjl#FCPATTERNITEREQUAL
+  33. file:///tmp/html-aqrcjl#FCPATTERNFINDITER
+  34. file:///tmp/html-aqrcjl#FCPATTERNITERISVALID
+  35. file:///tmp/html-aqrcjl#FCPATTERNITERGETOBJECT
+  36. file:///tmp/html-aqrcjl#FCPATTERNITERVALUECOUNT
+  37. file:///tmp/html-aqrcjl#FCPATTERNITERGETVALUE
+  38. file:///tmp/html-aqrcjl#FCPATTERNPRINT
+  39. file:///tmp/html-aqrcjl#FCDEFAULTSUBSTITUTE
+  40. file:///tmp/html-aqrcjl#FCNAMEPARSE
+  41. file:///tmp/html-aqrcjl#FCNAMEUNPARSE
+  42. file:///tmp/html-aqrcjl#FCPATTERNFORMAT
+  43. file:///tmp/html-aqrcjl#FCFONTSETCREATE
+  44. file:///tmp/html-aqrcjl#FCFONTSETDESTROY
+  45. file:///tmp/html-aqrcjl#FCFONTSETADD
+  46. file:///tmp/html-aqrcjl#FCFONTSETLIST
+  47. file:///tmp/html-aqrcjl#FCFONTSETMATCH
+  48. file:///tmp/html-aqrcjl#FCFONTSETPRINT
+  49. file:///tmp/html-aqrcjl#FCFONTSETSORT
+  50. file:///tmp/html-aqrcjl#FCFONTSETSORTDESTROY
+  51. file:///tmp/html-aqrcjl#FCOBJECTSETCREATE
+  52. file:///tmp/html-aqrcjl#FCOBJECTSETADD
+  53. file:///tmp/html-aqrcjl#FCOBJECTSETDESTROY
+  54. file:///tmp/html-aqrcjl#FCOBJECTSETBUILD
+  55. file:///tmp/html-aqrcjl#FCFREETYPECHARINDEX
+  56. file:///tmp/html-aqrcjl#FCFREETYPECHARSET
+  57. file:///tmp/html-aqrcjl#FCFREETYPECHARSETANDSPACING
+  58. file:///tmp/html-aqrcjl#FCFREETYPEQUERY
+  59. file:///tmp/html-aqrcjl#FCFREETYPEQUERYALL
+  60. file:///tmp/html-aqrcjl#FCFREETYPEQUERYFACE
+  61. file:///tmp/html-aqrcjl#FCVALUEDESTROY
+  62. file:///tmp/html-aqrcjl#FCVALUESAVE
+  63. file:///tmp/html-aqrcjl#FCVALUEPRINT
+  64. file:///tmp/html-aqrcjl#FCVALUEEQUAL
+  65. file:///tmp/html-aqrcjl#FCCHARSETCREATE
+  66. file:///tmp/html-aqrcjl#FCCHARSETDESTROY
+  67. file:///tmp/html-aqrcjl#FCCHARSETADDCHAR
+  68. file:///tmp/html-aqrcjl#FCCHARSETDELCHAR
+  69. file:///tmp/html-aqrcjl#FCCHARSETCOPY
+  70. file:///tmp/html-aqrcjl#FCCHARSETEQUAL
+  71. file:///tmp/html-aqrcjl#FCCHARSETINTERSECT
+  72. file:///tmp/html-aqrcjl#FCCHARSETUNION
+  73. file:///tmp/html-aqrcjl#FCCHARSETSUBTRACT
+  74. file:///tmp/html-aqrcjl#FCCHARSETMERGE
+  75. file:///tmp/html-aqrcjl#FCCHARSETHASCHAR
+  76. file:///tmp/html-aqrcjl#FCCHARSETCOUNT
+  77. file:///tmp/html-aqrcjl#FCCHARSETINTERSECTCOUNT
+  78. file:///tmp/html-aqrcjl#FCCHARSETSUBTRACTCOUNT
+  79. file:///tmp/html-aqrcjl#FCCHARSETISSUBSET
+  80. file:///tmp/html-aqrcjl#FCCHARSETFIRSTPAGE
+  81. file:///tmp/html-aqrcjl#FCCHARSETNEXTPAGE
+  82. file:///tmp/html-aqrcjl#FCCHARSETCOVERAGE
+  83. file:///tmp/html-aqrcjl#FCCHARSETNEW
+  84. file:///tmp/html-aqrcjl#FCLANGSETCREATE
+  85. file:///tmp/html-aqrcjl#FCLANGSETDESTROY
+  86. file:///tmp/html-aqrcjl#FCLANGSETCOPY
+  87. file:///tmp/html-aqrcjl#FCLANGSETADD
+  88. file:///tmp/html-aqrcjl#FCLANGSETDEL
+  89. file:///tmp/html-aqrcjl#FCLANGSETUNION
+  90. file:///tmp/html-aqrcjl#FCLANGSETSUBTRACT
+  91. file:///tmp/html-aqrcjl#FCLANGSETCOMPARE
+  92. file:///tmp/html-aqrcjl#FCLANGSETCONTAINS
+  93. file:///tmp/html-aqrcjl#FCLANGSETEQUAL
+  94. file:///tmp/html-aqrcjl#FCLANGSETHASH
+  95. file:///tmp/html-aqrcjl#FCLANGSETHASLANG
+  96. file:///tmp/html-aqrcjl#FCGETDEFAULTLANGS
+  97. file:///tmp/html-aqrcjl#FCLANGSETGETLANGS
+  98. file:///tmp/html-aqrcjl#FCGETLANGS
+  99. file:///tmp/html-aqrcjl#FCLANGNORMALIZE
+ 100. file:///tmp/html-aqrcjl#FCLANGGETCHARSET
+ 101. file:///tmp/html-aqrcjl#FCMATRIXINIT
+ 102. file:///tmp/html-aqrcjl#FCMATRIXCOPY
+ 103. file:///tmp/html-aqrcjl#FCMATRIXEQUAL
+ 104. file:///tmp/html-aqrcjl#FCMATRIXMULTIPLY
+ 105. file:///tmp/html-aqrcjl#FCMATRIXROTATE
+ 106. file:///tmp/html-aqrcjl#FCMATRIXSCALE
+ 107. file:///tmp/html-aqrcjl#FCMATRIXSHEAR
+ 108. file:///tmp/html-aqrcjl#FCRANGECOPY
+ 109. file:///tmp/html-aqrcjl#FCRANGECREATEDOUBLE
+ 110. file:///tmp/html-aqrcjl#FCRANGECREATEINTEGER
+ 111. file:///tmp/html-aqrcjl#FCRANGEDESTROY
+ 112. file:///tmp/html-aqrcjl#FCRANGEGETDOUBLE
+ 113. file:///tmp/html-aqrcjl#FCCONFIGCREATE
+ 114. file:///tmp/html-aqrcjl#FCCONFIGREFERENCE
+ 115. file:///tmp/html-aqrcjl#FCCONFIGDESTROY
+ 116. file:///tmp/html-aqrcjl#FCCONFIGSETCURRENT
+ 117. file:///tmp/html-aqrcjl#FCCONFIGGETCURRENT
+ 118. file:///tmp/html-aqrcjl#FCCONFIGUPTODATE
+ 119. file:///tmp/html-aqrcjl#FCCONFIGHOME
+ 120. file:///tmp/html-aqrcjl#FCCONFIGENABLEHOME
+ 121. file:///tmp/html-aqrcjl#FCCONFIGBUILDFONTS
+ 122. file:///tmp/html-aqrcjl#FCCONFIGGETCONFIGDIRS
+ 123. file:///tmp/html-aqrcjl#FCCONFIGGETFONTDIRS
+ 124. file:///tmp/html-aqrcjl#FCCONFIGGETCONFIGFILES
+ 125. file:///tmp/html-aqrcjl#FCCONFIGGETCACHE
+ 126. file:///tmp/html-aqrcjl#FCCONFIGGETCACHEDIRS
+ 127. file:///tmp/html-aqrcjl#FCCONFIGGETFONTS
+ 128. file:///tmp/html-aqrcjl#FCCONFIGGETBLANKS
+ 129. file:///tmp/html-aqrcjl#FCCONFIGGETRESCANINTERVAL
+ 130. file:///tmp/html-aqrcjl#FCCONFIGSETRESCANINTERVAL
+ 131. file:///tmp/html-aqrcjl#FCCONFIGAPPFONTADDFILE
+ 132. file:///tmp/html-aqrcjl#FCCONFIGAPPFONTADDDIR
+ 133. file:///tmp/html-aqrcjl#FCCONFIGAPPFONTCLEAR
+ 134. file:///tmp/html-aqrcjl#FCCONFIGSUBSTITUTEWITHPAT
+ 135. file:///tmp/html-aqrcjl#FCCONFIGSUBSTITUTE
+ 136. file:///tmp/html-aqrcjl#FCFONTMATCH
+ 137. file:///tmp/html-aqrcjl#FCFONTSORT
+ 138. file:///tmp/html-aqrcjl#FCFONTRENDERPREPARE
+ 139. file:///tmp/html-aqrcjl#FCFONTLIST
+ 140. file:///tmp/html-aqrcjl#FCCONFIGFILENAME
+ 141. file:///tmp/html-aqrcjl#FCCONFIGGETFILENAME
+ 142. file:///tmp/html-aqrcjl#FCCONFIGPARSEANDLOAD
+ 143. file:///tmp/html-aqrcjl#FCCONFIGPARSEANDLOADFROMMEMORY
+ 144. file:///tmp/html-aqrcjl#FCCONFIGGETSYSROOT
+ 145. file:///tmp/html-aqrcjl#FCCONFIGSETSYSROOT
+ 146. file:///tmp/html-aqrcjl#FCCONFIGFILEINFOITERINIT
+ 147. file:///tmp/html-aqrcjl#FCCONFIGFILEINFOITERNEXT
+ 148. file:///tmp/html-aqrcjl#FCCONFIGFILEINFOITERGET
+ 149. file:///tmp/html-aqrcjl#FCNAMEREGISTEROBJECTTYPES
+ 150. file:///tmp/html-aqrcjl#FCNAMEUNREGISTEROBJECTTYPES
+ 151. file:///tmp/html-aqrcjl#FCNAMEGETOBJECTTYPE
+ 152. file:///tmp/html-aqrcjl#FCNAMEREGISTERCONSTANTS
+ 153. file:///tmp/html-aqrcjl#FCNAMEUNREGISTERCONSTANTS
+ 154. file:///tmp/html-aqrcjl#FCNAMEGETCONSTANT
+ 155. file:///tmp/html-aqrcjl#FCNAMECONSTANT
+ 156. file:///tmp/html-aqrcjl#FCWEIGHTFROMOPENTYPEDOUBLE
+ 157. file:///tmp/html-aqrcjl#FCWEIGHTTOOPENTYPEDOUBLE
+ 158. file:///tmp/html-aqrcjl#FCWEIGHTFROMOPENTYPE
+ 159. file:///tmp/html-aqrcjl#FCWEIGHTTOOPENTYPE
+ 160. file:///tmp/html-aqrcjl#FCBLANKSCREATE
+ 161. file:///tmp/html-aqrcjl#FCBLANKSDESTROY
+ 162. file:///tmp/html-aqrcjl#FCBLANKSADD
+ 163. file:///tmp/html-aqrcjl#FCBLANKSISMEMBER
+ 164. file:///tmp/html-aqrcjl#FCATOMICCREATE
+ 165. file:///tmp/html-aqrcjl#FCATOMICLOCK
+ 166. file:///tmp/html-aqrcjl#FCATOMICNEWFILE
+ 167. file:///tmp/html-aqrcjl#FCATOMICORIGFILE
+ 168. file:///tmp/html-aqrcjl#FCATOMICREPLACEORIG
+ 169. file:///tmp/html-aqrcjl#FCATOMICDELETENEW
+ 170. file:///tmp/html-aqrcjl#FCATOMICUNLOCK
+ 171. file:///tmp/html-aqrcjl#FCATOMICDESTROY
+ 172. file:///tmp/html-aqrcjl#FCFILESCAN
+ 173. file:///tmp/html-aqrcjl#FCFILEISDIR
+ 174. file:///tmp/html-aqrcjl#FCDIRSCAN
+ 175. file:///tmp/html-aqrcjl#FCDIRSAVE
+ 176. file:///tmp/html-aqrcjl#FCDIRCACHEUNLINK
+ 177. file:///tmp/html-aqrcjl#FCDIRCACHEVALID
+ 178. file:///tmp/html-aqrcjl#FCDIRCACHELOAD
+ 179. file:///tmp/html-aqrcjl#FCDIRCACHERESCAN
+ 180. file:///tmp/html-aqrcjl#FCDIRCACHEREAD
+ 181. file:///tmp/html-aqrcjl#FCDIRCACHELOADFILE
+ 182. file:///tmp/html-aqrcjl#FCDIRCACHEUNLOAD
+ 183. file:///tmp/html-aqrcjl#FCCACHEDIR
+ 184. file:///tmp/html-aqrcjl#FCCACHECOPYSET
+ 185. file:///tmp/html-aqrcjl#FCCACHESUBDIR
+ 186. file:///tmp/html-aqrcjl#FCCACHENUMSUBDIR
+ 187. file:///tmp/html-aqrcjl#FCCACHENUMFONT
+ 188. file:///tmp/html-aqrcjl#FCDIRCACHECLEAN
+ 189. file:///tmp/html-aqrcjl#FCCACHECREATETAGFILE
+ 190. file:///tmp/html-aqrcjl#FCDIRCACHECREATEUUID
+ 191. file:///tmp/html-aqrcjl#FCDIRCACHEDELETEUUID
+ 192. file:///tmp/html-aqrcjl#FCSTRSETCREATE
+ 193. file:///tmp/html-aqrcjl#FCSTRSETMEMBER
+ 194. file:///tmp/html-aqrcjl#FCSTRSETEQUAL
+ 195. file:///tmp/html-aqrcjl#FCSTRSETADD
+ 196. file:///tmp/html-aqrcjl#FCSTRSETADDFILENAME
+ 197. file:///tmp/html-aqrcjl#FCSTRSETDEL
+ 198. file:///tmp/html-aqrcjl#FCSTRSETDESTROY
+ 199. file:///tmp/html-aqrcjl#FCSTRLISTCREATE
+ 200. file:///tmp/html-aqrcjl#FCSTRLISTFIRST
+ 201. file:///tmp/html-aqrcjl#FCSTRLISTNEXT
+ 202. file:///tmp/html-aqrcjl#FCSTRLISTDONE
+ 203. file:///tmp/html-aqrcjl#FCUTF8TOUCS4
+ 204. file:///tmp/html-aqrcjl#FCUCS4TOUTF8
+ 205. file:///tmp/html-aqrcjl#FCUTF8LEN
+ 206. file:///tmp/html-aqrcjl#FCUTF16TOUCS4
+ 207. file:///tmp/html-aqrcjl#FCUTF16LEN
+ 208. file:///tmp/html-aqrcjl#FCISLOWER
+ 209. file:///tmp/html-aqrcjl#FCISUPPER
+ 210. file:///tmp/html-aqrcjl#FCTOLOWER
+ 211. file:///tmp/html-aqrcjl#FCSTRCOPY
+ 212. file:///tmp/html-aqrcjl#FCSTRDOWNCASE
+ 213. file:///tmp/html-aqrcjl#FCSTRCOPYFILENAME
+ 214. file:///tmp/html-aqrcjl#FCSTRCMP
+ 215. file:///tmp/html-aqrcjl#FCSTRCMPIGNORECASE
+ 216. file:///tmp/html-aqrcjl#FCSTRSTR
+ 217. file:///tmp/html-aqrcjl#FCSTRSTRIGNORECASE
+ 218. file:///tmp/html-aqrcjl#FCSTRPLUS
+ 219. file:///tmp/html-aqrcjl#FCSTRFREE
+ 220. file:///tmp/html-aqrcjl#FCSTRBUILDFILENAME
+ 221. file:///tmp/html-aqrcjl#FCSTRDIRNAME
+ 222. file:///tmp/html-aqrcjl#FCSTRBASENAME

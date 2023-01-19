@@ -25,24 +25,32 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
+#include <errno.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifndef HAVE_STRUCT_DIRENT_D_TYPE
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #endif
-#include "fcstr.c"
-#undef FcConfigBuildFonts
-#undef FcConfigCreate
-#undef FcConfigGetCurrent
-#undef FcConfigParseAndLoadFromMemory
-#undef FcConfigUptoDate
-#undef FcFontList
-#undef FcInitReinitialize
-#undef FcPatternCreate
-#undef FcPatternDestroy
 #include <fontconfig/fontconfig.h>
+
+#ifdef _WIN32
+#  define FC_DIR_SEPARATOR         '\\'
+#  define FC_DIR_SEPARATOR_S       "\\"
+#else
+#  define FC_DIR_SEPARATOR         '/'
+#  define FC_DIR_SEPARATOR_S       "/"
+#endif
+
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path,mode) _mkdir(path)
+#endif
 
 #ifdef HAVE_MKDTEMP
 #define fc_mkdtemp	mkdtemp
@@ -154,26 +162,14 @@ unlink_dirs (const char *dir)
     return ret;
 }
 
-FcChar8 *
-FcLangNormalize (const FcChar8 *lang)
-{
-    return NULL;
-}
-
-FcChar8 *
-FcConfigHome (void)
-{
-    return NULL;
-}
-
 int
 main (void)
 {
-    FcChar8 *fontdir = NULL, *cachedir = NULL, *fontname;
+    FcChar8 *fontdir = NULL, *cachedir = NULL;
     char *basedir, template[512] = "/tmp/bz106632-XXXXXX";
     char cmd[512];
     FcConfig *config;
-    const FcChar8 *tconf = "<fontconfig>\n"
+    const FcChar8 *tconf = (const FcChar8 *) "<fontconfig>\n"
 	"  <dir>%s</dir>\n"
 	"  <cachedir>%s</cachedir>\n"
 	"</fontconfig>\n";
@@ -189,21 +185,21 @@ main (void)
 	fprintf (stderr, "%s: %s\n", template, strerror (errno));
 	goto bail;
     }
-    fontdir = FcStrBuildFilename (basedir, "fonts", NULL);
-    cachedir = FcStrBuildFilename (basedir, "cache", NULL);
+    fontdir = FcStrBuildFilename ((const FcChar8 *) basedir, (const FcChar8 *) "fonts", NULL);
+    cachedir = FcStrBuildFilename ((const FcChar8 *) basedir, (const FcChar8 *) "cache", NULL);
     fprintf (stderr, "D: Creating %s\n", fontdir);
-    mkdir_p (fontdir);
+    mkdir_p ((const char *) fontdir);
     fprintf (stderr, "D: Creating %s\n", cachedir);
-    mkdir_p (cachedir);
+    mkdir_p ((const char *) cachedir);
 
     fprintf (stderr, "D: Copying %s to %s\n", FONTFILE, fontdir);
-    snprintf (cmd, 512, "cp -a %s %s", FONTFILE, fontdir);
-    system (cmd);
+    snprintf (cmd, 512, "sleep 1; cp -a %s %s; sleep 1", FONTFILE, fontdir);
+    (void) system (cmd);
 
     fprintf (stderr, "D: Loading a config\n");
-    snprintf (conf, 1024, tconf, fontdir, cachedir);
+    snprintf (conf, 1024, (const char *) tconf, fontdir, cachedir);
     config = FcConfigCreate ();
-    if (!FcConfigParseAndLoadFromMemory (config, conf, FcTrue))
+    if (!FcConfigParseAndLoadFromMemory (config, (const FcChar8 *) conf, FcTrue))
     {
 	printf ("E: Unable to load config\n");
 	ret = 1;
@@ -225,14 +221,21 @@ main (void)
 	ret = 1;
 	goto bail;
     }
+    FcFontSetDestroy (fs);
     fprintf (stderr, "D: Removing %s\n", fontdir);
-    snprintf (cmd, 512, "rm -f %s%s*", fontdir, FC_DIR_SEPARATOR_S);
-    system (cmd);
+    snprintf (cmd, 512, "sleep 1; rm -f %s%s*; sleep 1", fontdir, FC_DIR_SEPARATOR_S);
+    (void) system (cmd);
     fprintf (stderr, "D: Reinitializing\n");
-    if (!FcConfigUptoDate (config) || !FcInitReinitialize ())
+    if (FcConfigUptoDate(config))
+    {
+	fprintf (stderr, "E: Config reports up-to-date\n");
+	ret = 2;
+	goto bail;
+    }
+    if (!FcInitReinitialize ())
     {
 	fprintf (stderr, "E: Unable to reinitialize\n");
-	ret = 2;
+	ret = 3;
 	goto bail;
     }
     if (FcConfigGetCurrent () == config)
@@ -241,8 +244,10 @@ main (void)
 	ret = 3;
 	goto bail;
     }
+    FcConfigDestroy (config);
+
     config = FcConfigCreate ();
-    if (!FcConfigParseAndLoadFromMemory (config, conf, FcTrue))
+    if (!FcConfigParseAndLoadFromMemory (config, (const FcChar8 *) conf, FcTrue))
     {
 	printf ("E: Unable to load config again\n");
 	ret = 4;
@@ -264,11 +269,18 @@ main (void)
 	ret = 1;
 	goto bail;
     }
+    FcFontSetDestroy (fs);
     fprintf (stderr, "D: Copying %s to %s\n", FONTFILE, fontdir);
-    snprintf (cmd, 512, "cp -a %s %s", FONTFILE, fontdir);
-    system (cmd);
+    snprintf (cmd, 512, "sleep 1; cp -a %s %s; sleep 1", FONTFILE, fontdir);
+    (void) system (cmd);
     fprintf (stderr, "D: Reinitializing\n");
-    if (!FcConfigUptoDate (config) || !FcInitReinitialize ())
+    if (FcConfigUptoDate(config))
+    {
+	fprintf (stderr, "E: Config up-to-date after addition\n");
+	ret = 3;
+	goto bail;
+    }
+    if (!FcInitReinitialize ())
     {
 	fprintf (stderr, "E: Unable to reinitialize\n");
 	ret = 2;
@@ -280,8 +292,10 @@ main (void)
 	ret = 3;
 	goto bail;
     }
+    FcConfigDestroy (config);
+
     config = FcConfigCreate ();
-    if (!FcConfigParseAndLoadFromMemory (config, conf, FcTrue))
+    if (!FcConfigParseAndLoadFromMemory (config, (const FcChar8 *) conf, FcTrue))
     {
 	printf ("E: Unable to load config again\n");
 	ret = 4;
@@ -303,10 +317,13 @@ main (void)
 	ret = 1;
 	goto bail;
     }
+    FcFontSetDestroy (fs);
+    FcConfigDestroy (config);
 
 bail:
     fprintf (stderr, "Cleaning up\n");
-    unlink_dirs (basedir);
+    if (basedir)
+	unlink_dirs (basedir);
     if (fontdir)
 	FcStrFree (fontdir);
     if (cachedir)

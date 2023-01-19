@@ -77,16 +77,16 @@ AM_CPPFLAGS = 						\
 	$(ICONV_CFLAGS)					\
 	$(LIBXML2_CFLAGS)				\
 	$(EXPAT_CFLAGS)					\
-	$(UUID_CFLAGS)					\
 	$(WARN_CFLAGS)					\
 	-DFC_CACHEDIR='"$(FC_CACHEDIR)"'                \
+	-DCONFIGDIR='"$(CONFIGDIR)"'			\
 	-DFONTCONFIG_PATH='"$(BASECONFIGDIR)"'		\
 	-DFC_TEMPLATEDIR='"$(TEMPLATEDIR)"'
 LDADD  = $(LIBINTL)
 
 EXTRA_DIST += makealias
 
-noinst_HEADERS=fcint.h fcftint.h fcdeprecate.h fcstdint.h
+noinst_HEADERS=fcint.h fcftint.h fcdeprecate.h fcfoundry.h fcmd5.h fcstdint.h
 
 ALIAS_FILES = fcalias.h fcaliastail.h fcftalias.h fcftaliastail.h
 
@@ -167,7 +167,7 @@ lib_LTLIBRARIES = libfontconfig.la
 libfontconfig_la_LDFLAGS =			\
 	-version-info @LIBT_VERSION_INFO@ -no-undefined $(export_symbols)
 
-libfontconfig_la_LIBADD = $(ICONV_LIBS) $(FREETYPE_LIBS) $(LIBXML2_LIBS) $(EXPAT_LIBS) $(UUID_LIBS) $(LTLIBINTL)
+libfontconfig_la_LIBADD = $(ICONV_LIBS) $(FREETYPE_LIBS) $(LIBXML2_LIBS) $(EXPAT_LIBS) $(LTLIBINTL)
 
 libfontconfig_la_DEPENDENCIES = $(fontconfig_def_dependency)
 
