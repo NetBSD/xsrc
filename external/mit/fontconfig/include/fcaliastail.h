@@ -34,6 +34,8 @@ extern __typeof (FcDirCacheDeleteUUID) FcDirCacheDeleteUUID __attribute((alias("
 extern __typeof (FcConfigHome) FcConfigHome __attribute((alias("IA__FcConfigHome"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcConfigEnableHome
 extern __typeof (FcConfigEnableHome) FcConfigEnableHome __attribute((alias("IA__FcConfigEnableHome"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
+# undef FcConfigGetFilename
+extern __typeof (FcConfigGetFilename) FcConfigGetFilename __attribute((alias("IA__FcConfigGetFilename"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcConfigFilename
 extern __typeof (FcConfigFilename) FcConfigFilename __attribute((alias("IA__FcConfigFilename"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcConfigCreate
@@ -462,6 +464,8 @@ extern __typeof (FcUcs4ToUtf8) FcUcs4ToUtf8 __attribute((alias("IA__FcUcs4ToUtf8
 extern __typeof (FcUtf16ToUcs4) FcUtf16ToUcs4 __attribute((alias("IA__FcUtf16ToUcs4"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcUtf16Len
 extern __typeof (FcUtf16Len) FcUtf16Len __attribute((alias("IA__FcUtf16Len"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
+# undef FcStrBuildFilename
+extern __typeof (FcStrBuildFilename) FcStrBuildFilename __attribute((alias("IA__FcStrBuildFilename"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcStrDirname
 extern __typeof (FcStrDirname) FcStrDirname __attribute((alias("IA__FcStrDirname"))) FC_ATTRIBUTE_VISIBILITY_EXPORT;
 # undef FcStrBasename

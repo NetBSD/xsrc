@@ -28,6 +28,8 @@ extern __typeof (FcConfigHome) IA__FcConfigHome FC_ATTRIBUTE_VISIBILITY_HIDDEN;
 #define FcConfigHome IA__FcConfigHome
 extern __typeof (FcConfigEnableHome) IA__FcConfigEnableHome FC_ATTRIBUTE_VISIBILITY_HIDDEN;
 #define FcConfigEnableHome IA__FcConfigEnableHome
+extern __typeof (FcConfigGetFilename) IA__FcConfigGetFilename FC_ATTRIBUTE_VISIBILITY_HIDDEN;
+#define FcConfigGetFilename IA__FcConfigGetFilename
 extern __typeof (FcConfigFilename) IA__FcConfigFilename FC_ATTRIBUTE_VISIBILITY_HIDDEN;
 #define FcConfigFilename IA__FcConfigFilename
 extern __typeof (FcConfigCreate) IA__FcConfigCreate FC_ATTRIBUTE_VISIBILITY_HIDDEN;
@@ -412,6 +414,8 @@ extern __typeof (FcUtf16ToUcs4) IA__FcUtf16ToUcs4 FC_ATTRIBUTE_VISIBILITY_HIDDEN
 #define FcUtf16ToUcs4 IA__FcUtf16ToUcs4
 extern __typeof (FcUtf16Len) IA__FcUtf16Len FC_ATTRIBUTE_VISIBILITY_HIDDEN;
 #define FcUtf16Len IA__FcUtf16Len
+extern __typeof (FcStrBuildFilename) IA__FcStrBuildFilename FC_ATTRIBUTE_VISIBILITY_HIDDEN;
+#define FcStrBuildFilename IA__FcStrBuildFilename
 extern __typeof (FcStrDirname) IA__FcStrDirname FC_ATTRIBUTE_VISIBILITY_HIDDEN;
 #define FcStrDirname IA__FcStrDirname
 extern __typeof (FcStrBasename) IA__FcStrBasename FC_ATTRIBUTE_VISIBILITY_HIDDEN;

@@ -25,14 +25,65 @@
 /* Objects MT-safe for readonly access. */
 
 #include "fcint.h"
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 #include <sys/types.h>
 
 #if defined (_WIN32) && !defined (R_OK)
 #define R_OK 4
 #endif
 
+#if defined(_WIN32) && !defined(S_ISFIFO)
+#define S_ISFIFO(m) 0
+#endif
+
 static FcConfig    *_fcConfig; /* MT-safe */
+static FcMutex	   *_lock;
+
+static void
+lock_config (void)
+{
+    FcMutex *lock;
+retry:
+    lock = fc_atomic_ptr_get (&_lock);
+    if (!lock)
+    {
+	lock = (FcMutex *) malloc (sizeof (FcMutex));
+	FcMutexInit (lock);
+	if (!fc_atomic_ptr_cmpexch (&_lock, NULL, lock))
+	{
+	    FcMutexFinish (lock);
+	    free (lock);
+	    goto retry;
+	}
+	FcMutexLock (lock);
+	/* Initialize random state */
+	FcRandom ();
+	return;
+    }
+    FcMutexLock (lock);
+}
+
+static void
+unlock_config (void)
+{
+    FcMutex *lock;
+    lock = fc_atomic_ptr_get (&_lock);
+    FcMutexUnlock (lock);
+}
+
+static void
+free_lock (void)
+{
+    FcMutex *lock;
+    lock = fc_atomic_ptr_get (&_lock);
+    if (lock && fc_atomic_ptr_cmpexch (&_lock, lock, NULL))
+    {
+	FcMutexFinish (lock);
+	free (lock);
+    }
+}
 
 static FcConfig *
 FcConfigEnsure (void)
@@ -44,24 +95,13 @@ retry:
     {
 	config = FcInitLoadConfigAndFonts ();
 
-	if (!fc_atomic_ptr_cmpexch (&_fcConfig, NULL, config)) {
-	    FcConfigDestroy (config);
+	if (!config || !fc_atomic_ptr_cmpexch (&_fcConfig, NULL, config)) {
+	    if (config)
+		FcConfigDestroy (config);
 	    goto retry;
 	}
     }
     return config;
-}
-
-static FcChar32
-FcHashAsStrIgnoreCase (const void *data)
-{
-    return FcStrHashIgnoreCase (data);
-}
-
-static int
-FcCompareAsStr (const void *v1, const void *v2)
-{
-    return FcStrCmp (v1, v2);
 }
 
 static void
@@ -76,12 +116,6 @@ FcDestroyAsRuleSet (void *data)
     FcRuleSetDestroy (data);
 }
 
-static void
-FcDestroyAsStr (void *data)
-{
-    FcStrFree (data);
-}
-
 FcBool
 FcConfigInit (void)
 {
@@ -94,8 +128,8 @@ FcConfigFini (void)
     FcConfig *cfg = fc_atomic_ptr_get (&_fcConfig);
     if (cfg && fc_atomic_ptr_cmpexch (&_fcConfig, cfg, NULL))
 	FcConfigDestroy (cfg);
+    free_lock ();
 }
-
 
 FcConfig *
 FcConfigCreate (void)
@@ -112,6 +146,10 @@ FcConfigCreate (void)
     config->configDirs = FcStrSetCreate ();
     if (!config->configDirs)
 	goto bail1;
+
+    config->configMapDirs = FcStrSetCreate();
+    if (!config->configMapDirs)
+	goto bail1_5;
 
     config->configFiles = FcStrSetCreate ();
     if (!config->configFiles)
@@ -159,7 +197,7 @@ FcConfigCreate (void)
 
     config->expr_pool = NULL;
 
-    config->sysRoot = NULL;
+    config->sysRoot = FcStrRealPath ((const FcChar8 *) getenv("FONTCONFIG_SYSROOT"));
 
     config->rulesetList = FcPtrListCreate (FcDestroyAsRuleSet);
     if (!config->rulesetList)
@@ -167,13 +205,6 @@ FcConfigCreate (void)
     config->availConfigFiles = FcStrSetCreate ();
     if (!config->availConfigFiles)
 	goto bail10;
-
-    config->uuid_table = FcHashTableCreate (FcHashAsStrIgnoreCase,
-					    FcCompareAsStr,
-					    FcHashStrCopy,
-					    FcHashUuidCopy,
-					    FcDestroyAsStr,
-					    FcHashUuidFree);
 
     FcRefInit (&config->ref, 1);
 
@@ -199,6 +230,8 @@ bail4:
 bail3:
     FcStrSetDestroy (config->configFiles);
 bail2:
+    FcStrSetDestroy (config->configMapDirs);
+bail1_5:
     FcStrSetDestroy (config->configDirs);
 bail1:
     free (config);
@@ -233,12 +266,12 @@ FcConfigUptoDate (FcConfig *config)
 {
     FcFileTime	config_time, config_dir_time, font_time;
     time_t	now = time(0);
+    FcBool	ret = FcTrue;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+	return FcFalse;
+
     config_time = FcConfigNewestFile (config->configFiles);
     config_dir_time = FcConfigNewestFile (config->configDirs);
     font_time = FcConfigNewestFile (config->fontDirs);
@@ -254,13 +287,19 @@ FcConfigUptoDate (FcConfig *config)
 	    fprintf (stderr,
                     "Fontconfig warning: Directory/file mtime in the future. New fonts may not be detected.\n");
 	    config->rescanTime = now;
-	    return FcTrue;
+	    goto bail;
 	}
 	else
-	    return FcFalse;
+	{
+	    ret = FcFalse;
+	    goto bail;
+	}
     }
     config->rescanTime = now;
-    return FcTrue;
+bail:
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcExpr *
@@ -287,12 +326,31 @@ FcConfigReference (FcConfig *config)
 {
     if (!config)
     {
-	config = FcConfigGetCurrent ();
+	/* lock during obtaining the value from _fcConfig and count up refcount there,
+	 * there are the race between them.
+	 */
+	lock_config ();
+    retry:
+	config = fc_atomic_ptr_get (&_fcConfig);
 	if (!config)
-	    return 0;
-    }
+	{
+	    unlock_config ();
 
-    FcRefInc (&config->ref);
+	    config = FcInitLoadConfigAndFonts ();
+	    if (!config)
+		goto retry;
+	    lock_config ();
+	    if (!fc_atomic_ptr_cmpexch (&_fcConfig, NULL, config))
+	    {
+		FcConfigDestroy (config);
+		goto retry;
+	    }
+	}
+	FcRefInc (&config->ref);
+	unlock_config ();
+    }
+    else
+	FcRefInc (&config->ref);
 
     return config;
 }
@@ -310,6 +368,7 @@ FcConfigDestroy (FcConfig *config)
     (void) fc_atomic_ptr_cmpexch (&_fcConfig, config, NULL);
 
     FcStrSetDestroy (config->configDirs);
+    FcStrSetDestroy (config->configMapDirs);
     FcStrSetDestroy (config->fontDirs);
     FcStrSetDestroy (config->cacheDirs);
     FcStrSetDestroy (config->configFiles);
@@ -335,8 +394,6 @@ FcConfigDestroy (FcConfig *config)
     }
     if (config->sysRoot)
 	FcStrFree (config->sysRoot);
-
-    FcHashTableDestroy (config->uuid_table);
 
     free (config);
 }
@@ -472,25 +529,32 @@ FcBool
 FcConfigBuildFonts (FcConfig *config)
 {
     FcFontSet	    *fonts;
+    FcBool	    ret = FcTrue;
 
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+	return FcFalse;
 	
     fonts = FcFontSetCreate ();
     if (!fonts)
-	return FcFalse;
+    {
+	ret = FcFalse;
+	goto bail;
+    }
 
     FcConfigSetFonts (config, fonts, FcSetSystem);
 
     if (!FcConfigAddDirList (config, FcSetSystem, config->fontDirs))
-	return FcFalse;
+    {
+	ret = FcFalse;
+	goto bail;
+    }
     if (FcDebug () & FC_DBG_FONTSET)
 	FcFontSetPrint (fonts);
-    return FcTrue;
+bail:
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcBool
@@ -498,20 +562,29 @@ FcConfigSetCurrent (FcConfig *config)
 {
     FcConfig *cfg;
 
+    if (config)
+    {
+	if (!config->fonts[FcSetSystem])
+	    if (!FcConfigBuildFonts (config))
+		return FcFalse;
+	FcRefInc (&config->ref);
+    }
+
+    lock_config ();
 retry:
     cfg = fc_atomic_ptr_get (&_fcConfig);
 
     if (config == cfg)
+    {
+	unlock_config ();
+	if (config)
+	    FcConfigDestroy (config);
 	return FcTrue;
-
-    if (config && !config->fonts[FcSetSystem])
-	if (!FcConfigBuildFonts (config))
-	    return FcFalse;
+    }
 
     if (!fc_atomic_ptr_cmpexch (&_fcConfig, cfg, config))
 	goto retry;
-
-    FcConfigReference (config);
+    unlock_config ();
     if (cfg)
 	FcConfigDestroy (cfg);
 
@@ -534,32 +607,133 @@ FcConfigAddConfigDir (FcConfig	    *config,
 FcStrList *
 FcConfigGetConfigDirs (FcConfig   *config)
 {
+    FcStrList *ret;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return 0;
-    }
-    return FcStrListCreate (config->configDirs);
+	return NULL;
+    ret = FcStrListCreate (config->configDirs);
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcBool
 FcConfigAddFontDir (FcConfig	    *config,
-		    const FcChar8   *d)
+		    const FcChar8   *d,
+		    const FcChar8   *m,
+		    const FcChar8   *salt)
 {
-    return FcStrSetAddFilename (config->fontDirs, d);
+    if (FcDebug() & FC_DBG_CACHE)
+    {
+	if (m)
+	{
+	    printf ("%s -> %s%s%s%s\n", d, m, salt ? " (salt: " : "", salt ? (const char *)salt : "", salt ? ")" : "");
+	}
+	else if (salt)
+	{
+	    printf ("%s%s%s%s\n", d, salt ? " (salt: " : "", salt ? (const char *)salt : "", salt ? ")" : "");
+	}
+    }
+    return FcStrSetAddFilenamePairWithSalt (config->fontDirs, d, m, salt);
+}
+
+FcBool
+FcConfigResetFontDirs (FcConfig *config)
+{
+    if (FcDebug() & FC_DBG_CACHE)
+    {
+	printf ("Reset font directories!\n");
+    }
+    return FcStrSetDeleteAll (config->fontDirs);
 }
 
 FcStrList *
 FcConfigGetFontDirs (FcConfig	*config)
 {
+    FcStrList *ret;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return 0;
+	return NULL;
+    ret = FcStrListCreate (config->fontDirs);
+    FcConfigDestroy (config);
+
+    return ret;
+}
+
+static FcBool
+FcConfigPathStartsWith(const FcChar8	*path,
+		       const FcChar8	*start)
+{
+    int len = strlen((char *) start);
+
+    if (strncmp((char *) path, (char *) start, len) != 0)
+	return FcFalse;
+
+    switch (path[len]) {
+    case '\0':
+    case FC_DIR_SEPARATOR:
+	return FcTrue;
+    default:
+	return FcFalse;
     }
-    return FcStrListCreate (config->fontDirs);
+}
+
+FcChar8 *
+FcConfigMapFontPath(FcConfig		*config,
+		    const FcChar8	*path)
+{
+    FcStrList	*list;
+    FcChar8	*dir;
+    const FcChar8 *map, *rpath;
+    FcChar8     *retval;
+
+    list = FcConfigGetFontDirs(config);
+    if (!list)
+	return 0;
+    while ((dir = FcStrListNext(list)))
+	if (FcConfigPathStartsWith(path, dir))
+	    break;
+    FcStrListDone(list);
+    if (!dir)
+	return 0;
+    map = FcStrTripleSecond(dir);
+    if (!map)
+	return 0;
+    rpath = path + strlen ((char *) dir);
+    while (*rpath == '/')
+	rpath++;
+    retval = FcStrBuildFilename(map, rpath, NULL);
+    if (retval)
+    {
+	size_t len = strlen ((const char *) retval);
+	while (len > 0 && retval[len-1] == '/')
+	    len--;
+	/* trim the last slash */
+	retval[len] = 0;
+    }
+    return retval;
+}
+
+const FcChar8 *
+FcConfigMapSalt (FcConfig      *config,
+		 const FcChar8 *path)
+{
+    FcStrList *list;
+    FcChar8 *dir;
+
+    list = FcConfigGetFontDirs (config);
+    if (!list)
+	return NULL;
+    while ((dir = FcStrListNext (list)))
+	if (FcConfigPathStartsWith (path, dir))
+	    break;
+    FcStrListDone (list);
+    if (!dir)
+	return NULL;
+
+    return FcStrTripleThird (dir);
 }
 
 FcBool
@@ -570,15 +744,17 @@ FcConfigAddCacheDir (FcConfig	    *config,
 }
 
 FcStrList *
-FcConfigGetCacheDirs (const FcConfig *config)
+FcConfigGetCacheDirs (FcConfig *config)
 {
+    FcStrList *ret;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return 0;
-    }
-    return FcStrListCreate (config->cacheDirs);
+	return NULL;
+    ret = FcStrListCreate (config->cacheDirs);
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcBool
@@ -586,7 +762,7 @@ FcConfigAddConfigFile (FcConfig	    *config,
 		       const FcChar8   *f)
 {
     FcBool	ret;
-    FcChar8	*file = FcConfigFilename (f);
+    FcChar8	*file = FcConfigGetFilename (config, f);
 
     if (!file)
 	return FcFalse;
@@ -599,13 +775,15 @@ FcConfigAddConfigFile (FcConfig	    *config,
 FcStrList *
 FcConfigGetConfigFiles (FcConfig    *config)
 {
+    FcStrList *ret;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return 0;
-    }
-    return FcStrListCreate (config->configFiles);
+	return NULL;
+    ret = FcStrListCreate (config->configFiles);
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcChar8 *
@@ -684,25 +862,26 @@ FcConfigAddBlank (FcConfig	*config FC_UNUSED,
 int
 FcConfigGetRescanInterval (FcConfig *config)
 {
+    int ret;
+
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return 0;
-    }
-    return config->rescanInterval;
+	return 0;
+    ret = config->rescanInterval;
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcBool
 FcConfigSetRescanInterval (FcConfig *config, int rescanInterval)
 {
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+	return FcFalse;
     config->rescanInterval = rescanInterval;
+    FcConfigDestroy (config);
+
     return FcTrue;
 }
 
@@ -733,35 +912,45 @@ FcConfigAddRule (FcConfig	*config,
 static FcValue
 FcConfigPromote (FcValue v, FcValue u, FcValuePromotionBuffer *buf)
 {
-    if (v.type == FcTypeInteger)
+    switch (v.type)
     {
-	v.type = FcTypeDouble;
-	v.u.d = (double) v.u.i;
-    }
-    else if (v.type == FcTypeVoid && u.type == FcTypeMatrix)
-    {
-	v.u.m = &FcIdentityMatrix;
-	v.type = FcTypeMatrix;
-    }
-    else if (buf && v.type == FcTypeString && u.type == FcTypeLangSet)
-    {
-	v.u.l = FcLangSetPromote (v.u.s, buf);
-	v.type = FcTypeLangSet;
-    }
-    else if (buf && v.type == FcTypeVoid && u.type == FcTypeLangSet)
-    {
-	v.u.l = FcLangSetPromote (NULL, buf);
-	v.type = FcTypeLangSet;
-    }
-    else if (buf && v.type == FcTypeVoid && u.type == FcTypeCharSet)
-    {
-	v.u.c = FcCharSetPromote (buf);
-	v.type = FcTypeCharSet;
-    }
-    if (buf && v.type == FcTypeDouble && u.type == FcTypeRange)
-    {
-	v.u.r = FcRangePromote (v.u.d, buf);
-	v.type = FcTypeRange;
+    case FcTypeInteger:
+        v.type = FcTypeDouble;
+        v.u.d = (double) v.u.i;
+        /* Fallthrough */
+    case FcTypeDouble:
+        if (u.type == FcTypeRange && buf)
+        {
+            v.u.r = FcRangePromote (v.u.d, buf);
+            v.type = FcTypeRange;
+        }
+        break;
+    case FcTypeVoid:
+        if (u.type == FcTypeMatrix)
+        {
+            v.u.m = &FcIdentityMatrix;
+            v.type = FcTypeMatrix;
+        }
+        else if (u.type == FcTypeLangSet && buf)
+        {
+            v.u.l = FcLangSetPromote (NULL, buf);
+            v.type = FcTypeLangSet;
+        }
+        else if (u.type == FcTypeCharSet && buf)
+        {
+            v.u.c = FcCharSetPromote (buf);
+            v.type = FcTypeCharSet;
+        }
+        break;
+    case FcTypeString:
+        if (u.type == FcTypeLangSet && buf)
+        {
+            v.u.l = FcLangSetPromote (v.u.s, buf);
+            v.type = FcTypeLangSet;
+        }
+        break;
+    default:
+        break;
     }
     return v;
 }
@@ -771,195 +960,247 @@ FcConfigCompareValue (const FcValue	*left_o,
 		      unsigned int      op_,
 		      const FcValue	*right_o)
 {
-    FcValue	left = FcValueCanonicalize(left_o);
-    FcValue	right = FcValueCanonicalize(right_o);
+    FcValue     left;
+    FcValue     right;
     FcBool	ret = FcFalse;
     FcOp	op = FC_OP_GET_OP (op_);
     int		flags = FC_OP_GET_FLAGS (op_);
     FcValuePromotionBuffer buf1, buf2;
 
-    left = FcConfigPromote (left, right, &buf1);
-    right = FcConfigPromote (right, left, &buf2);
-    if (left.type == right.type)
+    if (left_o->type != right_o->type)
     {
-	switch (left.type) {
-	case FcTypeUnknown:
-	    break;	/* No way to guess how to compare for this object */
-	case FcTypeInteger:
-	    break;	/* FcConfigPromote prevents this from happening */
-	case FcTypeDouble:
-	    switch ((int) op) {
-	    case FcOpEqual:
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = left.u.d == right.u.d;
-		break;
-	    case FcOpNotEqual:
-	    case FcOpNotContains:
-		ret = left.u.d != right.u.d;
-		break;
-	    case FcOpLess:
-		ret = left.u.d < right.u.d;
-		break;
-	    case FcOpLessEqual:
-		ret = left.u.d <= right.u.d;
-		break;
-	    case FcOpMore:
-		ret = left.u.d > right.u.d;
-		break;
-	    case FcOpMoreEqual:
-		ret = left.u.d >= right.u.d;
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeBool:
-	    switch ((int) op) {
-	    case FcOpEqual:
-		ret = left.u.b == right.u.b;
-		break;
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = left.u.b == right.u.b || left.u.b == FcDontCare;
-		break;
-	    case FcOpNotEqual:
-		ret = left.u.b != right.u.b;
-		break;
-	    case FcOpNotContains:
-		ret = !(left.u.b == right.u.b || left.u.b == FcDontCare);
-		break;
-	    case FcOpLess:
-		ret = left.u.b != right.u.b && right.u.b == FcDontCare;
-		break;
-	    case FcOpLessEqual:
-		ret = left.u.b == right.u.b || right.u.b == FcDontCare;
-		break;
-	    case FcOpMore:
-		ret = left.u.b != right.u.b && left.u.b == FcDontCare;
-		break;
-	    case FcOpMoreEqual:
-		ret = left.u.b == right.u.b || left.u.b == FcDontCare;
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeString:
-	    switch ((int) op) {
-	    case FcOpEqual:
-	    case FcOpListing:
-		if (flags & FcOpFlagIgnoreBlanks)
-		    ret = FcStrCmpIgnoreBlanksAndCase (left.u.s, right.u.s) == 0;
-		else
-		    ret = FcStrCmpIgnoreCase (left.u.s, right.u.s) == 0;
-		break;
-	    case FcOpContains:
-		ret = FcStrStrIgnoreCase (left.u.s, right.u.s) != 0;
-		break;
-	    case FcOpNotEqual:
-		if (flags & FcOpFlagIgnoreBlanks)
-		    ret = FcStrCmpIgnoreBlanksAndCase (left.u.s, right.u.s) != 0;
-		else
-		    ret = FcStrCmpIgnoreCase (left.u.s, right.u.s) != 0;
-		break;
-	    case FcOpNotContains:
-		ret = FcStrStrIgnoreCase (left.u.s, right.u.s) == 0;
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeMatrix:
-	    switch ((int) op) {
-	    case FcOpEqual:
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = FcMatrixEqual (left.u.m, right.u.m);
-		break;
-	    case FcOpNotEqual:
-	    case FcOpNotContains:
-		ret = !FcMatrixEqual (left.u.m, right.u.m);
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeCharSet:
-	    switch ((int) op) {
-	    case FcOpContains:
-	    case FcOpListing:
-		/* left contains right if right is a subset of left */
-		ret = FcCharSetIsSubset (right.u.c, left.u.c);
-		break;
-	    case FcOpNotContains:
-		/* left contains right if right is a subset of left */
-		ret = !FcCharSetIsSubset (right.u.c, left.u.c);
-		break;
-	    case FcOpEqual:
-		ret = FcCharSetEqual (left.u.c, right.u.c);
-		break;
-	    case FcOpNotEqual:
-		ret = !FcCharSetEqual (left.u.c, right.u.c);
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeLangSet:
-	    switch ((int) op) {
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = FcLangSetContains (left.u.l, right.u.l);
-		break;
-	    case FcOpNotContains:
-		ret = !FcLangSetContains (left.u.l, right.u.l);
-		break;
-	    case FcOpEqual:
-		ret = FcLangSetEqual (left.u.l, right.u.l);
-		break;
-	    case FcOpNotEqual:
-		ret = !FcLangSetEqual (left.u.l, right.u.l);
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeVoid:
-	    switch ((int) op) {
-	    case FcOpEqual:
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = FcTrue;
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeFTFace:
-	    switch ((int) op) {
-	    case FcOpEqual:
-	    case FcOpContains:
-	    case FcOpListing:
-		ret = left.u.f == right.u.f;
-		break;
-	    case FcOpNotEqual:
-	    case FcOpNotContains:
-		ret = left.u.f != right.u.f;
-		break;
-	    default:
-		break;
-	    }
-	    break;
-	case FcTypeRange:
-	    ret = FcRangeCompare (op, left.u.r, right.u.r);
-	    break;
-	}
+        left = FcValueCanonicalize(left_o);
+        right = FcValueCanonicalize(right_o);
+        left = FcConfigPromote (left, right, &buf1);
+        right = FcConfigPromote (right, left, &buf2);
+        left_o = &left;
+        right_o = &right;
+        if (left_o->type != right_o->type)
+        {
+	    if (op == FcOpNotEqual || op == FcOpNotContains)
+	        ret = FcTrue;
+            return ret;
+        }
     }
-    else
-    {
-	if (op == FcOpNotEqual || op == FcOpNotContains)
-	    ret = FcTrue;
+    switch (left_o->type) {
+    case FcTypeUnknown:
+        break;	/* No way to guess how to compare for this object */
+    case FcTypeInteger: {
+        int l = left_o->u.i;
+        int r = right_o->u.i;
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpContains:
+        case FcOpListing:
+            ret = l == r;
+            break;
+        case FcOpNotEqual:
+        case FcOpNotContains:
+            ret = l != r;
+            break;
+        case FcOpLess:
+            ret = l < r;
+            break;
+        case FcOpLessEqual:
+            ret = l <= r;
+            break;
+        case FcOpMore:
+            ret = l > r;
+            break;
+        case FcOpMoreEqual:
+            ret = l >= r;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeDouble: {
+        double l = left_o->u.d;
+        double r = right_o->u.d;
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpContains:
+        case FcOpListing:
+            ret = l == r;
+            break;
+        case FcOpNotEqual:
+        case FcOpNotContains:
+            ret = l != r;
+            break;
+        case FcOpLess:
+            ret = l < r;
+            break;
+        case FcOpLessEqual:
+            ret = l <= r;
+            break;
+        case FcOpMore:
+            ret = l > r;
+            break;
+        case FcOpMoreEqual:
+            ret = l >= r;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeBool: {
+        FcBool l = left_o->u.b;
+        FcBool r = right_o->u.b;
+        switch ((int) op) {
+        case FcOpEqual:
+            ret = l == r;
+            break;
+        case FcOpContains:
+        case FcOpListing:
+            ret = l == r || l >= FcDontCare;
+            break;
+        case FcOpNotEqual:
+            ret = l != r;
+            break;
+        case FcOpNotContains:
+            ret = !(l == r || l >= FcDontCare);
+            break;
+        case FcOpLess:
+            ret = l != r && r >= FcDontCare;
+            break;
+        case FcOpLessEqual:
+            ret = l == r || r >= FcDontCare;
+            break;
+        case FcOpMore:
+            ret = l != r && l >= FcDontCare;
+            break;
+        case FcOpMoreEqual:
+            ret = l == r || l >= FcDontCare;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeString: {
+        const FcChar8 *l = FcValueString (left_o);
+        const FcChar8 *r = FcValueString (right_o);
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpListing:
+            if (flags & FcOpFlagIgnoreBlanks)
+                ret = FcStrCmpIgnoreBlanksAndCase (l, r) == 0;
+            else
+                ret = FcStrCmpIgnoreCase (l, r) == 0;
+            break;
+        case FcOpContains:
+            ret = FcStrStrIgnoreCase (l, r) != 0;
+            break;
+        case FcOpNotEqual:
+            if (flags & FcOpFlagIgnoreBlanks)
+                ret = FcStrCmpIgnoreBlanksAndCase (l, r) != 0;
+            else
+                ret = FcStrCmpIgnoreCase (l, r) != 0;
+            break;
+        case FcOpNotContains:
+            ret = FcStrStrIgnoreCase (l, r) == 0;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeMatrix: {
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpContains:
+        case FcOpListing:
+            ret = FcMatrixEqual (left_o->u.m, right_o->u.m);
+            break;
+        case FcOpNotEqual:
+        case FcOpNotContains:
+            ret = !FcMatrixEqual (left_o->u.m, right_o->u.m);
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeCharSet: {
+        const FcCharSet *l = FcValueCharSet (left_o);
+        const FcCharSet *r = FcValueCharSet (right_o);
+        switch ((int) op) {
+        case FcOpContains:
+        case FcOpListing:
+            /* left contains right if right is a subset of left */
+            ret = FcCharSetIsSubset (r, l);
+            break;
+        case FcOpNotContains:
+            /* left contains right if right is a subset of left */
+            ret = !FcCharSetIsSubset (r, l);
+            break;
+        case FcOpEqual:
+            ret = FcCharSetEqual (l, r);
+            break;
+        case FcOpNotEqual:
+            ret = !FcCharSetEqual (l, r);
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeLangSet: {
+        const FcLangSet *l = FcValueLangSet (left_o);
+        const FcLangSet *r = FcValueLangSet (right_o);
+        switch ((int) op) {
+        case FcOpContains:
+        case FcOpListing:
+            ret = FcLangSetContains (l, r);
+            break;
+        case FcOpNotContains:
+            ret = !FcLangSetContains (l, r);
+            break;
+        case FcOpEqual:
+            ret = FcLangSetEqual (l, r);
+            break;
+        case FcOpNotEqual:
+            ret = !FcLangSetEqual (l, r);
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    case FcTypeVoid:
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpContains:
+        case FcOpListing:
+            ret = FcTrue;
+            break;
+        default:
+            break;
+        }
+        break;
+    case FcTypeFTFace:
+        switch ((int) op) {
+        case FcOpEqual:
+        case FcOpContains:
+        case FcOpListing:
+            ret = left_o->u.f == right_o->u.f;
+            break;
+        case FcOpNotEqual:
+        case FcOpNotContains:
+            ret = left_o->u.f != right_o->u.f;
+            break;
+        default:
+            break;
+        }
+        break;
+    case FcTypeRange: {
+        const FcRange *l = FcValueRange (left_o);
+        const FcRange *r = FcValueRange (right_o);
+        ret = FcRangeCompare (op, l, r);
+        break;
+    }
     }
     return ret;
 }
@@ -1316,17 +1557,141 @@ FcConfigEvaluate (FcPattern *p, FcPattern *p_pat, FcMatchKind kind, FcExpr *e)
     return v;
 }
 
+/* The bulk of the time in FcConfigSubstitute is spent walking
+ * lists of family names. We speed this up with a hash table.
+ * Since we need to take the ignore-blanks option into account,
+ * we use two separate hash tables.
+ */
+typedef struct
+{
+  int count;
+} FamilyTableEntry;
+
+
+typedef struct
+{
+  FcHashTable *family_blank_hash;
+  FcHashTable *family_hash;
+} FamilyTable;
+
+static FcBool
+FamilyTableLookup (FamilyTable   *table,
+                   FcOp           _op,
+                   const FcChar8 *s)
+{
+    FamilyTableEntry *fe;
+    int flags = FC_OP_GET_FLAGS (_op);
+    FcHashTable *hash;
+
+    if (flags & FcOpFlagIgnoreBlanks)
+        hash = table->family_blank_hash;
+    else
+        hash = table->family_hash;
+
+    return FcHashTableFind (hash, (const void *)s, (void **)&fe);
+}
+
+static void
+FamilyTableAdd (FamilyTable    *table,
+                FcValueListPtr  values)
+{
+    FcValueListPtr ll;
+    for (ll = values; ll; ll = FcValueListNext (ll))
+        {
+            const FcChar8 *s = FcValueString (&ll->value);
+            FamilyTableEntry *fe;
+
+            if (!FcHashTableFind (table->family_hash, (const void *)s, (void **)&fe))
+            {
+                fe = malloc (sizeof (FamilyTableEntry));
+                fe->count = 0;
+                FcHashTableAdd (table->family_hash, (void *)s, fe);
+            }
+            fe->count++;
+
+            if (!FcHashTableFind (table->family_blank_hash, (const void *)s, (void **)&fe))
+            {
+                fe = malloc (sizeof (FamilyTableEntry));
+                fe->count = 0;
+                FcHashTableAdd (table->family_blank_hash, (void *)s, fe);
+            }
+            fe->count++;
+       }
+}
+
+static void
+FamilyTableDel (FamilyTable   *table,
+                const FcChar8 *s)
+{
+    FamilyTableEntry *fe;
+
+    if (FcHashTableFind (table->family_hash, (void *)s, (void **)&fe))
+    {
+        fe->count--;
+        if (fe->count == 0)
+            FcHashTableRemove (table->family_hash, (void *)s);
+    }
+
+    if (FcHashTableFind (table->family_blank_hash, (void *)s, (void **)&fe))
+    {
+        fe->count--;
+        if (fe->count == 0)
+            FcHashTableRemove (table->family_blank_hash, (void *)s);
+    }
+}
+
+static FcBool
+copy_string (const void *src, void **dest)
+{
+  *dest = strdup ((char *)src);
+  return FcTrue;
+}
+
+static void
+FamilyTableInit (FamilyTable *table,
+                 FcPattern *p)
+{
+    FcPatternElt *e;
+
+    table->family_blank_hash = FcHashTableCreate ((FcHashFunc)FcStrHashIgnoreBlanksAndCase,
+                                          (FcCompareFunc)FcStrCmpIgnoreBlanksAndCase,
+                                          (FcCopyFunc)copy_string,
+                                          NULL,
+                                          free,
+                                          free);
+    table->family_hash = FcHashTableCreate ((FcHashFunc)FcStrHashIgnoreCase,
+                                          (FcCompareFunc)FcStrCmpIgnoreCase,
+                                          (FcCopyFunc)copy_string,
+                                          NULL,
+                                          free,
+                                          free);
+    e = FcPatternObjectFindElt (p, FC_FAMILY_OBJECT);
+    if (e)
+        FamilyTableAdd (table, FcPatternEltValues (e));
+}
+
+static void
+FamilyTableClear (FamilyTable *table)
+{
+    if (table->family_blank_hash)
+        FcHashTableDestroy (table->family_blank_hash);
+    if (table->family_hash)
+        FcHashTableDestroy (table->family_hash);
+}
+
 static FcValueList *
 FcConfigMatchValueList (FcPattern	*p,
 			FcPattern	*p_pat,
 			FcMatchKind      kind,
 			FcTest		*t,
-			FcValueList	*values)
+			FcValueList	*values,
+                        FamilyTable     *table)
 {
     FcValueList	    *ret = 0;
     FcExpr	    *e = t->expr;
     FcValue	    value;
     FcValueList	    *v;
+    FcOp            op;
 
     while (e)
     {
@@ -1342,6 +1707,27 @@ FcConfigMatchValueList (FcPattern	*p,
 	    e = 0;
 	}
 
+        if (t->object == FC_FAMILY_OBJECT && table)
+        {
+            op = FC_OP_GET_OP (t->op);
+            if (op == FcOpEqual || op == FcOpListing)
+            {
+                if (!FamilyTableLookup (table, t->op, FcValueString (&value)))
+                {
+                    ret = 0;
+                    goto done;
+                }
+            }
+            if (op == FcOpNotEqual && t->qual == FcQualAll)
+            {
+                ret = 0;
+                if (!FamilyTableLookup (table, t->op, FcValueString (&value)))
+                {
+                    ret = values;
+                }
+                goto done;
+            }
+        }
 	for (v = values; v; v = FcValueListNext(v))
 	{
 	    /* Compare the pattern value to the match expression value */
@@ -1349,6 +1735,8 @@ FcConfigMatchValueList (FcPattern	*p,
 	    {
 		if (!ret)
 		    ret = v;
+                if (t->qual != FcQualAll)
+                    break;
 	    }
 	    else
 	    {
@@ -1359,6 +1747,7 @@ FcConfigMatchValueList (FcPattern	*p,
 		}
 	    }
 	}
+done:
 	FcValueDestroy (value);
     }
     return ret;
@@ -1401,7 +1790,8 @@ FcConfigAdd (FcValueListPtr *head,
 	     FcValueList    *position,
 	     FcBool	    append,
 	     FcValueList    *new,
-	     FcObject        object)
+	     FcObject        object,
+             FamilyTable    *table)
 {
     FcValueListPtr  *prev, l, last, v;
     FcValueBinding  sameBinding;
@@ -1425,6 +1815,11 @@ FcConfigAdd (FcValueListPtr *head,
 
 	    return FcFalse;
 	}
+    }
+
+    if (object == FC_FAMILY_OBJECT && table)
+    {
+        FamilyTableAdd (table, new);
     }
 
     if (position)
@@ -1493,9 +1888,16 @@ FcConfigAdd (FcValueListPtr *head,
 
 static void
 FcConfigDel (FcValueListPtr *head,
-	     FcValueList    *position)
+	     FcValueList    *position,
+             FcObject        object,
+             FamilyTable    *table)
 {
     FcValueListPtr *prev;
+
+    if (object == FC_FAMILY_OBJECT && table)
+    {
+        FamilyTableDel (table, FcValueString (&position->value));
+    }
 
     for (prev = head; *prev != NULL; prev = &(*prev)->next)
     {
@@ -1511,9 +1913,10 @@ FcConfigDel (FcValueListPtr *head,
 
 static void
 FcConfigPatternAdd (FcPattern	*p,
-		    FcObject	object,
+		    FcObject	 object,
 		    FcValueList	*list,
-		    FcBool	append)
+		    FcBool	 append,
+                    FamilyTable *table)
 {
     if (list)
     {
@@ -1521,7 +1924,7 @@ FcConfigPatternAdd (FcPattern	*p,
 
 	if (!e)
 	    return;
-	FcConfigAdd (&e->values, 0, append, list, object);
+	FcConfigAdd (&e->values, 0, append, list, object, table);
     }
 }
 
@@ -1530,13 +1933,14 @@ FcConfigPatternAdd (FcPattern	*p,
  */
 static void
 FcConfigPatternDel (FcPattern	*p,
-		    FcObject	object)
+		    FcObject	 object,
+                    FamilyTable *table)
 {
     FcPatternElt    *e = FcPatternObjectFindElt (p, object);
     if (!e)
 	return;
     while (e->values != NULL)
-	FcConfigDel (&e->values, e->values);
+	FcConfigDel (&e->values, e->values, object, table);
 }
 
 static void
@@ -1569,16 +1973,16 @@ FcConfigSubstituteWithPat (FcConfig    *config,
     int		    i, nobjs;
     FcBool	    retval = FcTrue;
     FcTest	    **tst = NULL;
-
-    if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+    FamilyTable     data;
+    FamilyTable     *table = &data;
 
     if (kind < FcMatchKindBegin || kind >= FcMatchKindEnd)
 	return FcFalse;
+
+    config = FcConfigReference (config);
+    if (!config)
+	return FcFalse;
+
     s = config->subst[kind];
     if (kind == FcMatchPattern)
     {
@@ -1668,6 +2072,9 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 	printf ("FcConfigSubstitute ");
 	FcPatternPrint (p);
     }
+
+    FamilyTableInit (&data, p);
+
     FcPtrListIterInit (s, &iter);
     for (; FcPtrListIterIsValid (s, &iter); FcPtrListIterNext (s, &iter))
     {
@@ -1704,9 +2111,15 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 			FcTestPrint (r->u.test);
 		    }
 		    if (kind == FcMatchFont && r->u.test->kind == FcMatchPattern)
+                    {
 			m = p_pat;
+                        table = NULL;
+                    }
 		    else
+                    {
 			m = p;
+                        table = &data;
+                    }
 		    if (m)
 			e = FcPatternObjectFindElt (m, r->u.test->object);
 		    else
@@ -1739,7 +2152,7 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 		     * Check to see if there is a match, mark the location
 		     * to apply match-relative edits
 		     */
-		    vl = FcConfigMatchValueList (m, p_pat, kind, r->u.test, e->values);
+		    vl = FcConfigMatchValueList (m, p_pat, kind, r->u.test, e->values, table);
 		    /* different 'kind' won't be the target of edit */
 		    if (!value[object] && kind == r->u.test->kind)
 			value[object] = vl;
@@ -1763,7 +2176,7 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 		    /*
 		     * Evaluate the list of expressions
 		     */
-		    l = FcConfigValues (p, p_pat,kind,  r->u.edit->expr, r->u.edit->binding);
+		    l = FcConfigValues (p, p_pat, kind, r->u.edit->expr, r->u.edit->binding);
 		    if (tst[object] && (tst[object]->kind == FcMatchFont || kind == FcMatchPattern))
 			elt[object] = FcPatternObjectFindElt (p, tst[object]->object);
 
@@ -1781,12 +2194,12 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 			    /*
 			     * Append the new list of values after the current value
 			     */
-			    FcConfigAdd (&elt[object]->values, thisValue, FcTrue, l, r->u.edit->object);
+			    FcConfigAdd (&elt[object]->values, thisValue, FcTrue, l, r->u.edit->object, table);
 			    /*
 			     * Delete the marked value
 			     */
 			    if (thisValue)
-				FcConfigDel (&elt[object]->values, thisValue);
+				FcConfigDel (&elt[object]->values, thisValue, object, table);
 			    /*
 			     * Adjust a pointer into the value list to ensure
 			     * future edits occur at the same place
@@ -1800,8 +2213,8 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 			 * Delete all of the values and insert
 			 * the new set
 			 */
-			FcConfigPatternDel (p, r->u.edit->object);
-			FcConfigPatternAdd (p, r->u.edit->object, l, FcTrue);
+			FcConfigPatternDel (p, r->u.edit->object, table);
+			FcConfigPatternAdd (p, r->u.edit->object, l, FcTrue, table);
 			/*
 			 * Adjust a pointer into the value list as they no
 			 * longer point to anything valid
@@ -1811,33 +2224,33 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 		    case FcOpPrepend:
 			if (value[object])
 			{
-			    FcConfigAdd (&elt[object]->values, value[object], FcFalse, l, r->u.edit->object);
+			    FcConfigAdd (&elt[object]->values, value[object], FcFalse, l, r->u.edit->object, table);
 			    break;
 			}
 			/* fall through ... */
 		    case FcOpPrependFirst:
-			FcConfigPatternAdd (p, r->u.edit->object, l, FcFalse);
+			FcConfigPatternAdd (p, r->u.edit->object, l, FcFalse, table);
 			break;
 		    case FcOpAppend:
 			if (value[object])
 			{
-			    FcConfigAdd (&elt[object]->values, value[object], FcTrue, l, r->u.edit->object);
+			    FcConfigAdd (&elt[object]->values, value[object], FcTrue, l, r->u.edit->object, table);
 			    break;
 			}
 			/* fall through ... */
 		    case FcOpAppendLast:
-			FcConfigPatternAdd (p, r->u.edit->object, l, FcTrue);
+			FcConfigPatternAdd (p, r->u.edit->object, l, FcTrue, table);
 			break;
 		    case FcOpDelete:
 			if (value[object])
 			{
-			    FcConfigDel (&elt[object]->values, value[object]);
+			    FcConfigDel (&elt[object]->values, value[object], object, table);
 			    FcValueListDestroy (l);
 			    break;
 			}
 			/* fall through ... */
 		    case FcOpDeleteAll:
-			FcConfigPatternDel (p, r->u.edit->object);
+			FcConfigPatternDel (p, r->u.edit->object, table);
 			FcValueListDestroy (l);
 			break;
 		    default:
@@ -1867,12 +2280,14 @@ FcConfigSubstituteWithPat (FcConfig    *config,
 	FcPatternPrint (p);
     }
 bail1:
+    FamilyTableClear (&data);
     if (elt)
 	free (elt);
     if (value)
 	free (value);
     if (tst)
 	free (tst);
+    FcConfigDestroy (config);
 
     return retval;
 }
@@ -2099,7 +2514,7 @@ FcConfigXdgCacheHome (void)
 
     if (!_FcConfigHomeEnabled)
 	return NULL;
-    if (env)
+    if (env && env[0])
 	ret = FcStrCopy ((const FcChar8 *)env);
     else
     {
@@ -2175,6 +2590,65 @@ FcConfigXdgDataHome (void)
     return ret;
 }
 
+FcStrSet *
+FcConfigXdgDataDirs (void)
+{
+    const char *env = getenv ("XDG_DATA_DIRS");
+    FcStrSet *ret = FcStrSetCreate ();
+
+    if (env)
+    {
+	FcChar8 *ee, *e = ee = FcStrCopy ((const FcChar8 *) env);
+
+	/* We don't intentionally use FC_SEARCH_PATH_SEPARATOR here because of:
+	 *   The directories in $XDG_DATA_DIRS should be seperated with a colon ':'.
+	 * in doc.
+	 */
+	while (e)
+	{
+	    FcChar8 *p = (FcChar8 *) strchr ((const char *) e, ':');
+	    FcChar8 *s;
+	    size_t len;
+
+	    if (!p)
+	    {
+		s = FcStrCopy (e);
+		e = NULL;
+	    }
+	    else
+	    {
+		*p = 0;
+		s = FcStrCopy (e);
+		e = p + 1;
+	    }
+	    len = strlen ((const char *) s);
+	    if (s[len - 1] == FC_DIR_SEPARATOR)
+	    {
+		do
+		{
+		    len--;
+		}
+		while (len > 1 && s[len - 1] == FC_DIR_SEPARATOR);
+		s[len] = 0;
+	    }
+	    FcStrSetAdd (ret, s);
+	    FcStrFree (s);
+	}
+	FcStrFree (ee);
+    }
+    else
+    {
+	/* From spec doc at https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+	 *
+	 * If $XDG_DATA_DIRS is either not set or empty, a value equal to /usr/local/share/:/usr/share/ should be used.
+	 */
+	FcStrSetAdd (ret, (const FcChar8 *) "/usr/local/share");
+	FcStrSetAdd (ret, (const FcChar8 *) "/usr/share");
+    }
+
+    return ret;
+}
+
 FcBool
 FcConfigEnableHome (FcBool enable)
 {
@@ -2184,10 +2658,16 @@ FcConfigEnableHome (FcBool enable)
 }
 
 FcChar8 *
-FcConfigFilename (const FcChar8 *url)
+FcConfigGetFilename (FcConfig      *config,
+		     const FcChar8 *url)
 {
     FcChar8    *file, *dir, **path, **p;
+    const FcChar8 *sysroot;
 
+    config = FcConfigReference (config);
+    if (!config)
+	return NULL;
+    sysroot = FcConfigGetSysRoot (config);
     if (!url || !*url)
     {
 	url = (FcChar8 *) getenv ("FONTCONFIG_FILE");
@@ -2197,57 +2677,99 @@ FcConfigFilename (const FcChar8 *url)
     file = 0;
 
     if (FcStrIsAbsoluteFilename(url))
-	return FcConfigFileExists (0, url);
+    {
+	if (sysroot)
+	{
+	    size_t len = strlen ((const char *) sysroot);
+
+	    /* Workaround to avoid adding sysroot repeatedly */
+	    if (strncmp ((const char *) url, (const char *) sysroot, len) == 0)
+		sysroot = NULL;
+	}
+	file = FcConfigFileExists (sysroot, url);
+	goto bail;
+    }
 
     if (*url == '~')
     {
 	dir = FcConfigHome ();
 	if (dir)
-	    file = FcConfigFileExists (dir, url + 1);
+	{
+	    FcChar8 *s;
+
+	    if (sysroot)
+		s = FcStrBuildFilename (sysroot, dir, NULL);
+	    else
+		s = dir;
+	    file = FcConfigFileExists (s, url + 1);
+	    if (sysroot)
+		FcStrFree (s);
+	}
 	else
 	    file = 0;
     }
-
-    path = FcConfigGetPath ();
-    if (!path)
-	return NULL;
-    for (p = path; *p; p++)
+    else
     {
-	file = FcConfigFileExists (*p, url);
-	if (file)
-	    break;
+	path = FcConfigGetPath ();
+	if (!path)
+	{
+	    file = NULL;
+	    goto bail;
+	}
+	for (p = path; *p; p++)
+	{
+	    FcChar8 *s;
+
+	    if (sysroot)
+		s = FcStrBuildFilename (sysroot, *p, NULL);
+	    else
+		s = *p;
+	    file = FcConfigFileExists (s, url);
+	    if (sysroot)
+		FcStrFree (s);
+	    if (file)
+		break;
+	}
+	FcConfigFreePath (path);
     }
-    FcConfigFreePath (path);
+bail:
+    FcConfigDestroy (config);
+
     return file;
+}
+
+FcChar8 *
+FcConfigFilename (const FcChar8 *url)
+{
+    return FcConfigGetFilename (NULL, url);
 }
 
 FcChar8 *
 FcConfigRealFilename (FcConfig		*config,
 		      const FcChar8	*url)
 {
-    const FcChar8 *sysroot = FcConfigGetSysRoot (config);
-    FcChar8 *n = FcConfigFilename (url);
-    FcChar8 *nn = NULL;
+    FcChar8 *n = FcConfigGetFilename (config, url);
 
     if (n)
     {
-	FcChar8 buf[PATH_MAX];
+	FcChar8 buf[FC_PATH_MAX];
 	ssize_t len;
+	struct stat sb;
 
-	if (sysroot)
-	    nn = FcStrBuildFilename (sysroot, n, NULL);
-	else
-	    nn = FcStrdup (n);
-	FcStrFree (n);
-
-	if ((len = FcReadLink (nn, buf, sizeof (buf) - 1)) != -1)
+	if ((len = FcReadLink (n, buf, sizeof (buf) - 1)) != -1)
 	{
 	    buf[len] = 0;
 
-	    if (!FcStrIsAbsoluteFilename (buf))
+	    /* We try to pick up a config from FONTCONFIG_FILE
+	     * when url is null. don't try to address the real filename
+	     * if it is a named pipe.
+	     */
+	    if (!url && FcStat (n, &sb) == 0 && S_ISFIFO (sb.st_mode))
+		return n;
+	    else if (!FcStrIsAbsoluteFilename (buf))
 	    {
-		FcChar8 *dirname = FcStrDirname (nn);
-		FcStrFree (nn);
+		FcChar8 *dirname = FcStrDirname (n);
+		FcStrFree (n);
 		if (!dirname)
 		    return NULL;
 
@@ -2256,18 +2778,18 @@ FcConfigRealFilename (FcConfig		*config,
 		if (!path)
 		    return NULL;
 
-		nn = FcStrCanonFilename (path);
+		n = FcStrCanonFilename (path);
 		FcStrFree (path);
 	    }
 	    else
 	    {
-		FcStrFree (nn);
-		nn = FcStrdup (buf);
+		FcStrFree (n);
+		n = FcStrdup (buf);
 	    }
 	}
     }
 
-    return nn;
+    return n;
 }
 
 /*
@@ -2282,17 +2804,18 @@ FcConfigAppFontAddFile (FcConfig    *config,
     FcStrSet	*subdirs;
     FcStrList	*sublist;
     FcChar8	*subdir;
+    FcBool	ret = FcTrue;
 
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+	return FcFalse;
 
     subdirs = FcStrSetCreateEx (FCSS_GROW_BY_64);
     if (!subdirs)
-	return FcFalse;
+    {
+	ret = FcFalse;
+	goto bail;
+    }
 
     set = FcConfigGetFonts (config, FcSetApplication);
     if (!set)
@@ -2301,7 +2824,8 @@ FcConfigAppFontAddFile (FcConfig    *config,
 	if (!set)
 	{
 	    FcStrSetDestroy (subdirs);
-	    return FcFalse;
+	    ret = FcFalse;
+	    goto bail;
 	}
 	FcConfigSetFonts (config, set, FcSetApplication);
     }
@@ -2309,7 +2833,8 @@ FcConfigAppFontAddFile (FcConfig    *config,
     if (!FcFileScanConfig (set, subdirs, file, config))
     {
 	FcStrSetDestroy (subdirs);
-	return FcFalse;
+	ret = FcFalse;
+	goto bail;
     }
     if ((sublist = FcStrListCreate (subdirs)))
     {
@@ -2320,7 +2845,10 @@ FcConfigAppFontAddFile (FcConfig    *config,
 	FcStrListDone (sublist);
     }
     FcStrSetDestroy (subdirs);
-    return FcTrue;
+bail:
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 FcBool
@@ -2329,17 +2857,18 @@ FcConfigAppFontAddDir (FcConfig	    *config,
 {
     FcFontSet	*set;
     FcStrSet	*dirs;
+    FcBool	ret = FcTrue;
 
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return FcFalse;
-    }
+	return FcFalse;
 
     dirs = FcStrSetCreateEx (FCSS_GROW_BY_64);
     if (!dirs)
-	return FcFalse;
+    {
+	ret = FcFalse;
+	goto bail;
+    }
 
     set = FcConfigGetFonts (config, FcSetApplication);
     if (!set)
@@ -2348,7 +2877,8 @@ FcConfigAppFontAddDir (FcConfig	    *config,
 	if (!set)
 	{
 	    FcStrSetDestroy (dirs);
-	    return FcFalse;
+	    ret = FcFalse;
+	    goto bail;
 	}
 	FcConfigSetFonts (config, set, FcSetApplication);
     }
@@ -2358,23 +2888,26 @@ FcConfigAppFontAddDir (FcConfig	    *config,
     if (!FcConfigAddDirList (config, FcSetApplication, dirs))
     {
 	FcStrSetDestroy (dirs);
-	return FcFalse;
+	ret = FcFalse;
+	goto bail;
     }
     FcStrSetDestroy (dirs);
-    return FcTrue;
+bail:
+    FcConfigDestroy (config);
+
+    return ret;
 }
 
 void
 FcConfigAppFontClear (FcConfig	    *config)
 {
+    config = FcConfigReference (config);
     if (!config)
-    {
-	config = FcConfigGetCurrent ();
-	if (!config)
-	    return;
-    }
+	return;
 
     FcConfigSetFonts (config, 0, FcSetApplication);
+
+    FcConfigDestroy (config);
 }
 
 /*
@@ -2460,11 +2993,7 @@ FcConfigGetSysRoot (const FcConfig *config)
 	if (!config)
 	    return NULL;
     }
-
-    if (config->sysRoot)
-        return config->sysRoot;
-
-    return (FcChar8 *) getenv ("FONTCONFIG_SYSROOT");
+    return config->sysRoot;
 }
 
 void
@@ -2473,7 +3002,9 @@ FcConfigSetSysRoot (FcConfig      *config,
 {
     FcChar8 *s = NULL;
     FcBool init = FcFalse;
+    int nretry = 3;
 
+retry:
     if (!config)
     {
 	/* We can't use FcConfigGetCurrent() here to ensure
@@ -2493,7 +3024,7 @@ FcConfigSetSysRoot (FcConfig      *config,
 
     if (sysroot)
     {
-	s = FcStrCopyFilename (sysroot);
+	s = FcStrRealPath (sysroot);
 	if (!s)
 	    return;
     }
@@ -2505,6 +3036,17 @@ FcConfigSetSysRoot (FcConfig      *config,
     if (init)
     {
 	config = FcInitLoadOwnConfigAndFonts (config);
+	if (!config)
+	{
+	    /* Something failed. this is usually unlikely. so retrying */
+	    init = FcFalse;
+	    if (--nretry == 0)
+	    {
+		fprintf (stderr, "Fontconfig warning: Unable to initialize config and retry limit exceeded. sysroot functionality may not work as expected.\n");
+		return;
+	    }
+	    goto retry;
+	}
 	FcConfigSetCurrent (config);
 	/* FcConfigSetCurrent() increases the refcount.
 	 * decrease it here to avoid the memory leak.

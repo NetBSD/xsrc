@@ -20,11 +20,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 #include "fcint.h"
-#if !defined TOOL_FCCACHE
-#ifndef _WIN32
-#include <uuid/uuid.h>
-#endif
-#endif
 
 #define FC_HASH_SIZE 227
 
@@ -52,25 +47,6 @@ FcHashStrCopy (const void  *src,
     *dest = FcStrdup (src);
 
     return *dest != NULL;
-}
-
-FcBool
-FcHashUuidCopy (const void  *src,
-		void       **dest)
-{
-#if !defined TOOL_FCCACHE
-#ifndef _WIN32
-    *dest = malloc (sizeof (uuid_t));
-    uuid_copy (*dest, src);
-#endif
-#endif
-    return FcTrue;
-}
-
-void
-FcHashUuidFree (void *data)
-{
-    free (data);
 }
 
 FcHashTable *
