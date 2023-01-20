@@ -1078,21 +1078,21 @@ TCLIBDIR = TclLibDir
 #define ArCmdBase ar
 #endif
 #ifndef ArCmd
-#if HasLargeTmp || SystemV4 || LinuxBinUtilsMajorVersion || defined(NetBSDArchitecture)
+#if HasLargeTmp || SystemV4 || HasGnuAr
 #define ArCmd ArCmdBase cq
 #else
 #define ArCmd ArCmdBase clq
 #endif
 #endif
 #ifndef ArAddCmd
-#if HasLargeTmp || SystemV4
+#if HasLargeTmp || SystemV4 || HasGnuAr
 #define ArAddCmd ArCmdBase ru
 #else
 #define ArAddCmd ArCmdBase rul
 #endif
 #endif
 #ifndef ArExtCmd
-#if HasLargeTmp || SystemV4
+#if HasLargeTmp || SystemV4 || HasGnuAr
 #define ArExtCmd ArCmdBase x
 #else
 #define ArExtCmd ArCmdBase xl

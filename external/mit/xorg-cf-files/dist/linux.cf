@@ -90,6 +90,10 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.220 2003/12/30 22:38:33 tsi
 # define LinuxBinUtilsMajorVersion	DefaultLinuxBinUtilsMajorVersion
 #endif
 
+#ifndef HasGnuAr
+#define HasGnuAr		YES
+#endif
+
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 XCOMM libc:	(LinuxCLibMajorVersion./**/LinuxCLibMinorVersion./**/LinuxCLibTeenyVersion)
 XCOMM binutils:	(LinuxBinUtilsMajorVersion)

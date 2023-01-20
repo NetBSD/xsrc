@@ -153,6 +153,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #ifndef HasFlex
 #define HasFlex			YES
 #endif
+#ifndef HasGnuAr
+#define HasGnuAr		YES
+#endif
 
 #ifndef HasMktemp
 #if (OSMajorVersion >= 4) || (OSMajorVersion == 3 && OSMinorVersion >= 1) || \
