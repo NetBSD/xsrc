@@ -17,18 +17,14 @@
    language is requested. */
 /* #undef ENABLE_NLS */
 
-#if 0
 /* Additional font directories */
-#define FC_ADD_FONTS "/usr/X11R7/lib/X11/fonts,/usr/pkg/share/fonts/urw,/usr/pkg/share/ghostscript/fonts,/usr/pkg/share/fonts/X11"
-#endif
+#define FC_ADD_FONTS "/usr/pkg/lib/X11/fonts,/usr/pkg/share/fonts"
 
 /* Architecture prefix to use for cache file names */
 /* #undef FC_ARCHITECTURE */
 
-#if 0
 /* System font directory */
 #define FC_DEFAULT_FONTS "<dir>/usr/X11R7/lib/X11/fonts</dir>"
-#endif
 
 /* The type of len parameter of the gperf hash/lookup function */
 #define FC_GPERF_SIZE_T size_t
@@ -282,7 +278,7 @@
 #define PACKAGE_NAME "fontconfig"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "fontconfig 2.14.0"
+#define PACKAGE_STRING "fontconfig 2.14.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "fontconfig"
@@ -291,7 +287,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.14.0"
+#define PACKAGE_VERSION "2.14.1"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -412,7 +408,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.14.0"
+#define VERSION "2.14.1"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
