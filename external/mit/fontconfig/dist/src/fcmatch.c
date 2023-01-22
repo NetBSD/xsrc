@@ -26,6 +26,12 @@
 #include <float.h>
 
 
+#ifdef __vax__
+#define SENTINEL	1e38
+#else
+#define SENTINEL	1e99
+#endif
+
 static double
 FcCompareNumber (const FcValue *value1, const FcValue *value2, FcValue *bestValue)
 {
@@ -536,8 +542,8 @@ FcCompareDataInit (FcPattern     *pat,
             if (!FcHashTableFind (table, key, (void **)&e))
             {
                 e = malloc (sizeof (FamilyEntry));
-                e->strong_value = 1e99;
-                e->weak_value = 1e99;
+                e->strong_value = SENTINEL;
+                e->weak_value = SENTINEL;
                 FcHashTableAdd (table, (void *)key, e);
             }
             if (l->binding == FcValueBindingWeak)
@@ -573,8 +579,8 @@ FcCompareFamilies (FcPattern       *pat,
 
     assert (table != NULL);
 
-    strong_value = 1e99;
-    weak_value = 1e99;
+    strong_value = SENTINEL;
+    weak_value = SENTINEL;
 
     for (v2 = v2orig; v2; v2 = FcValueListNext(v2))
     {
