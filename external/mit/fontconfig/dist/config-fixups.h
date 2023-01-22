@@ -38,11 +38,3 @@
 #  define ALIGNOF_DOUBLE 4
 # endif
 #endif
-
-/*
- * NetBSD's lint cannot handle GCC's built-in <stdatomic.h>:
- * fcatomic.h(64): error: syntax error '__atomic_compare_exchange_ptr' [249]
- */
-#ifdef lint
-# undef HAVE_STDATOMIC_PRIMITIVES
-#endif
