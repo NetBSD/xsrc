@@ -1,5 +1,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the `closefrom' function. */
+#undef HAVE_CLOSEFROM
+
+/* Define to 1 if you have the `close_range' function. */
+#undef HAVE_CLOSE_RANGE
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -83,3 +89,12 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Path to compress */
+#undef XPM_PATH_COMPRESS
+
+/* Path to gzip */
+#undef XPM_PATH_GZIP
+
+/* Path to uncompress */
+#undef XPM_PATH_UNCOMPRESS
