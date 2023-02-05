@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libX11], [1.8.3],
+AC_INIT([libX11], [1.8.4],
         [https://gitlab.freedesktop.org/xorg/lib/libx11/-/issues], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
@@ -440,7 +440,7 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 echo ""
-echo "X11 will be built with the following settings:"
+echo "$PACKAGE_STRING will be built with the following settings:"
 echo " Loadable i18n module support:            "$XLIB_LOADABLE_I18N
 echo " Loadable xcursor library support:        "$XLIB_LOADABLE_XCURSOR
 echo " Threading support:                       "$xthreads
