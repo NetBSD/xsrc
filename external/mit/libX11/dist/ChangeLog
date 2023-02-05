@@ -1,3 +1,116 @@
+commit fc5ec8edda1efdf5d66db4e76796e3c407527b3b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 4 12:02:29 2023 -0800
+
+    libX11 1.8.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ba548ed1688d4d5a83913218155d0ddf616ff176
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 15 11:39:20 2023 -0800
+
+    configure: options summary should say "libX11", not just "X11"
+    
+    We're not configuring the entire window system here, just one library
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eb1c272ab5230d548077b9f59aca4b3457c3a8f8
+Author: GaryOderNichts <garyodernichts@gmail.com>
+Date:   Sat Dec 17 16:28:40 2022 +0100
+
+    Fix a9e845 and 797755 Allow X*IfEvent() to reenter libX11
+
+commit 0c7c4ce875ea65160705180ebb68a2c88afb678e
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Nov 3 17:25:29 2022 +0100
+
+    nls: add two compose sequences for capital B with stroke, for consistency
+    
+    Two compose sequences (with plain ASCII characters) existed for
+    the lowercase b with stroke (ƀ) but not for the capital one (Ƀ).
+    
+    This addresses part of issue #166.
+    
+    Reported-by: J. McWilliams
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit a80ef097e713aba0330b9cf9f3c1e309084b926f
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Nov 3 16:48:03 2022 +0100
+
+    nls: delete twelve compose sequences that cannot be typed
+    
+    There is not any keyboard layout (in xkeyboard-config) that contains
+    `obelowdot` or `ubelowdot`, so having compose sequences that use these
+    symbols is pointless.
+    
+    There are some layouts that contain `otilde` (and one that contains
+    `utilde`), but those layouts then do not contain `dead_horn`, so
+    the compose sequences that combine the two symbols are pointless.
+    
+    There are a few layouts that contain U+0256, U+025C, U+025F or U+0279,
+    but those layouts do not contain `dead_hook`, so the compose sequences
+    that combine the latter with one of the former are pointless.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 078cc39f05ddfd6166762f3166129258ddd07dd3
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Nov 3 16:31:04 2022 +0100
+
+    nls: delete 88 compose sequences that have the accents in the wrong order
+    
+    The various compose sequences with the accents in their proper order
+    (the highest placed accent first) continue to exist.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit aa5ef0ba80558f946871f574d38a15673e66221e
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Nov 3 16:27:51 2022 +0100
+
+    nls: move the compose sequences for Ș and Ț to the fitting Unicode block
+    
+    This addresses a side note of issue #166.
+    
+    Reported-by: J. McWilliams
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 82c25879b72f1ba7e9abe00e7bad55add33135cf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 4 11:25:48 2023 -0800
+
+    xlibi18n: Update Imake instructions to autoconf equivalent in comments
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 88399e01be679bfcc9a5e8922ffe2c47f0e56dee
+Author: Yuxuan Shui <yshuiv7@gmail.com>
+Date:   Tue Jan 3 15:09:28 2023 +0000
+
+    Revert "Update XPutBackEvent() to support clients that put back unpadded events"
+    
+    This reverts commit d6d6cba90215d323567fef13d6565756c9956f60.
+    
+    The reverted commit intended to fix the problem where an unpadded X
+    event struct is passed into XPutBackEvent, by creating a padded struct
+    with _XEventToWire and _XWireToEvent. However, _XWireToEvent updates the
+    last sequence number in Display, which may cause xlib to complain about
+    lost sequence numbers.
+    
+    IMO, the problem that commit tried to solve is a bug in the client
+    library, and workaround it inside Xlib is bad practice, especially given
+    the problem it caused. Plus, the offender cited in the original commit
+    message, freeglut, has already fixed this problem.
+    
+    Fixes: #176 #174
+    
+    Signed-off-by: Yuxuan Shui <yshuiv7@gmail.com>
+
 commit 48487c4b9028e9eec5371742f51e1d64c2e17296
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Dec 15 14:52:20 2022 -0800
