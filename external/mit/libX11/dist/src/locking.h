@@ -34,8 +34,12 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _X_locking_H_
 #define _X_locking_H_
 
+#ifndef xmalloc
 #define xmalloc(s) Xmalloc(s)
+#endif
+#ifndef xfree
 #define xfree(s) Xfree(s)
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xthreads.h>
