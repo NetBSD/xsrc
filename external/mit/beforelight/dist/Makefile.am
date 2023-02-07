@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.3 2013/05/31 05:00:24 mrg Exp $
+# $Id: Makefile.am,v 1.1.1.4 2023/02/07 05:05:28 mrg Exp $
 # 
 #  Copyright 2005  Red Hat, Inc.
 # 
@@ -49,3 +49,5 @@ ChangeLog:
 	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog INSTALL
+
+EXTRA_DIST = README.md
