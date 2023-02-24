@@ -304,6 +304,9 @@ FT_BEGIN_HEADER
    *   here with the configured one.
    */
 /* #define FT_CONFIG_OPTION_USE_BROTLI */
+#ifndef TOOL_FCCACHE
+#define FT_CONFIG_OPTION_USE_BROTLI 1
+#endif
 
 
   /**************************************************************************
