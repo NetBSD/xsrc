@@ -74,7 +74,7 @@ Bool ARKCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 Bool ARKSaveScreen(ScreenPtr pScreen, int mode);
 static void ARKFreeScreen(FREE_SCREEN_ARGS_DECL);
 static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
-			   int *indicies, LOCO *colors,
+			   int *indices, LOCO *colors,
 			   VisualPtr pVisual);
 static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new);
 
@@ -927,7 +927,7 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 	wrinx(isaIOBase + 0x3c4, 0x16, 0x00);
 
 	/* write the extended registers first so that textmode font
-	 * restoration can suceed
+	 * restoration can succeed
 	 */
 	wrinx(isaIOBase + 0x3c4, 0x10, new->sr10);
 	wrinx(isaIOBase + 0x3c4, 0x11, new->sr11);
@@ -1045,7 +1045,7 @@ static Bool ARKMapMem(ScrnInfoPtr pScrn)
 		
 		if (err) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "Cound not map framebuffer: %d\n", err);
+			   "Could not map framebuffer: %d\n", err);
 			return FALSE;
 		}
 	}
@@ -1053,7 +1053,7 @@ static Bool ARKMapMem(ScrnInfoPtr pScrn)
 
 	if (!pARK->FBBase) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "Cound not map framebuffer\n");
+			   "Could not map framebuffer\n");
 		return FALSE;
 	}
 
@@ -1113,7 +1113,7 @@ Bool ARKSwitchMode(SWITCH_MODE_ARGS_DECL)
 
 
 static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
-			   int *indicies, LOCO *colors,
+			   int *indices, LOCO *colors,
 			   VisualPtr pVisual)
 {
 	unsigned long isaIOBase = 0;
@@ -1123,7 +1123,7 @@ static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
 	int i, index;
 
 	for (i=0; i<numColors; i++) {
-		index = indicies[i];
+		index = indices[i];
 		outb(isaIOBase + 0x3c8, index);
 		outb(isaIOBase + 0x3c9, colors[index].red);
 		outb(isaIOBase + 0x3c9, colors[index].green);

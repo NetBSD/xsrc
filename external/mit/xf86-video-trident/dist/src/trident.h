@@ -30,7 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "tridentpcirename.h"
+#include "pci_rename.h"
 
 #include "exa.h"
 #include "xf86Cursor.h"
@@ -38,11 +38,6 @@
 #include "xaa.h"
 #endif
 #include "xf86fbman.h"
-#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2) 
-#include "xf86RamDac.h" 
-#else  
-#include "xf86Cursor.h"  
-#endif
 #include "compiler.h"
 #include "vgaHW.h"
 #include "xf86i2c.h"
@@ -107,7 +102,6 @@ typedef struct {
     int			useEXA;
     int			Chipset;
     int			DACtype;
-    int			RamDac;
     int                 ChipRev;
     int			HwBpp;
     int			BppShift;
@@ -173,7 +167,6 @@ typedef struct {
     CARD32		BltScanDirection;
     CARD32		DrawFlag;
     CARD16		LinePattern;
-    RamDacRecPtr	RamDacRec;
     int			CursorOffset;
     xf86CursorInfoPtr	CursorInfoRec;
     xf86Int10InfoPtr	Int10;
@@ -287,7 +280,7 @@ void tridentSetModeBIOS(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void TridentOutIndReg(ScrnInfoPtr pScrn,
 		     CARD32 reg, unsigned char mask, unsigned char data);
 unsigned char TridentInIndReg(ScrnInfoPtr pScrn, CARD32 reg);
-void TridentLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies, LOCO *colors, VisualPtr pVisual);
+void TridentLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors, VisualPtr pVisual);
 void TridentSetOverscan(ScrnInfoPtr pScrn, int overscan);
 int TGUISetRead(ScreenPtr pScreen, int bank);
 int TGUISetWrite(ScreenPtr pScreen, int bank);

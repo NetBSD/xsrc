@@ -280,7 +280,7 @@ S3VNopAllCmdSets(ScrnInfoPtr pScrn)
 }
 
 void
-S3VGEReset(ScrnInfoPtr pScrn, int from_timeout, int line, char *file)
+S3VGEReset(ScrnInfoPtr pScrn, int from_timeout, int line, const char *file)
 {
     unsigned long gs1, gs2;   /* -- debug info for graphics state -- */
     unsigned char tmp, sr1, resetidx=0x66;  /* FIXME */
