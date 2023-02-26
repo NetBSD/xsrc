@@ -32,6 +32,11 @@
 #include "vmwgfx_driver.h"
 #include <xf86Crtc.h>
 #include "vmwgfx_rr_inlines.h"
+#include "../src/common_compat.h"
+
+#ifndef X_DEBUG
+#define X_DEBUG X_NOTICE
+#endif
 
 /**
  * struct vmwgfx_layout_box - Struct representing a GUI layout rect

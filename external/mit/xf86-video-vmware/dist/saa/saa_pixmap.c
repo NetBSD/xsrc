@@ -134,7 +134,8 @@ saa_destroy_pixmap(PixmapPtr pPixmap)
 
 	REGION_UNINIT(pScreen, &spix->dirty_hw);
 	REGION_UNINIT(pScreen, &spix->dirty_shadow);
-	spix->damage = NULL;
+	if (spix->damage)
+	    DamageDestroy(spix->damage);
     }
 
     saa_swap(sscreen, pScreen, DestroyPixmap);

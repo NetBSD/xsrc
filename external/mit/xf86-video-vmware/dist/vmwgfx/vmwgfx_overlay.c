@@ -61,6 +61,7 @@ typedef uint8_t uint8;
 #include "../src/svga_reg.h"
 #include "../src/svga_escape.h"
 #include "../src/svga_overlay.h"
+#include "../src/common_compat.h"
 
 #include <X11/extensions/Xv.h>
 
@@ -114,6 +115,9 @@ static XF86ImageRec vmwareVideoImages[] =
     XVIMAGE_UYVY
 };
 
+static CONST_ABI_16_TO_19 char xv_colorkey_name[] = "XV_COLORKEY";
+static CONST_ABI_16_TO_19 char xv_autopaint_name[] = "XV_AUTOPAINT_COLORKEY";
+
 #define VMWARE_VID_NUM_ATTRIBUTES 2
 static XF86AttributeRec vmwareVideoAttributes[] =
 {
@@ -121,13 +125,13 @@ static XF86AttributeRec vmwareVideoAttributes[] =
         XvGettable | XvSettable,
         0x000000,
         0xffffff,
-        "XV_COLORKEY"
+        xv_colorkey_name,
     },
     {
         XvGettable | XvSettable,
         0,
         1,
-        "XV_AUTOPAINT_COLORKEY"
+        xv_autopaint_name,
     }
 };
 
@@ -254,15 +258,12 @@ vmwgfx_overlay_port_create(int drm_fd, ScreenPtr pScreen)
 }
 
 void
-vmw_video_free_adaptor(XF86VideoAdaptorPtr adaptor, Bool free_ports)
+vmw_video_free_adaptor(XF86VideoAdaptorPtr adaptor)
 {
-    if (free_ports) {
-	int i;
+    int i;
 
-	for(i=0; i<adaptor->nPorts; ++i) {
-	    free(adaptor->pPortPrivates[i].ptr);
-	}
-    }
+    for (i = 0; i < adaptor->nPorts; ++i)
+	free(adaptor->pPortPrivates[i].ptr);
 
     free(adaptor->pPortPrivates);
     xf86XVFreeVideoAdaptorRec(adaptor);

@@ -89,7 +89,7 @@ RedefineCursor(VMWAREPtr pVMWARE)
 	vmwareWriteWordToFIFO(pVMWARE, pVMWARE->hwcur.sourcePixmap[i]);
     }
 
-    /* Sync the FIFO, so that the definition preceeds any use of the cursor */
+    /* Sync the FIFO, so that the definition precedes any use of the cursor */
     vmwareWaitForFB(pVMWARE);
     pVMWARE->cursorDefined = TRUE;
 }

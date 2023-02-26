@@ -77,7 +77,8 @@ vmwgfx_hw_kill(struct vmwgfx_saa *vsaa,
 	       struct saa_pixmap *spix);
 Bool
 vmwgfx_create_hw(struct vmwgfx_saa *vsaa,
-		 PixmapPtr pixmap);
+		 PixmapPtr pixmap,
+		 Bool shared);
 
 
 /*
@@ -88,7 +89,8 @@ enum xa_formats
 vmwgfx_xa_format(enum _PictFormatShort format);
 Bool
 vmwgfx_hw_validate(PixmapPtr pixmap, RegionPtr region);
-
+Bool
+vmwgfx_hw_dri2_stage(PixmapPtr pixmap, unsigned int depth);
 Bool
 vmwgfx_hw_accel_stage(PixmapPtr pixmap, unsigned int depth,
 		      uint32_t add_flags, uint32_t remove_flags);

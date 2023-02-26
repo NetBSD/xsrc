@@ -32,6 +32,7 @@
 #include "vmwgfx_driver.h"
 #include "vmwgfx_drmi.h"
 #include "vmwgfx_saa.h"
+#include "../src/common_compat.h"
 
 #include <xf86xv.h>
 #include <X11/extensions/Xv.h>
@@ -40,7 +41,9 @@
 #include <xa_context.h>
 #include <math.h>
 
-/*XXX get these from pipe's texture limits */
+static CONST_ABI_16_0 char xv_adapt_name[] = "XA G3D Textured Video";
+
+/*Xxx get these from pipe's texture limits */
 #define IMAGE_MAX_WIDTH		2048
 #define IMAGE_MAX_HEIGHT	2048
 
@@ -71,13 +74,18 @@ static const float bt_709[] = {
 };
 
 static Atom xvBrightness, xvContrast, xvSaturation, xvHue;
+static CONST_ABI_16_TO_19 char xv_brightness_name[] = "XV_BRIGHTNESS";
+static CONST_ABI_16_TO_19 char xv_contrast_name[] = "XV_CONTRAST";
+static CONST_ABI_16_TO_19 char xv_saturation_name[] = "XV_SATURATION";
+static CONST_ABI_16_TO_19 char xv_hue_name[] = "XV_HUE";
+static CONST_ABI_16_TO_19 char xv_image_name[] = "XV_IMAGE";
 
 #define NUM_TEXTURED_ATTRIBUTES 4
 static const XF86AttributeRec TexturedAttributes[NUM_TEXTURED_ATTRIBUTES] = {
-    {XvSettable | XvGettable, -1000, 1000, "XV_BRIGHTNESS"},
-    {XvSettable | XvGettable, -1000, 1000, "XV_CONTRAST"},
-    {XvSettable | XvGettable, -1000, 1000, "XV_SATURATION"},
-    {XvSettable | XvGettable, -1000, 1000, "XV_HUE"}
+    {XvSettable | XvGettable, -1000, 1000, xv_brightness_name},
+    {XvSettable | XvGettable, -1000, 1000, xv_contrast_name},
+    {XvSettable | XvGettable, -1000, 1000, xv_saturation_name},
+    {XvSettable | XvGettable, -1000, 1000, xv_hue_name}
 };
 
 #define NUM_FORMATS 3
@@ -88,7 +96,7 @@ static XF86VideoFormatRec Formats[NUM_FORMATS] = {
 static XF86VideoEncodingRec DummyEncoding[1] = {
    {
       0,
-      "XV_IMAGE",
+      xv_image_name,
       IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT,
       {1, 1}
    }
@@ -229,7 +237,7 @@ stop_video(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 
        for (i=0; i<3; ++i) {
 	   for (j=0; j<2; ++j) {
-	       if (priv->yuv[i]) {
+	       if (priv->yuv[j][i]) {
 		   xa_surface_destroy(priv->yuv[j][i]);
 		   priv->yuv[j][i] = NULL;
 	       }
@@ -598,7 +606,7 @@ copy_packed_data(ScrnInfoPtr pScrn,
     int i;
    struct xa_surface **yuv = port->yuv[port->current_set];
    char *ymap, *vmap, *umap;
-   unsigned char y1, y2, u, v;
+   unsigned char _y1, _y2, u, v;
    int yidx, uidx, vidx;
    int y_array_size = w * h;
    int ret = BadAlloc;
@@ -626,22 +634,29 @@ copy_packed_data(ScrnInfoPtr pScrn,
       yp = buf + offsets[0];
       vp = buf + offsets[1];
       up = buf + offsets[2];
-      memcpy(ymap, yp, w*h);
-      memcpy(vmap, vp, w*h/4);
-      memcpy(umap, up, w*h/4);
+      for (i = 0; i < h; ++i) {
+          memcpy(ymap + w * i, yp, w);
+          yp += pitches[0];
+      }
+      for (i = 0; i < h / 2; ++i) {
+          memcpy(vmap + w * i / 2, vp, w / 2);
+          memcpy(umap + w * i / 2, up, w / 2);
+          vp += pitches[1];
+          up += pitches[2];
+      }
       break;
    }
    case FOURCC_UYVY:
       for (i = 0; i < y_array_size; i +=2 ) {
          /* extracting two pixels */
          u  = buf[0];
-         y1 = buf[1];
+         _y1 = buf[1];
          v  = buf[2];
-         y2 = buf[3];
+         _y2 = buf[3];
          buf += 4;
 
-         ymap[yidx++] = y1;
-         ymap[yidx++] = y2;
+         ymap[yidx++] = _y1;
+         ymap[yidx++] = _y2;
          umap[uidx++] = u;
          vmap[vidx++] = v;
       }
@@ -649,15 +664,15 @@ copy_packed_data(ScrnInfoPtr pScrn,
    case FOURCC_YUY2:
       for (i = 0; i < y_array_size; i +=2 ) {
          /* extracting two pixels */
-         y1 = buf[0];
+         _y1 = buf[0];
          u  = buf[1];
-         y2 = buf[2];
+         _y2 = buf[2];
          v  = buf[3];
 
          buf += 4;
 
-         ymap[yidx++] = y1;
-         ymap[yidx++] = y2;
+         ymap[yidx++] = _y1;
+         ymap[yidx++] = _y2;
          umap[uidx++] = u;
          vmap[vidx++] = v;
       }
@@ -821,22 +836,22 @@ put_image(ScrnInfoPtr pScrn,
    struct xorg_xv_port_priv *pPriv = (struct xorg_xv_port_priv *) data;
    ScreenPtr pScreen = xf86ScrnToScreen(pScrn);
    PixmapPtr pPixmap;
-   INT32 x1, x2, y1, y2;
+   INT32 x1, x2, _y1, _y2;
    BoxRec dstBox;
    int ret;
 
    /* Clip */
    x1 = src_x;
    x2 = src_x + src_w;
-   y1 = src_y;
-   y2 = src_y + src_h;
+   _y1 = src_y;
+   _y2 = src_y + src_h;
 
    dstBox.x1 = drw_x;
    dstBox.x2 = drw_x + drw_w;
    dstBox.y1 = drw_y;
    dstBox.y2 = drw_y + drw_h;
 
-   if (!xf86XVClipVideoHelper(&dstBox, &x1, &x2, &y1, &y2, clipBoxes,
+   if (!xf86XVClipVideoHelper(&dstBox, &x1, &x2, &_y1, &_y2, clipBoxes,
 			      width, height))
       return Success;
 
@@ -896,15 +911,12 @@ port_priv_create(struct xa_tracker *xat, struct xa_context *r,
 }
 
 static void
-vmwgfx_free_textured_adaptor(XF86VideoAdaptorPtr adaptor, Bool free_ports)
+vmwgfx_free_textured_adaptor(XF86VideoAdaptorPtr adaptor)
 {
-    if (free_ports) {
-	int i;
+    int i;
 
-	for(i=0; i<adaptor->nPorts; ++i) {
-	    free(adaptor->pPortPrivates[i].ptr);
-	}
-    }
+    for (i = 0; i < adaptor->nPorts; ++i)
+	free(adaptor->pPortPrivates[i].ptr);
 
     free(adaptor->pAttributes);
     free(adaptor->pPortPrivates);
@@ -943,7 +955,7 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
 
    adapt->type = XvWindowMask | XvInputMask | XvImageMask;
    adapt->flags = 0;
-   adapt->name = "XA G3D Textured Video";
+   adapt->name = xv_adapt_name;
    adapt->nEncodings = 1;
    adapt->pEncodings = DummyEncoding;
    adapt->nFormats = NUM_FORMATS;
@@ -976,6 +988,23 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
    }
 
    return adapt;
+}
+
+void
+vmw_xv_close(ScreenPtr pScreen)
+{
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+   modesettingPtr ms = modesettingPTR(pScrn);
+
+   if (ms->overlay) {
+       vmw_video_free_adaptor(ms->overlay);
+       ms->overlay = NULL;
+   }
+
+   if (ms->textured) {
+       vmwgfx_free_textured_adaptor(ms->textured);
+       ms->textured = NULL;
+   }
 }
 
 void
@@ -1017,17 +1046,19 @@ xorg_xv_init(ScreenPtr pScreen)
        adaptors[num_adaptors++] = overlay_adaptor;
 
    if (num_adaptors) {
-       Bool ret;
-       ret = xf86XVScreenInit(pScreen, adaptors, num_adaptors);
-       if (textured_adapter)
-	   vmwgfx_free_textured_adaptor(textured_adapter, !ret);
-       if (overlay_adaptor)
-	   vmw_video_free_adaptor(overlay_adaptor, !ret);
-       if (!ret)
+       if (xf86XVScreenInit(pScreen, adaptors, num_adaptors)) {
+	   ms->overlay = overlay_adaptor;
+	   ms->textured = textured_adapter;
+       } else {
+	   ms->overlay = NULL;
+	   ms->textured = NULL;
 	   xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		      "Failed to initialize Xv.\n");
+       }
    } else {
        xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		  "Disabling Xv because no adaptors could be initialized.\n");
    }
+
+   free(new_adaptors);
 }
