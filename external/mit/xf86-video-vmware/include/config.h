@@ -15,11 +15,17 @@
 /* Has version 2.4.38 or greater of libdrm */
 #define HAVE_LIBDRM_2_4_38 1
 
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+/* Has version 2.4.74 or greater of libdrm */
+#define HAVE_LIBDRM_2_4_74 1
+
+/* Has version 2.4.96 or greater of libdrm */
+#define HAVE_LIBDRM_2_4_96 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -57,8 +63,7 @@
 /* Has version 1.7.0 or greater of the Xserver */
 #define HAVE_XORG_SERVER_1_7_0 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
@@ -74,7 +79,7 @@
 #define PACKAGE_NAME "xf86-video-vmware"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-vmware 13.2.1"
+#define PACKAGE_STRING "xf86-video-vmware 13.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-vmware"
@@ -83,22 +88,24 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "13.2.1"
+#define PACKAGE_VERSION "13.4.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 13
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 2
+#define PACKAGE_VERSION_MINOR 4
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "13.2.1"
+#define VERSION "13.4.0"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
