@@ -101,7 +101,8 @@ Bool S3V_I2CInit(ScrnInfoPtr pScrn);
 
 /******************* s3v_accel ****************************/
 
-void S3VGEReset(ScrnInfoPtr pScrn, int from_timeout, int line, char *file);
+void S3VGEReset(ScrnInfoPtr pScrn, int from_timeout,
+                int line, const char *file);
 
 
 /*********************************************/
