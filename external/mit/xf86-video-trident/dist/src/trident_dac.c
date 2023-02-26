@@ -107,6 +107,14 @@ TridentFindMode(int xres, int yres, int depth)
     biosMode *mode;
 
     switch (depth) {
+    case 1:
+	size = sizeof(bios1) / sizeof(biosMode);
+	mode = bios1;
+	break;
+    case 4:
+	size = sizeof(bios4) / sizeof(biosMode);
+	mode = bios4;
+	break;
     case 8:
 	size = sizeof(bios8) / sizeof(biosMode);
 	mode = bios8;
@@ -1251,7 +1259,7 @@ void TridentSetOverscan(
 void TridentLoadPalette(
     ScrnInfoPtr pScrn, 
     int numColors, 
-    int *indicies,
+    int *indices,
     LOCO *colors,
     VisualPtr pVisual
 ){
@@ -1259,7 +1267,7 @@ void TridentLoadPalette(
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     int i, index;
     for(i = 0; i < numColors; i++) {
-	index = indicies[i];
+	index = indices[i];
     	OUTB(0x3C6, 0xFF);
 	DACDelay(hwp);
         OUTB(0x3c8, index);

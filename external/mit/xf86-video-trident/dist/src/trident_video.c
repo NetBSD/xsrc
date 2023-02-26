@@ -1266,12 +1266,12 @@ tridentFixFrame(ScrnInfoPtr pScrn, int *fixFrame)
      */
     switch (pTrident->Chipset) {
 	case TGUI9680:
-	    /* Furthur tweaking needed */
+	    /* Further tweaking needed */
     	    pTrident->hsync -= 84;
 	    pTrident->vsync += 2;
 	    break;
 	case PROVIDIA9682:
-	    /* Furthur tweaking needed */
+	    /* Further tweaking needed */
 	    pTrident->hsync += 7;
 	    break;
 	case PROVIDIA9685:
