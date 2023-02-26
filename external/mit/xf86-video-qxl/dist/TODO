@@ -1,0 +1,205 @@
+- Acceleration
+	- Blits and solid fill
+
+  - XAA and the shadow buffer will not work together, because the
+    shadow buffer updates in the block handler, so if we got any XAA
+    calls in between, things would get messed up. 
+
+    Current plan:
+	- Add our own damage tracker that produces raw rectangles
+	- Whenever it fires, submit the copy immediately
+
+	- Wrap the necessary ops in such a way that the original
+	  implementation gets called first. The original implementation
+	  will use fb, which will produce damage, which will get
+	  submitted.
+
+	  If we decide to accelerate a particular operation, first set
+          a flag that the immediately following damage event should not
+	  result in spice protocol being sent. Ie., 
+
+	  on_op:
+		qxl->enable_copying = FALSE
+
+		call original;
+
+		send acceleration command
+
+		qxl->enable_copying = TRUE
+
+	  Note damage is added before the drawing hits the framebuffer, so
+	  it will have to be stored, then cleared
+		- in a block handler
+		- before accelerating
+
+	  Ie., 
+
+	  on_op:
+		clear damage
+		disable damage reporting
+		call original (this will generate unreported damage and
+			paint to the shadow)
+		submit command
+		enable damage
+
+	   It may be possible to use the shadow code if we added a
+	   shadowReportNow() that would report any existing
+	   damage. Ie., basically export shadowRedisplay()
+
+    1. Get damage added, out of CreateScreenResources
+    2. Make sure it works
+    3. Submit copies and disable shadow
+    4. Delete shadow
+    5. Wrap some of the ops, or use XAA?
+
+    The input we get is:
+
+	- First a damage notification: "I am going to draw here"
+	- Then maybe an exa notification
+
+	So the algorithm is. 
+
+	Maintain a "to_copy" region to be copied into the device
+
+	- in damage, if there is anything in to_copy, copy it
+
+	- in block handler, if there is anything in to_copy, copy it
+
+	- in exa, if we manage to accelerate, delete to_copy.
+
+	Unfortunately, for core text, what happens is
+		- damage is produced for the glyph box
+		- solid fill is generated
+		- the glyph is drawn
+	And the algorithm above means the damage is thrown away.
+
+- Coding style fixes
+
+- Better malloc() implementation
+	- Take malloc() from the windows driver?
+	- Put blocks in a tree?
+
+- Find out why it picks 8x6 rather than a reasonable mode
+ - Possibly has to do with the timings it reports. RandR only
+   allows 8x6 and 6x4.
+
+- Only compile mmtest if glib is installed
+	Or maybe just get rid of mmtest.c
+
+- Notes on offscreen pixmaps
+
+  Yaniv says that PCI resources is a concern and that it would be better
+  if we can use guest memory instead of video memory. I guess we can
+  do that, given a kernel driver that can allocate pinned memory.
+
+	- If/when we add hardware acceleration to pixman, pixman will need to
+	  generate QXL protocol. This could be tricky because DRM assumes that
+	  everything is a pixmap, but qxl explicitly has a framebuffer. Same 
+	  goes for cairo-drm. 
+
+- Hashing
+
+  QXL has a feature where it can send hash codes for pixmaps. Unfortunately
+  most of the pixmaps we use are very shortlived. But there may be a benefit
+  for the root pixmap (and in general for the (few) windows that have
+  a pixmap background).
+
+  - When copying from pixmap to framebuffer, right now we just copy
+    the bits from the fb allocated pixmap.
+
+  - With hashing, we need to copy it to video memory, hash it, then set the
+    "unique" field to that hash value (plus the QXL_CACHE
+    flag). Presumably we'll get a normal remove on it when it is no
+    longer in use.
+
+  - If we know an image is available in video memory already, we should just
+    submit it. There is no race condition here because the image is
+    ultimately removed from vmem by the driver.
+
+    (Note hash value could probably just be XID plus a serial number).
+
+  - So for the proof of concept we'll be hashing complete pixmaps every time
+    we submit them.
+
+- Tiles
+
+  It may be beneficial to send pixmaps in smaller tiles, though Yaniv
+  says we will need atomic drawing to prevent tearing.
+
+- Video
+
+  We should certainly support Xv. The scaled blits should be sent
+  as commands, rather than as software. Does spice support YUV images?
+  If not, then it probably should.
+
+- Multi-monitor:
+
+  - Windows may not support more than dual-head, but we do support more than
+    dual-head in spice. This is why they do the multi-pci device.
+
+    Ie,. the claim is that Yaniv did not find any API that would
+    support more than two outputs per PCI device. (This seems dubious
+    given that four-head cards do exist).
+
+  - Linux multi-monitor configuration supports hotplug of monitors,
+    and you can't make up PCI devices from inside the driver.
+
+  - On windows the guest agent is responsible for setting the monitors
+    and resolutions.
+
+  - On linux we should support EDID information, and enabling and
+    disabling PCI devices on the fly is pretty difficult to deal with
+    in X. Ie., we would need working support for both GPU hotplug and
+    for shatter. This is just not happening in RHEL 5 or 6.
+
+  - Reading back EDID over the spice protocol would be necessary
+    because when you hit detect displays, that's what needs to happen.
+
+Better acceleration:
+
+- Given offscreen pixmaps, we should get rid of the shadow framebuffer.
+  If we have to fall back to software, we can use the drawing area to 
+  get the area in question, then copy them to qxl_malloced memory,
+  then draw there, then finally send the bits.
+
+-=-=-=-=-
+
+Done:
+
+Question:
+
+- Submit cursor images
+
+- Note: when we set a mode, all allocated memory should be considered
+  released.
+
+- What is the "vram" PCI range used for? 
+
+  As I read the Windows driver, it can be mapped with the ioctl
+  VIDEO_MAP_VIDEO_MEMORY. In driver.c it is mapped as pdev->fb, but
+  it is then never used for anything as far as I can tell.
+
+  Does Windows itself use that ioctl, and if so, for what. The area
+  is only 32K in size so it can't really be used for any realistic
+  bitmaps.
+
+    It's a required ioctl.  I believe it's needed for DGA-like things.
+    I have no idea how the Windows driver manages syncing for that,
+    but I think we can safely ignore it. [ajax]
+
+- Hook up randr if it isn't already
+
+- Garbage collection
+	- Before every allocation?
+	- When we run out of memory?
+	- Whenever we overflow some fixed pool?
+
+- Get rid of qxl_mem.h header; just use qxl.h
+
+- Split out ring code into qxl_ring.c
+
+- Don't keep the maps around that are just used in preinit
+	(Is there any real reason to not just do the CheckDevice in
+	 ScreenInit?)
+
+

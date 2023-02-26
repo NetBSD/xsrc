@@ -1,0 +1,163 @@
+1. Introduction
+2. Building
+2.1 Building from source on fedora
+2.2 Building from source with your own Xserver
+3. Running
+
+= 1. Introduction =
+Xspice is an X server and Spice server in one. It consists of a wrapper script
+for executing Xorg with the right parameters and environment variables, a
+module names spiceqxl_drv.so implementing three drivers: a video mostly
+code identical to the guest qxl X driver, and keyboard and mouse reading from
+the spice inputs channel.
+
+Xspice allows regular X connections, while a spice client provides the keyboard
+and mouse and video output.
+
+Spice client disconnections don't impact X client connections.
+
+Xserver's select loop is reused to service spice client sockets
+and the qxl driver is reused together with some of the qemu qxl device code
+
+The following changes have been done to the qxl driver.
+ * it creates only one memslot, covering the whole of memory (much like
+  spice does in simple display mode, i.e. vga, and the tester does)
+ * it invokes the whole of the qxl device from qemu, patching in both
+  directions.
+  * io becomes a function call instead of iob
+  * irq becomes a function call instead of setting a flag
+  * it runs spice server directly
+   * it is linked with spice-server.
+
+The protocol is unchanged.
+
+= 2. Building =
+== 2.1 Building from source on fedora ==
+
+The changes for ubuntu/debian should be minimal:
+ * location of drivers for Xorg (just where you put any qxl_drv.so etc.)
+ * location of Xorg config files
+
+In fedora they are: (note the lib64 - replace with lib if running on 32 bit
+fedora)
+
+DRV_DIR=/usr/lib64/xorg/modules/drivers
+XORG_CONF_DIR=/etc/X11
+
+git clone git://anongit.freedesktop.org/xorg/driver/xf86-video-qxl xspice
+sudo yum install spice-server-devel spice-protocol
+
+cd xspice
+autoreconf -i && ./configure --enable-xspice && make
+sudo cp src/.libs/spiceqxl_drv.so $DRV_DIR
+sudo cp spiceqxl.xorg $XORG_CONF_DIR
+
+Note: spiceqxl.org is copied to $XORG_CONF_DIR because Xorg only looks in a
+very particular config file path, and "." is not there (nor are absolute file
+names allowed unless Xorg is run as root).
+
+== 2.2 Building from source with your own Xserver ==
+
+Building the whole xserver is lengthier but can be done without
+any root permissions.
+
+This assumes you already have spice-protocol and spice-server
+installed into $TEST prefix below.
+
+TEST=/store/test ( or TEST=$(pwd)/testxspice )
+mkdir -p $TEST/src
+cd $TEST/src
+
+# grab xserver, xspice, xextproto, xkbcomp and more
+for src in \
+    git://anongit.freedesktop.org/xorg/proto/xextproto \
+    git://anongit.freedesktop.org/xorg/proto/x11proto \
+    git://anongit.freedesktop.org/xorg/proto/fontsproto \
+    git://anongit.freedesktop.org/xorg/app/xkbcomp \
+    git://anongit.freedesktop.org/xorg/xserver \
+    git://anongit.freedesktop.org/xorg/lib/libxtrans \
+    git://anongit.freedesktop.org/xorg/lib/libxkbfile \
+    git://anongit.freedesktop.org/xkeyboard-config \
+    git://git.freedesktop.org/git/spice/spice-protocol \
+    git://git.freedesktop.org/git/spice/spice ;
+do
+    git clone $src;
+done
+
+git clone git://anongit.freedesktop.org/xorg/driver/xf86-video-qxl xspice
+
+
+build and install into some non common prefix (not to overwrite
+your existing server) - note that this is just for testing. This
+should all work with the default server as well, but that server
+requires root generally and this is undesirable for testing (and
+running actually).
+
+export PKG_CONFIG_PATH=${TEST}/lib/pkgconfig:${TEST}/share/pkgconfig
+export MAKEFLAGS="-j4"
+
+#first build spice (or sudo yum install spice-devel or spice-server-devel)
+sudo yum-builddep spice (or spice-server)
+(cd spice-protocol; ./autogen.sh --prefix=$TEST && make install)
+(cd spice; ./autogen.sh --prefix=$TEST  && make install)
+
+# now build xserver
+sudo yum install xorg-x11-server-devel libxcb-util-devel xcb-util-keysyms-devel libXfont-devel
+(cd xextproto; ./autogen.sh --prefix=$TEST --without-xmlto && make install)
+(cd x11proto; ./autogen.sh --prefix=$TEST && make install)
+(cd fontsproto; ./autogen.sh --prefix=$TEST && make install)
+(cd libxtrans; ./autogen.sh --prefix=$TEST && make install)
+(cd libxkbfile; ./autogen.sh --prefix=$TEST && make install)
+(cd xkbcomp; ./autogen.sh --prefix=$TEST && make install)
+(cd xkeyboard-config; ./autogen.sh --prefix=$TEST && make install)
+
+
+# make sure DBUS_TYPE_UNIX_FD is defined (failed on my RHEL6 machine)
+ADDSTR="#ifndef DBUS_TYPE_UNIX_FD\n"
+ADDSTR+="#define DBUS_TYPE_UNIX_FD  ((int) 'h')\n"
+ADDSTR+="#endif"
+sed -i "/define DBUS_TIMEOUT/ a$ADDSTR" \
+    xserver/hw/xfree86/os-support/linux/systemd-logind.c
+
+# need ACLOCAL for libxtrans
+export ACLOCAL="aclocal -I $TEST/share/aclocal"
+(cd xserver; ./autogen.sh --prefix=$TEST && make install)
+
+# and now xspice
+(cd xspice; ./autogen.sh --prefix=$TEST --enable-xspice && make install)
+
+mkdir -p $TEST/etc/X11
+cp xspice/examples/spiceqxl.xorg.conf.example $TEST/etc/X11/spiceqxl.xorg.conf
+
+# Possibly also build spice-vdagent:
+sudo yum install libXrandr-devel libXinerama-devel
+git clone git://anongit.freedesktop.org/spice/linux/vd_agent spice-vdagent
+(cd spice-vdagent ; ./autogen.sh --prefix=$TEST && make install)
+
+= 3. Running =
+$XORG is either your own built $TEST/bin/Xorg or just the default Xorg
+
+If you built your own Xorg server:
+export PATH="$TEST/bin:$TEST/sbin:$PATH"
+export LD_LIBRARY_PATH=${TEST}/lib
+export XORG=$TEST/bin/Xorg # or /usr/bin/Xorg
+
+== 3.1 Run Xorg directly ==
+Run server with:
+export XSPICE_PORT=5900
+$XORG -noreset -config spiceqxl.xorg.conf :3.0
+
+== 3.2 Run using the Xspice script ==
+Or equivalently:
+
+xspice/scripts/Xspice --port 5900 --disable-ticketing --xorg $XORG :3.0 [--vdagent]
+(and many more options available -- see scripts/Xspice)
+
+Run X clients as usual by setting DISPLAY=:3.0, for example
+# DISPLAY=:3.0 firefox &  or 
+# DISPLAY=:3.0 twm &  DISPLAY=:3.0 xterm &
+
+Run spice client:
+sudo yum install virt-viewer
+remote-viewer spice://localhost:5900
+

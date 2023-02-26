@@ -1,0 +1,364 @@
+#!/usr/bin/python
+
+"""
+Xspice
+
+Xspice is a standard X server that is also a Spice server.
+
+It is implemented as a module with video, mouse and keyboard drivers.
+
+The video driver is mostly the same code as the qxl guest driver, hence
+Xspice is kept in the same repository. It can also be used to debug the qxl
+driver.
+
+Xspice (this executable) will set a bunch of environment variables that are
+used by spiceqxl_drv.so, and then spawn Xorg, giving it the default config file,
+which can be overridden as well.
+"""
+
+import argparse
+import os
+import sys
+import tempfile
+import atexit
+import time
+import signal
+from subprocess import Popen, PIPE
+
+def which(x):
+    if not x:
+        return x
+    if os.path.exists(x):
+        return x
+    for p in os.environ['PATH'].split(':'):
+        candidate = os.path.join(p, x)
+        if os.path.exists(candidate):
+            return candidate
+    print('Warning: failed to find executable %s' % x)
+    return None
+
+if 'XSPICE_ENABLE_GDB' in os.environ:
+    cgdb = which('cgdb')
+    if not cgdb:
+        cgdb = which('gdb')
+else:
+    cgdb = None
+
+def add_boolean(flag, *args, **kw):
+    parser.add_argument(flag, action='store_const', const='1',
+                        *args, **kw)
+
+wan_compression_options = ['auto', 'never', 'always']
+parser = argparse.ArgumentParser("Xspice",
+    description="X and Spice server. example usage: Xspice --port 5900 --disable-ticketing :1.0",
+    usage="Xspice [Xspice and Xorg options intermixed]",
+    epilog="Any option not parsed by Xspice gets passed to Xorg as is.")
+
+# X-related options
+parser.add_argument('--xorg', default=which('Xorg'), help='specify the path to the Xorg binary')
+parser.add_argument('--config', default='spiceqxl.xorg.conf', help='specify the path to the Xspice configuration')
+parser.add_argument('--auto', action='store_true', help='automatically create a temporary xorg.conf and start the X server')
+parser.add_argument('--xsession', help='if given, will run after Xorg launch.  Should be a program like x-session-manager')
+
+# Network and security options
+add_boolean('--disable-ticketing', help="do not require a client password")
+parser.add_argument('--password', help="set the password required to connect to the server")
+add_boolean('--sasl', help="use SASL to authenticate to the server")
+# Don't use any options that are already used by Xorg (unless we must)
+# specifically, don't use -p and -s.
+parser.add_argument('--port', type=int, help="use the specified port as Spice's regular unencrypted port")
+parser.add_argument('--tls-port', type=int, help='use the specified port as a TLS (encrypted) port', default=0)
+parser.add_argument('--x509-dir', help="set the directory where the CA certificate, server key and server certificate are searched for TLS, using the same predefined names QEMU uses")
+parser.add_argument('--cacert-file', help="set the CA certificate file location for TLS")
+parser.add_argument('--x509-key-file', help="set the server key file location for TLS")
+parser.add_argument('--x509-key-password', help="set the server key's password for TLS")
+parser.add_argument('--x509-cert-file', help="set the server certificate file location for TLS")
+parser.add_argument('--dh-file', help="set the server DH file location for TLS")
+parser.add_argument('--tls-ciphers', help="set the TLS ciphers preference order")
+add_boolean('--ipv4-only', help="only accept IP v4 connections")
+add_boolean('--ipv6-only', help="only accept IP v6 connections")
+parser.add_argument('--exit-on-disconnect', action='store_true', help='exit the X server when any client disconnects')
+
+# Monitor configuration options
+parser.add_argument('--numheads', type=int, help='number of virtual heads to create')
+
+# Compression options
+parser.add_argument('--jpeg-wan-compression',
+                    choices=wan_compression_options,
+                    help="set jpeg wan compression")
+parser.add_argument('--zlib-glz-wan-compression',
+                    choices=wan_compression_options,
+                    help="set zlib glz wan compressions")
+parser.add_argument('--image-compression',
+                    choices = ['off', 'auto_glz', 'auto_lz', 'quic',
+                               'glz', 'lz'],
+                    help="set image compression")
+parser.add_argument('--deferred-fps', type=int, help='if non zero, the driver will render all operations to the frame buffer, and keep track of a changed rectangle list. The changed rectangles will be transmitted at the rate requested (e.g. 10 frames per second). This can dramatically reduce network bandwidth for some use cases')
+# TODO - sound support
+parser.add_argument('--streaming-video', choices=['off', 'all', 'filter'],
+                    help='set the streaming video method')
+parser.add_argument('--video-codecs', help='set a semicolon-separated list of preferred video codecs to use. Each takes the form encoder:codec, with spice:mjpeg being the default and other options being provided by gstreamer for the mjpeg, vp8 and h264 codecs')
+
+# VDAgent options
+parser.add_argument('--vdagent', action='store_true', dest='vdagent_enabled', default=False, help='launch vdagent & vdagentd. They provide clipboard & resolution automation')
+parser.add_argument('--vdagent-virtio-path', help='virtio socket path used by vdagentd')
+parser.add_argument('--vdagent-uinput-path', help='uinput socket path used by vdagent')
+parser.add_argument('--vdagent-udcs-path', help='Unix domain socket path used by vdagent and vdagentd')
+parser.add_argument('--vdagentd-exec', help='path to spice-vdagentd (used with --vdagent)')
+parser.add_argument('--vdagent-exec', help='path to spice-vdagent (used with --vdagent)')
+parser.add_argument('--vdagent-no-launch', default=True, action='store_false', dest='vdagent_launch', help='do not launch vdagent & vdagentd, used for debugging or if some external script wants to take care of that')
+parser.add_argument('--vdagent-uid', default=str(os.getuid()), help='set vdagent user id. changing it makes sense only in conjunction with --vdagent-no-launch')
+parser.add_argument('--vdagent-gid', default=str(os.getgid()), help='set vdagent group id. changing it makes sense only in conjunction with --vdagent-no-launch')
+parser.add_argument('--audio-fifo-dir', help="if a directory is given, any file in that directory will be read for audio data to be sent to the client. This is designed to work with PulseAudio's module-pipe-sink")
+
+#TODO
+#Option "SpiceAddr" ""
+#add_boolean('--agent-mouse')
+#Option "EnableImageCache" "True"
+#Option "EnableFallbackCache" "True"
+#Option "EnableSurfaces" "True"
+#parser.add_argument('--playback-compression', choices=['0', '1'], help='enabled by default')
+#Option "SpiceDisableCopyPaste" "False"
+
+if cgdb:
+    parser.add_argument('--cgdb', action='store_true', default=False)
+
+args, xorg_args = parser.parse_known_args(sys.argv[1:])
+
+def agents_new_enough(args):
+    for f in [args.vdagent_exec, args.vdagentd_exec]:
+        if not f:
+            print('please specify path to vdagent/vdagentd executables')
+            return False
+        if not os.path.exists(f):
+            print('error: file not found ', f)
+            return False
+
+    for f in [args.vdagent_exec, args.vdagentd_exec]:
+        if Popen(args=[f, '-h'], stdout=PIPE, universal_newlines=True).stdout.read().find('-S') == -1:
+            return False
+    return True
+
+if args.vdagent_enabled:
+    if not args.vdagent_exec:
+        args.vdagent_exec = 'spice-vdagent'
+    if not args.vdagentd_exec:
+        args.vdagentd_exec = 'spice-vdagentd'
+    args.vdagent_exec = which(args.vdagent_exec)
+    args.vdagentd_exec = which(args.vdagentd_exec)
+    if not agents_new_enough(args):
+        if args.vdagent_enabled:
+            print("error: vdagent is not new enough to support Xspice")
+            raise SystemExit
+        args.vdagent_enabled = False
+
+def tls_files(args):
+    if args.tls_port == 0:
+        return {}
+    files = {}
+    for k, var in [('ca-cert', 'cacert_file'),
+                   ('server-key', 'x509_key_file'),
+                   ('server-cert', 'x509_cert_file')]:
+        files[k] = os.path.join(args.x509_dir, k + '.pem')
+        if getattr(args, var):
+            files[k] = getattr(args, var)
+    return files
+
+# XXX spice-server aborts if it can't find the certificates - avoid by checking
+# ourselves. This isn't exhaustive - if the server key requires a password
+# and it isn't supplied spice will still abort, and Xorg with it.
+for key, filename in tls_files(args).items():
+    if not os.path.exists(filename):
+        print("missing %s - %s does not exist" % (key, filename))
+        sys.exit(1)
+
+def error(msg, exit_code=1):
+    print("Xspice: %s" % msg)
+    sys.exit(exit_code)
+
+if not args.xorg:
+    error("Xorg missing")
+
+cleanup_files = []
+cleanup_dirs = []
+cleanup_processes = []
+
+def cleanup(*args):
+    for f in cleanup_files:
+        if os.path.exists(f):
+            os.remove(f)
+    for d in cleanup_dirs:
+        if os.path.exists(d):
+            os.rmdir(d)
+    for p in cleanup_processes:
+        try:
+            p.kill()
+        except OSError:
+            pass
+    for p in cleanup_processes:
+        try:
+            p.wait()
+        except OSError:
+            pass
+    del cleanup_processes[:]
+
+def launch(*args, **kw):
+    p = Popen(*args, **kw)
+    cleanup_processes.append(p)
+    return p
+
+signal.signal(signal.SIGTERM, cleanup)
+atexit.register(cleanup)
+
+if args.auto:
+    temp_dir = tempfile.mkdtemp(prefix="Xspice-")
+    cleanup_dirs.append(temp_dir)
+
+    args.config = temp_dir + "/xorg.conf"
+    cleanup_files.append(args.config)
+    cf = open(args.config, "w+")
+
+    logfile = temp_dir + "/xorg.log"
+    cleanup_files.append(logfile)
+
+    xorg_args = [ '-logfile', logfile ] + xorg_args
+    if args.audio_fifo_dir:
+        options = 'Option "SpicePlaybackFIFODir"  "%s"' % args.audio_fifo_dir
+    else:
+        options = ''
+    cf.write("""
+Section "Device"
+    Identifier "XSPICE"
+    Driver "spiceqxl"
+    %(options)s
+EndSection
+
+Section "InputDevice"
+    Identifier "XSPICE POINTER"
+    Driver     "xspice pointer"
+EndSection
+
+Section "InputDevice"
+    Identifier "XSPICE KEYBOARD"
+    Driver     "xspice keyboard"
+EndSection
+
+Section "Monitor"
+    Identifier    "Configured Monitor"
+EndSection
+
+Section "Screen"
+    Identifier     "XSPICE Screen"
+    Monitor        "Configured Monitor"
+    Device         "XSPICE"
+EndSection
+
+Section "ServerLayout"
+    Identifier "XSPICE Example"
+    Screen "XSPICE Screen"
+    InputDevice "XSPICE KEYBOARD"
+    InputDevice "XSPICE POINTER"
+EndSection
+
+# Prevent udev from loading vmmouse in a vm and crashing.
+Section "ServerFlags"
+    Option "AutoAddDevices" "False"
+EndSection
+
+
+    """ % locals())
+    cf.flush()
+
+if args.vdagent_enabled:
+    for f in [args.vdagent_udcs_path, args.vdagent_virtio_path, args.vdagent_uinput_path]:
+        if f and os.path.exists(f):
+            os.unlink(f)
+
+    if not temp_dir:
+        temp_dir = tempfile.mkdtemp(prefix="Xspice-")
+        cleanup_dirs.append(temp_dir)
+
+    # Auto generate temporary files for vdagent
+    if not args.vdagent_udcs_path:
+        args.vdagent_udcs_path = temp_dir + "/vdagent.udcs"
+    if not args.vdagent_virtio_path:
+        args.vdagent_virtio_path = temp_dir + "/vdagent.virtio"
+    if not args.vdagent_uinput_path:
+        args.vdagent_uinput_path = temp_dir + "/vdagent.uinput"
+
+    cleanup_files.extend([args.vdagent_udcs_path, args.vdagent_virtio_path, args.vdagent_uinput_path])
+
+var_args = ['port', 'tls_port', 'disable_ticketing',
+    'x509_dir', 'sasl', 'cacert_file', 'x509_cert_file',
+    'x509_key_file', 'x509_key_password',
+    'tls_ciphers', 'dh_file', 'password', 'image_compression',
+    'jpeg_wan_compression', 'zlib_glz_wan_compression',
+    'streaming_video', 'video_codecs', 'deferred_fps', 'exit_on_disconnect',
+    'vdagent_enabled', 'vdagent_virtio_path', 'vdagent_uinput_path',
+    'vdagent_uid', 'vdagent_gid']
+
+for arg in var_args:
+    if getattr(args, arg) != None:
+        # The Qxl code doesn't respect booleans, so pass them as 0/1
+        a = getattr(args, arg)
+        if a == True:
+            a = "1"
+        elif a == False:
+            a = "0"
+        else:
+            a = str(a)
+        os.environ['XSPICE_' + arg.upper()] = a
+
+# A few arguments don't follow the XSPICE_ convention - handle them manually
+if args.numheads:
+    os.environ['QXL_NUM_HEADS'] = str(args.numheads)
+
+
+display=""
+for arg in xorg_args:
+    if arg.startswith(":"):
+        display = arg
+if not display:
+    print("Error: missing display on line (i.e. :3)")
+    raise SystemExit
+os.environ ['DISPLAY'] = display
+
+exec_args = [args.xorg, '-config', args.config]
+if cgdb and args.cgdb:
+    exec_args = [cgdb, '--args'] + exec_args
+    args.xorg = cgdb
+
+# This is currently mandatory; the driver cannot survive a reset
+xorg_args = [ '-noreset' ] + xorg_args
+
+
+if args.vdagent_enabled:
+    for f in [args.vdagent_udcs_path, args.vdagent_virtio_path, args.vdagent_uinput_path]:
+        if os.path.exists(f):
+            os.unlink(f)
+    cleanup_files.extend([args.vdagent_udcs_path, args.vdagent_virtio_path, args.vdagent_uinput_path])
+
+xorg = launch(executable=args.xorg, args=exec_args + xorg_args)
+time.sleep(2)
+
+retpid,rc = os.waitpid(xorg.pid, os.WNOHANG)
+if retpid != 0:
+    print("Error: X server is not running")
+else:
+    if args.vdagent_enabled and args.vdagent_launch:
+        # XXX use systemd --user for this?
+        vdagentd = launch(args=[args.vdagentd_exec, '-f', '-x', '-S', args.vdagent_udcs_path,
+                          '-s', args.vdagent_virtio_path, '-u', args.vdagent_uinput_path])
+        time.sleep(1)
+        # TODO wait for uinput pipe open for write
+        vdagent = launch(args=[args.vdagent_exec, '-x', '-s', args.vdagent_virtio_path, '-S',
+                         args.vdagent_udcs_path])
+    if args.xsession:
+        environ = os.environ
+        os.spawnlpe(os.P_NOWAIT, args.xsession, environ)
+
+    try:
+        xorg.wait()
+    except KeyboardInterrupt:
+        # Catch Ctrl-C as that is the common way of ending this script
+        print("Keyboard Interrupt")
