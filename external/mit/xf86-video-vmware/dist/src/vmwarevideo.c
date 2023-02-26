@@ -54,7 +54,8 @@
 #endif
 
 static CONST_ABI_16_0 char xv_adapt_name[] = "VMWare Overlay Video Engine";
-static CONST_ABI_16_0 char xv_image_name[] = "XV_IMAGE";
+/* XXXMRG see xorg-server/dist/hw/xfree86/common/xf86xv.h */
+static /*CONST_ABI_16_0*/ char xv_image_name[] = "XV_IMAGE";
 
 #define HAVE_FILLKEYHELPERDRAWABLE \
     ((GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 2) ||  \
