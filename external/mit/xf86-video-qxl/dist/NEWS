@@ -1,0 +1,47 @@
+Major changes in 0.1.5
+======================
+
+Fix X restarts when kms is in use with multiple monitors
+Various Xspice fixes and improvements (agent fixes, command line handling,
+documentation, delayed fps, audio playback)
+Fix Xspice crashing after 11 days
+Add --numheads argument to Xspice script
+Allow to setup video codec for streaming when using Xspice (requires
+spice-server 0.13.2)
+Add support for X.Org 1.19
+Fix compilation on arches which do not have outb (aarch64)
+
+Major changes in 0.1.4
+======================
+Added smartcard support to XSpice
+Memleak fix which could cause X to run out of memory
+Expose randr properties for suggested display positions if kernel
+supports it
+
+Major changes in 0.1.3
+======================
+Xspice performance/stability improvements
+Bug/crash fixes in the drm layer
+
+Major changes in 0.1.2
+======================
+Support for server managed fds
+Xspice: use playback rate interface if available
+
+Bugs fixed:
+ 1030531 - drm: restore cursor after resolution change
+ fix cursor2 support in older kernels
+ FD 79317 - prevent crash on dual head systems
+
+Major changes in 0.1.1
+======================
+
+KMS support
+DFPS available to guest driver too
+Xspice audio & agent support
+GPL code removed (EDID)
+Warnings squash
+Bug fixes (numbers are Red Hat Bugzilla bug ids):
+ 883578 - remote-viewer gets frozen after migration of guest with video playback
+ 968931 - Crash in Xspice after closing tab with spice-html5
+ 894421 - Small change in guests resolution results in wrong resolution

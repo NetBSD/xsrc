@@ -1,0 +1,230 @@
+Section "Device"
+    Identifier "XSPICE"
+    Driver "spiceqxl"
+
+    # ---- Network and security options
+
+    # Do not require a client password.
+    # default: False
+    #Option "SpiceDisableTicketing" "False"
+
+    # Set the password required to connect to the Spice server.
+    #Option "SpicePassword" ""
+
+    # Enable usage of SASL supported by the spice-gtk client. Not required,
+    # default: False
+    #Option "SpiceSasl" "False"
+
+    # Use Spice's regular unencrypted port. One of SpicePort or SpiceTlsPort
+    # must be specified. SpicePort can also be set through the XSPICE_PORT
+    # environment variable or the --port Xspice option.
+    # Specify 0 to disable the use of the regular port
+    # default: 5900
+    #Option "SpicePort" "5900"
+
+    # Use a TLS (encrypted) port. One of SpicePort or SpiceTlsPort must be
+    # specified. SpiceTlsPort can also be set through the XSPICE_TLS_PORT
+    # environment variable or the --tls-port Xspice option.
+    #Option "SpiceTlsPort" "5900"
+
+    # Set the directory where the CA certificate, server key and server
+    # certificate are searched for TLS, using the same predefined names QEMU
+    # uses:
+    #   cacert.pem, server-key.pem, server-cert.pem
+    #Option "SpiceX509Dir" ""
+
+    # Set the CA certificate file location for TLS.
+    #Option "SpiceCacertFile" ""
+
+    # Set the server key file location for TLS.
+    #Option "SpiceX509KeyFile" ""
+
+    # Set the server key's password for TLS.
+    #Option "SpiceX509KeyPassword" ""
+
+    # Set the server certificate file location for TLS.
+    #Option "SpiceX509CertFile" ""
+
+    # Set the server DH file location for TLS.
+    #Option "SpiceDhFile" ""
+
+    # Set the TLS ciphers preference order.
+    #Option "SpiceTlsCiphers" ""
+
+    # Listen to a specific interface.
+    # default: Listen to all (0.0.0.0).
+    #Option "SpiceAddr" ""
+
+    # Set to True to only listen on IPv4 interfaces.
+    # default: False
+    #Option "SpiceIPV4Only" "False"
+
+    # Set to True to only listen on IPv6 interfaces.
+    # default: False
+    #Option "SpiceIPV6Only" "False"
+
+    # If set, the Spice server will exit when the first client disconnects.
+    # default: False
+    #Option "SpiceExitOnDisconnect" "True"
+
+
+    # ---- Monitor configuration options
+
+    # The number of heads to allocate by default.
+    # default: 4
+    #Option "NumHeads" "4"
+
+
+    # ---- Compression options
+
+    # Set zlib glz wan compression. Options are auto, never, always.
+    # default: auto
+    #Option "SpiceZlibGlzWanCompression" ""
+
+    # Set jpeg wan compression. Options are auto, never, always.
+    # default: auto
+    #Option "SpiceJpegWanCompression" ""
+
+    # Set image compression. Options are off, auto_glz, auto_lz, quic, glz, lz.
+    # default: auto_glz
+    #Option "SpiceImageCompression" ""
+
+    # If non zero, the driver will render all operations to the frame buffer,
+    # and keep track of a changed rectangle list. The changed rectangles
+    # will be transmitted at the rate requested (e.g. 10 frames per second).
+    # This can dramatically reduce network bandwidth for some use cases.
+    #Option "SpiceDeferredFPS" "10"
+
+    # Set the streaming video method. Options are filter, off, all.
+    # default: filter
+    #Option "SpiceStreamingVideo" ""
+
+    # Sets a semicolon-separated list of preferred video codecs.
+    # Each takes the form encoder:codec, with spice:mjpeg being the default,
+    # and other options being provided by gstreamer for the mjpeg, vp8 and h264
+    # codecs.
+    #Option "SpiceVideoCodecs" ""
+
+    # Enable caching of images directly written with uxa->put_image.
+    # default: True
+    #Option "EnableImageCache" "True"
+
+    # Enable caching of images created by uxa->prepare_access.
+    # default: True
+    #Option "EnableFallbackCache" "True"
+
+    # Enable the use of off-screen surfaces.
+    # default: True
+    #Option "EnableSurfaces" "True"
+
+
+    # ---- Xspice-specific buffer options
+
+    # Buffer Size notes:
+    #  The following buffer sizes are used for Xspice only.
+    #  If you are using the DFPS mode, surface ram is not used,
+    #  and you can set it to 1.
+    #  Otherwise, the surface buffer should be at least as large
+    #   as the frame buffer, and probably a multiple like 8.
+    #  The command buffer ram should also be substantially larger
+    #   than the frame buffer, and note that the frame buffer occupies
+    #   the front of the command buffer.  Hence, our default size
+    #   is a command buffer 7x the size of the frame buffer.
+    #  If you see 'Out of memory' errors in your xorg.log, you probably need
+    #   to increase the surface or command buffer sizes.
+
+    # The amount of surface buffer ram, in megabytes, to allocate.
+    # default: 128
+    #Option "SurfaceBufferSize" "128"
+
+    # The amount of command buffer ram, in megabytes, to allocate.
+    # default: 128
+    #Option "CommandBufferSize" "128"
+
+    # The amount of frame buffer ram, in megabytes, to reserve
+    #  This is reserved out of the CommandBuffer RAM
+    #  This governs the maximum size the X screen can be;
+    #   4 Heads at 1920x1080 require 32M of RAM
+    # default: 16
+    #Option "FrameBufferSize" "16"
+
+
+    # ---- VDAgent options
+
+    # Whether or not to accept Vdagent connections.
+    # default: False
+    #Option "SpiceVdagentEnabled" "False"
+
+    # Default path to listen for agent virtual io connections.
+    # default: /tmp/xspice-virtio"
+    #Option "SpiceVdagentVirtioPath" "/tmp/xspice-virtio"
+
+    # Default path to listen for agent uinput connections.
+    # default: /tmp/xspice-uinput
+    #Option "SpiceVdagentUinputPath" "/tmp/xspice-uinput"
+
+    # Default user id to set for the Virtio and Uinput sockets.
+    # Note: both uid and gid must be given for either to take effect.
+    # default: 0, or none
+    #Option "SpiceVdagentUid" "0"
+
+    # Default group id to set for the Virtio and Uinput sockets.
+    # Note: both uid and gid must be given for either to take effect.
+    # default: 0, or none
+    #Option "SpiceVdagentGid" "0"
+
+    # Set Spice Agent Mouse - Use Agent mouse if an agent connects.
+    # default: True
+    #Option "SpiceAgentMouse" "True"
+
+    # Set Spice Playback compression.
+    # default: True
+    #Option "SpicePlaybackCompression" "True"
+
+    # Disable copy and paste.
+    # default: False
+    #Option "SpiceDisableCopyPaste" "False"
+
+    # If a directory is given, any file in that directory will be read
+    # for audio data to be sent to the client.
+    # default: Not set.
+    #Option "SpicePlaybackFIFODir" "/tmp/"
+
+    # A unix domain name for a unix domain socket to communicate with
+    # a spiceccid smartcard driver.
+    # default: Not set.
+    #Option "SpiceSmartCardFile" "/tmp/spice.pcsc.comm"
+EndSection
+
+Section "InputDevice"
+    Identifier "XSPICE POINTER"
+    Driver     "xspice pointer"
+EndSection
+
+Section "InputDevice"
+    Identifier "XSPICE KEYBOARD"
+    Driver     "xspice keyboard"
+EndSection
+
+Section "Monitor"
+    Identifier    "Configured Monitor"
+EndSection
+
+Section "Screen"
+    Identifier     "XSPICE Screen"
+    Monitor        "Configured Monitor"
+    Device        "XSPICE"
+    DefaultDepth    24
+EndSection
+
+Section "ServerLayout"
+    Identifier "XSPICE Example"
+    Screen "XSPICE Screen"
+    InputDevice "XSPICE KEYBOARD"
+    InputDevice "XSPICE POINTER"
+EndSection
+
+# Prevent udev from loading vmmouse in a vm and crashing.
+Section "ServerFlags"
+    Option "AutoAddDevices" "False"
+EndSection
