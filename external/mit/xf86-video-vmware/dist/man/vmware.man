@@ -27,7 +27,7 @@ use Gallium3D XA to accelerate 3D operations. It will also by default enable
 DRI, the Direct Rendering Infrastructure, primarily for accelerated OpenGL.
 If 3D acceleration is available,
 the driver will in addition provide an additional XVideo adaptor for textured
-video. Gallium3D XA,\*libxatracker.so\*q and the accelerated OpenGL driver,
+video. Gallium3D XA, \*qlibxatracker.so\*q and the accelerated OpenGL driver,
 \*qvmwgfx_dri.so\*q is provided by the mesa distribution.
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration

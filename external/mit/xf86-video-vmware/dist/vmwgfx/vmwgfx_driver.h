@@ -36,15 +36,15 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <errno.h>
-#include <drm.h>
-#include <xf86drm.h>
-#include <xf86drmMode.h>
 #include <xorg-server.h>
 #include <xf86.h>
 #include <xf86Crtc.h>
 #include <xf86xv.h>
 #include <xa_tracker.h>
 #include <xf86Module.h>
+#include <drm.h>
+#include <xf86drm.h>
+#include <xf86drmMode.h>
 
 #include "../src/compat-api.h"
 #ifdef DRI2
@@ -70,6 +70,12 @@
 #define debug_printf(...)
 
 #define VMWGFX_DRI_DEVICE_LEN 80
+
+#undef VMWGFX_LIBDRM_DEVICENAME
+#if defined(HAVE_LIBDRM_2_4_96) || \
+  (defined(HAVE_LIBDRM_2_4_74) && !defined(__linux__))
+#define VMWGFX_LIBDRM_DEVICENAME
+#endif
 
 typedef struct
 {
@@ -145,7 +151,11 @@ typedef struct _modesettingRec
     struct vmwgfx_hosted *hosted;
 #ifdef DRI2
     Bool dri2_available;
+#ifdef VMWGFX_LIBDRM_DEVICENAME
+    char *dri2_device_name;
+#else
     char dri2_device_name[VMWGFX_DRI_DEVICE_LEN];
+#endif
 #endif
 #ifdef HAVE_LIBUDEV
     struct udev_monitor *uevent_monitor;
@@ -153,6 +163,15 @@ typedef struct _modesettingRec
     struct vmwgfx_layout *layout;
 #endif
     Bool autoLayout;
+#ifdef DRI3
+    Bool xa_dri3;
+    Bool dri3_available;
+#endif
+
+    /* Video */
+    XF86VideoAdaptorPtr overlay;
+    XF86VideoAdaptorPtr textured;
+
 } modesettingRec, *modesettingPtr;
 
 #define modesettingPTR(p) ((modesettingPtr)((p)->driverPrivate))
@@ -227,9 +246,20 @@ xorg_xv_init(ScreenPtr pScreen);
 XF86VideoAdaptorPtr
 vmw_video_init_adaptor(ScrnInfoPtr pScrn);
 void
-vmw_video_free_adaptor(XF86VideoAdaptorPtr adaptor, Bool free_ports);
+vmw_video_free_adaptor(XF86VideoAdaptorPtr adaptor);
+void
+vmw_xv_close(ScreenPtr pScreen);
 
 void
 vmw_ctrl_ext_init(ScrnInfoPtr pScrn);
+
+/***********************************************************************
+ * vmwgfx_dri3.c
+ */
+#define VMW_XA_VERSION_MAJOR_DRI3 2
+#define VMW_XA_VERSION_MINOR_DRI3 4
+
+Bool
+vmwgfx_dri3_init(ScreenPtr screen);
 
 #endif /* _XORG_TRACKER_H_ */

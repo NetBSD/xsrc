@@ -1,12 +1,627 @@
-commit 0e94cd85b2fa1501d4d883de3c97074c5ea5c373
-Author: Thomas Hellstrom <thellstrom@vmware.com>
-Date:   Wed Nov 16 11:22:53 2016 +0700
+commit f82ce27f17e1c706f34a0fdc5cceaf6e42db1476
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 12:01:58 2023 +1000
 
-    Bump minor for release.
+    Bump the version number to 13.4.0
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 3ec2fad6ed1a291f050cac4d33ea81e06c469c62
+Author: Ville Skyttä <ville.skytta@iki.fi>
+Date:   Sun Dec 15 13:56:04 2013 +0200
+
+    Man page syntax fix.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c59c5d241a5f09244be0cdea6dbdc938774c9486
+Author: Ville Skyttä <ville.skytta@iki.fi>
+Date:   Sun Dec 15 13:56:03 2013 +0200
+
+    Spelling fixes.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f7d50aa328d9488527eb2c97fba6a06c2b445d44
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 24 09:09:00 2022 -0700
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 790d641d1da415ffcda1c251961da63a60c06921
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 18 17:16:33 2022 -0700
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ff5637a14c52e6ec592592c88938104b087e925c
+Author: Martin Krastev <krastevm@vmware.com>
+Date:   Tue Jan 25 15:11:08 2022 +0200
+
+    Garbled XvPutImage output for FOURCC_YV12 when using 3D-accel-texture adaptor
+    
+    A helper for the PutImage callback in adaptor 'XA G3D Textured Video' was not
+    taking into account the source data pitches for YV12 format, resulting in
+    garbled frames for misaligned frame widths. Issue reported by Doug Brown.
+    This patch is based off the patch proposed by Doug.
+    
+    Repro of the original issue:
+    gst-launch-1.0 videotestsrc ! video/x-raw,format=YV12,width=449,height=240 ! xvimagesink
+    
+    Reported-by: Doug Brown <doug@schmorgal.com>
+    Signed-off-by: Martin Krastev <krastevm@vmware.com>
+    Reviewed-by: Zack Rusin <zackr@vmware.com>
+
+commit 77b8183b3395333d5d4c73e25c2d011748f15eda
+Author: Rudi Heitbaum <rudi@heitbaum.com>
+Date:   Sun May 8 03:00:10 2022 +0000
+
+    vmwgfx: fix missing array notation
+    
+     Fixes error identified by gcc-12.1.0 compiler
+    
+    make
+      CC       libvmwgfx_la-vmwgfx_tex_video.lo
+    vmwgfx_tex_video.c: In function 'stop_video':
+    vmwgfx_tex_video.c:240:20: error: the comparison will always evaluate as 'true' for the address of 'yuv' will never be NULL [-Werror=address]
+      240 |                if (priv->yuv[i]) {
+          |                    ^~~~
+
+commit 50ab008cb965dc9e47e0a84a1950e2485bbd3c44
+Author: Martin Krastev <krastevm@vmware.com>
+Date:   Tue Nov 30 11:47:39 2021 -0800
+
+    vmwgfx: Change header inclusion order to avoid xorg headers catching stdbool.h
+    
+    libdrm commit e641e2a632d779f638ac2ba983b9fceb20b3fac4 added
+    stdbool.h to the library headers which conflicts with xorg headers.
+    
+    Signed-off-by: Martin Krastev <krastevm@vmware.com>
+    Reviewed-by: Zack Rusin <zackr@vmware.com>
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit 5569f16a14a1b6974051b57cd2850f00882a899c
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Jan 17 10:19:04 2019 +0100
+
+    vmwgfx: Unify style in scanout_update and present functions
+    
+    Since the functions are pretty similar, Make them look more similar in terms
+    of memory allocation methods and variable names
+    
+    Reported-by: Brian Paul <brianp@vmware.com>
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 0a7c3570c92d2d831fec34415b3d821af18ba858
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 9 09:40:03 2019 +0100
+
+    vmwgfx: Limit the number of cliprects in a drm present_readback command v3
+    
+    The drm present readback command number of cliprects should not exceed
+    DRM_MODE_FB_DIRTY_MAX_CLIPS. If that number is exceeded, split
+    the command up.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com> #v1
+
+commit 357ce6e48c2e8f2ba2b2d889d4f2041818947eb3
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 9 09:20:45 2019 +0100
+
+    vmwgfx: Limit the number of cliprects in a drm present command v3
+    
+    The drm present command number of cliprects should not exceed
+    DRM_MODE_FB_DIRTY_MAX_CLIPS. If that number is exceeded, split
+    the command up.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com> #v2
+    Reviewed-by: Deepak Rawat < drawat@vmware.com> #v1
+
+commit 86189966c3dee0e0c10dd4926cebbe478129c6f0
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 9 08:27:16 2019 +0100
+
+    vmwgfx: Limit the number of cliprects in a drm dirtyfb command v3
+    
+    The drm dirtyfb command would error if the number of cliprects were larger
+    than DRM_MODE_FB_DIRTY_MAX_CLIPS. If that number is exceeded, split the
+    command up.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com> #v2
+    Reviewed-by: Deepak Rawat <drawat@vmware.com> #v1
+
+commit ba4ef498fd1f66f81aaffc3dac504044b2ad7cc3
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 9 08:00:00 2019 +0100
+
+    vmwgfx: Don't exceed the device command size limit v3
+    
+    With a huge number of DMA clip rects we could exceed the device command
+    buffer command size limit. Fix this by sending multiple DMA commands
+    when we exceed the limit.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com> #v1
+
+commit d31e8e77e1453c26a02f24b26d96b4660d29e1df
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Nov 27 08:37:13 2018 +0100
+
+    vmwgfx: Fix invalid memory accesses in CloseScreen
+    
+    Some of the CloseScreen callbacks were referencing XA objects so move the
+    destruction of the XA state tracker to the end of drv_close_screen to avoid
+    referencing freed resources.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 79d066da48dddcbdfcf41ecbe29cd96aaae2e11c
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Nov 27 08:29:06 2018 +0100
+
+    saa: Make sure damage destruction happens at the correct location
+    
+    Incorrect DestroyPixmap wrapping previously made the destruction of damage
+    objects typically happen in damageDestroyPixmap(), leaving a dangling
+    damage pointer in saa_destroy_pixmap() which was only cleared. However in
+    some cases that caused us to leak damage objects.
+    
+    Rework saa initialization somewhat to make sure saa_destroy_pixmap happens
+    before damageDestroyPixmap and destroy the damage object in saa_destroy_pixmap.
+    Also add a damage object destruction notifier callback that clears the
+    saa pixmap damage pointer should the damage object destruction accidentally
+    happen elsewhere.
+    
+    This makes sure we don't leak damage objects.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 53e87117bbf1cba05a5b5046db9efa961b18fc74
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Fri Nov 23 09:30:42 2018 +0100
+
+    vmwgfx: Use libdrm to obtain the drm device node name v2
+    
+    We were relying on a linux-specific way to do this. Now that the code is
+    used also on FreeBSD and there is functionality in libdrm to do this,
+    Use that functionality.
+    
+    v2:
+    Remove unused variable warning in the !VMWGFX_LIBDRM_DEVICENAME case.
+    
+    Co-authored-by: Johannes Lundberg <johalun0@gmail.com>
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com> #v1
+
+commit 0b34df288f0e163750962e0e59f5e329642ca457
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Nov 27 16:36:21 2018 +0100
+
+    vmwgfx: Fix a memory leak
+    
+    We were leaking a pointer to a drm encoder.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 4ec3d67da829f4e7a35ab08427002b9d7e4e5f4b
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Nov 27 16:20:32 2018 +0100
+
+    vmwgfx: Fix XVideo memory leaks
+    
+    We were not properly freeing the port privates.
+    In order to access those at CloseScreen time, don't free the adaptor pointers
+    at XV screen init, but hold on to them until CloseScreen.
+    
+    Also properly free the new_adaptors pointer.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 71c85a70f1c5ff93e931181d0858af22cba231ec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 10 13:12:13 2018 -0800
+
+    Remove obsolete B16 & B32 tags in struct definitions
+    
+    They were defined as empty strings on all platforms except for the
+    long unsupported Cray systems which needed to use bitfields to define
+    any type smaller than 64-bits.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit a5815ba3eba0b222e8082a2e868d68cdc6993d5e
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue May 15 13:57:27 2018 +0200
+
+    Bump version number for release
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 7b163c018b6343590cc36ecd58adcdc30852ee28
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue May 15 09:52:53 2018 +0200
+
+    Require at least XA version 2.4 to enable dri3
+    
+    The XA version was bumped from 2.3 to 2.4 to signal that there were no
+    significant correctness or performance regressions when running dri3
+    compared to dri2 on the vmware driver stack.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 6b7dc2f9304298e669e7ac97594b948d1476ae52
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Mar 22 08:28:57 2018 +0100
+
+    vmwgfx: Clear the DRM mode before use
+    
+    Avoid sending partially uninitialized data to the kernel.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 0f90e2ed52082c1e2af3b47424a6c7c5d4c0c81e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Mar 14 21:49:14 2018 +0100
+
+    saa: Build compatibility with xserver 1.20
+    
+    fbGetRotatedPixmap went away with 24bpp support, just treat it as NULL
+    and we'll do the right thing.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit 3cdeaa5db76f5db7ce9482d3e067d3014076f8e4
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Fri Feb 16 13:55:37 2018 +0100
+
+    Fix a couple of shadowed declaration warnings
+    
+    In some enviroments, "index", "y1" and "y2" are defined globally causing
+    warnings about shadowed declarations. Fix this.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 4ea5c4d5fa1dcb125137bcb76b402490ac134b4f
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Fri Feb 16 13:37:56 2018 +0100
+
+    Build fixes
+    
+    A couple of more build fixes for older X servers.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 1899b0896dae4ce86c9871fa491b464f6af88526
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 08:10:41 2018 +0100
+
+    vmwgfx: Fix server termination due to a mesa loader bug
+    
+    Some versions of the Gallium loader close our drm file descriptor if
+    xa_tracker_create() fails (typically 2D VMs.) While this is mostly fixed
+    everywhere, we implement a workaround to avoid tracking down the same bug
+    again and again on those setups where this is not fixed in mesa.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit ea77ce3a200bae7d97d6e45becc898765c1aa259
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 11:15:46 2018 +0100
+
+    legacy: Silence a warning about an unused constant
+    
+    VMWAREBuildStr was only used in the !LIBPCIACCESS path.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 7503135a72ab47928f5db838273851693b0dddbb
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 11:12:29 2018 +0100
+
+    legacy: Avoid using the xf86[Un]blockSigio functions
+    
+    They have been deprecated since mouse doesn't use SIGIO anymore.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 69632d06e2bf255b002d39df49aaf99ae86eaf4e
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 10:33:51 2018 +0100
+
+    vmwgfx: Fix potential libudev include and link failures
+    
+    We were not including the proper include- and link flags for libudev.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit dc85a6da15768f7a9622677e79c618bfb35ce513
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 10:14:20 2018 +0100
+
+    Fix a number of compilation warnings
+    
+    There are a number of compilation warnings caused by const char pointers
+    being either explicitly or implicitly cast to char pointers. There
+    are a number of ABI differences that have hindered this so far, but
+    make a new attempt using the common_compat.h defines.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 98199b4c0aca89b70d4f0a0e37e1e27ac15a23c7
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 08:24:25 2018 +0100
+
+    vmwgfx: Remove old XWayland and XMir drivers
+    
+    Old-style XWayland and XMir aren't available anymore.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 943548ac765e5dd49d275da2b72ff07b3a64694a
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 08:04:54 2018 +0100
+
+    vmwgfx: Fix compilation failure if dri3 is not available
+    
+    Compilation on CentOS failed due to some code not being conditioned on
+    DRI3 headers being present.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit 2d769dc01ea16df65d294f094bea5632e0b2a04e
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 14 07:59:57 2018 +0100
+
+    saa: Fix an include path
+    
+    Fix compilation failure on CentOS 6.5 due to an incorrect include path.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    Reviewed-by: Deepak Rawat <drawat@vmware.com>
+
+commit c0a2f40d978e77287d0cac95254fb6f26b2449a8
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 3 21:28:56 2018 +0100
+
+    Bump version number for release candidate
     
     Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
 
-commit 3fd542b0394f9ab198b7750409ec2c0f16eb59da
+commit 1674782e357950ca3a7438ac2a0eefece5566ffd
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 3 21:26:22 2018 +0100
+
+    Add the common_compat.h source file for distribution
+    
+    The common_compat.h source file was missing from Makefile.am causing
+    "make distcheck" to fail.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit 08ad438e2793248452dab100822cbfcaa05b9938
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Mar 23 08:57:44 2017 +0100
+
+    vmwgfx: Support DRI3 v2
+    
+    Add server-side DRI3 support
+    
+    Currently DRI3 introduces extra latency with gnome-shell for
+    the following reasons:
+    1) We enable GLX_EXT_buffer_age. Causes gnome-shell to post fullscreen damage.
+    2) We enable GLX_OML_sync_control. Cases additional slowdown.
+    Not exactly sure why.
+    
+    Probably we want to implement workarounds in mesa so that we don't enable
+    these extensions for gnome-shell. That can be done with driconf, using some
+    trickery.
+    
+    v2: Verify that sharing an ARGB surface as XRGB works before enabling
+    DRI3.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit c8b8b2ee4a7b1085990443bbf1903ec265ff46f0
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu May 11 04:39:57 2017 -0700
+
+    Revert "vmware/vmwgfx: Support multiple dri driver names"
+    
+    This reverts commit d5550b7f8375c3d9003731578c1570e014577348.
+    
+    The commit was intended to support video drivers, but has the side effect
+    that GLX thinks our driver supports more than it does.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 3aff4ee5ca885d09d3b4ad2b0980b84978597815
+Author: Deepak Singh Rawat <drawat@vmware.com>
+Date:   Mon Aug 7 16:02:59 2017 -0700
+
+    vmware/vmwgfx: Wrap deprecated
+    
+    Deprecated with 43dbc556f3a4d743b9121d6cfc21961be4a9da56
+    
+    Signed-off-by: Deepak Rawat <drawat@vmware.com>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit d8c2f8501307a9c0c65601e897e7d919e42ba0b3
+Author: Deepak Singh Rawat <drawat@vmware.com>
+Date:   Mon Aug 7 15:57:56 2017 -0700
+
+    vmware: Fix build warnings
+    
+    Due to following commit in xserver there were
+    build warnings, as variables now declared const.
+    
+    d89b42bda46d36fc0879611cc3b3566957ce36d0
+    e1e01d2e33c632e395d7e396f73fba8ae606b15a
+    
+    Added a compat header file.
+    
+    Signed-off-by: Deepak Rawat <drawat@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>:q
+
+commit ed0fd2f2823917a5dfefa3d3af774d4cdb40f958
+Author: Sinclair Yeh <syeh@vmware.com>
+Date:   Thu Jul 13 20:16:19 2017 +0200
+
+    Revert "Revert "vmware/vmwgfx: Support multiple dri driver names""
+    
+    This reverts commit ea94dc570846655bbb8a7c75bf465907e454bef9.
+    
+    Temporarily revert this for internal testing.
+
+commit 1388a1592cdab7cc8217546fb1e97da293e70393
+Author: Sinclair Yeh <syeh@vmware.com>
+Date:   Thu Jul 13 20:15:52 2017 +0200
+
+    Revert "vmwgfx: Support DRI3 v2"
+    
+    This reverts commit d0d5cf3e35fd47b44f32065c5cb64ba62661f03a.
+    
+    Temporarily revert this for internal testing.
+
+commit d0d5cf3e35fd47b44f32065c5cb64ba62661f03a
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Mar 23 08:57:44 2017 +0100
+
+    vmwgfx: Support DRI3 v2
+    
+    Add server-side DRI3 support
+    
+    Currently DRI3 introduces extra latency with gnome-shell for
+    the following reasons:
+    1) We enable GLX_EXT_buffer_age. Causes gnome-shell to post fullscreen damage.
+    2) We enable GLX_OML_sync_control. Cases additional slowdown.
+    Not exactly sure why.
+    
+    Probably we want to implement workarounds in mesa so that we don't enable
+    these extensions for gnome-shell. That can be done with driconf, using some
+    trickery.
+    
+    v2: Verify that sharing an ARGB surface as XRGB works before enabling
+    DRI3.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit ea94dc570846655bbb8a7c75bf465907e454bef9
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu May 11 04:39:57 2017 -0700
+
+    Revert "vmware/vmwgfx: Support multiple dri driver names"
+    
+    This reverts commit d5550b7f8375c3d9003731578c1570e014577348.
+    
+    The commit was intended to support video drivers, but has the side effect
+    that GLX thinks our driver supports more than it does.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit ed9d2a3fde597f2ff397fc11640c7001b816f3a6
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit fa4998d1b9e392c47ceff2fe9663950efbb6b134
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4a96179cdbeb4a418dfc0b7223d9253a355e91de
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 670db8dbf2c8a98df34a7c6592a6277ad9beb15a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 91881a66195f4bc41e075a0d573ada7cdc803ba0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fade4f46e84e93153edc3472abb73635f87555e6
 Author: Thomas Hellstrom <thellstrom@vmware.com>
 Date:   Wed Nov 16 11:35:58 2016 +0700
 
@@ -14,9 +629,8 @@ Date:   Wed Nov 16 11:35:58 2016 +0700
     
     Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
     Reviewed-by: Sinclair Yeh <syeh@vmware.com>
-    (cherry picked from commit fade4f46e84e93153edc3472abb73635f87555e6)
 
-commit e53a7e42eb7597808a364f230a97ce64481f084b
+commit d64d01c7a599dc3c79125701f076a3e459cefdc2
 Author: Hans de Goede <hdegoede@redhat.com>
 Date:   Thu Sep 29 19:37:22 2016 +0200
 
@@ -24,7 +638,17 @@ Date:   Thu Sep 29 19:37:22 2016 +0200
     
     Signed-off-by: Hans de Goede <hdegoede@redhat.com>
     Acked-by: Thomas Hellstrom <thellstrom@vmware.com>
-    (cherry picked from commit d64d01c7a599dc3c79125701f076a3e459cefdc2)
+
+commit d5550b7f8375c3d9003731578c1570e014577348
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Apr 20 20:10:41 2016 +0200
+
+    vmware/vmwgfx: Support multiple dri driver names
+    
+    Support sending multiple driver names and dri2 INFOREC v4.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
 
 commit 0bcd4df1843f00f8e8507750401ec2a2a29330dc
 Author: Thomas Hellstrom <thellstrom@vmware.com>

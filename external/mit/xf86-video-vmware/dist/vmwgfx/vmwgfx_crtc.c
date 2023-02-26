@@ -101,7 +101,7 @@ crtc_dpms(xf86CrtcPtr crtc, int mode)
 
 /*
  * Disable outputs and crtcs and drop the scanout reference from
- * scanout pixmaps. This will essentialy free all kms fb allocations.
+ * scanout pixmaps. This will essentially free all kms fb allocations.
  */
 
 void
@@ -172,6 +172,7 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 
     connector_id = xorg_output_get_id(output);
 
+    memset(&drm_mode, 0, sizeof(drm_mode));
     drm_mode.clock = mode->Clock;
     drm_mode.hdisplay = mode->HDisplay;
     drm_mode.hsync_start = mode->HSyncStart;
@@ -243,8 +244,10 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
      * Intel wrote the crtc code, let's do what the xf86-video-intel driver
      * does.
      */
+#if (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 23)
     if (pScreen)
 	xf86_reload_cursors(pScreen);
+#endif
 
     return TRUE;
 }

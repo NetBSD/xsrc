@@ -33,7 +33,6 @@
 
 #include "xorg-server.h"
 #include <xf86drm.h>
-#include <xf86drmMode.h>
 #include <xf86str.h>
 #include <randrstr.h>
 #include <xf86Crtc.h>
@@ -643,6 +642,7 @@ xorg_output_init(ScrnInfoPtr pScrn)
 	if (drm_encoder) {
 	    output->possible_crtcs = drm_encoder->possible_crtcs;
 	    output->possible_clones = drm_encoder->possible_clones;
+	    drmModeFreeEncoder(drm_encoder);
 	} else {
 	    output->possible_crtcs = 0;
 	    output->possible_clones = 0;

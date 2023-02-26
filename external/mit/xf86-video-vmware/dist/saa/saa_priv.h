@@ -59,20 +59,22 @@
 #include "glyphstr.h"
 #endif
 #include "damage.h"
+#include "../src/common_compat.h"
 
 #define SAA_INVALID_ADDRESS \
   ((void *) ((unsigned long) 0xFFFFFFFF - 1024*1024))
 
 struct saa_gc_priv {
     /* GC values from the layer below. */
-    GCOps *saved_ops;
-    GCFuncs *saved_funcs;
+    CONST_ABI_18_0 GCOps *saved_ops;
+    CONST_ABI_18_0 GCFuncs *saved_funcs;
 };
 
 struct saa_screen_priv {
     struct saa_driver *driver;
     CreateGCProcPtr saved_CreateGC;
     CloseScreenProcPtr saved_CloseScreen;
+    CloseScreenProcPtr saved_early_CloseScreen;
     GetImageProcPtr saved_GetImage;
     GetSpansProcPtr saved_GetSpans;
     CreatePixmapProcPtr saved_CreatePixmap;
@@ -126,8 +128,17 @@ do {								\
 	(real)->mem = (priv)->saved_##mem;	\
 }
 
+#define saa_wrap_early(priv, real, mem, func) {		\
+	(priv)->saved_early_##mem = (real)->mem;	\
+	(real)->mem = func;				\
+}
+
+#define saa_unwrap_early(priv, real, mem) {		\
+	(real)->mem = (priv)->saved_early_##mem;	\
+}
+
 #define saa_swap(priv, real, mem) {\
-	void *tmp = (priv)->saved_##mem;		\
+	CONST_ABI_18_0 void *tmp = (priv)->saved_##mem;		\
 	(priv)->saved_##mem = (real)->mem;	\
 	(real)->mem = tmp;			\
 }

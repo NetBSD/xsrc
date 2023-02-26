@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-vmware],
-        [13.2.1],
+        [13.4.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-vmware])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -32,8 +32,7 @@ AC_CONFIG_AUX_DIR(.)
 AC_SYS_LARGEFILE
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -133,6 +132,16 @@ if test x$BUILD_VMWGFX = xyes; then
 	PKG_CHECK_EXISTS([libdrm >= 2.4.38],
 			 [AC_DEFINE([HAVE_LIBDRM_2_4_38], 1,
 			 [Has version 2.4.38 or greater of libdrm])])
+#
+# Check for drmGetDeviceNameFromFd2. On linux we need
+# 2.4.96 for compatibility with the standalone vmwgfx driver
+#
+	PKG_CHECK_EXISTS([libdrm >= 2.4.74],
+			 [AC_DEFINE([HAVE_LIBDRM_2_4_74], 1,
+			 [Has version 2.4.74 or greater of libdrm])])
+	PKG_CHECK_EXISTS([libdrm >= 2.4.96],
+			 [AC_DEFINE([HAVE_LIBDRM_2_4_96], 1,
+			 [Has version 2.4.96 or greater of libdrm])])
 fi
 
 DRIVER_NAME=vmware

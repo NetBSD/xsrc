@@ -49,47 +49,47 @@
 typedef struct {
    CARD8  reqType;           /* always X_VMwareCtrlReqCode */
    CARD8  VMwareCtrlReqType; /* always X_VMwareCtrlQueryVersion */
-   CARD16 length B16;
-   CARD32 majorVersion B32;
-   CARD32 minorVersion B32;
+   CARD16 length;
+   CARD32 majorVersion;
+   CARD32 minorVersion;
 } xVMwareCtrlQueryVersionReq;
 #define sz_xVMwareCtrlQueryVersionReq 12
 
 typedef struct {
    BYTE    type; /* X_Reply */
    BYTE    pad1;
-   CARD16  sequenceNumber B16;
-   CARD32  length B32;
-   CARD32  majorVersion B32;
-   CARD32  minorVersion B32;
-   CARD32  pad2 B32;
-   CARD32  pad3 B32;
-   CARD32  pad4 B32;
-   CARD32  pad5 B32;
+   CARD16  sequenceNumber;
+   CARD32  length;
+   CARD32  majorVersion;
+   CARD32  minorVersion;
+   CARD32  pad2;
+   CARD32  pad3;
+   CARD32  pad4;
+   CARD32  pad5;
 } xVMwareCtrlQueryVersionReply;
 #define sz_xVMwareCtrlQueryVersionReply 32
 
 typedef struct {
    CARD8  reqType;           /* always X_VMwareCtrlReqCode */
    CARD8  VMwareCtrlReqType; /* always X_VMwareCtrlSetRes */
-   CARD16 length B16;
-   CARD32 screen B32;
-   CARD32 x B32;
-   CARD32 y B32;
+   CARD16 length;
+   CARD32 screen;
+   CARD32 x;
+   CARD32 y;
 } xVMwareCtrlSetResReq;
 #define sz_xVMwareCtrlSetResReq 16
 
 typedef struct {
    BYTE   type; /* X_Reply */
    BYTE   pad1;
-   CARD16 sequenceNumber B16;
-   CARD32 length B32;
-   CARD32 screen B32;
-   CARD32 x B32;
-   CARD32 y B32;
-   CARD32 pad2 B32;
-   CARD32 pad3 B32;
-   CARD32 pad4 B32;
+   CARD16 sequenceNumber;
+   CARD32 length;
+   CARD32 screen;
+   CARD32 x;
+   CARD32 y;
+   CARD32 pad2;
+   CARD32 pad3;
+   CARD32 pad4;
 } xVMwareCtrlSetResReply;
 #define sz_xVMwareCtrlSetResReply 32
 
@@ -98,24 +98,24 @@ typedef struct {
 typedef struct {
    CARD8  reqType;           /* always X_VMwareCtrlReqCode */
    CARD8  VMwareCtrlReqType; /* always X_VMwareCtrlSetTopology */
-   CARD16 length B16;
-   CARD32 screen B32;
-   CARD32 number B32;
-   CARD32 pad1   B32;
+   CARD16 length;
+   CARD32 screen;
+   CARD32 number;
+   CARD32 pad1;
 } xVMwareCtrlSetTopologyReq;
 #define sz_xVMwareCtrlSetTopologyReq 16
 
 typedef struct {
    BYTE   type; /* X_Reply */
    BYTE   pad1;
-   CARD16 sequenceNumber B16;
-   CARD32 length B32;
-   CARD32 screen B32;
-   CARD32 pad2   B32;
-   CARD32 pad3   B32;
-   CARD32 pad4   B32;
-   CARD32 pad5   B32;
-   CARD32 pad6   B32;
+   CARD16 sequenceNumber;
+   CARD32 length;
+   CARD32 screen;
+   CARD32 pad2;
+   CARD32 pad3;
+   CARD32 pad4;
+   CARD32 pad5;
+   CARD32 pad6;
 } xVMwareCtrlSetTopologyReply;
 #define sz_xVMwareCtrlSetTopologyReply 32
 
