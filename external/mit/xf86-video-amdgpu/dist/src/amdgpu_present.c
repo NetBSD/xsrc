@@ -58,21 +58,7 @@ struct amdgpu_present_vblank_event {
 static RRCrtcPtr
 amdgpu_present_get_crtc(WindowPtr window)
 {
-	ScreenPtr screen = window->drawable.pScreen;
-	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
-	xf86CrtcPtr crtc;
-	RRCrtcPtr randr_crtc = NULL;
-
-	crtc = amdgpu_pick_best_crtc(pScrn, FALSE,
-				     window->drawable.x,
-				     window->drawable.x + window->drawable.width,
-				     window->drawable.y,
-				     window->drawable.y + window->drawable.height);
-
-	if (crtc)
-		randr_crtc = crtc->randr_crtc;
-
-	return randr_crtc;
+	return amdgpu_randr_crtc_covering_drawable(&window->drawable);
 }
 
 static int
@@ -496,8 +482,13 @@ amdgpu_present_has_async_flip(ScreenPtr screen)
 Bool
 amdgpu_present_screen_init(ScreenPtr screen)
 {
-	if (amdgpu_present_has_async_flip(screen))
+	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
+
+	if (amdgpu_present_has_async_flip(screen)) {
 		amdgpu_present_screen_info.capabilities |= PresentCapabilityAsync;
+		info->can_async_flip = TRUE;
+	}
 
 	if (!present_screen_init(screen, &amdgpu_present_screen_info)) {
 		xf86DrvMsg(xf86ScreenToScrn(screen)->scrnIndex, X_WARNING,

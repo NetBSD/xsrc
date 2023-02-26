@@ -165,6 +165,7 @@ typedef enum {
 	OPTION_TEAR_FREE,
 	OPTION_DELETE_DP12,
 	OPTION_VARIABLE_REFRESH,
+	OPTION_ASYNC_FLIP_SECONDARIES,
 } AMDGPUOpts;
 
 static inline ScreenPtr
@@ -306,6 +307,8 @@ typedef struct {
 	/* kms pageflipping */
 	WindowPtr flip_window;
 	Bool allowPageFlip;
+	Bool can_async_flip;
+	Bool async_flip_secondaries;
 
 	/* cursor size */
 	int cursor_w;
@@ -369,9 +372,9 @@ extern void amdgpu_sync_close(ScreenPtr screen);
 /* amdgpu_video.c */
 extern void AMDGPUInitVideo(ScreenPtr pScreen);
 extern void AMDGPUResetVideo(ScrnInfoPtr pScrn);
-extern xf86CrtcPtr amdgpu_pick_best_crtc(ScrnInfoPtr pScrn,
-					 Bool consider_disabled,
+extern xf86CrtcPtr amdgpu_pick_best_crtc(ScreenPtr pScreen,
 					 int x1, int x2, int y1, int y2);
+extern RRCrtcPtr amdgpu_randr_crtc_covering_drawable(DrawablePtr pDraw);
 
 extern AMDGPUEntPtr AMDGPUEntPriv(ScrnInfoPtr pScrn);
 
