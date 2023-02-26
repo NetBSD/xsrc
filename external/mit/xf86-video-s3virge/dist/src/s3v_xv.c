@@ -351,6 +351,8 @@ S3VSetupImageVideoOverlay(ScreenPtr pScreen)
     XF86VideoAdaptorPtr adapt;
 
     adapt = S3VAllocAdaptor(pScrn);
+    if (adapt == NULL)
+        return NULL;
 
     adapt->type = XvWindowMask | XvInputMask | XvImageMask;
     adapt->flags = VIDEO_OVERLAID_IMAGES | VIDEO_CLIP_TO_VIEWPORT;
@@ -483,7 +485,7 @@ S3VDisplayVideoOverlay(
     int offset,
     short width, short height,
     int pitch, 
-    /* x,y src co-ordinates */
+    /* x,y src coordinates */
     int x1, int y1, int x2, int y2,
     /* dst in BoxPtr format */
     BoxPtr dstBox,

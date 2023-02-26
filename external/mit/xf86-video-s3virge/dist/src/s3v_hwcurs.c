@@ -171,6 +171,7 @@ S3VSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	    outCRReg(0x4b, bg);
 	    break;
 	  }  /* else fall through for ViRGE/MX... */
+	  /* FALLTHROUGH */
 	case 16:
 	  if (!(S3_ViRGE_GX2_SERIES(ps3v->Chipset) || S3_ViRGE_MX_SERIES(ps3v->Chipset))) {
 	    /* adjust colors to 16 bits */
@@ -207,7 +208,7 @@ S3VSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	    outCRReg(0x4b, bg >> 8);
 	    break;
 	  }  /* else fall through for ViRGE/MX... */
-
+	  /* FALLTHROUGH */
 	case 24:
 	case 32:
 	  /* Do it straight, full 24 bit color. */
