@@ -1,3 +1,483 @@
+commit ec567fe86ad6a9406ea466cec883283ab098ff6c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 13 14:59:29 2023 -0800
+
+    xf86-video-trident 1.4.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e993eebd1f3f0fed9ff77f024042aca9310eebcd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 11:34:53 2022 -0800
+
+    Fix 96 out of 102 -Wdiscarded-qualifiers warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bf78cb5118c86105cc3eca7e476ed7b30b9a0d8b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 9 11:32:24 2022 -0800
+
+    blade_exa: Fix -Wimplicit-fallthrough warning
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 819ce9b5dfa75c6c5d26cc674254c806a690ffad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c2f3f85426b957c1e7176ec18f2682eeb21ba440
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:25:10 2022 -0800
+
+    Update trident_pci_rename.h to pci_rename.h in src/Makefile.am
+    
+    Makefile was missed when header was renamed.  Fixes "make distcheck".
+    
+    Fixes: cc33df89bcdcec83da5b8eface1b191802d694b2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 077335e9b1c62c8fcbc21a4dbb8b34b670e276ef
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:18:10 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 12dc7dac8d0ddceb1843e9bbd604fdd2ec355c2c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:17:16 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 591dae19fb49b6a9c6d36ffc0fdf2224aed164c6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:15:43 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 07a5c4732f1c28ffcb873ee04500e3cb813c50b4
+Author: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date:   Tue Dec 7 22:28:04 2021 +0100
+
+    Remove ramdac
+    
+    ramdac drivers have been removed from xserver since version 21.0.99.1
+    and
+    https://gitlab.freedesktop.org/xorg/xserver/-/commit/f0385fb420158ac3bc1c4c325431ffc5c62344bb
+    resulting in the following build failure:
+    
+    In file included from trident_bank.c:37:
+    trident.h:41:10: fatal error: xf86RamDac.h: No such file or directory
+       41 | #include "xf86RamDac.h"
+          |          ^~~~~~~~~~~~~~
+    
+    Fixes:
+     - http://autobuild.buildroot.org/results/c81ac8075af257e8626d9d097270be7a7b4a1496
+    
+    Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+
+commit cc33df89bcdcec83da5b8eface1b191802d694b2
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 20:02:11 2019 -0700
+
+    Rename trident_pci_rename.h to pci_rename.h
+    
+    PCI rename header file appears to be generic, so trident_ prefix
+    should be dropped.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b0b1c79aa91b56f55094890d8de98ff82d58ee49
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:44:54 2019 -0700
+
+    Rename tridentpcirename.h to trident_pci_rename.h
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 2da734596084e742ab752567e2ee0eddffe14f95
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:42:54 2019 -0700
+
+    A minor adjustment to src/Makefile.am
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 5f110dc4c1c395ef07bd401f0e8abea095a1d22f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:39:45 2019 -0700
+
+    Move IsClearTV function location inside trident_pll.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b34e8641c63b4ac4166e276586807c920c3183cb
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:30:56 2019 -0700
+
+    Add braces to two for loops that lack them
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit eb2d933f74fb390643c7ea37a6223783ec29848c
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:30:03 2019 -0700
+
+    Rename tridenthelper.c to trident_pll.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit df9a2274788e12b71738412c681a3755640a0b95
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:13:42 2019 -0700
+
+    Fix indentation of tridenthelper.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit dff7175a3620bca0d45c241c42c8c0fc09c3c054
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:09:01 2019 -0700
+
+    Tab to spaces conversion for tridenthelper.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 8ea9a457609aca259da1abad9f99aa30964b6475
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri May 10 19:08:16 2019 -0700
+
+    Add braces to for loops inside tridenthelper.c
+    
+    Newer versions of gcc give warnings, so this fix suppresses the
+    warnings.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit fb546df6b2891e6c4b3032d57dc25084e9b6ec79
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:49:16 2019 -0800
+
+    Rename xp4_accel_exa.c to xp4_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ddb8975c0c810df7a3e6a5e7c18cb49fd59d2c34
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:46:48 2019 -0800
+
+    Fix indentation of xp4_accel_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit e9871ae05f4aaad194ff28ce34793df58bd757ce
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:44:35 2019 -0800
+
+    Tab to spaces conversion for xp4_accel_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1ec32020c9c9bfe53796b61605c2fb1df164870e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:33:02 2019 -0800
+
+    Rename xp4_accel.c to xp4_xaa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6f21b76940f582fc3dff8e67bceacc196598f941
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:30:17 2019 -0800
+
+    Suppress unused function compilation warnings for XP4 XAA functions
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 286b5ad5e3b755267b90cac670b2562b8209529a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:29:08 2019 -0800
+
+    Fix indentation of xp4_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ab9bc7fcfc8bcbe190ba48618ce9e813f02f11ee
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 14:21:31 2019 -0800
+
+    Tab to spaces conversion for xp4_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit be4a1b3065ff8cc7d826cae36747ae3cc4c5aecf
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 13:40:05 2019 -0800
+
+    Rename xp_accel.c to xp_xaa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit de1774492112fff99631cae041c81bfb6eb87a86
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 13:35:37 2019 -0800
+
+    Fix indentation of xp_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 867c9f8620e37477dfa1cdf919ea6472e4a5348f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 13:34:46 2019 -0800
+
+    Tab to spaces conversion for xp_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6793836ebf7ea4d1b9cc96ea1b948b35582d9cac
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Mar 5 13:24:35 2019 -0800
+
+    Fix indentation of src/Makefile.am
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit f08258914d87c991f496520007f5c39e2c373737
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:56:37 2019 -0800
+
+    Rename blade_accel_exa.c to blade_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b51b7aeb2a0658e3802a5efc1fab73062810bd87
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:55:55 2019 -0800
+
+    Fix indentation of blade_accel_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 4a4c34d9cff0d9a33d2daa135719812ab574bfbc
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:55:03 2019 -0800
+
+    Tab to spaces conversion for blade_accel_exa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 9f3aa06c20da422a27807facd952dc54f5d62947
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:51:06 2019 -0800
+
+    Rename blade_accel.c to blade_xaa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 2783af1f97ded26a028fe31f606ac3df12f2cf73
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:50:42 2019 -0800
+
+    Fix indentation for blade_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 62c95fa3d19f87329f780aa4853e3d8d9c1af3e5
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:50:24 2019 -0800
+
+    Tab to spaces conversion for blade_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 21f970fc6ddca600f617f8832fdb3313a66e26df
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:10:47 2019 -0800
+
+    Rename image_accel.c to image_xaa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6ca4a51aa1e0dc26665745da06def631bb15e734
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:10:28 2019 -0800
+
+    Fix indentation for image_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 96318bb118cb8e08900b43daf09a8e4f5b4df381
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Mar 4 21:10:01 2019 -0800
+
+    Tab to spaces conversion for image_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit e3d8815b11b80ab3460256dedd142070a257c2db
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Feb 19 19:13:33 2019 -0800
+
+    Rename trident_accel.c to tgui_xaa.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 626886dd43ed3a250c31868d9089835b76e2133a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Feb 19 19:13:32 2019 -0800
+
+    Fix indentation for trident_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 410ac2c46b2fc451dc3ecec30876128565f76ed6
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Feb 19 19:13:31 2019 -0800
+
+    Tab to spaces conversion for trident_accel.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1f965945fbe53a9a47c5d00f86b0348f495bc86b
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Feb 16 08:41:15 2019 -0800
+
+    Compilation fix for NEC PC-98x1 specific code inside trident_driver.c
+    
+    Unfortunately, commit 122747b2317fa6f82add70701efa8f853989ca3d broke
+    the order of various NEC PC-98x1 specific initialization functions
+    that was compiled for X Servers up to ABI_VIDEODRV_VERSION < 12.
+    This commit fixes the issue.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 30ca6e4630851f09a77dbc1f58e8c3b2472ad437
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Feb 4 22:01:06 2019 -0800
+
+    Tab to spaces conversion for trident_driver.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6ab3b054670d21bca51635ff222039882b0aa3ef
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 08:55:04 2018 -0600
+
+    Remove unwritten code related to EXA composite for Blade 3D
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b315b4a9f41bf6ac68c13bcdebc6f8d0cce07be7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 08:47:54 2018 -0600
+
+    Suppress defined but not used compilation warning
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 122747b2317fa6f82add70701efa8f853989ca3d
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 16:12:46 2018 -0600
+
+    Significantly reduce static function declarations for trident_driver.c
+    
+    Moved many functions around in order to accomplish this.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 8fee57780772dc8ffee1f90d2ee1af2232b5b387
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 16:10:42 2018 -0600
+
+    Use const char for xf86GetOptValString return type
+    
+    Apparently, xf86GetOptValString changed their return type from char
+    to const char between X Server 1.15 and 1.16. In particular, X Server
+    commit e1e01d2e33c632e395d7e396f73fba8ae606b15a made the change. This
+    commit will suppress the compilation warning.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 41d88c7bfd848fbbccb9136956b36a5a21d53317
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:15:00 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b50c09b9f910a754fdd3a6bef504e286bd7b32ef
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:38:54 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d270ceb929068f7292b9d759000a6224f2747cc
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 96f41ed9da81fc17fd1a778d01ffa096c6ba77a7
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f55e11cdd789754e8d51ba0b8b376a3a34b7b1d4
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 945cbd7c9a654bfd04142ec96d2997e362726558
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1283ff65bc9c7c9637c5423bb90737acd89d222e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit dadf45e8eb52ec8404ee596ee13984470b736fbd
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:48:51 2017 -0800
@@ -844,7 +1324,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 5fdfb936dda1156237851a66a935ca40e4b07788
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:50:00 2005 +0000
 
     Build system for trident
