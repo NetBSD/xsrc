@@ -1,3 +1,84 @@
+commit d9fcb67dff90d390b7d3340264613c82c9aa5d8e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 21 17:57:09 2023 -0800
+
+    xf86-video-ark 0.7.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b6710acc6936727a7b75689925770f26c7cd385
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 18a4ef933cb4de21b0663c17ddd56e0f73869679
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 17 15:03:17 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e56bc415ebbf21a55c4a8bfad64f9a033412f652
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 17 15:02:27 2022 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 56a04db5639f09b06f86b5b8ead70c3a7e2393f6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 17 15:01:44 2022 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 280301d5145a6950e97b1feabc52941aea9d8d99
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 17 14:57:30 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d974aa419c1da34ac16dbb5bb97f985e0d177a51
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 17 14:57:22 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c9a53c9ca6a114df303ab71ca852cae13ee323c
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 3a3eb72baec46f48e6cf15a834271c3d3386deac
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Sep 17 15:55:37 2013 -0400
+
+    Remove usage of mibstore.h (removed from server)
+    
+    The module had a compile error for this missing header file.
+    
+    Changes similar to vmware commit
+    23d87c92b7211cc5249eefe4ab3a2c7f370e279e
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit 8d63c607ceab903dbe36eccf2315065e6830a47e
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Jul 17 16:05:09 2012 +1000
@@ -165,9 +246,9 @@ Date:   Fri Dec 3 19:23:51 2010 -0500
     
     Comparing with lspci, the framebuffer address is wrong:
     00:0f.0 VGA compatible controller: ARK Logic Inc 2000PV [Stingray] (prog-if 00 [VGA controller])
-    	Flags: medium devsel
-    	Memory at e5000000 (32-bit, prefetchable) [size=4M]
-    	[virtual] Expansion ROM at 1c000000 [disabled] [size=64K]
+            Flags: medium devsel
+            Memory at e5000000 (32-bit, prefetchable) [size=4M]
+            [virtual] Expansion ROM at 1c000000 [disabled] [size=64K]
     
     Reviewed-by: Adam Jackson <ajax@redhat.com>
 
@@ -264,7 +345,7 @@ Date:   Sat Jun 12 10:32:57 2010 -0400
 
     COPYING: replace stub file with Copyright notice
     
-    Copyright 2000	Ani Joshi
+    Copyright 2000  Ani Joshi
     
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
@@ -573,7 +654,7 @@ Date:   Thu Aug 18 09:03:45 2005 +0000
     Update autogen.sh to one that does objdir != srcdir.
 
 commit 25a5746b57a841c69c7c03ee217b8596f695b243
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Aug 10 14:07:24 2005 +0000
 
     Don\'t lose existing CFLAGS in all the input drivers and some of the video
@@ -594,7 +675,7 @@ Date:   Fri Jul 29 21:22:42 2005 +0000
     - Update modular Xorg version
 
 commit 0092febd5aba5c208bee3b86dc4fcb27b2ffe1b6
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 00:28:44 2005 +0000
 
     - Add build system for xf86-video-ati
@@ -606,19 +687,19 @@ Date:   Thu Jul 14 00:28:44 2005 +0000
     - xf86-video-ark: s/module-dir/xorg-module-dir/
 
 commit 2a195bccdc39b5e0241c03e0485a8afe1f0d2571
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 22:02:27 2005 +0000
 
     driver/xf86-video-ark/src: Add Makefile.am
 
 commit 9cf05e94f77f859615b4cb35a6fb52b3939836aa
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 18:08:41 2005 +0000
 
     Add accidentally left out PKG_CHECK_MODULES
 
 commit 6a04dd93ad508915ae8f263ab54b80fb9acec4df
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 13 17:39:31 2005 +0000
 
     Build system for ark video driver
