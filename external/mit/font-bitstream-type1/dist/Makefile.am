@@ -40,14 +40,14 @@ FONT_FILES = \
 fontdir = @FONTDIR@
 font_DATA = $(FONT_FILES)
 
-EXTRA_DIST = $(FONT_FILES) Copyright
+EXTRA_DIST = $(FONT_FILES) Copyright README.md
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 install-data-hook:
 	@rm -f $(DESTDIR)$(fontdir)/fonts.scale
 	$(MKFONTSCALE) $(DESTDIR)$(fontdir)
-	@rm -f $(DESTDIR)$(fontdir)/font.dir
+	@rm -f $(DESTDIR)$(fontdir)/fonts.dir
 	$(MKFONTDIR) $(DESTDIR)$(fontdir)
 	@RUN_FCCACHE@
 
