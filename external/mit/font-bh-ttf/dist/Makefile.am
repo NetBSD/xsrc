@@ -40,14 +40,14 @@ actualconfigdir = $(FC_CONFDIR)/conf.d
 availconfigdir = $(FC_CONFDIR)/conf.avail
 dist_availconfig_DATA = 42-luxi-mono.conf
 
-EXTRA_DIST = $(FONT_FILES) COPYRIGHT.BH
+EXTRA_DIST = $(FONT_FILES) COPYRIGHT.BH README.md
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 install-data-hook:
 	@rm -f $(DESTDIR)$(fontdir)/fonts.scale
 	$(MKFONTSCALE) $(DESTDIR)$(fontdir)
-	@rm -f $(DESTDIR)$(fontdir)/font.dir
+	@rm -f $(DESTDIR)$(fontdir)/fonts.dir
 	$(MKFONTDIR) $(DESTDIR)$(fontdir)
 	mkdir -p $(DESTDIR)$(actualconfigdir)
 	@rm -f $(DESTDIR)$(actualconfigdir)/$(dist_availconfig_DATA)
