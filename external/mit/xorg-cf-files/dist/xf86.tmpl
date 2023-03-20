@@ -70,7 +70,7 @@ MODULE_DEFINES = -DXFree86Module
 
 #if defined(IHaveModules) && DoLoadableServer
 
-/* This overrides the ObjCompile in Imake.rules! */
+/* This overrides the ObjectCompile in Imake.rules! */
 #undef ObjectCompile
 #define ObjectCompile(options) RemoveFile($@)                           @@\
 	ClearmakeOSName\

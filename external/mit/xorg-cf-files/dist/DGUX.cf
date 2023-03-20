@@ -73,7 +73,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Ex
 #define Malloc0ReturnsNull YES  /* Added for 3.2Xh,i... GNU does return 0 */
 #define Malloc0ReturnsNullDefines -DMALLOC_0_RETURNS_NULL   /* define for GNU malloc X3.2i */
 /*******TCL TK DEFINITIONS ***********/
-#define HasTk  YES                 /* Comment out if you dont have this */
+#define HasTk  YES                 /* Comment out if you don't have this */
 #define TkLibDir    /usr/X11R6.3/lib
 #define TkIncDir    /usr/X11R6.3/include
 #define TkLibName   tk8.0
@@ -104,7 +104,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Ex
 #ifndef DefaultCCOptions
 #define DefaultCCOptions     /* -ansi -pedantic */
 #endif
-#define OptimizedCDebugFlags -O2  /* Add -g -mstandard for full debuging info */
+#define OptimizedCDebugFlags -O2  /* Add -g -mstandard for full debugging info */
 #define OptimizedCplusplusDebugFlags
 #define DebuggableCDebugFlags -g -mstandard
 #define DebuggableCplusplusDebugFlags

@@ -85,7 +85,7 @@ DEPXTOOLLIB = _UseCat($(USRLIBDIR),$(TOOLKITSRC),/libXt.a)
 # endif
 #endif
 
-/* The inbuf paramter to iconv(3) is "const char**", not "char **" */
+/* The inbuf parameter to iconv(3) is "const char**", not "char **" */
 ICONV_INBUF_DEFINE = -DICONV_INBUF_CONST
 
 ICONVSYSLIB = -liconv

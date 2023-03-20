@@ -285,7 +285,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.186 2003/06/25 18:06:22 eich Exp $
 
 /*
  * By default the application defaults files are always installed.
- * Uncommenting the the following will prevent exising application
+ * Uncommenting the following will prevent existing application
  * defaults files from being over-written.
  *
 #define InstallAppDefFiles	NO

@@ -28,7 +28,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasMkstemp		YES
 #define HasUsableFileMmap	YES
 #define HasZlib			YES
-#define HasSetUseContext	YES
+#define HasSetUserContext	YES
 #define HasBSDAuth		YES
 #define HasSetProcTitle		YES
 #define HasBasename		NO
@@ -342,8 +342,7 @@ install.man:: 								@@\
 #define       XsunServer      YES             /* mono + 8 bit color */
 #endif
 #ifndef       Xsun24Server
-#define       Xsun24Server    NO              /* mono + 8 bit color + 24 bit c
-olor */
+#define       Xsun24Server    NO              /* mono + 8 bit color + 24 bit color */
 #endif
 
 #ifndef NeedConstPrototypes

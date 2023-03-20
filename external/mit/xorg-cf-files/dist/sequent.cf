@@ -212,7 +212,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
  *
  * The following cpp macro defines have been introduced by Sequent.
  * They will be referenced in Sequent patches sent to TOG.
- * They may be moved above if accepted by TOG or X.org.
+ * They may be moved above if accepted by TOG or X.Org.
  */
 
 #define AdminBaseDir		  /usr/admin.ptx/etc/base.dir
@@ -264,7 +264,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
  * Sequent builds X11 and Motif in the same tree.
  * The Motif project files include the X11 project files.
  *
- * Later we may use the Local project files similer the the lynx.cf
+ * Later we may use the Local project files similar to the lynx.cf
  *
  * #define LocalTmplFile		<Motif.tmpl>
  * #define LocalRulesFile		<Motif.rules>
@@ -303,7 +303,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define RanlibProgram	ranlib
 
 /*
- * Build all the X11 debug libaries *_d.a for use by Sequent Service
+ * Build all the X11 debug libraries *_d.a for use by Sequent Service
  */
 
 /*
@@ -335,14 +335,14 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define DebugLibFS		DebugLibDefault	/* debugged FS library */
 
 /*
- * Build all the Motif debug libaries *_d.a for use by Service
+ * Build all the Motif debug libraries *_d.a for use by Service
  */
 #define DebugLibXm		DebugLibDefault
 #define DebugLibMrm		DebugLibDefault
 #define DebugLibUil		DebugLibDefault
 
 /*
- * Build all the Adobe DPS debug libaries *_d.a for use by Service
+ * Build all the Adobe DPS debug libraries *_d.a for use by Service
  */
 #define DebugLibDps		DebugLibDefault
 

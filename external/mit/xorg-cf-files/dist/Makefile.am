@@ -159,3 +159,6 @@ ChangeLog:
 	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog INSTALL
+
+# Optional meson build files
+EXTRA_DIST += meson.build meson_options.txt empty.def

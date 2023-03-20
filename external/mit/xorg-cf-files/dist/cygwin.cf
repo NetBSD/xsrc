@@ -99,7 +99,7 @@
 /*
  * Cygwin has Tcl/Tk, but you need to keep the version numbers
  * of the libs in sync.  These version numbers may change
- * occassionally.
+ * occasionally.
  */
 #define Hastcl			YES
 #define Hastk			YES

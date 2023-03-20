@@ -1,3 +1,191 @@
+commit f83c3406389d0487e7b2cbdc2cfbd32fd1aa2fed
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 21 18:21:16 2023 -0800
+
+    xorg-cf-files 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ebb320bf2aa8de75270eb580705deb2b1d144a54
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 15 11:15:32 2023 -0800
+
+    configure: Switch to XORG_DEFAULT_NOCODE_OPTIONS
+    
+    Stop running all sorts of compiler tests we don't need since there
+    is no code in this module to compile.  Requires xorg-macros 1.20.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b6ece89e454a94c96e6f4592fe58ac6d534f16f3
+Author: WANG Xuerui <xen0n@gentoo.org>
+Date:   Sun Jan 22 16:44:50 2023 +0800
+
+    Add support for Linux/LoongArch
+
+commit 3cf266086c36169b019973c71d9752bae6445222
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 10 15:28:31 2023 -0800
+
+    meson: simplify installation of empty *.def files
+    
+    Suggested-by: Emmanuele Bassi <ebassi@gnome.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 86e14513f1246b12525909f01a78b99901b33435
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 10 15:20:28 2023 -0800
+
+    meson: modernize some usage in meson.build & .gitlab-CI.yml
+    
+    Suggested-by: Emmanuele Bassi <ebassi@gnome.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e3d3b1906560db61daacdcfc23908918dfa54f84
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 1 15:37:55 2023 -0800
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build type
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 889f8a9c9ac733c62a86fa2fbc6614554eefd3ba
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 1 15:16:24 2023 -0800
+
+    configure.ac: Don't pass through '${FONTROOTDIR}' into site.def
+    
+    Imake doesn't know how to expand shell variables, so instead we
+    rely on the FontDir #define already in the site.def file.
+    
+    (I don't think this setting is really used in X11R7.0 or later,
+     which is why no one has noticed before now, but since we set it,
+     might as well set it to something that can be used instead of
+     "#define FontEncDir ${FONTROOTDIR}/encodings".)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8d88c559b177e832b581c8ac0aa383b6cf79e0d0
+Author: Weijia <contact@weijia.wang>
+Date:   Thu Dec 22 20:44:16 2022 +0100
+
+    Add support for aarch64-darwin
+
+commit 90b66dc73deb9ef303690370395cf831425547c7
+Author: Yasuhiro Kimura <yasu@utahime.org>
+Date:   Thu Oct 13 15:22:02 2022 +0900
+
+    Fix incompatibility issue of GNU binutils 2.36 and later on FreeBSD.
+    
+    Commit a6d4d6223ef75119d5373fa4cc04161bcdb4e769 fixes incompatibility
+    issue of GNU binutils 2.36 and later. If I check the diff of the
+    commit, there seems to be asumption that the issue is specific to
+    Linux. But it also happens on FreeBSD if user installs GNU binutils
+    from FreeBSD ports/packages collections and '/usr/local/bin' comes
+    before '/usr/bin' in the value of PATH enviroment variable. So fix the
+    issue also on FreeBSD with following way.
+    
+    1. Introduce new macro 'HasGnuAr'.
+    2. Change Imake.tmpl so it defines 'ArCmd' as 'ArCmdBase cq' if
+       'HasGnuAr' is defined.
+    3. Define 'HasGnuAr' in both FreeBSD.cf and linux.cf.
+    
+    Since 'ar' command of FreeBSD base system simply ignores 'l' option,
+    it also works fine even if GNU binutils isn't installed.
+
+commit 159a6b5118a6d8a7ed1660620657337e09c58eaa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Oct 13 15:03:22 2022 -0700
+
+    More typo fixes
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 219b2cb0350817d9fff9ee3ca746ccec162dc6af
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 01357ea5e3072b16a89e087355d2c7bb5db7d7d4
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e9bda51aebd2eacf32ecbfc1c76457fc7066a5eb
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 123946c0ed54fa8b74d9a6200b71e2da5eb84ef1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jun 17 12:21:01 2022 -0700
+
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters
+    
+    configure.ac:36: warning: AC_OUTPUT should be used without arguments.
+    configure.ac:36: You should run autoupdate.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b250d86fb74910f0022686fc4161945aba2be34
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 16:05:37 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 027da8ee0f3628078e5fd364a4d67fa84a35b304
+Author: Marek Szuba <marecki@gentoo.org>
+Date:   Tue Aug 10 08:57:00 2021 -0700
+
+    Linux/RISC-V support
+    
+    Fixes: #2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b147369cb685929c62efcd29b4a6c0313cb90d39
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 14:51:01 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d74f9cfe2fd2f62baeaf9f68c6ac637c48917024
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 15 14:49:53 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 8142029c10379002a3f00094060b78e9d55e8322
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Aug 1 17:59:14 2021 -0700

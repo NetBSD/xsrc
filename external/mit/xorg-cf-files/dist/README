@@ -1,6 +1,6 @@
 The xorg-cf-files package contains the data files for the imake utility,
 defining the known settings for a wide variety of platforms (many of which
-have not been verified or tested in over a decade), and for many of the
+have not been verified or tested in almost two decades), and for many of the
 libraries formerly delivered in the X.Org monolithic releases.
 
 The X Window System used imake extensively up through the X11R6.9 release,
@@ -20,7 +20,7 @@ Xorg mailing list:
 
         https://lists.x.org/mailman/listinfo/xorg
 
-The master development code repository can be found at:
+The primary development code repository can be found at:
 
         https://gitlab.freedesktop.org/xorg/util/cf
 
@@ -161,7 +161,7 @@ Imake.tmpl provides defaults for the following variables:
 	MsMacros		macro flag for TroffCmd, normally "-ms"
 	MvCmd			command to rename a file
 	NdbmDefines		-D's to turn on use of ndbm routines
-	NeedConstPrototoypes	whether const is supported
+	NeedConstPrototypes	whether const is supported
 	NeedFunctionPrototypes	whether or not to force function prototypes
 	NeedNestedPrototypes	whether nested prototypes are supported
 	NeedVarargsPrototypes	whether varargs prototypes are supported
@@ -173,7 +173,7 @@ Imake.tmpl provides defaults for the following variables:
 	OSName			operating system name
 	OSTeenyVersion		maintenance version number of operating system
 	OptimizedCDebugFlags	C compiler flags to turn on optimization
-	XtPopdownConformance	XtPopdown conformans to the specification
+	XtPopdownConformance	XtPopdown conformance to the specification
 	PreProcessCmd		command to run /lib/cpp on scripts
 	RanlibCmd		command to clean up libraries
 	RanlibInstFlags		flags to ranlib after copying
@@ -324,20 +324,20 @@ X11.tmpl provides defaults for the following variables:
 	ServerExtraDefines	special -D's for server
 	ServerOSDefines		OS -D's for server
 	ServerAssertDefines	-DNDEBUG for no assertions, /**/ for assertions
-	SharedLibFS		boolean for making sharable libFS.so
-	SharedLibICE		boolean for making sharable libICE.so
-	SharedLibSM		boolean for making sharable libSM.so
-	SharedLibX11		boolean for making sharable libX11.so
-	SharedLibXau		boolean for making sharable libXau.so
-	SharedLibXaw		boolean for making sharable libXaw.so
-	SharedLibXdmcp		boolean for making sharable libXdmcp.so
-	SharedLibXext		boolean for making sharable libXext.so
-	SharedLibXi		boolean for making sharable libXi.so
-	SharedLibXmu		boolean for making sharable libXmu.so
-	SharedLibXt		boolean for making sharable libXt.so
-	SharedLibXtst		boolean for making sharable libXtst.so
-	SharedLibXag		boolean for making sharable libXag.so
-	SharedOldX		boolean for making sharable liboldX.so
+	SharedLibFS		boolean for making shareable libFS.so
+	SharedLibICE		boolean for making shareable libICE.so
+	SharedLibSM		boolean for making shareable libSM.so
+	SharedLibX11		boolean for making shareable libX11.so
+	SharedLibXau		boolean for making shareable libXau.so
+	SharedLibXaw		boolean for making shareable libXaw.so
+	SharedLibXdmcp		boolean for making shareable libXdmcp.so
+	SharedLibXext		boolean for making shareable libXext.so
+	SharedLibXi		boolean for making shareable libXi.so
+	SharedLibXmu		boolean for making shareable libXmu.so
+	SharedLibXt		boolean for making shareable libXt.so
+	SharedLibXtst		boolean for making shareable libXtst.so
+	SharedLibXag		boolean for making shareable libXag.so
+	SharedOldX		boolean for making shareable liboldX.so
 	ShmDefines		MIT-SHM define
 	TwmDir			directory in which to install twm config files
 	UseCCMakeDepend		boolean for using alternate makedepend script

@@ -60,7 +60,7 @@ XCOMM hv: but in future a separate system)
 #define HasSockets		YES
 #define HasSnprintf		YES
 #define HasWChar32		NO
-#define HasUsableFileMap	NO
+#define HasUsableFileMmap	NO
 #define HasNCurses		YES
 #define HasVarRun		NO
 #define HasLibPthread		NO

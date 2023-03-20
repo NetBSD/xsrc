@@ -88,7 +88,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * For gcc, gcc2 or gcc3, define HasGcc, HasGcc2 or HasGcc3 to YES in site.def
  * For other compilers, define HasSunC to NO in site.def, then
  *    provide appropriate values for the various compiler related
- *    configuration varibles used here.
+ *    configuration variables used here.
  *
  * If you don't tell us which C compiler you have, we assume you have
  * the SunPro C compiler under Solaris 2.x, and the bundled /bin/cc
@@ -659,7 +659,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #endif /* SPARC or Sun3/M68k */
 
 #if OSMajorVersion >= 4
-#define HasUsableFileMap YES
+#define HasUsableFileMmap YES
 #endif
 
 #ifndef UseDeprecatedKeyboardDriver
@@ -830,7 +830,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #endif
 #ifndef Mapfile_NoExData
 # if defined(SparcArchitecture)
-/* SPARC archictecture requires PLT section in .data be executable, so
+/* SPARC architecture requires PLT section in .data be executable, so
    we can only make .bss, not all of .data no-exec on SPARC */
 #   define Mapfile_NoExData /**/
 # else
@@ -975,7 +975,7 @@ man_keywords::								@@\
 #endif
 
 /*
- * Turn off seperate configuration directories.
+ * Turn off separate configuration directories.
  */
 #ifndef	UseSeparateConfDir
 #define	UseSeparateConfDir	NO
