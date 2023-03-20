@@ -90,6 +90,10 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.220 2003/12/30 22:38:33 tsi
 # define LinuxBinUtilsMajorVersion	DefaultLinuxBinUtilsMajorVersion
 #endif
 
+#ifndef HasGnuAr
+#define HasGnuAr	YES
+#endif
+
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 XCOMM libc:	(LinuxCLibMajorVersion./**/LinuxCLibMinorVersion./**/LinuxCLibTeenyVersion)
 XCOMM binutils:	(LinuxBinUtilsMajorVersion)
@@ -584,7 +588,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #define MkdirHierCmd		mkdir -p
 
 #ifndef HaveLib64
-# if defined (AMD64Architecture) || defined (s390xArchitecture) || defined (Ppc64Architecture) || defined (AArch64Architecture)
+# if defined (AMD64Architecture) || defined (s390xArchitecture) || defined (Ppc64Architecture) || defined (AArch64Architecture) || defined (RV64Architecture)
 #  define HaveLib64	YES
 # else
 #  define HaveLib64	NO
@@ -611,7 +615,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #   ifndef MakeDllModules
 #     define MakeDllModules	YES
 #   endif
-#  endif /* MipsArchitecure */
+#  endif /* MipsArchitecture */
 #  if defined (i386Architecture) && ((GccMajorVersion >3) \
    || ((GccMajorVersion == 3) &&  (GccMinorVersion >= 1)))
 #   ifndef CcCmd
@@ -734,7 +738,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #  ifdef i386Architecture
 #   define CcCmd		gcc -b i486-linux
 #   define AsCmd		CcCmd -c -x assembler
-#   define LdCmd		CcCmd -nosdlib -Wl,"-m elf_i386"
+#   define LdCmd		CcCmd -nostdlib -Wl,"-m elf_i386"
 #   define AsmDefines		-D__ELF__
 #   define CplusplusCmd		c++ -b i486-linux
 #  endif /* i386Architecture */
@@ -1000,6 +1004,42 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # define ServerExtraDefines    -DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
 #endif /* AArch64Architecture */
 
+#ifdef LoongArch64Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags -O2 GccAliasingArgs
+# endif
+# define LinuxMachineDefines	-D__loongarch__ -D__loongarch_grlen=64 -D__loongarch_lp64
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* LoongArch64Architecture */
+
+#ifdef LoongArch32Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags -O2 GccAliasingArgs
+# endif
+# define LinuxMachineDefines	-D__loongarch__ -D__loongarch_grlen=32
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* LoongArch32Architecture */
+
+#ifdef RV64Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags -O2 GccAliasingArgs
+# endif
+# define LinuxMachineDefines	-D__riscv -D__riscv_xlen=64
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* RV64Architecture */
+
+#ifdef RV32Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags -O2 GccAliasingArgs
+# endif
+# define LinuxMachineDefines	-D__riscv -D__riscv_xlen=32
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* RV32Architecture */
+
 #ifndef StandardDefines
 # ifdef __linux__
 #  define StandardDefines	-Dlinux LinuxMachineDefines LinuxSourceDefines
@@ -1034,7 +1074,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # define ConnectionFlags	-DUNIXCONN -DTCPCONN
 #endif
 
-/* Some of these man page defaults are overriden in the above OS sections */
+/* Some of these man page defaults are overridden in the above OS sections */
 #ifndef ManSuffix
 # define ManSuffix	1x
 #endif

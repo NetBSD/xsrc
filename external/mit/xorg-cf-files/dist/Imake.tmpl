@@ -1078,7 +1078,7 @@ TCLIBDIR = TclLibDir
 #define ArCmdBase ar
 #endif
 #ifndef ArCmd
-#if HasLargeTmp || SystemV4 || LinuxBinUtilsMajorVersion
+#if HasLargeTmp || SystemV4 || HasGnuAr
 #define ArCmd ArCmdBase cq
 #else
 #define ArCmd ArCmdBase clq
@@ -1834,7 +1834,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
 #else
               CPP = CppCmd $(STD_CPP_DEFINES)		/* simple filters */
            RAWCPP = RawCppCmd $(STD_CPP_OPTIONS)
-    PREPROCESSCMD = PreProcessCmd $(STD_CPP_DEFINES)	/* prefered; mdep */
+    PREPROCESSCMD = PreProcessCmd $(STD_CPP_DEFINES)	/* preferred; mdep */
 #endif
           INSTALL = InstallCmd
      INSTALLFLAGS = InstallFlags

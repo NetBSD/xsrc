@@ -41,7 +41,7 @@ clean::									@@\
 
 
 /*
- * DebuggedAndProfiledLibraryOjbectRule - generate make rules to build
+ * DebuggedAndProfiledLibraryObjectRule - generate make rules to build
  * debuggable, profiled, and "normal" objects.
  */
 #ifndef DebuggedAndProfiledLibraryObjectRule

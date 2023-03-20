@@ -52,7 +52,7 @@ XCOMM platform:  $XFree86: xc/config/cf/sco.cf,v 3.13 1997/05/24 13:46:28 dawes 
 # ifndef HasSymLinks
 #  define HasSymLinks           NO
 # endif
-# define CommpressManCmd        pack
+# define CompressManCmd         pack
 #endif
 
 /*

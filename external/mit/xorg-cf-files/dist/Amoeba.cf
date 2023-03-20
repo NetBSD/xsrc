@@ -175,7 +175,7 @@ AINSTALLFLAGS   =
 TOB             = /bin/sh $(CONFIGSRC)/util/aminstall.sh $(ABIN)
 MKXDIRHIER      = /bin/sh $(CONFIGSRC)/util/ammkdirhier.sh $(ABIN)
 
-/* Make wizardy: */
+/* Make wizardry: */
 COMPILE.c=$(CC) $(CFLAGS) $(CPPFLAGS) -c
 LINK.c=$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 

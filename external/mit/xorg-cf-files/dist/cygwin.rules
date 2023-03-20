@@ -175,21 +175,21 @@ clean::									@@\
 #endif /* InstallSharedLibraryData */
 
 /*
- * MakeDllProg
+ * MakeDLLProg
  */
 
 #define MakeDLLProg(libname,solist,prog,rev)			        @@\
 	prog -shared -Wl,--out-implib=ImportLibraryName(libname,rev) -Wl,--enable-auto-import,--enable-runtime-pseudo-reloc -Wl,--exclude-libs,ALL -o SharedLibraryName(libname,rev) solist $(REQUIREDLIBS)
 
 /*
- * MakeDll
+ * MakeDLL
  */
 
 #define MakeDLL(libname,solist,rev)					@@\
     MakeDLLProg(libname,solist,$(CC),rev)
 
 /*
- * MakeCplusplusDll
+ * MakeCplusplusDLL
  */
 
 #define MakeCplusplusDLL(libname,solist,rev)				@@\
@@ -420,7 +420,7 @@ $(IMAKE) $(IMAKE).Osuf:							@@\
 
 
 /*
- * ResourceObjectRule - Build a Windows resouce file (.res) into
+ * ResourceObjectRule - Build a Windows resource file (.res) into
  * an object file (.o) that can be linked in with the executable
  * or library being built.
  */

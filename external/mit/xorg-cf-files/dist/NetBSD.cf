@@ -591,7 +591,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-/* Always build the XInput library, regardless of server support on this plattform */
+/* Always build the XInput library, regardless of server support on this platform */
 #if !defined(BuildXInputLib) && !defined(BuildServersOnly)
 # define BuildXInputLib          YES
 #endif
@@ -694,6 +694,6 @@ sed 's/\.[0-9]*$$//'`
 
 /*
  * Always include xorg.cf for GccAliasingArgs,
- * regardless of server support on this plattform
+ * regardless of server support on this platform
  */
 #include <xorg.cf>
