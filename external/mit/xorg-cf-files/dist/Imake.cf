@@ -37,6 +37,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 #  define x86_64DarwinArchitecture
 #  undef __x86_64__
 # endif
+# ifdef __aarch64__
+#  define aarch64DarwinArchitecture
+#  undef __aarch64__
+# endif
 #endif
 
 #if defined(clipper) || defined(__clipper__)
@@ -258,6 +262,14 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 # ifdef __ia64__
 #  define ia64Architecture
 #  undef __ia64__
+# endif
+# if defined(__riscv)
+#   undef __riscv
+#   ifdef _LP64
+#     define RV64Architecture
+#   else
+#     define RV32Architecture
+#   endif
 # endif
 #endif /* NetBSD */
 
@@ -1040,6 +1052,29 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 # if defined(__aarch64__)
 #   define AArch64Architecture
 #   undef __aarch64__
+# endif
+# if defined(__loongarch__)
+#   undef __loongarch__
+#   if __loongarch_grlen == 64
+#     undef __loongarch_grlen
+#     undef __loongarch_lp64
+#     define LoongArch64Architecture
+#   endif
+#   if __loongarch_grlen == 32
+#     undef __loongarch_grlen
+#     define LoongArch32Architecture
+#   endif
+# endif
+# if defined(__riscv)
+#   undef __riscv
+#   if __riscv_xlen == 64
+#     undef __riscv_xlen
+#     define RV64Architecture
+#   endif
+#   if __riscv_xlen == 32
+#     undef __riscv_xlen
+#     define RV32Architecture
+#   endif
 # endif
 #endif /* linux || __GLIBC__ */
 

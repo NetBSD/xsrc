@@ -284,7 +284,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
 #  endif
-#elif defined(ia64Architecture) || defined(AMD64Architecture)
+#elif defined(ia64Architecture) || defined(AMD64Architecture) || defined(RV64Architecture)
 #define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
 #else
 #  define ServerExtraDefines GccGasOption
@@ -595,7 +595,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-/* Always build the XInput library, regardless of server support on this plattform */
+/* Always build the XInput library, regardless of server support on this platform */
 #if !defined(BuildXInputLib) && !defined(BuildServersOnly)
 # define BuildXInputLib          YES
 #endif
@@ -698,6 +698,6 @@ sed 's/\.[0-9]*$$//'`
 
 /*
  * Always include xorg.cf for GccAliasingArgs,
- * regardless of server support on this plattform
+ * regardless of server support on this platform
  */
 #include <xorg.cf>
