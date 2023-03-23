@@ -83,6 +83,15 @@ xkb_symbols "swap_lalt_lctl" {
     modifier_map Control { <LALT> };
 };
 
+// Swap the functions of the right Alt key and the right Ctrl key.
+partial modifier_keys
+xkb_symbols "swap_ralt_rctl" {
+    replace key <RALT> { [ Control_R, Control_R ] };
+    replace key <RCTL> { [ Alt_R, Meta_R ] };
+    modifier_map Mod1    { <RCTL> };
+    modifier_map Control { <RALT> };
+};
+
 // Swap the functions of the left Win key and the left Ctrl key.
 partial modifier_keys
 xkb_symbols "swap_lwin_lctl" {

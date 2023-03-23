@@ -269,7 +269,7 @@ xkb_symbols "ergonomic" {
 partial alphanumeric_keys modifier_keys
 xkb_symbols "modern" {
 
-	name[Group1]= "Latvian (modern)";
+	name[Group1]= "Latvian (Modern Latin)";
 
 	key <TLDE> {[ grave,		asciitilde,	acute,		copyright		]};
 	key <AE01> {[ 1,		exclam,		onesuperior,	exclamdown		]};
@@ -320,6 +320,70 @@ xkb_symbols "modern" {
 	key <AB06> {[ f,		F,		period,		F			]};
 	key <AB07> {[ y,		Y,		U0233,		U0232			]};
 	key <AB08> {[ h,		H,		U1E29,		U1E28			]};
+	key <AB09> {[ comma,		semicolon,	less,		multiply		]};
+	key <AB10> {[ period,		colon,		greater,	division		]};
+	key <SPCE> {[ space,		space,		apostrophe				]};
+
+	modifier_map Mod5 { <AC06> };
+
+	include "level3(ralt_switch)"
+};
+
+
+partial alphanumeric_keys modifier_keys
+xkb_symbols "modern-cyr" {
+
+	name[Group1]= "Latvian (Modern Cyrillic)";
+
+	key <TLDE> {[ grave,		asciitilde,	acute,		copyright		]};
+	key <AE01> {[ 1,		exclam,		onesuperior,	exclamdown		]};
+	key <AE02> {[ 2,		at,		twosuperior,	oneeighth		]};
+	key <AE03> {[ 3,		numbersign,	threesuperior,	sterling		]};
+	key <AE04> {[ 4,		dollar,		EuroSign,	cent			]};
+	key <AE05> {[ 5,		percent,	onehalf,	threeeighths		]};
+	key <AE06> {[ 6,		asciicircum,	threequarters,	fiveeighths		]};
+	key <AE07> {[ 7,		ampersand,	braceleft,	seveneighths		]};
+	key <AE08> {[ 8,		asterisk,	bracketleft,	trademark		]};
+	key <AE09> {[ 9,		parenleft,	bracketright,	plusminus		]};
+	key <AE10> {[ 0,		parenright,	braceright,	degree			]};
+	key <AE11> {[ minus,		underscore,	backslash,	questiondown		]};
+	key <AE12> {[ equal,		plus,		endash,		emdash			]};
+
+	key <AD01> {[ U044D,		U042D,		U0454,		U0404			]};
+	key <AD02> {[ U043E,		U041E							]};
+	key <AD03> {[ U044F,		U042F,		U0458,		U0408			]};
+	key <AD04> {[ U043F,		U041F,		question				]};
+	key <AD05> {[ U0431,		U0411,		exclam					]};
+	key <AD06> {[ U0439,		U0419,		emdash					]};
+	key <AD07> {[ U0434,		U0414,		U0452,		U0402			]};
+	key <AD08> {[ U0456,		U0406,		U0457,		U0407			]};
+	key <AD09> {[ U043B,		U041B,		U0459,		U0409			]};
+	key <AD10> {[ U0433,		U0413,		U0491,		U0490			]};
+	Key <AD11> {[ bracketleft,	braceleft,	guillemotleft,	leftdoublequotemark	]};
+	key <AD12> {[ bracketright,	braceright,	guillemotright,	rightdoublequotemark	]};
+
+	key <AC01> {[ U0435,		U0415,		U0451,		U0401			]};
+	key <AC02> {[ U0443,		U0423,		U044E,		U042E			]};
+	key <AC03> {[ U0430,		U0410							]};
+	key <AC04> {[ U043D,		U041D,		U045A,		U040A			]};
+	key <AC05> {[ U043A,		U041A,		U045C,		U040C			]};
+	key <AC06> {[ ISO_Level3_Latch,	quotedbl,	apostrophe,	quotedbl		]};
+	key <AC07> {[ U0441,		U0421,		U0448,		U0428			]};
+	key <AC08> {[ U0438,		U0418							]};
+	key <AC09> {[ U0442,		U0422,		U045B,		U040B			]};
+	key <AC10> {[ U0440,		U0420,		U0453,		U0403			]};
+	key <AC11> {[ U043C,		U041C							]};
+	key <BKSL> {[ slash,		question,	backslash,	bar			]};
+
+	key <LSGT> {[ U0457,		U0407,		U0458,		U0408			]};
+	key <AB01> {[ U044C,		U042C,		U044A,		U042A			]};
+	key <AB02> {[ U0437,		U0417,		U0436,		U0416			]};
+	key <AB03> {[ U0446,		U0426,		U0447,		U0427			]};
+	key <AB04> {[ U0432,		U0412,		U0455,		U0405			]};
+	key <AB05> {[ U0449,		U0429,		U045F,		U040F			]};
+	key <AB06> {[ U0444,		U0424,		U0301					]};
+	key <AB07> {[ U044B,		U042B,		U045E,		U040E			]};
+	key <AB08> {[ U0445,		U0425,		U04BB,		U04BA			]};
 	key <AB09> {[ comma,		semicolon,	less,		multiply		]};
 	key <AB10> {[ period,		colon,		greater,	division		]};
 	key <SPCE> {[ space,		space,		apostrophe				]};

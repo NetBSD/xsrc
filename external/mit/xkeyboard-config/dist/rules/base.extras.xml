@@ -843,6 +843,19 @@
             </languageList>
           </configItem>
         </variant>
+        <variant>
+          <configItem popularity="exotic">
+            <name>typo</name>
+            <shortDescription>ru</shortDescription>
+            <description>Russian (typographic)</description>
+            <countryList>
+              <iso3166Id>RU</iso3166Id>
+            </countryList>
+            <languageList>
+              <iso639Id>rus</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
       </variantList>
     </layout>
     <layout>

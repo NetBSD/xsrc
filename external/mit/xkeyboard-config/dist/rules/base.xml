@@ -1415,6 +1415,13 @@
         </variant>
         <variant>
           <configItem>
+            <name>colemak_dh_ortho</name>
+            <description>English (Colemak-DH Ortholinear)</description>
+          </configItem>
+        </variant>
+
+        <variant>
+          <configItem>
             <name>dvorak</name>
             <description>English (Dvorak)</description>
           </configItem>
@@ -2095,6 +2102,17 @@
             <!-- Keyboard indicator for Gujarati layouts -->
             <shortDescription>gu</shortDescription>
             <description>Gujarati</description>
+            <languageList>
+              <iso639Id>guj</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>guj-kagapa</name>
+            <!-- Keyboard indicator for Hindi layouts -->
+            <shortDescription>guj</shortDescription>
+            <description>Gujarati (KaGaPa, phonetic)</description>
             <languageList>
               <iso639Id>guj</iso639Id>
             </languageList>
@@ -4641,7 +4659,13 @@
         <variant>
           <configItem>
             <name>modern</name>
-            <description>Latvian (modern)</description>
+            <description>Latvian (Modern Latin)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>modern-cyr</name>
+            <description>Latvian (Modern Cyrillic)</description>
           </configItem>
         </variant>
         <variant>
@@ -7306,6 +7330,12 @@
       </option>
       <option>
         <configItem>
+          <name>ctrl:swap_ralt_rctl</name>
+          <description>Swap Right Alt with Right Ctrl</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
           <name>ctrl:swap_lwin_lctl</name>
           <description>Swap Left Win with Left Ctrl</description>
         </configItem>
@@ -7831,6 +7861,18 @@
         <configItem>
           <name>apple:alupckeys</name>
           <description>Apple Aluminium emulates Pause, PrtSc, Scroll Lock</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>apple:jp_oadg109a</name>
+          <description>Japanese Apple keyboards emulate OADG109A backslash</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>apple:jp_pc106</name>
+          <description>Japanese Apple keyboards emulate PC106 backslash</description>
         </configItem>
       </option>
       <option>

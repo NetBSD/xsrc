@@ -468,6 +468,7 @@ xkb_symbols "modifiers" {
 
     // Fn key (right alt) switches to 3rd level
     include "level3(ralt_switch)"
+    modifier_map Mod5 { ISO_Level3_Shift };
 };
 
 partial hidden alphanumeric_keys

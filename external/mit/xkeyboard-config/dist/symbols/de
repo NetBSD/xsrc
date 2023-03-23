@@ -849,10 +849,10 @@ xkb_symbols "tr" {
 
     name[Group1]="Turkish (Germany)";
 
-    key <AD08>  { [    i,      I,      U0131,  U0130   ] };
-    key <AC02>  { [    s,      S,      U015F,  U015E   ] };
-    key <AC05>  { [    g,      G,      U011F,  U011E   ] };
-    key <AB03>  { [    c,      C,      U0E7,   U0C7    ] };
+    key <AD08>	{[  i,  I,   idotless, Iabovedot ], type[group1]="FOUR_LEVEL_ALPHABETIC" };
+    key <AC02>	{[  s,  S,   scedilla,  Scedilla ]};
+    key <AC05>	{[  g,  G,     gbreve,    Gbreve ]};
+    key <AB03>	{[  c,  C,   ccedilla,  Ccedilla ]};
 };
 
 partial alphanumeric_keys
