@@ -139,3 +139,13 @@ xkb_symbols "alupckeys" {
     };
     override key <NMLK> { [ Num_Lock, Pointer_EnableKeys ] };
 };
+
+partial
+xkb_symbols "jp_oadg109a" {
+    replace key <AB11> { [ backslash, underscore ] };
+};
+
+partial
+xkb_symbols "jp_pc106" {
+    replace key <AB11> { [ backslash, bar ] };
+};

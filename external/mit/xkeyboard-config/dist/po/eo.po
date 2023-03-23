@@ -1,8 +1,8 @@
 # Esperanta traduko por 'xkeyboard-config'
-# Copyright (C) 2022 The Free Software Foundation, Inc.
+# Copyright (C) 2008-2019, 2021, 2022, 2023 The Free Software Foundation, Inc.
 # This file is distributed under the same license as the xkeyboard-config package.
 #
-# Felipe Castro <fefcas@gmail.com>, 2008-2019, 2021.
+# Felipe Castro <fefcas@gmail.com>, 2008-2019, 2021, 2023.
 # Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>, 2021.
 # Benno Schulenberg <vertaling@coevern.nl>, 2022.
 msgid ""
@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: xkeyboard-config 2.36.99\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-09-15 22:36+0000\n"
-"PO-Revision-Date: 2022-09-16 16:20+0200\n"
-"Last-Translator: Benno Schulenberg <vertaling@coevern.nl>\n"
+"PO-Revision-Date: 2023-01-08 15:48-0300\n"
+"Last-Translator: Felipe Castro <fefcas@gmail.com>\n"
 "Language-Team: Esperanto <translation-team-eo@lists.sourceforge.net>\n"
 "Language: eo\n"
 "MIME-Version: 1.0\n"
@@ -19,6 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: rules/base.xml:8
 msgid "Generic 86-key PC"
@@ -1538,7 +1539,7 @@ msgstr "rif"
 
 #: rules/base.xml:2740
 msgid "Tarifit"
-msgstr ""
+msgstr "'Tarifit'"
 
 #. Keyboard indicator for Cameroon layouts
 #: rules/base.xml:2752
@@ -1592,7 +1593,7 @@ msgstr "shn"
 
 #: rules/base.xml:2888
 msgid "Shan"
-msgstr ""
+msgstr "'Shan'"
 
 #: rules/base.xml:2898
 msgid "zgt"
@@ -1600,7 +1601,7 @@ msgstr "zgt"
 
 #: rules/base.xml:2899
 msgid "Shan (Zawgyi Tai)"
-msgstr ""
+msgstr "'Shan' (Zawgyi Tai)"
 
 #: rules/base.xml:2910
 msgid "mon"
@@ -4741,7 +4742,7 @@ msgstr "Atsina"
 
 #: rules/base.extras.xml:419
 msgid "Coeur d'Alene Salish"
-msgstr ""
+msgstr "'Coeur d'Alene Salish'"
 
 #: rules/base.extras.xml:428
 msgid "Czech Slovak and German (US)"

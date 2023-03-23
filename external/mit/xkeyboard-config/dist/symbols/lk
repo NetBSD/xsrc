@@ -135,8 +135,8 @@ xkb_symbols "us" {
   key <AB05> { [             b,             B,    VoidSymbol ] };
   key <AB06> { [             n,             N,        ntilde ] };
   key <AB07> { [             m,    VoidSymbol,    VoidSymbol ] };
-  key <AB08> { [         comma,          less,           UAB ] };
-  key <AB09> { [        period,       greater,           UBB ] };
+  key <AB08> { [         comma,          less, guillemotleft ] };
+  key <AB09> { [        period,       greater,guillemotright ] };
   key <AB10> { [         slash,      question,         U200C ] };
 
   key <AC01> { [             a,        aacute,    adiaeresis ] };
@@ -168,13 +168,13 @@ xkb_symbols "us" {
   key <AE02> { [             2,            at, dead_belowdot ] };
   key <AE03> { [             3,    numbersign, dead_abovedot ] };
   key <AE04> { [             4,        dollar,      currency ] };
-  key <AE05> { [             5,       percent,           UB0 ] };
+  key <AE05> { [             5,       percent,        degree ] };
   key <AE06> { [             6,   asciicircum,    onequarter ] };
   key <AE07> { [             7,     ampersand,       onehalf ] };
   key <AE08> { [             8,      asterisk, threequarters ] };
   key <AE09> { [             9,     parenleft,    VoidSymbol ] };
   key <AE10> { [             0,    parenright,    VoidSymbol ] };
-  key <AE11> { [         minus,    underscore,         U2014 ] };
+  key <AE11> { [         minus,    underscore,        emdash ] };
   key <AE12> { [         equal,          plus,    VoidSymbol ] };
 
   key <BKSL> { [     backslash,           bar,    VoidSymbol ] };

@@ -2066,6 +2066,79 @@ xkb_symbols "tel-kagapa" {
     include "level3(ralt_switch)"
 };
 
+// ---- BEGIN Gujarati KaGaPa phonetic ----
+// Name:        KaGaPa phonetic
+// Author:      Sharad Gor <docbroke@protonmail.com>
+// Layout image at https://github.com/Docbroke/Gujarati_KaGaPa/blob/main/Guj_KaGaPa_layout.jpg
+
+partial alphanumeric_keys
+xkb_symbols "guj-kagapa" {
+     name[Group1] = "Gujarati (KaGaPa, phonetic)";
+     key.type[group1]="FOUR_LEVEL";
+
+// NUMBER ROW
+    key <TLDE>  { [   grave,        asciitilde,   U201C          ] };  // U201C: “ left double quotation mark
+    key <AE01>  { [   1,            exclam,       U0AE7          ] };
+    key <AE02>  { [   2,            at,           U0AE8,  U0AF1  ] };  // U0AF1: Gujarati rupee sign (૱)
+    key <AE03>  { [   3,            numbersign,   U0AE9          ] };
+    key <AE04>  { [   4,            dollar,       U0AEA,  U20B9  ] };  // U20B9: new Indian rupee sign
+    key <AE05>  { [   5,            percent,      U0AEB          ] };
+    key <AE06>  { [   6,            asciicircum,  U0AEC,  U200C  ] };  // ZWNJ
+    key <AE07>  { [   7,            ampersand,    U0AED,  U200D  ] };  // ZWJ
+    key <AE08>  { [   8,            asterisk,     U0AEE,  U0A81  ] };  // U0A81: canndrabindu (ઁ )
+    key <AE09>  { [   9,            parenleft,    U0AEF          ] };
+    key <AE10>  { [   0,            parenright,   U0AE6,  U0AF0  ] };  // U0AF0:(૰)  abbreviation sign
+
+    key <AE11>  { [   minus,        underscore,   U0952          ] };  // U0952: Devanagari stress sign anudatta(॒)
+    key <AE12>  { [   equal,        plus                         ] };
+
+//First row
+
+    key <AD01>  { [   U0A9F,         U0AA0                       ] };  // Q: retroflex Ta ટ , Tha ઠ
+    key <AD02>  { [   U0AA1,         U0AA2                       ] };  // W: retroflex Da ડ , Dha ઢ
+    key <AD03>  { [   U0AC7,         U0AC8,      U0A8F,  U0A90   ] };  // E: oે  oૈ  એ  ઐ
+    key <AD04>  { [   U0AB0,         U0AC3,      U0A8B,  U0AC4   ] };  // R: ર oૃ  ઋ  oૄ
+    key <AD05>  { [   U0AA4,         U0AA5,      U0A9F,  U0AA0   ] };  // T: ત થ ટ ઠ
+    key <AD06>  { [   U0AAF                                      ] };  // Y: ય
+    key <AD07>  { [   U0AC1,         U0AC2,      U0A89,  U0A8A   ] };  // U: oુ   oૂ   ઉ   ઊ
+    key <AD08>  { [   U0ABF,         U0AC0,      U0A87,  U0A88   ] };  // I: oિ  oી  ઇ   ઈ
+    key <AD09>  { [   U0ACB,         U0ACC,      U0A93,  U0A94   ] };  // O: oો  oૌ  ઓ   ઔ
+    key <AD10>  { [   U0AAA,         U0AAB                       ] };  // P: પ ફ
+    key <AD11>  { [   bracketleft,   braceleft                   ] };
+    key <AD12>  { [   bracketright,  braceright                  ] };
+    key <BKSL>  { [   backslash,    bar,          U0964,  U0965  ] };  // backslash, pipe, danda, double danda
+
+//Second row
+
+    key <AC01>  { [   U0ABE,        U0A86,     U0A85,    U0A8D   ] };  // A: oા આ  અ  ઍ
+    key <AC02>  { [   U0AB8,        U0AB6                        ] };  // S: સ  શ
+    key <AC03>  { [   U0AA6,        U0AA7,     U0AA1,    U0AA2   ] };  // D: દ ધ ડ ઢ
+    key <AC04>  { [   U0ACD,        U0AC4,     U0AE0             ] };  // F: o્  oૄ  ૠ
+    key <AC05>  { [   U0A97,        U0A98                        ] };  // G: ગ  ઘ
+    key <AC06>  { [   U0AB9,        U0A83                        ] };  // H: હ (ઃ)
+
+    key <AC07>  { [   U0A9C,        U0A9D,     U0A9E,    U0AF9   ] };  // J: જ  ઝ  ઞ  ૹ
+    key <AC08>  { [   U0A95,        U0A96                        ] };  // K: ક ખ
+    key <AC09>  { [   U0AB2,        U0AB3,     U0AE1,    U0AE2   ] };  // L: લ ળ  ૡ oૢ
+    key <AC10>  { [   semicolon,    colon                        ] };  //
+    key <AC11>  { [   apostrophe,   quotedbl,  U0951,    U201D   ] };  // U0951: o॑ Devanagari stress sign udatta
+                                                                       // U201D: ” Right double quotation mark
+    key <AB01>  { [   U0A9E,        U0A99                        ] };  // Z: nya ઞ, nga ઙ
+    key <AB02>  { [   U0AB7,        U0ABC                        ] };  // X: ssa ષ, nukta below o઼
+    key <AB03>  { [   U0A9A,        U0A9B                        ] };  // C: ચ છ
+    key <AB04>  { [   U0AB5,        U0ACC,     U0A94             ] };  // V: વ  oૌ  ઔ
+    key <AB05>  { [   U0AAC,        U0AAD                        ] };  // B: બ ભ
+    key <AB06>  { [   U0AA8,        U0AA3                        ] };  // N: ન ણ
+    key <AB07>  { [   U0AAE,        U0A82,     U0ABD,    U0AD0   ] };  // M: મ oં  ઽ ૐ
+    key <AB08>  { [   comma,        less,      U0AC5,    U0A8D   ] };  // ,: oॅ   ઍ
+    key <AB09>  { [   period,       greater,   U0AC9,    U0A91   ] };  // .: oૉ, ઑ
+    key <AB10>  { [   slash,        question                     ] };
+
+    include "level3(ralt_switch)"
+};
+// ---- END Gujarati KaGaPa ----
+
+
 // Description	: Keymap for Manipuri language (Meetei mayek script)
 // Encoding	: Unicode (http://www.unicode.org)
 // Author	: Santosh Heigrujam <santosh.tomba@gmail.com>
