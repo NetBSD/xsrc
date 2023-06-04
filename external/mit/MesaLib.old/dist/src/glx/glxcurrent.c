@@ -40,18 +40,6 @@
 #include "glx_error.h"
 
 /*
- * MASSIVE KLUDGE!
- * We need these to not be extern in libGL.so because of
- * PR toolchain/50277
- */
-#if defined(GLX_USE_TLS) && defined(__NetBSD__)
-_X_EXPORT __thread struct _glapi_table * _glapi_tls_Dispatch
-    __attribute__((tls_model("initial-exec"))) = NULL;
-_X_EXPORT __thread void * _glapi_tls_Context
-    __attribute__((tls_model("initial-exec")));
-#endif
-
-/*
 ** We setup some dummy structures here so that the API can be used
 ** even if no context is current.
 */
