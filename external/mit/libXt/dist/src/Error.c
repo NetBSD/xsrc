@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -241,7 +241,7 @@ DefaultMsg(String name,
            String class,
            String defaultp,
            String *params,
-           Cardinal *num_params,
+           const Cardinal *num_params,
            Bool error,
            void (*fn) (_Xconst _XtString))
 {
@@ -266,7 +266,7 @@ DefaultMsg(String name,
 
             if (i > 10)
                 i = 10;
-            (void) memmove((char *) par, (char *) params, i * sizeof(String));
+            (void) memcpy(par, params, i * sizeof(String));
             memset(&par[i], 0, (10 - i) * sizeof(String));
             (void) fprintf(stderr, "%s%s",
                            error ? XTERROR_PREFIX : XTWARNING_PREFIX,
@@ -305,7 +305,7 @@ program as a non-root user or by removing the suid bit on the executable.");
 
         if (i > 10)
             i = 10;
-        (void) memmove((char *) par, (char *) params, i * sizeof(String));
+        (void) memcpy(par, params, i * sizeof(String));
         memset(&par[i], 0, (10 - i) * sizeof(String));
         if (i != *num_params)
             XtWarning("Some arguments in following message were lost");

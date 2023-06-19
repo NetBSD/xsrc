@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -103,8 +103,8 @@ GetBranchHead(TMParseStateTree parseTree,
               TMShortCard modIndex,
               Boolean isDummy)
 {
-#define TM_BRANCH_HEAD_TBL_ALLOC        8
-#define TM_BRANCH_HEAD_TBL_REALLOC      8
+#define TM_BRANCH_HEAD_TBL_ALLOC        ((TMShortCard) 8)
+#define TM_BRANCH_HEAD_TBL_REALLOC      ((TMShortCard) 8)
 
     TMBranchHead branchHead = parseTree->branchHeadTbl;
 
@@ -123,31 +123,27 @@ GetBranchHead(TMParseStateTree parseTree,
         }
     }
     if (parseTree->numBranchHeads == parseTree->branchHeadTblSize) {
-        TMShortCard newSize;
 
         if (parseTree->branchHeadTblSize == 0)
-            parseTree->branchHeadTblSize =
-                (TMShortCard) (parseTree->branchHeadTblSize +
-                               TM_BRANCH_HEAD_TBL_ALLOC);
+            parseTree->branchHeadTblSize = TM_BRANCH_HEAD_TBL_ALLOC;
         else
-            parseTree->branchHeadTblSize =
-                (TMShortCard) (parseTree->branchHeadTblSize +
-                               TM_BRANCH_HEAD_TBL_REALLOC);
-        newSize =
-            (TMShortCard) (parseTree->branchHeadTblSize *
-                           sizeof(TMBranchHeadRec));
+            parseTree->branchHeadTblSize += TM_BRANCH_HEAD_TBL_REALLOC;
+
         if (parseTree->isStackBranchHeads) {
             TMBranchHead oldBranchHeadTbl = parseTree->branchHeadTbl;
 
-            parseTree->branchHeadTbl = (TMBranchHead) __XtMalloc(newSize);
-            XtMemmove(parseTree->branchHeadTbl, oldBranchHeadTbl, newSize);
+            parseTree->branchHeadTbl =
+                XtMallocArray((Cardinal) parseTree->branchHeadTblSize,
+                              (Cardinal) sizeof(TMBranchHeadRec));
+            memcpy(parseTree->branchHeadTbl, oldBranchHeadTbl,
+                   parseTree->branchHeadTblSize * sizeof(TMBranchHeadRec));
             parseTree->isStackBranchHeads = False;
         }
         else {
             parseTree->branchHeadTbl = (TMBranchHead)
-                XtRealloc((char *) parseTree->branchHeadTbl,
-                          (Cardinal) (parseTree->branchHeadTblSize *
-                                      sizeof(TMBranchHeadRec)));
+                XtReallocArray(parseTree->branchHeadTbl,
+                               (Cardinal) parseTree->branchHeadTblSize,
+                               (Cardinal) sizeof(TMBranchHeadRec));
         }
     }
 #ifdef TRACE_TM
@@ -168,8 +164,8 @@ GetBranchHead(TMParseStateTree parseTree,
 TMShortCard
 _XtGetQuarkIndex(TMParseStateTree parseTree, XrmQuark quark)
 {
-#define TM_QUARK_TBL_ALLOC      16
-#define TM_QUARK_TBL_REALLOC    16
+#define TM_QUARK_TBL_ALLOC      ((TMShortCard) 16)
+#define TM_QUARK_TBL_REALLOC    ((TMShortCard) 16)
     TMShortCard i;
 
     for (i = 0; i < parseTree->numQuarks; i++)
@@ -178,31 +174,27 @@ _XtGetQuarkIndex(TMParseStateTree parseTree, XrmQuark quark)
 
     if (i == parseTree->numQuarks) {
         if (parseTree->numQuarks == parseTree->quarkTblSize) {
-            TMShortCard newSize;
 
             if (parseTree->quarkTblSize == 0)
-                parseTree->quarkTblSize =
-                    (TMShortCard) (parseTree->quarkTblSize +
-                                   TM_QUARK_TBL_ALLOC);
+                parseTree->quarkTblSize = TM_QUARK_TBL_ALLOC;
             else
-                parseTree->quarkTblSize =
-                    (TMShortCard) (parseTree->quarkTblSize +
-                                   TM_QUARK_TBL_REALLOC);
-            newSize =
-                (TMShortCard) (parseTree->quarkTblSize * sizeof(XrmQuark));
+                parseTree->quarkTblSize += TM_QUARK_TBL_REALLOC;
 
             if (parseTree->isStackQuarks) {
                 XrmQuark *oldquarkTbl = parseTree->quarkTbl;
 
-                parseTree->quarkTbl = (XrmQuark *) __XtMalloc(newSize);
-                XtMemmove(parseTree->quarkTbl, oldquarkTbl, newSize);
+                parseTree->quarkTbl =
+                    XtMallocArray((Cardinal) parseTree->quarkTblSize,
+                                  (Cardinal) sizeof(XrmQuark));
+                memcpy(parseTree->quarkTbl, oldquarkTbl,
+                       parseTree->quarkTblSize * sizeof(XrmQuark));
                 parseTree->isStackQuarks = False;
             }
             else {
                 parseTree->quarkTbl = (XrmQuark *)
-                    XtRealloc((char *) parseTree->quarkTbl,
-                              (Cardinal) (parseTree->quarkTblSize *
-                                          sizeof(XrmQuark)));
+                    XtReallocArray(parseTree->quarkTbl,
+                                   (Cardinal) parseTree->quarkTblSize,
+                                   (Cardinal) sizeof(XrmQuark));
             }
         }
         parseTree->quarkTbl[parseTree->numQuarks++] = quark;
@@ -223,8 +215,6 @@ GetComplexBranchIndex(TMParseStateTree parseTree,
 #define TM_COMPLEXBRANCH_HEAD_TBL_REALLOC 4
 
     if (parseTree->numComplexBranchHeads == parseTree->complexBranchHeadTblSize) {
-        TMShortCard newSize;
-
         if (parseTree->complexBranchHeadTblSize == 0)
             parseTree->complexBranchHeadTblSize =
                 (TMShortCard) (parseTree->complexBranchHeadTblSize +
@@ -234,23 +224,21 @@ GetComplexBranchIndex(TMParseStateTree parseTree,
                 (TMShortCard) (parseTree->complexBranchHeadTblSize +
                                TM_COMPLEXBRANCH_HEAD_TBL_REALLOC);
 
-        newSize =
-            (TMShortCard) (parseTree->complexBranchHeadTblSize *
-                           sizeof(StatePtr));
-
         if (parseTree->isStackComplexBranchHeads) {
             StatePtr *oldcomplexBranchHeadTbl = parseTree->complexBranchHeadTbl;
 
-            parseTree->complexBranchHeadTbl = (StatePtr *) __XtMalloc(newSize);
-            XtMemmove(parseTree->complexBranchHeadTbl,
-                      oldcomplexBranchHeadTbl, newSize);
+            parseTree->complexBranchHeadTbl =
+                XtMallocArray((Cardinal) parseTree->complexBranchHeadTblSize,
+                              (Cardinal) sizeof(StatePtr));
+            memcpy(parseTree->complexBranchHeadTbl, oldcomplexBranchHeadTbl,
+                   parseTree->complexBranchHeadTblSize * sizeof(StatePtr));
             parseTree->isStackComplexBranchHeads = False;
         }
         else {
             parseTree->complexBranchHeadTbl = (StatePtr *)
-                XtRealloc((char *) parseTree->complexBranchHeadTbl,
-                          (Cardinal) (parseTree->complexBranchHeadTblSize *
-                                      sizeof(StatePtr)));
+                XtReallocArray(parseTree->complexBranchHeadTbl,
+                               (Cardinal) parseTree->complexBranchHeadTblSize,
+                               (Cardinal) sizeof(StatePtr));
         }
     }
     parseTree->complexBranchHeadTbl[parseTree->numComplexBranchHeads++] = NULL;
@@ -288,13 +276,13 @@ _XtGetTypeIndex(Event *event)
             _XtGlobalTM.typeMatchSegmentTblSize =
                 (TMShortCard) (_XtGlobalTM.typeMatchSegmentTblSize + 4);
             _XtGlobalTM.typeMatchSegmentTbl = (TMTypeMatch *)
-                XtRealloc((char *) _XtGlobalTM.typeMatchSegmentTbl,
-                          (Cardinal) (_XtGlobalTM.typeMatchSegmentTblSize *
-                                      sizeof(TMTypeMatch)));
+                XtReallocArray(_XtGlobalTM.typeMatchSegmentTbl,
+                               (Cardinal) _XtGlobalTM.typeMatchSegmentTblSize,
+                               (Cardinal) sizeof(TMTypeMatch));
         }
         _XtGlobalTM.typeMatchSegmentTbl[_XtGlobalTM.numTypeMatchSegments++] =
-            segment = (TMTypeMatch)
-            __XtMalloc(TM_TYPE_SEGMENT_SIZE * sizeof(TMTypeMatchRec));
+            segment = XtMallocArray(TM_TYPE_SEGMENT_SIZE,
+                                    (Cardinal) sizeof(TMTypeMatchRec));
         j = 0;
     }
     typeMatch = &segment[j];
@@ -390,13 +378,13 @@ _XtGetModifierIndex(Event *event)
             _XtGlobalTM.modMatchSegmentTblSize =
                 (TMShortCard) (_XtGlobalTM.modMatchSegmentTblSize + 4);
             _XtGlobalTM.modMatchSegmentTbl = (TMModifierMatch *)
-                XtRealloc((char *) _XtGlobalTM.modMatchSegmentTbl,
-                          (Cardinal) (_XtGlobalTM.modMatchSegmentTblSize *
-                                      sizeof(TMModifierMatch)));
+                XtReallocArray(_XtGlobalTM.modMatchSegmentTbl,
+                               (Cardinal) _XtGlobalTM.modMatchSegmentTblSize,
+                               (Cardinal) sizeof(TMModifierMatch));
         }
         _XtGlobalTM.modMatchSegmentTbl[_XtGlobalTM.numModMatchSegments++] =
-            segment = (TMModifierMatch)
-            __XtMalloc(TM_MOD_SEGMENT_SIZE * sizeof(TMModifierMatchRec));
+            segment = XtMallocArray(TM_MOD_SEGMENT_SIZE,
+                                    (Cardinal) sizeof(TMModifierMatchRec));
         j = 0;
     }
     modMatch = &segment[j];
@@ -720,9 +708,9 @@ PushContext(TMContext *contextPtr, StatePtr newState)
                     (TMShortCard) (context->maxMatches +
                                    TM_CONTEXT_MATCHES_REALLOC);
             context->matches = (MatchPairRec *)
-                XtRealloc((char *) context->matches,
-                          (Cardinal) (context->maxMatches *
-                                      sizeof(MatchPairRec)));
+                XtReallocArray(context->matches,
+                               (Cardinal) context->maxMatches,
+                               sizeof(MatchPairRec));
         }
         context->matches[context->numMatches].isCycleStart =
             newState->isCycleStart;
@@ -1384,9 +1372,9 @@ _XtCreateXlations(TMStateTree *stateTrees,
     if (_XtGlobalTM.numTms == _XtGlobalTM.tmTblSize) {
         _XtGlobalTM.tmTblSize = (TMShortCard) (_XtGlobalTM.tmTblSize + 16);
         _XtGlobalTM.tmTbl = (XtTranslations *)
-            XtRealloc((char *) _XtGlobalTM.tmTbl,
-                      (Cardinal) (_XtGlobalTM.tmTblSize *
-                                  sizeof(XtTranslations)));
+            XtReallocArray(_XtGlobalTM.tmTbl,
+                           (Cardinal) _XtGlobalTM.tmTblSize,
+                           (Cardinal) sizeof(XtTranslations));
     }
     _XtGlobalTM.tmTbl[_XtGlobalTM.numTms++] = xlations;
     UNLOCK_PROCESS;
@@ -1410,19 +1398,18 @@ TMStateTree
 _XtParseTreeToStateTree(TMParseStateTree parseTree)
 {
     TMSimpleStateTree simpleTree;
-    unsigned int tableSize;
 
     if (parseTree->numComplexBranchHeads) {
         TMComplexStateTree complexTree;
 
         complexTree = XtNew(TMComplexStateTreeRec);
         complexTree->isSimple = False;
-        tableSize =
-            (unsigned) (parseTree->numComplexBranchHeads * sizeof(StatePtr));
-        complexTree->complexBranchHeadTbl = (StatePtr *)
-            __XtMalloc(tableSize);
-        XtMemmove(complexTree->complexBranchHeadTbl,
-                  parseTree->complexBranchHeadTbl, tableSize);
+        complexTree->complexBranchHeadTbl =
+            XtMallocArray((Cardinal) parseTree->numComplexBranchHeads,
+                          (Cardinal) sizeof(StatePtr));
+        memcpy(complexTree->complexBranchHeadTbl,
+               parseTree->complexBranchHeadTbl,
+               parseTree->numComplexBranchHeads * sizeof(StatePtr));
         complexTree->numComplexBranchHeads = parseTree->numComplexBranchHeads;
         simpleTree = (TMSimpleStateTree) complexTree;
     }
@@ -1434,16 +1421,17 @@ _XtParseTreeToStateTree(TMParseStateTree parseTree)
     simpleTree->refCount = 0;
     simpleTree->mappingNotifyInterest = parseTree->mappingNotifyInterest;
 
-    tableSize =
-        (unsigned) (parseTree->numBranchHeads * sizeof(TMBranchHeadRec));
-    simpleTree->branchHeadTbl = (TMBranchHead)
-        __XtMalloc(tableSize);
-    XtMemmove(simpleTree->branchHeadTbl, parseTree->branchHeadTbl, tableSize);
+    simpleTree->branchHeadTbl =
+        XtMallocArray((Cardinal) parseTree->numBranchHeads,
+                      (Cardinal) sizeof(TMBranchHeadRec));
+    memcpy(simpleTree->branchHeadTbl, parseTree->branchHeadTbl,
+           parseTree->numBranchHeads * sizeof(TMBranchHeadRec));
     simpleTree->numBranchHeads = parseTree->numBranchHeads;
 
-    tableSize = (unsigned) (parseTree->numQuarks * sizeof(XrmQuark));
-    simpleTree->quarkTbl = (XrmQuark *) __XtMalloc(tableSize);
-    XtMemmove(simpleTree->quarkTbl, parseTree->quarkTbl, tableSize);
+    simpleTree->quarkTbl = XtMallocArray((Cardinal) parseTree->numQuarks,
+                                         (Cardinal) sizeof(XrmQuark));
+    memcpy(simpleTree->quarkTbl, parseTree->quarkTbl,
+           parseTree->numQuarks * sizeof(XrmQuark));
     simpleTree->numQuarks = parseTree->numQuarks;
 
     return (TMStateTree) simpleTree;
@@ -1799,6 +1787,7 @@ MergeTranslations(Widget widget,
         bindings = NULL;
     }
     switch (operation) {
+    default:
     case XtTableReplace:
         newTable = bindPair[0].xlations = xlations;
         bindPair[0].bindings = bindings;
@@ -1882,8 +1871,8 @@ MakeBindData(TMComplexBindProcs bindings,
         if (oldBindData && oldBindData->simple.isComplex)
             cBindData->accel_context =
                 ((TMComplexBindData) oldBindData)->accel_context;
-        XtMemmove((char *) &cBindData->bindTbl[0], (char *) bindings,
-                  numBindings * sizeof(TMComplexBindProcsRec));
+        memcpy(&cBindData->bindTbl[0], bindings,
+               numBindings * sizeof(TMComplexBindProcsRec));
     }
     return bindData;
 }
@@ -2036,7 +2025,7 @@ ComposeTranslations(Widget dest,
  * If a GetValues is done on a translation resource that contains
  * accelerators we need to return the accelerator context in addition
  * to the pure translations.  Since this means returning memory that
- * the client controlls but we still own, we will track the "headers"
+ * the client controls but we still own, we will track the "headers"
  * that we return (via a linked list pointed to from the bindData) and
  * free it at destroy time.
  */
@@ -2073,9 +2062,9 @@ _XtGetTranslationValue(Widget w)
         aXlations->hasBindings = True;
         aXlations->xlations = xlations;
         aXlations->next = NULL;
-        XtMemmove((char *) &aXlations->bindTbl[0],
-                  (char *) &cBindData->bindTbl[0],
-                  numBindings * sizeof(TMComplexBindProcsRec));
+        memcpy(&aXlations->bindTbl[0],
+               &cBindData->bindTbl[0],
+               numBindings * sizeof(TMComplexBindProcsRec));
         return (XtTranslations) aXlations;
     }
 }

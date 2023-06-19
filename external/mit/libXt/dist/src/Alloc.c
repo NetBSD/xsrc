@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, 2023, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -84,6 +84,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #define Xmalloc(size) malloc((size))
 #define Xrealloc(ptr, size) realloc((ptr), (size))
@@ -145,7 +146,9 @@ XtAsprintf(_XtString *new_string, _Xconst char *_X_RESTRICT_KYWD format, ...)
 
     *new_string = XtMalloc((Cardinal) len + 1); /* snprintf doesn't count trailing '\0' */
     if ((size_t) len < sizeof(buf)) {
-        strncpy(*new_string, buf, (size_t) len);
+        if ((size_t) len > 0) {
+            memcpy(*new_string, buf, (size_t) len);
+        }
         (*new_string)[len] = '\0';
     }
     else {
@@ -193,6 +196,38 @@ XtRealloc(char *ptr, unsigned size)
         _XtAllocError("realloc");
 
     return (ptr);
+}
+
+void *
+XtReallocArray(void *ptr, unsigned num, unsigned size)
+{
+    if (ptr == NULL) {
+#ifdef MALLOC_0_RETURNS_NULL
+        if ((num == 0) || (size == 0))
+            num = size = 1;
+#endif
+#if (SIZE_MAX / UINT_MAX) <= UINT_MAX
+        if ((num > 0) && (SIZE_MAX / num) < size)
+            _XtAllocError("reallocarray: overflow detected");
+#endif
+        return (XtMalloc(num * size));
+    }
+    else {
+        void *new;
+
+#ifdef HAVE_REALLOCARRAY
+        new = reallocarray(ptr, size, num);
+#else
+# if (SIZE_MAX / UINT_MAX) <= UINT_MAX
+        if ((num > 0) && ((SIZE_MAX / num) < size))
+            _XtAllocError("reallocarray: overflow detected");
+# endif
+        new = Xrealloc(ptr, size * num);
+#endif
+        if ((new == NULL) && (num != 0) && (size != 0))
+            _XtAllocError("reallocarray");
+        return (new);
+    }
 }
 
 char *
@@ -387,7 +422,7 @@ _XtRealloc(char *ptr, unsigned size, const char *file, int line)
 
         if (copysize > size)
             copysize = size;
-        memmove(newptr, ptr, copysize);
+        memcpy(newptr, ptr, copysize);
         _XtFree(ptr);
     }
     UNLOCK_PROCESS;
@@ -398,6 +433,23 @@ char *
 XtRealloc(char *ptr, unsigned size)
 {
     return _XtRealloc(ptr, size, (char *) NULL, 0);
+}
+
+void *
+_XtReallocArray(void *ptr, unsigned num, unsigned size, const char *file, int line)
+{
+#if (SIZE_MAX / UINT_MAX) <= UINT_MAX
+    if ((num > 0) && (SIZE_MAX / num) < size)
+        _XtAllocError("reallocarray: overflow");
+#endif
+
+    return _XtRealloc(ptr, (num * size), file, line);
+}
+
+void *
+XtReallocArray(void *ptr, unsigned num, unsigned size)
+{
+    return _XtReallocArray(ptr, num, size, (char *) NULL, 0);
 }
 
 char *

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -166,21 +166,23 @@ ConstructCallbackOffsets(WidgetClass myWidgetClass)
 
     /* Count the number of callbacks */
     resourceList = (XrmResourceList) myObjectClass->object_class.resources;
-    for (i = (int) myObjectClass->object_class.num_resources; --i >= 0;
-         resourceList++)
-        if (resourceList->xrm_type == QCallback)
-            tableSize++;
+    if (resourceList != NULL) {
+        for (i = (int) myObjectClass->object_class.num_resources; --i >= 0;
+             resourceList++) {
+            if (resourceList->xrm_type == QCallback)
+                tableSize++;
+        }
+    }
 
     /*
      * Allocate and load the table.  Make sure that the new callback
      * offsets occur in the table ahead of the superclass callback
      * offsets so that resource overrides work.
      */
-    newTable = (CallbackTable)
-        __XtMalloc((Cardinal)
-                   (sizeof(XrmResource *) * (size_t) (tableSize + 1)));
+    newTable = XtMallocArray((Cardinal) tableSize + 1,
+                             (Cardinal) sizeof(XrmResource *));
 
-    newTable[0] = (XrmResource *) (long) tableSize;
+    newTable[0] = (XrmResource *) (XtIntPtr) tableSize;
 
     if (superTable)
         tableSize -= (int) (long) superTable[0];

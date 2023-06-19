@@ -345,6 +345,7 @@ WriteSourceLine(TableEnt * te, int abi, int fudge)
 {
     char *c;
 
+    (void) abi;
     for (c = te->right; *c; c++)
         (void) printf("'%c',", *c);
     (void) printf("%c", '0');
@@ -439,6 +440,7 @@ ArrayperWriteSource(int abi)
     File *phile;
     static int done_atom;
 
+    (void) abi;
     for (phile = file; phile; phile = phile->next) {
         Table *t;
         TableEnt *te;

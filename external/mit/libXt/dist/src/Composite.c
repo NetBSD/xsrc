@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -247,10 +247,8 @@ CompositeInsertChild(Widget w)
         /* Allocate more space */
         cw->composite.num_slots += (cw->composite.num_slots / 2) + 2;
         cw->composite.children = children =
-            (WidgetList) XtRealloc((XtPointer) children,
-                                   (Cardinal) ((unsigned)
-                                               (cw->composite.num_slots) *
-                                               sizeof(Widget)));
+            XtReallocArray(children, cw->composite.num_slots,
+                           (Cardinal) sizeof(Widget));
     }
     /* Ripple children up one space from "position" */
     for (i = cw->composite.num_children; i > position; i--) {

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -456,15 +456,12 @@ _XtBuildKeysymTables(Display *dpy, register XtPerDisplay pd)
                                       &pd->keysyms_per_keycode);
     XtFree((char *) pd->modKeysyms);
 
-    pd->modKeysyms =
-        (KeySym *) __XtMalloc((Cardinal) KeysymTableSize * sizeof(KeySym));
+    pd->modKeysyms = XtMallocArray(KeysymTableSize, (Cardinal) sizeof(KeySym));
     maxCount = KeysymTableSize;
     tempCount = 0;
 
     XtFree((char *) pd->modsToKeysyms);
-    table =
-        (ModToKeysymTable *) __XtMalloc((Cardinal) 8 *
-                                        sizeof(ModToKeysymTable));
+    table = XtMallocArray(8, (Cardinal) sizeof(ModToKeysymTable));
     pd->modsToKeysyms = table;
 
     table[0].mask = ShiftMask;
@@ -502,9 +499,10 @@ _XtBuildKeysymTables(Display *dpy, register XtPerDisplay pd)
                     if (keysym != 0 && keysym != tempKeysym) {
                         if (tempCount == maxCount) {
                             maxCount += KeysymTableSize;
-                            pd->modKeysyms = (KeySym *) XtRealloc((char *) pd->
-                                                                  modKeysyms,
-                                                                  (unsigned) ((size_t) maxCount * sizeof(KeySym)));
+                            pd->modKeysyms =
+                                XtReallocArray(pd->modKeysyms,
+                                               (Cardinal) maxCount,
+                                               (Cardinal) sizeof(KeySym));
                         }
                         pd->modKeysyms[tempCount++] = keysym;
                         table[i].count++;
@@ -738,10 +736,9 @@ XtKeysymToKeycodeList(Display *dpy,
                 KeyCode *old = keycodes;
 
                 maxcodes += KEYCODE_ARRAY_SIZE;
-                keycodes = (KeyCode *) __XtMalloc(maxcodes * sizeof(KeyCode));
+                keycodes = XtMallocArray(maxcodes, (Cardinal) sizeof(KeyCode));
                 if (ncodes) {
-                    (void) memmove((char *) keycodes, (char *) old,
-                                   ncodes * sizeof(KeyCode));
+                    (void) memcpy(keycodes, old, ncodes * sizeof(KeyCode));
                     XtFree((char *) old);
                 }
                 codeP = &keycodes[ncodes];

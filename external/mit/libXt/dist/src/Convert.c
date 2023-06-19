@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -403,7 +403,7 @@ CacheEnter(Heap *heap,
     else {
         p->from_is_value = False;
         p->from.addr = (XPointer) _XtHeapAlloc(heap, from->size);
-        (void) memmove((char *) p->from.addr, (char *) from->addr, from->size);
+        (void) memcpy(p->from.addr, (char *) from->addr, from->size);
     }
     p->num_args = (unsigned short) num_args;
     if (num_args && args) {
@@ -428,7 +428,7 @@ CacheEnter(Heap *heap,
     else {
         p->to_is_value = False;
         p->to.addr = (XPointer) _XtHeapAlloc(heap, to->size);
-        (void) memmove((char *) p->to.addr, (char *) to->addr, to->size);
+        (void) memcpy(p->to.addr, (char *) to->addr, to->size);
     }
     UNLOCK_PROCESS;
     return p;
@@ -608,8 +608,8 @@ ComputeArgs(Widget widget,
             /* Convert in place for next usage */
             convert_args[i].address_mode = XtResourceQuark;
             convert_args[i].address_id =
-                (XtPointer) (long) XrmStringToQuark((String) convert_args[i].
-                                                    address_id);
+                (XtPointer) (XtIntPtr) XrmStringToQuark((String) convert_args[i].
+                                                        address_id);
             /* Fall through */
 
         case XtResourceQuark:
@@ -698,7 +698,7 @@ XtDirectConvert(XtConverter converter,
     (*to).addr = NULL;
     (*converter) (args, &num_args, from, to);
     /* This memory can never be freed since we don't know the Display
-     * or app context from which to compute the persistance */
+     * or app context from which to compute the persistence */
     {
         CacheEnter(&globalHeap, (XtTypeConverter) converter, args, num_args,
                    from, to, (to->addr != NULL), hash, False, False,

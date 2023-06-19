@@ -288,7 +288,7 @@ _set_resource_values(Widget w, char *resource, char *value, char *last_part)
  *      remainder       the part of the resource string left over
  *      resource        the resource string to be matched
  *      value           the value to be set
- *      last_token      the last * or . before the final resoruce part
+ *      last_token      the last * or . before the final resource part
  *      last_part       the last resource part (e.g. *background)
  *
  * RETURN VALUES: void
@@ -347,7 +347,7 @@ _apply_values_to_children(Widget w,
  *      remainder       the remaining part of the resource string
  *      resource        the resource string to be matched
  *      value           the value to be applied
- *      last_token      the last * or . before the final resoruce part
+ *      last_token      the last * or . before the final resource part
  *      last_part       the last resource part (e.g. *background)
  *
  * RETURN VALUES: none
@@ -483,7 +483,7 @@ _match_resource_to_widget(Widget w, char *part)
  *      remainder       the part of the resource string left over
  *      resource        the resource string to be matched
  *      value           the value to be set
- *      last_token      the last * or . before the final resoruce part
+ *      last_token      the last * or . before the final resource part
  *      last_part       the last resource part (e.g. *background)
  *
  * RETURN VALUES: none
@@ -620,7 +620,7 @@ _get_last_part(char *remainder, char **part)
         *part = XtNewString(tight);
         return ('.');
     }
-    if ((tight == NULL) || (loose && (strcoll(tight, loose) < 0))) {
+    if ((tight == NULL) || (strcoll(tight, loose) < 0)) {
         *loose++ = '\0';
         *part = XtNewString(loose);
         return ('*');
@@ -665,9 +665,11 @@ _search_widget_tree(Widget w, char *resource, char *value)
     Widget parent = w;
     char *last_part;
     char *remainder = NULL;
-    char last_token;
     char *loose, *tight;
     int loose_len, tight_len;
+
+    if (resource == NULL)
+        return;
 
     /*
      * Find the root of the tree given any widget
@@ -705,6 +707,8 @@ _search_widget_tree(Widget w, char *resource, char *value)
      * etc.)
      */
     if (remainder) {
+        char last_token;
+
         last_token = _get_last_part(remainder, &last_part);
         /*
          * this case covers resources of only one level (eg. *background)
@@ -777,8 +781,7 @@ _locate_children(Widget parent, Widget **children)
         return (0);
     }
 
-    *children = (Widget *)
-        XtMalloc((Cardinal) (sizeof(Widget) * (size_t) num_children));
+    *children = XtMallocArray((Cardinal)num_children, (Cardinal)sizeof(Widget));
 
     if (XtIsComposite(parent)) {
         for (i = 0; i < comp->composite.num_children; i++) {

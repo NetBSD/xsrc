@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -539,6 +539,7 @@ XtMakeResizeRequest(Widget widget,
     WIDGET_TO_APPCON(widget);
 
     LOCK_APP(app);
+    memset(&request, 0, sizeof(request));
     request.request_mode = CWWidth | CWHeight;
     request.width = (Dimension) width;
     request.height = (Dimension) height;

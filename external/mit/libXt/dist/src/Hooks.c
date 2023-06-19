@@ -87,7 +87,7 @@ XtRemoveBlockHook(XtBlockHookId id)
 }
 
 static void
-DeleteShellFromHookObj(Widget shell,
+DeleteShellFromHookObj(const Widget shell,
                        XtPointer closure,
                        XtPointer call_data _X_UNUSED)
 {
@@ -117,10 +117,9 @@ _XtAddShellToHookObj(Widget shell)
 
     if (ho->hooks.num_shells == ho->hooks.max_shells) {
         ho->hooks.max_shells += SHELL_INCR;
-        ho->hooks.shells =
-            (WidgetList) XtRealloc((char *) ho->hooks.shells,
-                                   (Cardinal) (ho->hooks.max_shells *
-                                               sizeof(Widget)));
+        ho->hooks.shells = XtReallocArray(ho->hooks.shells,
+                                          (Cardinal) ho->hooks.max_shells,
+                                          (Cardinal) sizeof(Widget));
     }
     ho->hooks.shells[ho->hooks.num_shells++] = shell;
 

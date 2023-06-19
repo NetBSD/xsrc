@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -203,10 +203,10 @@ _XtInherit(void)
  * First it could be used as a generic function and second
  * as an absolute address reference, which will be used to
  * check the initialisation process of several other libraries.
- * Because of this the symbol must be accessable by all
+ * Because of this the symbol must be accessible by all
  * client dll's and applications.  In unix environments
  * this is no problem, because the used shared libraries
- * format (elf) supports this immediatly.  Under Windows
+ * format (elf) supports this immediately.  Under Windows
  * this isn't true, because a functions address in a dll
  * is different from the same function in another dll or
  * applications, because the used Portable Executable
@@ -287,7 +287,7 @@ XtToolkitInitialize(void)
     XrmInitialize();
     _XtResourceListInitialize();
 
-    /* Other intrinsic intialization */
+    /* Other intrinsic initialization */
     _XtConvertInitialize();
     _XtEventInitialize();
     _XtTranslateInitialize();
@@ -668,11 +668,10 @@ _MergeOptionTables(const XrmOptionDescRec *src1,
     int dst_len, order;
     enum { Check, NotSorted, IsSorted } sort_order = Check;
 
-    *dst = table = (XrmOptionDescRec *)
-        __XtMalloc((Cardinal)
-                   (sizeof(XrmOptionDescRec) * (num_src1 + num_src2)));
+    *dst = table = XtMallocArray(num_src1 + num_src2,
+                                 (Cardinal) sizeof(XrmOptionDescRec));
 
-    (void) memmove(table, src1, sizeof(XrmOptionDescRec) * num_src1);
+    (void) memcpy(table, src1, sizeof(XrmOptionDescRec) * num_src1);
     if (num_src2 == 0) {
         *num_dst = num_src1;
         return;
@@ -748,7 +747,7 @@ _GetResource(Display *dpy,
             if (Qtype == _XtQString)
                 *(String *) value->addr = db_value.addr;
             else
-                (void) memmove(value->addr, db_value.addr, value->size);
+                (void) memcpy(value->addr, db_value.addr, value->size);
             return True;
         }
         else {
@@ -786,9 +785,8 @@ _XtPreparseCommandLine(XrmOptionDescRec *urlist,
     _XtString *targv;
     int targc = argc;
 
-    targv = (_XtString *)
-        __XtMalloc((Cardinal) (sizeof(_XtString *) * (size_t) argc));
-    (void) memmove(targv, argv, sizeof(char *) * (size_t) argc);
+    targv = XtMallocArray((Cardinal) argc, (Cardinal) sizeof(_XtString *));
+    (void) memcpy(targv, argv, sizeof(char *) * (size_t) argc);
     _MergeOptionTables(opTable, XtNumber(opTable), urlist, num_urs,
                        &options, &num_options);
     name_list[0] = class_list[0] = XrmPermStringToQuark(".");
@@ -931,7 +929,7 @@ _XtDisplayInitialize(Display *dpy,
                         sizeof(XrmHashTable));
         if (!(search_list = (XrmHashTable *) ALLOCATE_LOCAL(size)))
             _XtAllocError(NULL);
-        (void) memmove((char *) search_list, (char *) old, (size >> 1));
+        (void) memcpy(search_list, old, (size >> 1));
         DEALLOCATE_LOCAL(old);
     }
 

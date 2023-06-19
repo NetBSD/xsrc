@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -956,10 +956,9 @@ ClassPartInitialize(WidgetClass widget_class)
         XtPointer *extP
             = &((ShellWidgetClass) widget_class)->shell_class.extension;
         ext = XtNew(ShellClassExtensionRec);
-        (void) memmove((char *) ext,
-                       (char *) _FindClassExtension(widget_class->
-                                                    core_class.superclass),
-                       sizeof(ShellClassExtensionRec));
+        (void) memcpy(ext,
+                      _FindClassExtension(widget_class->core_class.superclass),
+                      sizeof(ShellClassExtensionRec));
         ext->next_extension = *extP;
         *extP = (XtPointer) ext;
     }
@@ -1801,8 +1800,8 @@ GetGeometry(Widget W, Widget child)
             WMShellPart *wm = &((WMShellWidget) w)->wm;
 
             EvaluateSizeHints((WMShellWidget) w);
-            (void) memmove((char *) &hints, (char *) &wm->size_hints,
-                           sizeof(struct _OldXSizeHints));
+            (void) memcpy(&hints, &wm->size_hints,
+                          sizeof(struct _OldXSizeHints));
             hints.win_gravity = wm->win_gravity;
             if (wm->size_hints.flags & PBaseSize) {
                 width -= wm->base_width;
@@ -3493,8 +3492,8 @@ EditCommand(_XtString str,      /* if not NULL, the sm_client_id */
         count++;
 
     if (want) {
-        s = new = (_XtString *)
-            __XtMalloc((Cardinal) ((size_t) (count + 3) * sizeof(_XtString *)));
+        s = new = XtMallocArray((Cardinal) count + 3,
+                                (Cardinal) sizeof(_XtString *));
         *s = *sarray;
         s++;
         sarray++;
@@ -3509,8 +3508,8 @@ EditCommand(_XtString str,      /* if not NULL, the sm_client_id */
     else {
         if (count < 3)
             return NewStringArray(sarray);
-        s = new = (_XtString *)
-            __XtMalloc((Cardinal) ((size_t) (count - 1) * sizeof(_XtString *)));
+        s = new = XtMallocArray((Cardinal) count - 1,
+                                (Cardinal) sizeof(_XtString *));
         for (; --count >= 0; sarray++) {
             if (strcmp(*sarray, "-xtsessionID") == 0) {
                 sarray++;

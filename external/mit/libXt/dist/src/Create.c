@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -145,8 +145,8 @@ XtInitializeWidgetClass(WidgetClass wc)
         Cardinal num_params;
 
         param[0] = wc->core_class.class_name;
-        param[1] = (String) wc->core_class.version;
-        param[2] = (String) XtVersion;
+        param[1] = (String) (XtIntPtr) wc->core_class.version;
+        param[2] = (String) (XtIntPtr) XtVersion;
 
         if (wc->core_class.version == (11 * 1000 + 5) ||        /* MIT X11R5 */
             wc->core_class.version == (11 * 1000 + 4)) {        /* MIT X11R4 */
@@ -352,7 +352,7 @@ xtCreate(String name,
     double widget_cache[100];
     Widget req_widget;
     XtPointer req_constraints = NULL;
-    Cardinal wsize, csize;
+    Cardinal wsize;
     Widget widget;
     XtCacheRef *cache_refs;
     XtCreateHookDataRec call_data;
@@ -411,15 +411,16 @@ xtCreate(String name,
 
     wsize = widget_class->core_class.widget_size;
     req_widget = (Widget) XtStackAlloc(wsize, widget_cache);
-    (void) memmove((char *) req_widget, (char *) widget, (size_t) wsize);
+    (void) memcpy(req_widget, (char *) widget, (size_t) wsize);
     CallInitialize(XtClass(widget), req_widget, widget, args, num_args);
     if (parent_constraint_class != NULL) {
         double constraint_cache[20];
+        Cardinal csize;
 
         csize = parent_constraint_class->constraint_class.constraint_size;
         if (csize) {
             req_constraints = XtStackAlloc(csize, constraint_cache);
-            (void) memmove((char *) req_constraints, widget->core.constraints,
+            (void) memcpy(req_constraints, widget->core.constraints,
                            (size_t) csize);
             req_widget->core.constraints = req_constraints;
         }
@@ -432,7 +433,7 @@ xtCreate(String name,
         }
     }
     XtStackFree((XtPointer) req_widget, widget_cache);
-    if (post_proc != (XtWidgetProc) NULL) {
+    if (post_proc != (XtWidgetProc) NULL && (parent != NULL)) {
         Widget hookobj;
 
         (*post_proc) (widget);
@@ -628,11 +629,9 @@ popupPostProc(Widget w)
 {
     Widget parent = XtParent(w);
 
-    parent->core.popup_list =
-        (WidgetList) XtRealloc((char *) parent->core.popup_list,
-                               (Cardinal) ((unsigned)
-                                           (parent->core.num_popups +
-                                            1) * sizeof(Widget)));
+    parent->core.popup_list = XtReallocArray(parent->core.popup_list,
+                                             (parent->core.num_popups + 1),
+                                             (Cardinal) sizeof(Widget));
     parent->core.popup_list[parent->core.num_popups++] = w;
 }
 
@@ -781,7 +780,7 @@ _XtCreateHookObj(Screen *screen)
     CompileCallbacks(hookobj);
     wsize = hookObjectClass->core_class.widget_size;
     req_widget = (Widget) XtStackAlloc(wsize, widget_cache);
-    (void) memmove((char *) req_widget, (char *) hookobj, (size_t) wsize);
+    (void) memcpy(req_widget, (char *) hookobj, (size_t) wsize);
     CallInitialize(hookObjectClass, req_widget, hookobj,
                    (ArgList) NULL, (Cardinal) 0);
     XtStackFree((XtPointer) req_widget, widget_cache);

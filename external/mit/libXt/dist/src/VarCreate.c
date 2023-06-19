@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -295,9 +295,8 @@ _XtVaOpenApplication(XtAppContext *app_context_return,
             typed_args[count].size = 0;
         }
         count++;
-        typed_args = (XtTypedArgList)
-            XtRealloc((char *) typed_args,
-                      (Cardinal) ((size_t) (count + 1) * sizeof(XtTypedArg)));
+        typed_args = XtReallocArray(typed_args, (Cardinal) count + 1,
+                                    (Cardinal) sizeof(XtTypedArg));
     }
     typed_args[count].name = NULL;
 

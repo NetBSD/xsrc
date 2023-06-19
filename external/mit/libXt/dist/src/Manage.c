@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -243,8 +243,7 @@ ManageChildren(WidgetList children,
         unique_children = cache;
     }
     else {
-        unique_children = (WidgetList)
-            __XtMalloc((Cardinal) ((size_t) num_children * sizeof(Widget)));
+        unique_children = XtMallocArray(num_children, (Cardinal) sizeof(Widget));
     }
     num_unique_children = 0;
     for (i = 0; i < num_children; i++) {
@@ -396,7 +395,7 @@ XtSetMappedWhenManaged(Widget widget, _XtBoolean mapped_when_managed)
 
         call_data.type = XtHsetMappedWhenManaged;
         call_data.widget = widget;
-        call_data.event_data = (XtPointer) (unsigned long) mapped_when_managed;
+        call_data.event_data = (XtPointer) (XtUIntPtr) mapped_when_managed;
         XtCallCallbackList(hookobj,
                            ((HookObject) hookobj)->hooks.changehook_callbacks,
                            (XtPointer) &call_data);

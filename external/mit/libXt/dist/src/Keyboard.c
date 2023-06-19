@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -226,7 +226,7 @@ IsOutside(XKeyEvent *e, Widget w)
 
     /*
      * if the pointer is outside the shell or inside
-     * the window try to see if it would recieve the
+     * the window try to see if it would receive the
      * focus
      */
     XtTranslateCoords(w, 0, 0, &left, &top);
@@ -346,11 +346,7 @@ FindKeyDestination(Widget widget,
                         device->grabType = XtPseudoPassiveServerGrab;
                         pdi->activatingKey = (KeyCode) event->keycode;
                         device->grab = *grab;
-
-                        if (grab)
-                            dspWidget = grab->widget;
-                        else
-                            dspWidget = focusWidget;
+                        dspWidget = grab->widget;
                     }
                 }
             }
@@ -428,7 +424,7 @@ GetShell(Widget widget)
 }
 
 /*
- * Check that widget really has Xt focus due to it having recieved an
+ * Check that widget really has Xt focus due to it having received an
  * event
  */
 typedef enum { NotActive = 0, IsActive, IsTarget } ActiveType;

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -167,15 +167,6 @@ static ModifierRec modifiers[] = {
     {"l",       0,      ParseModImmed, LockMask},
 };
 
-static NameValueRec buttonNames[] = {
-    {"Button1",             0,         Button1},
-    {"Button2",             0,         Button2},
-    {"Button3",             0,         Button3},
-    {"Button4",             0,         Button4},
-    {"Button5",             0,         Button5},
-    {NULL,                  NULLQUARK, 0},
-};
-
 static NameValueRec motionDetails[] = {
     {"Normal",              0,         NotifyNormal},
     {"Hint",                0,         NotifyHint},
@@ -234,6 +225,7 @@ static NameValueRec mappingNotify[] = {
 static String ParseKeySym(PARSE_PROC_DECL);
 static String ParseKeyAndModifiers(PARSE_PROC_DECL);
 static String ParseTable(PARSE_PROC_DECL);
+static String ParseButton(PARSE_PROC_DECL);
 static String ParseImmed(PARSE_PROC_DECL);
 static String ParseAddModifier(PARSE_PROC_DECL);
 static String ParseNone(PARSE_PROC_DECL);
@@ -253,8 +245,8 @@ static EventKey events[] = {
 {"KeyUp",           NULLQUARK, KeyRelease,      ParseKeySym,    NULL},
 {"KeyRelease",      NULLQUARK, KeyRelease,      ParseKeySym,    NULL},
 
-{"ButtonPress",     NULLQUARK, ButtonPress,     ParseTable, (Opaque)buttonNames},
-{"BtnDown",         NULLQUARK, ButtonPress,     ParseTable, (Opaque)buttonNames},
+{"ButtonPress",     NULLQUARK, ButtonPress,     ParseButton, NULL },
+{"BtnDown",         NULLQUARK, ButtonPress,     ParseButton, NULL },
 {"Btn1Down",        NULLQUARK, ButtonPress,     ParseImmed, (Opaque)Button1},
 {"Btn2Down",        NULLQUARK, ButtonPress,     ParseImmed, (Opaque)Button2},
 {"Btn3Down",        NULLQUARK, ButtonPress,     ParseImmed, (Opaque)Button3},
@@ -263,8 +255,8 @@ static EventKey events[] = {
 
 /* Event Name,    Quark, Event Type,    Detail Parser, Closure */
 
-{"ButtonRelease",   NULLQUARK, ButtonRelease,   ParseTable, (Opaque)buttonNames},
-{"BtnUp",           NULLQUARK, ButtonRelease,   ParseTable, (Opaque)buttonNames},
+{"ButtonRelease",   NULLQUARK, ButtonRelease,   ParseButton, NULL },
+{"BtnUp",           NULLQUARK, ButtonRelease,   ParseButton, NULL },
 {"Btn1Up",          NULLQUARK, ButtonRelease,   ParseImmed, (Opaque)Button1},
 {"Btn2Up",          NULLQUARK, ButtonRelease,   ParseImmed, (Opaque)Button2},
 {"Btn3Up",          NULLQUARK, ButtonRelease,   ParseImmed, (Opaque)Button3},
@@ -561,10 +553,8 @@ StoreLateBindings(KeySym keysymL,
             pair = TRUE;
         }
 
-        temp = (LateBindingsPtr) XtRealloc((char *) temp,
-                                           (unsigned) ((count + number +
-                                                        1) *
-                                                       sizeof(LateBindings)));
+        temp = XtReallocArray(temp, (Cardinal) (count + number + 1),
+                              (Cardinal) sizeof(LateBindings));
         *lateBindings = temp;
         XtSetBit(temp[count].knot, notL);
         XtSetBit(temp[count].pair, pair);
@@ -681,7 +671,7 @@ FetchModifierToken(String str, XrmQuark *token_return)
             modStr = XtStackAlloc((size_t) (str - start + 1), modStrbuf);
             if (modStr == NULL)
                 _XtAllocError(NULL);
-            (void) memmove(modStr, start, (size_t) (str - start));
+            (void) memcpy(modStr, start, (size_t) (str - start));
             modStr[str - start] = '\0';
             *token_return = XrmStringToQuark(modStr);
             XtStackFree(modStr, modStrbuf);
@@ -709,7 +699,7 @@ ParseModifiers(register String str, EventPtr event, Boolean *error)
             ScanWhitespace(str);
             return str;
         }
-        else if (Qmod == QAny) {        /*backward compatability */
+        else if (Qmod == QAny) {        /*backward compatibility */
             event->event.modifierMask = 0;
             event->event.modifiers = AnyModifier;
             ScanWhitespace(str);
@@ -792,7 +782,7 @@ ParseXtEventType(register String str,
     eventTypeStr = XtStackAlloc((size_t) (str - start + 1), eventTypeStrbuf);
     if (eventTypeStr == NULL)
         _XtAllocError(NULL);
-    (void) memmove(eventTypeStr, start, (size_t) (str - start));
+    (void) memcpy(eventTypeStr, start, (size_t) (str - start));
     eventTypeStr[str - start] = '\0';
     *tmEventP = LookupTMEventType(eventTypeStr, error);
     XtStackFree(eventTypeStr, eventTypeStrbuf);
@@ -1011,6 +1001,7 @@ ParseKeySym(register String str,
               */
              (*str == '(' && *(str + 1) >= '0' && *(str + 1) <= '9')) {
         keySymName = keySymNamebuf;     /* just so we can stackfree it later */
+        keySymName[0] = '\0';
         /* no detail */
         event->event.eventCode = 0L;
         event->event.eventCodeMask = 0L;
@@ -1023,7 +1014,7 @@ ParseKeySym(register String str,
                && *str != '\0')
             str++;
         keySymName = XtStackAlloc((size_t) (str - start + 1), keySymNamebuf);
-        (void) memmove(keySymName, start, (size_t) (str - start));
+        (void) memcpy(keySymName, start, (size_t) (str - start));
         keySymName[str - start] = '\0';
         event->event.eventCode = StringToKeySym(keySymName, error);
         event->event.eventCodeMask = (unsigned long) (~0L);
@@ -1069,7 +1060,7 @@ ParseTable(register String str, Opaque closure, EventPtr event, Boolean *error)
         *error = TRUE;
         return str;
     }
-    (void) memmove(tableSymName, start, (size_t) (str - start));
+    (void) memcpy(tableSymName, start, (size_t) (str - start));
     tableSymName[str - start] = '\0';
     signature = StringToQuark(tableSymName);
     for (; table->signature != NULLQUARK; table++)
@@ -1082,6 +1073,47 @@ ParseTable(register String str, Opaque closure, EventPtr event, Boolean *error)
     Syntax("Unknown Detail Type:  ", tableSymName);
     *error = TRUE;
     return PanicModeRecovery(str);
+}
+
+static String
+ParseButton(String str, Opaque closure, EventPtr event, Boolean *error)
+{
+    String start = str;
+    char buttonStr[7];
+    size_t len;
+    static const char buttonPrefix[] = "Button";
+    unsigned long button;
+
+    event->event.eventCode = 0L;
+    if (strncmp(str, buttonPrefix, sizeof(buttonPrefix)-1) != 0) {
+	event->event.eventCodeMask = 0L;
+	return str;
+    }
+    str += sizeof(buttonPrefix)-1;
+    start = str;
+    ScanNumeric(str);
+    if (str == start) {
+	Syntax("Missing button number", "");
+	*error = TRUE;
+	return PanicModeRecovery(str);
+    }
+    len = (size_t) (str - start);
+    if (len >= sizeof buttonStr) {
+	Syntax("Button number too long", "");
+	*error = TRUE;
+	return PanicModeRecovery(str);
+    }
+    (void) memcpy(buttonStr, start, len);
+    buttonStr[len] = '\0';
+    button = StrToNum(buttonStr);
+    if (button < 1 || 255 < button) {
+	Syntax("Invalid button number", buttonStr);
+	*error = TRUE;
+	return PanicModeRecovery(str);
+    }
+    event->event.eventCode = button;
+    event->event.eventCodeMask = (unsigned long) (~0L);
+    return str;
 }
 
 static String
@@ -1120,7 +1152,7 @@ ParseAtom(String str, Opaque closure _X_UNUSED, EventPtr event, Boolean *error)
             *error = TRUE;
             return str;
         }
-        (void) memmove(atomName, start, (size_t) (str - start));
+        (void) memcpy(atomName, start, (size_t) (str - start));
         atomName[str - start] = '\0';
         event->event.eventCode = (TMLongCard) XrmStringToQuark(atomName);
         event->event.matchEvent = _XtMatchAtom;
@@ -1532,7 +1564,7 @@ ParseRepeat(register String str, int *reps, Boolean *plus, Boolean *error)
         ScanNumeric(str);
         len = (size_t) (str - start);
         if (len < sizeof repStr) {
-            (void) memmove(repStr, start, len);
+            (void) memcpy(repStr, start, len);
             repStr[len] = '\0';
             *reps = (int) StrToNum(repStr);
         }
@@ -1672,7 +1704,7 @@ ParseActionProc(register String str, XrmQuark *actionProcNameP, Boolean *error)
         *error = TRUE;
         return str;
     }
-    (void) memmove(procName, start, (size_t) (str - start));
+    (void) memcpy(procName, start, (size_t) (str - start));
     procName[str - start] = '\0';
     *actionProcNameP = XrmStringToQuark(procName);
     return str;
@@ -1700,7 +1732,7 @@ ParseString(register String str, _XtString *strP)
                  (*(str + 1) == '\\' && *(str + 2) == '"'))) {
                 len = (unsigned) (prev_len + (str - start + 2));
                 *strP = XtRealloc(*strP, len);
-                (void) memmove(*strP + prev_len, start, (size_t) (str - start));
+                (void) memcpy(*strP + prev_len, start, (size_t) (str - start));
                 prev_len = len - 1;
                 str++;
                 (*strP)[prev_len - 1] = *str;
@@ -1711,7 +1743,7 @@ ParseString(register String str, _XtString *strP)
         }
         len = (unsigned) (prev_len + (str - start + 1));
         *strP = XtRealloc(*strP, len);
-        (void) memmove(*strP + prev_len, start, (size_t) (str - start));
+        (void) memcpy(*strP + prev_len, start, (size_t) (str - start));
         (*strP)[len - 1] = '\0';
         if (*str == '"')
             str++;
@@ -1728,7 +1760,7 @@ ParseString(register String str, _XtString *strP)
                && *str != '\0')
             str++;
         *strP = __XtMalloc((unsigned) (str - start + 1));
-        (void) memmove(*strP, start, (size_t) (str - start));
+        (void) memcpy(*strP, start, (size_t) (str - start));
         (*strP)[str - start] = '\0';
     }
     return str;
@@ -1771,8 +1803,7 @@ ParseParamSeq(register String str, String **paramSeqP, Cardinal *paramNumP)
     }
 
     if (num_params != 0) {
-        String *paramP = (String *)
-            __XtMalloc((Cardinal) ((num_params + 1) * sizeof(String)));
+        String *paramP = XtMallocArray(num_params + 1, (Cardinal)sizeof(String));
         Cardinal i;
 
         *paramSeqP = paramP;
@@ -1876,7 +1907,7 @@ ShowProduction(String currentProduction)
     production = XtStackAlloc(len + 1, productionbuf);
     if (production == NULL)
         _XtAllocError(NULL);
-    (void) memmove(production, currentProduction, len);
+    (void) memcpy(production, currentProduction, len);
     production[len] = '\0';
 
     params[0] = production;
@@ -1938,7 +1969,7 @@ CheckForPoundSign(String str,
         start = str;
         str = ScanIdent(str);
         len = MIN(19, (int) (str - start));
-        (void) memmove(operation, start, (size_t) len);
+        (void) memcpy(operation, start, (size_t) len);
         operation[len] = '\0';
         if (!strcmp(operation, "replace"))
             opType = XtTableReplace;
@@ -2178,7 +2209,6 @@ _XtTranslateInitialize(void)
 
     Compile_XtEventTable(events, XtNumber(events));
     Compile_XtModifierTable(modifiers, XtNumber(modifiers));
-    CompileNameValueTable(buttonNames);
     CompileNameValueTable(notifyModes);
     CompileNameValueTable(motionDetails);
 #if 0

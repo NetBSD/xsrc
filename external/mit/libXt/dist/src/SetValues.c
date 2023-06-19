@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -151,8 +151,6 @@ CallConstraintSetValues(ConstraintWidgetClass class,
     XtSetValuesFunc set_values;
 
     if ((WidgetClass) class != constraintWidgetClass) {
-        ConstraintWidgetClass superclass;
-
         if (class == NULL) {
             XtAppErrorMsg(XtWidgetToApplicationContext(current),
                           "invalidClass", "constraintSetValue",
@@ -161,6 +159,8 @@ CallConstraintSetValues(ConstraintWidgetClass class,
                           NULL, NULL);
         }
         else {
+            ConstraintWidgetClass superclass;
+
             LOCK_PROCESS;
             superclass = (ConstraintWidgetClass) class->core_class.superclass;
             UNLOCK_PROCESS;
@@ -201,7 +201,6 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
     double oldcCache[20], reqcCache[20];
     Cardinal widgetSize, constraintSize;
     Boolean redisplay, cleared_rect_obj = False;
-    XtGeometryResult result;
     XtWidgetGeometry geoReq, geoReply;
     WidgetClass wc;
     ConstraintWidgetClass cwc = NULL;
@@ -225,7 +224,7 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
     UNLOCK_PROCESS;
     oldw = (Widget) XtStackAlloc(widgetSize, oldwCache);
     reqw = (Widget) XtStackAlloc(widgetSize, reqwCache);
-    (void) memmove((char *) oldw, (char *) w, (size_t) widgetSize);
+    (void) memcpy(oldw, w, (size_t) widgetSize);
 
     /* Set resource values */
 
@@ -234,7 +233,7 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
               wc->core_class.num_resources, args, num_args);
     UNLOCK_PROCESS;
 
-    (void) memmove((char *) reqw, (char *) w, (size_t) widgetSize);
+    (void) memcpy(reqw, w, (size_t) widgetSize);
 
     hasConstraints = (XtParent(w) != NULL && !XtIsShell(w) &&
                       XtIsConstraint(XtParent(w)));
@@ -258,8 +257,8 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
         /* Allocate and copy current constraints into oldw */
         oldw->core.constraints = XtStackAlloc(constraintSize, oldcCache);
         reqw->core.constraints = XtStackAlloc(constraintSize, reqcCache);
-        (void) memmove((char *) oldw->core.constraints,
-                       (char *) w->core.constraints, (size_t) constraintSize);
+        (void) memcpy(oldw->core.constraints,
+                      w->core.constraints, (size_t) constraintSize);
 
         /* Set constraint values */
         LOCK_PROCESS;
@@ -267,8 +266,8 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
                   (XrmResourceList *) (cwc->constraint_class.resources),
                   cwc->constraint_class.num_resources, args, num_args);
         UNLOCK_PROCESS;
-        (void) memmove((char *) reqw->core.constraints,
-                       (char *) w->core.constraints, (size_t) constraintSize);
+        (void) memcpy(reqw->core.constraints,
+                      w->core.constraints, (size_t) constraintSize);
     }
 
     /* Inform widget of changes, then inform parent of changes */
@@ -324,6 +323,8 @@ XtSetValues(register Widget w, ArgList args, Cardinal num_args)
         }
 
         if (geoReq.request_mode != 0) {
+            XtGeometryResult result;
+
             /* Pass on any requests for unchanged geometry values */
             if (geoReq.request_mode !=
                 (CWX | CWY | CWWidth | CWHeight | CWBorderWidth)) {

@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -146,7 +146,7 @@ _XtFillAncestorList(Widget **listPtr,
 
     /* First time in, allocate the ancestor list */
     if (trace == NULL) {
-        trace = (Widget *) __XtMalloc(CACHESIZE * sizeof(Widget));
+        trace = XtMallocArray(CACHESIZE, (Cardinal) sizeof(Widget));
         *maxElemsPtr = CACHESIZE;
     }
     /* First fill in the ancestor list */
@@ -160,9 +160,8 @@ _XtFillAncestorList(Widget **listPtr,
             /* This should rarely happen, but if it does it'll probably
                happen again, so grow the ancestor list */
             *maxElemsPtr += CACHESIZE;
-            trace = (Widget *) XtRealloc((char *) trace,
-                                         (Cardinal) (sizeof(Widget) *
-                                                     (size_t) (*maxElemsPtr)));
+            trace = XtReallocArray(trace, (Cardinal) *maxElemsPtr,
+                                   (Cardinal) sizeof(Widget));
         }
         trace[i] = w;
     }
