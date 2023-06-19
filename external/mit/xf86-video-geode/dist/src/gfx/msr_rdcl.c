@@ -437,8 +437,8 @@ redcloud_find_msr_device(MSR * pDev)
 /*--------------------------------------------------------------------
  * gfx_id_msr_device 
  *
- *	This routine handles reading the capabilities MSR register (typically 
- *	0x2000) and checking if the 'id' field matchs  pDev.Id.  This routine is
+ *  This routine handles reading the capabilities MSR register (typically
+ *  0x2000) and checking if the 'id' field matches pDev.Id.  This routine is
  *  used by applications/drivers that need to extend the list of known
  *  MBUS devices beyond those known by Durango.
  *

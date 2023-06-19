@@ -1251,7 +1251,7 @@ gfx_set_video_palette_entry(unsigned long index, unsigned long palette)
 /*---------------------------------------------------------------------------
  * gfx_set_video_palette_bypass
  * 
- * This routine enables/disables the pallete RAM bypass.
+ * This routine enables/disables the palette RAM bypass.
  *---------------------------------------------------------------------------
  */
 #if GFX_VIDEO_DYNAMIC

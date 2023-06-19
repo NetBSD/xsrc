@@ -305,7 +305,7 @@ z4l_open_device(Z4lPortPrivRec * pPriv)
         enable = 1;
 #ifdef NONBLK_IO
         if (IoCtl(pPriv->fd, FIONBIO, &enable, 1) != 0) {
-            DBLOG(1, "open cant enable nonblocking\n");
+            DBLOG(1, "open can't enable nonblocking\n");
             close(pPriv->fd);
             pPriv->fd = -1;
         }
@@ -1363,7 +1363,7 @@ Z4lInit(ScrnInfoPtr pScrni, XF86VideoAdaptorPtr ** adaptors)
             msg = "no streaming";
 #ifdef NONBLK_IO
         else if (IoCtl(fd, FIONBIO, &enable, 1) != 0)
-            msg = "cant enable non-blocking io";
+            msg = "can't enable non-blocking io";
 #endif
         if (msg == NULL) {
             memset(&format, 0, sizeof(format));

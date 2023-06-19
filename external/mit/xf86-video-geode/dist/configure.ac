@@ -23,8 +23,8 @@
 # Initialize Autoconf
 AC_PREREQ(2.60)
 AC_INIT([xf86-video-geode],
-        [2.11.20],
-        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-geode/issues],
+        [2.11.21],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-geode/-/issues],
         [xf86-video-geode],
         [http://www.x.org/wiki/GeodeDriver])
 
@@ -34,7 +34,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 AM_MAINTAINER_MODE
 
 # Initialize libtool

@@ -1158,7 +1158,7 @@ GXSubsequentSolidBresenhamLine(ScrnInfoPtr pScrni, int x1, int y1,
  *     y0         int     destination y start offset
  *     x1         int     destination x end offset
  *     y1         int     destination y end offset
- *  flags         int     OMIT_LAST, dont draw last pixel (not used)
+ *  flags         int     OMIT_LAST, don't draw last pixel (not used)
  *
  * Returns      :none
  *---------------------------------------------------------------------------*/
@@ -1319,9 +1319,9 @@ GXSetupForDashedLine(ScrnInfoPtr pScrn, int fg, int bg, int rop,
  * Parameters:
  *		pScrni:		Screen handler pointer having screen information.
  *      x1:  		Specifies the starting x position
- *      y1:      	Specifies starting y possition
- *      absmaj:		Specfies the Bresenman absolute major.
- *		absmin:		Specfies the Bresenman absolute minor.
+ *      y1:      	Specifies starting y position
+ *      absmaj:		Specifies the Bresenman absolute major.
+ *		absmin:		Specifies the Bresenman absolute minor.
  *		err:     	Specifies the bresenham err term.
  *		len:     	Specifies the length of the vector interms of pixels.
  *		octant:  	not used in this function,may be added for standard
@@ -1376,7 +1376,7 @@ GXSubsequentDashedBresenhamLine(ScrnInfoPtr pScrni,
  *     y0         int     destination y start offset
  *     x1         int     destination x end offset
  *     y1         int     destination y end offset
- *  flags         int     OMIT_LAST, dont draw last pixel (not used)
+ *  flags         int     OMIT_LAST, don't draw last pixel (not used)
  *  phase         int     initial pattern offset at x1,y1
  *
  * Returns      :none

@@ -1802,7 +1802,7 @@ gfx_get_frame_buffer_line_size(void)
 
 /*---------------------------------------------------------------------------
  * gfx_get_display_mode
- * get the curent mode set,
+ * get the current mode set,
  * return the supported mode on success, -1 on fail
  *---------------------------------------------------------------------------
  */
@@ -1824,7 +1824,7 @@ gfx_get_display_mode(int *xres, int *yres, int *bpp, int *hz)
 
 /*---------------------------------------------------------------------------
  * gfx_get_display_details
- * given the mode get's the resoultion details, width, height, freq
+ * given the mode gets the resolution details, width, height, freq
  *---------------------------------------------------------------------------
  */
 int

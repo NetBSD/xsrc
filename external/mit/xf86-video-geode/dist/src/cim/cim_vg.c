@@ -901,7 +901,7 @@ vg_set_custom_mode(VG_DISPLAY_MODE * mode_params, int bpp)
                                   == VG_MODEFLAG_INT_FLICKER) ||
         (irq_ctl & DC3_IRQFILT_GFX_FILT_EN)) {
         /* HIGH BANDWIDTH */
-        /* Set agressive watermarks and disallow forced low priority */
+        /* Set aggressive watermarks and disallow forced low priority */
 
         gcfg |= 0x0000BA01;
         dcfg |= 0x000EA000;

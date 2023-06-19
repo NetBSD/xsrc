@@ -131,7 +131,7 @@ extern "C" {
     /* brightness is a percentage, 0 to 100 */
 
     int FS450_get_contrast(int *p_contrast);
-    int FS450_set_contrast(int constrast);
+    int FS450_set_contrast(int contrast);
     /* contrast is a percentage, 0 to 100 */
 
 /*==========================================================================*/

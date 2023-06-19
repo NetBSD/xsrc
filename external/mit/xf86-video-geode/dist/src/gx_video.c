@@ -112,7 +112,7 @@ void GXSetVideoPosition(int x, int y, int width, int height,
 
 extern void GXAccelSync(ScrnInfoPtr pScrni);
 
-int DeltaX, DeltaY;
+extern int DeltaX, DeltaY;
 
 unsigned long graphics_lut[256];
 static int lutflag = 0;
@@ -271,7 +271,7 @@ typedef struct {
 /*----------------------------------------------------------------------------
  * GXSetColorKey
  *
- * Description	:This function reads the color key for the pallete and
+ * Description	:This function reads the color key for the palette and
  *				  sets the video color key register.
  *
  * Parameters.
@@ -514,7 +514,7 @@ GXStopVideo(ScrnInfoPtr pScrni, pointer data, Bool exit)
  *		attribute	:The port attribute to be set
  *		value		:Value of the attribute to be set.
  *
- * Returns			:Sucess if the attribute is supported, else BadMatch
+ * Returns			:Success if the attribute is supported, else BadMatch
  *
  * Comments			:none
  *----------------------------------------------------------------------------
@@ -564,7 +564,7 @@ GXSetPortAttribute(ScrnInfoPtr pScrni,
  *		attribute	:The port attribute to be read
  *		value		:Pointer to the value of the attribute to be read.
  *
- * Returns			:Sucess if the attribute is supported, else BadMatch
+ * Returns			:Success if the attribute is supported, else BadMatch
  *
  * Comments			:none
  *----------------------------------------------------------------------------

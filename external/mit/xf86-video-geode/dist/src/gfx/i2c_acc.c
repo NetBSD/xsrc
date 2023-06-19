@@ -187,9 +187,9 @@ sio_read_reg(unsigned char reg)
  *	gfx_i2c_reset
  *
  *	This routine resets the I2C bus as follows :
- *	· Sets the base address of the ACCESS.bus
- *	· Sets the frequency of the ACCESS.bus
- *	· Resets the ACCESS.bus
+ *	Â· Sets the base address of the ACCESS.bus
+ *	Â· Sets the frequency of the ACCESS.bus
+ *	Â· Resets the ACCESS.bus
  *
  * 	If 'adr'  is -1 the address is read from the hardware.
  *	If 'freq' is -1 the frequency is set to 56 clock cycles.

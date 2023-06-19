@@ -63,7 +63,7 @@ extern "C" {
     extern unsigned char *gfx_phys_spptr;
     extern unsigned char *gfx_phys_gpptr;
 
-/* DURANGO VARIBLES FOR RUNTIME SELECTION AND POSSIBLE VALUES */
+/* DURANGO VARIABLES FOR RUNTIME SELECTION AND POSSIBLE VALUES */
 
     extern int gfx_display_type;
 #define GFX_DISPLAY_TYPE_GU1		0x0001
@@ -603,7 +603,7 @@ extern "C" {
     int gfx_get_brightness(int *p_brightness);
     int gfx_set_brightness(int brightness);
     int gfx_get_contrast(int *p_contrast);
-    int gfx_set_contrast(int constrast);
+    int gfx_set_contrast(int contrast);
     int gfx_get_yc_filter(unsigned int *p_yc_filter);
     int gfx_set_yc_filter(unsigned int yc_filter);
     int gfx_get_aps_trigger_bits(unsigned int *p_trigger_bits);

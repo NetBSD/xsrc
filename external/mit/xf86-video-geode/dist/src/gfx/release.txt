@@ -333,7 +333,7 @@ FUNCTIONAL CHANGES
 * Added support for 1152x864 desktop resolution on a flat panel.
 * Added 24BPP support for large display modes.
 * Modified gfx_set_video_scale such that an identity scale is now default.
-* Modifed flat panel modeset code to dynamically determine the size of the mode table.
+* Modified flat panel modeset code to dynamically determine the size of the mode table.
 * Added support for Carmel Rev D2.
 
 =============================================================================
@@ -462,7 +462,7 @@ FUNCTIONAL CHANGES
 * Added functions gfx_enable_softvga, dfx_disable_softvga. 
 * Added code optimization in rendering loops to use 32 bit writes where possible.
 * Added gfx_is_mode_supported to query if given mode supported by the h/w.
-* Added Flat panel support, realy testing with panel done only for 800x600.
+* Added Flat panel support, really testing with panel done only for 800x600.
 * Removed subtraction of 16 from gfx_set_compression_size.
 * Added version.h file to reflect the version of the durango used. 
 
@@ -475,7 +475,7 @@ FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
 * Verified Xfree86 driver version 1.1 under FreeBSD and Linux.
 * Added automatic detection of BLT buffer bases in "gfx_set_bpp" routine.
-* Fixed improper setting of VGA attrubute controller index register.
+* Fixed improper setting of VGA attribute controller index register.
 * Moved "gfx_get_display_bpp" to always be included.
 * Moved "gfx_get_hactive" and "gfx_get_vactive" to always be included.
 * Clipped video source size if off bottom or right side.
@@ -503,7 +503,7 @@ FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
 * Verified display modes and graphics rendering on SC1200.
 * Updated PLL table for SC1200 to set modes.
-* DURANGO.C FILE CHANGE!: Modifed and added compiler definitions.
+* DURANGO.C FILE CHANGE!: Modified and added compiler definitions.
 * Split gfx_disp.c file into gu1_disp.c and gu2_disp.c
 * Split gfx_rndr.c file into gu1_rndr.c and gu2_rndr.c
 * Split gfx_vid.c file into vid_5530.c, vid_1400.c, and vid_1200.c
@@ -567,7 +567,7 @@ FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
 FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
-* Added video port, video decoder, I2C, and hardware query rouines.
+* Added video port, video decoder, I2C, and hardware query routines.
 * New files: gfx_vip.c, gfx_dcdr.c, gfx_i2c.c, gfx_read.c.
 
 =============================================================================
@@ -581,7 +581,7 @@ FUNCTIONAL CHANGES
 * Added "gfx_get_vid_register_base" and "gfx_get_vip_register_base".
 * Added initial PLL table for SC1400.
 * Verified mode set and video overlay routines work correctly on SC1400.
-* Updated initilization routines.
+* Updated initialization routines.
 * Added update of graphics engine in "gfx_set_display_pitch".
 
 =============================================================================

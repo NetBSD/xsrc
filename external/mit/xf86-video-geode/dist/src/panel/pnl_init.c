@@ -25,7 +25,7 @@
 
 /* 
  * File Contents:   This file contains the Geode frame buffer panel
- *                  intialization functions.
+ *                  initialization functions.
  * 
  * SubModule:       Geode FlatPanel library
  * */

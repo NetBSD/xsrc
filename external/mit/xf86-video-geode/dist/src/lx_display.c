@@ -297,7 +297,7 @@ lx_crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
     else
         vg_set_display_offset(0);
 
-    /* FIXME: Whats up with X and Y?  Does that come into play
+    /* FIXME: What's up with X and Y?  Does that come into play
      * here? */
 
     df_configure_video_source(&vs_odd, &vs_even);

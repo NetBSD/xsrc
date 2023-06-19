@@ -25,7 +25,7 @@
 
 /*
  * File Contents:   This file panel functions which query for the BIOS for 
- *                  current FP Paramters.
+ *                  current FP Parameters.
  * 
  * SubModule:       Geode FlatPanel library
  * */

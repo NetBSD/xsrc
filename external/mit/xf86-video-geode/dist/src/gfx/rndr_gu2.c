@@ -137,7 +137,7 @@ gfx_set_bpp(unsigned short bpp)
 {
     GFXbpp = bpp;
 
-    /* COVERT TO BPP/FORMAT VALUE */
+    /* CONVERT TO BPP/FORMAT VALUE */
     /* Save in global to combine with ROP later. */
     /* Could write register here and then use byte access for */
     /* the ROP, but would need to set other 24 bits to make */

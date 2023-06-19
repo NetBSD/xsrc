@@ -74,7 +74,7 @@
 
 extern OptionInfoRec LX_GeodeOptions[];
 
-unsigned char *XpressROMPtr;
+extern unsigned char *XpressROMPtr;
 
 static Bool
 LXSaveScreen(ScreenPtr pScrn, int mode)
@@ -425,7 +425,7 @@ LXPreInit(ScrnInfoPtr pScrni, int flags)
                               (int *) &(pGeode->FBAvail)))
         pGeode->FBAvail = 0;
 
-    /* For compatability - allow SWCursor too */
+    /* For compatibility - allow SWCursor too */
 
     if (xf86ReturnOptValBool(GeodeOptions, LX_OPTION_SW_CURSOR, FALSE))
         pGeode->tryHWCursor = FALSE;

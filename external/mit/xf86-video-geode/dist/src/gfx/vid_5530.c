@@ -1086,7 +1086,7 @@ gfx_get_video_src_size(void)
 
     if (width) {
         /* DETERMINE HEIGHT BY DIVIDING TOTAL SIZE BY WIDTH */
-        /* Get total size from display controller - abtracted. */
+        /* Get total size from display controller - abstracted. */
 
         height = gfx_get_display_video_size() / (width << 1);
     }

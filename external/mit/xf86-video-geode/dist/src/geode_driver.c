@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Avanced Micro Devices, Inc.
+ * Copyright (c) 2006 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -414,7 +414,7 @@ AmdPciProbe(DriverPtr driver,
  *
  * Comments     :This should be minimal probe and it should under no
  *               circumstances change the state of the hardware.Don't do
- *               any intiallizations other than the required
+ *               any initializations other than the required
  *               ScreenInforec.
 *----------------------------------------------------------------------------
 */

@@ -1136,7 +1136,7 @@ lx_do_composite_mask_two_pass(PixmapPtr pxDst, unsigned long dstOffset,
     /* The rendering region should not be bigger than off-screen memory size
      * which equals to DEFAULT_EXA_SCRATCH_BFRSZ. If that happens, we split
      * the PictOpOver rendering region into several 256KB chunks. And because
-     * of the Pitch(stride) parameter, so we use maximun width of mask picture.
+     * of the Pitch(stride) parameter, so we use maximum width of mask picture.
      * that is to say it is a scanline rendering process */
     if (width * height * 4 > DEFAULT_EXA_SCRATCH_BFRSZ) {
         opWidth = width;

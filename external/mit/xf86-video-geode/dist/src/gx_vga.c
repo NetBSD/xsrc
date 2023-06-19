@@ -174,7 +174,7 @@ gu2_gfx_to_vga(int vga_mode)
     /*restart the sequencer */
     gfx_outw(0x3C4, 0x300);
 
-    /* turn on the attribute controler */
+    /* turn on the attribute controller */
     tmp = gfx_inb(0x3DA);
     gfx_outb(0x3C0, 0x20);
     tmp = gfx_inb(0x3DA);

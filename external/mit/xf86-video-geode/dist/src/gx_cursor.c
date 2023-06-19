@@ -74,15 +74,15 @@ GXHWCursorInit(ScreenPtr pScrn)
     infoPtr = xf86CreateCursorInfoRec();
     if (!infoPtr)
         return FALSE;
-    /* the geode structure is intiallized with the cursor infoRec */
+    /* the geode structure is initialized with the cursor infoRec */
     pGeode->CursorInfo = infoPtr;
     infoPtr->MaxWidth = 32;
     infoPtr->MaxHeight = 32;
-    /* seeting up the cursor flags */
+    /* setting up the cursor flags */
     infoPtr->Flags = HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
         HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
         HARDWARE_CURSOR_SOURCE_MASK_NOT_INTERLEAVED;
-    /* cursor info ptr is intiallized with the values obtained from
+    /* cursor info ptr is initialized with the values obtained from
      * * durnago calls
      */
     infoPtr->SetCursorColors = GXSetCursorColors;
@@ -125,7 +125,7 @@ GXSetCursorColors(ScrnInfoPtr pScrni, int bg, int fg)
  * Parameters:
  *		pScrn: 	Screeen pointer structure.
  *    	    x:  Specifies the x-cordinates of the cursor.
- *    	    y: 	Specifies the y co-ordinate of the cursor.
+ *    	    y: 	Specifies the y coordinate of the cursor.
  *
  * Returns: none.
  *

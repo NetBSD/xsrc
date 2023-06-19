@@ -207,7 +207,7 @@ vip_update_601_params(VIP_601PARAMS * buffer)
  *
  * The new buffer addresses are written to the hardware registers although
  * they may not be latched immediately. Calling vip_is_buffer_update_latched
- * allows the determination of whether the update has occured.
+ * allows the determination of whether the update has occurred.
  *
  * Review the Cimarron VIP API documentation to determine which buffer
  * addresses are latched immediately.
@@ -1085,7 +1085,7 @@ vip_restore_state(VIPSTATEBUFFER * restore_buffer)
  *
  * This routine returns the current interrupt state of the system. The
  * rv can be tested with the following flags to determine if the appropriate
- * event has occured.
+ * event has occurred.
  *--------------------------------------------------------------------------*/
 
 unsigned long
