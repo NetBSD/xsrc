@@ -204,7 +204,8 @@ TRANS(ParseAddress) (const char *address,
 
     char	*mybuf, *tmpptr = NULL;
     const char	*_protocol = NULL;
-    char	*_host, *_port;
+    char	*_host;
+    const char	*_port;
     char	hostnamebuf[256];
     int		_host_len;
 
