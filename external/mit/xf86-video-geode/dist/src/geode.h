@@ -215,7 +215,7 @@ typedef struct _geodeRec {
     unsigned long CursorStartOffset;
 
     int Pitch;                  /* display FB pitch */
-    int displaySize;            /* The size of the visibile area */
+    int displaySize;            /* The size of the visible area */
 
     ExaOffscreenArea *shadowArea;
 
@@ -285,7 +285,7 @@ typedef struct _geodeRec {
     int PanelX;
     int PanelY;
 
-    int displayPitch;           /* The pitch ofthe visible area */
+    int displayPitch;           /* The pitch of the visible area */
     int displayOffset;          /* The offset of the visible area */
 
     DisplayModePtr curMode;
@@ -361,7 +361,7 @@ enum LX_GeodeOpts {
 #endif
 
 #ifdef HAVE_GX
-typedef enum {
+enum GX_GeodeOpts {
     GX_OPTION_SW_CURSOR,
     GX_OPTION_HW_CURSOR,
     GX_OPTION_NOCOMPRESSION,
@@ -378,7 +378,7 @@ typedef enum {
     GX_OPTION_FBSIZE,
     GX_OPTION_PANEL_GEOMETRY,
     GX_OPTION_DONT_PROGRAM
-} GX_GeodeOpts;
+};
 #endif
 
 /* geode_dcon.c */

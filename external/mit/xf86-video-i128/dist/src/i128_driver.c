@@ -115,7 +115,7 @@ static unsigned int I128DDC1Read(ScrnInfoPtr pScrn);
 /* 
  * This contains the functions needed by the server after loading the
  * driver module.  It must be supplied, and gets added the driver list by
- * the Module Setup funtion in the dynamic case.  In the static case a
+ * the Module Setup function in the dynamic case.  In the static case a
  * reference to this is compiled in, and this requires that the name of
  * this DriverRec be an upper-case version of the driver name.
  */
@@ -151,7 +151,7 @@ static XF86ModuleVersionInfo i128VersRec =
 /*
  * XF86ModuleData structure is the first part of the driver that is used
  * by the module loader.  It provides the XF86ModuleVersionInfo structure
- * used to verify that the module version is compatable with the loader
+ * used to verify that the module version is compatible with the loader
  * version.  It also provides a pointer to the module specific
  * ModuleSetupProc() and ModuleTearDownProc() functions.
  */
@@ -439,7 +439,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     ClockRangePtr clockRanges;
     MessageType from;
     unsigned long iobase;
-    char *ramdac = NULL;
+    const char *ramdac = NULL;
     CARD32 tmpl, tmph, tmp;
     unsigned char n, m, p, mdc, df;
     float mclk;

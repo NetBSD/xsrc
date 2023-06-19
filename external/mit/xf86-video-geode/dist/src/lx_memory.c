@@ -263,7 +263,7 @@ LXInitOffscreen(ScrnInfoPtr pScrni)
 
         if (ptr == NULL) {
             /* If we couldn't allocate what we wanted,
-             * then allocate whats left */
+             * then allocate what's left */
 
             ptr = GeodeAllocRemainder(pGeode);
         }

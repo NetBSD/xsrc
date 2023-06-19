@@ -80,7 +80,7 @@
 
 extern OptionInfoRec GX_GeodeOptions[];
 
-unsigned char *XpressROMPtr;
+extern unsigned char *XpressROMPtr;
 
 static inline void
 gx_enable_dac_power(void)
@@ -271,7 +271,7 @@ GXAllocateMemory(ScreenPtr pScrn, ScrnInfoPtr pScrni, int rotate)
                 RegionRec OffscreenRegion;
                 BoxRec AvailBox;
 
-                /* Assume the shadow FB exists even if it doesnt */
+                /* Assume the shadow FB exists even if it doesn't */
 
                 if (pGeode->shadowSize == 0) {
                     size = (pScrn->width * bytpp) * pScrni->virtualX;
@@ -566,7 +566,7 @@ GXPreInit(ScrnInfoPtr pScrni, int flags)
                               (int *) &(pGeode->FBAvail)))
         pGeode->FBAvail = 0;
 
-    /* For compatability - allow SWCursor too */
+    /* For compatibility - allow SWCursor too */
 
     if (xf86ReturnOptValBool(GeodeOptions, GX_OPTION_SW_CURSOR, FALSE))
         pGeode->tryHWCursor = FALSE;
@@ -622,7 +622,7 @@ GXPreInit(ScrnInfoPtr pScrni, int flags)
             pGeode->useEXA = FALSE;
         else if (xf86NameCmp(s, "EXA"))
             xf86DrvMsg(pScrni->scrnIndex, X_ERROR,
-                       "Unknown accleration method %s.  Defaulting to XAA.\n",
+                       "Unknown acceleration method %s.  Defaulting to XAA.\n",
                        s);
 #elif defined(XF86EXA)
         pGeode->useEXA = TRUE;
@@ -1137,7 +1137,7 @@ GXEnterGraphics(ScreenPtr pScrn, ScrnInfoPtr pScrni)
     }
 
     /* Set up the memory */
-    /* XXX - FIXME - when we alow inital rotation, it should be here */
+    /* XXX - FIXME - when we allow initial rotation, it should be here */
     GXAllocateMemory(pScrn, pScrni, pGeode->rotation);
 
     /* Clear the framebuffer */
@@ -1637,7 +1637,7 @@ GeodeCalculatePitchBytes(unsigned int width, unsigned int bpp)
     if (width < 640)
         delta <<= 1;
 
-    /* Calculate the pitch (compression rquires a power of 2) */
+    /* Calculate the pitch (compression requires a power of 2) */
 
     if (delta > 4096)
         delta = 8192;

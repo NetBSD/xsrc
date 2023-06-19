@@ -301,7 +301,7 @@ Savage_SetMode(
 
 	if( psav->hwcursor && psav->hwc_on) {
 	    SavageHideCursor(pScrn);
-	    psav->hwc_on = TRUE;    /* save for later restauration */
+	    psav->hwc_on = TRUE;    /* save for later restoration */
 	}
 	
 

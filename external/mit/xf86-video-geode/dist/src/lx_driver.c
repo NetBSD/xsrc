@@ -427,7 +427,7 @@ LXPreInit(ScrnInfoPtr pScrni, int flags)
                               (int *) &(pGeode->FBAvail)))
         pGeode->FBAvail = 0;
 
-    /* For compatability - allow SWCursor too */
+    /* For compatibility - allow SWCursor too */
 
     if (xf86ReturnOptValBool(GeodeOptions, LX_OPTION_SW_CURSOR, FALSE))
         pGeode->tryHWCursor = FALSE;

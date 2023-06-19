@@ -85,7 +85,6 @@
 #include "savage_dripriv.h"
 #include "savage_dri.h"
 #include "dri.h"
-#include "GL/glxint.h"
 #include "xf86drm.h"
 
 /* Totals 2 Mbytes which equals 2^16 32-byte vertices divided among up
@@ -476,9 +475,6 @@ typedef struct _Savage {
     Bool 		directRenderingEnabled;
     DRIInfoPtr 		pDRIInfo;
     int 		drmFD;
-    int 		numVisualConfigs;
-    __GLXvisualConfig*	pVisualConfigs;
-    SAVAGEConfigPrivPtr 	pVisualConfigsPriv;
     SAVAGEDRIServerPrivatePtr DRIServerInfo;
     ScreenWakeupHandlerProcPtr coreWakeupHandler;
     ScreenBlockHandlerProcPtr  coreBlockHandler;
