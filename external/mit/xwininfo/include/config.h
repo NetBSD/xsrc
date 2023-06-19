@@ -47,7 +47,7 @@
 #define PACKAGE_NAME "xwininfo"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xwininfo 1.1.5"
+#define PACKAGE_STRING "xwininfo 1.1.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xwininfo"
@@ -56,7 +56,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.5"
+#define PACKAGE_VERSION "1.1.6"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -65,7 +65,7 @@
 #define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 5
+#define PACKAGE_VERSION_PATCHLEVEL 6
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -97,7 +97,7 @@
 /* #undef USE_XCB_ICCCM */
 
 /* Version number of package */
-#define VERSION "1.1.5"
+#define VERSION "1.1.6"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
