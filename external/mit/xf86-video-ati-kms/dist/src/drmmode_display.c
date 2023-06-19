@@ -45,7 +45,9 @@
 #include "radeon_glamor.h"
 #include "radeon_reg.h"
 
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,19,99,1,0)
 #include <dri.h>
+#endif
 
 #include "drmmode_display.h"
 
@@ -720,7 +722,7 @@ drmmode_crtc_prime_scanout_update(xf86CrtcPtr crtc, DisplayModePtr mode,
 		xorg_list_for_each_entry(dirty, &screen->pixmap_dirty_list,
 					 ent) {
 			if (radeon_dirty_src_equals(dirty, drmmode_crtc->prime_scanout_pixmap)) {
-				dirty->slave_dst =
+				dirty->secondary_dst =
 					drmmode_crtc->scanout[scanout_id].pixmap;
 				break;
 			}
@@ -1275,7 +1277,7 @@ drmmode_show_cursor (xf86CrtcPtr crtc)
 	    arg.hot_y = yhot;
 
 	    ret = drmIoctl(pRADEONEnt->fd, DRM_IOCTL_MODE_CURSOR2, &arg);
-	    if (ret == -EINVAL)
+	    if (ret == -1 && errno == EINVAL)
 		use_set_cursor2 = FALSE;
 	    else
 		return;
@@ -1356,7 +1358,7 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 
 	xorg_list_for_each_entry(dirty, &screen->pixmap_dirty_list, ent) {
 		if (radeon_dirty_src_equals(dirty, drmmode_crtc->prime_scanout_pixmap)) {
-			PixmapStopDirtyTracking(dirty->src, dirty->slave_dst);
+			PixmapStopDirtyTracking(dirty->src, dirty->secondary_dst);
 			break;
 		}
 	}

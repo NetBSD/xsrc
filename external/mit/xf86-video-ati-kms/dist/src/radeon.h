@@ -182,18 +182,18 @@ typedef enum {
 
 
 static inline ScreenPtr
-radeon_master_screen(ScreenPtr screen)
+radeon_primary_screen(ScreenPtr screen)
 {
-    if (screen->current_master)
-	return screen->current_master;
+    if (screen->current_primary)
+	return screen->current_primary;
 
     return screen;
 }
 
 static inline ScreenPtr
-radeon_dirty_master(PixmapDirtyUpdatePtr dirty)
+radeon_dirty_primary(PixmapDirtyUpdatePtr dirty)
 {
-    return radeon_master_screen(dirty->slave_dst->drawable.pScreen);
+    return radeon_primary_screen(dirty->secondary_dst->drawable.pScreen);
 }
 
 static inline DrawablePtr
@@ -790,8 +790,8 @@ static inline Bool radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_buffer *bo
 
 static inline struct radeon_buffer *radeon_get_pixmap_bo(PixmapPtr pPix)
 {
-#ifdef USE_GLAMOR
     RADEONInfoPtr info = RADEONPTR(xf86ScreenToScrn(pPix->drawable.pScreen));
+#ifdef USE_GLAMOR
 
     if (info->use_glamor) {
 	struct radeon_pixmap *priv;
@@ -799,7 +799,7 @@ static inline struct radeon_buffer *radeon_get_pixmap_bo(PixmapPtr pPix)
 	return priv ? priv->bo : NULL;
     } else
 #endif
-    {
+    if (info->accelOn) {
 	struct radeon_exa_pixmap_priv *driver_priv;
 	driver_priv = exaGetPixmapDriverPrivate(pPix);
 	return driver_priv ? driver_priv->bo : NULL;
@@ -896,7 +896,7 @@ radeon_pixmap_get_fb(PixmapPtr pix)
 				   handle);
     }
 
-    return *fb_ptr;
+    return fb_ptr ? *fb_ptr : NULL;
 }
 
 
