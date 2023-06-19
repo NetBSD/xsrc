@@ -1,3 +1,197 @@
+commit bd0a761059d8542323cf69138755eb8ccbfd8d9f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 13:00:26 2023 -0700
+
+    xf86-video-savage 2.4.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 04137c3a614f2c8477877c6925e6aa657954c47d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 17:36:59 2022 -0800
+
+    Fix -Wformat warnings about integer size of arguments
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e9ed4a875524c7d0876612e561ee9868da5a01d3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 17:29:31 2022 -0800
+
+    constify some char * declarations
+    
+    Clears 8 of 15 -Wdiscarded-qualifiers warnings from gcc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7133cd19ec1dad028303b2c3c829998152c0ba1a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5c25920ed2796092157b46eccfece0b6ae665b04
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 27 18:11:44 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d9e6a6e2e0ba4c64b2e52aea55aefabc693e9f97
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 27 17:47:19 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e966c430b1a9ace6cca2bc05d169a54092c4778e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 27 17:42:49 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2ec88355123b1def99d8c79769f396ac97bc5008
+Author: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date:   Sat May 4 21:03:28 2019 +0200
+
+    configure.ac: fix cross-compilation
+    
+    AC_CHECK_FILE can't be used when cross-compiling
+    
+    [Retrieved from:
+    https://git.buildroot.net/buildroot/tree/package/x11r7/xdriver_xf86-video-savage/0001-cross-compile.patch]
+    Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+
+commit 8579718352809c04809bc810c9c3f6207eaa06b5
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jan 28 20:03:25 2019 -0800
+
+    Changing result parameter type for ScreenWakeupHandlerProcPtr
+    
+    For ABI_VIDEODRV_VERSION >= 23, it was changed to int from unsigned
+    long.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+    Reviewed-by: Matt Turner <mattst88@gmail.com>
+
+commit fcc50b5af5a13083337984fc53e41cd704e84e15
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Dec 13 10:54:24 2018 -0600
+
+    Eliminate unused variable compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 69f6c305f41b1af500c4a40b7fb43a021ca8b255
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Dec 13 10:53:30 2018 -0600
+
+    Eliminate set but not used variable compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit dce59663ecd846831724d6d7303ee813fa458a7d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:07:23 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 00dd9447bfd6aea80d279b22d469b88cc60a799e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:15:34 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0ece556daa8a88771b669d8104396abd9166d2d0
+Author: Stefan Dirsch <sndirsch@suse.de>
+Date:   Mon Jun 25 15:55:06 2018 +0200
+
+    Add check for max[HV]Value to ValidMode hook
+    
+    xorg-server 1.20 removed this check, so implement this in the driver
+    itself.
+    
+    Signed-off-by: Stefan Dirsch <sndirsch@suse.de>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 4241304ee2101563d2d8eb8916d85fc3626f181b
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Jul 17 12:17:56 2017 +0100
+
+    xf86-video-savage: remove the GlxSetVisualConfigs stub and friends
+    
+    The function was an empty since 2008 at least. Remove it alongside the
+    unused GLX visuals code.
+    
+    With this all the GL/GLX dependencies in the driver are gone.
+    
+    Cc: Stefan Dirsch <sndirsch@suse.de>
+    Cc: Hans de Goede <hdegoede@redhat.com>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 1f42681efbb20e208f617ef2e6d5f2a05486a243
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit b934a3ab0a850401b6b8dd34a3c7a258d64af8a8
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 28619f7aa35daaa50e156c4a6e7e26797e690940
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit daff0d3e729d2cb0f0d6a08759fb1e4350bf8b85
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 419694a31d02052dfba5cd156dde0bbbf811fb7e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit d0582b84231de1b089eda296cd3bb859e5df1acd
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:44:13 2017 -0800
@@ -841,7 +1035,7 @@ Date:   Thu May 28 15:16:22 2009 -0400
     Remove useless loader symbol lists.
 
 commit f2742755352d49a1ff4cbf9a1a5050a0a50e9e6b
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Sun Apr 12 16:07:06 2009 -0500
 
     Do not use XAAGetCopyROP outside of XAA-specific code
@@ -853,7 +1047,7 @@ Date:   Sun Apr 12 16:07:06 2009 -0500
     It is disturbing that this has not been caught before.
 
 commit a5ad3e8f509ca07c429a43810cc3e2f80e70a1dc
-Author: Alex Villacís Lasso <alex@karlalex.palosanto.com>
+Author: Alex Villacís Lasso  <alex@karlalex.palosanto.com>
 Date:   Sat Apr 11 19:12:31 2009 -0500
 
     Implement use of Mastered Image Transfer through AGP for UploadToScreen EXA acceleration.
@@ -861,7 +1055,7 @@ Date:   Sat Apr 11 19:12:31 2009 -0500
     Under some conditions (documented in this patch), the UploadToScreen implementation can make use of the AGP scratch buffer used for XVideo as a convenient source for Mastered Image Transfer. The previous implementation is still available as a fallback for when AGP acceleration is not possible. This requires the AGP scratch buffer to be persistent, so the XVideo code is also made aware of an existing DRM mapping for the scratch buffer.
 
 commit 0f4369c95b6ef948743c9b244709e454b8b8ef7f
-Author: Alex Villacís Lasso <alex@karlalex.palosanto.com>
+Author: Alex Villacís Lasso  <alex@karlalex.palosanto.com>
 Date:   Sat Mar 14 21:34:48 2009 -0500
 
     Fix crash by null pointer access when DRI is not available.
@@ -920,7 +1114,7 @@ Date:   Thu Jan 22 01:22:53 2009 -0500
     https://bugs.launchpad.net/bugs/294899
 
 commit 8241b8edaf1f100b0d9f308fdf921b2ab548f3dc
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:22:42 2009 -0500
 
     EXA: UTS Optimization
@@ -929,7 +1123,7 @@ Date:   Fri Jan 16 16:22:42 2009 -0500
     a loop for every dword
 
 commit 50bcd4bd6f32ed2fd9631b3607a203a187b2e4a2
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:20:23 2009 -0500
 
     Add AGPforXv Option
@@ -938,7 +1132,7 @@ Date:   Fri Jan 16 16:20:23 2009 -0500
     for Xv image upload
 
 commit 91d5c09c891c944ae4188ecac607ebdb44ed81d7
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:18:25 2009 -0500
 
     YUV packed buffer and YV12 planar buffer (if required) are now separate allocations
@@ -947,7 +1141,7 @@ Date:   Fri Jan 16 16:18:25 2009 -0500
     buffer, no longer restricted to space past packed buffer.
 
 commit 9bcbdcc0e2535ea1e7c5e234b07d0a4be173a78f
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:16:46 2009 -0500
 
     Document the existence of the IgnoreEDID option
@@ -959,7 +1153,7 @@ Date:   Fri Jan 9 16:33:29 2009 -0800
     Remove xorgconfig & xorgcfg from See Also list in man page
 
 commit aea0496f662fa25b40c59e65a50daf58a8a0d6d0
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Thu Nov 6 16:10:30 2008 -0500
 
     Fix EXA Copy
@@ -967,7 +1161,7 @@ Date:   Thu Nov 6 16:10:30 2008 -0500
     patch from Alex Villacís Lasso with minor updates from me
 
 commit e6b6506a0e77e1198d6a83eecddf342b746f31f4
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Thu Nov 6 14:11:49 2008 -0500
 
     Bug #18378: Use xfVillKeyHelperDrawable if available.
@@ -1018,7 +1212,7 @@ Date:   Sat May 10 14:58:14 2008 +1000
     savage: fix typos in error message
 
 commit 9cb124b3542c942622a54d0ce429661516b1e2f4
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Thu Apr 10 12:51:47 2008 -0400
 
     EXA upload to screen must honor pitch of the source data
@@ -1066,25 +1260,25 @@ Date:   Sun Feb 24 21:46:43 2008 -0500
     Bug #11139: Remove some dead code.
 
 commit 583051fce0d39fd2b8b5022016599e88d0af9041
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:49:05 2008 -0500
 
     [PATCH] Do not wait for vertical retrace anymore on old streams engine.
 
 commit 52029dede1924c25275a1c6f20f68e98ba210e22
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:47:42 2008 -0500
 
     [PATCH] Reset lastKnownPitch to 0 right after enabling streams.
 
 commit efd4ae6fda22a9283663cde23e6deead13130f6f
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:46:11 2008 -0500
 
     [PATCH] Prevent use of BCI for YV12 -> YUY2 conversion from scribbling past the end of the allocated video buffer.
 
 commit ee5b54a66495e51fb2a27b4ecb5875dae776b3c9
-Author: Alex Villacís Lasso <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:45:19 2008 -0500
 
     [PATCH] BCI can only handle widths that are multiple of 16, so only use BCI for these (for now).
@@ -1092,7 +1286,7 @@ Date:   Wed Jan 30 21:45:19 2008 -0500
     Small optimizations (use memcpy instead of copy loop).
 
 commit 1169cb5bd96f7a4ac0deea6d085133d446ec0d6a
-Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:08:50 2008 -0500
 
     Implement driver option IgnoreEDID
@@ -1104,7 +1298,7 @@ Date:   Sat Jan 19 12:08:50 2008 -0500
     that the EDID monitor information can be explictly disabled.
 
 commit ce182d1883bba35491858b47291c8240441443d0
-Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:06:25 2008 -0500
 
     Fix ambiguous operator precedence
@@ -1115,7 +1309,7 @@ Date:   Sat Jan 19 12:06:25 2008 -0500
     patch than anything else.
 
 commit 88141fd21214c501cafed73b1bba084b8a2bb929
-Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:02:56 2008 -0500
 
     Make sure MMIO region is mapped VIDMEM_MMIO, not VIDMEM_FRAMEBUFFER
@@ -1197,7 +1391,7 @@ Date:   Wed Aug 22 11:45:43 2007 -0700
     
     Conflicts:
     
-    	src/savage_driver.h
+            src/savage_driver.h
 
 commit da23218b067d9b1808fc1168737c79b3349af09e
 Author: Ian Romanick <idr@us.ibm.com>
@@ -1316,7 +1510,7 @@ Date:   Mon Dec 11 13:16:53 2006 -0800
     
     Conflicts:
     
-    	src/savage_driver.c
+            src/savage_driver.c
 
 commit 37240b81daa4ed46c27e439d22b6fd9909dac249
 Author: Alex Deucher <alex@t41p.(none)>
@@ -1695,14 +1889,14 @@ Date:   Fri Jul 29 21:22:44 2005 +0000
     - Update modular Xorg version
 
 commit 593267735819585c87652a62d62ca231a9e8f01b
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 21:23:29 2005 +0000
 
     Add xf86driproto to dependencies for drivers with DRI support. Patch from
         Donnie Berkholz
 
 commit cacbac692c3725e372e9c25177f4b26d86a8c0d5
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 22:11:46 2005 +0000
 
     Build system for savage

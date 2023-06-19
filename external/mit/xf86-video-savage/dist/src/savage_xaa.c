@@ -679,12 +679,12 @@ SavageSubsequentColorExpandScanline(
 
 
 /*
- * The meaning of the two pattern paremeters to Setup & Subsequent for
+ * The meaning of the two pattern parameters to Setup & Subsequent for
  * Mono8x8Patterns varies depending on the flag bits.  We specify
  * HW_PROGRAMMED_BITS, which means our hardware can handle 8x8 patterns
  * without caching in the frame buffer.  Thus, Setup gets the pattern bits.
  * There is no way with BCI to rotate an 8x8 pattern, so we do NOT specify
- * HW_PROGRAMMED_ORIGIN.  XAA wil rotate it for us and pass the rotated
+ * HW_PROGRAMMED_ORIGIN.  XAA will rotate it for us and pass the rotated
  * pattern to both Setup and Subsequent.  If we DID specify PROGRAMMED_ORIGIN,
  * then Setup would get the unrotated pattern, and Subsequent gets the
  * origin values.

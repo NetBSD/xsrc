@@ -25,18 +25,7 @@
 #ifndef SAVAGE_DRIPRIV_H
 #define SAVAGE_DRIPRIV_H
 
-#include "GL/glxint.h"
-
 #define SAVAGE_MAX_DRAWABLES 256
-
-extern void GlxSetVisualConfigs( int nconfigs,
-				 __GLXvisualConfig *configs,
-				 void **configprivs );
-
-typedef struct {
-  /* Nothing here yet */
-  int dummy;
-} SAVAGEConfigPrivRec, *SAVAGEConfigPrivPtr;
 
 typedef struct {
   /* Nothing here yet */

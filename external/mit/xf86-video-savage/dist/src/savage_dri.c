@@ -50,27 +50,9 @@
 #include "savage_common.h"
 
 #define _XF86DRI_SERVER_
-#include "GL/glxtokens.h"
 #include "sarea.h"
 #include "savage_dri.h"
 #include "savage_sarea.h"
-
-static struct {
-   int bpp;
-   int redSize;
-   int greenSize;
-   int blueSize;
-   int alphaSize;
-   int redMask;
-   int greenMask;
-   int blueMask;
-   int alphaMask;
-   int depthSize;
-} SAVAGEVisuals[] = {
-   { 16, 5, 6, 5, 0, 0x0000F800, 0x000007E0, 0x0000001F, 0, 16 },
-   { 32, 8, 8, 8, 0, 0x00FF0000, 0x0000FF00, 0x000000FF, 0, 24 },
-   {  0, 0, 0, 0, 0,          0,          0,          0, 0,  0 }
-};
 
 static char SAVAGEKernelDriverName[] = "savage";
 static char SAVAGEClientDriverName[] = "savage";
@@ -97,149 +79,6 @@ static void
 SAVAGEDRISubsequentScreenToScreenCopy(
     ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2,
     int w, int h);
-
-
-/* Initialize the visual configs that are supported by the hardware.
- * These are combined with the visual configs that the indirect
- * rendering core supports, and the intersection is exported to the
- * client.
- */
-static Bool SAVAGEInitVisualConfigs( ScreenPtr pScreen )
-{
-   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
-   SavagePtr psav = SAVPTR(pScrn);
-   int numConfigs = 0;
-   __GLXvisualConfig *pConfigs = 0;
-   SAVAGEConfigPrivPtr pSAVAGEConfigs = 0;
-   SAVAGEConfigPrivPtr *pSAVAGEConfigPtrs = 0;
-   int i, db, stencil, accum, visNum;
-
-   switch ( pScrn->bitsPerPixel ) {
-   case 8:
-   case 24:
-      break;
-
-   case 16:
-   case 32:
-      numConfigs = 8;
-
-      pConfigs = (__GLXvisualConfig*)calloc( sizeof(__GLXvisualConfig),
-						numConfigs );
-      if ( !pConfigs ) {
-	 return FALSE;
-      }
-
-      pSAVAGEConfigs = (SAVAGEConfigPrivPtr)calloc( sizeof(SAVAGEConfigPrivRec),
-						 numConfigs );
-      if ( !pSAVAGEConfigs ) {
-	 free( pConfigs );
-	 return FALSE;
-      }
-
-      pSAVAGEConfigPtrs = (SAVAGEConfigPrivPtr*)calloc( sizeof(SAVAGEConfigPrivPtr),
-						     numConfigs );
-      if ( !pSAVAGEConfigPtrs ) {
-	 free( pConfigs );
-	 free( pSAVAGEConfigs );
-	 return FALSE;
-      }
-
-      for ( i = 0 ; i < numConfigs ; i++ ) {
-	 pSAVAGEConfigPtrs[i] = &pSAVAGEConfigs[i];
-      }
-
-      for (visNum = 0; SAVAGEVisuals[visNum].bpp != 0; visNum++) {
-         if ( SAVAGEVisuals[visNum].bpp == pScrn->bitsPerPixel )
-            break;
-      }
-      if ( SAVAGEVisuals[visNum].bpp == 0 ) {
-	 free( pConfigs );
-	 free( pSAVAGEConfigs );
-         return FALSE;
-      }
-
-      i = 0;
-      for ( accum = 0 ; accum <= 1 ; accum++ ) {
-         for ( stencil = 0 ; stencil <= 1 ; stencil++ ) {
-            for ( db = 1 ; db >= 0 ; db-- ) {
-               pConfigs[i].vid		= -1;
-               pConfigs[i].class	= -1;
-               pConfigs[i].rgba		= TRUE;
-               pConfigs[i].redSize	= SAVAGEVisuals[visNum].redSize;
-               pConfigs[i].greenSize	= SAVAGEVisuals[visNum].greenSize;
-               pConfigs[i].blueSize	= SAVAGEVisuals[visNum].blueSize;
-               pConfigs[i].alphaSize	= SAVAGEVisuals[visNum].alphaSize;
-               pConfigs[i].redMask	= SAVAGEVisuals[visNum].redMask;
-               pConfigs[i].greenMask	= SAVAGEVisuals[visNum].greenMask;
-               pConfigs[i].blueMask	= SAVAGEVisuals[visNum].blueMask;
-               pConfigs[i].alphaMask	= SAVAGEVisuals[visNum].alphaMask;
-
-               if ( accum ) {
-                  pConfigs[i].accumRedSize	= 16;
-                  pConfigs[i].accumGreenSize	= 16;
-                  pConfigs[i].accumBlueSize	= 16;
-                  pConfigs[i].accumAlphaSize	= 0;
-               } else {
-                  pConfigs[i].accumRedSize	= 0;
-                  pConfigs[i].accumGreenSize	= 0;
-                  pConfigs[i].accumBlueSize	= 0;
-                  pConfigs[i].accumAlphaSize	= 0;
-               }
-               if ( db ) {
-                  pConfigs[i].doubleBuffer	= TRUE;
-               } else {
-                  pConfigs[i].doubleBuffer	= FALSE;
-               }
-               pConfigs[i].stereo		= FALSE;
-               pConfigs[i].bufferSize		= pScrn->bitsPerPixel;
-               pConfigs[i].depthSize	= SAVAGEVisuals[visNum].depthSize;
-               if ( stencil ) {
-                  pConfigs[i].stencilSize	= 8;
-               } else {
-                  pConfigs[i].stencilSize	= 0;
-               }
-
-               pConfigs[i].auxBuffers		= 0;
-               pConfigs[i].level		= 0;
-
-               pConfigs[i].visualRating	= GLX_NONE;
-               if ( pScrn->bitsPerPixel == 16 ) {
-                  if ( accum || stencil ) {
-                     pConfigs[i].visualRating	= GLX_SLOW_CONFIG;
-                  }
-               } else if ( accum ) {
-                  pConfigs[i].visualRating	= GLX_SLOW_VISUAL_EXT;
-               }
-               pConfigs[i].transparentPixel	= GLX_NONE;
-               pConfigs[i].transparentRed	= 0;
-               pConfigs[i].transparentGreen	= 0;
-               pConfigs[i].transparentBlue	= 0;
-               pConfigs[i].transparentAlpha	= 0;
-               pConfigs[i].transparentIndex	= 0;
-               i++;
-            }
-         }
-      }
-      if ( i != numConfigs ) {
-         xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
-		     "[drm] Incorrect initialization of visuals\n" );
-         return FALSE;
-      }
-      break;
-
-   default:
-      /* Unexpected bits/pixels */
-      break;
-   }
-
-   psav->numVisualConfigs = numConfigs;
-   psav->pVisualConfigs = pConfigs;
-   psav->pVisualConfigsPriv = pSAVAGEConfigs;
-
-   GlxSetVisualConfigs( numConfigs, pConfigs, (void **)pSAVAGEConfigPtrs );
-
-   return TRUE;
-}
 
 static Bool SAVAGECreateContext( ScreenPtr pScreen, VisualPtr visual,
 			      drm_context_t hwContext, void *pVisualConfigPriv,
@@ -799,10 +638,9 @@ Bool SAVAGEDRIScreenInit( ScreenPtr pScreen )
    SAVAGEDRIPtr pSAVAGEDRI;
    SAVAGEDRIServerPrivatePtr pSAVAGEDRIServer;
 
-   /* Check that the GLX, DRI, and DRM modules have been loaded by testing
+   /* Check that the DRI, and DRM modules have been loaded by testing
     * for canonical symbols in each module.
     */
-   if ( !xf86LoaderCheckSymbol( "GlxSetVisualConfigs" ) )	return FALSE;
    if ( !xf86LoaderCheckSymbol( "drmAvailable" ) )		return FALSE;
    if ( !xf86LoaderCheckSymbol( "DRIQueryVersion" ) ) {
       xf86DrvMsg( pScreen->myNum, X_ERROR,
@@ -895,8 +733,8 @@ Bool SAVAGEDRIScreenInit( ScreenPtr pScreen )
 
    xf86DrvMsg( pScrn->scrnIndex, X_INFO,
 	       "[drm] Sarea %d+%d: %d\n",
-	       sizeof(XF86DRISAREARec), sizeof(SAVAGESAREAPrivRec),
-	       sizeof(XF86DRISAREARec) + sizeof(SAVAGESAREAPrivRec) );
+	       (int) sizeof(XF86DRISAREARec), (int) sizeof(SAVAGESAREAPrivRec),
+	       (int) (sizeof(XF86DRISAREARec) + sizeof(SAVAGESAREAPrivRec)) );
 
    pDRIInfo->SAREASize = SAREA_MAX;
 
@@ -1013,10 +851,6 @@ Bool SAVAGEDRIScreenInit( ScreenPtr pScreen )
       return FALSE;
    }
 
-   if ( !SAVAGEInitVisualConfigs( pScreen ) ) {
-      SAVAGEDRICloseScreen( pScreen );
-      return FALSE;
-   }
    xf86DrvMsg( pScrn->scrnIndex, X_INFO, "[dri] visual configs initialized\n" );
 
    return TRUE;
@@ -1332,12 +1166,6 @@ void SAVAGEDRICloseScreen( ScreenPtr pScreen )
    if ( psav->DRIServerInfo ) {
       free( psav->DRIServerInfo );
       psav->DRIServerInfo = 0;
-   }
-   if ( psav->pVisualConfigs ) {
-      free( psav->pVisualConfigs );
-   }
-   if ( psav->pVisualConfigsPriv ) {
-      free( psav->pVisualConfigsPriv );
    }
 }
 

@@ -199,7 +199,7 @@ SavageInitialize2DEngine(ScrnInfoPtr pScrn)
 	OUTREG(0x48C18, (psav->cobOffset >> 7) | (psav->cobIndex));
 	if( psav->ShadowStatus )
 	{
-	    /* Set shadow update threshholds. */
+	    /* Set shadow update thresholds. */
 	    /*OUTREG(0x48C10, 0x6090 );
 	      OUTREG(0x48C14, 0x70A8 );*/
 	    OUTREG(0x48C10, psav->bciThresholdLo >> 2);
@@ -420,7 +420,7 @@ void SavageSetGBD_Twister(ScrnInfoPtr pScrn)
      *          01: destination tiling format
      *          10: texture tiling format
      *          11: reserved
-     *   bit 28: block write disble/enable
+     *   bit 28: block write disable/enable
      *          0: disable
      *          1: enable
      */
@@ -836,7 +836,7 @@ void SavageSetGBD_M7(ScrnInfoPtr pScrn)
      *          01: reserved
      *          10: 16 bit
      *          11: 32 bit
-     *   bit 28: block write disble/enable
+     *   bit 28: block write disable/enable
      *          0: enable
      *          1: disable
      */
@@ -1455,9 +1455,9 @@ SavageInitAccel(ScreenPtr pScreen)
         /*if ( scanlines > maxlines ) scanlines = maxlines;*/
         /* CR47983, XvMC do not work on system with frame buffer less than 32MB.
          * VBE reports frame buffer size a little less than 16MB, this makes the condition
-         *   truns out FALSE.
+         *   turns out FALSE.
          * Now just reduce the level to 14.5MB, things should be OK, while the hwmc frame buffer layout
-         *    caculation need more understanding and should be fixed.
+         *    calculation need more understanding and should be fixed.
          */
         /*if total memory is less than 16M, there is no HWMC support */
         if((psav->videoRambytes < /*16*/(14*1024+512)*1024L) || psav->bDisableXvMC)

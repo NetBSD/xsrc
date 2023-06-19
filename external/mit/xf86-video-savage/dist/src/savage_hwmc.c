@@ -128,7 +128,7 @@ static XF86ImagePtr savage_subpicture_list[1] =
 
 /* Fill in the device dependent adaptor record. 
  * This is named "SAVAGE Video Overlay" because this code falls under the
- * XV extenstion, the name must match or it won't be used.
+ * XV extension, the name must match or it won't be used.
  *
  * Surface and Subpicture - see above
  * Function pointers to functions below
@@ -157,7 +157,7 @@ static XF86MCAdaptorPtr ppAdapt[1] =
  *
  *  SAVAGEInitMC
  *
- *  Initialize the hardware motion compenstation extention for this 
+ *  Initialize the hardware motion compensation extension for this
  *  hardware. The initialization routines want the address of the pointers
  *  to the structures, not the address of the structures. This means we
  *  allocate (or create static?) the pointer memory and pass that 

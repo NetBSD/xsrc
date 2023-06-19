@@ -255,7 +255,7 @@ do {                                    \
 
 /*
  * Jiayo Hsu, Mar 21, 2002             
- * modify this to scalable schema,because different chips have differnt regs,          
+ * modify this to scalable schema, because different chips have different regs,
  * besides add in patch code for  Paramount(SuperSavage) from 2K
  */
 #define InI2CREG(a,reg)                                 \
