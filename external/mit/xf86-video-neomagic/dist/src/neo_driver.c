@@ -463,6 +463,7 @@ NEOGetRec(ScrnInfoPtr pScrn)
 
     if (pScrn->driverPrivate == NULL)
 	return FALSE;
+    else
         return TRUE;
 }
 
@@ -890,6 +891,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	case 24:
 	    if (nPtr->NeoChipset != NM2070)
 		break;
+	    /* FALLTHROUGH */
 	default:
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "Given depth (%d) is not supported by this driver\n",
@@ -1074,7 +1076,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,
 		   "Video modes are centered on the display\n");
     if (nPtr->swCursor)
-	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG, "using sofware cursor\n");
+	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG, "using software cursor\n");
     if (nPtr->noMMIO)
 	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG, "MMIO mode disabled\n");
     if (nPtr->onPciBurst)
@@ -1084,7 +1086,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 		   "Option StrangeLockups set: disabling some acceleration\n");
     if (nPtr->showcache)
 	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,
-		   "Show chache for debugging\n");
+		   "Show cache for debugging\n");
 
     if (!xf86LoadSubModule(pScrn, "xaa")) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadow\n");
@@ -2787,7 +2789,7 @@ neoModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
         
     /*
-     * If the screen is to be centerd, turn on the centering for the
+     * If the screen is to be centered, turn on the centering for the
      * various modes.
      */
     NeoNew->PanelVertCenterReg1  = 0x00;
@@ -2953,7 +2955,7 @@ neoCalcVCLK(ScrnInfoPtr pScrn, long freq)
 	for (n = 0; n <= MAX_N; n++)
 	    for (d = 1; d <= MAX_D; d++) {
 		f_out = (n+1.0)/((d+1.0)*(1<<f))*REF_FREQ;
-		f_diff = abs(f_out-f_target);
+		f_diff = fabs(f_out-f_target);
 		if (f_diff < f_best_diff) {
 		    f_best_diff = f_diff;
 		    n_best = n;

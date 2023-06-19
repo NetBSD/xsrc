@@ -1,3 +1,92 @@
+commit fc60f28cc9985c60d8d8f846a429a3a62133d7c3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 12:47:22 2023 -0700
+
+    xf86-video-neomagic 1.3.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ad829f3e14ce8702551329a5c9b1deda98c1f386
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 16:50:16 2022 -0800
+
+    NEOPreInit: Handle -Wimplicit-fallthrough warning
+    
+    neo_driver.c: In function ‘NEOPreInit’:
+    neo_driver.c:892:9: warning: this statement may fall through
+      [-Wimplicit-fallthrough=]
+          if (nPtr->NeoChipset != NM2070)
+             ^
+    neo_driver.c:894:2: note: here
+      default:
+      ^~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b10d7736ae7f7b3f8a6058b2d5e8d9b60c4d105f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 16:47:10 2022 -0800
+
+    NEOGetRec: Fix -Wmisleading-indentation warning
+    
+    neo_driver.c: In function ‘NEOGetRec’:
+    neo_driver.c:464:5: warning: this ‘if’ clause does not guard...
+      [-Wmisleading-indentation]
+         if (pScrn->driverPrivate == NULL)
+         ^~
+    neo_driver.c:466:9: note: ...this statement, but the latter is
+      misleadingly indented as if it were guarded by the ‘if’
+             return TRUE;
+             ^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 032b89419ed33a5ec1776144160ceb882cb0449c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a941cc0a13615729ce2aefe97fcc070875dd8858
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 13:14:05 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f3cc137e20253a16659f9ef978139979dea61113
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 13:13:46 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3c8ce1f98a7e72593856bb296e53365baf31b231
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 13:12:16 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f2aad64f4d732d4ec26e66d135fcd86c385527b7
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sun Feb 10 17:20:27 2019 +0100
+
+    Use fabs() instead of abs() on double value.
+    
+    Silences clang warnings.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Walter Harms <wharms@bfs.de>
+
 commit 754031be27385154d39b65f8d703279f841b2c31
 Author: Kevin Brace <kevinbrace@gmx.com>
 Date:   Mon Dec 24 18:48:32 2018 -0600
@@ -767,20 +856,20 @@ Date:   Mon Oct 17 00:09:04 2005 +0000
     Use sed & cpp to substitute variables in driver man pages
 
 commit 392f13b748742e93dfccd3c4bebb323165eb8eb4
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Oct 4 21:36:51 2005 +0000
 
     Link nvidida readme file into nvidia driver, Exclude duplicated neomagic
         readme
 
 commit a114e9e031bf1250fbb1e03b81927198d376f6e0
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Sep 27 21:09:35 2005 +0000
 
     Fix capitalization mistake
 
 commit c82ff116e460d5c89cb20a8f94632501b473ad09
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Sep 27 20:53:19 2005 +0000
 
     Update build system for apm, chips, cirrus, glint, i740, mga, neomagic,
@@ -807,7 +896,7 @@ Date:   Fri Jul 29 21:22:44 2005 +0000
     - Update modular Xorg version
 
 commit 8bc434f88799b9690d13bbc01ea24f5090f430aa
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 16:52:44 2005 +0000
 
     Build system for neomagic

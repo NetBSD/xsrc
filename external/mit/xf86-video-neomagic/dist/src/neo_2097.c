@@ -219,7 +219,7 @@ Neo2097AccelInit(ScreenPtr pScreen)
      */
     nAcl->ColorShiftAmt = 0;
     
-    /* Initialize for 8bpp or 15/16bpp support accellerated */
+    /* Initialize for 8bpp or 15/16bpp support accelerated */
     switch (pScrn->bitsPerPixel) {
     case 8:
 	nAcl->BltCntlFlags = NEO_BC1_DEPTH8;

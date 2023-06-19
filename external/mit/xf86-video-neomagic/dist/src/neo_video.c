@@ -804,7 +804,7 @@ NEODisplayVideo(ScrnInfoPtr pScrn, int id, int offset,
     if (dstBox->x2 >= pScrn->virtualX) {
 	/*
 	 * This is a hack to work around a problem when video is moved
-	 * accross the right border.
+	 * across the right border.
 	 */
 	int diff_s = (width - ((x2 - x1) >> 16)) & ~1;
 	int diff_d = (drw_w - dstBox->x2 + dstBox->x1) & ~1;

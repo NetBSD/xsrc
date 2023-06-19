@@ -23,15 +23,15 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-neomagic],
-        [1.3.0],
-        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-neomagic/issues],
+        [1.3.1],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-neomagic/-/issues],
         [xf86-video-neomagic])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],

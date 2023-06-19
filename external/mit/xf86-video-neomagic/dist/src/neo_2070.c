@@ -143,7 +143,7 @@ Neo2070AccelInit(ScreenPtr pScreen)
      * Setup some global variables
      */
     
-    /* Initialize for 8bpp or 15/16bpp support accellerated */
+    /* Initialize for 8bpp or 15/16bpp support accelerated */
     switch (pScrn->bitsPerPixel) {
     case 8:
 	nAcl->BltCntlFlags = NEO_BC1_DEPTH8;
