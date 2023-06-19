@@ -91,13 +91,14 @@ build_triplet = @build@
 host_triplet = @host@
 @LEGACY_TRUE@am__append_1 = include/X11/extensions/XKBgeom.h
 @LEGACY_TRUE@am__append_2 = include/X11/extensions/vldXvMC.h
+@LEGACY_TRUE@am__append_3 = PM_spec
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(dist_doc_DATA) \
+	$(am__configure_deps) $(am__dist_doc_DATA_DIST) \
 	$(am__XCalibrateinclude_HEADERS_DIST) $(applewm_HEADERS) \
 	$(bigreqs_HEADERS) $(compat_HEADERS) $(composite_HEADERS) \
 	$(damage_HEADERS) $(dmx_HEADERS) $(dri2_HEADERS) \
@@ -244,6 +245,10 @@ am__installdirs = "$(DESTDIR)$(applewmprotopkgconfigdir)" \
 	"$(DESTDIR)$(xf86vidmodedir)" "$(DESTDIR)$(xineramadir)" \
 	"$(DESTDIR)$(xprotodir)" "$(DESTDIR)$(xproxymngdir)" \
 	"$(DESTDIR)$(xwaylandprotodir)"
+am__dist_doc_DATA_DIST = compositeproto.txt damageproto.txt \
+	dri2proto.txt dri3proto.txt fixesproto.txt presentproto.txt \
+	randrproto.txt renderproto.txt resproto.txt xv-protocol-v2.txt \
+	xwaylandproto.txt PM_spec
 DATA = $(applewmprotopkgconfig_DATA) $(bigreqsprotopkgconfig_DATA) \
 	$(calibrateprotopkgconfig_DATA) \
 	$(compositeprotopkgconfig_DATA) $(damageprotopkgconfig_DATA) \
@@ -730,6 +735,10 @@ top_srcdir = @top_srcdir@
 XORGRELSTRING = @PACKAGE_STRING@
 XORGMANNAME = X Version 11
 SUFFIXES = .$(MISC_MAN_SUFFIX) .man
+dist_doc_DATA = compositeproto.txt damageproto.txt dri2proto.txt \
+	dri3proto.txt fixesproto.txt presentproto.txt randrproto.txt \
+	renderproto.txt resproto.txt xv-protocol-v2.txt \
+	xwaylandproto.txt $(am__append_3)
 applewmdir = $(includedir)/X11/extensions
 applewm_HEADERS = \
         include/X11/extensions/applewmconst.h \
@@ -1084,20 +1093,6 @@ xwaylandprotopkgconfig_DATA = xwaylandproto.pc
 @LEGACY_TRUE@xf86rushprotopkgconfigdir = $(datadir)/pkgconfig
 @LEGACY_TRUE@xf86rushprotopkgconfig_DATA = xf86rushproto.pc
 SUBDIRS = specs
-dist_doc_DATA = \
-	compositeproto.txt \
-	damageproto.txt \
-	dri2proto.txt \
-	dri3proto.txt \
-	fixesproto.txt \
-	PM_spec \
-	presentproto.txt \
-	randrproto.txt \
-	renderproto.txt \
-	resproto.txt \
-	xv-protocol-v2.txt \
-	xwaylandproto.txt
-
 EXTRA_DIST = \
     COPYING-applewmproto \
     COPYING-bigreqsproto \
