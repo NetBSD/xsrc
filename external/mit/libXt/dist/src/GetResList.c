@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -90,15 +90,15 @@ XtGetResourceList(WidgetClass widget_class,
     register XtResourceList *list, dlist;
 
     LOCK_PROCESS;
+    *resources = XtMallocArray(widget_class->core_class.num_resources,
+                               (Cardinal) sizeof(XtResource));
     size = (int) (widget_class->core_class.num_resources * sizeof(XtResource));
-    *resources = (XtResourceList) __XtMalloc((unsigned) size);
 
     if (!widget_class->core_class.class_inited) {
         /* Easy case */
 
-        (void) memmove((char *) *resources,
-                       (char *) widget_class->core_class.resources,
-                       (size_t) size);
+        (void) memcpy(*resources, widget_class->core_class.resources,
+                      (size_t) size);
         *num_resources = widget_class->core_class.num_resources;
         UNLOCK_PROCESS;
         return;
@@ -131,7 +131,7 @@ XtGetResourceList(WidgetClass widget_class,
 }
 
 static Boolean
-ClassIsSubclassOf(WidgetClass class, WidgetClass superclass)
+ClassIsSubclassOf(WidgetClass class, const WidgetClass superclass)
 {
     for (; class != NULL; class = class->core_class.superclass) {
         if (class == superclass)
@@ -163,15 +163,15 @@ XtGetConstraintResourceList(WidgetClass widget_class,
         return;
     }
 
+    *resources = XtMallocArray(class->constraint_class.num_resources,
+                               (Cardinal) sizeof(XtResource));
     size = (int) (class->constraint_class.num_resources * sizeof(XtResource));
-    *resources = (XtResourceList) __XtMalloc((unsigned) size);
 
     if (!class->core_class.class_inited) {
         /* Easy case */
 
-        (void) memmove((char *) *resources,
-                       (char *) class->constraint_class.resources,
-                       (size_t) size);
+        (void) memcpy(*resources, class->constraint_class.resources,
+                      (size_t) size);
         *num_resources = class->constraint_class.num_resources;
         UNLOCK_PROCESS;
         return;

@@ -1,5 +1,5 @@
 /************************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -239,9 +239,9 @@ YieldAppLock(XtAppContext app,
             unsigned ii;
 
             app_lock->stack.st = (struct _Tstack *)
-                XtRealloc((char *) app_lock->stack.st,
-                          (Cardinal) ((app_lock->stack.size +
-                                       STACK_INCR) * sizeof(struct _Tstack)));
+                XtReallocArray(app_lock->stack.st,
+                               (Cardinal) (app_lock->stack.size + STACK_INCR),
+                               (Cardinal) sizeof(struct _Tstack));
             ii = app_lock->stack.size;
             app_lock->stack.size += STACK_INCR;
             for (; ii < app_lock->stack.size; ii++) {
@@ -363,8 +363,7 @@ InitAppLock(XtAppContext app)
 #endif
     app_lock->stack.size = STACK_INCR;
     app_lock->stack.sp = -1;
-    app_lock->stack.st =
-        (struct _Tstack *) __XtMalloc(sizeof(struct _Tstack) * STACK_INCR);
+    app_lock->stack.st = XtMallocArray(STACK_INCR, sizeof(struct _Tstack));
     for (ii = 0; ii < STACK_INCR; ii++) {
         app_lock->stack.st[ii].c = xcondition_malloc();
         xcondition_init(app_lock->stack.st[ii].c);

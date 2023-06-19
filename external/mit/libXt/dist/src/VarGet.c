@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -246,7 +246,7 @@ XtVaGetValues(Widget widget, ...)
     if (total_count != typed_count) {
         size_t limit = (size_t) (total_count - typed_count);
 
-        args = (ArgList) __XtMalloc((unsigned) (limit * sizeof(Arg)));
+        args = XtMallocArray((Cardinal) limit, (Cardinal) sizeof(Arg));
     }
     else
         args = NULL;            /* for lint; really unused */

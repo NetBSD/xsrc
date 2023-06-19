@@ -428,10 +428,8 @@ GetResources(Widget widget, XtResourceList *res_list, Cardinal *number)
                                     &num_constraint);
 
         cons_top = constraint;
-        *res_list = (XtResourceList) XtRealloc((char *) *res_list,
-                                               (Cardinal) ((*number +
-                                                            num_constraint) *
-                                                           sizeof(XtResource)));
+        *res_list = XtReallocArray(*res_list, *number + num_constraint,
+                                   (Cardinal) sizeof(XtResource));
 
         for (temp = num_constraint, res = *res_list + *number; temp != 0;
              temp--)

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -870,8 +870,7 @@ _XtPrintEventSeq(register EventSeqPtr eventSeq, Display *dpy)
         modMatch =
             TMGetModifierMatch(_XtGetModifierIndex(&eventSeqs[j]->event));
         PrintEvent(sb, typeMatch, modMatch, dpy);
-        if (j < i)
-            *sb->current++ = ',';
+        *sb->current++ = ',';
     }
     UNLOCK_PROCESS;
     return sb->start;

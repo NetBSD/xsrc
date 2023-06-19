@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -86,7 +86,7 @@ typedef struct _XtEventRecExt {
 #define NonMaskableMask ((EventMask)0x80000000L)
 
 /*
- * These are definitions to make the code that handles exposure compresssion
+ * These are definitions to make the code that handles exposure compression
  * easier to read.
  *
  * COMP_EXPOSE      - The compression exposure field of "widget"
@@ -105,39 +105,42 @@ typedef struct _XtEventRecExt {
 EventMask
 XtBuildEventMask(Widget widget)
 {
-    XtEventTable ev;
     EventMask mask = 0L;
 
-    WIDGET_TO_APPCON(widget);
+    if (widget != NULL) {
+        XtEventTable ev;
 
-    LOCK_APP(app);
-    for (ev = widget->core.event_table; ev != NULL; ev = ev->next) {
-        if (!ev->select)
-            continue;
+        WIDGET_TO_APPCON(widget);
 
-        if (!ev->has_type_specifier)
-            mask |= ev->mask;
-        else {
-            if (EXT_TYPE(ev) < LASTEvent) {
-                Cardinal i;
+        LOCK_APP(app);
+        for (ev = widget->core.event_table; ev != NULL; ev = ev->next) {
+            if (!ev->select)
+                continue;
 
-                for (i = 0; i < ev->mask; i++)
-                    if (EXT_SELECT_DATA(ev, i))
-                        mask |= *(EventMask *) EXT_SELECT_DATA(ev, i);
+            if (!ev->has_type_specifier)
+                mask |= ev->mask;
+            else {
+                if (EXT_TYPE(ev) < LASTEvent) {
+                    Cardinal i;
+
+                    for (i = 0; i < ev->mask; i++)
+                        if (EXT_SELECT_DATA(ev, i))
+                            mask |= *(EventMask *) EXT_SELECT_DATA(ev, i);
+                }
             }
         }
-    }
-    LOCK_PROCESS;
-    if (widget->core.widget_class->core_class.expose != NULL)
-        mask |= ExposureMask;
-    if (widget->core.widget_class->core_class.visible_interest)
-        mask |= VisibilityChangeMask;
-    UNLOCK_PROCESS;
-    if (widget->core.tm.translations)
-        mask |= widget->core.tm.translations->eventMask;
+        LOCK_PROCESS;
+        if (widget->core.widget_class->core_class.expose != NULL)
+            mask |= ExposureMask;
+        if (widget->core.widget_class->core_class.visible_interest)
+            mask |= VisibilityChangeMask;
+        UNLOCK_PROCESS;
+        if (widget->core.tm.translations)
+            mask |= widget->core.tm.translations->eventMask;
 
-    mask = mask & ~NonMaskableMask;
-    UNLOCK_APP(app);
+        mask = mask & ~NonMaskableMask;
+        UNLOCK_APP(app);
+    }
     return mask;
 }
 
@@ -180,8 +183,8 @@ RemoveEventHandler(Widget widget,
                    int type,
                    Boolean has_type_specifier,
                    Boolean other,
-                   XtEventHandler proc,
-                   XtPointer closure,
+                   const XtEventHandler proc,
+                   const XtPointer closure,
                    Boolean raw)
 {
     XtEventRec *p, **pp;
@@ -212,7 +215,7 @@ RemoveEventHandler(Widget widget,
 
         /* p->mask specifies count of EXT_SELECT_DATA(p,i)
          * search through the list of selection data, if not found
-         * dont remove this handler
+         * don't remove this handler
          */
         for (i = 0; i < p->mask && select_data != EXT_SELECT_DATA(p, i);)
             i++;
@@ -265,9 +268,9 @@ RemoveEventHandler(Widget widget,
  *                   adding the event handlers.
  *      Arguments: widget - widget to register an event handler for.
  *                 eventMask - events to mask for.
- *                 other - pass non maskable events to this proceedure.
- *                 proc - proceedure to register.
- *                 closure - data to pass to the event hander.
+ *                 other - pass non maskable events to this procedure.
+ *                 proc - procedure to register.
+ *                 closure - data to pass to the event handler.
  *                 position - where to add this event handler.
  *                 force_new_position - If the element is already in the
  *                                      list, this will force it to the
@@ -765,10 +768,8 @@ CallEventHandlers(Widget widget, XEvent *event, EventMask mask)
             (p->has_type_specifier && event->type == EXT_TYPE(p)))
             numprocs++;
     }
-    proc = (XtEventHandler *)
-        __XtMalloc((Cardinal)
-                   ((size_t) numprocs *
-                    (sizeof(XtEventHandler) + sizeof(XtPointer))));
+    proc = XtMallocArray((Cardinal) numprocs, (Cardinal)
+                         (sizeof(XtEventHandler) + sizeof(XtPointer)));
     closure = (XtPointer *) (proc + numprocs);
 
     numprocs = 0;
@@ -955,7 +956,7 @@ static void AddExposureToRectangularRegion(XEvent *, Region);
 /*      Function Name: CompressExposures
  *      Description: Handles all exposure compression
  *      Arguments: event - the xevent that is to be dispatched
- *                 widget - the widget that this event occured in.
+ *                 widget - the widget that this event occurred in.
  *      Returns: none.
  *
  *      NOTE: Event must be of type Expose or GraphicsExpose.
@@ -1123,7 +1124,7 @@ _XtEventInitialize(void)
  *      Description: Sets the x, y, width, and height of the event
  *                   to be the clip box of Expose Region.
  *      Arguments: event  - the X Event to mangle; Expose or GraphicsExpose.
- *                 widget - the widget that this event occured in.
+ *                 widget - the widget that this event occurred in.
  *                 pd     - the per display information for this widget.
  *      Returns: none.
  */
@@ -1777,10 +1778,9 @@ XtRegisterExtensionSelector(Display *dpy,
         }
     }
     pd->ext_select_count++;
-    pd->ext_select_list =
-        (ExtSelectRec *) XtRealloc((char *) pd->ext_select_list,
-                                   (Cardinal) ((size_t) pd->ext_select_count *
-                                               sizeof(ExtSelectRec)));
+    pd->ext_select_list = XtReallocArray(pd->ext_select_list,
+                                         (Cardinal) pd->ext_select_count,
+                                         (Cardinal) sizeof(ExtSelectRec));
     for (i = pd->ext_select_count - 1; i > 0; i--) {
         if (pd->ext_select_list[i - 1].min > min_event_type) {
             pd->ext_select_list[i] = pd->ext_select_list[i - 1];

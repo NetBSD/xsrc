@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -1293,8 +1293,7 @@ FillInLangSubs(Substitution subs, XtPerDisplay pd)
     char **rest;
     char *ch;
 
-    if (pd->language == NULL ||
-        (pd->language != NULL && pd->language[0] == '\0')) {
+    if (pd->language == NULL || pd->language[0] == '\0') {
         subs[0].substitution = subs[1].substitution =
             subs[2].substitution = subs[3].substitution = NULL;
         return;
@@ -1302,7 +1301,7 @@ FillInLangSubs(Substitution subs, XtPerDisplay pd)
 
     string = ExtractLocaleName(pd->language);
 
-    if (string == NULL || (string != NULL && string[0] == '\0')) {
+    if (string == NULL || string[0] == '\0') {
         subs[0].substitution = subs[1].substitution =
             subs[2].substitution = subs[3].substitution = NULL;
         return;
@@ -1310,7 +1309,7 @@ FillInLangSubs(Substitution subs, XtPerDisplay pd)
 
     len = (int) strlen(string) + 1;
     subs[0].substitution = (_XtString) string;
-    p1 = subs[1].substitution = __XtMalloc((Cardinal) (3 * len));
+    p1 = subs[1].substitution = XtMallocArray(3, (Cardinal) len);
     p2 = subs[2].substitution = subs[1].substitution + len;
     p3 = subs[3].substitution = subs[2].substitution + len;
 
@@ -1346,7 +1345,7 @@ FillInLangSubs(Substitution subs, XtPerDisplay pd)
 
 /*
  * default path used if environment variable XFILESEARCHPATH
- * is not defined.  Also substitued for %D.
+ * is not defined.  Also substituted for %D.
  * The exact value should be documented in the implementation
  * notes for any Xt implementation.
  */

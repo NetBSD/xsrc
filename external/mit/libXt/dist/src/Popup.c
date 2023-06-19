@@ -114,7 +114,7 @@ XtPopup(Widget widget, XtGrabKind grab_kind)
 
         call_data.type = XtHpopup;
         call_data.widget = widget;
-        call_data.event_data = (XtPointer) grab_kind;
+        call_data.event_data = (XtPointer) (XtIntPtr) grab_kind;
         XtCallCallbackList(hookobj,
                            ((HookObject) hookobj)->hooks.changehook_callbacks,
                            (XtPointer) &call_data);

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -133,7 +133,7 @@ _XtCopyFromArg(XtArgVal src, char *dst, register unsigned int size)
         else
             p = (char *) &src;
 
-        (void) memmove(dst, p, (size_t) size);
+        (void) memcpy(dst, p, (size_t) size);
     }
 }                               /* _XtCopyFromArg */
 
@@ -157,7 +157,7 @@ _XtCopyToArg(char *src, XtArgVal *dst, register unsigned int size)
         } u;
 
         if (size <= sizeof(XtArgVal)) {
-            (void) memmove((char *) &u, (char *) src, (size_t) size);
+            (void) memcpy(&u, src, (size_t) size);
             if (size == sizeof(long))
                 *dst = (XtArgVal) u.longval;
 #ifdef LONG64
@@ -207,7 +207,7 @@ CopyToArg(char *src, XtArgVal *dst, register unsigned int size)
         } u;
 
         if (size <= sizeof(XtArgVal)) {
-            (void) memmove((char *) &u, (char *) src, (size_t) size);
+            (void) memcpy(&u, src, (size_t) size);
             if (size == sizeof(long))
                 *dst = (XtArgVal) u.longval;
 #ifdef LONG64
@@ -336,7 +336,7 @@ BadSize(Cardinal size, XrmQuark name)
     String params[2];
     Cardinal num_params = 2;
 
-    params[0] = (String) (long) size;
+    params[0] = (String) (XtIntPtr) size;
     params[1] = XrmQuarkToString(name);
     XtWarningMsg("invalidSizeOverride", "xtDependencies", XtCXtToolkitError,
                  "Representation size %d must match superclass's to override %s",
@@ -374,10 +374,9 @@ _XtDependencies(XtResourceList *class_resp,    /* VAR */
 
     /* Allocate and initialize new_res with superclass resource pointers */
     new_num_res = super_num_res + class_num_res;
-    new_res = (XrmResourceList *)
-        __XtMalloc((Cardinal) (new_num_res * sizeof(XrmResourceList)));
+    new_res = XtMallocArray(new_num_res, (Cardinal) sizeof(XrmResourceList));
     if (super_num_res > 0)
-        XtMemmove(new_res, super_res, super_num_res * sizeof(XrmResourceList));
+        memcpy(new_res, super_res, super_num_res * sizeof(XrmResourceList));
 
     /* Put pointers to class resource entries into new_res */
     new_next = super_num_res;
@@ -461,8 +460,7 @@ _XtCreateIndirectionTable(XtResourceList resources, Cardinal num_resources)
     register Cardinal idx;
     XrmResourceList *table;
 
-    table = (XrmResourceList *)
-        __XtMalloc((Cardinal) (num_resources * sizeof(XrmResourceList)));
+    table = XtMallocArray(num_resources, (Cardinal) sizeof(XrmResourceList));
     for (idx = 0; idx < num_resources; idx++)
         table[idx] = (XrmResourceList) (&(resources[idx]));
     return table;
@@ -596,10 +594,9 @@ GetResources(Widget widget,             /* Widget resources are associated with 
                               searchList, (int) searchListSize)) {
         if (searchList == stackSearchList)
             searchList = NULL;
-        searchList = (XrmHashTable *) XtRealloc((char *) searchList,
-                                                (Cardinal) (sizeof(XrmHashTable)
-                                                            * (searchListSize *=
-                                                               2)));
+        searchListSize *= 2;
+        searchList = XtReallocArray(searchList, searchListSize,
+                                    (Cardinal) sizeof(XrmHashTable));
     }
 
     if (persistent_resources)
@@ -921,12 +918,11 @@ GetResources(Widget widget,             /* Widget resources are associated with 
         cache_ptr = cache_base;
     if (cache_ptr && cache_ptr != cache_ref) {
         int cache_ref_size = (int) (cache_ptr - cache_ref);
-        XtCacheRef *refs = (XtCacheRef *)
-            __XtMalloc((Cardinal)
-                       (sizeof(XtCacheRef) * (size_t) (cache_ref_size + 1)));
+        XtCacheRef *refs = XtMallocArray((Cardinal) cache_ref_size + 1,
+                                         (Cardinal) sizeof(XtCacheRef));
 
-        (void) memmove(refs, cache_ref,
-                       sizeof(XtCacheRef) * (size_t) cache_ref_size);
+        (void) memcpy(refs, cache_ref,
+                      sizeof(XtCacheRef) * (size_t) cache_ref_size);
         refs[cache_ref_size] = NULL;
         return refs;
     }
@@ -949,8 +945,7 @@ CacheArgs(ArgList args,
     count = (args != NULL) ? num_args : num_typed_args;
 
     if (num_quarks < count) {
-        quarks =
-            (XrmQuarkList) __XtMalloc((Cardinal) (count * sizeof(XrmQuark)));
+        quarks = XtMallocArray(count, (Cardinal) sizeof(XrmQuark));
     }
     else {
         quarks = quark_cache;
@@ -1047,7 +1042,6 @@ _XtGetSubresources(Widget w,                    /* Widget "parent" of subobject 
     XrmClass *classes, classes_s[50];
     XrmQuark quark_cache[100];
     XrmQuarkList quark_args;
-    XrmResourceList *table;
     Cardinal count, ntyped_args = num_typed_args;
     XtCacheRef *Resrc = NULL;
 
@@ -1065,6 +1059,8 @@ _XtGetSubresources(Widget w,                    /* Widget "parent" of subobject 
         _XtAllocError(NULL);
     }
     else {
+        XrmResourceList *table;
+
         /* Get full name, class of subobject */
         GetNamesAndClasses(w, names, classes);
         count -= 2;

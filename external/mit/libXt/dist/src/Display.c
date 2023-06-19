@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -121,9 +121,9 @@ AddToAppContext(Display *d, XtAppContext app)
 
     if (app->count >= app->max) {
         app->max = (short) (app->max + DISPLAYS_TO_ADD);
-        app->list = (Display **) XtRealloc((char *) app->list,
-                                           (Cardinal) (((size_t) app->max) *
-                                                       sizeof(Display *)));
+        app->list = XtReallocArray(app->list,
+                                   (Cardinal) app->max,
+                                   (Cardinal) sizeof(Display *));
     }
 
     app->list[app->count++] = d;
@@ -139,7 +139,7 @@ AddToAppContext(Display *d, XtAppContext app)
 }
 
 static void
-XtDeleteFromAppContext(Display *d, register XtAppContext app)
+XtDeleteFromAppContext(const Display *d, register XtAppContext app)
 {
     register int i;
 
@@ -346,9 +346,8 @@ _XtAppInit(XtAppContext *app_context_return,
     /*
      * Save away argv and argc so we can set the properties later
      */
-    saved_argv = (_XtString *)
-        __XtMalloc((Cardinal)
-                   ((size_t) (*argc_in_out + 1) * sizeof(_XtString)));
+    saved_argv = XtMallocArray((Cardinal) *argc_in_out + 1,
+                               (Cardinal) sizeof(_XtString));
 
     for (i = 0; i < *argc_in_out; i++)
         saved_argv[i] = (*argv_in_out)[i];
@@ -550,10 +549,9 @@ XtDestroyApplicationContext(XtAppContext app)
         app->being_destroyed = TRUE;
         LOCK_PROCESS;
         _XtAppDestroyCount++;
-        appDestroyList =
-            (XtAppContext *) XtRealloc((char *) appDestroyList,
-                                       (unsigned) ((size_t) _XtAppDestroyCount *
-                                                   sizeof(XtAppContext)));
+        appDestroyList = XtReallocArray(appDestroyList,
+                                        (Cardinal) _XtAppDestroyCount,
+                                        (Cardinal) sizeof(XtAppContext));
         appDestroyList[_XtAppDestroyCount - 1] = app;
         UNLOCK_PROCESS;
         UNLOCK_APP(app);
@@ -739,10 +737,9 @@ XtCloseDisplay(Display *dpy)
     else {
         pd->being_destroyed = TRUE;
         app->dpy_destroy_count++;
-        app->dpy_destroy_list = (Display **)
-            XtRealloc((char *) app->dpy_destroy_list,
-                      (Cardinal) ((size_t) app->dpy_destroy_count *
-                                  sizeof(Display *)));
+        app->dpy_destroy_list = XtReallocArray(app->dpy_destroy_list,
+                                               (Cardinal) app->dpy_destroy_count,
+                                               (Cardinal) sizeof(Display *));
         app->dpy_destroy_list[app->dpy_destroy_count - 1] = dpy;
     }
     UNLOCK_APP(app);
@@ -819,9 +816,8 @@ XtGetDisplays(XtAppContext app_context,
 
     LOCK_APP(app_context);
     *num_dpy_return = (Cardinal) app_context->count;
-    *dpy_return = (Display **)
-        __XtMalloc((Cardinal)
-                   ((size_t) app_context->count * sizeof(Display *)));
+    *dpy_return = XtMallocArray((Cardinal) app_context->count,
+                                (Cardinal) sizeof(Display *));
     for (ii = 0; ii < app_context->count; ii++)
         (*dpy_return)[ii] = app_context->list[ii];
     UNLOCK_APP(app_context);

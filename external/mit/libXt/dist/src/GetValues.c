@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -75,8 +75,8 @@ in this Software without prior written authorization from The Open Group.
 #include "StringDefs.h"
 
 static int
-GetValues(char *base,                   /* Base address to fetch values from */
-          XrmResourceList *res,        /* The current resource values.      */
+GetValues(char *const base,             /* Base address to fetch values from */
+          XrmResourceList *res,         /* The current resource values.      */
           register Cardinal num_resources, /* number of items in resources   */
           ArgList args,                 /* The resource values requested     */
           Cardinal num_args)            /* number of items in arg list       */
@@ -200,9 +200,9 @@ XtGetValues(register Widget w,
     int targ;
     XtAppContext app = XtWidgetToApplicationContext(w);
 
-    if (num_args == 0)
+    if (num_args == 0) {
         return;
-    if ((args == NULL) && (num_args != 0)) {
+    } else if (args == NULL) {
         XtAppErrorMsg(app,
                       "invalidArgCount", "xtGetValues", XtCXtToolkitError,
                       "Argument count > 0 on NULL argument list in XtGetValues",

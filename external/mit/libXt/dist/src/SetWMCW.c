@@ -5,7 +5,7 @@
 
 /************************************************************
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,7 @@ XtSetWMColormapWindows(Widget widget, Widget *list, Cardinal count)
         return;
     }
 
-    top = checked = (Widget *) __XtMalloc((Cardinal) sizeof(Widget) * count);
+    top = checked = XtMallocArray(count, (Cardinal) sizeof(Widget));
 
 /*
  * The specification calls for only adding the windows that have unique
@@ -136,7 +136,7 @@ XtSetWMColormapWindows(Widget widget, Widget *list, Cardinal count)
  * windows and set the property.
  */
 
-    data = (Window *) __XtMalloc((Cardinal) sizeof(Window) * checked_count);
+    data = XtMallocArray(checked_count, (Cardinal) sizeof(Window));
 
     for (i = 0; i < checked_count; i++)
         data[i] = XtWindow(top[i]);

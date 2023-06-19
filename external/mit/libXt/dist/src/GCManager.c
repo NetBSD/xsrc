@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -250,10 +250,8 @@ XtAllocateGC(register Widget widget,
         if (!pd->pixmap_tab) {
             int n;
 
-            pd->pixmap_tab =
-                (Drawable **)
-                __XtMalloc((Cardinal)
-                           ((unsigned) ScreenCount(dpy) * sizeof(Drawable *)));
+            pd->pixmap_tab = XtMallocArray((Cardinal) ScreenCount(dpy),
+                                           (Cardinal) sizeof(Drawable *));
             for (n = 0; n < ScreenCount(dpy); n++)
                 pd->pixmap_tab[n] = NULL;
         }

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -229,11 +229,8 @@ GetSelectionProperty(Display *dpy)
         }
     }
     propCount = sarray->propCount++;
-    sarray->list = (SelectionProp) XtRealloc((XtPointer) sarray->list,
-                                             (Cardinal) ((size_t) sarray->
-                                                         propCount *
-                                                         sizeof
-                                                         (SelectionPropRec)));
+    sarray->list = XtReallocArray(sarray->list, (Cardinal) sarray->propCount,
+                                  (Cardinal) sizeof(SelectionPropRec));
     (void) snprintf(propname, sizeof(propname), "_XT_SELECTION_%d", propCount);
     sarray->list[propCount].prop = XInternAtom(dpy, propname, FALSE);
     sarray->list[propCount].avail = FALSE;
@@ -289,15 +286,14 @@ MakeInfo(Select ctx,
     CallBackInfo info = XtNew(CallBackInfoRec);
 
     info->ctx = ctx;
-    info->callbacks = (XtSelectionCallbackProc *)
-        __XtMalloc((unsigned)
-                   ((size_t) count * sizeof(XtSelectionCallbackProc)));
-    (void) memmove((char *) info->callbacks, (char *) callbacks,
-                   (size_t) count * sizeof(XtSelectionCallbackProc));
-    info->req_closure = (XtPointer *)
-        __XtMalloc((unsigned) ((size_t) count * sizeof(XtPointer)));
-    (void) memmove((char *) info->req_closure, (char *) closures,
-                   (size_t) count * sizeof(XtPointer));
+    info->callbacks = XtMallocArray((Cardinal) count,
+                                    (Cardinal) sizeof(XtSelectionCallbackProc));
+    (void) memcpy(info->callbacks, callbacks,
+                  (size_t) count * sizeof(XtSelectionCallbackProc));
+    info->req_closure = XtMallocArray((Cardinal) count,
+                                      (Cardinal) sizeof(XtPointer));
+    (void) memcpy(info->req_closure, closures,
+                  (size_t) count * sizeof(XtPointer));
     if (count == 1 && properties != NULL && properties[0] != None)
         info->property = properties[0];
     else {
@@ -307,10 +303,10 @@ MakeInfo(Select ctx,
     info->proc = HandleSelectionReplies;
     info->widget = widget;
     info->time = time;
-    info->incremental =
-        (Boolean *) __XtMalloc((Cardinal) ((size_t) count * sizeof(Boolean)));
-    (void) memmove((char *) info->incremental, (char *) incremental,
-                   (size_t) count * sizeof(Boolean));
+    info->incremental = XtMallocArray((Cardinal) count,
+                                      (Cardinal) sizeof(Boolean));
+    (void) memcpy(info->incremental, incremental,
+                  (size_t) count * sizeof(Boolean));
     info->current = 0;
     info->value = NULL;
     return (info);
@@ -979,7 +975,7 @@ OwnSelection(Widget widget,
             XtAddCallback(widget, XtNdestroyCallback,
                           WidgetDestroyed, (XtPointer) ctx);
         }
-        ctx->widget = widget;   /* Selection offically changes hands. */
+        ctx->widget = widget;   /* Selection officially changes hands. */
         ctx->time = time;
         ctx->serial = serial;
     }
@@ -1240,7 +1236,7 @@ HandleGetIncrement(Widget widget,
             int size = (int) BYTELENGTH(length, info->format) + 1;
             char *tmp = __XtMalloc((Cardinal) size);
 
-            (void) memmove(tmp, value, (size_t) size);
+            (void) memcpy(tmp, value, (size_t) size);
             XFree(value);
             value = tmp;
 #endif
@@ -1256,7 +1252,7 @@ HandleGetIncrement(Widget widget,
                 info->value = XtRealloc(info->value,
                                         (Cardinal) info->bytelength);
             }
-            (void) memmove(&info->value[info->offset], value, (size_t) size);
+            (void) memcpy(&info->value[info->offset], value, (size_t) size);
             info->offset += size;
             XFree(value);
         }
@@ -1353,7 +1349,7 @@ HandleNormal(Display *dpy,
         int size = (int) BYTELENGTH(length, info->format) + 1;
         char *tmp = __XtMalloc((Cardinal) size);
 
-        (void) memmove(tmp, value, (size_t) size);
+        (void) memcpy(tmp, value, (size_t) size);
         XFree(value);
         value = (unsigned char *) tmp;
     }
@@ -1514,7 +1510,7 @@ DoLocalTransfer(Request req,
 
                         /* both sides think they own this storage */
                         temp = __XtMalloc((unsigned) bytelength);
-                        (void) memmove(temp, value, (size_t) bytelength);
+                        (void) memcpy(temp, value, (size_t) bytelength);
                         value = temp;
                     }
                     /* use care; older clients were never warned that
@@ -1545,7 +1541,7 @@ DoLocalTransfer(Request req,
                                       (Cardinal) (totallength =
                                                   totallength +
                                                   (unsigned long) bytelength));
-                    (void) memmove((char *) total + totallength - bytelength,
+                    (void) memcpy((char *) total + totallength - bytelength,
                                    value, (size_t) bytelength);
                     (*(XtConvertSelectionIncrProc) ctx->convert)
                         (ctx->widget, &selection, &target,
@@ -1577,7 +1573,7 @@ DoLocalTransfer(Request req,
 
                 /* both sides think they own this storage; better copy */
                 temp = __XtMalloc((unsigned) bytelength);
-                (void) memmove(temp, value, (size_t) bytelength);
+                (void) memcpy(temp, value, (size_t) bytelength);
                 value = temp;
             }
             if (value == NULL)
@@ -1610,6 +1606,7 @@ GetSelectionValue(Widget widget,
         RequestRec req;
 
         ctx->req = &req;
+        memset(&req, 0, sizeof(req));
         req.ctx = ctx;
         req.event.time = time;
         ctx->ref_count++;
@@ -1714,7 +1711,7 @@ GetSelectionValues(Widget widget,
         req.ctx = ctx;
         req.event.time = time;
         ctx->ref_count++;
-        for (i = 0, j = 0; count; count--, i++, j++) {
+        for (i = 0, j = 0; count > 0; count--, i++, j++) {
             if (j >= num_callbacks)
                 j = 0;
 
@@ -1753,13 +1750,13 @@ GetSelectionValues(Widget widget,
                         time, incremental, properties);
         XtStackFree((XtPointer) passed_callbacks, stack_cbs);
 
-        info->target = (Atom *)
-            __XtMalloc((unsigned) ((size_t) (count + 1) * sizeof(Atom)));
+        info->target = XtMallocArray ((Cardinal) count + 1,
+                                      (Cardinal) sizeof(Atom));
         (*info->target) = ctx->prop_list->indirect_atom;
-        (void) memmove((char *) info->target + sizeof(Atom), (char *) targets,
+        (void) memcpy((char *) info->target + sizeof(Atom), targets,
                        (size_t) count * sizeof(Atom));
-        pairs = (IndirectPair *)
-            __XtMalloc((unsigned) ((size_t) count * sizeof(IndirectPair)));
+        pairs = XtMallocArray ((Cardinal) count + 1,
+                               (Cardinal) sizeof(IndirectPair));
         for (p = &pairs[count - 1], t = &targets[count - 1], i = count - 1;
              p >= pairs; p--, t--, i--) {
             p->target = *t;
@@ -1958,9 +1955,8 @@ AddSelectionRequests(Widget wid,
         int j = 0;
 
         qi->count += count;
-        req = (QueuedRequest *) XtRealloc((char *) req,
-                                          (Cardinal) ((size_t) (start + count) *
-                                                      sizeof(QueuedRequest)));
+        req = XtReallocArray(req, (Cardinal) (start + count),
+                             (Cardinal) sizeof(QueuedRequest));
         while (i < count) {
             QueuedRequest newreq = (QueuedRequest)
                 __XtMalloc(sizeof(QueuedRequestRec));
@@ -2032,6 +2028,9 @@ CleanupRequest(Display *dpy, QueuedRequestInfo qi, Atom sel)
 {
     int i, j, n;
 
+    if (qi == NULL)
+        return;
+
     i = 0;
 
     /* Remove this selection from the list */
@@ -2071,7 +2070,7 @@ XtCreateSelectionRequest(Widget widget, Atom selection)
     QueuedRequestInfo queueInfo;
     Window window = XtWindow(widget);
     Display *dpy = XtDisplay(widget);
-    int n;
+    Cardinal n;
 
     LOCK_PROCESS;
     if (multipleContext == 0)
@@ -2088,7 +2087,7 @@ XtCreateSelectionRequest(Widget widget, Atom selection)
         queueInfo =
             (QueuedRequestInfo) __XtMalloc(sizeof(QueuedRequestInfoRec));
         queueInfo->count = 0;
-        queueInfo->selections = (Atom *) __XtMalloc(sizeof(Atom) * 2);
+        queueInfo->selections = XtMallocArray(2, (Cardinal) sizeof(Atom));
         queueInfo->selections[0] = None;
         queueInfo->requests = (QueuedRequest *)
             __XtMalloc(sizeof(QueuedRequest));
@@ -2098,9 +2097,8 @@ XtCreateSelectionRequest(Widget widget, Atom selection)
     n = 0;
     while (queueInfo->selections[n] != None)
         n++;
-    queueInfo->selections =
-        (Atom *) XtRealloc((char *) queueInfo->selections,
-                           (Cardinal) ((size_t) (n + 2) * sizeof(Atom)));
+    queueInfo->selections = XtReallocArray(queueInfo->selections, (n + 2),
+                                           (Cardinal) sizeof(Atom));
     queueInfo->selections[n] = selection;
     queueInfo->selections[n + 1] = None;
 
@@ -2285,7 +2283,7 @@ XtGetSelectionParameters(Widget owner,
             int size = (int) BYTELENGTH(*length_return, *format_return) + 1;
             char *tmp = __XtMalloc((Cardinal) size);
 
-            (void) memmove(tmp, *value_return, (size_t) size);
+            (void) memcpy(tmp, *value_return, (size_t) size);
             XFree(*value_return);
             *value_return = tmp;
         }
@@ -2328,9 +2326,8 @@ AddParamInfo(Widget w, Atom selection, Atom param_atom)
         }
         if (n == 0) {
             pinfo->count++;
-            pinfo->paramlist = (Param)
-                XtRealloc((char *) pinfo->paramlist,
-                          (Cardinal) (pinfo->count * sizeof(ParamRec)));
+            pinfo->paramlist = XtReallocArray(pinfo->paramlist, pinfo->count,
+                                              (Cardinal) sizeof(ParamRec));
             p = &pinfo->paramlist[pinfo->count - 1];
             (void) XSaveContext(XtDisplay(w), XtWindow(w),
                                 paramPropertyContext, (char *) pinfo);

@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -193,13 +193,12 @@ Phase2Destroy(register Widget widget)
 }                               /* Phase2Destroy */
 
 static Boolean
-IsDescendant(Widget widget, Widget root)
+IsDescendant(Widget widget, const Widget root)
 {
-    while ((widget = XtParent(widget)) != root) {
-        if (widget == NULL)
-            return False;
+    while (widget != NULL && (widget = XtParent(widget)) != root) {
+        ;
     }
-    return True;
+    return (widget != NULL) ? True : False;
 }
 
 static void
@@ -372,11 +371,9 @@ XtDestroyWidget(Widget widget)
 
     if (app->destroy_count == app->destroy_list_size) {
         app->destroy_list_size += 10;
-        app->destroy_list = (DestroyRec *)
-            XtRealloc((char *) app->destroy_list,
-                      (Cardinal) (sizeof(DestroyRec) *
-                                  (size_t) app->destroy_list_size)
-            );
+        app->destroy_list = XtReallocArray(app->destroy_list,
+                                           (Cardinal) app->destroy_list_size,
+                                           (Cardinal) sizeof(DestroyRec));
     }
     dr = app->destroy_list + app->destroy_count++;
     dr->dispatch_level = app->dispatch_level;

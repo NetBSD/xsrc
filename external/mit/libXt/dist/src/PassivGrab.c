@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -108,7 +108,7 @@ DeleteDetailFromMask(Mask **ppDetailMask, unsigned short detail)
     if (!pDetailMask) {
         int i;
 
-        pDetailMask = (Mask *) __XtMalloc(sizeof(Mask) * MasksPerDetailMask);
+        pDetailMask = XtMallocArray(MasksPerDetailMask, (Cardinal) sizeof(Mask));
         for (i = MasksPerDetailMask; --i >= 0;)
             pDetailMask[i] = (unsigned long) (~0);
         *ppDetailMask = pDetailMask;
@@ -121,7 +121,7 @@ DeleteDetailFromMask(Mask **ppDetailMask, unsigned short detail)
  */
 
 static Mask *
-CopyDetailMask(Mask *pOriginalDetailMask)
+CopyDetailMask(const Mask *pOriginalDetailMask)
 {
     Mask *pTempMask;
     int i;
@@ -129,7 +129,7 @@ CopyDetailMask(Mask *pOriginalDetailMask)
     if (!pOriginalDetailMask)
         return NULL;
 
-    pTempMask = (Mask *) __XtMalloc(sizeof(Mask) * MasksPerDetailMask);
+    pTempMask = XtMallocArray(MasksPerDetailMask, (Cardinal) sizeof(Mask));
 
     for (i = 0; i < MasksPerDetailMask; i++)
         pTempMask[i] = pOriginalDetailMask[i];
@@ -558,7 +558,7 @@ _XtCheckServerGrabsOnWidget(XEvent *event, Widget widget, _XtBoolean isKeyboard)
 
     /*
      * if either there is no entry in the context manager or the entry
-     * is empty, or the keyboard is grabed, then no work to be done
+     * is empty, or the keyboard is grabbed, then no work to be done
      */
     if (!*passiveListPtr)
         return (XtServerGrabPtr) NULL;
@@ -859,7 +859,7 @@ XtUngrabButton(Widget widget, unsigned int button, Modifiers modifiers)
 }
 
 /*
- * Active grab of Device. clear any client side grabs so we dont lock
+ * Active grab of Device. clear any client side grabs so we don't lock
  */
 static int
 GrabDevice(Widget widget,
@@ -940,7 +940,7 @@ UngrabDevice(Widget widget, Time time, Boolean isKeyboard)
 }
 
 /*
- * Active grab of keyboard. clear any client side grabs so we dont lock
+ * Active grab of keyboard. clear any client side grabs so we don't lock
  */
 int
 XtGrabKeyboard(Widget widget,

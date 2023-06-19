@@ -1,3 +1,408 @@
+commit 64fca6a2d7cf4fee28ca2277ca6a8b7b32aee66e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 13:42:31 2023 -0700
+
+    libXt 1.3.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b3b0c1ad25a5d0f628eddd00113a40364d68480b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 3 17:42:47 2023 -0800
+
+    Replace XtMalloc() calls with XtMallocArray()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b1b54c50d0e5851d72c1e7aff4057687be2e447e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 3 16:23:20 2023 -0800
+
+    Replace XtRealloc() calls with XtReallocArray()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ece1c842a08c11c1f84b95355801d41cd8435b1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 3 14:55:19 2023 -0800
+
+    Add XtReallocArray() for overflow checking of multiplied args
+    
+    Uses reallocarray() if available, otherwise checks for overflow itself,
+    if overflow is possible (i.e. in ILP32 & ILP64 environments, but not LP64
+    with 32-bit ints).
+    
+    Includes unit tests and XtMallocArray() helper macro.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 392eb1cd5f2bdb186f0ff7f51abc4dd05ec13709
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 3 13:28:18 2023 -0800
+
+    test: Add unit tests for XtMalloc, XtCalloc, & XtRealloc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6cc4dd4191b4b13bd85fe287b6067e287a85d1d2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 4 10:33:29 2023 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    configure.ac:36: warning: The macro `AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:36: You should run autoupdate.
+    m4/libtool.m4:100: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:36: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 444eb13db2f9bc89aba333057fb9eae5d12acf5d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 09:30:58 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1736034c39682927830c0660a0b9587f19e53e4e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 3 11:35:21 2023 -0800
+
+    TMstate.c: Handle -Wduplicated-branches warnings
+    
+    Gets rid of these messages from gcc:
+    
+    TMstate.c: In function ‘GetBranchHead’:
+    TMstate.c:128:12: warning: this condition has identical branches
+      [-Wduplicated-branches]
+             if (parseTree->branchHeadTblSize == 0)
+                ^
+    TMstate.c: In function ‘_XtGetQuarkIndex’:
+    TMstate.c:183:16: warning: this condition has identical branches
+      [-Wduplicated-branches]
+                 if (parseTree->quarkTblSize == 0)
+                    ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 358e6295fdc494f4f1ed6ab7b1618a82bcd4b0ac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 3 11:09:22 2023 -0800
+
+    Add xfilesearchpath to xt.pc
+    
+    Make setting of --with-xfile-search-path available to other components,
+    without having to link with libXt.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5c617fc17d9da49f92823b78472a59bd98033611
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 16:24:31 2023 -0800
+
+    configure.ac: Replace HAVE_LIBRARY with AC_CHECK_LIB
+    
+    AC_CHECK_LIB was introduced in autoconf 2.0 (1994) to replace HAVE_LIBRARY
+    
+    Clears autoconf warnings of:
+    
+    configure.ac:108: warning: The macro `AC_HAVE_LIBRARY' is obsolete.
+    configure.ac:108: You should run autoupdate.
+    ./lib/autoconf/libs.m4:138: AC_HAVE_LIBRARY is expanded from...
+    configure.ac:108: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e7b044c11190ed4deae2c2bb61ff3cc2c99170b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 17 09:28:57 2022 -0800
+
+    tests: Replace g_assert() calls with g_assert_*() calls
+    
+    https://docs.gtk.org/glib/testing.html warns against using g_assert()
+    in test cases, since it is a no-op when compiling with G_DISABLE_ASSERT.
+    The replacement calls also give more detailed messages on failures.
+    
+    Raises the minimum required glib version for building unit tests
+    from 2.16 (released March 2008) to 2.40 (released March 2014) to
+    get support for g_assert_nonnull().
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 205e30739073d282d4401df57862ac3a5cf6a987
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 17 09:12:05 2022 -0800
+
+    tests: Use XORG_MEMORY_CHECK_FLAGS from xorg-macros 1.16
+    
+    Replaces previous local copy which had gotten out of date.
+    Raises xorg-macros minimum version from 1.13 (released March 2011)
+    to 1.16 (Dec. 2011).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 35eed89c651c87a5e9950f3033c1516358456425
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 17 08:38:38 2022 -0800
+
+    tests: update g_test_bug_base url from bugzilla to gitlab
+    
+    Also adds a call to g_test_bug() for the one existing testcase
+    associated with a bug in a public bug tracker.
+    
+    Otherwise this is mostly a placeholder for now, as no other tests
+    call g_test_bug() yet to report what bugs they test for.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1aaf5d502027104ddd566090787780319f510278
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 11 19:02:20 2022 -0700
+
+    Use memcpy() instead of XtMemmove() when buffers are known to differ
+    
+    Most of these came from a mass XtBCopy() -> XtMemmove() substitution
+    in 1993 with a commit comment of "ANSIfication".
+    
+    But include/X11/IntrinsicI.h now defines XtMemmmove() as just
+    calling memcpy() as long as src & dst differ, so remove an
+    unnecessary check when we've just allocated a buffer, and reduce
+    the chance that someone thinks we'll actually call memmove() instead
+    of memcpy()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3c54e99864eb6dba0d0cde7fe0a23ed7c1f5875f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 11 18:41:14 2022 -0700
+
+    Use memcpy() instead of memmove() when buffers are known not to overlap
+    
+    Most of these came from a mass bcopy() -> memmove() substitution
+    in 1993 with a commit comment of "ANSIfication".
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bbe78f905da6e36ebe1fe520903c760107b92b78
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 18:14:45 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eb4fe3345af696ea5a08a44034a464a712a02fdd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 18:12:34 2022 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ff361fe5ff0e7e34c838d7d1399de62ee90096e7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 17 18:09:44 2022 -0700
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bf57306493609b654167966eaad314048e649f9a
+Author: Thomas E. Dickey <dickey@his.com>
+Date:   Mon Jun 20 23:28:06 2022 +0000
+
+    update copyright-date
+
+commit cbbf610bfbef2f8a20c8a2886a8a9c1ec94d4a66
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sun Jan 9 11:23:01 2022 -0800
+
+    Support buttons > 5 in translation tables [v2]
+    
+    Add support for arbitrary button numbers by replacing the table-driven
+    detail parsing for BtnDown/ButtonPress and BtnUp/ButtonRelease with a
+    custom parser that allows for an arbitrary button number (1-255) after
+    the 'Button' prefix.
+    
+    Document what this syntax looks like in the table of detail information.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 215b8ee1d3231dd34a9e8002832cd028a6728dc7
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Fri Jun 17 20:45:41 2022 -0400
+
+    cppcheck (revise IsDescendant() to fix possible null-dereference)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 806aefc8c6175b6252a300905a327e9d60939af7
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Fri Jun 17 20:44:12 2022 -0400
+
+    cppcheck fixes (const, null dereferencing, uninitialized, scope)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit a80c543bb9955199619a2cb6280b89a879fd8811
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Thu Jun 16 16:06:42 2022 -0400
+
+    fixes for gcc13 warnings
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit a6685523e189c6330ba7007ecaf8f6d462b63024
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 14 20:25:20 2022 -0400
+
+    cppcheck and clang --analyze fixes
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 248f980a67ac721882465c48d60039ac70d3fa82
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 14 04:03:18 2022 -0400
+
+    codespell-fixes
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 0f77f9f6a8974257a21e5fc0b8327b838c2a4849
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Jun 14 03:46:53 2022 -0400
+
+    add _X_NORETURN to agree with header-file
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 9bebcedeb378f9fd6ea26767b11dae551b94dc54
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 2 18:34:01 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d5bb760ee996927dd5dfa5b3c219b3d6ef63d11
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 14:50:51 2021 +0100
+
+    Fix InternalCallbackRec layout if pointers are bigger than 64 bits
+    
+    When running `xeyes` via `SSH -X` on CHERI-RISC-V FreeBSD, I was getting
+    a Bus Error (unaligned store) in the `cl->callback = callback;` line of
+    _XtAddCallback. The `cl` variable (created using `ToList(icl)`) was only
+    aligned to 8 bytes, but for CHERI-RISC-V pointer-type loads and stores
+    require 16-byte alignment.
+    
+    In order to fix this, I added a C99 flexible array member to
+    internalCallbackRec when compiling for C99 or newer. This ensures
+    that sizeof(InternalCallbackRec) is 16 (since it now includes the
+    required 12 byte padding up to the first XtCallbackRec). This also
+    ensures that alignof(InternalCallbackRec) is 16, but that doesn't
+    matter in this case since malloc() will always return a
+    sufficiently-aligned pointer.
+    
+    I also changed ToList(p) to use the flexible array member directly
+    when compiling for C99. This is not a functional change since it
+    will evaluate to the same pointer, but it does add additional type
+    checking and ensures that only a `InternalCallbackRec *` can be
+    passed to the macro.
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
+commit f8c7069a46af185e0bfaa43d63d450c9a44787ba
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 14:35:11 2021 +0100
+
+    Fix XrmResource layout if pointers are bigger than long
+    
+    On CHERI-enabled architectures (e.g. Arm's Morello), pointers are twice
+    the size of addresses (i.e. 128 bits for Morello, 64 bits for 32-bit
+    RISC-V). However, XtArgVal is currently defined as long, so it cannot
+    be used to store pointers on these architectures.
+    
+    Also add a _Static_assert() when compiling with C11 support to check
+    that the offset of the last member matches that of XtResource.
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
+commit dd3e028d2a1bc5daf87865ca1e5e923000186af8
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 14:33:31 2021 +0100
+
+    Cast via intptr_t when converting integers to pointers
+    
+    I found these by compiling libXt with the CHERI Clang compiler, as it
+    warns about conversions from integer to pointer that do not use intptr_t.
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
+commit 38e89c8582efc8cd1e49205b5d02a10511738120
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 14:32:44 2021 +0100
+
+    Use XtUIntPtr for integer types that can hold pointers
+    
+    Various Xt*Id types are integer types that are used to hold pointers.
+    Use uintptr_t for standards-compliant conversion and to support
+    architectures where long cannot hold pointers (e.g. CHERI).
+    
+    I found these by compiling libXt with the CHERI Clang compiler, as it
+    warns about conversions from integer to pointer that do not use intptr_t.
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
+commit cfa8e152141367edb7b53e90da4ad80e995f3607
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 14:29:28 2021 +0100
+
+    XtArgVal: Support architectures where pointers are bigger than long
+    
+    On CHERI-enabled architectures (e.g. Arm's Morello), pointers are twice
+    the size of addresses (i.e. 128 bits for Morello, 64 bits for 32-bit
+    RISC-V). However, XtArgVal is currently defined as long, so it cannot
+    be used to store pointers on these architectures.
+    
+    This commit changes XtArgVal to use intptr_t instead, which should be
+    long on most architectures but is larger for CHERI.
+    It also introduces XtIntPtr/XtUIntPtr which will be used in follow-up
+    changes. This commit should also help on LLP64 ABIs where long is 32
+    bits but pointers are 64 bits.
+    
+    I am not sure what the compiler and C standard requirements are, so I've
+    guarded the use of stdint.h with `#if __STDC_VERSION__ >= 199901L`.
+    I've also added a _Static_assert() when compiling in C11 mode to
+    statically verify that the XtArgVal type requirements are met.
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
+commit 4a1cacfb1a21b2583809451089d115fc8a23133e
+Author: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+Date:   Wed Jun 16 11:03:25 2021 +0100
+
+    Define LONG64 if __SIZEOF_LONG__ indicates 64-bit long
+    
+    All modern compilers (GCC>=4.6, Clang>=3.0) define this macro, so we can
+    use it to detect 64-bit longs without adding to the architecture list.
+    
+    This change is needed to successfully run xeyes on a FreeBSD CHERI-RISC-V
+    QEMU VM via SSH forwarding.
+    See also https://gitlab.freedesktop.org/xorg/proto/xorgproto/-/merge_requests/41
+    
+    Signed-off-by: Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
+
 commit edd70bdfbbd16247e3d9564ca51d864f82626eb7
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Sun Jan 24 09:45:53 2021 -0500
@@ -3486,7 +3891,7 @@ Date:   Sat Mar 27 16:30:02 2010 -0400
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit e3bce11a8ea7e0175a6f08367bace9b0eb2b898a
-Author: Rémi Cardona <remi@gentoo.org>
+Author: Rémi Cardona  <remi@gentoo.org>
 Date:   Mon Mar 15 22:59:04 2010 +0100
 
     libXt 1.0.8
@@ -3535,7 +3940,7 @@ Date:   Mon Dec 7 22:28:53 2009 -0800
     Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
 
 commit 345633dc9c79b32a1b391dfb4dfedf87ae9e291b
-Author: Rémi Cardona <remi@gentoo.org>
+Author: Rémi Cardona  <remi@gentoo.org>
 Date:   Mon Nov 9 12:26:17 2009 +0100
 
     Don't install makestrs on the system
@@ -4217,7 +4622,7 @@ Date:   Thu Jun 30 12:23:32 2005 +0000
     Add -no-undefined to linker command to build shared library on cygwin too
 
 commit 64b2b98096c6a5b2ac3af59796e07601eee4e28a
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Mon Jun 20 21:47:20 2005 +0000
 
     - Make Xt install its internal files in /usr/include/X11, both in the
@@ -4278,13 +4683,13 @@ Date:   Thu May 19 00:10:08 2005 +0000
     Require automake 1.7 in AM_INIT_AUTOMAKE
 
 commit c7fe09644945e3725c0b67b84cd24d8475cea184
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed May 18 19:34:25 2005 +0000
 
     Also include include/X11
 
 commit 605a76dcc93e277e1b26841a0225b7e0fb851b76
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Wed May 18 15:38:31 2005 +0000
 
     - conditionally include config.h in xc/lib/Xt sources

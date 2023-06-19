@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -208,7 +208,7 @@ XtDisplayStringConversionWarning(Display *dpy,
                 report_it = *(Boolean *) value.addr ? Report : Ignore;
             else if (rep_type == _XtQString) {
                 XrmValue toVal;
-                Boolean report;
+                Boolean report = False;
 
                 toVal.addr = (XPointer) &report;
                 toVal.size = sizeof(Boolean);
@@ -817,7 +817,7 @@ XtCvtStringToFloat(Display *dpy,
                    XtPointer *closure_ret _X_UNUSED)
 {
     int ret;
-    float f, nan;
+    float f, nan = 0.0;
 
     (void) sscanf("NaN", "%g",
                   toVal->addr != NULL ? (float *) toVal->addr : &nan);
@@ -1697,7 +1697,7 @@ XtCvtStringToCommandArgArray(Display *dpy,
                 (IsWhitespace(*(src + 1)) || IsNewline(*(src + 1)))) {
                 len = (int) (src - start);
                 if (len) {
-                    /* copy preceeding part of token */
+                    /* copy preceding part of token */
                     memcpy(dst, start, (size_t) len);
                     dst += len;
                 }
@@ -1719,8 +1719,8 @@ XtCvtStringToCommandArgArray(Display *dpy,
             dst++;
     }
 
-    ptr = strarray = (String *)
-        __XtMalloc((Cardinal) ((size_t) (tokens + 1) * sizeof(String)));
+    ptr = strarray = XtMallocArray((Cardinal) tokens + 1,
+                                   (Cardinal) sizeof(String));
     src = dst_str;
     while (--tokens >= 0) {
         *ptr = src;

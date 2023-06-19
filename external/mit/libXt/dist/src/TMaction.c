@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -102,7 +102,6 @@ CompileActionTable(register RConst struct _XtActionsRec *actions, register Cardi
 {
     register CompiledActionTable cActions;
     register int i;
-    CompiledAction hold;
     CompiledActionTable cTableHold;
     XrmQuark (*func) (_Xconst char *);
 
@@ -111,8 +110,8 @@ CompileActionTable(register RConst struct _XtActionsRec *actions, register Cardi
     func = (perm ? XrmPermStringToQuark : XrmStringToQuark);
 
     if (!stat) {
-        cTableHold = cActions = (CompiledActionTable)
-            __XtMalloc((Cardinal) ((size_t) count * sizeof(CompiledAction)));
+        cTableHold = cActions = XtMallocArray(count,
+                                              (Cardinal) sizeof(CompiledAction));
 
         for (i = (int) count; --i >= 0; cActions++, actions++) {
             cActions->proc = actions->proc;
@@ -130,6 +129,7 @@ CompileActionTable(register RConst struct _XtActionsRec *actions, register Cardi
 
     /* Insertion sort.  Whatever sort is used, it must be stable. */
     for (i = 1; (Cardinal) i <= count - 1; i++) {
+        CompiledAction hold;
         register Cardinal j;
 
         hold = cActions[i];
@@ -464,15 +464,14 @@ EnterBindCache(Widget w,
         if (_XtGlobalTM.numBindCache == _XtGlobalTM.bindCacheTblSize) {
             _XtGlobalTM.bindCacheTblSize =
                 (TMShortCard) (_XtGlobalTM.bindCacheTblSize + 16);
-            _XtGlobalTM.bindCacheTbl = (TMBindCache *)
-                XtRealloc((char *) _XtGlobalTM.bindCacheTbl,
-                          (Cardinal) ((_XtGlobalTM.bindCacheTblSize) *
-                                      sizeof(TMBindCache)));
+            _XtGlobalTM.bindCacheTbl =
+                XtReallocArray(_XtGlobalTM.bindCacheTbl,
+                               (Cardinal) _XtGlobalTM.bindCacheTblSize,
+                               (Cardinal) sizeof(TMBindCache));
         }
         _XtGlobalTM.bindCacheTbl[_XtGlobalTM.numBindCache++] = bindCache;
 #endif                          /* TRACE_TM */
-        XtMemmove((XtPointer) &bindCache->procs[0],
-                  (XtPointer) procs, procsSize);
+        memcpy(&bindCache->procs[0], procs, procsSize);
     }
     UNLOCK_PROCESS;
     return &bindCache->procs[0];
@@ -574,7 +573,6 @@ void
 _XtBindActions(Widget widget, XtTM tm)
 {
     XtTranslations xlations = tm->translations;
-    TMSimpleStateTree stateTree;
     int globalUnbound = 0;
     Cardinal i;
     TMBindData bindData = (TMBindData) tm->proc_table;
@@ -587,6 +585,8 @@ _XtBindActions(Widget widget, XtTM tm)
         return;
 
     for (i = 0; i < xlations->numStateTrees; i++) {
+        TMSimpleStateTree stateTree;
+
         stateTree = (TMSimpleStateTree) xlations->stateTreeTbl[i];
         if (bindData->simple.isComplex) {
             complexBindProcs = TMGetComplexBindEntry(bindData, i);
@@ -761,9 +761,8 @@ XtGetActionList(WidgetClass widget_class,
     }
     *num_actions_return = widget_class->core_class.num_actions;
     if (*num_actions_return) {
-        XtActionList list = *actions_return = (XtActionList)
-            __XtMalloc((Cardinal)
-                       ((size_t) *num_actions_return * sizeof(XtActionsRec)));
+        XtActionList list = *actions_return =
+            XtMallocArray(*num_actions_return, (Cardinal) sizeof(XtActionsRec));
 
         table = GetClassActions(widget_class);
 
@@ -906,7 +905,7 @@ _XtPopupInitialize(XtAppContext app)
      * The _XtGlobalTM.newMatchSemantics flag determines whether
      * we support old or new matching
      * behavior. This is mainly an issue of whether subsequent lhs will
-     * get pushed up in the match table if a lhs containing thier initial
+     * get pushed up in the match table if a lhs containing this initial
      * sequence has already been encountered. Currently inited to False;
      */
 #ifdef NEW_TM
