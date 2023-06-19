@@ -1,3 +1,286 @@
+commit 695e90ad26f632feb0f58ad94882fb3a263bf114
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jun 15 09:14:48 2023 -0700
+
+    libX11 1.8.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 304a654a0d57bf0f00d8998185f0360332cfa36c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jun 10 16:30:07 2023 -0700
+
+    InitExt.c: Add bounds checks for extension request, event, & error codes
+    
+    Fixes CVE-2023-3138: X servers could return values from XQueryExtension
+    that would cause Xlib to write entries out-of-bounds of the arrays to
+    store them, though this would only overwrite other parts of the Display
+    struct, not outside the bounds allocated for that structure.
+    
+    Reported-by: Gregory James DUCK <gjduck@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 71b08b8af20474bb704a11affaa8ea39b06d5ddf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed May 31 17:45:40 2023 -0700
+
+    libX11 1.8.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 03ba0140940cc76524d83096a47309f5c398541f
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Mon May 22 12:02:06 2023 +0200
+
+    nls: use a slash instead of a combining solidus in compose sequences
+    
+    First: combining diacritics like the combining long solidus (`U+0338`)
+    are not meant to be used in compose sequences.  Second: there is just
+    one layout in xkeyboard-config that contains the `U0338` character:
+    the deprecated/obsolete German T3 layout.  So, practically speaking,
+    these compose sequences with `U0338` were untypable.  So, use a slash
+    instead, that almost all layouts have.  This does require that the
+    sequence `<Compose> <less> <slash>` changes its meaning from backslash
+    to not-less-than (`≮`).  This seems like an acceptable sacrifice, as
+    the sequence `<Compose> <slash> <slash>` is a faster/easier sequence
+    for the backslash and most layouts contain a backslash already anyway.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 616701317e25b2c0f509f4d93af5dee6de09012d
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Mon May 22 11:19:32 2023 +0200
+
+    nls: delete six compose sequences that cannot be typed
+    
+    None of the layouts in xkeyboard-config contain `Ohook` or `Uhook`
+    or `U+01D3` (U with caron) nor their lowercase forms, so these six
+    sequences cannot be typed on any known keyboard.
+    
+    (Also, the target characters of the sequences with hook and horn
+    seem to occur only in Vietnamese, where the horn is part of the
+    vowel and the hook is a tonal mark.  All Vietnamese layouts in
+    xkeyboard-config contain `Ohorn` and `Uhorn`, and then the five
+    tonal marks as dead keys, `dead_hook` among them.  It does not
+    make sense to want to apply a horn to a vowel that already has
+    a tonal mark, nor is it possible with the Vietnamese layouts.)
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 35d9621d78cb196b4ccd3ee1baa1ce2a21e4674b
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Sun May 21 16:17:32 2023 +0200
+
+    nls: sort three sequences alphabetically in their group, like all others
+    
+    Also, consistently form uppercase+lowercase pairs, like for most others.
+
+commit 208d550954c7266fa8093b02a2a97047e1478c00
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Thu Apr 13 17:25:35 2023 +0200
+
+    nls: make the Amharic compose sequences use the dead-vowel symbols
+    
+    Last year, commit 488b156fe2 changed mistaken ASCII characters to the
+    code points that were actually used in the Ethiopian keyboard layout.
+    
+    But those code points were mistaken too: the intention was not to use
+    the code point U+FE68 in the layout but the raw symbol code 0xfe68 --
+    and so on for the other codes.  The symbols that these raw codes were
+    intended to refer to were `dead_a` and friends.  But these dead vowels
+    were added under different codes: 0xfe80 to 0xfe8b.
+    
+    So, correct the Amharic compose sequences to make use of the dead-vowel
+    symbols that were specifically added for them fifteen years ago.
+    
+    (As soon as this is merged, xkeyboard-config wil be changed too to use
+    the dead vowels in the Ethiopian layout.)
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 96cbac89a02220eb21e13ca5fa7c8c5adf77028a
+Author: jmcwilliams403 <jmcwilliams403@gmail.com>
+Date:   Fri Mar 31 09:47:03 2023 -0400
+
+    nls: add compose sequence for capital schwa, and delete a deviant one
+    
+    This sequence has already been defined in the iso8859-9e compose
+    file meant for the Azerbaijani locale, yet for the longest time, only
+    the lowercase form has existed in the en_US.UTF-8 master compose
+    file. This patch adds one sequence for Latin Capital Letter Schwa for
+    the Azerbaijani language.
+    
+    Additionally, the sequence in the pt_BR.UTF-8 locale for capital
+    schwa has been removed as it uses two lowercase e's as part of its
+    sequence, which in practice would make typing both `Multi_key e e`
+    and `Multi_key E E` output capital schwa.
+
+commit a6528d92b3865adb4f9951df91a714f55f56d59e
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Tue Apr 4 11:35:44 2023 +0200
+
+    XSetScreenSaver.man: restore the part that was accidentally snipped
+    
+    Four years ago, while removing private macros, commit fe46eb2871
+    unintentionally truncated the XSetScreenSaver manpage.  Restore
+    the snipped part (minus trailing spaces and a mistaken singular).
+    
+    This fixes issue #187.
+    
+    Reported-by: Sergio Gelato
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit eb166af8f9f4184108fe8e0611a09af03d12059e
+Author: jmcwilliams403 <jmcwilliams403@gmail.com>
+Date:   Fri Mar 24 08:37:32 2023 -0400
+
+    NLS: Remove strange dead_cedilla cedi sign sequences
+    
+    These sequences appear to be a leftover artifact of auto-generating
+    dead_currency sequences for cent and the cedi sign, where chaining
+    with ascii "c" vs "ccedilla" would output cent vs the cedi sign
+    respectively, but somehow this ended up creating strange sequences
+    with dead_cedilla followed by cent or the colon sign to output the
+    cedi sign, the latter sequence of which was already removed recently.
+    Additionally, sequences beginninng with dead_cedilla followed by
+    currency have been removed as they also appear to be related to these
+    artifacts. The two remaining sequences beginning with dead_currency
+    followed by dead_cedilla are maintained and moved to the stretch of
+    dead_currency sequences next to ccedilla, and sorted in order of
+    unicode decompositional complexity.
+
+commit 6e889f34679bb96f4d61ef069259c042cb4a9a59
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Mar 24 09:41:48 2023 +0100
+
+    nls: remove twenty two untypable Greek compose sequences
+    
+    None of the keyboard layouts in xkeyboard-config contains accented
+    Greek characters like `Greek_alphaaccent` or `Greek_iotadieresis`
+    (nor in their Unicode hexadecimal forms, like U03AC or 0x10003CA),
+    so none of these sequences could be typed on an existing layout.
+    
+    Also, the two sequences that started with `Greek_accentdieresis`
+    were plain wrong: making a spacing character into a dead key.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit 98be4cb23a5eadc98f81f05c4696f687119152c8
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Fri Mar 24 09:00:48 2023 +0100
+
+    nls: remove four hundred and sixty untypable Greek compose sequences
+    
+    None of the keyboard layouts in xkeyboard-config contains code points
+    in the range U+1F00..U+1FFF (the Greek Extended block), so none of the
+    removed sequences could be typed on an existing layout.
+    
+    (Of course it is possible that some people have their own private layout
+    that contains some of the Greek Extended characters, but if they do,
+    then they can also define private compose sequences, when needed.)
+    
+    Modern Greek does not use these characters with polytonic diacritics
+    anyway -- they are useful only for typing traditional Greek.
+    
+    The useless sequences were removed with this command:
+    
+      sed -i '/<U1F..>/d' nls/en_US.UTF-8/Compose.pre
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit ff8706a5eae25b8bafce300527079f68a201d27f
+Author: Benno Schulenberg <bensberg@telfort.nl>
+Date:   Wed Jun 15 11:54:54 2022 +0200
+
+    nls: delete compose sequences that pointlessly mix upper and lower case
+    
+    It's nice to have compose sequences for things like © and ®, but allowing
+    them to be composed also with letters of different case is unneeded.  It
+    is good enough to have sequences of only lowercase and only uppercase.
+    
+    Signed-off-by: Benno Schulenberg <bensberg@telfort.nl>
+
+commit ca99e338a9b8aad300933b1336f9e3c091392213
+Author: jmcwilliams403 <jmcwilliams403@gmail.com>
+Date:   Sun Mar 12 15:13:27 2023 +0000
+
+    NLS: move dead-caron subscript compositions to the relevant Unicode block
+
+commit dac2985b347cebc0f631e43e41eaeddb68de1676
+Author: jmcwilliams403 <jmcwilliams403@gmail.com>
+Date:   Sun Mar 12 14:49:47 2023 +0000
+
+    NLS: implement the expansion of the six Breton N-graph keysyms
+    
+    These one-keysym-to-multiple-characters sequences will allow fully defining
+    the Breton keyboard layout, without needing custom compose sequences.
+
+commit e45ca7b41dcd3ace7681d6897505f85d374640f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Mar 14 10:22:48 2023 -0700
+
+    gitlab CI: add workflow rules
+    
+    Needed due to the gitlab config changes described in:
+     https://gitlab.freedesktop.org/freedesktop/freedesktop/-/issues/438
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 72eeeb6dedc39f68608312eb0001f77fffccd499
+Author: jmcwilliams403 <jmcwilliams403@gmail.com>
+Date:   Sun Mar 5 13:33:38 2023 +0000
+
+    NLS: move long S compositions to respective blocks
+
+commit 8bbbed75a20556e41658103265974decee974645
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 4 10:44:45 2023 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:20: warning: The macro `AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:20: You should run autoupdate.
+    m4/libtool.m4:100: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:20: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 53bf8584e8d7d5d4a4a8114bff26a6f631c7fac1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 14:09:45 2023 -0800
+
+    configure: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an autoconf warning.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 31a9451111fb1e3ae1199d44f94cd0b134ca455d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 13:13:21 2023 -0800
+
+    configure: raise minimum autoconf requirement to 2.70
+    
+    Needed for builds on NetBSD to work correctly, since it depends on
+    AC_USE_SYSTEM_EXTENSIONS defining _OPENBSD_SOURCE to expose the
+    prototype for reallocarray() in the system headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1ba02f878f83e3b42389547e01b24371f0a50e60
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 13:32:02 2023 -0800
+
+    gitlab CI: Add libtool to required packages
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit fc5ec8edda1efdf5d66db4e76796e3c407527b3b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Feb 4 12:02:29 2023 -0800

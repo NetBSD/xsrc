@@ -31,6 +31,26 @@ For patch submission instructions, see:
 
   https://www.x.org/wiki/Development/Documentation/SubmittingPatches
 
+## Release 1.8.6
+
+ * Add bounds checks in InitExt.c (CVE-2023-3138)
+
+## Release 1.8.5
+
+ * autoconf & libtool updates (!187, !188)
+ * Restore missing text in XSetScreenSaver man page (#187, !203)
+ * Update am_ET.UTF-8 compose keys to use dead-vowel symbols,
+   in coordination with xkeyboard-config 2.39 (!205)
+ * Assorted updates to en_US.UTF-8 compose keys (!189, !195, !196, !198,
+   !199, !200, !201, !207, !208, !209)
+
+## Release 1.8.4
+
+ * Revert AddressSanitizer fix from 1.8.3 that caused regression (#176, !180)
+ * Add two compose sequences for "capital B with stroke", remove others (!179)
+ * Further improved handling of reentering libX11 via X*IfEvent() calls (!176)
+
+
 ## Release 1.8.3
 
  * Improved handling of reentering libX11 via X*IfEvent() calls (!171, !173)
