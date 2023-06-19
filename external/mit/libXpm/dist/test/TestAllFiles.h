@@ -156,5 +156,9 @@ TestAllNormalFiles(const char *subdir, int expected, testfilefunc testfunc)
 static void
 TestAllCompressedFiles(const char *subdir, int expected, testfilefunc testfunc)
 {
+#ifdef NO_ZPIPE
+    g_test_message("compression disabled, skipping compressed file tests");
+#else
     TestAllFilesByType(G_TEST_BUILT, TRUE, subdir, expected, testfunc);
+#endif
 }
