@@ -1,3 +1,110 @@
+commit 20dec4447eead8288c332064e9312233655202f7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 7 16:07:57 2023 -0700
+
+    xf86-video-i128 1.2.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2a0606ca9d7984815c5dd5f087f7735819e7e8d1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 10:25:11 2023 -0700
+
+    Handle -Wempty-body warnings
+    
+    Repeated for each call of the CACHED_UPDATE macro:
+    
+    i128exa.c: In function ‘i128SetBufCtrl’:
+    i128exa.c:66:74: warning: suggest braces around empty body in an ‘if’ statement [-Wempty-body]
+             if (CACHE_DEBUG) I128_EXA_DEBUG(("Updated cache for " #reg "\n")); \
+                                                                              ^
+    i128exa.c:89:5: note: in expansion of macro ‘CACHED_UPDATE’
+         CACHED_UPDATE(buf_ctrl, BUF_CTRL);
+         ^~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4e5a23aa55e5a85ae816616283e79c777d5a29fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 10:21:56 2023 -0700
+
+    Handle -Wdiscarded-qualifiers warnings
+    
+    i128_driver.c: In function ‘I128PreInit’:
+    i128_driver.c:857:18: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+               ramdac = "TI3025";
+                      ^
+    i128_driver.c:894:18: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+               ramdac = "IBM526";
+                      ^
+    i128_driver.c:928:18: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+               ramdac = "IBM528";
+                      ^
+    i128_driver.c:962:18: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+               ramdac = "SilverHammer";
+                      ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fc8f4fd967ffab492dfa23e3f71c3cb8d2cbc145
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 9 10:19:46 2023 -0700
+
+    Handle -Wunused-const-variable warnings
+    
+    i128accel.c:95:18: warning: ‘split_size’ defined but not used [-Wunused-const-variable=]
+     static const int split_size[] = { 0x20,  0x10,  0x08, 0x00 };
+                      ^~~~~~~~~~
+    i128accel.c:94:18: warning: ‘max_size’ defined but not used [-Wunused-const-variable=]
+     static const int max_size[]   = { 0x80,  0x40,  0x20, 0x00 };
+                      ^~~~~~~~
+    i128accel.c:93:18: warning: ‘min_size’ defined but not used [-Wunused-const-variable=]
+     static const int min_size[]   = { 0x62,  0x32,  0x1A, 0x00 };
+                      ^~~~~~~~
+    i128accel.c:73:21: warning: ‘i128alu’ defined but not used [-Wunused-const-variable=]
+     static const CARD32 i128alu[16] =
+                         ^~~~~~~
+    i128exa.c:450:33: warning: ‘dest_formats’ defined but not used [-Wunused-const-variable=]
+     static const struct dest_format dest_formats[] = {
+                                     ^~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cfbbdffde628c762c5bb355f1871ce503c5d09f9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1992391af0d03c51a995b8df4791dc685e2299b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 11:52:00 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ce6d6a8b606ff4ddb55f6096fd2bb9b361ea8a80
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 11:51:33 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c43b12e980c73bac1f52582d672f03ca1a31245
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 11:47:14 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 674af4475064c8eb8a7f2a9368c04c9089582f94
 Author: Kevin Brace <kevinbrace@gmx.com>
 Date:   Fri Dec 7 15:15:03 2018 -0800
@@ -688,13 +795,13 @@ Date:   Mon Oct 17 00:09:03 2005 +0000
     Use sed & cpp to substitute variables in driver man pages
 
 commit a7245466156b03b2d6a96f553a0b32bd2ea9f37c
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Oct 4 20:01:03 2005 +0000
 
     Check in generated README files
 
 commit be7e3263669b7f2746b1dce8d1909576f38844ee
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Mon Oct 3 21:22:07 2005 +0000
 
     - For all drivers that have a <driver>.sgml file, add code in their build
@@ -748,7 +855,7 @@ Date:   Fri Jul 29 21:22:43 2005 +0000
     - Update modular Xorg version
 
 commit 12fb6c9712311fb0e39bce91862aac5f6b832cd7
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 00:01:49 2005 +0000
 
     Build system for i128 driver

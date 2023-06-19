@@ -68,6 +68,7 @@ static void I128ScreenToScreenBitBlt(ScrnInfoPtr pScrn, int nbox,
 #define ENG_DONE() { while (pI128->mem.rbase_a[FLOW] & (FLOW_DEB | FLOW_MCB | FLOW_PRV)) ;}
 
 
+#ifdef HAVE_XAA_H
 /* pre-shift rops and just or in as needed */
 
 static const CARD32 i128alu[16] =
@@ -93,6 +94,7 @@ static const CARD32 i128alu[16] =
 static const int min_size[]   = { 0x62,  0x32,  0x1A, 0x00 };
 static const int max_size[]   = { 0x80,  0x40,  0x20, 0x00 };
 static const int split_size[] = { 0x20,  0x10,  0x08, 0x00 };
+#endif
 
 
 void

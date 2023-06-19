@@ -63,7 +63,7 @@
 
 #define CACHED_UPDATE(val, reg) \
     do if (pI128->val != val) { \
-        if (CACHE_DEBUG) I128_EXA_DEBUG(("Updated cache for " #reg "\n")); \
+        if (CACHE_DEBUG) { I128_EXA_DEBUG(("Updated cache for " #reg "\n")); } \
         pI128->mem.rbase_a[reg] = pI128->val = val; \
     } while (0)
 
@@ -447,11 +447,11 @@ struct dest_format {
     int i128_format;
 };
 
+#if 0
 static const struct dest_format dest_formats[] = {
     { 0, 0 }
 };
 
-#if 0
 static struct dest_format *
 i128MapDestFormat(int fmt)
 {
