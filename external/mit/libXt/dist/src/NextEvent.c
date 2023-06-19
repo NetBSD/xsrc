@@ -1,5 +1,5 @@
 /***********************************************************
-Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1993, Oracle and/or its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -144,7 +144,7 @@ static SignalEventRec *freeSignalRecs;
 #endif
 
 static void
-AdjustHowLong(unsigned long *howlong, struct timeval *start_time)
+AdjustHowLong(unsigned long *howlong, const struct timeval *start_time)
 {
     struct timeval new_time, time_spent, lstart_time;
 
@@ -280,10 +280,8 @@ InitFds(XtAppContext app,
                          wf->stack);
     }
     else {
-        wf->fdlist = (struct pollfd *)
-            XtRealloc((char *) wf->fdlist,
-                      (Cardinal) (sizeof(struct pollfd) *
-                                  (size_t) wf->fdlistlen));
+        wf->fdlist = XtReallocArray(wf->fdlist, (Cardinal) wf->fdlistlen,
+                                    (Cardinal) sizeof(struct pollfd));
     }
 
     if (wf->fdlistlen) {
@@ -332,7 +330,7 @@ InitFds(XtAppContext app,
 static void
 AdjustTimes(XtAppContext app,
             Boolean block,
-            unsigned long *howlong,
+            const unsigned long *howlong,
             Boolean ignoreTimers,
             wait_times_ptr_t wt)
 {
@@ -601,7 +599,7 @@ _XtWaitForSomething(XtAppContext app,
     if (app->lock == (ThreadAppProc) NULL)
         drop_lock = FALSE;
 #else
-    drop_lock = drop_lock;      /* avoid unsed warning */
+    (void) drop_lock;           /* avoid unused warning */
 #endif
 
     InitTimes((Boolean) block, howlong, &wt);
@@ -649,14 +647,14 @@ _XtWaitForSomething(XtAppContext app,
             nfds = IoWait(&wt, &wf);
         if (nfds == -1) {
             /*
-             *  interrupt occured recalculate time value and wait again.
+             *  interrupt occurred recalculate time value and wait again.
              */
             if (errno == EINTR || errno == EAGAIN) {
                 if (errno == EAGAIN) {
-                    errno = 0;  /* errno is not self reseting */
+                    errno = 0;  /* errno is not self resetting */
                     continue;
                 }
-                errno = 0;      /* errno is not self reseting */
+                errno = 0;      /* errno is not self resetting */
 
                 /* was it interrupted by a signal that we care about? */
                 if (!ignoreSignals && app->signalQueue != NULL) {
@@ -1002,7 +1000,7 @@ XtNoticeSignal(XtSignalId id)
      *
      * Lastly, and perhaps most importantly, since POSIX threads
      * says that the handling of asynchronous signals in a synchronous
-     * threads environment is undefined. Therefor it would be an
+     * threads environment is undefined. Therefore it would be an
      * error for both signals and threads to be in use in the same
      * program.
      */
@@ -1043,11 +1041,8 @@ XtAppAddInput(XtAppContext app,
         Cardinal n = (Cardinal) (source + 1);
         int ii;
 
-        app->input_list = (InputEvent **) XtRealloc((char *) app->input_list,
-                                                    (Cardinal) ((size_t) n *
-                                                                sizeof
-                                                                (InputEvent
-                                                                 *)));
+        app->input_list = XtReallocArray(app->input_list, n,
+                                         (Cardinal) sizeof(InputEvent *));
         for (ii = app->input_max; ii < (int) n; ii++)
             app->input_list[ii] = (InputEvent *) NULL;
         app->input_max = (short) n;

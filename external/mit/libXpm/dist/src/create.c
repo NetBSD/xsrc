@@ -2392,8 +2392,8 @@ ParseAndPutPixels(
 	{
 
 /* free all allocated pointers at all exits */
-#define FREE_CIDX {int f; for (f = 0; f < 256; f++) \
-if (cidx[f]) XpmFree(cidx[f]);}
+#define FREE_CIDX do {int f; for (f = 0; f < 256; f++) \
+if (cidx[f]) XpmFree(cidx[f]);} while(0)
 
 	    /* array of pointers malloced by need */
 	    unsigned short *cidx[256];
