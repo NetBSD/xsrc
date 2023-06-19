@@ -95,7 +95,7 @@
 #define PACKAGE_NAME "xdpyinfo"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xdpyinfo 1.3.3"
+#define PACKAGE_STRING "xdpyinfo 1.3.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xdpyinfo"
@@ -104,7 +104,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.3.3"
+#define PACKAGE_VERSION "1.3.4"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -113,7 +113,7 @@
 #define PACKAGE_VERSION_MINOR 3
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
+#define PACKAGE_VERSION_PATCHLEVEL 4
 
 /* Define to 1 if all of the C90 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
@@ -121,4 +121,4 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.3.3"
+#define VERSION "1.3.4"
