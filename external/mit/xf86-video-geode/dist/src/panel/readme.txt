@@ -22,7 +22,7 @@ subdirectory needs to be copied in the driver directory.
 -----------------------------------------------------------------------------
 INSTALLATION INSTRUCTIONS	
 ----------------------------------------------------------------------------- 
-These is no instalation and to be treaded as a driver source code extension.
+There is no installation and to be treated as a driver source code extension.
 -----------------------------------------------------------------------------
 UNIT TEST
 Panel library when compiled is a part of the driver and cannot be unit tested.
@@ -153,7 +153,7 @@ Dependencies:
 -----------------------------------------------------------------------------
 FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
-- Added function protoype.
+- Added function prototype.
 -----------------------------------------------------------------------------
 DEFECTS CORRECTED
 -----------------------------------------------------------------------------
@@ -224,7 +224,7 @@ Dependencies:
 -----------------------------------------------------------------------------
 FUNCTIONAL CHANGES
 -----------------------------------------------------------------------------
-Added the protoype for gfx_detect_video.
+Added the prototype for gfx_detect_video.
 Durango dependency removed.
 -----------------------------------------------------------------------------
 DEFECTS CORRECTED

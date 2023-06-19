@@ -1044,7 +1044,7 @@ gfx_set_video_palette_entry(unsigned long index, unsigned long palette)
 /*---------------------------------------------------------------------------
  * gfx_set_video_palette_bypass
  * 
- * This routine enables/disables the pallete RAM bypass.
+ * This routine enables/disables the palette RAM bypass.
  *---------------------------------------------------------------------------
  */
 #if GFX_VIDEO_DYNAMIC
@@ -2045,7 +2045,7 @@ gfx_get_video_src_size(void)
 
     if (width) {
         /* DETERMINE HEIGHT BY DIVIDING TOTAL SIZE BY WIDTH */
-        /* Get total size from display controller - abtracted. */
+        /* Get total size from display controller - abstracted. */
 
         height = gfx_get_display_video_size() / (width << 1);
     }

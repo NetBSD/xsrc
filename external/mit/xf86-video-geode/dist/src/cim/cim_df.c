@@ -138,7 +138,7 @@ df_configure_video_source(DF_VIDEO_SOURCE_PARAMS * video_source_odd,
     /* STORE THE DESIRED SCALING PROCEDURE */
     /* Cimarron supports two modes when programming the scale and position  */
     /* of the video window.  The first mode is designed to implicitly apply */
-    /* the graphics scale to any video operations.  The second applys the   */
+    /* the graphics scale to any video operations.  The second applies the  */
     /* video unchanged, allowing complete control by the user.  To allow    */
     /* visibility between modules, the current mode is stored in a spare    */
     /* bit in the DF miscellaneous register.                                */
@@ -866,7 +866,7 @@ df_set_video_enable(int enable, unsigned long flags)
         WRITE_REG32(DC3_GENERAL_CFG, (gcfg & ~DC3_GCFG_VIDE));
 
         /* DISABLE COLOR KEY WINDOW WHEN VIDEO IS INACTIVE         */
-        /* To mimic legacy functionality, we disble color keying   */
+        /* To mimic legacy functionality, we disable color keying  */
         /* when the video window is not active.  We will restore   */
         /* the enable when video is re-enabled if the appropriate  */
         /* bit is set in display config.                           */

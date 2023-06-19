@@ -1011,7 +1011,7 @@ int fs450_set_color(int color);
 int fs450_get_brightness(int *p_brightness);
 int fs450_set_brightness(int brightness);
 int fs450_get_contrast(int *p_contrast);
-int fs450_set_contrast(int constrast);
+int fs450_set_contrast(int contrast);
 int fs450_get_yc_filter(unsigned int *p_yc_filter);
 int fs450_set_yc_filter(unsigned int yc_filter);
 int fs450_get_aps_trigger_bits(unsigned int *p_trigger_bits);

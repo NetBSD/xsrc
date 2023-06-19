@@ -78,8 +78,8 @@ const S_SET_DESCRIP *gcc_regs(void);
 #define	HOUSTON_IHO				0x00    /* Input Horizontal Offset                      */
 #define	HOUSTON_IVO				0x02    /* Input Vertical Offset                        */
 #define	HOUSTON_IHA				0x04    /* Input Horizontal Active Width        */
-#define	HOUSTON_VSC				0x06    /* Vertical Scaling Coeficient          */
-#define	HOUSTON_HSC				0x08    /* Horizontal Scaling Coeficient        */
+#define	HOUSTON_VSC				0x06    /* Vertical Scaling Coefficient          */
+#define	HOUSTON_HSC				0x08    /* Horizontal Scaling Coefficient        */
 #define	HOUSTON_BYP				0x0A    /* Bypass Register                                      */
 #define	HOUSTON_CR				0x0C    /* Control Register                             */
 #define	HOUSTON_SP				0x0E    /* Status                                                       */
@@ -1027,7 +1027,7 @@ gfx_set_tv_enable(int on)
 
     /*if turning off... */
     if (!on) {
-        /*reenable vga. */
+        /*re-enable vga. */
         PLAL_EnableVga();
 
         /*power down houston */
@@ -1477,13 +1477,13 @@ gfx_get_contrast(int *p_contrast)
 
 #if GFX_TV_DYNAMIC
 int
-fs450_set_contrast(int constrast)
+fs450_set_contrast(int contrast)
 #else
 int
-gfx_set_contrast(int constrast)
+gfx_set_contrast(int contrast)
 #endif
 {
-    d.contrast = range_limit(constrast, 0, 100);
+    d.contrast = range_limit(contrast, 0, 100);
 
     return write_config(REQ_BRIGHTNESS_CONTRAST);
 }
@@ -3239,7 +3239,7 @@ PLAL_SetTVTimingRegisters(const S_TIMING_SPECS * p_specs)
     reg = ((p_specs->v_sync - 1) << 16) | (p_specs->v_sync - 2);
     WriteGx(DC_FP_V_TIMING, reg);
 
-    /*timing config, reenable all dclk stuff. */
+    /*timing config, re-enable all dclk stuff. */
     reg = ReadGx(DC_TIMING_CFG);
     reg |= GX_TGEN;
     WriteGx(DC_TIMING_CFG, reg);

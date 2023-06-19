@@ -149,7 +149,7 @@ gfx_detect_chip(void)
 /*----------------------------------------------------------------------------
  * gfx_detect_cpu
  * 
- * This routine returns the type and revison of the CPU.  If a Geode 
+ * This routine returns the type and revision of the CPU.  If a Geode
  * processor is not present, the routine returns zero.
  *
  * The return value is as follows:

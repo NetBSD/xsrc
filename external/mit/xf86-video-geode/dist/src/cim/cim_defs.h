@@ -315,7 +315,7 @@
 /*-----------------------------------------------------------------*/
 /* STRING MACROS                                                   */
 /* These macros are included to facilitate the optimization of     */
-/* routines that write or copy large amounts of data.  Two vesions */
+/* routines that write or copy large amounts of data. Two versions */
 /* of these macros are included.  One is intended for operating    */
 /* systems that allow the use of inline assembly, while the other  */
 /* is a pure C implementation for stricter operating systems.      */

@@ -43,7 +43,7 @@ GEODELINK_NODE msr_dev_lookup[MSR_DEVICE_EMPTY];
 /*---------------------------------------------------------------------------
  * msr_init_table
  *
- * This routine intializes the internal MSR table in Cimarron.  This table is
+ * This routine initializes the internal MSR table in Cimarron. This table is
  * used for any MSR device accesses.
  *--------------------------------------------------------------------------*/
 

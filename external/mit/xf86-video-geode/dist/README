@@ -1,6 +1,6 @@
 xf86-video-geode -- AMD Geode GX and LX graphics driver for X.org
 =================================================================
-README last updated: 2011-11-24
+README last updated: 2020-12-15
 
 1.INTRODUCTION
 
@@ -45,6 +45,11 @@ LX: 1920x1440 (CRT) and 1600x1200 (TFT)
 GX: 1600x1200 (CRT) and 1280x1024 (TFT)
 SC: 1280x1024 (CRT/TFT) *** Currently unsupported by this driver ***
 
+Additionally, on the LX, the driver can DCC probe the display and calculate
+the clockrate for the maximum resolution supported by the display. However,
+this won't work on LX platforms with GPIO configured for serial console. On
+such hardware, the resolution must be specified in /etc/X11/xorg.conf.
+
 5.CONFIGURATION OPTIONS
 
 You can specify driver options in /etc/X11/xorg.conf in the usual fashion:
@@ -79,6 +84,21 @@ OSMColorExpBuffers: Set the number of color expansion buffers (XAA only)
 ExaScratch: Specify the amount of extra EXA scratch buffer (in bytes)
 
 6.FREQUENTLY ASKED QUESTIONS (FAQ)
+
+Q: Why doesn't the GEODE driver work on recent Linux kernels?
+
+A: Since kernel 4.x Linux has strong memory protection. If the kernel is
+   booted with a frame buffer (e.g. vesafb) it reserves the video memory
+   for itself. Disabling this requires booting the kernel in non-graphic
+   mode. On GRUB, this is configured by this /etc/default/grub option:
+
+   GRUB_GFXPAYLOAD_LINUX=text
+
+   Alternately, adding iomem=relaxed to GRUB_CMDLINE_LINUX_DEFAULT will
+   allow the video memory to be accessed by vesafb and the GEODE driver.
+
+   Once either option has been added and the GRUB configuration refreshed,
+   the GEODE driver will launch on recent kernels as previously.
 
 Q: Why doesn't the GEODE driver work at WXGA (wide screen) resolutions?
 

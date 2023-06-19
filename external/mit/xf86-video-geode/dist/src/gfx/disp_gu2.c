@@ -613,11 +613,11 @@ gfx_set_display_offset(unsigned long offset)
     WRITE_REG32(MDC_UNLOCK, MDC_UNLOCK_VALUE);
 
     /* START ADDRESS EFFECTS DISPLAY COMPRESSION */
-    /* Disable compression for non-zero start addresss values.            */
-    /* Enable compression if offset is zero and comression is intended to */
-    /* be enabled from a previous call to "gfx_set_compression_enable".   */
-    /* Compression should be disabled BEFORE the offset is changed        */
-    /* and enabled AFTER the offset is changed.                           */
+    /* Disable compression for non-zero start address values.              */
+    /* Enable compression if offset is zero and compression is intended to */
+    /* be enabled from a previous call to "gfx_set_compression_enable".    */
+    /* Compression should be disabled BEFORE the offset is changed         */
+    /* and enabled AFTER the offset is changed.                            */
     if (offset == 0) {
         WRITE_REG32(MDC_FB_ST_OFFSET, offset);
         if (gfx_compression_enabled) {
@@ -1100,7 +1100,7 @@ int
 gfx_set_compression_enable(int enable)
 #endif
 {
-    /* SET GLOBAL VARIABLE FOR INDENDED STATE */
+    /* SET GLOBAL VARIABLE FOR INTENDED STATE */
     /* Compression can only be enabled for non-zero start address values. */
     /* Keep state to enable compression on start address changes. */
 

@@ -407,7 +407,7 @@ gfx_set_raster_operation(unsigned char rop)
     GFXsavedRop = rop16;
 
     /* SET FLAG INDICATING ROP REQUIRES DESTINATION DATA */
-    /* True if even bits (0:2:4:6) do not equal the correspinding */
+    /* True if even bits (0:2:4:6) do not equal the corresponding */
     /* even bits (1:3:5:7). */
 
     GFXusesDstData = ((rop & 0x55) ^ ((rop >> 1) & 0x55));

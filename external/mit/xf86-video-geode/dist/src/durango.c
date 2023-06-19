@@ -24,7 +24,7 @@
  * */
 
 /* The previous version of this file was way more complex then it should have
-   been - remove the unnessesary #defines and routines, and concentrate on
+   been - remove the unnecessary #defines and routines, and concentrate on
    Linux for now.
 */
 

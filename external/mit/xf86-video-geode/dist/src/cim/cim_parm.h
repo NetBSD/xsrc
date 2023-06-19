@@ -109,7 +109,7 @@ typedef struct tagGeodeLinkNode {
 
 /*---------------------------------------------*/
 /* QWORD DATA STRUCTURE                        */
-/* 64-bit data structure for MSR acess.        */
+/* 64-bit data structure for MSR access.       */
 /*---------------------------------------------*/
 
 typedef struct tagQ_WORD {

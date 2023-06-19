@@ -1,5 +1,89 @@
+commit dc1f918c15ecca548d8d3d6ec547a6d1cd4dff77
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 4 17:56:58 2023 -0700
+
+    xf86-video-geode 2.11.21
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a6c02a86675554ee8b9a5d3278376b5053e824b9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 4 17:53:29 2023 -0700
+
+    Makefile.am: swap order of ACLOCAL_AMFLAGS
+    
+    Causes autoreconf to fail with:
+    libtoolize:   error: AC_CONFIG_MACRO_DIRS([m4]) conflicts with ACLOCAL_AMFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cad9e93a84d1f42777cf1c2a50f30f482b0d0a9e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 3 16:01:56 2022 -0700
+
+    src/gfx/i2c_acc.c: Convert from ISO-8859-1 to UTF-8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a8afaf6e7e3f75a6364063138ed29ea0fadf1019
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 3 15:59:40 2022 -0700
+
+    gitlab CI: add a basic build test
+    
+    Forces 32-bit build since it fails to build 64-bit
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 27ea30c38994b689d6e27e8fac8c63d69179f9b5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 11:04:32 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2c415eb841c94238cf49c44dea4a83fa83621307
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 10:47:51 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ae82f4b2746eb24295389f184bc18a9cb6c8f31c
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
+Date:   Mon May 17 21:50:23 2021 +0300
+
+    Mention iomem=relaxed in the README FAQ for Linux 4.x+ requirements
+    
+    Thanks to Ben Hutchings for pointing out that vesafb and legacy X
+    drivers can peacefully coexist if iomem=relaxed gets added to the
+    Linux kernel cmdline options.
+    
+    Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
+
+commit 0bb81df318e2dbd093040ba35a51b726b8954cb5
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
+Date:   Tue Dec 15 20:17:25 2020 +0200
+
+    Updated the README's FAQ for Linux 4.x+ requirements
+
+commit ba63bf6821c40707237ad2e7a13352a537e5b588
+Author: Christian Gmeiner <christian.gmeiner@gmail.com>
+Date:   Thu Dec 3 14:22:23 2020 +0100
+
+    fix 'multiple definition of' linker error
+    
+    Fix for FTBFS due to -fno-common on GCC 10.
+    
+    Signed-off-by: Christian Gmeiner <christian.gmeiner@gmail.com>
+
 commit c8c1e7ffbeb81bbaa148ed3f66e45e373e35ddad
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Fri Sep 20 12:45:29 2019 +0300
 
     Geode 2.11.20
@@ -52,7 +136,7 @@ Date:   Tue Jan 24 09:53:06 2017 -0500
     Signed-off-by: Adam Jackson <ajax@redhat.com>
 
 commit ec3440ea602aa2c8fc826adfd921506aec60eb7d
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Dec 10 15:18:28 2016 +0200
 
     Geode 2.11.19
@@ -73,7 +157,7 @@ Date:   Tue Jul 19 10:03:56 2016 -0400
     Signed-off-by: Adam Jackson <ajax@redhat.com>
 
 commit 9b04a4df4239e7e9414402f8522cb31728481a27
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Feb 3 20:38:37 2016 +0200
 
     Geode 2.11.18
@@ -154,7 +238,7 @@ Date:   Mon Jul 20 10:37:16 2015 +0200
     Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
 
 commit 97e53b5896752a7e504d0159a7009418e2510521
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed May 20 11:24:30 2015 +0300
 
     Geode 2.11.17
@@ -211,7 +295,7 @@ Date:   Thu Sep 25 16:11:56 2014 +0300
     Signed-off-by: Matthieu Herrb <matthieu@openbsd.org>
 
 commit 6ec1e2df7aeb78332fee0dd90900906e58aa790b
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Thu Jul 17 03:28:26 2014 +0300
 
     Geode 2.11.16
@@ -225,13 +309,13 @@ Date:   Thu Jul 17 03:28:26 2014 +0300
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit 70b131d09b7d21df1d1ffcf6a4e50d3086924228
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Feb 8 14:58:26 2014 +0200
 
     No need to conditionalize the xf86Modes.h include.
 
 commit 9707a7a5eac25536a5150fc12d9ace52420b4d36
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Feb 8 13:27:11 2014 +0200
 
     Added conditional include to fix FTBFS on xserver 1.15 and up.
@@ -239,7 +323,7 @@ Date:   Sat Feb 8 13:27:11 2014 +0200
     Thanks to Maarten Lankhorst for the fix.
 
 commit c2d956a1e9bba7fa7877544f8e036ae78faa441f
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Oct 9 14:48:45 2013 +0300
 
     Geode 2.11.15
@@ -257,7 +341,7 @@ Date:   Wed Oct 9 14:48:45 2013 +0300
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit 69a8eedfe62d0df9037d86b47f2a6e34ba3c40a8
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Thu Oct 3 01:29:35 2013 +0300
 
     Migrate AC_CONFIG_AUX_DIR to [build-aux]
@@ -265,7 +349,7 @@ Date:   Thu Oct 3 01:29:35 2013 +0300
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit b57f56b311d7f9702459f2bfd5330141f6b2bcff
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Oct 2 22:39:49 2013 +0300
 
     Fix whitespace in AC_INIT
@@ -273,7 +357,7 @@ Date:   Wed Oct 2 22:39:49 2013 +0300
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit 7d9f923e15eca509cd61f4f01ebbb0b2bf49d73c
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Oct 2 22:35:12 2013 +0300
 
     Bump AC_PREREQ to 2.60 as suggested by Gaetan Nadon
@@ -281,7 +365,7 @@ Date:   Wed Oct 2 22:35:12 2013 +0300
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit cb36826843017583aecbc77c4dbeb8ec5198c016
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Oct 2 22:18:42 2013 +0300
 
     libtool upgrade to include m4 directory
@@ -297,7 +381,7 @@ Date:   Wed Jan 9 22:16:26 2013 -0500
     Signed-off-by: Adam Jackson <ajax@redhat.com>
 
 commit a96a4e28a079499b18b441f0b6c05c50dd86ead6
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 25 11:12:58 2012 +0200
 
     Geode 2.11.14
@@ -321,7 +405,7 @@ Date:   Sun Nov 25 11:12:58 2012 +0200
      * Fedora (X server 1.13) on OLPC XO-1.
 
 commit cec433840fde8be3ee6b8ce916b416f44d15a794
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Nov 24 12:02:32 2012 +0200
 
     pre-release whitespace cleanup using ../modular/x-indent-all.sh
@@ -389,7 +473,7 @@ Date:   Tue Oct 23 11:35:18 2012 +0300
     Became redundant with commit 32a927b8e6
 
 commit 5cfd7591b2f6ccb57d698738faa3fa800088f972
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Tue Oct 2 18:05:55 2012 +0300
 
     Clarified the copyright and license of src/geode_msr.c src/geode_blend.h
@@ -426,7 +510,7 @@ Date:   Tue Sep 18 08:41:53 2012 +0300
     Also move up the mask check to do less checks in the PictOpAdd logic.
 
 commit 4a20e8ac285cfe8a033f771ac8df25f873db9908
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Aug 29 12:53:00 2012 +0300
 
     NEWS: add information about releases since 2.11.9
@@ -434,7 +518,7 @@ Date:   Wed Aug 29 12:53:00 2012 +0300
     ...and flip the location of the recent src/Makefile.am addition.
 
 commit 0e64b1252c51e380f72f6ff0bdb6836a6e27071d
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Thu Aug 9 18:59:03 2012 +0300
 
     src/Makefile.am: added missing compat-api.h to geode_drv_la_SOURCES
@@ -493,7 +577,7 @@ Date:   Wed Jul 25 04:44:18 2012 +0300
     it completely, as the debug message wasn't useful anyway.
 
 commit 1ed67d70ac9d3afd9b372c311aaf7b77e38b3e21
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Jul 11 15:50:28 2012 +0300
 
     Whitespace cleanup using ../modular/x-indent.sh
@@ -510,7 +594,7 @@ Date:   Tue Apr 3 11:08:09 2012 +0100
     Signed-off-by: Dave Airlie <airlied@redhat.com>
 
 commit 048c67d6f351083741ef68e94a278a445c16436d
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Jan 2 17:49:10 2012 +0200
 
     z4l.c: drop unnecessary #include linux/types.h
@@ -543,7 +627,7 @@ Date:   Mon Jan 2 17:49:10 2012 +0200
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit e420d7956afceeb41f20179cedc28d46aebdb29f
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Dec 26 22:13:22 2011 +0200
 
     Geode 2.11.13
@@ -571,7 +655,7 @@ Date:   Mon Dec 26 22:13:22 2011 +0200
     Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
 
 commit 7e7fe26882dada5878d5450e64c043ba7b0737fd
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Dec 25 21:43:40 2011 +0200
 
     Fix lx_display.c:360:9: warning: ISO C90 forbids mixed declarations and code
@@ -599,7 +683,7 @@ Date:   Tue Nov 29 12:02:32 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit db7155395e794eb276f853c7642f62727e29a0b9
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Tue Nov 29 23:49:06 2011 +0200
 
     README: added example of ZTV loading to EC800 xorg.conf sample.
@@ -622,25 +706,25 @@ Date:   Tue Nov 29 14:20:17 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 2890f6c431a6de0726c6c53a800074f95d71294e
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Thu Nov 24 21:47:35 2011 +0200
 
     README: added info about how to calculate arbitrary laptop modelines.
 
 commit e520739e9ce18a48df7d873de16022aec21d7d3c
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 21 22:47:23 2011 +0200
 
     README: whitespace cleanup.
 
 commit edb6a6380e0db6be06fe89e7d73dedbca945550f
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 21 22:42:41 2011 +0200
 
     README: harmonize x.org versus freedesktop.org as much as possible.
 
 commit 308430e8898e29ae111bf4f552f4d7554b96fda2
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 21 22:34:26 2011 +0200
 
     README: add info about the Geode mailing list and Bugzilla component.
@@ -662,13 +746,13 @@ Date:   Mon Nov 14 14:52:21 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 0daee9eb57c826da120edf35c50e8947a43f19b2
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 21 10:54:10 2011 +0200
 
     README: a little bit of proofreading wouldn't hurt now, would it?
 
 commit d1c40f2d5baa2d964499412c7f1c443c9ee63626
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 21 10:24:29 2011 +0200
 
     README: added a sample xorg.conf for 1024x600 and 800x480 laptops.
@@ -969,19 +1053,19 @@ Date:   Tue Nov 15 18:02:34 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 2b3767b9e424ce371c342c9c9a2f2ae1f61df1fd
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Nov 19 02:29:20 2011 +0200
 
     README: emphasize that "ztv" is the name of that VIP driver.
 
 commit aa7cd847d821ed639f7d18a5114a13c324f6f227
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sat Nov 19 02:17:22 2011 +0200
 
     README: properly call the LX's video input port feature "VIP"
 
 commit 9bbc7bc49f1d04d41d7e1750b81cfce45e4ddf42
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Thu Nov 17 02:15:27 2011 +0200
 
     Added info about 'ztv' a.k.a. the V4L2 driver for LX in README.
@@ -995,55 +1079,55 @@ Date:   Tue Nov 15 16:55:15 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit b724ff4045994fff721db4ab67f8aa418cc4f707
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Nov 14 08:44:32 2011 +0200
 
     Revert "Only enable z4l.c on Linux" until we have a consensus.
 
 commit 587d4e40e58e70649968261f73b7fb2078349f4f
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 13 15:48:29 2011 +0200
 
     Revised BSD check in geode_msr.c
 
 commit ee52d73fd2c68740b1ff3cdb5b1bf2a6d941090d
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 13 03:40:01 2011 +0200
 
     Move the z4l.c test to src/Makefile.am where it should be.
 
 commit d193a42b3596ceb9dfaa66af71edd1f15ecc75bd
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 13 03:23:21 2011 +0200
 
     Added two #ifdef to enable building on FreeBSD.
 
 commit ee6296ecb8bf5c9b5e7fa3eade5fa45245b66d62
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 13 03:14:51 2011 +0200
 
     Whitespace cleanup.
 
 commit f6745f544feeb7443405f4b87043be9b721236b5
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Nov 13 03:10:01 2011 +0200
 
     Only enable z4l.c on Linux.
 
 commit f15f4da59a80533f3864aa6c54b4471e272d5c80
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Wed Apr 6 22:13:09 2011 +0300
 
     Added info about the Geode developers' IRC channel in README.
 
 commit 3c1375afdb9e1be524adae98c3713397d50e3a3e
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Mar 13 16:17:06 2011 +0200
 
     Proofread and restructured the README for clarity.
 
 commit 9d0986232cb417f41aee934b655cc0bbbae5f99b
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Mar 13 15:21:31 2011 +0200
 
     Added README section about supported resolutions.
@@ -1052,7 +1136,7 @@ Date:   Sun Mar 13 15:21:31 2011 +0200
     right below this new supported resolutions section.
 
 commit 8eab313cdf0cdc53ea936c7a9dd716d1000e1c56
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Mar 13 15:10:28 2011 +0200
 
     Removed README note about minimal version.
@@ -1084,13 +1168,13 @@ Date:   Sat Mar 12 22:17:19 2011 +0200
     Signed-off-by: Mart Raudsepp <leio@gentoo.org>
 
 commit 1a23956758d17a8b4c1d8acebf8acc94358c37b9
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Sun Feb 13 21:52:55 2011 +0200
 
     Geode 2.11.12
 
 commit 30d46e6c28479e07ac8328b6f4dfc2692eb1ac6d
-Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Author: Martin-Éric Racine  <martin-eric.racine@iki.fi>
 Date:   Mon Feb 7 00:04:06 2011 +0000
 
     Stop including "linux/videodev.h" in z4l.c
@@ -1115,7 +1199,7 @@ Date:   Sun Feb 6 20:22:01 2011 +0000
     Fixes https://bugs.freedesktop.org/show_bug.cgi?id=33004
 
 commit 66c375d2a1d1eadb38d2cbfe2d08cfec20213cb4
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Dec 27 15:20:38 2010 +0200
 
     Geode 2.11.11
@@ -1171,7 +1255,7 @@ Date:   Sun Dec 12 16:17:24 2010 +0200
     Signed-off-by: Priit Laes <plaes@plaes.org>
 
 commit 1d8d02d64e9f5d5dd3788b3b9b1b25866c2ed6b5
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Nov 19 17:24:35 2010 +0200
 
     LX Panel: lower the 1024x600 refresh rate down to 60Hz.
@@ -1187,13 +1271,13 @@ Date:   Fri Nov 19 10:28:31 2010 +0800
     Signed-off-by: Frank Huang<frankr.huang@amd.com>
 
 commit 50f9152e2087fd50dfc09e35505c2fbcdd3183b0
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Nov 9 11:12:44 2010 +0200
 
     Geode 2.11.10
 
 commit ff091333b506855c17ec8ea5f933026221600be9
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Thu Oct 28 13:13:09 2010 +0300
 
     Revert "Simplify the mode_valid function"
@@ -1345,7 +1429,7 @@ Date:   Wed Sep 1 10:30:35 2010 +0800
     Signed-off-by: Frank Huang <frankr.huang@amd.com>
 
 commit fc342655a3d928759467eac8c917effe8f283031
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Aug 23 07:46:22 2010 +0300
 
     Geode 2.11.9
@@ -1397,25 +1481,25 @@ Date:   Mon Aug 16 07:09:43 2010 +0300
     Breakage from commit 38e86827
 
 commit b0a13d871d9b72da83380d4564ae947ace733b5d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Aug 15 18:19:00 2010 +0300
 
     Fix a few typos in NEWS.
 
 commit 66a74e1e7ee5abde9a9eebfece126ba2fdafce9d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Aug 15 18:13:57 2010 +0300
 
     Further rephrase the content of NEWS.
 
 commit fc711bc0c3b21fd11ffd1ab590122226799ee904
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Aug 15 18:11:43 2010 +0300
 
     Fixes the styling of NEWS for consistency.
 
 commit 2c26c5a4399fcf04d402a973ce3da484215d3202
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Aug 15 18:00:41 2010 +0300
 
     Created a NEWS file to document recent changes.
@@ -1464,7 +1548,7 @@ Date:   Mon Aug 9 18:03:23 2010 +0800
     Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
 
 commit 1f96e74919fe9442062804de785c6e1008d75bf2
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Aug 9 10:48:16 2010 +0300
 
     Revert "Improve the glyph rendering performance"
@@ -1626,7 +1710,7 @@ Date:   Thu Aug 5 08:08:06 2010 +0300
     Fix this by deriving the BPP from the input image parameters.
 
 commit f0df6821c454d2b174a071fd846b399e8c2f98f5
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Jul 11 21:28:49 2010 +0300
 
     Rephrased the FAQ about video rotation to NOT specify a minimum RAM size.
@@ -1645,7 +1729,7 @@ Date:   Mon Jul 5 16:49:05 2010 +0800
     Acked-by: Mart Raudsepp <leio@gentoo.org>
 
 commit d8baf45eb79e473fba68b8335b6aaca27df681cf
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Jun 23 00:41:53 2010 +0300
 
     Added square braces to all AC_INIT elements.
@@ -1670,7 +1754,7 @@ Date:   Tue Jun 22 08:30:52 2010 -0700
     Signed-off-by: Jamey Sharp <jamey@minilop.net>
 
 commit b47d77360cb428d8892beb93789c83dfa681b26f
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Jun 21 07:44:31 2010 +0300
 
     Added FAQ about minimal memory requirements to rotate screen in README.
@@ -1712,19 +1796,19 @@ Date:   Sun Jun 13 18:47:12 2010 +0800
     Acked-by: Mart Raudsepp <leio@gentoo.org>
 
 commit 8e53a62f196dfc4eb1e8769183b00bf4a3122ddc
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Jun 13 03:24:20 2010 +0300
 
     Clean up and indent the content of COPYING for better clarity.
 
 commit 4302f6961571609a2b8a27a2d21281f758f48f0d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Jun 13 03:19:18 2010 +0300
 
     Move the AMD-specific part of the license away from the boilerplate text.
 
 commit 83b8249d91c7bf351f44062b5e42d12b0b8c9a28
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Jun 13 03:15:09 2010 +0300
 
     Removed superflous duplicate license from COPYING.
@@ -1775,7 +1859,7 @@ Date:   Mon May 10 07:39:20 2010 +0300
     Correctly set the name for the user-specified panel mode.
 
 commit db01a594ac30c730c580bcf9323220b83eb8ce03
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Thu Apr 15 16:36:43 2010 +0300
 
     Geode 2.11.8
@@ -1808,25 +1892,25 @@ Date:   Fri Mar 26 08:56:56 2010 -0400
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 621de3bf4966b48532ae2bff5f3859a1a6d63241
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Thu Feb 11 19:56:10 2010 +0000
 
     Bump the minimal autoconf version to 2.59.
 
 commit f67c4f57c06ce4800f2929f65f88b65e22499a65
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Thu Feb 11 21:38:59 2010 +0200
 
     Bump the minimal xutils macro version to 1.4, as agreed with Gaetan Nadon.
 
 commit 10364d0f667c808641d62339c99564b401683612
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Feb 8 18:43:27 2010 +0200
 
     Get rid of unused XFreeXDGA extension.
 
 commit ba9e3975535ffdf05611e96feb578eb01c49544d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Feb 3 21:09:53 2010 +0000
 
     Geode 2.11.7
@@ -1862,7 +1946,7 @@ Date:   Sat Oct 3 16:41:14 2009 -0300
     geode: fix typo in AmdPciProbe
 
 commit 93f0303f79ce29e896e4817e945709c6a1d3df69
-Author: Christian Bühler <christian@cbuehler.de>
+Author: Christian Bühler  <christian@cbuehler.de>
 Date:   Sat Dec 19 18:59:00 2009 +0200
 
     Geode LX does not support PanelGeometry
@@ -1958,13 +2042,13 @@ Date:   Sun Sep 27 16:33:51 2009 -0400
     This is a private build script that should not be distributed
 
 commit 1cdb69f2ed0efff76edf90d62ffed72fe65108f5
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 27 14:57:18 2009 +0300
 
     Geode 2.11.6
 
 commit a504725d2250e663f0a275fd0c02cc849dafe792
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 27 14:55:25 2009 +0300
 
     Revert "LX: validate display modes"
@@ -1975,7 +2059,7 @@ Date:   Sun Sep 27 14:55:25 2009 +0300
     which affected the OLPC XO-1 and a number of Geode-based notebooks.
 
 commit 1b1092b11a686febfd3ee20bd18677fcc366faa5
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Sep 22 16:41:59 2009 +0300
 
     Geode 2.11.5
@@ -2004,25 +2088,25 @@ Date:   Tue Sep 8 21:53:49 2009 -0300
     Signed-off-by: Otavio Salvador <otavio@ossystems.com.br>
 
 commit 292df8af92d5295c4be1ab0b3ad630a09589eb55
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Sep 18 10:04:38 2009 +0300
 
     geode: further precised brand names of Geode variants by NSC in README.
 
 commit 869a93c00ce2e9fe739239b4481b5c98e4df9092
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Sep 18 09:26:25 2009 +0300
 
     Geode: corrected the product names in README.
 
 commit 9184997ac2bf08841f1a40ebf416e49b44d71ff4
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Sep 18 09:15:25 2009 +0300
 
     geode: Added the PCI vendor and device ID of NSC SC1400 to README.
 
 commit 651310328e3cfc5c4936cf5df1dcaf7d319d20f6
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Sep 9 19:47:14 2009 +0300
 
     Switch project URL in README to read-only www host.
@@ -2034,37 +2118,37 @@ Date:   Wed Sep 9 06:00:00 2009 +0300
     geode: use lowercase vendor id
 
 commit 50b44451c6462bf999e8899715377dd735bc8940
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Sep 9 00:06:44 2009 +0300
 
     Added extended info about which Geode driver covers what Geode variant in README.
 
 commit 7af63b86ab9e06b9ccdf1291250afa303b69a885
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sat Sep 5 01:47:11 2009 +0300
 
     Fixed a typo in src/lx_output.c debug message.
 
 commit 999d1ef343c65ac2324ac1e9c2e72f014cb5610d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Thu Sep 3 10:56:09 2009 +0300
 
     Added README about X server dependency bump due to GX Randr dixSetPrivate fix.
 
 commit feea2a0afa67c8be1d1afd743ab45745878c1c91
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Aug 31 23:28:31 2009 +0300
 
     Release 2.11.4.1.
 
 commit f1268f3ba8404129d358db3bb1e66f3841f7018a
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Aug 31 23:24:30 2009 +0300
 
     Fixed typo in GX2 dixSetPrivate patch. Kudos to Eamon Walsh!
 
 commit 34405a9c5cb0c30d45c12ef6850fc636a964e441
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Aug 28 11:21:57 2009 +0300
 
     Release 2.11.4.
@@ -2078,7 +2162,7 @@ Date:   Tue Aug 18 07:30:33 2009 -0300
     EXA support is broken for GX so we disable it for now.
 
 commit ef3fbd7bd03fa4a9ff966a373ba8ddec94ea8ff5
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Aug 18 14:11:07 2009 +0300
 
     Revert "GX: use XAA by default."
@@ -2101,13 +2185,13 @@ Date:   Fri May 22 20:40:16 2009 -0300
     Signed-off-by: Otavio Salvador <otavio@ossystems.com.br>
 
 commit 917a5bf5fdadac1a8799336aa8da2e51f8790eea
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Aug 4 21:33:12 2009 +0300
 
     Migrated the project URL to the new http://wiki.x.org/wiki/GeodeDriver
 
 commit c2141752ed4520af6d7f5197fcb0c512058db839
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Aug 4 21:00:24 2009 +0300
 
     Somewhat harmonized the README between xf86-video-cyrix, xf86-video-nsc and xf86-video-geode.
@@ -2117,19 +2201,19 @@ Date:   Tue Aug 4 21:00:24 2009 +0300
       and install a redirect from the old page.
 
 commit b5419c47138e9a8efc5f946fd08c4488dedcb5ee
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Jul 29 13:57:15 2009 +0300
 
     Added missing development dependencies (X.org macros) to FAQ.
 
 commit c088a8dc4e5a37d8e07766c0c26ebc11037407c0
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Jul 29 12:23:46 2009 +0300
 
     Added FAQ about building drivers from GIT for testing purposes.
 
 commit a3788ff318f57f64d7317eeaee4d64a466f3745a
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Jul 29 02:35:04 2009 +0300
 
     Added FAQ about submitting patches and producing useful backtraces.
@@ -2196,13 +2280,13 @@ Date:   Thu May 28 14:56:22 2009 -0400
     Remove useless loader symbol lists.
 
 commit 106c341c4076f7714cd67e0fcf5942a22554c8f3
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon May 25 23:28:17 2009 +0300
 
     Cleaned up the FAQ about WXGA modes.
 
 commit 60f37744b09fa1cdf4a3bcfa1a039ac8c984b942
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon May 25 17:51:34 2009 +0300
 
     Added a FAQ about disabling Panel in BIOS to enable WXGA modes.
@@ -2554,25 +2638,25 @@ Date:   Fri Aug 15 14:25:00 2008 -0400
     s/XF86_VERSION_CURRENT/XORG_VERSION_CURRENT/
 
 commit b06f75895b6363816bf88402a233800631718f4d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Aug 15 14:13:12 2008 +0300
 
     Bump to version 2.10.1 and release.
 
 commit 6908dda7ac66cbe13737db6c9c3e5ebe16156099
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Aug 13 09:51:23 2008 +0300
 
     Added info about the current roadmap.
 
 commit 89c6a947f31af15a8f65706de328300ea2e75f1a
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Aug 13 09:32:21 2008 +0300
 
     All your typos are belong to us!!!
 
 commit 4e95ee76d47982450ec112988adb2079658bb682
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Aug 13 09:25:49 2008 +0300
 
     Updated the README with the URL of the Geode X.Org wiki and
@@ -2653,7 +2737,7 @@ Date:   Wed May 28 09:25:06 2008 +0930
     VCP.
 
 commit 94b9029e335ddbe7c22a8fe4bf69858b75179219
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed May 7 22:35:23 2008 +0300
 
     Making libDDC support the 2.9.0 release.
@@ -2803,19 +2887,19 @@ Date:   Sun Mar 2 11:52:01 2008 +0200
     ensure that it doesn't disturb operation on the TFT output.
 
 commit 2a7240e845ba27a9d2f485fda0bb5f8175234454
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Feb 10 01:55:06 2008 +0200
 
     Erm... That would be pScrni, of course.
 
 commit ae448a3beafe001c2bbc60f9fa09ebcfb00e828f
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Feb 10 01:50:26 2008 +0200
 
     Added trivial fix for Gamma initialization.
 
 commit 4670abb6036379245995f000dcb7d3e33f39570f
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sat Jan 26 01:51:39 2008 +0200
 
     [GX/LX] Bump the default pixel depth up to 16-bit.
@@ -2844,25 +2928,25 @@ Date:   Mon Jan 14 01:43:16 2008 +0100
     Signed-off-by: Bernardo Innocenti <bernie@codewiz.org>
 
 commit ba2880433912cd63c68cd81682d8e48c3cf77a09
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Jan 14 12:32:13 2008 +0200
 
     Expanded the bug reporting URL in configure.ac to specify the Driver/AMD component.
 
 commit cf5e5d2b37de2504b76d96e1f26a5450550b8320
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Jan 14 03:05:48 2008 +0200
 
     Basic OLPC support from Bernardo Innocenti and Jordan Crouse.
 
 commit 471f96cf85c6db9952ff4443f84a3c8d701927e7
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Tue Jan 8 13:57:25 2008 -0700
 
     Trivial patch to fix the ZTV module
 
 commit 407f403583f901bbb38d267b9194835d5255d41c
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sat Jan 5 06:29:59 2008 +0200
 
     [GX][LX] Push PreInit fixes to avoid segfauls on X -configure.
@@ -2893,7 +2977,7 @@ Date:   Mon Dec 24 11:56:19 2007 -0700
     cleanly.
 
 commit d4cd5d91a015088d548736831edd31760bcda88d
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Oct 15 16:32:56 2007 +0300
 
     Bumped package version to 2.7.7.3.
@@ -2920,67 +3004,67 @@ Date:   Tue Sep 18 13:45:10 2007 -0600
     uploads will be.
 
 commit b795643e860548eff6f1a458391e56098c490f64
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Sep 17 14:57:22 2007 +0300
 
     Update the package version in configure.ac
 
 commit 65a629fb9861f51f7591bfc1d80068194e7f840e
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Mon Sep 17 14:55:49 2007 +0300
 
     ChangeLog DOES need to be cleaned, but in MAINTIANERCLEANFILES.
 
 commit 5179095e4e9ba4e699f6965b752df932d2808155
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Sep 12 10:53:34 2007 +0300
 
     Creating a release of course requires updating the package version...
 
 commit 39be7f612783fcc6e51ee0a502e4630661fab702
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Sep 12 09:04:08 2007 +0300
 
     We no longer delete the ChangeLog in the clean target. We will simply overwrite it instead.
 
 commit 48b20f8c1424e953485149b707318386339e2953
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 13:28:57 2007 +0300
 
     Erm... actually, the ChangeLog needs ot be removed, since it's generated at release time.
 
 commit 4ade6759760b52ed3b84a846f9c4f5f421a70ef8
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 13:18:28 2007 +0300
 
     Commit the clean 2.7.7.0 ChangeLog to GIT.
 
 commit 1d1b3005a741b04331fecb1453a0c5c6381518a7
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 12:54:30 2007 +0300
 
     Added the standard X.org ChangeLog generation target to Makefile.am
 
 commit f159ec89c2e1fd33a52d8f0375233c5fb06bc6f0
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 12:46:40 2007 +0300
 
     Reverted autogen.sh changes too, since the 'dist' target does what we need.
 
 commit bae63fbe0871229ecd9fca75043065c15a8ea9dc
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 12:39:06 2007 +0300
 
     Reverted the autotool file generation from the GIT tree.
 
 commit 1afba2099aaefead9e87827c60dea146d6e264f3
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 10:18:49 2007 +0300
 
     Regenerated configure based on new package version.
 
 commit e525ca0d68faed9ede9f55df6d0d4a3099d3ad49
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Sun Sep 2 10:05:49 2007 +0300
 
     Bumped the package version to 2.7.7.0 and calling it a release.
@@ -3010,7 +3094,7 @@ Date:   Thu Aug 2 10:45:14 2007 -0600
     we do.
 
 commit 8ce4c5cc9650ddc81d9243bc416522800bce3afc
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Wed Jul 25 09:55:25 2007 -0600
 
     Add the all-important if/then loop to avoid
@@ -3018,7 +3102,7 @@ Date:   Wed Jul 25 09:55:25 2007 -0600
     tree.
 
 commit bb0f0afc6c5cf849081a007af0c2d3485e87e9c4
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Jul 13 12:34:45 2007 -0600
 
     This autogen.sh implements ChangeLog generation from the git commit
@@ -3044,7 +3128,7 @@ Date:   Tue Jul 10 10:06:01 2007 -0600
     that bridge when we get to it.
 
 commit 47b5a249e7ae877d7816504fec4f987442d07931
-Author: Martin-Éric Racine <q-funk@iki.fi>
+Author: Martin-Éric Racine  <q-funk@iki.fi>
 Date:   Fri Jul 6 16:59:51 2007 -0600
 
     An improved autogen.sh script

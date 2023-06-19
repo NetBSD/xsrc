@@ -832,7 +832,7 @@ typedef struct tagPLLFrequency {
 /*----------------------------------------------------------------*/
 
 /*----------------------------*/
-/* STATIC GEODELINK ADRESSES  */
+/* STATIC GEODELINK ADDRESSES */
 /*----------------------------*/
 
 #define MSR_ADDRESS_GLIU0                   0x10000000

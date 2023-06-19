@@ -159,7 +159,7 @@ int gfx_set_screen_enable(int enable);  /* forward declaration                  
 #include "vid_1200.c"
 #endif
 
-/* INLUDE SUPPORT FOR REDCLOUD, IF SPECIFIED. */
+/* INCLUDE SUPPORT FOR REDCLOUD, IF SPECIFIED. */
 
 #if GFX_VIDEO_REDCLOUD
 #include "vid_rdcl.c"
