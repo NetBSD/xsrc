@@ -267,7 +267,7 @@ SavageSetCursorPosition(
 	yoff = 0;
     }
 
-    /* This is the recomended order to move the cursor */
+    /* This is the recommended order to move the cursor */
         if (psav->IsSecondary) {
 	SelectIGA2();
     	outCRReg( 0x46, (x & 0xff00)>>8 );
@@ -300,12 +300,16 @@ SavageSetCursorColors(
     int fg)
 {
     SavagePtr psav = SAVPTR(pScrn);
+#if 0
     Bool bNeedExtra = FALSE;
+#endif
 
     /* Clock doubled modes need an extra cursor stack write. */
 
+#if 0
     bNeedExtra =
         (psav->CursorInfoRec->Flags & HARDWARE_CURSOR_TRUECOLOR_AT_8BPP);
+#endif
 
     /* With the streams engine on HW Cursor seems to be 24bpp ALWAYS */
     if( 1 
