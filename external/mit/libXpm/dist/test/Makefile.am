@@ -23,7 +23,7 @@
 
 if ENABLE_UNIT_TESTS
 if HAVE_GLIB
-check_PROGRAMS = XpmCreate XpmMisc XpmRead XpmWrite
+check_PROGRAMS = XpmCreate XpmMisc XpmRead XpmWrite rgb
 
 TESTS=$(check_PROGRAMS)
 
@@ -39,6 +39,9 @@ XpmCreate_SOURCES = XpmCreate.c TestAllFiles.h
 XpmMisc_SOURCES = XpmMisc.c
 XpmRead_SOURCES = XpmRead.c TestAllFiles.h
 XpmWrite_SOURCES = XpmWrite.c CompareXpmImage.h TestAllFiles.h
+
+rgb_SOURCES = rgb.c
+rgb_CPPFLAGS = -I$(top_srcdir)/include/X11
 
 LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
 		  $(top_srcdir)/tap-driver.sh
@@ -96,4 +99,5 @@ EXTRA_DIST = \
 	pixmaps/invalid/zero-width.xpm \
 	pixmaps/invalid/zero-width-v1.xpm \
 	pixmaps/no-mem/oversize.xpm \
+	rgb.txt \
 	tap-test

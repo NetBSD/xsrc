@@ -118,7 +118,7 @@ int
 main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
-    g_test_bug_base("https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues/");
+    g_test_bug_base(PACKAGE_BUGREPORT);
 
     g_test_add_func("/XpmCreate/XpmCreateXpmImageFromData",
                     test_XpmCreateXpmImageFromData);
