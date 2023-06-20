@@ -1,8 +1,8 @@
-/* $XTermId: graphics_sixel.c,v 1.36 2022/02/21 23:13:48 tom Exp $ */
+/* $XTermId: graphics_sixel.c,v 1.44 2023/05/09 20:30:24 tom Exp $ */
 
 /*
- * Copyright 2014-2021,2022 by Ross Combs
- * Copyright 2014-2021,2022 by Thomas E. Dickey
+ * Copyright 2014-2022,2023 by Ross Combs
+ * Copyright 2014-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -74,9 +74,10 @@ parse_prefixedtype_params(ANSI *params, const char **string)
 	if (isdigit(ch)) {
 	    last_empty = 0;
 	    if (nparam < NPARAM) {
-		params->a_param[nparam] =
-		    (ParmType) ((params->a_param[nparam] * 10)
-				+ (ch - '0'));
+		unsigned oldValue = (unsigned) params->a_param[nparam];
+		unsigned newValue = ((oldValue * 10) + (unsigned) (ch - '0'));
+		newValue = Min(MaxUParm, newValue);
+		params->a_param[nparam] = (ParmType) newValue;
 	    }
 	} else if (ch == ';') {
 	    last_empty = 1;
@@ -109,15 +110,24 @@ typedef struct {
     int col;			/* context used during parsing */
 } SixelContext;
 
-/* sixel scrolling:
- * VK100/GIGI ? (did it even support Sixel?)
- * VT125      unsupported
- * VT240      unsupported
- * VT241      unsupported
- * VT330      mode setting
- * VT382      ?
- * VT340      mode setting
- * dxterm     ?
+/* SIXEL SCROLLING, which is on by default in VT3xx terminals, can be
+ * turned off to better emulate VT2xx terminals by setting Sixel
+ * Display Mode (DECSDM)
+ *
+ *		SIXEL DISPLAY MODE	SIXEL SCROLLING
+ * VT125	Always on		Unsupported
+ * VT240	Always on		Unsupported
+ * VT241	Always on		Unsupported
+ * VT330	Available via DECSDM	Default mode
+ * VT382	Available via DECSDM	Default mode
+ * VT340	Available via DECSDM	Default mode
+ * VK100/GIGI	No sixel support	No sixel support
+ *
+ * dxterm (DECterm) emulated a VT100 series terminal, and supported sixels
+ * according to 1995 posting to comp.os.vms:
+ *	https://groups.google.com/g/comp.os.vms/c/XAUMmLtC8Yk
+ * though not DRCS according to
+ *	http://odl.sysworks.biz/disk$axpdocdec023/office/dwmot126/vmsdw126/relnotes/6470pro_004.html
  */
 
 static void
@@ -239,28 +249,31 @@ finished_parsing(XtermWidget xw, Graphic *graphic)
     if (SixelScrolling(xw)) {
 	int new_row, new_col;
 
+	/* NOTE: XTerm follows the VT382 behavior in text cursor placement. 
+	 * The VT382's vertical position appears to be truncated (rounded
+	 * toward zero) after converting to character row.  While rounding up
+	 * is more often what is desired, so as to not overwrite the image,
+	 * doing so automatically would cause text or graphics to scroll off
+	 * the top of the screen.  Therefore, applications must add their own
+	 * newline character, if desired, after a sixel image.
+	 *
+	 * FIXME: The VT340 also rounds down, but it seems to have a strange
+	 * behavior where, on rare occasions, two newlines are required to
+	 * advance beyond the end of the image.  This appears to be a firmware
+	 * bug, but it should be added as an option for compatibility.
+	 */
+	new_row = (graphic->charrow - 1
+		   + (((graphic->actual_height * graphic->pixh)
+		       + FontHeight(screen) - 1)
+		      / FontHeight(screen)));
+
 	if (screen->sixel_scrolls_right) {
-	    new_row = (graphic->charrow
-		       + (((graphic->actual_height * graphic->pixh)
-			   + FontHeight(screen) - 1)
-			  / FontHeight(screen))
-		       - 1);
 	    new_col = (graphic->charcol
 		       + (((graphic->actual_width * graphic->pixw)
 			   + FontWidth(screen) - 1)
 			  / FontWidth(screen)));
 	} else {
-	    /* FIXME: At least of the VT382 the vertical position appears to be
-	     * truncated (rounded toward zero after converting to character row.
-	     * This code rounds up, which seems more useful, but it would be
-	     * better to be compatible.  Verify this is true on a VT3[34]0 as
-	     * well.
-	     */
-	    new_row = (graphic->charrow
-		       + (((graphic->actual_height * graphic->pixh)
-			   + FontHeight(screen) - 1)
-			  / FontHeight(screen)));
-	    new_col = 0;
+	    new_col = graphic->charcol;
 	}
 
 	TRACE(("setting text position after %dx%d\t%.1f start (%d %d): cursor (%d,%d)\n",
@@ -358,13 +371,13 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
     }
 
     {
-	int Pmacro = params->a_param[0];
-	int Pbgmode = params->a_param[1];
-	int Phgrid = params->a_param[2];
-	int Pan = params->a_param[3];
-	int Pad = params->a_param[4];
-	int Ph = params->a_param[5];
-	int Pv = params->a_param[6];
+	int Pmacro = UParmOf(params->a_param[0]);
+	int Pbgmode = UParmOf(params->a_param[1]);
+	int Phgrid = UParmOf(params->a_param[2]);
+	int Pan = UParmOf(params->a_param[3]);
+	int Pad = UParmOf(params->a_param[4]);
+	int Ph = UParmOf(params->a_param[5]);
+	int Pv = UParmOf(params->a_param[6]);
 
 	(void) Phgrid;
 
@@ -384,7 +397,7 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 	    context.aspect_vertical = Pan;
 	    context.aspect_horizontal = Pad;
 
-	    if (Ph <= 0 || Pv <= 0) {
+	    if (Ph == 0 || Pv == 0) {
 		TRACE(("DATA_ERROR: raster image dimensions are invalid %dx%d\n",
 		       Ph, Pv));
 		return -1;
@@ -556,26 +569,26 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 	    }
 	} else if (ch == '#') {	/* DECGCI */
 	    ANSI color_params;
-	    int Pregister;
+	    RegisterNum Pregister;
 
 	    parse_prefixedtype_params(&color_params, &string);
-	    Pregister = color_params.a_param[0];
-	    if (Pregister >= (int) graphic->valid_registers) {
-		TRACE(("DATA_WARNING: sixel color operator uses out-of-range register %d\n", Pregister));
+	    Pregister = (RegisterNum) color_params.a_param[0];
+	    if (Pregister >= graphic->valid_registers) {
+		TRACE(("DATA_WARNING: sixel color operator uses out-of-range register %u\n", Pregister));
 		/* FIXME: supposedly the DEC terminals wrapped register indices -- verify */
-		while (Pregister >= (int) graphic->valid_registers)
-		    Pregister -= (int) graphic->valid_registers;
-		TRACE(("DATA_WARNING: converted to %d\n", Pregister));
+		while (Pregister >= graphic->valid_registers)
+		    Pregister = Pregister - (RegisterNum) graphic->valid_registers;
+		TRACE(("DATA_WARNING: converted to %u\n", Pregister));
 	    }
 
 	    if (color_params.a_nparam > 2 && color_params.a_nparam <= 5) {
-		int Pspace = color_params.a_param[1];
-		int Pc1 = color_params.a_param[2];
-		int Pc2 = color_params.a_param[3];
-		int Pc3 = color_params.a_param[4];
+		int Pspace = UParmOf(color_params.a_param[1]);
+		int Pc1 = UParmOf(color_params.a_param[2]);
+		int Pc2 = UParmOf(color_params.a_param[3]);
+		int Pc3 = UParmOf(color_params.a_param[4]);
 		short r, g, b;
 
-		TRACE(("sixel set color register=%d space=%d color=[%d,%d,%d] (nparams=%d)\n",
+		TRACE(("sixel set color register=%u space=%d color=[%d,%d,%d] (nparams=%d)\n",
 		       Pregister, Pspace, Pc1, Pc2, Pc3, color_params.a_nparam));
 
 		switch (Pspace) {
@@ -602,12 +615,12 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 		    return finished_parsing(xw, graphic);
 		}
 		update_color_register(graphic,
-				      (RegisterNum) Pregister,
+				      Pregister,
 				      r, g, b);
 	    } else if (color_params.a_nparam == 1) {
-		TRACE(("sixel switch to color register=%d (nparams=%d)\n",
+		TRACE(("sixel switch to color register=%u (nparams=%d)\n",
 		       Pregister, color_params.a_nparam));
-		context.current_register = (RegisterNum) Pregister;
+		context.current_register = Pregister;
 	    } else {
 		TRACE(("DATA_ERROR: sixel switch color operator with unexpected parameter count (nparams=%d)\n", color_params.a_nparam));
 		return finished_parsing(xw, graphic);
@@ -621,8 +634,8 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 		TRACE(("DATA_ERROR: sixel raster attribute operator with incomplete parameters (found %d, expected 2 or 4)\n", raster_params.a_nparam));
 		return finished_parsing(xw, graphic);
 	    } {
-		int Pan = raster_params.a_param[0];
-		int Pad = raster_params.a_param[1];
+		int Pan = UParmOf(raster_params.a_param[0]);
+		int Pad = UParmOf(raster_params.a_param[1]);
 		TRACE(("sixel raster attribute with h:w=%d:%d\n", Pan, Pad));
 		if (Pan == 0 || Pad == 0) {
 		    TRACE(("DATA_ERROR: invalid raster ratio %d/%d\n", Pan, Pad));
@@ -634,8 +647,8 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 	    }
 
 	    if (raster_params.a_nparam >= 4) {
-		int Ph = raster_params.a_param[2];
-		int Pv = raster_params.a_param[3];
+		int Ph = UParmOf(raster_params.a_param[2]);
+		int Pv = UParmOf(raster_params.a_param[3]);
 
 		TRACE(("sixel raster attribute with h=%d v=%d\n", Ph, Pv));
 		if (Ph <= 0 || Pv <= 0) {

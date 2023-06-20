@@ -1,7 +1,7 @@
-/* $XTermId: ptyx.h,v 1.1060 2022/03/08 23:31:40 tom Exp $ */
+/* $XTermId: ptyx.h,v 1.1090.1.2 2023/05/02 08:19:02 tom Exp tom $ */
 
 /*
- * Copyright 1999-2021,2022 by Thomas E. Dickey
+ * Copyright 1999-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -81,6 +81,7 @@
 #endif
 
 #include <stdio.h>
+#include <limits.h>
 
 #if defined(HAVE_STDINT_H) || !defined(HAVE_CONFIG_H)
 #include <stdint.h>
@@ -92,8 +93,8 @@
 /* adapted from IntrinsicI.h */
 #define MyStackAlloc(size, stack_cache_array)     \
     ((size) <= sizeof(stack_cache_array)	  \
-    ?  (XtPointer)(stack_cache_array)		  \
-    :  (XtPointer)malloc((size_t)(size)))
+    ?  (stack_cache_array)			  \
+    :  (char*)malloc((size_t)(size)))
 
 #define MyStackFree(pointer, stack_cache_array) \
     if ((pointer) != ((char *)(stack_cache_array))) free(pointer)
@@ -313,6 +314,7 @@ typedef enum {
 #define MaxCols(screen)		((screen)->max_col + 1)
 #define MaxRows(screen)		((screen)->max_row + 1)
 
+#define MaxUChar 255
 typedef unsigned char Char;		/* to support 8 bit chars */
 typedef Char *ScrnPtr;
 typedef ScrnPtr *ScrnBuf;
@@ -395,6 +397,9 @@ typedef struct {
 			  ((c) >= ANSI_DEL && (c) <= ANSI_APC)))
 #define OnlyLatin1(c)	(NonLatin1(c) ? BAD_ASCII : (c))
 
+#define L_BLOK		'['
+#define R_BLOK		']'
+
 #define L_CURL		'{'
 #define R_CURL		'}'
 
@@ -422,7 +427,7 @@ typedef struct {
 #define TERMCAP_SIZE 1500		/* 1023 is standard; 'screen' exceeds */
 
 #define MAX_XLFD_FONTS	1
-#define MAX_XFT_FONTS	1
+#define MAX_XFT_FONTS	2
 #define NMENUFONTS	10		/* font entries in fontMenu */
 
 #define	NBOX	5			/* Number of Points in box	*/
@@ -442,6 +447,12 @@ typedef	struct {
 
 typedef short ParmType;
 typedef unsigned short UParm;		/* unparseputn passes ParmType	*/
+
+#define MaxSParm   0x7fff		/* limit if a signed value is needed */
+#define MaxUParm   0xffff		/* limit if unsigned value is needed */
+
+#define SParmOf(n) ((int)(ParmType)(n))
+#define UParmOf(n) ((unsigned)(UParm)(n))
 
 typedef struct {
 	Char		a_type;		/* CSI, etc., see unparseq()	*/
@@ -568,6 +579,10 @@ typedef enum {
 #define OPT_DEC_RECTOPS 1 /* true if xterm is configured for VT420 rectangles */
 #endif
 
+#ifndef OPT_SGR2_HASH
+#define OPT_SGR2_HASH 1 /* true if xterm hashes color-lookups for faint color */
+#endif
+
 #ifndef OPT_SIXEL_GRAPHICS
 #define OPT_SIXEL_GRAPHICS 0 /* true if xterm supports VT240-style sixel graphics */
 #endif
@@ -602,6 +617,10 @@ typedef enum {
 #else
 #define OPT_EBCDIC 0
 #endif
+#endif
+
+#ifndef OPT_EXEC_SELECTION
+#define OPT_EXEC_SELECTION 1 /* true if xterm can exec to process selection */
 #endif
 
 #ifndef OPT_EXEC_XTERM
@@ -1521,10 +1540,10 @@ typedef enum {
 #if OPT_DEC_CHRSET
 #define if_OPT_DEC_CHRSET(code) code
 	/* Use 2 bits for encoding the double high/wide sense of characters */
-#define CSET_SWL        0
-#define CSET_DHL_TOP    1
-#define CSET_DHL_BOT    2
-#define CSET_DWL        3
+#define CSET_SWL        0	/* character set: single-width line */
+#define CSET_DHL_TOP    1	/* character set: double-height top line */
+#define CSET_DHL_BOT    2	/* character set: double-height bottom line */
+#define CSET_DWL        3	/* character set: double-width line */
 #define NUM_CHRSET      8	/* normal/bold and 4 CSET_xxx values */
 
 	/* Use remaining bits for encoding the other character-sets */
@@ -1583,6 +1602,9 @@ extern int A2E(int);
 #endif
 
 #define CONTROL(a) (A2E(E2A(a)&037))
+
+#define XTERM_ERASE A2E(CONTROL('H'))
+#define XTERM_LNEXT A2E(CONTROL('V'))
 
 /***====================================================================***/
 
@@ -1650,7 +1672,9 @@ typedef unsigned IChar;		/* for 8-21 bit characters */
 #define WIDEST_ICHAR	NARROW_ICHAR
 typedef unsigned short IChar;	/* for 8-16 bit characters */
 #endif
-#else
+#else	/* !OPT_WIDE_CHARS */
+#undef OPT_WIDER_ICHAR
+#define OPT_WIDER_ICHAR 0
 #define if_OPT_WIDE_CHARS(screen, code) /* nothing */
 #define if_WIDE_OR_NARROW(screen, wide, narrow) narrow
 typedef unsigned char IChar;	/* for 8-bit characters */
@@ -1707,9 +1731,9 @@ typedef struct {
 	int      update;	/* HandleInterpret */
 #if OPT_WIDE_CHARS
 	IChar    utf_data;	/* resulting character */
-	int      utf_size;	/* ...number of bytes decoded */
+	size_t   utf_size;	/* ...number of bytes decoded */
 	Char    *write_buf;
-	unsigned write_len;
+	size_t   write_len;
 #endif
 	Char     buffer[1];
 } PtyData;
@@ -1893,9 +1917,23 @@ typedef struct {
 	Bool		mixed;
 	Dimension	min_width;	/* nominal cell width for 0..255 */
 	Dimension	max_width;	/* maximum cell width */
-} FontMap;
+} XTermFontInfo;
 
-#define KNOWN_MISSING	256
+	/*
+	 * Map of characters to simplify/speed-up the checks for missing glyphs
+	 * at runtime.
+	 *
+	 * FIXME: initially implement for Xft, but replace known_missing[] in
+	 * X11 fonts as well.
+	 */
+typedef Char XTfontNum;
+typedef struct {
+	int		depth;		/* number of fonts merged for map */
+	size_t		limit;		/* allocated size of per_font, etc */
+	size_t		first_char;	/* merged first-character index */
+	size_t		last_char;	/* merged last-character index */
+	XTfontNum *	per_font;	/* index 1-n of first font with char */
+} XTermFontMap;
 
 typedef enum {
 	fwNever = 0,
@@ -1909,8 +1947,8 @@ typedef struct {
 	fontWarningTypes warn;
 	XFontStruct *	fs;
 	char *		fn;
-	FontMap		map;
-	Char		known_missing[KNOWN_MISSING];
+	XTermFontInfo	font_info;
+	Char		known_missing[MaxUChar + 1];
 } XTermFonts;
 
 #if OPT_RENDERFONT
@@ -1931,22 +1969,30 @@ typedef enum {
 	, xcBogus			/* ignore this pattern */
 	, xcOpened			/* slot has open font descriptor */
 	, xcUnused			/* opened, but unused so far */
-} XftCache;
+} XTermXftState;
 
 typedef struct {
 	XftFont *	font;
-	XftCache	usage;
+	XTermXftState	usage;
 } XTermXftCache;
 
+#define MaxXftCache	MaxUChar
+
 typedef struct {
-	XftFont *	font;		/* main font */
 	XftPattern *	pattern;	/* pattern for main font */
 	XftFontSet *	fontset;	/* ordered list of fallback patterns */
-	XTermXftCache * cache;
-	unsigned	limit;		/* allocated size of cache[] */
-	unsigned	opened;		/* number of slots with xcOpened */
-	FontMap		map;
+	XTermXftCache	cache[MaxXftCache + 1]; /* list of open font pointers */
+	int		fs_size;	/* last usable index of cache[] */
+	Char		opened;		/* number in cache[] with xcOpened */
+	XTermFontInfo	font_info;	/* summary of font metrics */
+	XTermFontMap	font_map;	/* map of glyphs provided in fontset */
 } XTermXftFonts;
+
+#define XftFpN(p,n)	(p)->cache[(n)].font
+#define XftIsN(p,n)	(p)->cache[(n)].usage
+
+#define XftFp(p)	XftFpN(p,0)
+#define XftIs(p)	XftIsN(p,0)
 
 typedef	struct _ListXftFonts {
 	struct _ListXftFonts *next;
@@ -2330,6 +2376,9 @@ typedef struct {
 #if OPT_DIRECT_COLOR
 	Boolean		direct_color;	/* direct-color enabled?	*/
 #endif
+#if OPT_WIDE_ATTRS && OPT_SGR2_HASH
+	Boolean		faint_relative;	/* faint is relative?		*/
+#endif
 #endif /* OPT_ISO_COLORS */
 #if OPT_DEC_CHRSET
 	Boolean		font_doublesize;/* enable font-scaling		*/
@@ -2338,7 +2387,7 @@ typedef struct {
 	int		fonts_used;	/* count items in double_fonts	*/
 	XTermFonts	double_fonts[NUM_CHRSET];
 #if OPT_RENDERFONT
-	XftFont *	double_xft_fonts[NUM_CHRSET];
+	XTermXftFonts	double_xft_fonts[NUM_CHRSET];
 #endif
 #endif /* OPT_DEC_CHRSET */
 #if OPT_DEC_RECTOPS
@@ -2369,9 +2418,10 @@ typedef struct {
 	Boolean		char_was_written;
 	int		last_written_col;
 	int		last_written_row;
-	TypedBuffer(XChar2b);
-	TypedBuffer(char);
 #endif
+	TypedBuffer(IChar);
+	TypedBuffer(Char);
+	TypedBuffer(XChar2b);
 #if OPT_BROKEN_OSC
 	Boolean		brokenLinuxOSC; /* true to ignore Linux palette ctls */
 #endif
@@ -2463,8 +2513,8 @@ typedef struct {
 	String		disallowedMouseOps;
 	char		disallow_mouse_ops[emLAST];
 
-	String		disallowedPasteControls;
-	char		disallow_paste_controls[epLAST];
+	String		disallowedPasteOps;
+	char		disallow_paste_ops[epLAST];
 
 	String		disallowedTcapOps;
 	char		disallow_tcap_ops[etLAST];
@@ -2537,6 +2587,7 @@ typedef struct {
 	int		cursor_state;	/* ON, OFF, or BLINKED_OFF	*/
 	int		cursor_busy;	/* do not redraw...		*/
 	Boolean		cursor_underline; /* true if cursor is in underline mode */
+	Boolean         cursor_bar;     /* true if cursor is in bar mode */
 	XtCursorShape	cursor_shape;
 #if OPT_BLINK_CURS
 	BlinkOps	cursor_blink;	/* cursor blink enable		*/
@@ -2747,10 +2798,10 @@ typedef struct {
 	if (IsStatusShown(screen) && (screen)->status_active) stmt
 
 	Boolean		status_timeout;	/* status timeout needs service	*/
-	Boolean		status_active;	/* DECSASD */
+	int		status_active;	/* DECSASD */
 	int		status_type;	/* DECSSDT */
 	int		status_shown;	/* last-displayed type */
-	SavedCursor	status_data[2];
+	SavedCursor	status_data[2];	/* main- and status-cursors */
 	char *		status_fmt;	/* format for indicator-status	*/
 
 #else /* !OPT_STATUS_LINE */
@@ -2758,6 +2809,7 @@ typedef struct {
 #define AddStatusLineRows(nrow)         /* nothing */
 #define LastRowNumber(screen)           (screen)->max_row
 #define FirstRowNumber(screen)          0
+#define IsStatusShown(screen) False
 #define PlusStatusLine(screen,expr)     (expr)
 #define if_STATUS_LINE(screen,stmt)	/* nothing */
 
@@ -2892,12 +2944,17 @@ typedef struct {
 	void *		icon_cgs_cache;
 #endif
 #if OPT_RENDERFONT
+	int		xft_max_glyph_memory;
+	int		xft_max_unref_fonts;
+	Boolean		xft_track_mem_usage;
 	Boolean		force_xft_height;
 	ListXftFonts	*list_xft_fonts;
 	XTermXftFonts	renderFontNorm[NMENUFONTS];
 	XTermXftFonts	renderFontBold[NMENUFONTS];
+#if OPT_WIDE_ATTRS || OPT_RENDERWIDE
 	XTermXftFonts	renderFontItal[NMENUFONTS];
 	XTermXftFonts	renderFontBtal[NMENUFONTS];
+#endif
 #if OPT_RENDERWIDE
 	XTermXftFonts	renderWideNorm[NMENUFONTS];
 	XTermXftFonts	renderWideBold[NMENUFONTS];
@@ -3189,6 +3246,8 @@ typedef struct _Misc {
     float face_size[NMENUFONTS];
     char *render_font_s;
     int limit_fontsets;
+    int limit_fontheight;
+    int limit_fontwidth;
 #endif
 } Misc;
 
@@ -3234,6 +3293,7 @@ typedef struct _Work {
     Boolean force_wideFont;	/* true to single-step wideFont	*/
 #if OPT_RENDERFONT
     Boolean render_font;
+    FcPattern *xft_defaults;
     unsigned max_fontsets;
 #endif
 #if OPT_DABBREV
@@ -3274,7 +3334,7 @@ extern WidgetClass tekWidgetClass;
 #define MODE_DECCKM	xBIT(2)	/* private mode 1: cursor keys */
 #define MODE_SRM	xBIT(3)	/* mode 12: send-receive mode */
 #define MODE_DECBKM	xBIT(4)	/* private mode 67: backarrow */
-#define MODE_DECSDM	xBIT(5)	/* private mode 80: sixel scrolling mode */
+#define MODE_DECSDM	xBIT(5)	/* private mode 80: sixel DISPLAY mode -- note, when SDM is off, the terminal is in sixel SCROLLING mode  */
 
 #define N_MARGINBELL	10
 
@@ -3421,10 +3481,11 @@ typedef struct _TekWidgetRec {
 #define NOTRANSLATION	DrawBIT(1)	/* No scan for chars missing in font */
 #define DOUBLEWFONT	DrawBIT(2)	/* The actual X-font is double-width */
 #define DOUBLEHFONT	DrawBIT(3)	/* The actual X-font is double-height */
-#define CHARBYCHAR	DrawBIT(4)	/* Draw chars one-by-one */
+#define DOUBLEFIRST	DrawBIT(4)	/* Draw chars one-by-one */
+#define CHARBYCHAR	DrawBIT(5)	/* Draw chars one-by-one */
 
 /* The following attribute is used in the argument of xtermSpecialFont etc */
-#define NORESOLUTION	DrawBIT(5)	/* find the font without resolution */
+#define NORESOLUTION	DrawBIT(6)	/* find the font without resolution */
 
 /*
  * Groups of attributes
@@ -3452,7 +3513,8 @@ typedef struct _TekWidgetRec {
 #endif
 
 /*
- * Sixel-scrolling is backwards, perhaps from an error in the hardware design.
+ * Sixel scrolling is on when Sixel Display Mode is off, and vice versa.
+ * (Note: DEC erroneously conflates the two in the VT330/340 manual).
  */
 #define SixelScrolling(xw) (!((xw)->keyboard.flags & MODE_DECSDM))
 

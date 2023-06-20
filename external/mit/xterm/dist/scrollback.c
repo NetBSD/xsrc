@@ -1,4 +1,4 @@
-/* $XTermId: scrollback.c,v 1.23 2022/03/09 00:38:51 tom Exp $ */
+/* $XTermId: scrollback.c,v 1.22 2022/03/09 00:32:17 tom Exp $ */
 
 /*
  * Copyright 2009-2020,2022 by Thomas E. Dickey
