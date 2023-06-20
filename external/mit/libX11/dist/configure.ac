@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
-AC_PREREQ([2.60])
-AC_INIT([libX11], [1.8.4],
+AC_PREREQ([2.70])
+AC_INIT([libX11], [1.8.6],
         [https://gitlab.freedesktop.org/xorg/lib/libx11/-/issues], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
-# Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
+# Must be called before any macros that run the compiler (like LT_INIT)
 # to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -17,7 +17,7 @@ AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Initialize libtool
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_SYS_LARGEFILE
 
@@ -260,7 +260,7 @@ AC_CHECK_FUNC(poll, [AC_DEFINE(USE_POLL, 1, [poll() function is available])], )
 #
 AC_MSG_CHECKING([keysym definitions])
 AC_ARG_WITH([keysymdefdir],
-        [AC_HELP_STRING([--with-keysymdefdir=DIR], [The location of keysymdef.h (defaults to xproto include dir)])],
+        [AS_HELP_STRING([--with-keysymdefdir=DIR], [The location of keysymdef.h (defaults to xproto include dir)])],
         [KEYSYMDEFDIR=$withval],
         [KEYSYMDEFDIR=`$PKG_CONFIG --variable=includedir xproto`/X11])
 
