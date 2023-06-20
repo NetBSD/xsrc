@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: tcapquery.pl,v 1.29 2019/04/29 23:27:57 tom Exp $
+# $XTermId: tcapquery.pl,v 1.28 2019/04/23 23:43:04 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

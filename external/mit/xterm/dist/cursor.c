@@ -1,7 +1,7 @@
-/* $XTermId: cursor.c,v 1.82 2022/02/13 18:20:53 tom Exp $ */
+/* $XTermId: cursor.c,v 1.88 2023/05/29 23:52:12 tom Exp $ */
 
 /*
- * Copyright 2002-2021,2022 by Thomas E. Dickey
+ * Copyright 2002-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -100,19 +100,38 @@ CursorSet(TScreen *screen, int row, int col, unsigned flags)
 }
 
 /*
- * moves the cursor left n, no wrap around
+ * Unlike VT100, xterm allows reverse wrapping of the cursor.  This feature was
+ * introduced in X10R4 (December 1986), but did not modify the comment which
+ * said "moves the cursor left n, no wrap around".  However, this reverse
+ * wrapping allowed the cursor to wrap around to the end of the screen.
+ *
+ * xterm added VT420-compatible left/right margin support in 2012.  If the
+ * cursor starts off within the margins, the reverse wrapping result will be
+ * within the margins.
+ *
+ * Wrapping to the end of the screen did not appear to be the original intent.
+ * That was suppressed in 2023.
  */
 void
 CursorBack(XtermWidget xw, int n)
 {
 #define WRAP_MASK (REVERSEWRAP | WRAPAROUND)
     TScreen *screen = TScreenOf(xw);
-    int rev;
+    int rev = (((xw->flags & WRAP_MASK) == WRAP_MASK) != 0);
     int left = ScrnLeftMargin(xw);
+    int right = ScrnRightMargin(xw);
     int before = screen->cur_col;
 
-    if ((rev = ((xw->flags & WRAP_MASK) == WRAP_MASK)) != 0
-	&& screen->do_wrap) {
+    CLineData *ld;
+    int count;
+    int top;
+    int col;
+    int row;
+
+    TRACE(("CursorBack(%d) current %d,%d rev=%d left=%d\n",
+	   n, screen->cur_row, screen->cur_col, rev, left));
+
+    if (rev && screen->do_wrap) {
 	n--;
     }
 
@@ -120,26 +139,48 @@ CursorBack(XtermWidget xw, int n)
     if (before < left)
 	left = 0;
 
-    if ((screen->cur_col -= n) < left) {
-	if (rev) {
-	    int in_row = ScrnRightMargin(xw) - left + 1;
-	    int offset = (in_row * screen->cur_row) + screen->cur_col - left;
-	    if ((before == left) &&
-		ScrnIsColInMargins(screen, before) &&
-		ScrnIsRowInMargins(screen, screen->cur_row) &&
-		screen->cur_row == screen->top_marg) {
-		offset = (screen->bot_marg + 1) * in_row - 1;
-	    } else if (offset < 0) {
-		int length = in_row * MaxRows(screen);
-		offset += ((-offset) / length + 1) * length;
+    ld = NULL;
+    count = n;
+    top = 0;
+    col = screen->cur_col - 1;
+    row = screen->cur_row;
+
+    for (;;) {
+	if (col < left) {
+	    if (!rev) {
+		col = left;
+		break;
 	    }
-	    set_cur_row(screen, (offset / in_row));
-	    set_cur_col(screen, (offset % in_row) + left);
-	    do_xevents(xw);
-	} else {
-	    set_cur_col(screen, left);
+	    if (row <= top) {
+		col = left;
+		row = top;
+		break;
+	    }
+	    ld = NULL;		/* try a reverse-wrap */
+	    --row;
 	}
+	if (ld == NULL) {
+	    ld = getLineData(screen, ROW2INX(screen, row));
+	    if (ld == NULL)
+		break;		/* should not happen */
+	    if (row != screen->cur_row) {
+		if (!LineTstWrapped(ld)) {
+		    ++row;	/* reverse-wrap failed */
+		    col = left;
+		    break;
+		}
+		col = right;
+	    }
+	}
+
+	if (--count <= 0)
+	    break;
+	--col;
     }
+    set_cur_row(screen, row);
+    set_cur_col(screen, col);
+    do_xevents(xw);
+
     ResetWrap(screen);
 }
 
@@ -378,13 +419,14 @@ CursorSave(XtermWidget xw)
  * DEC 070 does mention the ANSI color text extension saying that it, too, is
  * saved/restored.
  */
+#define ALL_FLAGS (IFlags)(~0)
 #define DECSC_FLAGS (ATTRIBUTES|ORIGIN|PROTECTED)
 
 /*
  * Restore Cursor and Attributes
  */
-void
-CursorRestore2(XtermWidget xw, SavedCursor * sc)
+static void
+CursorRestoreFlags(XtermWidget xw, SavedCursor * sc, IFlags our_flags)
 {
     TScreen *screen = TScreenOf(xw);
 
@@ -399,8 +441,8 @@ CursorRestore2(XtermWidget xw, SavedCursor * sc)
 	resetCharsets(screen);
     }
 
-    UIntClr(xw->flags, DECSC_FLAGS);
-    UIntSet(xw->flags, sc->flags & DECSC_FLAGS);
+    UIntClr(xw->flags, our_flags);
+    UIntSet(xw->flags, sc->flags & our_flags);
     if ((xw->flags & ORIGIN)) {
 	CursorSet(screen,
 		  sc->row - screen->top_marg,
@@ -421,11 +463,23 @@ CursorRestore2(XtermWidget xw, SavedCursor * sc)
 #endif
 }
 
+/*
+ * Use this entrypoint for the status-line.
+ */
+void
+CursorRestore2(XtermWidget xw, SavedCursor * sc)
+{
+    CursorRestoreFlags(xw, sc, ALL_FLAGS);
+}
+
+/*
+ * Use this entrypoint for the VT100 window.
+ */
 void
 CursorRestore(XtermWidget xw)
 {
     TScreen *screen = TScreenOf(xw);
-    CursorRestore2(xw, &screen->sc[screen->whichBuf]);
+    CursorRestoreFlags(xw, &screen->sc[screen->whichBuf], DECSC_FLAGS);
 }
 
 /*

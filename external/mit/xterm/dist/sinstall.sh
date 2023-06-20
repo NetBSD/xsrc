@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: sinstall.sh,v 1.18 2010/03/06 16:19:13 tom Exp $
+# $XTermId: sinstall.sh,v 1.16 2008/03/02 23:35:02 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

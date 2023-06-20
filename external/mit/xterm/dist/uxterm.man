@@ -1,4 +1,4 @@
-.\" $XTermId: uxterm.man,v 1.8 2018/06/23 00:19:44 tom Exp $
+.\" $XTermId: uxterm.man,v 1.7 2013/01/01 00:40:55 tom Exp $
 .\"
 .\" Copyright 2007-2012, 2018 Thomas E. Dickey
 .\" Copyright 2001, 2004 Branden Robinson

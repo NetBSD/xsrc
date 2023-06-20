@@ -1,4 +1,4 @@
-/* $XTermId: testxmc.c,v 1.54 2020/11/08 20:12:21 tom Exp $ */
+/* $XTermId: testxmc.c,v 1.53 2019/06/30 18:56:50 tom Exp $ */
 
 /*
  * Copyright 1997-2019,2020 by Thomas E. Dickey

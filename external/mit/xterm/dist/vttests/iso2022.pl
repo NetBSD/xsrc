@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: iso2022.pl,v 1.5 2021/02/13 01:24:32 tom Exp $
+# $XTermId: vxt-iso2022,v 1.5 2021/02/13 01:24:32 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2021 by Thomas E. Dickey
 #

@@ -1,4 +1,4 @@
-/* $XTermId: cachedGCs.c,v 1.81 2021/09/16 19:48:02 tom Exp $ */
+/* $XTermId: cachedGCs.c,v 1.80 2021/02/02 00:20:11 tom Exp $ */
 
 /*
  * Copyright 2007-2019,2021 by Thomas E. Dickey

@@ -1,4 +1,4 @@
-/* $XTermId: Tekparse.h,v 1.8 2016/10/06 00:32:30 tom Exp $ */
+/* $XTermId: Tekparse.h,v 1.7 2006/02/13 01:14:57 tom Exp $ */
 
 /*
  * Copyright 1998-2006,2016 by Thomas E. Dickey

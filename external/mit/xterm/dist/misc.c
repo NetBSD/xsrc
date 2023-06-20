@@ -1,7 +1,7 @@
-/* $XTermId: misc.c,v 1.1015 2022/02/18 09:08:10 tom Exp $ */
+/* $XTermId: misc.c,v 1.1045 2023/03/31 23:03:37 tom Exp $ */
 
 /*
- * Copyright 1999-2021,2022 by Thomas E. Dickey
+ * Copyright 1999-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -98,6 +98,12 @@
 #include <graphics_sixel.h>
 
 #include <assert.h>
+
+#ifdef HAVE_MKSTEMP
+#define MakeTemp(f) mkstemp(f)
+#else
+#define MakeTemp(f) mktemp(f)
+#endif
 
 #ifdef VMS
 #define XTERM_VMS_LOGFILE "SYS$SCRATCH:XTERM_LOG.TXT"
@@ -743,7 +749,7 @@ void
 init_colored_cursor(Display *dpy)
 {
     static const char theme[] = "index.theme";
-    static const char pattern[] = "xtermXXXXXX";
+    static const char pattern[] = "xtermXXXXXXXX";
     char *env = getenv("XCURSOR_THEME");
 
     xterm_cursor_theme = 0;
@@ -777,7 +783,7 @@ init_colored_cursor(Display *dpy)
 #ifdef HAVE_MKDTEMP
 	    xterm_cursor_theme = mkdtemp(filename);
 #else
-	    if (mktemp(filename) != 0
+	    if (MakeTemp(filename) != 0
 		&& mkdir(filename, 0700) == 0) {
 		xterm_cursor_theme = filename;
 	    }
@@ -1213,13 +1219,13 @@ HandleInterpret(Widget w GCC_UNUSED,
 {
     if (*param_count == 1) {
 	const char *value = params[0];
-	int need = (int) strlen(value);
-	int used = (int) (VTbuffer->next - VTbuffer->buffer);
-	int have = (int) (VTbuffer->last - VTbuffer->buffer);
+	size_t need = strlen(value);
+	size_t used = (size_t) (VTbuffer->next - VTbuffer->buffer);
+	size_t have = (size_t) (VTbuffer->last - VTbuffer->buffer);
 
-	if (have - used + need < BUF_SIZE) {
+	if ((have - used) + need < (size_t) BUF_SIZE) {
 
-	    fillPtyData(term, VTbuffer, value, (int) strlen(value));
+	    fillPtyData(term, VTbuffer, value, strlen(value));
 
 	    TRACE(("Interpret %s\n", value));
 	    VTbuffer->update++;
@@ -1733,7 +1739,7 @@ dabbrev_expand(XtermWidget xw)
 	    memmove(copybuffer + del_cnt,
 		    expansion + hint_len,
 		    strlen(expansion) - hint_len);
-	    v_write(pty, copybuffer, (unsigned) buf_cnt);
+	    v_write(pty, copybuffer, buf_cnt);
 	    /* v_write() just reset our flag */
 	    screen->dabbrev_working = True;
 	    free(copybuffer);
@@ -2140,6 +2146,7 @@ timestamp_filename(char *dst, const char *src)
 	    tstruct->tm_sec);
 }
 
+#if OPT_SCREEN_DUMPS
 FILE *
 create_printfile(XtermWidget xw, const char *suffix)
 {
@@ -2171,7 +2178,9 @@ create_printfile(XtermWidget xw, const char *suffix)
     fp = (fd >= 0) ? fdopen(fd, "wb") : NULL;
     return fp;
 }
+#endif /* OPT_SCREEN_DUMPS */
 
+#if OPT_SCREEN_DUMPS || defined(ALLOWLOGGING)
 int
 open_userfile(uid_t uid, gid_t gid, char *path, Bool append)
 {
@@ -2319,6 +2328,7 @@ creat_as(uid_t uid, gid_t gid, Bool append, char *pathname, unsigned mode)
     }
 }
 #endif /* !VMS */
+#endif /* OPT_SCREEN_DUMPS || defined(ALLOWLOGGING) */
 
 int
 xtermResetIds(TScreen *screen)
@@ -2476,7 +2486,7 @@ GenerateLogPath(void)
 #else
     static const char log_def_name[] = "XtermLog.XXXXXX";
     if ((log_default = x_strdup(log_def_name)) != NULL) {
-	mktemp(log_default);
+	MakeTemp(log_default);
     }
 #endif
 
@@ -2549,7 +2559,7 @@ FlushLog(XtermWidget xw)
 
     if (screen->logging && !(screen->inhibit & I_LOG)) {
 	Char *cp;
-	int i;
+	size_t i;
 
 #ifdef VMS			/* avoid logging output loops which otherwise occur sometimes
 				   when there is no output and cp/screen->logstart are 1 apart */
@@ -2559,8 +2569,8 @@ FlushLog(XtermWidget xw)
 #endif /* VMS */
 	cp = VTbuffer->next;
 	if (screen->logstart != 0
-	    && (i = (int) (cp - screen->logstart)) > 0) {
-	    IGNORE_RC(write(screen->logfd, screen->logstart, (size_t) i));
+	    && (i = (size_t) (cp - screen->logstart)) > 0) {
+	    IGNORE_RC(write(screen->logfd, screen->logstart, i));
 	}
 	screen->logstart = VTbuffer->next;
     }
@@ -2637,6 +2647,9 @@ rgb masks (%04lx/%04lx/%04lx)\n"
 			   ((vi->red_mask & vi->green_mask) == 0) &&
 			   ((vi->green_mask & vi->blue_mask) == 0) &&
 			   ((vi->blue_mask & vi->red_mask) == 0) &&
+			   xw->rgb_widths[0] <= (unsigned) vi->bits_per_rgb &&
+			   xw->rgb_widths[1] <= (unsigned) vi->bits_per_rgb &&
+			   xw->rgb_widths[2] <= (unsigned) vi->bits_per_rgb &&
 			   (vi->class == TrueColor
 			    || vi->class == DirectColor));
 
@@ -2755,7 +2768,9 @@ AllocOneColor(XtermWidget xw, XColor *def)
 	             << xw->rgb_shifts[nn]) \
 	 & xw->visInfo->name ##_mask)
 
-    if (getVisualInfo(xw) != NULL && xw->has_rgb) {
+#define VisualIsRGB(xw) (getVisualInfo(xw) != NULL && xw->has_rgb && xw->visInfo->bits_per_rgb <= 8)
+
+    if (VisualIsRGB(xw)) {
 	def->pixel = MaskIt(red, 0) | MaskIt(green, 1) | MaskIt(blue, 2);
     } else {
 	Display *dpy = screen->display;
@@ -2769,6 +2784,9 @@ AllocOneColor(XtermWidget xw, XColor *def)
 	    def->pixel = ((bright >= levels)
 			  ? xw->dft_background
 			  : xw->dft_foreground);
+	    TRACE(("XAllocColor failed, for %04x/%04x/%04x: choose %08lx (%d vs %d)\n",
+		   def->red, def->green, def->blue,
+		   def->pixel, bright, levels));
 	    result = False;
 	}
     }
@@ -2792,13 +2810,17 @@ QueryOneColor(XtermWidget xw, XColor *def)
 	(unsigned short)((((UnMaskIt(name,nn) << 8) \
 			   |UnMaskIt(name,nn))) << (8 - xw->rgb_widths[nn]))
 
-    if (getVisualInfo(xw) != NULL && xw->has_rgb) {
+    if (VisualIsRGB(xw)) {
 	/* *INDENT-EQLS* */
 	def->red   = UnMaskIt2(red, 0);
 	def->green = UnMaskIt2(green, 1);
 	def->blue  = UnMaskIt2(blue, 2);
-    } else if (!XQueryColor(TScreenOf(xw)->display, xw->core.colormap, def)) {
-	result     = False;
+    } else {
+	Display *dpy = TScreenOf(xw)->display;
+	if (!XQueryColor(dpy, xw->core.colormap, def)) {
+	    TRACE(("XQueryColor failed, given %08lx\n", def->pixel));
+	    result     = False;
+	}
     }
     return result;
 }
@@ -3354,93 +3376,85 @@ ManipulateSelectionData(XtermWidget xw, TScreen *screen, char *buf, int final)
 	    PDATA('6', CUT_BUFFER6),
 	    PDATA('7', CUT_BUFFER7),
     };
+    char target_used[XtNumber(table)];
+    char select_code[XtNumber(table) + 1];
+    String select_args[XtNumber(table) + 1];
 
     const char *base = buf;
-    Cardinal j, n = 0;
+    Cardinal j;
+    Cardinal num_targets = 0;
 
     TRACE(("Manipulate selection data\n"));
 
+    memset(target_used, 0, sizeof(target_used));
     while (*buf != ';' && *buf != '\0') {
 	++buf;
     }
 
     if (*buf == ';') {
-	char *used;
 
 	*buf++ = '\0';
-
 	if (*base == '\0')
 	    base = "s0";
 
-	if ((used = x_strdup(base)) != 0) {
-	    String *select_args;
-
-	    if ((select_args = TypeCallocN(String, 2 + strlen(base))) != 0) {
-		while (*base != '\0') {
-		    for (j = 0; j < XtNumber(table); ++j) {
-			if (*base == table[j].given) {
-			    used[n] = *base;
-			    select_args[n++] = table[j].result;
-			    TRACE(("atom[%d] %s\n", n, table[j].result));
-			    break;
-			}
+	while (*base != '\0') {
+	    for (j = 0; j < XtNumber(table); ++j) {
+		if (*base == table[j].given) {
+		    if (!target_used[j]) {
+			target_used[j] = 1;
+			select_code[num_targets] = *base;
+			select_args[num_targets++] = table[j].result;
+			TRACE(("atom[%d] %s\n", num_targets, table[j].result));
 		    }
-		    ++base;
-		}
-		used[n] = 0;
-
-		if (!strcmp(buf, "?")) {
-		    if (AllowWindowOps(xw, ewGetSelection)) {
-			TRACE(("Getting selection\n"));
-			unparseputc1(xw, ANSI_OSC);
-			unparseputs(xw, "52");
-			unparseputc(xw, ';');
-
-			unparseputs(xw, used);
-			unparseputc(xw, ';');
-
-			/* Tell xtermGetSelection data is base64 encoded */
-			screen->base64_paste = n;
-			screen->base64_final = final;
-
-			screen->selection_time =
-			    XtLastTimestampProcessed(TScreenOf(xw)->display);
-
-			/* terminator will be written in this call */
-			xtermGetSelection((Widget) xw,
-					  screen->selection_time,
-					  select_args, n,
-					  NULL);
-			/*
-			 * select_args is used via SelectionReceived, cannot
-			 * free it here.
-			 */
-		    } else {
-			free(select_args);
-		    }
-		} else {
-		    if (AllowWindowOps(xw, ewSetSelection)) {
-			char *old = buf;
-
-			TRACE(("Setting selection(%s) with %s\n", used, buf));
-			screen->selection_time =
-			    XtLastTimestampProcessed(TScreenOf(xw)->display);
-
-			for (j = 0; j < n; ++j) {
-			    buf = old;
-			    ClearSelectionBuffer(screen, select_args[j]);
-			    while (*buf != '\0') {
-				AppendToSelectionBuffer(screen,
-							CharOf(*buf++),
-							select_args[j]);
-			    }
-			}
-			CompleteSelection(xw, select_args, n);
-		    }
-		    free(select_args);
+		    break;
 		}
 	    }
-	    free(used);
+	    ++base;
+	}
+	select_code[num_targets] = '\0';
+
+	if (!strcmp(buf, "?")) {
+	    if (AllowWindowOps(xw, ewGetSelection)) {
+		TRACE(("Getting selection\n"));
+		unparseputc1(xw, ANSI_OSC);
+		unparseputs(xw, "52");
+		unparseputc(xw, ';');
+
+		unparseputs(xw, select_code);
+		unparseputc(xw, ';');
+
+		/* Tell xtermGetSelection data is base64 encoded */
+		screen->base64_paste = num_targets;
+		screen->base64_final = final;
+
+		screen->selection_time =
+		    XtLastTimestampProcessed(TScreenOf(xw)->display);
+
+		/* terminator will be written in this call */
+		xtermGetSelection((Widget) xw,
+				  screen->selection_time,
+				  select_args, num_targets,
+				  NULL);
+	    }
+	} else {
+	    if (AllowWindowOps(xw, ewSetSelection)) {
+		char *old = buf;
+
+		TRACE(("Setting selection(%s) with %s\n", select_code, buf));
+		screen->selection_time =
+		    XtLastTimestampProcessed(TScreenOf(xw)->display);
+
+		for (j = 0; j < num_targets; ++j) {
+		    buf = old;
+		    ClearSelectionBuffer(screen, select_args[j]);
+		    while (*buf != '\0') {
+			AppendToSelectionBuffer(screen,
+						CharOf(*buf++),
+						select_args[j]);
+		    }
+		}
+		CompleteSelection(xw, select_args, num_targets);
+	    }
 	}
     }
 }
@@ -3527,6 +3541,28 @@ typedef enum {
  */
 #define OSC_RESET 100
 #define OSC_Reset(code) (code) + OSC_RESET
+
+/*
+ * Other (non-color) OSC controls
+ */
+typedef enum {
+    OSC_IconBoth = 0
+    ,OSC_IconOnly = 1
+    ,OSC_TitleOnly = 2
+    ,OSC_X_Property = 3
+    ,OSC_SetAnsiColor = 4
+    ,OSC_GetAnsiColors = 5
+    ,OSC_ColorMode = 6
+    ,OSC_SetupPointer = 22
+    ,OSC_Unused_30 = 30		/* Konsole (unused) */
+    ,OSC_Unused_31 = 31		/* Konsole (unused) */
+    ,OSC_NewLogFile = 46
+    ,OSC_FontOps = 50
+    ,OSC_Unused_51		/* Emacs (unused) */
+    ,OSC_SelectionData = 52
+    ,OSC_AllowedOps = 60
+    ,OSC_DisallowedOps = 61
+} OscMiscOps;
 
 static Bool
 GetOldColors(XtermWidget xw)
@@ -3679,6 +3715,7 @@ OscToColorIndex(OscTextColors mode)
     case OSC_NCOLORS:
 	break;
     }
+#undef CASE
     return result;
 }
 
@@ -3941,9 +3978,9 @@ ChangeFontRequest(XtermWidget xw, String buf)
 	    {
 		memset(&fonts, 0, sizeof(fonts));
 		fonts.f_n = name;
-		SetVTFont(xw, num, True, &fonts);
-		if (num == screen->menu_font_number &&
-		    num != fontMenu_fontescape) {
+		if (SetVTFont(xw, num, True, &fonts)
+		    && num == screen->menu_font_number
+		    && num != fontMenu_fontescape) {
 		    screen->EscapeFontName() = x_strdup(name);
 		}
 	    }
@@ -3955,6 +3992,44 @@ ChangeFontRequest(XtermWidget xw, String buf)
     }
 }
 #endif /* OPT_SHIFT_FONTS */
+
+/***====================================================================***/
+
+static void
+report_allowed_ops(XtermWidget xw, int final)
+{
+    TScreen *screen = TScreenOf(xw);
+    char delimiter = ';';
+
+    unparseputc1(xw, ANSI_OSC);
+    unparseputn(xw, OSC_AllowedOps);
+
+#define CASE(name) \
+    if (screen->name) { \
+	unparseputc(xw, delimiter); \
+	unparseputs(xw, #name); \
+	delimiter = ','; \
+    }
+    CASE(allowColorOps);
+    CASE(allowFontOps);
+    CASE(allowMouseOps);
+    CASE(allowPasteControls);
+    CASE(allowTcapOps);
+    CASE(allowTitleOps);
+    CASE(allowWindowOps);
+#undef CASE
+
+    unparseputc1(xw, final);
+}
+
+static void
+report_disallowed_ops(XtermWidget xw, char *value, int final)
+{
+    unparseputc1(xw, ANSI_OSC);
+    unparseputn(xw, OSC_DisallowedOps);
+    unparse_disallowed_ops(xw, value);
+    unparseputc1(xw, final);
+}
 
 /***====================================================================***/
 
@@ -4011,8 +4086,8 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	    /* FALLTHRU */
 	case 1:
 	    if (*cp != ';') {
-		TRACE(("do_osc did not find semicolon offset %d\n",
-		       (int) (cp - oscbuf)));
+		TRACE(("do_osc did not find semicolon offset %lu\n",
+		       (unsigned long) (cp - oscbuf)));
 		return;
 	    }
 	    state = 2;
@@ -4029,9 +4104,9 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 		case 2:
 		    break;
 		default:
-		    TRACE(("do_osc found nonprinting char %02X offset %d\n",
+		    TRACE(("do_osc found nonprinting char %02X offset %lu\n",
 			   CharOf(*cp),
-			   (int) (cp - oscbuf)));
+			   (unsigned long) (cp - oscbuf)));
 		    return;
 		}
 	    }
@@ -4044,14 +4119,15 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
      */
     if (xw->work.palette_changed) {
 	switch (mode) {
-	case 03:		/* change X property */
-	case 30:		/* Konsole (unused) */
-	case 31:		/* Konsole (unused) */
-	case 50:		/* font operations */
-	case 51:		/* Emacs (unused) */
-#if OPT_PASTE64
-	case 52:		/* selection data */
-#endif
+	case OSC_AllowedOps:
+	case OSC_DisallowedOps:
+	case OSC_FontOps:
+	case OSC_NewLogFile:
+	case OSC_SelectionData:
+	case OSC_Unused_30:
+	case OSC_Unused_31:
+	case OSC_Unused_51:
+	case OSC_X_Property:
 	    TRACE(("forced repaint after palette changed\n"));
 	    xw->work.palette_changed = False;
 	    xtermRepaint(xw);
@@ -4067,10 +4143,10 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
      * a special case.
      */
     switch (mode) {
-    case 50:
+    case OSC_FontOps:
 #if OPT_ISO_COLORS
-    case OSC_Reset(4):
-    case OSC_Reset(5):
+    case OSC_Reset(OSC_SetAnsiColor):
+    case OSC_Reset(OSC_GetAnsiColors):
 	need_data = False;
 	optional_data = True;
 	break;
@@ -4088,6 +4164,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
     case OSC_Reset(OSC_TEK_BG):
     case OSC_Reset(OSC_TEK_CURSOR):
 #endif
+    case OSC_AllowedOps:
 	need_data = False;
 	break;
 #endif
@@ -4121,34 +4198,34 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
     }
 
     switch (mode) {
-    case 0:			/* new icon name and title */
+    case OSC_IconBoth:		/* new icon name and title */
 	ChangeIconName(xw, buf);
 	ChangeTitle(xw, buf);
 	break;
 
-    case 1:			/* new icon name only */
+    case OSC_IconOnly:		/* new icon name only */
 	ChangeIconName(xw, buf);
 	break;
 
-    case 2:			/* new title only */
+    case OSC_TitleOnly:	/* new title only */
 	ChangeTitle(xw, buf);
 	break;
 
-    case 3:			/* change X property */
+    case OSC_X_Property:	/* change X property */
 	if (AllowWindowOps(xw, ewSetXprop))
 	    ChangeXprop(buf);
 	break;
 #if OPT_ISO_COLORS
-    case 5:
+    case OSC_GetAnsiColors:
 	ansi_colors = NUM_ANSI_COLORS;
 	/* FALLTHRU */
-    case 4:
+    case OSC_SetAnsiColor:
 	if (ChangeAnsiColorRequest(xw, mode, buf, ansi_colors, final))
 	    xw->work.palette_changed = True;
 	break;
-    case 6:
+    case OSC_ColorMode:
 	/* FALLTHRU */
-    case OSC_Reset(6):
+    case OSC_Reset(OSC_ColorMode):
 	TRACE(("parse colorXXMode:%s\n", buf));
 	while (*buf != '\0') {
 	    long which = 0;
@@ -4199,10 +4276,10 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	    }
 	}
 	break;
-    case OSC_Reset(5):
+    case OSC_Reset(OSC_GetAnsiColors):
 	ansi_colors = NUM_ANSI_COLORS;
 	/* FALLTHRU */
-    case OSC_Reset(4):
+    case OSC_Reset(OSC_SetAnsiColor):
 	if (ResetAnsiColorRequest(xw, buf, ansi_colors))
 	    xw->work.palette_changed = True;
 	break;
@@ -4244,17 +4321,12 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	}
 	break;
 
-    case 22:
+    case OSC_SetupPointer:
 	xtermSetupPointer(xw, buf);
 	break;
 
-    case 30:
-    case 31:
-	/* reserved for Konsole (Stephan Binner <Stephan.Binner@gmx.de>) */
-	break;
-
 #ifdef ALLOWLOGGING
-    case 46:			/* new log file */
+    case OSC_NewLogFile:
 #ifdef ALLOWLOGFILECHANGES
 	/*
 	 * Warning, enabling this feature allows people to overwrite
@@ -4274,7 +4346,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	break;
 #endif /* ALLOWLOGGING */
 
-    case 50:
+    case OSC_FontOps:
 #if OPT_SHIFT_FONTS
 	if (*buf == '?') {
 	    QueryFontRequest(xw, buf, final);
@@ -4283,19 +4355,24 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	}
 #endif /* OPT_SHIFT_FONTS */
 	break;
-    case 51:
-	/* reserved for Emacs shell (Rob Mayoff <mayoff@dqd.com>) */
-	break;
 
 #if OPT_PASTE64
-    case 52:
+    case OSC_SelectionData:
 	ManipulateSelectionData(xw, screen, buf, final);
 	break;
 #endif
-	/*
-	 * One could write code to send back the display and host names,
-	 * but that could potentially open a fairly nasty security hole.
-	 */
+
+    case OSC_AllowedOps:	/* XTQALLOWED */
+	report_allowed_ops(xw, final);
+	break;
+
+    case OSC_DisallowedOps:	/* XTQDISALLOWED */
+	report_disallowed_ops(xw, buf, final);
+	break;
+
+    case OSC_Unused_30:
+    case OSC_Unused_31:
+    case OSC_Unused_51:
     default:
 	TRACE(("do_osc - unrecognized code\n"));
 	break;
@@ -4811,12 +4888,12 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 	cp++;
 	switch (*cp) {
 #if OPT_TCAP_QUERY
-	case 'p':
+	case 'p':		/* XTSETTCAP */
 	    if (AllowTcapOps(xw, etSetTcap)) {
 		set_termcap(xw, cp + 1);
 	    }
 	    break;
-	case 'q':
+	case 'q':		/* XTGETTCAP */
 	    if (AllowTcapOps(xw, etGetTcap)) {
 		Bool fkey;
 		unsigned state;
@@ -4858,7 +4935,7 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 				    unparseputn(xw, xw->rgb_widths[0]);
 				} else {
 				    char temp[1024];
-				    sprintf(temp, "%d/%d/%d",
+				    sprintf(temp, "%u/%u/%u",
 					    xw->rgb_widths[0],
 					    xw->rgb_widths[1],
 					    xw->rgb_widths[2]);
@@ -4895,11 +4972,12 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 	    break;
 #endif
 #if OPT_XRES_QUERY
-	case 'Q':
+	case 'Q':		/* XTGETXRES */
 	    ++cp;
 	    if (AllowXResOps(xw)) {
 		Boolean first = True;
-		while (*cp != '\0') {
+		okay = True;
+		while (*cp != '\0' && okay) {
 		    const char *parsed = 0;
 		    const char *tmp;
 		    char *name = x_decode_hex(cp, &parsed);
@@ -4908,6 +4986,10 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		    if (cp == parsed || name == NULL) {
 			free(name);
 			break;	/* no data found, error */
+		    }
+		    if ((cp - parsed) > 1024) {
+			free(name);
+			break;	/* ignore improbable resource */
 		    }
 		    TRACE(("query-feature '%s'\n", name));
 		    if ((value = vt100ResourceToString(xw, name)) != 0) {
@@ -6422,7 +6504,6 @@ xtermSetenv(const char *var, const char *value)
 
 	    found = envindex;
 	    environ[found + 1] = NULL;
-	    environ = environ;
 	}
 
 	environ[found] = malloc(2 + len + strlen(value));
@@ -7477,14 +7558,6 @@ update_winsize(TScreen *screen, int rows, int cols, int height, int width)
 	last_cols = cols;
 	last_high = height;
 	last_wide = width;
-#if OPT_STATUS_LINE
-	if (IsStatusShown(screen)) {
-	    ++rows;
-	    height += FontHeight(screen);
-	    TRACE(("... account for status-line -> %dx%d (%dx%d)\n",
-		   rows, cols, height, width));
-	}
-#endif
 	setup_winsize(ts, rows, cols, height, width);
 	TRACE_RC(code, SET_TTYSIZE(screen->respond, ts));
 	trace_winsize(ts, "from SET_TTYSIZE");

@@ -1,15 +1,15 @@
-# $XTermId: xterm.spec,v 1.149 2022/03/04 21:39:26 tom Exp $
+# $XTermId: xterm.spec,v 1.160 2023/05/28 08:34:22 tom Exp $
 Summary: X terminal emulator (development version)
 %global my_middle xterm
 %global my_suffix -dev
 %global fullname %{my_middle}%{my_suffix}
 %global my_class XTermDev
 Name: %{fullname}
-Version: 372
+Version: 382
 Release: 1
 License: X11
 Group: User Interface/X
-Source: xterm-%{version}.tgz
+Source: https://invisible-island.net/archives/xterm/xterm-%{version}.tgz
 URL: https://invisible-island.net/xterm/
 Provides: x-terminal-emulator >= %{version}
 
@@ -27,7 +27,9 @@ Provides: x-terminal-emulator >= %{version}
 BuildRequires: x11-docs
 %else
 %if %{is_redhat}
-BuildRequires: xorg-x11-docs
+# missing in Fedora 37:
+## BuildRequires: xorg-x11-docs
+BuildRequires: ncurses-devel
 %else
 %if %{is_suse}
 BuildRequires: xorg-docs
@@ -207,14 +209,6 @@ if [ -x %{_bindir}/gtk-update-icon-cache ]; then
 fi
 %endif
 
-%clean
-if rm -rf $RPM_BUILD_ROOT; then
-  echo OK
-else
-  find $RPM_BUILD_ROOT -type f | grep -F -v /.nfs && exit 1
-fi
-exit 0
-
 %files
 %defattr(-,root,root,-)
 %{_bindir}/koi8r%{fullname}
@@ -244,6 +238,9 @@ exit 0
 %{_pixmapsdir}/*.xpm
 
 %changelog
+
+* Fri Nov 25 2022 Thomas E. Dickey
+- Fedora 37 has no xorg-x11-docs
 
 * Thu Feb 24 2022 Thomas E. Dickey
 - double-buffer is not enabled by default

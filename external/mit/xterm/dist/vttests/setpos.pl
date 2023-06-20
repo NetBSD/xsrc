@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: setpos.pl,v 1.18 2019/05/26 23:19:29 tom Exp $
+# $XTermId: vxt-setpos,v 1.18 2019/05/26 23:19:29 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2019 by Thomas E. Dickey
 #

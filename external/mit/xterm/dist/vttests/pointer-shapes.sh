@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: pointer-shapes.sh,v 1.2 2021/11/11 17:47:07 tom Exp $
+# $XTermId: vxt-pointer-shapes,v 1.2 2021/11/11 17:47:07 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

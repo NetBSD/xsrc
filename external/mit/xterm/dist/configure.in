@@ -1,9 +1,9 @@
-dnl $XTermId: configure.in,v 1.383 2022/02/20 14:18:05 tom Exp $
+dnl $XTermId: configure.in,v 1.394 2023/02/12 19:12:35 tom Exp $
 dnl
 dnl -----------------------------------------------------------------------------
 dnl this file is part of xterm
 dnl
-dnl Copyright 1997-2021,2022 by Thomas E. Dickey
+dnl Copyright 1997-2022,2023 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -65,14 +65,14 @@ CF_XOPEN_SOURCE(700)
 CF_SIGWINCH
 
 ###	checks for header files
+AC_CHECK_DECL(exit)
 AC_CHECK_HEADERS( \
 ncurses/curses.h \
 ncurses/term.h \
-stdlib.h \
-sys/ptem.h sys/ttydefaults.h \
+sys/ptem.h \
+sys/ttydefaults.h \
 term.h \
 termios.h \
-unistd.h \
 wchar.h \
 )
 AC_HEADER_TIME
@@ -82,6 +82,7 @@ AM_LANGINFO_CODESET
 CF_SIG_ATOMIC_T
 AC_CHECK_TYPE(time_t, long)
 CF_TYPE_CC_T
+CF_TYPE_NFDS_T
 AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_UID_T
@@ -104,6 +105,8 @@ AC_CHECK_FUNCS( \
 	waitpid \
 	wcswidth \
 	wcwidth )
+CF_MKSTEMP
+CF_SETITIMER
 CF_UTMP
 CF_STRUCT_LASTLOG
 CF_POSIX_SAVED_IDS
@@ -443,8 +446,8 @@ if test "$cf_tic_prog" = yes ; then
 	fi
 	SET_TERMINFO=
 	if test -n "$TERMINFO_DIR" ; then
-		TERMINFO_DIR='$(DESTDIR)'$TERMINFO_DIR
-		SET_TERMINFO='TERMINFO=$(TERMINFO_DIR)'
+		TERMINFO_DIR='${DESTDIR}'$TERMINFO_DIR
+		SET_TERMINFO='TERMINFO=${TERMINFO_DIR}'
 	fi
 	no_ticprog=
 else
@@ -632,6 +635,16 @@ CF_ARG_DISABLE(boxchars,
 	[enable_boxchars=yes])
 AC_MSG_RESULT($enable_boxchars)
 test "$enable_boxchars" = no && AC_DEFINE(OPT_BOX_CHARS,0,[Define to 0 to disable fallback-support for box chars])
+
+AC_MSG_CHECKING(if you want to allow spawning commands to process selections)
+CF_ARG_DISABLE(exec-selection,
+	[  --disable-exec-selection disable "exec-formatted" and "exec-selection" actions],
+	[enable_exec_selection=no],
+	[enable_exec_selection=yes])
+AC_MSG_RESULT($enable_exec_selection)
+if test "$enable_exec_selection" = no ; then
+	AC_DEFINE(OPT_EXEC_SELECTION,0,[Define to 0 to disable "exec-selection" action])
+fi
 
 AC_MSG_CHECKING(if you want to allow spawning new xterms)
 CF_ARG_ENABLE(exec-xterm,
@@ -828,10 +841,10 @@ else
 fi
 
 AC_MSG_CHECKING(if you want support for mouse in readline applications)
-CF_ARG_ENABLE(readline-mouse,
-	[  --enable-readline-mouse enable support for mouse in readline applications],
-	[enable_readline_mouse=yes],
-	[enable_readline_mouse=no])
+CF_ARG_DISABLE(readline-mouse,
+	[  --disable-readline-mouse disable support for mouse in readline applications],
+	[enable_readline_mouse=no],
+	[enable_readline_mouse=yes])
 AC_MSG_RESULT($enable_readline_mouse)
 if test "$enable_readline_mouse" = yes ; then
 	AC_DEFINE(OPT_READLINE,1,[Define to 1 to enable support for mouse in readline applications])
@@ -1141,7 +1154,7 @@ if test -n "$cf_cv_lib_part_tgetent"; then
     AC_CHECK_FUNCS(use_extended_names)
 fi
 
-CF_ENABLE_WARNINGS(Wdeclaration-after-statement Wextra Wno-unknown-pragmas Wswitch-enum Wno-cast-qual)
+CF_ENABLE_WARNINGS(Wdeclaration-after-statement Wextra Wno-unknown-pragmas Wswitch-enum Wno-cast-qual,yes)
 
 AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(CHARPROC_DEPS)
@@ -1193,5 +1206,5 @@ then
 fi
 
 ###	output xtermcfg.h, etc
-AC_CONFIG_FILES([Makefile df-install minstall:minstall.in])
+AC_CONFIG_FILES([Makefile df-install minstall:minstall.in run-tic.sh:run-tic.in])
 AC_OUTPUT

@@ -1,4 +1,4 @@
-/* $XTermId: graphics.h,v 1.29 2022/02/22 23:36:19 tom Exp $ */
+/* $XTermId: graphics.h,v 1.28 2022/02/21 23:46:34 tom Exp $ */
 
 /*
  * Copyright 2013-2016,2022 by Ross Combs

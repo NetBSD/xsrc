@@ -1,7 +1,7 @@
-/* $XTermId: menu.c,v 1.367 2021/06/03 21:23:40 tom Exp $ */
+/* $XTermId: menu.c,v 1.369.1.1 2022/10/07 08:00:53 Ben.Wong Exp $ */
 
 /*
- * Copyright 1999-2020,2021 by Thomas E. Dickey
+ * Copyright 1999-2021,2022 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -312,7 +312,7 @@ MenuEntry mainMenuEntries[] = {
 #ifdef ALLOWLOGGING
     { "logging",	do_logging,	NULL },
 #endif
-#ifdef OPT_PRINT_ON_EXIT
+#if OPT_PRINT_ON_EXIT
     { "print-immediate", do_write_now,	NULL },
     { "print-on-error",	do_write_error,	NULL },
 #endif
@@ -811,7 +811,7 @@ domenu(Widget w,
 	    update_meta_esc();
 	    update_delete_del();
 	    update_keyboard_type();
-#ifdef OPT_PRINT_ON_EXIT
+#if OPT_PRINT_ON_EXIT
 	    screen->write_error = !IsEmpty(resource.printFileOnXError);
 	    SetItemSensitivity(mainMenuEntries[mainMenu_write_now].widget, True);
 	    SetItemSensitivity(mainMenuEntries[mainMenu_write_error].widget, screen->write_error);
@@ -1144,7 +1144,7 @@ do_logging(Widget gw GCC_UNUSED,
 }
 #endif
 
-#ifdef OPT_PRINT_ON_EXIT
+#if OPT_PRINT_ON_EXIT
 static void
 do_write_now(Widget gw GCC_UNUSED,
 	     XtPointer closure GCC_UNUSED,
@@ -2344,7 +2344,7 @@ update_decsdm(void)
     UpdateCheckbox("update_decsdm",
 		   vtMenuEntries,
 		   vtMenu_sixelscrolling,
-		   (term->keyboard.flags & MODE_DECSDM) != 0);
+		   (term->keyboard.flags & MODE_DECSDM) == 0);
 }
 
 void

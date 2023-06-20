@@ -1,4 +1,4 @@
-/* $XTermId: version.c,v 1.7 2020/06/23 22:46:02 tom Exp $ */
+/* $XTermId: version.c,v 1.6 2019/11/13 23:52:20 tom Exp $ */
 
 /*
  * Copyright 2013-2019,2020 by Thomas E. Dickey

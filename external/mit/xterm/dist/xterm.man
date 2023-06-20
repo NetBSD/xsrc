@@ -1,7 +1,7 @@
 '\" t
-.\" $XTermId: xterm.man,v 1.856 2022/02/22 09:11:42 tom Exp $
+.\" $XTermId: xterm.man,v 1.877 2023/03/10 01:08:28 tom Exp $
 .\"
-.\" Copyright 1996-2021,2022 by Thomas E. Dickey
+.\" Copyright 1996-2022,2023 by Thomas E. Dickey
 .\"
 .\"                         All Rights Reserved
 .\"
@@ -279,8 +279,8 @@ See \fIXterm Control Sequences\fP for details.
 .
 .\" ***************************************************************************
 .SH OPTIONS
-Because \fI\*n\fP uses the X Toolkit library,
-it accepts the standard X Toolkit command line options.
+Because \fI\*n\fP uses the \fIX Toolkit\fP library,
+it accepts the standard \fIX Toolkit\fP command line options.
 \fI\*N\fP also accepts many application-specific options.
 .PP
 By convention, if an option begins with a \*(``\fB+\fP\*(''
@@ -288,17 +288,17 @@ instead of a \*(``\fB\-\fP\*('',
 the option is restored to its default value.
 .\" ***************************************************************************
 .PP
-Most of the \fI\*n\fP options are actually parsed by the X Toolkit,
+Most of the \fI\*n\fP options are actually parsed by the \fIX Toolkit\fP,
 which sets resource values, and
 overrides corresponding resource-settings in your X resource files.
-\fI\*N\fP provides the X Toolkit with a table of options.
-A few of these are marked, telling the X Toolkit to ignore them
+\fI\*N\fP provides the \fIX Toolkit\fP with a table of options.
+A few of these are marked, telling the \fIX Toolkit\fP to ignore them
 (\fB\-help\fP,
 \fB\-version\fP,
 \fB\-class\fP,
 \fB\-e\fP, and
 \fB\-into\fP).
-After the X Toolkit has parsed the command-line parameters,
+After the \fIX Toolkit\fP has parsed the command-line parameters,
 it removes those which it handles,
 leaving the specially-marked parameters for \fI\*n\fP to handle.
 .\" ***************************************************************************
@@ -333,9 +333,9 @@ The \fB\-version\fP and \fB\-help\fP options are interpreted even if \fI\*n\fP
 cannot open the display, and are useful for testing and configuration scripts.
 Along with \fB\-class\fP, they are checked before other options.
 To do this, \fI\*n\fP has its own (much simpler) argument parser,
-along with a table of the X Toolkit's built-in list of options.
+along with a table of the \fIX Toolkit\fP's built-in list of options.
 .PP
-Relying upon the X Toolkit to parse the options and associated values
+Relying upon the \fIX Toolkit\fP to parse the options and associated values
 has the advantages of simplicity and good integration with the X resource
 mechanism.
 There are a few drawbacks
@@ -355,7 +355,7 @@ In the design of these options,
 some are deemed more important,
 and can override other options.
 .IP
-The X Toolkit uses patterns (constants and wildcards) to match resources.
+The \fIX Toolkit\fP uses patterns (constants and wildcards) to match resources.
 Once a particular pattern has been used,
 it will not modify it.
 To override a given setting,
@@ -365,7 +365,7 @@ Some poorly-designed resource files are too specific
 to allow the command-line options to affect the relevant widget values.
 .bP
 In a few cases,
-the X Toolkit combines its standard options in ways which do not work
+the \fIX Toolkit\fP combines its standard options in ways which do not work
 well with \fI\*n\fP.
 This happens with the color (\fB\-fg\fP, \fB\-bg\fP) and reverse (\fB\-rv\fP)
 options.
@@ -461,6 +461,14 @@ That is the \fIvt100\fP \fBinternalBorder\fP resource.
 The
 default is \*(``2\*(''.
 .TP 8
+.B "\-barc"
+This option, corresponding to the \fBcursorBar\fP resource,
+makes the cursor a bar instead of a box.
+.TP 8
+.B "+barc"
+This option, corresponding to the \fBcursorBar\fP resource,
+makes the cursor a box instead of a bar.
+.TP 8
 .BI \-baudrate " number"
 Set the line-speed, used to test the behavior of applications that
 use the line-speed when optimizing their output to the screen.
@@ -524,7 +532,7 @@ Normally it is \*(``__default_class__\*('', but
 can be set to another class such as
 \*(``U__default_class__\*('' to override selected resources.
 .IP
-X Toolkit sets the \fBWM_CLASS\fP property using the instance name
+\fIX Toolkit\fP sets the \fBWM_CLASS\fP property using the instance name
 and this class value.
 .TP 8
 .B "\-cm"
@@ -605,7 +613,7 @@ When a CJK
 double-width font is specified, you also need to turn
 on the \fBcjkWidth\fP resource.
 .IP
-If you specify both \fB\-fa\fP and the X Toolkit option \fB\-fn\fP,
+If you specify both \fB\-fa\fP and the \fIX Toolkit\fP option \fB\-fn\fP,
 the \fB\-fa\fP setting overrides the latter.
 .IP
 See also the \fBrenderFont\fP resource,
@@ -1249,10 +1257,12 @@ when your operating system does not support locale.
 This option resets the \fButf8\fP resource.
 .TP 8
 .B "\-uc"
-This option makes the cursor underlined instead of a box.
+This option, corresponding to the \fBcursorUnderline\fP resource,
+makes the cursor underlined instead of a box.
 .TP 8
 .B "+uc"
-This option makes the cursor a box instead of underlined.
+This option m, corresponding to the \fBcursorUnderline\fP resource,
+akes the cursor a box instead of underlined.
 .TP 8
 .B "\-ulc"
 This option disables the display of characters with underline attribute as
@@ -1363,8 +1373,8 @@ initialization or the \fB\-S\fP option to a process running in the \fI\*n\fP.
 .PP
 The following command line arguments are provided for compatibility with
 older versions.
-They may not be supported in the next release as the X
-Toolkit provides standard options that accomplish the same task.
+They may not be supported in the next release as the
+\fIX Toolkit\fP provides standard options that accomplish the same task.
 .TP 8
 .B "%\fIgeom\fP"
 This option specifies the preferred size and position of the Tektronix window.
@@ -1381,12 +1391,12 @@ It is equivalent to \fB\-title\fP.
 .BI \-n " string"
 This option specifies the icon name for \fI\*n\fP's windows.
 It is shorthand for specifying the \*(``\fBiconName\fP\*('' resource.
-Note that this is not the same as the toolkit option \fB\-name\fP.
+Note that this is not the same as the \fIX Toolkit\fP option \fB\-name\fP.
 The default icon name is the application name.
 .IP
 If no suitable icon is found, \fI\*n\fP provides a compiled-in pixmap.
 .IP
-X Toolkit sets the \fBWM_ICON_NAME\fP property using this value.
+\fIX Toolkit\fP sets the \fBWM_ICON_NAME\fP property using this value.
 .TP 8
 .B \-r
 This option indicates that reverse video should be simulated by swapping
@@ -1400,17 +1410,18 @@ It is equivalent to \fB\-borderwidth\fP or \fB\-bw\fP.
 .
 .SS X Toolkit Options
 .PP
-The following standard X Toolkit command line arguments are commonly used
+The following standard \fIX Toolkit\fP command line arguments are commonly used
 with \fI\*n\fP:
 .TP 8
 .B \-bd \fIcolor\fP
 This option specifies the color to use for the border of the window.
 The corresponding resource name is \fBborderColor\fP.
-\fI\*N\fP uses the X Toolkit default, which is \*(``XtDefaultForeground\*(''.
+\fI\*N\fP uses the \fIX Toolkit\fP default,
+which is \*(``XtDefaultForeground\*(''.
 .IP
 \fI\*N\fP's VT100 window has two borders:
 the \fIinner\fP border \fBinternalBorder\fP
-and the \fIouter\fP border \fBborderWidth\fP, managed by the X Toolkit.
+and the \fIouter\fP border \fBborderWidth\fP, managed by the \fIX Toolkit\fP.
 .IP
 Normally \fI\*n\fP fills the inner border using the VT100 window's
 background color.
@@ -1446,6 +1457,12 @@ The default is
 This option specifies the font to be used for displaying normal text.
 The corresponding resource name is \fIfont\fP.
 The resource value default is \fIfixed\fP.
+.IP
+\fI\*N\fP's \fB\-fn\fP option accepts a comma-separated list like \fB\-fa\fP,
+for the VT100 widget,
+using the first bitmap font (and discarding additional fonts).
+However, other widgets (such as the toolbar) will be confused by this
+and give a warning.
 .TP 8
 .B \-font \fIfont\fP
 This is the same as \fB\-fn\fP.
@@ -1486,14 +1503,14 @@ The default title is the command
 line specified after the \fB\-e\fP option, if any, otherwise the application
 name.
 .IP
-X Toolkit sets the \fBWM_NAME\fP property using this value.
+\fIX Toolkit\fP sets the \fBWM_NAME\fP property using this value.
 .TP 8
 .B \-xrm \fIresourcestring\fP
 This option specifies a resource string to be used.
 This is especially
 useful for setting resources that do not have separate command line options.
 .PP
-X Toolkit accepts alternate names for a few of these options, e.g.,
+\fIX Toolkit\fP accepts alternate names for a few of these options, e.g.,
 .bP
 \*(``\fB\-background\fP\*('' for \*(``\fB\-bg\fP\*(''
 .bP
@@ -1506,8 +1523,9 @@ Abbreviated options also are supported, e.g.,
 .
 .
 .SH RESOURCES
-\fI\*N\fP understands all of the core X Toolkit resource names and classes.
-It also uses the X Toolkit resource types (such as
+\fI\*N\fP understands all of the core
+\fIX Toolkit\fP resource names and classes.
+It also uses the \fIX Toolkit\fP resource types (such as
 booleans,
 colors,
 fonts,
@@ -1517,7 +1535,7 @@ along with their respective converters.
 Those resource types are not always sufficient:
 .bP
 \fI\*N\fP's resource values may be lists of names.
-X Toolkit resource types do not include lists.
+\fIX Toolkit\fP resource types do not include lists.
 \fI\*N\fP uses a string for the resource, and parses it.
 .IP
 Comma-separated lists of names ignore case.
@@ -1811,7 +1829,7 @@ The default is
 .TP 8
 .B "menuHeight\fP (class\fB MenuHeight\fP)"
 Specifies the height of the toolbar,
-which may be increased by the X toolkit layout widget depending upon
+which may be increased by the \fIX Toolkit\fP Layout widget depending upon
 the fontsize used.
 The default is
 \*(``25\*(''.
@@ -1819,7 +1837,7 @@ The default is
 .B "menuLocale\fP (class\fB MenuLocale\fP)"
 Specify the locale used for character-set computations when loading
 the popup menus.
-Use this to improve initialization performance of the Athena popup menus,
+Use this to improve initialization performance of the \fIAthena\fP popup menus,
 which may load unnecessary (and very large) fonts, e.g.,
 in a locale having UTF-8 encoding.
 The default is \*(``C\*('' (POSIX).
@@ -2260,11 +2278,14 @@ The default is \*(``true\*(''.
 .TP 8
 .B "allowPasteControls\fP (class\fB AllowPasteControls\fP)"
 If true, allow control characters such as BEL and CAN to be pasted.
-Formatting characters (tab, newline) are always allowed.
+Formatting characters (tab, newline) are normally allowed,
+unless suppressed via the \fBdisallowedPasteControls\fP resource.
 Other C0 control characters are suppressed unless this resource is enabled.
 The exact set of control characters (C0 and C1)
 depends upon whether UTF-8 encoding is used,
-as well as the \fBallowC1Printable\fP resource.
+as well as
+the \fBallowC1Printable\fP
+and \fBdisallowedPasteControls\fP resources.
 The default is \*(``false\*(''.
 .TP 8
 .B "allowScrollLock\fP (class\fB AllowScrollLock\fP)"
@@ -2474,7 +2495,7 @@ default is \*(``true\*(''.
 .TP 8
 .B "awaitInput\fP (class\fB AwaitInput\fP)"
 Specifies whether or not \fI\*n\fR uses a 50 millisecond timeout to
-await input (i.e., to support the Xaw3d arrow scrollbar).
+await input (i.e., to support the \fIXaw3d\fP arrow scrollbar).
 The default is \*(``false\*(''.
 .TP 8
 .B "backarrowKey\fP (class\fB BackarrowKey\fP)"
@@ -2941,6 +2962,11 @@ should be worked around.
 See the \fB\-cu\fP option for details.
 The default is \*(``false\*(''.
 .TP 8
+.B "cursorBar\fP (class\fB CursorBar\fP)"
+Specifies whether to make the cursor a left-bar or a box,
+unless the \fBcursorUnderline\fP resource is set.
+The default is \*(``false\*(''.
+.TP 8
 .B "cursorBlink\fP (class\fB CursorBlink\fP)"
 Specifies whether to make the cursor blink.
 \fI\*N\fP accepts either a keyword (ignoring case)
@@ -3018,6 +3044,7 @@ The default is \*(``600\*(''.
 .TP 8
 .B "cursorUnderLine\fP (class\fB CursorUnderLine\fP)"
 Specifies whether to make the cursor underlined or a box.
+If unset (false), the \fBcursorBar\fP resource may set the cursor shape.
 The default is \*(``false\*(''.
 .TP 8
 .B "cutNewline\fP (class\fB CutNewline\fP)"
@@ -3195,12 +3222,11 @@ This overrides the \fBalternateScroll\fP resource.
 .RE
 .TP 8
 .B "disallowedPasteControls\fP (class\fB DisallowedPasteControls\fP)"
-The \fBallowPasteControls\fP resource is normally used to prevent
-pasting C1 controls, as well as non-formatting C0 controls such
-as the ASCII escape character.
-Those characters are simply ignored.
-This resource further extends the set of control characters
+Use this resource to disallow pasting specific C0 control characters
+when the \fBallowPasteControls\fP resource is false (i.e., the default).
+This resource defines the set of control characters
 which cannot be pasted, converting each into a space.
+Other C0 controls are pasted without change.
 .IP
 The resource value is a comma-separated list of names.
 \fI\*N\fP ignores capitalization.
@@ -3476,6 +3502,10 @@ For example,
 XTerm*faceName: x:fixed,xft:Bitstream Vera Sans Mono
 .NE
 .IP
+Two TrueType fonts can be specified in this way.
+The first is the primary font;
+the second acts as a manual override to the \fIfontconfig\fP fontset.
+.IP
 If no \fBfaceName\fP resource is specified,
 or if there is no match for both TrueType normal and bold fonts,
 \fI\*n\fR uses the XLFD (bitmap) \fBfont\fP and related resources.
@@ -3562,6 +3592,14 @@ Specifies the pointsize of the sixth alternative font.
 .TP 8
 .B "faceSize7\fP (class\fB FaceSize7\fP)"
 Specifies the pointsize of the seventh alternative font.
+.TP 8
+.B "faintIsRelative\fP (class\fB FaintIsRelative\fP)"
+Faint colors are derived from the current text color, e.g., the ANSI colors,
+by scaling the red, green and blue components.
+Use this resource to specify whether that is done relative to the
+current background color,
+or as an absolute value.
+The default is \*(``false\*(''.
 .TP 8
 .B "fastScroll\fP (class\fB FastScroll\fP)"
 Modifies the effect of jump scroll (\fBjumpScroll\fP)
@@ -3962,8 +4000,10 @@ which change character sets.
 The default is \*(``B\*('', which corresponds to US ASCII.
 .TP 8
 .B "limitFontsets\fP (class\fB LimitFontsets\fP)"
-Limits the number of TrueType fallback fonts (i.e., fontset) which can be used.
+Limits the number of TrueType fallback fonts (i.e., fontset)
+which can be tested.
 The default is \*(``50\*(''.
+No more than \*(``255\*('' will be scanned.
 .IP
 This limits the number of fallback fonts
 which \fI\*n\fP uses to display characters.
@@ -3976,6 +4016,27 @@ The Xft library and \fI\*n\fP write this debugging trace
 to the standard output.
 .IP
 Set this to \*(``0\*('' to disable fallbacks entirely.
+.TP 8
+.B "limitFontHeight\fP (class\fB LimitFontHeight\fP)"
+When scaling a TrueType font to provide the parts for a double-high
+character, \fI\*n\fP compares the scaled font with the original
+to ensure that it is taller.
+.IP
+The default is \*(``10\*('' (percent).
+.TP 8
+.B "limitFontWidth\fP (class\fB LimitFontWidth\fP)"
+When looking for fallback fonts, \fI\*n\fP checks to see that the
+the character to be displayed is the same width as the primary font.
+If a character extends outside the font's bounding box,
+\fI\*n\fP will clip it, to fit.
+.IP
+This resource controls the amount by which the character can extend
+outside its bounding box before \fI\*n\fP looks further for a better font.
+.IP
+This resource is also used in scaling TrueType fonts for double-wide characters,
+like \fBlimitFontHeight\fP for double-wide characters.
+.IP
+The default is \*(``10\*('' (percent).
 .TP 8
 .B "limitResize\fP (class\fB LimitResize\fP)"
 Limits resizing of the screen via control sequence to a given multiple of
@@ -4069,7 +4130,7 @@ you can add those after the command, e.g.,
 .NE
 .IP
 Alternatively,
-you may put those parameter within a shell script to execute the converter,
+you may put those parameters within a shell script to execute the converter,
 and set this resource to point to the shell script.
 .IP
 When using a locale-filter, e.g., with the \fI\-e\fP option, or the shell,
@@ -4348,7 +4409,7 @@ Specifies the number of characters from the right margin at which the margin
 bell should be rung, when enabled by the \fBmarginBell\fP resource.
 The default is \*(``10\*(''.
 .TP 8
-.B "\fIname\fP\fBKeymap\fP (class\fB \fIName\fP\fBKeymap\fP)"
+.B "\fIname\fBKeymap\fR (class\fB \fIName\fBKeymap\fR)"
 See the discussion of the \fBkeymap()\fP action.
 .TP 8
 .B "nextEventDelay\fP (class\fB NextEventDelay\fP)"
@@ -4913,7 +4974,7 @@ There are several aspects to reverse video in \fI\*n\fP:
 The command-line \fB\-rv\fP option tells the X libraries to reverse
 the foreground and background colors.
 \fI\*N\fP's command-line options set resource values.
-In particular, the X Toolkit sets the \fBreverseVideo\fP resource
+In particular, the \fIX Toolkit\fP sets the \fBreverseVideo\fP resource
 when the \fB\-rv\fP option is used.
 .bP
 If the user has also used command-line options \fB\-fg\fP or \fB\-bg\fP
@@ -5095,7 +5156,7 @@ otherwise the default is \*(``false\*(''.
 .B "showMissingGlyphs\fP (class\fB ShowMissingGlyphs\fP)"
 Tells \fI\*n\fP whether to display a box outlining places where
 a character has been used that the font does not represent.
-The default is \*(``false\*(''.
+The default is \*(``true\*(''.
 .TP 8
 .B "showWrapMarks\fP (class\fB ShowWrapMarks\fP)"
 For debugging \fI\*n\fP and applications that may manipulate the
@@ -5113,7 +5174,10 @@ If \fI\*n\fR is configured to support SIXEL graphics,
 this resource tells it whether to
 scroll up one line at a time when sixels would be written
 past the bottom line on the window.
-The default is \*(``false\*('' which enables scrolling.
+The default is \*(``true\*('' which enables scrolling.
+.IP
+Sixel scrolling is the opposite of DEC Sixel Display Mode (DECSDM):
+when one is on, the other is off.
 .TP 8
 .B "sixelScrollsRight\fP (class\fB SixelScrollsRight\fP)"
 If \fI\*n\fR is configured to support SIXEL graphics,
@@ -5233,7 +5297,7 @@ Specifies the key and button bindings for menus, selections, \*(``programmed
 strings\*('', etc.
 The \fBtranslations\fP resource,
 which provides much of \fI\*n\fP's configurability,
-is a feature of the X Toolkit Intrinsics library (Xt).
+is a feature of the \fIX Toolkit Intrinsics\fP library (Xt).
 See the \fBActions\fP section.
 .TP 8
 .B "trimSelection\fP (class\fB TrimSelection\fP)"
@@ -5477,6 +5541,24 @@ draw normal text.
 If no double-width font is found, it will improvise, by stretching
 the normal font.
 .TP 8
+.B "xftMaxGlyphMemory\fP (class\fB XftMaxGlyphMemory\fP)"
+Set the Xft library's limit on glyph memory (typically 4Mb).
+When it reaches this limit, it discards \*(``randomly chosen\*(''
+glyphs to make room for new ones.
+The default is \*(``0\*('' to use Xft's default value.
+.TP 8
+.B "xftMaxUnrefFonts\fP (class\fB XftMaxUnrefFonts\fP)"
+Set the Xft library's limit on fonts which have been loaded (typically 16),
+e.g., matching patterns for fallback searches,
+but are not actually used.
+The default is \*(``0\*('' to use Xft's default value.
+.TP 8
+.B "xftTrackMemUsage\fP (class\fB XftTrackMemUsage\fP)"
+Enables glyph memory tracking (introduced in Xft 2.3.5),
+which allows Xft to efficiently discard obsolete data when running
+short of memory.
+The default is \*(``false\*(''.
+.TP 8
 .B "ximFont\fP (class\fB XimFont\fP)"
 This option specifies the font to be used for displaying the preedit string
 in the \*(``OverTheSpot\*('' input method.
@@ -5534,7 +5616,7 @@ Specifies the width of the Tektronix window in pixels.
 .SS Menu Resources
 .PP
 The resources that may be specified for the various menus are described in
-the documentation for the Athena \fBSimpleMenu\fP widget.
+the documentation for the \fIAthena\fP \fBSimpleMenu\fP widget.
 The name and classes of the entries in each of the menus are listed below.
 Resources named \*(``\fBline\fIN\fR\*('' where \fIN\fR is a number
 are separators with class \fBSmeLine\fR.
@@ -5856,7 +5938,7 @@ This entry invokes the \fBset\-visibility(\fItek,toggle\fB)\fR action.
 .\"
 .SS Scrollbar Resources
 .PP
-The following resources are useful when specified for the Athena Scrollbar
+The following resources are useful when specified for the \fIAthena\fP Scrollbar
 widget:
 .TP 8
 .B "background\fP (class\fB Background\fP)"
@@ -6661,15 +6743,29 @@ This corresponds to the \fB\-ai\fP option and the \fBactiveIcon\fP resource.
 .
 .TP
 .B Sixel Scrolling\fP (resource \fBsixelScrolling\fP)
-When enabled,
-sixel graphics are positioned at the current text cursor location, scroll
-the image vertically if larger than the screen, and leave the text cursor
-at the start of the next complete line after the image when returning to text
-mode (this is the default).
-When disabled,
-sixel graphics are positioned at the upper left of the screen, are
-cropped to fit the screen, and do not affect the text cursor location.
 This corresponds to the \fBsixelScrolling\fP resource.
+It can also be turned off and on using the private mode DECSDM
+(Sixel Display Mode).
+.RS
+.bP
+When enabled,
+\fI\*n\fR draws sixel graphics at the current text cursor location,
+scrolling the image vertically if it is larger than the screen,
+and leaving the text cursor
+at the same column in the next complete line after the image when
+returning to text mode
+.IP
+This is the default,
+which corresponds to the \fIreset\fP state of DECSDM.
+.bP
+When disabled,
+\fI\*n\fR draws sixel graphics starting at the upper left of the screen,
+cropping to fit the screen,
+and does not alter the text cursor location.
+.IP
+This corresponds to the \fIset\fP state of DECSDM.
+.RE
+.IP
 There is no corresponding command-line option.
 .
 .TP
@@ -6874,7 +6970,7 @@ which can be controlled by writing escape sequences to the terminal.
 These are disabled if the SendEvents feature is enabled:
 .RS
 .TP
-.B Allow Color Ops\fP (resource \fBallow\-font\-ops\fP)
+.B Allow Color Ops\fP (resource \fBallow\-color\-ops\fP)
 This corresponds to the \fBallowColorOps\fP resource.
 Enable or disable control sequences that set/query the colors.
 .TP
@@ -8126,7 +8222,7 @@ keys for entering commonly-typed words:
 Key bindings are normally associated with the \fIvt100\fP or \fItek4014\fP
 widgets which act as terminal emulators.
 \fI\*N\fP's scrollbar (and toolbar if it is configured) are separate widgets.
-Because all of these use the X Toolkit,
+Because all of these use the \fIX Toolkit\fP,
 they have corresponding \fBtranslations\fP resources.
 Those resources are distinct,
 and match different patterns, e.g., the differences in widget-name and
@@ -8490,7 +8586,7 @@ In the output from \fBxprop\fP(1), there are several properties.
 .TP 5
 .B WM_CLASS
 This shows the \fIinstance name\fP and the X resource \fIclass\fP,
-passed to X Toolkit during initialization of \fI\*n\fP,
+passed to \fIX Toolkit\fP during initialization of \fI\*n\fP,
 e.g.,
 .NS
 WM_CLASS(STRING) = "xterm", "UXTerm"
@@ -8506,7 +8602,7 @@ WM_CLIENT_LEADER(WINDOW): window id # 0x800023
 .TP 5
 .B WM_COMMAND
 This shows the command-line arguments for \fI\*n\fP
-which are passed to X Toolkit during initialization, e.g.,
+which are passed to \fIX Toolkit\fP during initialization, e.g.,
 .NS
 WM_COMMAND(STRING) = { "xterm", "\-class", "UXTerm", "\-title", "uxterm", "\-u8" }
 .NE
@@ -8530,7 +8626,7 @@ This holds the window title, normally at the top of \fI\*n\fP's window.
 It is set via the \fBtitle\fP resource.
 Applications can change this using control sequences.
 .SS Properties set by Xterm
-X Toolkit does not manage EWMH properties.
+\fIX Toolkit\fP does not manage EWMH properties.
 \*N does this directly.
 .TP 5
 .B _NET_WM_ICON_NAME
@@ -8555,7 +8651,8 @@ That may include other window manager hints;
 properties for a window manager which claims EWMH compliance.
 .TP 5
 .B _NET_WM_STATE
-This tells \fI\*n\fP whether its window has been maximized by the window manager,
+This tells \fI\*n\fP whether
+its window has been maximized by the window manager,
 and if so, what type of maximizing:
 .RS
 .TP 5
@@ -8870,7 +8967,7 @@ https://invisible\-island.net/xterm/xterm.faq.html
 https://invisible\-island.net/xterm/xterm.log.html
 .RE
 .PP
-\fIX Toolkit Intrinsics \(en C Language Interface\fP (Xt),
+\fIX Toolkit Intrinsics \(en C Language Interface\fR (Xt),
 .br
 Joel McCormack, Paul Asente, Ralph R. Swick (1994),
 .br
@@ -8918,7 +9015,7 @@ Steve Pitschke (Stellar), Ron Newman (MIT-Athena), Jim Fulton (MIT X
 Consortium), Dave Serisky (HP), Jonathan Kamens (MIT-Athena).
 .PP
 Beginning with XFree86, there were far more identifiable contributors.
-The \fITHANKS\fP file in \fI\*n\fP's source lists 234 in August 2021.
+The \fITHANKS\fP file in \fI\*n\fP's source lists 243 in June 2022.
 Keep in mind these:
 Jason Bacon,
 Jens Schweikhardt,

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: query-xres.pl,v 1.6 2019/10/06 23:56:18 tom Exp $
+# $XTermId: query-feature.pl,v 1.5 2019/10/06 23:50:25 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

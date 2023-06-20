@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: wrap.pl,v 1.12 2007/07/13 00:15:28 tom Exp $
+# $XTermId: vxt-wrap,v 1.12 2007/07/13 00:15:28 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2007 by Thomas E. Dickey
 #

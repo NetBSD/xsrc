@@ -1,5 +1,5 @@
 #! /usr/bin/perl -w
-# $XTermId: gen-pc-fkeys.pl,v 1.22 2007/11/30 23:03:55 tom Exp $
+# $XTermId: gen-pc-fkeys.pl,v 1.21 2007/11/30 23:03:55 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

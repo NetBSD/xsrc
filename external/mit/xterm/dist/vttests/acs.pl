@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: acs.pl,v 1.3 2018/04/22 15:14:45 tom Exp $
+# $XTermId: vxt-acs,v 1.3 2018/04/22 15:14:45 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

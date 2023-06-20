@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: palettes.pl,v 1.26 2020/07/01 20:13:58 tom Exp $
+# $XTermId: vxt-palettes,v 1.26 2020/07/01 20:13:58 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

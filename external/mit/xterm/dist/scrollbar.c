@@ -1,4 +1,4 @@
-/* $XTermId: scrollbar.c,v 1.214 2021/12/31 23:35:02 tom Exp $ */
+/* $XTermId: scrollbar.c,v 1.213.1.3 2021/12/31 23:35:02 tom Exp tom $ */
 
 /*
  * Copyright 2000-2020,2021 by Thomas E. Dickey

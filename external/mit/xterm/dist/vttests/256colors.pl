@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: 256colors.pl,v 1.6 2017/01/22 18:34:06 tom Exp $
+# $XTermId: 256colors.pl,v 1.5 2014/02/26 20:16:12 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

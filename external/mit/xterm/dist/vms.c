@@ -390,7 +390,7 @@ static void tt_echo_ast(TT_BUF_STRUCT *buff_addr)
 
  */
 
-int tt_write(const char *tt_write_buf, int size)
+int tt_write(const char *tt_write_buf, size_t size)
 {
   int status;
   TT_BUF_STRUCT *echoBuff;

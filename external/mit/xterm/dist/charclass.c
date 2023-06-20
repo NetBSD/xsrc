@@ -1,7 +1,7 @@
-/* $XTermId: charclass.c,v 1.44 2021/02/02 00:19:32 tom Exp $ */
+/* $XTermId: charclass.c,v 1.49 2023/03/31 23:06:48 tom Exp $ */
 
 /*
- * Copyright 2002-2020,2021 by Thomas E. Dickey
+ * Copyright 2002-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -78,20 +78,6 @@ static struct classentry {
     int last;
 } *classtab;
 
-typedef enum {
-    IDENT = -1,
-    OTHER = 0,
-    CNTRL = 1,
-    ALNUM = 48,
-    BLANK = 32,
-    U_CJK = 0x4e00,
-    U_SUP = 0x2070,
-    U_SUB = 0x2080,
-    U_HIR = 0x3040,
-    U_KAT = 0x30a0,
-    U_HAN = 0xac00
-} Classes;
-
 #ifdef TEST_DRIVER
 static int opt_all;
 static int opt_check;
@@ -141,7 +127,10 @@ init_classtab(void)
     SetCharacterClassRange(0x17d4, 0x17dc, IDENT);	/* Khmer punctuation */
     SetCharacterClassRange(0x1800, 0x180a, IDENT);	/* Mongolian punctuation */
     SetCharacterClassRange(0x2000, 0x200a, BLANK);	/* spaces */
-    SetCharacterClassRange(0x200b, 0x27ff, IDENT);	/* punctuation and symbols */
+    SetCharacterClassRange(0x200b, 0x200f, CNTRL);	/* formatting */
+    SetCharacterClassRange(0x2010, 0x27ff, IDENT);	/* punctuation and symbols */
+    SetCharacterClassRange(0x202a, 0x202e, CNTRL);	/* formatting */
+    SetCharacterClassRange(0x2060, 0x206f, CNTRL);	/* formatting */
     SetCharacterClassRange(0x2070, 0x207f, U_SUP);	/* superscript */
     SetCharacterClassRange(0x2080, 0x208f, U_SUB);	/* subscript */
     SetCharacterClassRange(0x3000, 0x3000, BLANK);	/* ideographic space */
@@ -152,10 +141,12 @@ init_classtab(void)
     SetCharacterClassRange(0xac00, 0xd7a3, U_HAN);	/* Hangul Syllables */
     SetCharacterClassRange(0xf900, 0xfaff, U_CJK);	/* CJK Ideographs */
     SetCharacterClassRange(0xfe30, 0xfe6b, IDENT);	/* punctuation forms */
+    SetCharacterClassRange(0xfeff, 0xfeff, CNTRL);	/* formatting */
     SetCharacterClassRange(0xff00, 0xff0f, IDENT);	/* half/fullwidth ASCII */
     SetCharacterClassRange(0xff1a, 0xff20, IDENT);	/* half/fullwidth ASCII */
     SetCharacterClassRange(0xff3b, 0xff40, IDENT);	/* half/fullwidth ASCII */
     SetCharacterClassRange(0xff5b, 0xff64, IDENT);	/* half/fullwidth ASCII */
+    SetCharacterClassRange(0xfff9, 0xfffb, CNTRL);	/* formatting */
 
     TRACE((TRACE_R " init_classtab\n"));
     return;
@@ -271,8 +262,8 @@ report_wide_char_class(void)
     printf("from these overlapping intervals of character codes:\n");
     for (i = classtab[0].first; i <= classtab[0].last; i++) {
 	printf("\tU+%04X .. U+%04X %s\n",
-	       classtab[i].first,
-	       classtab[i].last,
+	       (unsigned) classtab[i].first,
+	       (unsigned) classtab[i].last,
 	       class_name((Classes) classtab[i].cclass));
     }
     printf("\n");
@@ -320,7 +311,7 @@ expected_class(int wch)
 {
     int result = wch;
     wint_t ch = (wint_t) wch;
-    if (ch == '\0' || ch == '\t') {
+    if (wch < 0 || ch == '\0' || ch == '\t') {
 	result = BLANK;
     } else if (iswcntrl(ch)) {
 	result = CNTRL;

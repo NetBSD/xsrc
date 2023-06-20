@@ -1,7 +1,7 @@
-/* $XTermId: main.c,v 1.886 2022/02/22 23:35:41 tom Exp $ */
+/* $XTermId: main.c,v 1.901 2023/05/07 23:43:44 tom Exp $ */
 
 /*
- * Copyright 2002-2021,2022 by Thomas E. Dickey
+ * Copyright 2002-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -502,9 +502,6 @@ static char **command_to_exec = NULL;
 static char **command_to_exec_with_luit = NULL;
 static unsigned command_length_with_luit = 0;
 #endif
-
-#define TERMCAP_ERASE "kb"
-#define VAL_INITIAL_ERASE A2E(8)
 
 /* choose a nice default value for speed - if we make it too low, users who
  * mistakenly use $TERM set to vt100 will get padding delays.  Setting it to a
@@ -1011,6 +1008,8 @@ DATA("-ai",		"*activeIcon",	XrmoptionNoArg,		"off"),
 DATA("+ai",		"*activeIcon",	XrmoptionNoArg,		"on"),
 #endif /* NO_ACTIVE_ICON */
 DATA("-b",		"*internalBorder",XrmoptionSepArg,	NULL),
+DATA("-barc",		"*cursorBar",	XrmoptionNoArg,		"on"),
+DATA("+barc",		"*cursorBar",	XrmoptionNoArg,		"off"),
 DATA("-bc",		"*cursorBlink",	XrmoptionNoArg,		"on"),
 DATA("+bc",		"*cursorBlink",	XrmoptionNoArg,		"off"),
 DATA("-bcf",		"*cursorOffTime",XrmoptionSepArg,	NULL),
@@ -1156,8 +1155,8 @@ DATA("-uc",		"*cursorUnderLine", XrmoptionNoArg,	"on"),
 DATA("+uc",		"*cursorUnderLine", XrmoptionNoArg,	"off"),
 DATA("-ulc",		"*colorULMode",	XrmoptionNoArg,		"off"),
 DATA("+ulc",		"*colorULMode",	XrmoptionNoArg,		"on"),
-DATA("-ulit",       	"*italicULMode", XrmoptionNoArg,        "off"),
-DATA("+ulit",       	"*italicULMode", XrmoptionNoArg,        "on"),
+DATA("-ulit",		"*italicULMode", XrmoptionNoArg,	"off"),
+DATA("+ulit",		"*italicULMode", XrmoptionNoArg,	"on"),
 DATA("-ut",		"*utmpInhibit",	XrmoptionNoArg,		"on"),
 DATA("+ut",		"*utmpInhibit",	XrmoptionNoArg,		"off"),
 DATA("-im",		"*useInsertMode", XrmoptionNoArg,	"on"),
@@ -1188,8 +1187,8 @@ DATA("-sm",		"*sessionMgt",	XrmoptionNoArg,		"on"),
 DATA("+sm",		"*sessionMgt",	XrmoptionNoArg,		"off"),
 #endif
 #if OPT_TOOLBAR
-DATA("-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		"on"),
-DATA("+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		"off"),
+DATA("-tb",		"*" XtNtoolBar,	XrmoptionNoArg,		"on"),
+DATA("+tb",		"*" XtNtoolBar,	XrmoptionNoArg,		"off"),
 #endif
 #if OPT_MAXIMIZE
 DATA("-maximized",	"*maximized",	XrmoptionNoArg,		"on"),
@@ -1536,7 +1535,7 @@ parseArg(int *num, char **argv, char **valuep)
 {
     /* table adapted from XtInitialize, used here to improve abbreviations */
     /* *INDENT-OFF* */
-#define DATA(option,kind) { (char *) option, NULL, kind, (XtPointer) NULL }
+#define DATA(option,kind) { (char *) option, NULL, kind, (XPointer) 0 }
     static XrmOptionDescRec opTable[] = {
 	DATA("+synchronous",	   XrmoptionNoArg),
 	DATA("-background",	   XrmoptionSepArg),
@@ -1824,7 +1823,7 @@ my_pty_name(char *device)
 	    if (name)
 		break;
 	    len--;
-	} else if (isalpha(ch)) {
+	} else if (isalpha(CharOf(ch))) {
 	    name = True;
 	    len--;
 	} else {
@@ -2194,6 +2193,52 @@ lookup_baudrate(const char *value)
     if (result == 0) {
 	fprintf(stderr, "unsupported value for baudrate: %s\n", value);
     }
+    return result;
+}
+
+int
+get_tty_erase(int fd, int default_erase, const char *tag)
+{
+    int result = default_erase;
+    int rc;
+
+#ifdef TERMIO_STRUCT
+    TERMIO_STRUCT my_tio;
+    rc = ttyGetAttr(fd, &my_tio);
+    if (rc == 0)
+	result = my_tio.c_cc[VERASE];
+#else /* !TERMIO_STRUCT */
+    struct sgttyb my_sg;
+    rc = ioctl(fd, TIOCGETP, (char *) &my_sg);
+    if (rc == 0)
+	result = my_sg.sg_erase;
+#endif /* TERMIO_STRUCT */
+    TRACE(("%s erase:%d (from %s)\n", (rc == 0) ? "OK" : "FAIL", result, tag));
+    (void) tag;
+    return result;
+}
+
+int
+get_tty_lnext(int fd, int default_lnext, const char *tag)
+{
+    int result = default_lnext;
+    int rc;
+
+#ifdef TERMIO_STRUCT
+    TERMIO_STRUCT my_tio;
+    rc = ttyGetAttr(fd, &my_tio);
+    if (rc == 0)
+	result = my_tio.c_cc[VLNEXT];
+#elif defined(HAS_LTCHARS)
+    struct ltchars my_ltc;
+    rc = ioctl(fd, TIOCGLTC, (char *) &my_ltc);
+    if (rc == 0)
+	result = my_ltc.t_lnextc;
+#else
+    result = XTERM_LNEXT;
+#endif /* TERMIO_STRUCT */
+    TRACE(("%s lnext:%d (from %s)\n", (rc == 0) ? "OK" : "FAIL", result, tag));
+    (void) tag;
     return result;
 }
 
@@ -2704,14 +2749,11 @@ main(int argc, char *argv[]ENVP_ARG)
     if (command_to_exec) {
 	Arg args[2];
 
-	if (!resource.title) {
-	    if (command_to_exec) {
-		resource.title = x_basename(command_to_exec[0]);
-	    }			/* else not reached */
-	}
-
+	if (!resource.title)
+	    resource.title = x_basename(command_to_exec[0]);
 	if (!resource.icon_name)
 	    resource.icon_name = resource.title;
+
 	XtSetArg(args[0], XtNtitle, resource.title);
 	XtSetArg(args[1], XtNiconName, resource.icon_name);
 
@@ -2722,6 +2764,18 @@ main(int argc, char *argv[]ENVP_ARG)
 	       *command_to_exec));
 
 	XtSetValues(toplevel, args, 2);
+    } else if (IsEmpty(resource.title) && strcmp(my_class, DEFCLASS)) {
+	Arg args[2];
+	int n;
+
+	resource.title = x_strdup(my_class);
+	for (n = 0; resource.title[n]; ++n) {
+	    if (isalpha(CharOf(resource.title[n])))
+		resource.title[n] = (char) tolower(resource.title[n]);
+	}
+	TRACE(("setting:\n\ttitle \"%s\"\n", resource.title));
+	XtSetArg(args[0], XtNtitle, resource.title);
+	XtSetValues(toplevel, args, 1);
     }
 #if OPT_LUIT_PROG
     if (term->misc.callfilter) {
@@ -3528,7 +3582,7 @@ findValidShell(const char *haystack, const char *needle)
 	have = (size_t) (t - s);
 
 	if ((have >= want) && (*s != '#')) {
-	    char *p = malloc(have + 1);
+	    char *p = (char *) malloc(have + 1);
 
 	    if (p != 0) {
 		char *q;
@@ -3665,48 +3719,71 @@ resetShell(char *oldPath)
 static void
 xtermTrimEnv(void)
 {
-#define DATA(wild,name) { wild, #name }
-    static struct {
+#define KEEP(wild,name) { 0, wild, #name }
+#define TRIM(wild,name) { 1, wild, #name }
+    /* *INDENT-OFF* */
+    static const struct {
+	int trim;
 	int wild;
 	const char *name;
     } table[] = {
-	DATA(0, DEFAULT_COLORS),
-	    DATA(0, DESKTOP_STARTUP_ID),
-	    DATA(0, WCWIDTH_CJK_LEGACY),
-	    DATA(0, XCURSOR_PATH),
-	    DATA(1, COLORFGBG),
-	    DATA(1, COLORTERM),
-	    DATA(1, ITERM2_),
-	    DATA(1, MC_),
-	    DATA(1, PUTTY),
-	    DATA(1, RXVT_),
-	    DATA(1, URXVT_),
-	    DATA(1, VTE_),
+	TRIM(0, COLUMNS),
+	TRIM(0, DEFAULT_COLORS),
+	TRIM(0, DESKTOP_STARTUP_ID),
+	TRIM(0, LINES),
+	TRIM(0, SHLVL),		/* ksh, bash */
+	TRIM(0, STY),		/* screen */
+	TRIM(0, TERMCAP),
+	TRIM(0, TMUX),
+	TRIM(0, TMUX_PANE),
+	TRIM(0, WCWIDTH_CJK_LEGACY),
+	TRIM(0, WINDOW),	/* screen */
+	TRIM(0, XCURSOR_PATH),
+	KEEP(0, MC_XDG_OPEN),
+	TRIM(1, COLORFGBG),
+	TRIM(1, COLORTERM),
+	TRIM(1, GIO_LAUNCHED_),
+	TRIM(1, ITERM2_),
+	TRIM(1, MC_),
+	TRIM(1, MINTTY_),
+	TRIM(1, PUTTY),
+	TRIM(1, RXVT_),
+	TRIM(1, TERM_),
+	TRIM(1, URXVT_),
+	TRIM(1, VTE_),
+	TRIM(1, XTERM_),
     };
-#undef DATA
-    Cardinal n;
+#undef TRIM
+    /* *INDENT-ON* */
+    Cardinal j, k;
 
-    for (n = 0; n < XtNumber(table); ++n) {
-	int s;
-	if (table[n].wild) {
-	    size_t srclen = strlen(table[n].name);
-	    for (s = 0; environ[s] != NULL; ++s) {
-		size_t dstlen = strlen(environ[s]);
-		if (dstlen > srclen) {
-		    char *dstend = strchr(environ[s], '=');
+    for (j = 0; environ[j] != NULL; ++j) {
+	char *equals = strchr(environ[j], '=');
+	size_t dstlen = strlen(environ[j]);
+
+	if (equals != NULL)
+	    dstlen = (size_t) (equals - environ[j]);
+
+	for (k = 0; k < XtNumber(table); ++k) {
+	    size_t srclen = strlen(table[k].name);
+	    if (table[k].wild) {
+		if (dstlen >= srclen &&
+		    !strncmp(environ[j], table[k].name, srclen)) {
 		    char *my_var;
-		    if (dstend != NULL &&
-			(dstlen = (size_t) (dstend - environ[s])) >= srclen &&
-			!strncmp(table[n].name, environ[s], dstlen) &&
-			(my_var = x_strdup(environ[s])) != NULL) {
+		    if (table[k].trim &&
+			(my_var = x_strdup(environ[j])) != NULL) {
 			my_var[dstlen] = '\0';
 			xtermUnsetenv(my_var);
 			free(my_var);
 		    }
+		    break;
 		}
+	    } else if (dstlen == srclen &&
+		       !strncmp(environ[j], table[k].name, srclen)) {
+		if (table[k].trim)
+		    xtermUnsetenv(table[k].name);
+		break;
 	    }
-	} else if (getenv(table[n].name) != NULL) {
-	    xtermUnsetenv(table[n].name);
 	}
     }
 }
@@ -3727,7 +3804,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
     int done;
 #endif
 #if OPT_INITIAL_ERASE
-    int initial_erase = VAL_INITIAL_ERASE;
+    int initial_erase = XTERM_ERASE;
     Bool setInitialErase;
 #endif
     int rc = 0;
@@ -3844,7 +3921,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	got_handshake_size = False;
 #endif /* OPT_PTY_HANDSHAKE */
 #if OPT_INITIAL_ERASE
-	initial_erase = VAL_INITIAL_ERASE;
+	initial_erase = XTERM_ERASE;
 #endif
 	signal(SIGALRM, SIG_DFL);
 
@@ -3959,20 +4036,9 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	TRACE_GET_TTYSIZE(screen->respond, "after get_pty");
 #if OPT_INITIAL_ERASE
 	if (resource.ptyInitialErase) {
-#ifdef TERMIO_STRUCT
-	    TERMIO_STRUCT my_tio;
-	    rc = ttyGetAttr(screen->respond, &my_tio);
-	    if (rc == 0)
-		initial_erase = my_tio.c_cc[VERASE];
-#else /* !TERMIO_STRUCT */
-	    struct sgttyb my_sg;
-	    rc = ioctl(screen->respond, TIOCGETP, (char *) &my_sg);
-	    if (rc == 0)
-		initial_erase = my_sg.sg_erase;
-#endif /* TERMIO_STRUCT */
-	    TRACE(("%s initial_erase:%d (from pty)\n",
-		   (rc == 0) ? "OK" : "FAIL",
-		   initial_erase));
+	    initial_erase = get_tty_erase(screen->respond,
+					  initial_erase,
+					  "pty");
 	}
 #endif /* OPT_INITIAL_ERASE */
     }
@@ -5022,6 +5088,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 		}
 		if (*newtc) {
 #if OPT_INITIAL_ERASE
+#define TERMCAP_ERASE "kb"
 		    unsigned len;
 		    remove_termcap_entry(newtc, TERMCAP_ERASE "=");
 		    len = (unsigned) strlen(newtc);
@@ -5133,7 +5200,7 @@ spawnXTerm(XtermWidget xw, unsigned line_speed)
 	    signal(SIGHUP, SIG_DFL);
 #endif
 
-	    if ((shname_minus = malloc(strlen(shname) + 2)) != 0) {
+	    if ((shname_minus = (char *) malloc(strlen(shname) + 2)) != 0) {
 		(void) strcpy(shname_minus, "-");
 		(void) strcat(shname_minus, shname);
 	    } else {
