@@ -883,4 +883,4 @@ See Also
 
 Version
 
-   Fontconfig version 2.14.1
+   Fontconfig version 2.14.2

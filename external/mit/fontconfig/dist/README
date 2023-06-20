@@ -1,11 +1,43 @@
                               Fontconfig
              Font configuration and customization library
-                            Version 2.14.1
-                              2022-10-21
+                            Version 2.14.2
+                              2023-01-27
 
 
 Check INSTALL for compilation and installation instructions.
 Report bugs to https://gitlab.freedesktop.org/fontconfig/fontconfig/issues/new.
+
+2.14.2
+
+Akira TAGOH (13):
+      Fix the build issue on meson when -g option is added to c_args
+      Store artifacts for meson windows CI
+      Add FC_DESKTOP_NAME property
+      Add --with-default-sub-pixel-rendering option
+      Update po-conf/POTFILES.in
+      Ignore null pointer on Fc*Destroy functions
+      Convert tabs to spaces
+      Convert more tabs to spaces in docs
+      src/meson.build: Store correct paths to fontconfig.pc.
+      Fix a typo in description for HAVE_STDATOMIC_PRIMITIVES
+      Report more detailed logs instead of assertion.
+      Add some missing constant names for weight.
+      Adujst indentation between programlisting in fontconfig-user.sgml
+
+Christopher Degawa (1):
+      meson: modify gperf test to remove sh dependency
+
+Jason Francis (1):
+      meson: Update freetype2 git repository to upstream
+
+Jean Abou Samra (1):
+      Ignore LC_CTYPE if set to "UTF-8"
+
+Ondrej Balaz (1):
+      Expand ~ in glob
+
+lilinjie (1):
+      fix typo
 
 2.14.1
 
@@ -1433,7 +1465,7 @@ Akira TAGOH (60):
       Bug 26830 - Add search for libiconv non-default directory
       Bug 28491 - Allow matching on FC_FILE
       Bug 48573 - platform without regex do not have also REG_XXX defines
-      Bug 27526 - Compatibility fix for old windows sytems
+      Bug 27526 - Compatibility fix for old windows systems
       Add --with-expat, --with-expat-includes and --with-expat-lib back.
       doc: Fix a typo of the environment variable name.
       Bug 25151 - Move cleanCacheDirectory() from fc-cache.c into
@@ -1705,7 +1737,7 @@ Behdad Esfahbod (119):
       [doc] Add const decorator for FcPatternDuplicate()
       Add FcPatternFilter() (#13016)
       [doc] Document that a zero rescanInterval disables automatic checks (#17103)
-      Get rid of $Id: README,v 1.1.1.10 2023/01/21 02:09:06 mrg Exp $ tags
+      Get rid of $Id: README,v 1.1.1.11 2023/06/20 02:19:18 mrg Exp $ tags
       [doc] Fix signature of FcConfigHome()
       Fix docs re 'orig' argument of FcPatternBuild and family
       Update sr.orth to actul subset of Cyrillic used by Serbian (#17208)

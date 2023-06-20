@@ -1,8 +1,8 @@
-dnl 
+dnl
 dnl  fontconfig/configure.in
-dnl 
+dnl
 dnl  Copyright © 2003 Keith Packard
-dnl 
+dnl
 dnl  Permission to use, copy, modify, distribute, and sell this software and its
 dnl  documentation for any purpose is hereby granted without fee, provided that
 dnl  the above copyright notice appear in all copies and that both that
@@ -12,7 +12,7 @@ dnl  advertising or publicity pertaining to distribution of the software without
 dnl  specific, written prior permission.  The authors make no
 dnl  representations about the suitability of this software for any purpose.  It
 dnl  is provided "as is" without express or implied warranty.
-dnl 
+dnl
 dnl  THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 dnl  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
 dnl  EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -26,14 +26,14 @@ dnl Process this file with autoconf to create configure.
 AC_PREREQ(2.61)
 
 dnl ==========================================================================
-dnl                               Versioning              
+dnl                               Versioning
 dnl ==========================================================================
 
 dnl This is the package version number, not the shared library
 dnl version.  This same version number must appear in fontconfig/fontconfig.h
 dnl Yes, it is a pain to synchronize version numbers.  Unfortunately, it's
 dnl not possible to extract the version number here from fontconfig.h
-AC_INIT([fontconfig], [2.14.1], [https://gitlab.freedesktop.org/fontconfig/fontconfig/issues/new])
+AC_INIT([fontconfig], [2.14.2], [https://gitlab.freedesktop.org/fontconfig/fontconfig/issues/new])
 AM_INIT_AUTOMAKE([1.11 parallel-tests dist-xz])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
@@ -456,6 +456,25 @@ AC_SUBST(JSONC_CFLAGS)
 AC_SUBST(JSONC_LIBS)
 
 #
+# Set default sub-pixel rendering
+#
+
+AC_ARG_WITH(default-sub-pixel-rendering,
+    [AC_HELP_STRING([--with-default-sub-pixel-rendering=NAME],
+            [Enable your preferred sub-pixel rendering configuration (none/bgr/rgb/vbgr/vrgb) [default=none]])],
+    preferred_sub_pixel_rendering="$withval", preferred_sub_pixel_rendering=none)
+
+case "$preferred_sub_pixel_rendering" in
+none|bgr|rgb|vbgr|vrgb)
+    PREFERRED_SUB_PIXEL_RENDERING="$preferred_sub_pixel_rendering"
+    AC_SUBST(PREFERRED_SUB_PIXEL_RENDERING)
+    ;;
+*)
+    AC_MSG_ERROR([Invalid sub-pixel rendering. please choose one of none, bgr, rgb, vbgr, or vrgb])
+    ;;
+esac
+
+#
 # Set default hinting
 #
 
@@ -562,7 +581,7 @@ case "$FC_ADD_FONTS" in
 "")
 	;;
 *)
-	FC_FONTPATH=`echo $FC_ADD_FONTS | 
+	FC_FONTPATH=`echo $FC_ADD_FONTS |
 			sed -e 's/^/<dir>/' -e 's/$/<\/dir>/' -e 's/,/<\/dir> <dir>/g'`
 	;;
 esac
@@ -679,7 +698,7 @@ AC_CACHE_CHECK([stdatomic.h atomic primitives], fc_cv_have_stdatomic_atomic_prim
 	)
 ])
 if $fc_cv_have_stdatomic_atomic_primitives; then
-	AC_DEFINE(HAVE_STDATOMIC_PRIMITIVES, 1, [Have Intel __sync_* atomic primitives])
+	AC_DEFINE(HAVE_STDATOMIC_PRIMITIVES, 1, [Have C99 stdatomic atomic primitives])
 fi
 
 AC_CACHE_CHECK([for Intel atomic primitives], fc_cv_have_intel_atomic_primitives, [

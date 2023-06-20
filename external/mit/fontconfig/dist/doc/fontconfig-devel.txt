@@ -1,4 +1,4 @@
-Fontconfig Developers Reference, Version 2.14.1
+Fontconfig Developers Reference, Version 2.14.2
 
    Copyright © 2002 Keith Packard
 
@@ -4001,6 +4001,7 @@ FcConstant
    FcNameRegisterConstants -- Register symbolic constants
    FcNameUnregisterConstants -- Unregister symbolic constants
    FcNameGetConstant -- Lookup symbolic constant
+   FcNameGetConstantFor -- Lookup symbolic constant For object
    FcNameConstant -- Get the value for a symbolic constant
 
    Provides for application-specified symbolic constants for font
@@ -4056,6 +4057,24 @@ Description
 
    Return the FcConstant structure related to symbolic constant
    string.
+
+FcNameGetConstantFor
+
+Name
+
+   FcNameGetConstantFor -- Lookup symbolic constant For object
+
+Synopsis
+
+#include <fontconfig/fontconfig.h>
+
+   const FcConstant * FcNameGetConstantFor(FcChar8 *string, char
+   *object);
+
+Description
+
+   Return the FcConstant structure related to symbolic constant
+   string for object.
 
 FcNameConstant
 

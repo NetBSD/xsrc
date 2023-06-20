@@ -88,6 +88,6 @@ pkgmod.generate(libfontconfig,
   variables: [
     'sysconfdir=@0@'.format(join_paths(prefix, get_option('sysconfdir'))),
     'localstatedir=@0@'.format(join_paths(prefix, get_option('localstatedir'))),
-    'confdir=${sysconfdir}/fonts',
-    'cachedir=${localstatedir}/cache/fontconfig',
+    'confdir=@0@'.format(fc_baseconfigdir),
+    'cachedir=@0@'.format(fc_cachedir),
   ])

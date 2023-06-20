@@ -1,5 +1,5 @@
 project('fontconfig', 'c',
-  version: '2.14.1',
+  version: '2.14.2',
   meson_version : '>= 0.57.0',
   default_options: [ 'buildtype=debugoptimized'],
 )
@@ -30,7 +30,7 @@ freetype_dep = dependency('freetype2', method: 'pkg-config', version: freetype_r
 # Give another shot using CMake
 if not freetype_dep.found()
   freetype_dep = dependency('freetype', method: 'cmake', version: freetype_req_cmake,
-    fallback: ['freetype2', 'freetype_dep'])
+    fallback: ['freetype2', 'freetype_dep'], default_options: 'werror=false')
 endif
 
 # Linking expat should not be so difficult... see: https://github.com/mesonbuild/meson/issues/10516
@@ -315,39 +315,33 @@ if fc_configdir.startswith(fc_baseconfigdir + '/')
   fonts_conf.set('CONFIGDIR', fc_configdir.split(fc_baseconfigdir + '/')[1])
 endif
 
-# It will automatically fallback to subproject if not found on system
-gperf = find_program('gperf')
+gperf = find_program('gperf', required: false)
+gperf_len_type = ''
 
-sh = find_program('sh', required : false)
-
-if not sh.found() # host_machine.system() == 'windows' or not sh.found()
-  # TODO: This is not always correct
-  if cc.get_id() == 'msvc'
-    gperf_len_type = 'size_t'
-  else
-    gperf_len_type = 'unsigned'
-  endif
-else
+if gperf.found()
   gperf_test_format = '''
   #include <string.h>
   const char * in_word_set(const char *, @0@);
   @1@
   '''
-  gperf_snippet_format = 'echo foo,bar | @0@ -L ANSI-C'
-  gperf_snippet = run_command(sh, '-c', gperf_snippet_format.format(gperf.full_path()),
-    check: true)
-  gperf_test = gperf_test_format.format('size_t', gperf_snippet.stdout())
+  gperf_snippet = run_command(gperf, '-L', 'ANSI-C', files('meson-cc-tests/gperf.txt'),
+    check: true).stdout()
 
-  if cc.compiles(gperf_test)
-    gperf_len_type = 'size_t'
-  else
-    gperf_test = gperf_test_format.format('unsigned', gperf_snippet.stdout())
-    if cc.compiles(gperf_test)
-      gperf_len_type = 'unsigned'
-    else
-      error('unable to determine gperf len type')
+  foreach type : ['size_t', 'unsigned']
+    if cc.compiles(gperf_test_format.format(type, gperf_snippet))
+      gperf_len_type = type
+      break
     endif
+  endforeach
+
+  if gperf_len_type == ''
+    error('unable to determine gperf len type')
   endif
+else
+  # Fallback to subproject
+  gperf = find_program('gperf')
+  # assume if we are compiling from the wrap, the size is just size_t
+  gperf_len_type = 'size_t'
 endif
 
 message('gperf len type is @0@'.format(gperf_len_type))
