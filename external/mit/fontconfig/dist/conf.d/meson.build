@@ -7,9 +7,9 @@ conf_files = [
   '10-hinting-none.conf',
   '10-hinting-slight.conf',
   '10-no-antialias.conf',
-  '10-no-sub-pixel.conf',
   '10-scale-bitmap-fonts.conf',
   '10-sub-pixel-bgr.conf',
+  '10-sub-pixel-none.conf',
   '10-sub-pixel-rgb.conf',
   '10-sub-pixel-vbgr.conf',
   '10-sub-pixel-vrgb.conf',
@@ -41,12 +41,13 @@ conf_files = [
 ]
 
 preferred_hinting = get_option('default-hinting')
+preferred_sub_pixel_rendering = get_option('default-sub-pixel-rendering')
 
 conf_links = [
   '10-hinting-@0@.conf'.format(preferred_hinting),
   '10-scale-bitmap-fonts.conf',
+  '10-sub-pixel-@0@.conf'.format(preferred_sub_pixel_rendering),
   '10-yes-antialias.conf',
-  '10-sub-pixel-rgb.conf',
   '11-lcdfilter-default.conf',
   '20-unhint-small-vera.conf',
   '30-metric-aliases.conf',
