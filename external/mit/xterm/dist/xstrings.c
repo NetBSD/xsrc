@@ -1,7 +1,7 @@
-/* $XTermId: xstrings.c,v 1.78 2020/10/12 18:50:28 tom Exp $ */
+/* $XTermId: xstrings.c,v 1.79 2022/11/16 23:54:32 tom Exp $ */
 
 /*
- * Copyright 2000-2019,2020 by Thomas E. Dickey
+ * Copyright 2000-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -163,9 +163,8 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
     if (!IsEmpty(login_name)
 	&& strcmp(login_name, in_out->pw_name)) {
 	struct passwd pw2;
-	Boolean ok2;
 
-	if ((ok2 = x_getpwnam(login_name, &pw2))) {
+	if (x_getpwnam(login_name, &pw2)) {
 	    uid_t uid2 = pw2.pw_uid;
 	    struct passwd pw3;
 	    Boolean ok3;
@@ -177,8 +176,7 @@ login_alias(char *login_name, uid_t uid, struct passwd *in_out)
 	    } else {
 		FreeAndNull(login_name);
 	    }
-	    if (ok2)
-		free_pw(&pw2);
+	    free_pw(&pw2);
 	    if (ok3)
 		free_pw(&pw3);
 	}
@@ -395,29 +393,39 @@ x_freeargs(char **argv)
 int
 x_strcasecmp(const char *s1, const char *s2)
 {
-    size_t len = strlen(s1);
+    size_t len1 = (s1 != NULL) ? strlen(s1) : 0;
+    size_t len2 = (s2 != NULL) ? strlen(s2) : 0;
 
-    if (len != strlen(s2))
-	return 1;
-
-    return x_strncasecmp(s1, s2, (unsigned) len);
+    return ((len1 != len2)
+	    ? 1
+	    : x_strncasecmp(s1, s2, (unsigned) len1));
 }
 
 int
 x_strncasecmp(const char *s1, const char *s2, unsigned n)
 {
-    while (n-- != 0) {
-	char c1 = x_toupper(*s1);
-	char c2 = x_toupper(*s2);
-	if (c1 != c2)
-	    return 1;
-	if (c1 == 0)
-	    break;
-	s1++;
-	s2++;
+    int result = 0;
+
+    if (s1 != NULL && s2 != NULL) {
+	while (n-- != 0) {
+	    char c1 = x_toupper(*s1);
+	    char c2 = x_toupper(*s2);
+	    if (c1 != c2) {
+		result = 1;
+		break;
+	    } else if (c1 == 0) {
+		break;
+	    }
+	    s1++;
+	    s2++;
+	}
+    } else if (s1 == NULL && s2 != NULL) {
+	result = 1;
+    } else if (s1 != NULL && s2 == NULL) {
+	result = 1;
     }
 
-    return 0;
+    return result;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $XTermId: VTparse.h,v 1.69 2019/02/10 23:34:21 tom Exp $ */
+/* $XTermId: VTparse.h,v 1.68 2018/08/29 09:18:37 tom Exp $ */
 
 /*
  * Copyright 1996-2018,2019 by Thomas E. Dickey

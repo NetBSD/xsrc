@@ -1,4 +1,4 @@
-/* $XTermId: xterm_io.h,v 1.67 2020/01/18 18:48:19 tom Exp $ */
+/* $XTermId: xterm_io.h,v 1.65 2018/06/28 21:35:01 tom Exp $ */
 
 /*
  * Copyright 2000-2018,2020 by Thomas E. Dickey

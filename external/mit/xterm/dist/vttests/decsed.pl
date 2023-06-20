@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: decsed.pl,v 1.6 2015/02/22 01:37:20 tom Exp $
+# $XTermId: vxt-decsed,v 1.6 2015/02/22 01:37:20 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

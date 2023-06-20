@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: under-latin.pl,v 1.6 2020/01/31 00:16:52 tom Exp $
+# $XTermId: vxt-under-latin,v 1.6 2020/01/31 00:16:52 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

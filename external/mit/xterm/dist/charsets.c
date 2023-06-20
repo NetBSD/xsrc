@@ -1,4 +1,4 @@
-/* $XTermId: charsets.c,v 1.113 2020/12/25 15:15:37 tom Exp $ */
+/* $XTermId: charsets.c,v 1.112 2020/12/24 22:07:02 tom Exp $ */
 
 /*
  * Copyright 1998-2019,2020 by Thomas E. Dickey

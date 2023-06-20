@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: paste64.pl,v 1.14 2018/11/20 01:05:55 tom Exp $
+# $XTermId: paste64.pl,v 1.13 2014/12/28 21:16:36 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

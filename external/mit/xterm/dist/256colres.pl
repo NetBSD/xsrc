@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $XTermId: 256colres.pl,v 1.16 2007/06/08 23:58:37 tom Exp $
+# $XTermId: 256colres.pl,v 1.15 2007/06/08 23:58:37 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: closest-rgb.pl,v 1.12 2020/12/13 15:07:02 tom Exp $
+# $XTermId: closest-rgb.pl,v 1.11 2018/08/10 18:02:55 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

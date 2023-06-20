@@ -1,5 +1,5 @@
 #! /usr/bin/perl -w
-# $XTermId: gen-charsets.pl,v 1.2 2018/08/22 22:59:15 tom Exp $
+# $XTermId: gen-charsets.pl,v 1.1 2018/08/22 22:48:14 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

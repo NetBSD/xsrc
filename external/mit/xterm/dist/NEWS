@@ -1,9 +1,13 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #372 - 2022/03/09
+                            Patch #382 - 2023/05/30
 
-     * amend   allocation/freeing  of  scrollback  lines,  eliminating  an
-       adjustment  for status-line added in patch #371 (report/testcase by
+     * amend change to CursorBack in patch #380, allowing the result to be
+       on  the  hidden  right-half  of  double-cell  characters (report by
        Rajeev V. Pillai).
+     * amend  xtermDrawString, fixing regression with --disable-wide-chars
+       configuration from patch #380.
+     * corrected   pathname   for  run-tic.sh,  for  full  install  in  an
+       out-of-tree build (report by Rajeev V. Pillai).
 

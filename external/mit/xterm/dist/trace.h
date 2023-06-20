@@ -69,9 +69,9 @@ extern	void	TraceClose (void);
 #define TRACE_L "{{"
 #define TRACE_R "}}"
 
-extern	const char * visibleChars(const Char * /* buf */, unsigned /* len */);
+extern	const char * visibleChars(const Char * /* buf */, size_t /* len */);
 extern	const char * visibleEventMode(EventMode);
-extern	const char * visibleIChars(const IChar * /* buf */, unsigned /* len */);
+extern	const char * visibleIChars(const IChar * /* buf */, size_t /* len */);
 extern	const char * visibleUChar(unsigned);
 extern	const char * visibleDblChrset(unsigned /* chrset */);
 extern	const char * visibleEventType (int);

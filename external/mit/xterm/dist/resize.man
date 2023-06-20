@@ -1,4 +1,4 @@
-.\" $XTermId: resize.man,v 1.37 2019/02/07 00:16:12 tom Exp $
+.\" $XTermId: resize.man,v 1.36 2019/02/06 23:06:08 tom Exp $
 .\"
 .\" Copyright 1998-2017,2019 by Thomas E. Dickey
 .\"

@@ -1,4 +1,4 @@
-# $XTermId: keysym.map,v 1.10 2018/06/29 00:51:40 Brad.Town Exp $
+# $XTermId: keysym.map,v 1.9 2016/05/22 20:05:27 tom Exp $
 #
 # This list can be used to convert X11 Keysyms to Unicode 2.1 character.
 # The list is not checked for correctness by Unicode officials.  Use it

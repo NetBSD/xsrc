@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vt52chars.pl,v 1.1 2019/07/08 20:27:21 tom Exp $
+# $XTermId: vxt-vt52chars,v 1.1 2019/07/08 20:27:21 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2019 by Thomas E. Dickey
 #

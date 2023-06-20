@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
-# Copyright 2019,2020 by Thomas E. Dickey
+# Copyright 2019-2020,2022 by Thomas E. Dickey
 #
 #                         All Rights Reserved
 #
@@ -612,7 +612,10 @@ sub ModifyOtherKeys($$$$) {
                     $result = 1
                       if ( &computeMaskedModifier( $state, $ShiftMask ) );
                 }
-                elsif ( $sym eq "XK_Return" or $sym eq "XK_Tab" ) {
+                elsif ($sym eq "XK_Escape"
+                    or $sym eq "XK_Return"
+                    or $sym eq "XK_Tab" )
+                {
 
                     $result = ( $modify_parm != 0 );
                 }
@@ -620,8 +623,8 @@ sub ModifyOtherKeys($$$$) {
                     if ( &IsControlInput($code) ) {
                         $result = 1;
                     }
-                    elsif ( $state == $ShiftMask ) {
-                        $result = ( $sym eq "XK_space" or $sym eq "XK_Return" );
+                    elsif ( $state == $ShiftMask and $sym eq "XK_space" ) {
+                        $result = 1;
                     }
                     elsif ( &computeMaskedModifier( $state, $ShiftMask ) ) {
                         $result = 1;

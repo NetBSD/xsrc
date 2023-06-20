@@ -44,13 +44,15 @@ case "$*" in
 	;;
 esac
 
+: "${TMPDIR=/tmp}"
+
 while [ $# != 0 ]
 do
 	if [ $ASNEED = no ] && [ -n "$LINKIT" ]
 	then
 		ASNEED=yes
 		OPT=-Wl,-as-needed
-		warned=`mktemp`
+		warned=`mktemp "$TMPDIR/xterm.XXXXXXXX"`
 		trap "rm -f $warned; exit 1" 1 2 3 15
 		trap "rm -f $warned" 0
 		if ( eval $LINKIT $OPT $NO_LTO "$@" >"$warned" 2>&1 )

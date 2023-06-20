@@ -1,4 +1,4 @@
-/* $XTermId: xtermcap.h,v 1.20 2013/06/23 15:34:37 tom Exp $ */
+/* $XTermId: xtermcap.h,v 1.19 2013/06/23 15:34:37 tom Exp $ */
 
 /*
  * Copyright 2007-2011,2013 by Thomas E. Dickey

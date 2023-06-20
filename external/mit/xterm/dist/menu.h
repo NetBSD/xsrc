@@ -1,4 +1,4 @@
-/* $XTermId: menu.h,v 1.146 2021/03/21 20:03:03 tom Exp $ */
+/* $XTermId: menu.h,v 1.145 2020/09/15 11:09:06 tom Exp $ */
 
 /*
  * Copyright 1999-2020,2021 by Thomas E. Dickey

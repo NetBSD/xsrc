@@ -1,4 +1,4 @@
-/* $XTermId: error.h,v 1.26 2012/10/05 00:17:51 tom Exp $ */
+/* $XTermId: error.h,v 1.25 2012/10/05 00:17:51 tom Exp $ */
 
 /*
  * Copyright 1997-2011,2012 by Thomas E. Dickey

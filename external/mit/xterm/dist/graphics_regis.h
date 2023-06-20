@@ -1,4 +1,4 @@
-/* $XTermId: graphics_regis.h,v 1.2 2016/05/29 16:34:47 tom Exp $ */
+/* $XTermId: graphics_regis.h,v 1.1 2014/04/11 19:36:41 Ross.Combs Exp $ */
 
 /*
  * Copyright 2014,2016 by Ross Combs
