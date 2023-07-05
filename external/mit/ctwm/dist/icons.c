@@ -38,6 +38,8 @@
 #include "image.h"
 #include "win_utils.h"
 #include "workspace_manager.h"
+#include "xparsegeometry.h"
+
 
 static void splitIconRegionEntry(IconEntry *ie, RegGravity grav1,
                                  RegGravity grav2, int w, int h);
@@ -162,8 +164,8 @@ AddIconRegion(const char *geom, RegGravity grav1, RegGravity grav2,
 	ir->stepy = stepy;
 	ir->x = ir->y = ir->w = ir->h = 0;
 
-	mask = XParseGeometry(geom, &ir->x, &ir->y, (unsigned int *)&ir->w,
-	                      (unsigned int *)&ir->h);
+	mask = RLayoutXParseGeometry(Scr->Layout, geom, &ir->x, &ir->y,
+	                             (unsigned int *)&ir->w, (unsigned int *)&ir->h);
 
 	if(mask & XNegative) {
 		ir->x += Scr->rootw - ir->w;

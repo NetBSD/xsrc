@@ -1,4 +1,7 @@
-/* $NetBSD: ctwm_config.h,v 1.1 2021/04/11 10:11:57 nia Exp $ */
+/*
+ * Compile-time config settings.  This gets processed by cmake into the
+ * file that's actually used.
+ */
 
 /*
  * Various on/off configs
@@ -20,6 +23,7 @@
 #endif
 
 /* rplay? */
+/* #undef USE_RPLAY */
 #ifdef USE_RPLAY
 /*
  * This mismatched naming is a historical remnant.  User-facing stuff
@@ -42,4 +46,32 @@
 /* Does libc provide regex funcs we use? */
 #ifdef USE_SREGEX
 # define USE_SYS_REGEX
+#endif
+
+/* Is usable xrandr available? */
+#ifdef USE_XRANDR
+# define XRANDR
+#endif
+
+/* Enable captive mode (ctwm -w) related bits */
+/* #undef USE_CAPTIVE */
+#ifdef USE_CAPTIVE
+# define CAPTIVE
+#endif
+
+/* Fragments of remaining VirtualScreens support */
+/* #undef USE_VSCREEN */
+#ifdef USE_VSCREEN
+# define VSCREEN
+#endif
+
+/* WindowBox support */
+/* #undef USE_WINBOX */
+#ifdef USE_WINBOX
+# define WINBOX
+#endif
+
+/* Session support */
+#ifdef USE_SESSION
+# define SESSION
 #endif

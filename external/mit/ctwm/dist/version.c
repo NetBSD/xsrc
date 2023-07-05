@@ -11,8 +11,8 @@
 #include "version.h"
 
 #define VERSION_MAJOR "4"
-#define VERSION_MINOR "0"
-#define VERSION_PATCH "3"
+#define VERSION_MINOR "1"
+#define VERSION_PATCH "0"
 #define VERSION_ADDL  ""
 
 #define VERSION_ID VERSION_MAJOR "." VERSION_MINOR "." VERSION_PATCH
@@ -26,7 +26,7 @@ const char *VersionNumber_minor = VERSION_MINOR;
 const char *VersionNumber_patch = VERSION_PATCH;
 const char *VersionNumber_addl  = VERSION_ADDL;
 const char *VCSType     = "bzr";
-const char *VCSRevision = "fullermd@over-yonder.net-20190721212859-1hko50q7rrvqttfb";
+const char *VCSRevision = "fullermd@over-yonder.net-20230326223622-nydwio13vncluzwi";
 
 #ifdef BUILD_VERSION_BIN
 #include <stdio.h>

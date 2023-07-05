@@ -34,10 +34,11 @@ struct WList {
 };
 
 struct IconMgr {
-	struct IconMgr *next;               /* ptr to the next icon manager */
-	struct IconMgr *prev;               /* ptr to the previous icon mgr */
-	struct IconMgr *lasti;              /* ptr to the last icon mgr */
-	struct IconMgr *nextv;              /* ptr to the next virt icon mgr */
+	struct IconMgr *next;  ///< Next iconmgr in this workspace
+	struct IconMgr *prev;  ///< Prev iconmgr in this workspace
+	struct IconMgr *lasti; ///< Last iconmgr in this workspace
+	struct IconMgr *nextv; ///< Next workspace's icon manager head
+
 	struct WList *first;                /* first window in the list */
 	struct WList *last;                 /* last window in the list */
 	struct WList *active;               /* the active entry */

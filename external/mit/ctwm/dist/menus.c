@@ -103,15 +103,23 @@ AddFuncKey(char *name, int cont, int nmods, int func,
            MenuRoot *menu, char *win_name, char *action)
 {
 	FuncKey *tmp;
-	KeySym keysym;
-	KeyCode keycode;
+	KeySym keysym = NoSymbol;
+	KeyCode keycode = 0;
 
 	/*
 	 * Don't let a 0 keycode go through, since that means AnyKey to the
-	 * XGrabKey call in GrabKeys().
+	 * XGrabKey call in GrabKeys().  Conditionalize on dpy to handle
+	 * special cases where we don't have a server to talk to.
 	 */
-	if((keysym = XStringToKeysym(name)) == NoSymbol ||
-	                (keycode = XKeysymToKeycode(dpy, keysym)) == 0) {
+	keysym = XStringToKeysym(name);
+	if(dpy) {
+		keycode = XKeysymToKeycode(dpy, keysym);
+	}
+	if(keysym == NoSymbol || (dpy && keycode == 0)) {
+		fprintf(stderr, "ignore %s key binding (%s)\n", name,
+		        keysym == NoSymbol
+		        ? "key symbol not found"
+		        : "key code not found");
 		return false;
 	}
 
@@ -471,7 +479,7 @@ void MakeWorkspacesMenu(void)
 
 static bool fromMenu;
 bool
-cur_fromMenu()
+cur_fromMenu(void)
 {
 	return fromMenu;
 }
@@ -523,7 +531,7 @@ void UpdateMenu(void)
 		              &x_root, &y_root, &x, &y, &JunkMask);
 
 		/* if we haven't received the enter notify yet, wait */
-		if(ActiveMenu && !ActiveMenu->entered) {
+		if(!ActiveMenu->entered) {
 			continue;
 		}
 
@@ -783,10 +791,16 @@ MenuItem *AddToMenu(MenuRoot *menu, char *item, char *action,
 		CreateFonts(Scr);
 	}
 
-	XmbTextExtents(Scr->MenuFont.font_set,
-	               itemname, tmp->strlen,
-	               &ink_rect, &logical_rect);
-	width = logical_rect.width;
+	if(dpy) {
+		XmbTextExtents(Scr->MenuFont.font_set,
+		               itemname, tmp->strlen,
+		               &ink_rect, &logical_rect);
+		width = logical_rect.width;
+	}
+	else {
+		// Fake for non-dpy cases
+		width = 25;
+	}
 
 	if(width <= 0) {
 		width = 1;
@@ -836,11 +850,10 @@ void MakeMenus(void)
 
 void MakeMenu(MenuRoot *mr)
 {
-	MenuItem *start, *end, *cur, *tmp;
+	MenuItem *start, *tmp;
 	XColor f1, f2, f3;
 	XColor b1, b2, b3;
 	XColor save_fore, save_back;
-	int num, i;
 	int fred, fgreen, fblue;
 	int bred, bgreen, bblue;
 	int width, borderwidth;
@@ -860,7 +873,7 @@ void MakeMenu(MenuRoot *mr)
 			mr->width += 16 + 10;
 		}
 		width = mr->width + 10;
-		for(cur = mr->first; cur != NULL; cur = cur->next) {
+		for(MenuItem *cur = mr->first; cur != NULL; cur = cur->next) {
 			XmbTextExtents(Scr->MenuFont.font_set, cur->item, cur->strlen,
 			               &ink_rect, &logical_rect);
 			max_entry_height = MAX(max_entry_height, logical_rect.height);
@@ -1015,6 +1028,7 @@ void MakeMenu(MenuRoot *mr)
 		return;
 	}
 
+	// Do InterpolateMenuColors magic
 	start = mr->first;
 	while(1) {
 		for(; start != NULL; start = start->next) {
@@ -1026,6 +1040,7 @@ void MakeMenu(MenuRoot *mr)
 			break;
 		}
 
+		MenuItem *end;
 		for(end = start->next; end != NULL; end = end->next) {
 			if(end->user_colors) {
 				break;
@@ -1036,7 +1051,7 @@ void MakeMenu(MenuRoot *mr)
 		}
 
 		/* we have a start and end to interpolate between */
-		num = end->item_num - start->item_num;
+		int num = end->item_num - start->item_num;
 
 		f1.pixel = start->normal.fore;
 		XQueryColor(dpy, cmap, &f1);
@@ -1065,7 +1080,12 @@ void MakeMenu(MenuRoot *mr)
 		start->highlight.back = start->normal.fore;
 		start->highlight.fore = start->normal.back;
 		num -= 1;
-		for(i = 0, cur = start->next; i < num; i++, cur = cur->next) {
+		int i = 0;
+		MenuItem *cur = start->next;
+		// XXX Should be impossible to run out of cur's before num's,
+		// unless the item_num's are wrong (which would break other
+		// stuff), but add condition to quiet static analysis.
+		for(; cur != NULL && i < num ; i++, cur = cur->next) {
 			f3.red += fred;
 			f3.green += fgreen;
 			f3.blue += fblue;
@@ -1205,7 +1225,15 @@ PopUpMenu(MenuRoot *menu, int x, int y, bool center)
 			}
 			WindowNameCount++;
 		}
+
+		// Hack: always pretend there's at least one window, even if
+		// there are none; that lets us skip special cases for empty
+		// lists...
+		if(WindowNameCount == 0) {
+			WindowNameCount = 1;
+		}
 		WindowNames = calloc(WindowNameCount, sizeof(TwmWindow *));
+
 		WindowNameCount = 0;
 		for(tmp_win = Scr->FirstWindow;
 		                tmp_win != NULL;
@@ -1276,9 +1304,6 @@ PopUpMenu(MenuRoot *menu, int x, int y, bool center)
 	/* Keys added by dl */
 
 	if(menu == Scr->Keys) {
-		FuncKey *tmpKey;
-		char *tmpStr;
-		char *modStr;
 		char *oldact = 0;
 		int oldmod = 0;
 
@@ -1294,37 +1319,21 @@ PopUpMenu(MenuRoot *menu, int x, int y, bool center)
 
 		AddToMenu(menu, "Twm Keys", NULL, NULL, F_TITLE, NULL, NULL);
 
-		for(tmpKey = Scr->FuncKeyRoot.next; tmpKey != NULL;  tmpKey = tmpKey->next) {
+		for(const FuncKey *tmpKey = Scr->FuncKeyRoot.next; tmpKey != NULL;
+		                tmpKey = tmpKey->next) {
+			char *tmpStr;
+
 			if(tmpKey->func != F_EXEC) {
 				continue;
 			}
 			if((tmpKey->action == oldact) && (tmpKey->mods == oldmod)) {
 				continue;
 			}
-			switch(tmpKey->mods) {
-				case  1:
-					modStr = "S";
-					break;
-				case  4:
-					modStr = "C";
-					break;
-				case  5:
-					modStr = "S + C";
-					break;
-				case  8:
-					modStr = "M";
-					break;
-				case  9:
-					modStr = "S + M";
-					break;
-				case 12:
-					modStr = "C + M";
-					break;
-				default:
-					modStr = "";
-					break;
+
+			tmpStr = mk_twmkeys_entry(tmpKey);
+			if(tmpStr == NULL) {
+				tmpStr = strdup("(error)");
 			}
-			asprintf(&tmpStr, "[%s + %s] %s", tmpKey->name, modStr, tmpKey->action);
 
 			AddToMenu(menu, tmpStr, tmpKey->action, NULL, tmpKey->func, NULL, NULL);
 			oldact = tmpKey->action;
@@ -1381,23 +1390,7 @@ PopUpMenu(MenuRoot *menu, int x, int y, bool center)
 	/*
 	* clip to screen
 	*/
-	clipped = false;
-	if(x + menu->width > Scr->rootw) {
-		x = Scr->rootw - menu->width;
-		clipped = true;
-	}
-	if(x < 0) {
-		x = 0;
-		clipped = true;
-	}
-	if(y + menu->height > Scr->rooth) {
-		y = Scr->rooth - menu->height;
-		clipped = true;
-	}
-	if(y < 0) {
-		y = 0;
-		clipped = true;
-	}
+	clipped = ConstrainByLayout(Scr->Layout, -1, &x, menu->width, &y, menu->height);
 	MenuOrigins[MenuDepth].x = x;
 	MenuOrigins[MenuDepth].y = y;
 	MenuDepth++;
@@ -1654,3 +1647,72 @@ void WarpCursorToDefaultEntry(MenuRoot *menu)
 	             menu->width, menu->height, xl, yt);
 }
 
+
+
+/**
+ * Generate up a string representation of a keybinding->action.
+ * Internally used in generating TwmKeys menu.
+ */
+char *
+mk_twmkeys_entry(const FuncKey *key)
+{
+	char *ret;
+	//         S+  C+  5(Mx+)  5(Ax+)
+#define MSLEN (2 + 2 + 5 * 3 + 5 * 3)
+	char modStr[MSLEN + 1];
+	char *modStrCur = modStr;
+
+	// Init
+	*modStrCur = '\0';
+
+	// Check and add prefixes for each modifier
+#define DO(mask, str) do { \
+                if(key->mods & mask##Mask) { \
+                        const int tslen = sizeof(str) - 1; \
+                        if((modStrCur - modStr + tslen) >= MSLEN) { \
+                                fprintf(stderr, "BUG: No space to add '%s' " \
+                                                "in %s()\n", str, __func__); \
+                                return NULL; \
+                        } \
+                        strcpy(modStrCur, str); \
+                        modStrCur += tslen; \
+                } \
+        } while(0)
+
+	// Mod1 is Meta (== Alt), so is special and comes first, apart and
+	// differing from the other more generic ModX's.
+	DO(Mod1, "M+");
+
+	// Shift/Ctrl are normal common bits.
+	DO(Shift,   "S+");
+	DO(Control, "C+");
+
+	// Other Mod's and Alt's are weirder, but possible.
+	DO(Mod2, "M2+");
+	DO(Mod3, "M3+");
+	DO(Mod4, "M4+");
+	DO(Mod5, "M5+");
+
+	DO(Alt1, "A1+");
+	DO(Alt2, "A2+");
+	DO(Alt3, "A3+");
+	DO(Alt4, "A4+");
+	DO(Alt5, "A5+");
+
+	// Overflows for test.  Watch out for colliding with X or our *Mask
+	// defs.
+	// +1 when combined with above, should be enough
+#define Over1Mask (1<<30)
+	DO(Over1, "a");
+	// Way too big no matter what
+#define OverAllMask (1<<31)
+	DO(OverAll, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+
+#undef OverAllMask
+#undef Over1Mask
+
+#undef DO
+
+	asprintf(&ret, "[%s%s] %s", modStr, key->name, key->action);
+	return ret;
+}

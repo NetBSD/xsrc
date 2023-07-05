@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ctwm_shutdown.h"
 #include "screen.h"
 #include "list.h"
 #include "util.h"
@@ -71,7 +72,7 @@ void AddToList(name_list **list_head, const char *name, void *ptr)
 	if(nptr == NULL) {
 		fprintf(stderr, "unable to allocate %lu bytes for name_list\n",
 		        (unsigned long) sizeof(name_list));
-		Done(0);
+		DoShutdown();
 	}
 
 	nptr->next = *list_head;

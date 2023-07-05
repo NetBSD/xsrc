@@ -43,7 +43,6 @@ typedef struct WindowRegion WindowRegion;
 typedef struct WindowEntry WindowEntry;
 typedef struct WindowBox WindowBox;
 typedef struct TwmWindow TwmWindow;
-typedef struct TWMWinConfigEntry TWMWinConfigEntry;
 
 /* From image.h */
 typedef struct Image Image;
@@ -65,5 +64,10 @@ typedef struct OccupyWindow OccupyWindow;
 /* From otp.h */
 typedef struct OtpWinList OtpWinList;
 typedef struct OtpPreferences OtpPreferences;
+
+/* From r_structs.h */
+typedef struct RArea RArea;
+typedef struct RAreaList RAreaList;
+typedef struct RLayout RLayout;
 
 #endif /* _CTWM_TYPES_H */

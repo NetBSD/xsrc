@@ -67,10 +67,12 @@
 #include <X11/Xatom.h>
 
 #include "ctwm_atoms.h"
+#include "ctwm_shutdown.h"
 #include "icons.h"
 #include "list.h"
 #include "screen.h"
 #include "session.h"
+
 
 SmcConn smcConn = NULL;
 static XtInputId iceInputId;
@@ -81,13 +83,24 @@ static bool sent_save_done = false;
 static void SaveYourselfCB(SmcConn smcCon, SmPointer clientData,
                            int saveType, Bool shutdown, int interactStyle,
                            Bool fast);
+static char *GetClientID(Window window);
+static char *GetWindowRole(Window window);
+static int WriteWinConfigEntry(FILE *configFile, TwmWindow *theWindow,
+                        char *clientId, char *windowRole);
+static int ReadWinConfigEntry(FILE *configFile, unsigned short version,
+                       TWMWinConfigEntry **pentry);
+static void SaveYourselfPhase2CB(SmcConn smcCon, SmPointer clientData);
+static void DieCB(SmcConn smcCon, SmPointer clientData);
+static void SaveCompleteCB(SmcConn smcCon, SmPointer clientData);
+static void ShutdownCancelledCB(SmcConn smcCon, SmPointer clientData);
+static void ProcessIceMsgProc(XtPointer client_data, int *source, XtInputId *id);
 
 #define SAVEFILE_VERSION 2
 
 
 /*===[ Get Client SM_CLIENT_ID ]=============================================*/
 
-char *GetClientID(Window window)
+static char *GetClientID(Window window)
 /* This function returns the value of the session manager client ID property
  * given a valid window handle. If no such property exists on a window then
  * null is returned
@@ -127,7 +140,7 @@ char *GetClientID(Window window)
 
 /*===[ Get Window Role ]=====================================================*/
 
-char *GetWindowRole(Window window)
+static char *GetWindowRole(Window window)
 /* this function returns the WM_WINDOW_ROLE property of a window
  */
 {
@@ -354,7 +367,7 @@ static int read_counted_string(FILE *file, char **stringp)
 
 /*===[ Write Window Config Entry to file ]===================================*/
 
-int WriteWinConfigEntry(FILE *configFile, TwmWindow *theWindow,
+static int WriteWinConfigEntry(FILE *configFile, TwmWindow *theWindow,
                         char *clientId, char *windowRole)
 /* this function writes a window configuration entry of a given window to
  * the given configuration file
@@ -496,7 +509,7 @@ int WriteWinConfigEntry(FILE *configFile, TwmWindow *theWindow,
 
 /*===[ Read Window Configuration Entry ]=====================================*/
 
-int ReadWinConfigEntry(FILE *configFile, unsigned short version,
+static int ReadWinConfigEntry(FILE *configFile, unsigned short version,
                        TWMWinConfigEntry **pentry)
 /* this function reads the next window configuration entry from the given file
  * else it returns 0 if none exists or there is a problem
@@ -863,7 +876,7 @@ static char *unique_filename(char *path, char *prefix, int *fd)
 #  define PATH_MAX 1023
 #endif
 
-void SaveYourselfPhase2CB(SmcConn smcCon, SmPointer clientData)
+static void SaveYourselfPhase2CB(SmcConn smcCon, SmPointer clientData)
 /* this is where all the work is done in saving the state of the windows.
  * it is not done in Phase One because phase one is used for the other clients
  * to make sure that all the property information on their windows is correct
@@ -1059,19 +1072,19 @@ static void SaveYourselfCB(SmcConn smcCon, SmPointer clientData,
 
 /*===[ Die SM Call Back ]====================================================*/
 
-void DieCB(SmcConn smcCon, SmPointer clientData)
+static void DieCB(SmcConn smcCon, SmPointer clientData)
 /* this procedure is called by the session manager when requesting that the
  * application shut istelf down
  */
 {
 	SmcCloseConnection(smcCon, 0, NULL);
 	XtRemoveInput(iceInputId);
-	Done(0);
+	DoShutdown();
 }
 
 /*===[ Save Complete SM Call Back ]==========================================*/
 
-void SaveCompleteCB(SmcConn smcCon, SmPointer clientData)
+static void SaveCompleteCB(SmcConn smcCon, SmPointer clientData)
 /* This function is called to say that the save has been completed and that
  * the program can continue its operation
  */
@@ -1081,7 +1094,7 @@ void SaveCompleteCB(SmcConn smcCon, SmPointer clientData)
 
 /*===[ Shutdown Cancelled SM Call Back ]=====================================*/
 
-void ShutdownCancelledCB(SmcConn smcCon, SmPointer clientData)
+static void ShutdownCancelledCB(SmcConn smcCon, SmPointer clientData)
 
 {
 	if(!sent_save_done) {
@@ -1092,7 +1105,7 @@ void ShutdownCancelledCB(SmcConn smcCon, SmPointer clientData)
 
 /*===[ Process ICE Message ]=================================================*/
 
-void ProcessIceMsgProc(XtPointer client_data, int *source, XtInputId *id)
+static void ProcessIceMsgProc(XtPointer client_data, int *source, XtInputId *id)
 
 {
 	IceConn     ice_conn = (IceConn) client_data;
@@ -1155,4 +1168,12 @@ void ConnectToSessionManager(char *previous_id)
 	                     (XtPointer) XtInputReadMask,
 	                     ProcessIceMsgProc,
 	                     (XtPointer) iceConn);
+}
+
+
+void shutdown_session(void)
+{
+	if(smcConn) {
+		SmcCloseConnection(smcConn, 0, NULL);
+	}
 }
