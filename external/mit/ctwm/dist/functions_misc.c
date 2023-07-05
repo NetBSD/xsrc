@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "animate.h"
+#include "ctwm_shutdown.h"
 #include "functions.h"
 #include "functions_defs.h"
 #include "functions_internal.h"
@@ -22,7 +23,9 @@
 #endif
 #include "util.h"
 #include "win_iconify.h"
+#ifdef WINBOX
 #include "windowbox.h"
+#endif
 #include "workspace_utils.h"
 
 #include "ext/repl_str.h"
@@ -189,7 +192,7 @@ DFHANDLER(altcontext)
  */
 DFHANDLER(quit)
 {
-	Done(0);
+	DoShutdown();
 }
 
 DFHANDLER(restart)
@@ -209,6 +212,7 @@ DFHANDLER(trace)
 
 
 
+#ifdef WINBOX
 /*
  * Special windowbox-related
  */
@@ -220,6 +224,7 @@ DFHANDLER(fittocontent)
 	}
 	fittocontent(tmp_win);
 }
+#endif
 
 
 
@@ -444,6 +449,7 @@ Execute(const char *_s)
 		s = tmp;
 	}
 
+#ifdef CAPTIVE
 	subs = strstr(s, "$redirect");
 	if(subs) {
 		char *tmp;
@@ -466,6 +472,7 @@ Execute(const char *_s)
 
 		free(redir);
 	}
+#endif
 
 
 	/*

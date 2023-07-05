@@ -20,6 +20,7 @@
 #include "otp.h"
 #include "screen.h"
 #include "win_iconify.h"
+#include "win_ring.h"
 #include "win_utils.h"
 
 
@@ -120,47 +121,16 @@ DFHANDLER(warptoiconmgr)
 	}
 }
 
-
 /* Taken from vtwm version 5.3 */
 DFHANDLER(ring)
 {
-	if(tmp_win->ring.next || tmp_win->ring.prev) {
+	if(WindowIsOnRing(tmp_win)) {
 		/* It's in the ring, let's take it out. */
-		TwmWindow *prev = tmp_win->ring.prev, *next = tmp_win->ring.next;
-
-		/*
-		* 1. Unlink window
-		* 2. If window was only thing in ring, null out ring
-		* 3. If window was ring leader, set to next (or null)
-		*/
-		if(prev) {
-			prev->ring.next = next;
-		}
-		if(next) {
-			next->ring.prev = prev;
-		}
-		if(Scr->Ring == tmp_win) {
-			Scr->Ring = (next != tmp_win ? next : NULL);
-		}
-
-		if(!Scr->Ring || Scr->RingLeader == tmp_win) {
-			Scr->RingLeader = Scr->Ring;
-		}
-		tmp_win->ring.next = tmp_win->ring.prev = NULL;
+		UnlinkWindowFromRing(tmp_win);
 	}
 	else {
 		/* Not in the ring, so put it in. */
-		if(Scr->Ring) {
-			tmp_win->ring.next = Scr->Ring->ring.next;
-			if(Scr->Ring->ring.next->ring.prev) {
-				Scr->Ring->ring.next->ring.prev = tmp_win;
-			}
-			Scr->Ring->ring.next = tmp_win;
-			tmp_win->ring.prev = Scr->Ring;
-		}
-		else {
-			tmp_win->ring.next = tmp_win->ring.prev = Scr->Ring = tmp_win;
-		}
+		AddWindowToRing(tmp_win);
 	}
 	/*tmp_win->ring.cursor_valid = false;*/
 }
@@ -219,9 +189,6 @@ WarpAlongRing(XButtonEvent *ev, bool forward)
 
 	if(forward) {
 		for(r = head->ring.next; r != head; r = r->ring.next) {
-			if(!r) {
-				break;
-			}
 			if(r->mapped && (Scr->WarpRingAnyWhere || visible(r))) {
 				break;
 			}
@@ -229,18 +196,25 @@ WarpAlongRing(XButtonEvent *ev, bool forward)
 	}
 	else {
 		for(r = head->ring.prev; r != head; r = r->ring.prev) {
-			if(!r) {
-				break;
-			}
 			if(r->mapped && (Scr->WarpRingAnyWhere || visible(r))) {
 				break;
 			}
 		}
 	}
 
-	/* Note: (Scr->Focus != r) is necessary when we move to a workspace that
-	   has a single window and we want warping to warp to it. */
-	if(r && (r != head || Scr->Focus != r)) {
+	/*
+	 * Note: (Scr->Focus == NULL) is necessary when we move to (or
+	 * are in) a workspace that has a single window, and we're not
+	 * on that window (but the window is head), and we want f.warpring
+	 * to warp to it.
+	 * Generalised that is also true if we are on a window but it is
+	 * not on the ring.
+	 * TODO: on an empty screen, it still moves the mouse cursor...
+	 */
+
+	if(r != head
+	                || Scr->Focus == NULL
+	                || !WindowIsOnRing(Scr->Focus)) {
 		TwmWindow *p = Scr->RingLeader, *t;
 
 		Scr->RingLeader = r;

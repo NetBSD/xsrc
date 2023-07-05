@@ -28,6 +28,9 @@
 #include "parse.h"
 #include "parse_be.h"
 #include "parse_yacc.h"
+#include "r_area.h"
+#include "r_area_list.h"
+#include "r_layout.h"
 #ifdef SOUNDS
 #  include "sound.h"
 #endif
@@ -342,6 +345,7 @@ static const TwmKeyword keytable[] = {
 	{ "menutitleforeground",    CKEYWORD, kwc_MenuTitleForeground },
 	{ "meta",                   META, 0 },
 	{ "mod",                    META, 0 },  /* fake it */
+	{ "monitorlayout",          MONITOR_LAYOUT, 0 },
 	{ "monochrome",             MONOCHROME, 0 },
 	{ "move",                   MOVE, 0 },
 	{ "movedelta",              NKEYWORD, kwn_MoveDelta },
@@ -451,7 +455,9 @@ static const TwmKeyword keytable[] = {
 	{ "usethreedmenus",         KEYWORD, kw0_Use3DMenus },
 	{ "usethreedtitles",        KEYWORD, kw0_Use3DTitles },
 	{ "usethreedwmap",          KEYWORD, kw0_Use3DWMap },
+#ifdef VSCREEN
 	{ "virtualscreens",         VIRTUAL_SCREENS, 0 },
+#endif
 	{ "w",                      WINDOW, 0 },
 	{ "wait",                   WAITC, 0 },
 	{ "warpcursor",             WARP_CURSOR, 0 },
@@ -461,7 +467,9 @@ static const TwmKeyword keytable[] = {
 	{ "warpunmapped",           KEYWORD, kw0_WarpUnmapped },
 	{ "west",                   GRAVITY, GRAV_WEST },
 	{ "window",                 WINDOW, 0 },
+#ifdef WINBOX
 	{ "windowbox",              WINDOW_BOX, 0 },
+#endif
 	{ "windowfunction",         WINDOW_FUNCTION, 0 },
 	{ "windowgeometries",       WINDOW_GEOMETRIES, 0 },
 	{ "windowregion",           WINDOW_REGION, 0 },
@@ -1548,12 +1556,13 @@ do_color_keyword(int keyword, int colormode, char *s)
 static void
 put_pixel_on_root(Pixel pixel)
 {
-	int           i, addPixel = 1;
+	bool addone = true;
 	Atom          retAtom;
 	int           retFormat;
 	unsigned long nPixels, retAfter;
 	Pixel        *retProp;
 
+	// Get current list
 	if(XGetWindowProperty(dpy, Scr->Root, XA__MIT_PRIORITY_COLORS, 0, 8192,
 	                      False, XA_CARDINAL, &retAtom,
 	                      &retFormat, &nPixels, &retAfter,
@@ -1561,18 +1570,57 @@ put_pixel_on_root(Pixel pixel)
 		return;
 	}
 
-	for(i = 0; i < nPixels; i++)
+	// See if we already have this one
+	for(int i = 0; i < nPixels; i++) {
 		if(pixel == retProp[i]) {
-			addPixel = 0;
+			addone = false;
 		}
-
+	}
 	XFree(retProp);
 
-	if(addPixel)
+	// If not, append it
+	if(addone) {
 		XChangeProperty(dpy, Scr->Root, XA__MIT_PRIORITY_COLORS,
 		                XA_CARDINAL, 32, PropModeAppend,
 		                (unsigned char *)&pixel, 1);
+	}
 }
+
+/*
+ * Stash for SaveColor{} values during config parsing.
+ */
+typedef struct _cnode {
+	int i;
+	int cmode;
+	char *sname;
+	struct _cnode *next;
+} Cnode;
+static Cnode *chead = NULL;
+
+/**
+ * Add a SaveColor{} entry to our stash.
+ */
+static void
+add_cnode(int kwcl, int cmode, char *colname)
+{
+	Cnode *cnew;
+
+	cnew = calloc(1, sizeof(Cnode));
+	cnew->i     = kwcl;
+	cnew->cmode = cmode;
+	cnew->sname = colname;
+
+	if(!chead) {
+		chead = cnew;
+	}
+	else {
+		cnew->next = chead;
+		chead = cnew;
+	}
+
+	return;
+}
+
 
 /*
  * do_string_savecolor() save a color from a string in the twmrc file.
@@ -1580,41 +1628,16 @@ put_pixel_on_root(Pixel pixel)
 void
 do_string_savecolor(int colormode, char *s)
 {
-	Pixel p;
-	GetColor(colormode, &p, s);
-	put_pixel_on_root(p);
-	return;
+	add_cnode(0, colormode, s);
 }
 
 /*
  * do_var_savecolor() save a color from a var in the twmrc file.
  */
-typedef struct _cnode {
-	int i;
-	struct _cnode *next;
-} Cnode, *Cptr;
-static Cptr chead = NULL;
-
 void
 do_var_savecolor(int key)
 {
-	Cptr cptrav, cpnew;
-	if(!chead) {
-		chead = malloc(sizeof(Cnode));
-		chead->i = key;
-		chead->next = NULL;
-	}
-	else {
-		cptrav = chead;
-		while(cptrav->next != NULL) {
-			cptrav = cptrav->next;
-		}
-		cpnew = malloc(sizeof(Cnode));
-		cpnew->i = key;
-		cpnew->next = NULL;
-		cptrav->next = cpnew;
-	}
-	return;
+	add_cnode(key, 0, NULL);
 }
 
 /*
@@ -1624,8 +1647,16 @@ do_var_savecolor(int key)
 void
 assign_var_savecolor(void)
 {
-	Cptr cp = chead;
+	Cnode *cp = chead;
+
+	// Start with an empty property
+	XChangeProperty(dpy, Scr->Root, XA__MIT_PRIORITY_COLORS,
+	                XA_CARDINAL, 32, PropModeReplace, NULL, 0);
+
+	// Loop over, stash 'em, and clean up
 	while(cp != NULL) {
+		Cnode *tmp_cp = cp;
+
 		switch(cp->i) {
 			case kwcl_BorderColor:
 				put_pixel_on_root(Scr->BorderColorC.back);
@@ -1666,11 +1697,18 @@ assign_var_savecolor(void)
 			case kwcl_MapWindowBackground:
 				put_pixel_on_root(Scr->workSpaceMgr.windowcp.back);
 				break;
+			case 0: {
+				// This means it's a string, not one of our keywords
+				Pixel p;
+				GetColor(cp->cmode, &p, cp->sname);
+				put_pixel_on_root(p);
+			}
 		}
+
 		cp = cp->next;
+		free(tmp_cp);
 	}
 	if(chead) {
-		free(chead);
 		chead = NULL;
 	}
 }
@@ -1967,5 +2005,165 @@ add_mwm_ignore(char *s)
 	twmrc_error_prefix();
 	fprintf(stderr, "Unexpected MWMIgnore value '%s'\n", s);
 	ParseError = true;
+	return;
+}
+
+
+/*
+ * Parsing for Layout { } lists, to override the monitor layout we
+ * assumed or got from RANDR.
+ */
+static RAreaList *override_monitors;
+static struct {
+	char **names;
+	int len;
+	int cap;
+} override_monitors_names;
+
+
+/**
+ * Allocate space for our monitor override list.
+ */
+void
+init_layout_override(void)
+{
+	// 4 seems like a good guess.  If we're doing this, we're probably
+	// making at least 2 monitors, and >4 is gonna be pretty rare, so...
+	const int initsz = 4;
+
+	override_monitors = RAreaListNew(initsz, NULL);
+	if(override_monitors == NULL) {
+		twmrc_error_prefix();
+		fprintf(stderr, "Failed allocating RAreaList for monitors.\n");
+		ParseError = true;
+		return;
+		// Maybe we should just abort(); if malloc failed allocating a
+		// few dozen bytes this early, we're _screwed_.
+	}
+
+	override_monitors_names.names = calloc(initsz, sizeof(char *));
+	override_monitors_names.len = 0;
+	override_monitors_names.cap = initsz;
+
+	return;
+}
+
+/**
+ * Add an entry to our monitor list
+ *
+ * Expecting: [Name:]WxH[+X[+Y]]
+ */
+void
+add_layout_override_entry(const char *s)
+{
+	const char *tmp;
+	int xpgret;
+	int x, y;
+	unsigned int width, height;
+
+	if(override_monitors == NULL) {
+		// alloc failed, so just give up; we'll fail in the end anyway...
+		return;
+	}
+
+	// Got a name?
+	tmp = strchr(s, ':');
+	if(tmp != NULL && tmp != s) {
+		// Stash the name
+		override_monitors_names.names[override_monitors_names.len]
+		        = strndup(s, tmp - s);
+		// len advances below
+
+		// Advance to geom
+		s = tmp + 1;
+	}
+	// Advance whether we got a name or not, to keep in sync.
+	override_monitors_names.len++;
+
+
+	// Either way, s points at the geom now
+	xpgret = XParseGeometry(s, &x, &y, &width, &height);
+
+	// Width and height are non-optional.  If x/y aren't given, we assume
+	// +0+0.  If we're given -0's, well, we don't _support_ that, but
+	// XPG() turns them into positives for us, so just accept it...
+	const int has_hw = (WidthValue | HeightValue);
+	if((xpgret & has_hw) != has_hw) {
+		twmrc_error_prefix();
+		fprintf(stderr, "Need both height and width in '%s'\n", s);
+		ParseError = true;
+		// Don't bother free()'ing stuff, we're going to exit after
+		// parse completes
+		return;
+	}
+	if(!(xpgret & XValue)) {
+		x = 0;
+	}
+	if(!(xpgret & YValue)) {
+		y = 0;
+	}
+
+
+	// And stash it
+	RAreaListAdd(override_monitors, RAreaNewStatic(x, y, width, height));
+
+	// Whether we had a name for this 'monitor' or not, we need to
+	// possibly grow the names list, since it has to stay in lockstep
+	// with the areas as we add 'em.
+	{
+		char ***names = &override_monitors_names.names;
+		int len = override_monitors_names.len;
+
+		if(len == override_monitors_names.cap) {
+			char **tnames = realloc(*names, (len + 1) * sizeof(char *));
+			if(tnames == NULL) {
+				abort();
+			}
+			*names = tnames;
+			override_monitors_names.cap++;
+		}
+	}
+
+	return;
+}
+
+/**
+ * Finalize the override layout and store it up globally.
+ */
+void
+proc_layout_override(void)
+{
+	RLayout *new_layout;
+
+	// Guard
+	if(RAreaListLen(override_monitors) < 1) {
+		// Make this non-fatal, so an empty spec not-quite-quietly does
+		// nothing.
+		twmrc_error_prefix();
+		fprintf(stderr, "no monitors specified, ignoring MonitorLayout\n");
+
+		// Since it's non-fatal, we _do_ need to cleanup more
+		// carefully...
+		RAreaListFree(override_monitors);
+		for(int i = 0; i < override_monitors_names.len ; i++) {
+			free(override_monitors_names.names[i]);
+		}
+		free(override_monitors_names.names);
+		return;
+	}
+
+	new_layout = RLayoutNew(override_monitors);
+	RLayoutSetMonitorsNames(new_layout, override_monitors_names.names);
+	// Silently stop paying attention to o_m_n.  Don't free() anything,
+	// since new_layout now owns it.  If we get another MonitorLayout{}
+	// block, it'll start over again with init(), and allocate new space.
+
+#ifdef DEBUG
+	fprintf(stderr, "Overridden layout: ");
+	RLayoutPrint(new_layout);
+#endif
+
+	RLayoutFree(Scr->Layout);
+	Scr->Layout = new_layout;
 	return;
 }

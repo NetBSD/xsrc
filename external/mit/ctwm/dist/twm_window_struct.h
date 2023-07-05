@@ -243,8 +243,10 @@ struct TwmWindow {
 
 	/// WindowRegion containing this window.  \todo Write-only?  Reap?
 	WindowRegion *wr;
+#ifdef WINBOX
 	WindowBox *winbox; ///< WindowBox containing this window.
 	bool iswinbox;     ///< This is a WindowBox window.
+#endif
 
 	/// Saved window geometry.  Used in f.savegeometry and
 	/// f.restoregeometry.

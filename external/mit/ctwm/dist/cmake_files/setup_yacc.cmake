@@ -8,11 +8,8 @@
 # Setup flags, and have an escape to debug the parser, if that's ever
 # useful.
 #
-# Making this a list messes with BISON_TARGET() which requires a string
-# according to the docs (though only cmake 3.4 start complaining about
-# getting a list).  A string might be nicer, but we'd really need
-# string(CONCAT) for that, and x-ref in do_install.cmake for notes on
-# that.
+# YFLAGS being a list is the Right(tm) choice here, though it messes with
+# BISON_TARGET() below.
 set(YFLAGS -d -b gram)
 if(DO_DEBUGPARSER)
 	list(APPEND YFLAGS -t -v)
@@ -30,8 +27,15 @@ if(NOT FORCE_PREGEN_FILES)
 endif()
 
 if(BISON_FOUND)
-	# What a stupid way to spell 'stringify'...
-	string(REPLACE ";" " " _YFSTR "${YFLAGS}")
+	# BISON_TARGET requires a string, not a list, for COMPILE_FLAGS.
+	# list(JOIN) would be the proper solution here, but requires cmake
+	# 3.12.
+	if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.12)
+		list(JOIN YFLAGS " " _YFSTR)
+	else()
+		# So until then, this is our stupid stringify hack...
+		string(REPLACE ";" " " _YFSTR "${YFLAGS}")
+	endif()
 	BISON_TARGET(ctwm_parser gram.y ${CMAKE_CURRENT_BINARY_DIR}/gram.tab.c
 		COMPILE_FLAGS ${_YFSTR})
 elseif(YACC)

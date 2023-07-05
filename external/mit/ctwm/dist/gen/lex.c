@@ -1,6 +1,6 @@
-#line 1 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 1 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 
-#line 3 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 3 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -513,11 +513,11 @@ char *yytext;
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
-#line 516 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 516 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 #line 55 "lex.l"
  /* Requires flex 2.5.1 (28Mar95) */
  /* Requires flex 2.5.2 (25Apr95) */
-#line 520 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 520 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 
 #define INITIAL 0
 
@@ -734,7 +734,7 @@ YY_DECL
 	{
 #line 60 "lex.l"
 
-#line 737 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 737 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -896,7 +896,7 @@ YY_RULE_SETUP
 #line 97 "lex.l"
 ECHO;
 	YY_BREAK
-#line 899 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/lex.c"
+#line 899 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

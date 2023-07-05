@@ -61,3 +61,33 @@
 #ifdef USE_SREGEX
 # define USE_SYS_REGEX
 #endif
+
+/* Is usable xrandr available? */
+#cmakedefine USE_XRANDR
+#ifdef USE_XRANDR
+# define XRANDR
+#endif
+
+/* Enable captive mode (ctwm -w) related bits */
+#cmakedefine USE_CAPTIVE
+#ifdef USE_CAPTIVE
+# define CAPTIVE
+#endif
+
+/* Fragments of remaining VirtualScreens support */
+#cmakedefine USE_VSCREEN
+#ifdef USE_VSCREEN
+# define VSCREEN
+#endif
+
+/* WindowBox support */
+#cmakedefine USE_WINBOX
+#ifdef USE_WINBOX
+# define WINBOX
+#endif
+
+/* Session support */
+#cmakedefine USE_SESSION
+#ifdef USE_SESSION
+# define SESSION
+#endif

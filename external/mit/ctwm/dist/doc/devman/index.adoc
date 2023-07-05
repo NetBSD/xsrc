@@ -14,6 +14,9 @@ reminded of.
 * <<functions.adoc#,f.functions>> talks about how the various
 `f.whatever` functions are dispatched and how you'd go about writing one.
 
+* <<rlayout.adoc#,RLayout>> describes the functions and data structures
+involving `RArea` and `RLayout` bits.
+
 * <<principles.adoc#,Principles Of Operation>> is a pre-existing dev
 document that covers a number of areas.  Probably over time it'll get
 piecewise integrated into bigger individual sections.

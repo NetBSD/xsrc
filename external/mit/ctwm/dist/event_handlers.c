@@ -37,6 +37,7 @@
 #include "clicktofocus.h"
 #include "colormaps.h"
 #include "ctwm_atoms.h"
+#include "ctwm_shutdown.h"
 #include "events.h"
 #include "event_handlers.h"
 #include "event_internal.h"
@@ -59,6 +60,7 @@
 #include "win_ops.h"
 #include "win_regions.h"
 #include "win_resize.h"
+#include "win_ring.h"
 #include "win_utils.h"
 #include "workspace_manager.h"
 #include "workspace_utils.h"
@@ -434,7 +436,7 @@ HandleFocusOut(void)
 /*
  * Only sent if SubstructureNotifyMask is selected on the (root) window.
  */
-void HandleCirculateNotify()
+void HandleCirculateNotify(void)
 {
 	VirtualScreen *vs;
 #ifdef DEBUG_EVENTS
@@ -1688,8 +1690,6 @@ void HandleExpose(void)
 
 static void remove_window_from_ring(TwmWindow *tmp)
 {
-	TwmWindow *prev = tmp->ring.prev, *next = tmp->ring.next;
-
 	if(enter_win == tmp) {
 		enter_flag = false;
 		enter_win = NULL;
@@ -1705,24 +1705,7 @@ static void remove_window_from_ring(TwmWindow *tmp)
 		lower_win = NULL;
 	}
 
-	/*
-	 * 1. Unlink window
-	 * 2. If window was only thing in ring, null out ring
-	 * 3. If window was ring leader, set to next (or null)
-	 */
-	if(prev) {
-		prev->ring.next = next;
-	}
-	if(next) {
-		next->ring.prev = prev;
-	}
-	if(Scr->Ring == tmp) {
-		Scr->Ring = (next != tmp ? next : NULL);
-	}
-
-	if(!Scr->Ring || Scr->RingLeader == tmp) {
-		Scr->RingLeader = Scr->Ring;
-	}
+	UnlinkWindowFromRing(tmp);
 }
 
 
@@ -2094,31 +2077,43 @@ void HandleMapNotify(void)
 	 * the client would think that the window has a chance of being viewable
 	 * when it really isn't.
 	 */
-
 	XGrabServer(dpy);
+
+	// Mapping the window, hide its icon
 	if(Tmp_win->icon && Tmp_win->icon->w) {
 		XUnmapWindow(dpy, Tmp_win->icon->w);
 	}
-	if(Tmp_win->title_w) {
-		XMapSubwindows(dpy, Tmp_win->title_w);
-	}
+
+	// Map up everything inside the frame (not the frame itself, so if it
+	// wasn't already up, nothing will show yet)
 	XMapSubwindows(dpy, Tmp_win->frame);
-	if(Scr->Focus != Tmp_win && Tmp_win->hilite_wl) {
-		XUnmapWindow(dpy, Tmp_win->hilite_wl);
+
+	// Choose which of the hi/lolite's should be left up, based on the
+	// focus
+	if(Scr->Focus != Tmp_win) {
+		if(Tmp_win->hilite_wl) {
+			XUnmapWindow(dpy, Tmp_win->hilite_wl);
+		}
+		if(Tmp_win->hilite_wr) {
+			XUnmapWindow(dpy, Tmp_win->hilite_wr);
+		}
 	}
-	if(Scr->Focus != Tmp_win && Tmp_win->hilite_wr) {
-		XUnmapWindow(dpy, Tmp_win->hilite_wr);
-	}
-	if(Scr->Focus == Tmp_win && Tmp_win->lolite_wl) {
-		XUnmapWindow(dpy, Tmp_win->lolite_wl);
-	}
-	if(Scr->Focus == Tmp_win && Tmp_win->lolite_wr) {
-		XUnmapWindow(dpy, Tmp_win->lolite_wr);
+	else {
+		if(Tmp_win->lolite_wl) {
+			XUnmapWindow(dpy, Tmp_win->lolite_wl);
+		}
+		if(Tmp_win->lolite_wr) {
+			XUnmapWindow(dpy, Tmp_win->lolite_wr);
+		}
 	}
 
+	// Now map the frame itself (which brings all the rest into view)
 	XMapWindow(dpy, Tmp_win->frame);
+
 	XUngrabServer(dpy);
 	XFlush(dpy);
+
+	// Set the flags
 	Tmp_win->mapped = true;
 	Tmp_win->isicon = false;
 	Tmp_win->icon_on = false;
@@ -2182,17 +2177,23 @@ void HandleUnmapNotify(void)
 		                  ReparentNotify, &ev);
 		SetMapStateProp(Tmp_win, WithdrawnState);
 		if(reparented) {
-			if(Tmp_win->old_bw) XSetWindowBorderWidth(dpy,
-				                Event.xunmap.window,
-				                Tmp_win->old_bw);
+			// It got reparented, get rid of our alterations.
+			if(Tmp_win->old_bw) {
+				XSetWindowBorderWidth(dpy,
+				                      Event.xunmap.window,
+				                      Tmp_win->old_bw);
+			}
 			if(Tmp_win->wmhints->flags & IconWindowHint) {
 				XUnmapWindow(dpy, Tmp_win->wmhints->icon_window);
 			}
 		}
 		else {
+			// Didn't get reparented, so we should do it ourselves
 			XReparentWindow(dpy, Event.xunmap.window, Tmp_win->attr.root,
 			                dstx, dsty);
-			RestoreWithdrawnLocation(Tmp_win);
+			// XXX Need to think more about just what the roots and
+			// coords are here...
+			RestoreWinConfig(Tmp_win);
 		}
 		XRemoveFromSaveSet(dpy, Event.xunmap.window);
 		XSelectInput(dpy, Event.xunmap.window, NoEventMask);
@@ -2229,11 +2230,13 @@ void HandleMotionNotify(void)
 		}
 
 		Tmp_win = GetTwmWindow(ResizeWindow);
+#ifdef WINBOX
 		if(Tmp_win && Tmp_win->winbox) {
 			XTranslateCoordinates(dpy, Scr->Root, Tmp_win->winbox->window,
 			                      Event.xmotion.x_root, Event.xmotion.y_root,
 			                      &(Event.xmotion.x_root), &(Event.xmotion.y_root), &JunkChild);
 		}
+#endif
 		DoResize(Event.xmotion.x_root, Event.xmotion.y_root, Tmp_win);
 	}
 	else if(Scr->BorderCursors && Tmp_win && Event.xany.window == Tmp_win->frame) {
@@ -2266,11 +2269,13 @@ void HandleButtonRelease(void)
 		MoveOutline(Scr->XineramaRoot, 0, 0, 0, 0, 0, 0);
 
 		Tmp_win = GetTwmWindow(DragWindow);
+#ifdef WINBOX
 		if(Tmp_win->winbox) {
 			XTranslateCoordinates(dpy, Scr->Root, Tmp_win->winbox->window,
 			                      Event.xbutton.x_root, Event.xbutton.y_root,
 			                      &(Event.xbutton.x_root), &(Event.xbutton.y_root), &JunkChild);
 		}
+#endif
 		if(DragWindow == Tmp_win->frame) {
 			xl = Event.xbutton.x_root - DragX - Tmp_win->frame_bw;
 			yt = Event.xbutton.y_root - DragY - Tmp_win->frame_bw;
@@ -2318,6 +2323,7 @@ void HandleButtonRelease(void)
 
 		CurrentDragX = xl;
 		CurrentDragY = yt;
+#ifdef VSCREEN
 		/*
 		 * sometimes getScreenOf() replies with the wrong window when moving
 		 * y to a negative number.  Need to figure out why... [XXX]
@@ -2351,6 +2357,7 @@ void HandleButtonRelease(void)
 				yt = desty;
 			}
 		}
+#endif
 		if(DragWindow == Tmp_win->frame) {
 			SetupWindow(Tmp_win, xl, yt,
 			            Tmp_win->frame_width, Tmp_win->frame_height, -1);
@@ -2823,17 +2830,21 @@ void HandleButtonPress(void)
 				                      &chwin);
 				Event.xbutton.window = Tmp_win->w;
 
+#ifdef WINBOX
 				if(Tmp_win->iswinbox && chwin) {
 					int x, y;
+					TwmWindow *wtmp;
 					XTranslateCoordinates(dpy, Tmp_win->w, chwin,
 					                      Event.xbutton.x, Event.xbutton.y,
 					                      &x, &y, &chwin);
-					if(chwin && (Tmp_win = GetTwmWindow(chwin))) {
+					if(chwin && (wtmp = GetTwmWindow(chwin))) {
 						Event.xany.window = chwin;
 						Event.xbutton.x   = x;
 						Event.xbutton.y   = y;
+						Tmp_win = wtmp;
 					}
 				}
+#endif
 				Context = C_WINDOW;
 			}
 			else if(Event.xbutton.subwindow
@@ -2843,6 +2854,7 @@ void HandleButtonPress(void)
 			else {
 				Context = C_FRAME;
 			}
+
 			if(Scr->ClickToFocus && Tmp_win->wmhints->input) {
 				SetFocus(Tmp_win, CurrentTime);
 			}
@@ -2870,7 +2882,6 @@ void HandleButtonPress(void)
 	 */
 	if(RootFunction != 0) {
 		if(Event.xany.window == Scr->Root) {
-			Window win;
 			int x, y;
 
 			/* if the window was the Root, we don't know for sure it
@@ -2884,7 +2895,9 @@ void HandleButtonPress(void)
 
 			if(Event.xany.window != 0 &&
 			                (Tmp_win = GetTwmWindow(Event.xany.window))) {
+#ifdef WINBOX
 				if(Tmp_win->iswinbox) {
+					Window win;
 					XTranslateCoordinates(dpy, Scr->Root, Event.xany.window,
 					                      x, y, &x, &y, &win);
 					XTranslateCoordinates(dpy, Event.xany.window, win,
@@ -2893,6 +2906,7 @@ void HandleButtonPress(void)
 						Event.xany.window = win;
 					}
 				}
+#endif
 			}
 			if(Event.xany.window == 0 ||
 			                !(Tmp_win = GetTwmWindow(Event.xany.window))) {
@@ -3107,13 +3121,18 @@ void HandleEnterNotify(void)
 		for(vs = Scr->vScreenList; vs != NULL; vs = vs->next) {
 			if(ewp->window == vs->window) {
 				Scr->Root  = vs->window;
+#ifdef CAPTIVE
 				Scr->rootx = Scr->crootx + vs->x;
 				Scr->rooty = Scr->crooty + vs->y;
+#else
+				Scr->rootx = vs->x;
+				Scr->rooty = vs->y;
+#endif
 				Scr->rootw = vs->w;
 				Scr->rooth = vs->h;
 				Scr->currentvs = vs;
 #if 0
-				fprintf(stderr, "entering new vs : 0x%x, 0x%x, %d, %d, %d, %d\n",
+				fprintf(stderr, "entering new vs : %p, 0x%lx, %d, %d, %d, %d\n",
 				        vs, Scr->Root, vs->x, vs->y, vs->w, vs->h);
 #endif
 				return;
@@ -3357,7 +3376,7 @@ void HandleEnterNotify(void)
 			/*
 			 * set ring leader
 			 */
-			if(Tmp_win->ring.next && (!enter_flag || raise_win == enter_win)) {
+			if(WindowIsOnRing(Tmp_win) && (!enter_flag || raise_win == enter_win)) {
 				Scr->RingLeader = Tmp_win;
 			}
 			XSync(dpy, 0);

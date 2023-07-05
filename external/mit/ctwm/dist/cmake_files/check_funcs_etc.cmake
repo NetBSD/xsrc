@@ -35,6 +35,10 @@ endif(NOT HAS_GETOPT_LONG)
 # least some versions of AIX, etc.  There's a version in openssh-portable
 # that I believe is pretty portable if we find a system we care about
 # lacking it and need to pull in a local version, but I don't expect to.
+#
+# n.b.; this slightly overlaps with earlier run code that sometimes needs
+# to crank on extra -D's to show this up in headers, but it differs a
+# little, so I won't bother collapsing them...
 check_function_exists(asprintf HAS_ASPRINTF)
 if(NOT HAS_ASPRINTF)
 	message(FATAL_ERROR "You don't seem to have asprintf(3).")

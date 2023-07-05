@@ -5,7 +5,7 @@
  * Adapted for use with more than one virtual screen by
  * Olaf "Rhialto" Seibert <rhialto@falu.nl>.
  *
- * $Id: otp.c,v 1.1.1.1 2021/04/11 08:36:52 nia Exp $
+ * $Id: otp.c,v 1.1.1.2 2023/07/05 07:36:07 nia Exp $
  *
  * handles all the OnTopPriority-related issues.
  *
@@ -80,6 +80,7 @@ typedef struct Box {
 
 
 static bool OtpCheckConsistencyVS(VirtualScreen *currentvs, Window vroot);
+static void OwlPrettyPrint(const OtpWinList *start);
 static void OwlSetAflagMask(OtpWinList *owl, unsigned mask, unsigned setto);
 static void OwlSetAflag(OtpWinList *owl, unsigned flag);
 static void OwlClearAflag(OtpWinList *owl, unsigned flag);
@@ -245,8 +246,19 @@ static bool OtpCheckConsistencyVS(VirtualScreen *currentvs, Window vroot)
 		assert(owl->pri_base <= OTP_MAX);
 
 		/* List should be bottom->top, so effective pri better ascend */
-		assert(PRI(owl) >= priority);
-		priority = PRI(owl);
+		{
+			const int nextpri = PRI(owl);
+			if(nextpri < priority) {
+				fprintf(stderr, "%s(): Priority went backward "
+				        "(%d:'%s' -> %d:'%s')\n",
+				        __func__,
+				        priority, owl->below->twm_win->name,
+				        nextpri, owl->twm_win->name);
+				OwlPrettyPrint(Scr->bottomOwl);
+				abort();
+			}
+			priority = nextpri;
+		}
 
 #if DEBUG_OTP
 
@@ -281,6 +293,7 @@ static bool OtpCheckConsistencyVS(VirtualScreen *currentvs, Window vroot)
 			nwins++;
 		}
 
+#ifdef WINBOX
 		if(twm_win->winbox) {
 			/*
 			 * We can't check windows in a WindowBox, since they are
@@ -289,6 +302,7 @@ static bool OtpCheckConsistencyVS(VirtualScreen *currentvs, Window vroot)
 			DPRINTF((stderr, "Can't check this window, it is in a WinBox\n"));
 			continue;
 		}
+#endif
 
 		/*
 		 * Check only windows from the current vitual screen; the others
@@ -370,6 +384,7 @@ static OtpWinList *GetOwlAtOrBelowInVS(OtpWinList *owl, VirtualScreen *vs)
 	return owl;
 }
 
+#ifdef WINBOX
 /*
  * Windows in a box don't really occur in the stacking order of the
  * root window.
@@ -394,6 +409,7 @@ static OtpWinList *GetOwlAtOrBelowInWinbox(OtpWinList **owlp, WindowBox *wb)
 	}
 	return owl;
 }
+#endif
 
 
 static void InsertOwlAbove(OtpWinList *owl, OtpWinList *other_owl)
@@ -432,12 +448,19 @@ static void InsertOwlAbove(OtpWinList *owl, OtpWinList *other_owl)
 		Scr->bottomOwl = owl;
 	}
 	else {
+#ifdef WINBOX
 		WindowBox *winbox = owl->twm_win->winbox;
+#endif
 		OtpWinList *vs_owl;
 
-		if(winbox != NULL) {
+		if(false) {
+			// dummy
+		}
+#ifdef WINBOX
+		else if(winbox != NULL) {
 			vs_owl = GetOwlAtOrBelowInWinbox(&other_owl, winbox);
 		}
+#endif
 		else {
 
 			vs_owl = GetOwlAtOrBelowInVS(other_owl, owl->twm_win->parent_vs);
@@ -876,9 +899,11 @@ void OtpSetPriority(TwmWindow *twm_win, WinType wintype, int new_pri, int where)
 	DPRINTF((stderr, "OtpSetPriority: new_pri=%d\n", new_pri));
 	assert(owl != NULL);
 
+#ifdef WINBOX
 	if(twm_win->winbox != NULL || twm_win->iswinbox) {
 		return;
 	}
+#endif
 
 	if(ABS(new_pri) > OTP_ZERO) {
 		DPRINTF((stderr, "invalid OnTopPriority value: %d\n", new_pri));
@@ -898,9 +923,11 @@ void OtpChangePriority(TwmWindow *twm_win, WinType wintype, int relpriority)
 	int priority = owl->pri_base + relpriority;
 	int where;
 
+#ifdef WINBOX
 	if(twm_win->winbox != NULL || twm_win->iswinbox) {
 		return;
 	}
+#endif
 
 	where = relpriority < 0 ? Below : Above;
 
@@ -919,9 +946,11 @@ void OtpSwitchPriority(TwmWindow *twm_win, WinType wintype)
 
 	assert(owl != NULL);
 
+#ifdef WINBOX
 	if(twm_win->winbox != NULL || twm_win->iswinbox) {
 		return;
 	}
+#endif
 
 	where = priority < OTP_ZERO ? Below : Above;
 	TryToMoveTransientsOfTo(owl, priority, where);
@@ -936,9 +965,11 @@ void OtpToggleSwitching(TwmWindow *twm_win, WinType wintype)
 	OtpWinList *owl = (wintype == IconWin) ? twm_win->icon->otp : twm_win->otp;
 	assert(owl != NULL);
 
+#ifdef WINBOX
 	if(twm_win->winbox != NULL || twm_win->iswinbox) {
 		return;
 	}
+#endif
 
 	owl->switching = !owl->switching;
 
@@ -1197,11 +1228,16 @@ void OtpAdd(TwmWindow *twm_win, WinType wintype)
 
 	assert(*owlp == NULL);
 
-	/* windows in boxes *must* inherit priority from the box */
-	if(twm_win->winbox) {
+	if(false) {
+		// dummy
+	}
+#ifdef WINBOX
+	else if(twm_win->winbox) {
+		/* windows in boxes *must* inherit priority from the box */
 		parent = twm_win->winbox->twmwin->otp;
 		parent->switching = false;
 	}
+#endif
 	/* in case it's a transient, find the parent */
 	else if(wintype == WinWin && (twm_win->istransient
 	                              || !isGroupLeader(twm_win))) {
@@ -1398,7 +1434,7 @@ ReparentWindowAndIcon(Display *display, TwmWindow *twm_win,
 }
 
 /* Iterators.  */
-TwmWindow *OtpBottomWin()
+TwmWindow *OtpBottomWin(void)
 {
 	OtpWinList *owl = Scr->bottomOwl;
 	while(owl && owl->type != WinWin) {
@@ -1407,7 +1443,7 @@ TwmWindow *OtpBottomWin()
 	return owl ? owl->twm_win : NULL;
 }
 
-TwmWindow *OtpTopWin()
+TwmWindow *OtpTopWin(void)
 {
 	OtpWinList *owl = Scr->bottomOwl, *top = NULL;
 	while(owl) {
@@ -1436,6 +1472,46 @@ TwmWindow *OtpNextWinDown(TwmWindow *twm_win)
 	}
 	return owl ? owl->twm_win : NULL;
 }
+
+
+
+/*
+ * Outputting info to understand the state of OTP stuff.
+ */
+
+/// Pretty-print a whole OWL stack.  Works upward from the arg;
+/// generally, you'd call this with Scr->bottomOwl.
+static void
+OwlPrettyPrint(const OtpWinList *start)
+{
+	fprintf(stderr, "%s():\n", __func__);
+
+	for(const OtpWinList *owl = start ; owl != NULL ; owl = owl->above) {
+		fprintf(stderr, "  pri=%2d (%+d) %s 0x%lx:'%1.50s'\n",
+		        OtpEffectivePriority(owl->twm_win),
+		        OtpEffectiveDisplayPriority(owl->twm_win),
+		        (owl->type == WinWin ? "win" : "ico"),
+		        owl->twm_win->w, owl->twm_win->name);
+		fprintf(stderr, "         basepri=%d %s%s%s\n",
+		        owl->pri_base,
+#ifdef EWMH
+		        (owl->pri_aflags & OTP_AFLAG_ABOVE ? " _ABOVE" : ""),
+		        (owl->pri_aflags & OTP_AFLAG_BELOW ? " _BELOW" : ""),
+		        (owl->pri_aflags & OTP_AFLAG_FULLSCREEN ? " _FULLSCREEN" : "")
+#else
+		        "", "", ""
+#endif
+		       );
+		if(owl->twm_win->istransient) {
+			const TwmWindow *parent = GetTwmWindow(owl->twm_win->transientfor);
+			fprintf(stderr, "         transient for 0x%lx:%1.50s\n",
+			        parent->w, parent->name);
+		}
+	}
+
+	fprintf(stderr, "  Done.\n");
+}
+
 
 
 /*
@@ -1620,7 +1696,7 @@ OtpFocusWindowBE(TwmWindow *twm_win, int oldprio)
 	//
 	// XXX It should not be this freakin' hard to find a window's
 	// transients.  We should fix that more globally.
-	
+
 	// XXX Let's just get a friggin' vector implementation already...
 	size_t tlsz = 32;  // Should hardly ever be too small
 	size_t tlused = 0;
@@ -1637,7 +1713,7 @@ OtpFocusWindowBE(TwmWindow *twm_win, int oldprio)
 		OtpWinList *next = trans->above;
 
 		if((trans->type == WinWin)
-				&& isTransientOf(trans->twm_win, twm_win)) {
+		                && isTransientOf(trans->twm_win, twm_win)) {
 			// Got one, stash it
 			tlst[tlused++] = trans;
 

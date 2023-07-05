@@ -366,6 +366,13 @@ ReGrab(void)
 static bool
 DeferExecution(int context, int func, Cursor cursor)
 {
+	Window confine_to = Scr->Root;
+#ifdef CAPTIVE
+	if(func == F_ADOPTWINDOW) {
+		confine_to = None;
+	}
+#endif
+
 	if((context == C_ROOT) || (context == C_ALTERNATE)) {
 		LastCursor = cursor;
 		XGrabPointer(dpy,
@@ -374,7 +381,7 @@ DeferExecution(int context, int func, Cursor cursor)
 		             ButtonPressMask | ButtonReleaseMask,
 		             GrabModeAsync,
 		             GrabModeAsync,
-		             (func == F_ADOPTWINDOW) ? None : Scr->Root,
+		             confine_to,
 		             cursor,
 		             CurrentTime);
 		RootFunction = func;

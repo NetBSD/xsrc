@@ -7,7 +7,7 @@
 
 /* General creation/WSM drawing */
 void InitWorkSpaceManagerContext(void);
-void ConfigureWorkSpaceManager(void);
+void ConfigureWorkSpaceManager(ScreenInfo *scr);
 void CreateWorkSpaceManager(void);
 void PaintWorkSpaceManager(VirtualScreen *vs);
 void WMgrHandleExposeEvent(VirtualScreen *vs, XEvent *event);

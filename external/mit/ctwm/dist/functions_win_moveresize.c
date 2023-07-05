@@ -16,6 +16,8 @@
 #include "icons.h"
 #include "otp.h"
 #include "parse.h"
+#include "r_area.h"
+#include "r_layout.h"
 #include "screen.h"
 #include "util.h"
 #include "vscreen.h"
@@ -24,6 +26,7 @@
 #include "win_resize.h"
 #include "win_utils.h"
 #include "workspace_manager.h"
+#include "xparsegeometry.h"
 
 
 /*
@@ -149,12 +152,14 @@ movewindow(EF_FULLPROTO)
 		Scr->OpaqueMove = false;
 	}
 
+#ifdef WINBOX
 	/* If it's in a WindowBox, adjust coordinates as necessary */
 	if(tmp_win->winbox) {
 		XTranslateCoordinates(dpy, dragroot, tmp_win->winbox->window,
 		                      eventp->xbutton.x_root, eventp->xbutton.y_root,
 		                      &(eventp->xbutton.x_root), &(eventp->xbutton.y_root), &JunkChild);
 	}
+#endif
 
 	/*
 	 * XXX pulldown=true only when we're triggering from a ButtonRelease
@@ -184,9 +189,9 @@ movewindow(EF_FULLPROTO)
 	 * different size.
 	 */
 	Scr->SizeStringOffset = SIZE_HINDENT;
-	XResizeWindow(dpy, Scr->SizeWindow,
-	              Scr->SizeStringWidth + SIZE_HINDENT * 2,
-	              Scr->SizeFont.height + SIZE_VINDENT * 2);
+	MoveResizeSizeWindow(eventp->xbutton.x_root, eventp->xbutton.y_root,
+	                     Scr->SizeStringWidth + SIZE_HINDENT * 2,
+	                     Scr->SizeFont.height + SIZE_VINDENT * 2);
 	XMapRaised(dpy, Scr->SizeWindow);
 
 	/*
@@ -194,8 +199,12 @@ movewindow(EF_FULLPROTO)
 	 * reported relative to what root.
 	 */
 	{
+#ifdef WINBOX
 		const Window grabwin = (tmp_win->winbox ? tmp_win->winbox->window
 		                        : Scr->XineramaRoot);
+#else
+		const Window grabwin = Scr->XineramaRoot;
+#endif
 
 		XGrabPointer(dpy, grabwin, True,
 		             ButtonPressMask | ButtonReleaseMask |
@@ -447,11 +456,13 @@ movewindow(EF_FULLPROTO)
 		FixRootEvent(eventp);
 
 		/* Tweak for window box, if this is in one */
+#ifdef WINBOX
 		if(tmp_win->winbox) {
 			XTranslateCoordinates(dpy, dragroot, tmp_win->winbox->window,
 			                      eventp->xmotion.x_root, eventp->xmotion.y_root,
 			                      &(eventp->xmotion.x_root), &(eventp->xmotion.y_root), &JunkChild);
 		}
+#endif
 
 		/*
 		 * If we haven't moved MoveDelta yet, we're not yet sure we're
@@ -978,6 +989,39 @@ DFHANDLER(bottomzoom)
 	fullzoom(tmp_win, func);
 }
 
+DFHANDLER(xzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xhorizoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xfullzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xfullscreenzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xleftzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xrightzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xtopzoom)
+{
+	fullzoom(tmp_win, func);
+}
+DFHANDLER(xbottomzoom)
+{
+	fullzoom(tmp_win, func);
+}
+
 
 /*
  * f.fill - resizing until collision
@@ -1188,7 +1232,7 @@ DFHANDLER(moveresize)
 	unsigned int width, height;
 	int px = 20, py = 30;
 
-	mask = XParseGeometry(action, &x, &y, &width, &height);
+	mask = RLayoutXParseGeometry(Scr->Layout, action, &x, &y, &width, &height);
 	if(!(mask &  WidthValue)) {
 		width = tmp_win->frame_width;
 	}
@@ -1281,36 +1325,42 @@ static int
 FindConstraint(TwmWindow *tmp_win, MoveFillDir direction)
 {
 	TwmWindow  *t;
-	int ret;
+	int ret, limit;
 	const int winx = tmp_win->frame_x;
 	const int winy = tmp_win->frame_y;
 	const int winw = tmp_win->frame_width  + 2 * tmp_win->frame_bw;
 	const int winh = tmp_win->frame_height + 2 * tmp_win->frame_bw;
 
+	RArea area = RAreaNew(winx, winy, winw, winh);
+
 	switch(direction) {
 		case MFD_LEFT:
-			if(winx < Scr->BorderLeft) {
+			limit = RLayoutFindMonitorLeftEdge(Scr->BorderedLayout, &area);
+			if(winx < limit) {
 				return -1;
 			}
-			ret = Scr->BorderLeft;
+			ret = limit;
 			break;
 		case MFD_RIGHT:
-			if(winx + winw > Scr->rootw - Scr->BorderRight) {
+			limit = RLayoutFindMonitorRightEdge(Scr->BorderedLayout, &area);
+			if(winx + winw > limit) {
 				return -1;
 			}
-			ret = Scr->rootw - Scr->BorderRight;
+			ret = limit + 1;
 			break;
 		case MFD_TOP:
-			if(winy < Scr->BorderTop) {
+			limit = RLayoutFindMonitorTopEdge(Scr->BorderedLayout, &area);
+			if(winy < limit) {
 				return -1;
 			}
-			ret = Scr->BorderTop;
+			ret = limit;
 			break;
 		case MFD_BOTTOM:
-			if(winy + winh > Scr->rooth - Scr->BorderBottom) {
+			limit = RLayoutFindMonitorBottomEdge(Scr->BorderedLayout, &area);
+			if(winy + winh > limit) {
 				return -1;
 			}
-			ret = Scr->rooth - Scr->BorderBottom;
+			ret = limit + 1;
 			break;
 		default:
 			return -1;

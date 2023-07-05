@@ -100,7 +100,7 @@ if(IS_BZR_CO AND HAS_BZR)
 	set(rw_ver_bzr "${TOOLS}/rewrite_version_bzr.sh")
 	add_custom_command(OUTPUT ${version_c}
 		DEPENDS ${version_c_in} ${BZR_DIRSTATE_FILE} ${rw_ver_bzr}
-		COMMAND ${rw_ver_bzr} < ${version_c_in} > ${version_c}
+		COMMAND env BZR_CMD=${BZR_CMD} ${rw_ver_bzr} < ${version_c_in} > ${version_c}
 		COMMENT "Generating version.c from current WT state."
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	)

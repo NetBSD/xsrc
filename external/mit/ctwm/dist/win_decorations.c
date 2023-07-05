@@ -17,6 +17,8 @@
 #include "screen.h"
 #include "drawing.h"
 #include "occupation.h"
+#include "r_area.h"
+#include "r_layout.h"
 #include "win_utils.h"
 #include "workspace_manager.h"
 
@@ -92,34 +94,36 @@ SetupFrame(TwmWindow *tmp_win, int x, int y, int w, int h, int bw,
 	 * Set some bounds on the window location, to be sure part of it is
 	 * visible.
 	 */
-#define MARGIN 16  /* one "average" cursor width */
+	{
+#define MARGIN (16 - 1)  /* one "average" cursor width - 1 */
+		RArea area = RAreaNew(x, y, w, h);
+		int limit;
 
-	/*
-	 * (x,y) is the top left of the window.  Make sure it's not off the
-	 * right or bottom of the screen
-	 */
-	if(x >= Scr->rootw) {
-		x = Scr->rootw - MARGIN;
-	}
-	if(y >= Scr->rooth) {
-		y = Scr->rooth - MARGIN;
-	}
+		/* Make sure the window is not vertically off the screen */
+		limit = RLayoutFindBottomEdge(Scr->Layout, &area);
+		if(y > limit) {
+			y = limit - MARGIN;
+		}
+		else {
+			limit = RLayoutFindTopEdge(Scr->Layout, &area);
+			if(y + h + bw < limit) {
+				y = limit - h + MARGIN;
+			}
+		}
 
-	/*
-	 * Make sure the bottom right isn't off the left or top of the
-	 * screen.
-	 *
-	 * XXX Should this be 2*bw?
-	 */
-	if((x + w + bw <= 0)) {
-		x = -w + MARGIN;
-	}
-	if((y + h + bw <= 0)) {
-		y = -h + MARGIN;
-	}
-
+		/* Make sure the window is not horizontally off the screen */
+		limit = RLayoutFindRightEdge(Scr->Layout, &area);
+		if(x > limit) {
+			x = limit - MARGIN;
+		}
+		else {
+			limit = RLayoutFindLeftEdge(Scr->Layout, &area);
+			if(x + w + bw < limit) {
+				x = limit - w + MARGIN;
+			}
+		}
 #undef MARGIN
-
+	}
 
 	/*
 	 * Do some magic if the window being Setup'd is an icon manager.  The
@@ -827,7 +831,15 @@ ComputeWindowTitleOffsets(TwmWindow *tmp_win, unsigned int width, bool squeeze)
 	 * Space available for the window title for calculating name_x.
 	 * (window width) - (space reserved l and r for buttons)
 	 */
-	int titlew = width - Scr->TBInfo.titlex - Scr->TBInfo.rightoff;
+	const int titlew = width - Scr->TBInfo.titlex - Scr->TBInfo.rightoff;
+
+	/*
+	 * If our title is long enough, it'll overflow the available space.
+	 * At that point, any "justification" is pretty moot, so just pretend
+	 * anything long enough is left-justified.
+	 */
+	const TitleJust eff_just = (tmp_win->name_width >= titlew)
+	                           ? TJ_LEFT : Scr->TitleJustification;
 
 	/*
 	 * First figure where the window name goes, depending on
@@ -841,7 +853,7 @@ ComputeWindowTitleOffsets(TwmWindow *tmp_win, unsigned int width, bool squeeze)
 	 * The fixing below at least theoretically fixes that, though other
 	 * parts of the drawing will still cause Bad Side Effects.
 	 */
-	switch(Scr->TitleJustification) {
+	switch(eff_just) {
 		case TJ_UNDEF:
 			/* Can't happen; fallthru to TJ_LEFT */
 			fprintf(stderr, "%s(): Unexpected Scr->TitleJustification %d, "

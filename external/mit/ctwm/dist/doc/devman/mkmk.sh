@@ -21,6 +21,7 @@ all: \${BDIR}
 
 \${BDIR}:
 	mkdir -p \${BDIR}
+	(cd \${BDIR} && ln -s ../static .)
 
 clean:
 	rm -rf \${BDIR}

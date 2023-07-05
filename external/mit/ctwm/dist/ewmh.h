@@ -58,7 +58,9 @@ typedef struct EwmhStrut {
 void EwmhInit(void);
 bool EwmhInitScreenEarly(ScreenInfo *scr);
 void EwmhInitScreenLate(ScreenInfo *scr);
+#ifdef VSCREEN
 void EwmhInitVirtualRoots(ScreenInfo *scr);
+#endif
 void EwmhTerminate(void);
 void EwmhSelectionClear(XSelectionClearEvent *sev);
 bool EwmhClientMessage(XClientMessageEvent *msg);
@@ -77,6 +79,7 @@ int EwmhGetInitPriority(TwmWindow *twm_win);
 bool EwmhHasBorder(TwmWindow *twm_win);
 bool EwmhHasTitle(TwmWindow *twm_win);
 bool EwmhOnWindowRing(TwmWindow *twm_win);
+void EwmhSet_NET_FRAME_EXTENTS(TwmWindow *twm_win);
 void EwmhSet_NET_SHOWING_DESKTOP(int state);
 void EwmhSet_NET_WM_STATE(TwmWindow *twm_win, int changes);
 

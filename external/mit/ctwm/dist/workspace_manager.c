@@ -29,6 +29,8 @@
 #include "win_utils.h"
 #include "workspace_manager.h"
 #include "workspace_utils.h"
+#include "xparsegeometry.h"
+
 
 #include "gram.tab.h"
 
@@ -75,17 +77,41 @@ InitWorkSpaceManagerContext(void)
 }
 
 
-/*
+/**
  * Prep up structures for WSM windows in each VS.  Called (for each
- * screen) in startup after InitVirtualScreens() has setup the VS stuff
- * (and after config file processing).
+ * Screen) in startup after InitVirtualScreens() has setup the VS stuff
+ * (and after config file processing).  This also retrieves info for each
+ * vs about which workspace is active, if available (from restarting
+ * ourself, etc).
+ *
+ * XXX Passed param isn't quite complete, as we call some funcs that use
+ * global Scr...
  */
 void
-ConfigureWorkSpaceManager(void)
+ConfigureWorkSpaceManager(ScreenInfo *scr)
 {
-	VirtualScreen *vs;
+	WorkSpace *ws = Scr->workSpaceMgr.workSpaceList;
+	char *vsmapbuf, *vsmap;
 
-	for(vs = Scr->vScreenList; vs != NULL; vs = vs->next) {
+	// Get the workspace name that's up on this vscreen.  This is
+	// where the startup process actually sets what workspace we're
+	// [re]starting in.
+	vsmapbuf = CtwmGetVScreenMap(dpy, Scr->Root);
+	if(vsmapbuf != NULL) {
+		// Property is a comma-separate list of the workspaces for
+		// each vscreen, in magic order.  So we start by chopping off
+		// the first and then re-chop in the loop below.
+		vsmap = strtok(vsmapbuf, ",");
+	}
+	else {
+		vsmap = NULL;
+	}
+
+
+	// Setup each vs
+	for(VirtualScreen *vs = scr->vScreenList; vs != NULL; vs = vs->next) {
+		WorkSpace *fws;
+
 		/*
 		 * Make sure this is all properly initialized to nothing.  Otherwise
 		 * bad and undefined behavior can show up in certain cases (e.g.,
@@ -94,10 +120,30 @@ ConfigureWorkSpaceManager(void)
 		 * e.g.  f.menu "TwmWindows".)
 		 */
 		WorkSpaceWindow *wsw = calloc(1, sizeof(WorkSpaceWindow));
-		wsw->state = Scr->workSpaceMgr.initialstate;
+		wsw->state = scr->workSpaceMgr.initialstate;
+
+		// If we have a current ws for this vs, assign it in, and
+		// loop onward to the ws for the next vs.  For any we don't
+		// have a default for, the default ws is the first one we haven't
+		// used yet.
+		if((fws = GetWorkspace(vsmap)) != NULL) {
+			wsw->currentwspc = fws;
+			vsmap = strtok(NULL, ",");
+		}
+		else {
+			wsw->currentwspc = ws;
+			if(ws) {
+				ws = ws->next;
+			}
+		}
+
 		vs->wsw = wsw;
 	}
+
+	free(vsmapbuf);
 }
+
+
 
 
 /*
@@ -130,45 +176,8 @@ CreateWorkSpaceManager(void)
 	 * workspace (we just reuse the same one), but we do need one for
 	 * each vscreen (since they have to be displayed simultaneously).
 	 */
-	{
-		WorkSpace *ws, *fws;
-		char *vsmapbuf, *vsmap;
-
-		vsmapbuf = CtwmGetVScreenMap(dpy, Scr->Root);
-		if(vsmapbuf != NULL) {
-			vsmap = strtok(vsmapbuf, ",");
-		}
-		else {
-			vsmap = NULL;
-		}
-
-		/*
-		 * weird things can happen if the config file is changed or the
-		 * atom returned above is messed with.  Sometimes windows may
-		 * disappear in that case depending on what's changed.
-		 * (depending on where they were on the actual screen.
-		 */
-		ws = Scr->workSpaceMgr.workSpaceList;
-		for(VirtualScreen *vs = Scr->vScreenList; vs != NULL; vs = vs->next) {
-			WorkSpaceWindow *wsw = vs->wsw;
-			if(vsmap) {
-				fws = GetWorkspace(vsmap);
-			}
-			else {
-				fws = NULL;
-			}
-			if(fws) {
-				wsw->currentwspc = fws;
-				vsmap = strtok(NULL, ",");
-			}
-			else {
-				wsw->currentwspc = ws;
-				ws = ws->next;
-			}
-			CreateWorkSpaceManagerWindow(vs);
-		}
-
-		free(vsmapbuf);
+	for(VirtualScreen *vs = Scr->vScreenList; vs != NULL; vs = vs->next) {
+		CreateWorkSpaceManagerWindow(vs);
 	}
 
 
@@ -313,7 +322,7 @@ CreateWorkSpaceManagerWindow(VirtualScreen *vs)
 			bheight = 22;
 
 			/* Adjust to WSMGeometry if specified */
-			mask = XParseGeometry(geometry, &x, &y, &width, &height);
+			mask = RLayoutXParseGeometry(Scr->Layout, geometry, &x, &y, &width, &height);
 			if(mask & WidthValue) {
 				bwidth = (width - (columns * hspace)) / columns;
 			}

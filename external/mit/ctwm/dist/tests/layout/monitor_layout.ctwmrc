@@ -1,0 +1,7 @@
+# Allow testing MonitorLayout config
+MonitorLayout
+{
+	"One:1024x768+0+0"
+	"Two:768x1024+1024+0"
+	"800x600+1792+0" # Unnamed
+}

@@ -37,7 +37,6 @@ MaskScreen(char *file)
 	XEvent event;
 	Cursor waitcursor;
 	int x, y;
-	ColorPair WelcomeCp;
 	XColor black;
 
 	NewFontCursor(&waitcursor, "watch");
@@ -61,8 +60,10 @@ MaskScreen(char *file)
 		return;
 	}
 
-	WelcomeCp.fore = Scr->Black;
-	WelcomeCp.back = Scr->White;
+	ColorPair WelcomeCp = {
+		.fore = Scr->Black,
+		.back = Scr->White,
+	};
 	Scr->WelcomeCmap  = XCreateColormap(dpy, Scr->WindowMask, Scr->d_visual,
 	                                    AllocNone);
 	if(! Scr->WelcomeCmap) {
@@ -91,10 +92,15 @@ MaskScreen(char *file)
 		return;
 	}
 
-	if(CLarg.is_captive) {
+	if(0) {
+		// Dummy
+	}
+#ifdef CAPTIVE
+	else if(CLarg.is_captive) {
 		XSetWindowColormap(dpy, Scr->WindowMask, Scr->WelcomeCmap);
 		XSetWMColormapWindows(dpy, Scr->Root, &(Scr->WindowMask), 1);
 	}
+#endif
 	else {
 		XInstallColormap(dpy, Scr->WelcomeCmap);
 	}
@@ -173,9 +179,14 @@ UnmaskScreen(void)
 	}
 	XStoreColors(dpy, cmap, colors, 256);
 
-	if(CLarg.is_captive) {
+	if(0) {
+		// Dummy
+	}
+#ifdef CAPTIVE
+	else if(CLarg.is_captive) {
 		XSetWindowColormap(dpy, Scr->Root, cmap);
 	}
+#endif
 	else {
 		XInstallColormap(dpy, cmap);
 	}
@@ -201,9 +212,14 @@ UnmaskScreen(void)
 		select(0, NULL, NULL, NULL, &timeout);
 	}
 
-	if(CLarg.is_captive) {
+	if(0) {
+		// Dummy
+	}
+#ifdef CAPTIVE
+	else if(CLarg.is_captive) {
 		XSetWindowColormap(dpy, Scr->Root, stdcmap);
 	}
+#endif
 	else {
 		XInstallColormap(dpy, stdcmap);
 	}

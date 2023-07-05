@@ -9,6 +9,7 @@
 #include "list.h"
 #include "screen.h"
 #include "win_regions.h"
+#include "xparsegeometry.h"
 
 
 static void splitWindowRegionEntry(WindowEntry *we,
@@ -43,8 +44,9 @@ AddWindowRegion(char *geom, RegGravity grav1, RegGravity grav2)
 	wr->grav2      = grav2;
 	wr->x = wr->y = wr->w = wr->h = 0;
 
-	mask = XParseGeometry(geom, &wr->x, &wr->y, (unsigned int *) &wr->w,
-	                      (unsigned int *) &wr->h);
+	mask = RLayoutXParseGeometry(Scr->Layout, geom, &wr->x, &wr->y,
+	                             (unsigned int *) &wr->w,
+	                             (unsigned int *) &wr->h);
 
 	if(mask & XNegative) {
 		wr->x += Scr->rootw - wr->w;

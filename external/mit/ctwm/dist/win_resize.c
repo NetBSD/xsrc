@@ -36,6 +36,9 @@
 #include "colormaps.h"
 #include "screen.h"
 #include "drawing.h"
+#include "r_area.h"
+#include "r_area_list.h"
+#include "r_layout.h"
 #include "win_decorations.h"
 #include "win_ops.h"
 #include "win_resize.h"
@@ -194,9 +197,11 @@ void StartResize(XEvent *evp, TwmWindow *tmp_win,
 	                 ButtonMotionMask | PointerMotionHintMask;
 
 	grabwin = Scr->Root;
+#ifdef WINBOX
 	if(tmp_win->winbox) {
 		grabwin = tmp_win->winbox->window;
 	}
+#endif
 	XGrabPointer(dpy, grabwin, True, resizeGrabMask,
 	             GrabModeAsync, GrabModeAsync, grabwin, cursor, CurrentTime);
 
@@ -216,9 +221,9 @@ void StartResize(XEvent *evp, TwmWindow *tmp_win,
 	}
 
 	Scr->SizeStringOffset = SIZE_HINDENT;
-	XResizeWindow(dpy, Scr->SizeWindow,
-	              Scr->SizeStringWidth + SIZE_HINDENT * 2,
-	              Scr->SizeFont.height + SIZE_VINDENT * 2);
+	MoveResizeSizeWindow(evp->xbutton.x_root, evp->xbutton.y_root,
+	                     Scr->SizeStringWidth + SIZE_HINDENT * 2,
+	                     Scr->SizeFont.height + SIZE_VINDENT * 2);
 	XMapRaised(dpy, Scr->SizeWindow);
 	InstallRootColormap();
 	last_width = 0;
@@ -252,9 +257,9 @@ void MenuStartResize(TwmWindow *tmp_win, int x, int y, int w, int h)
 	last_width = 0;
 	last_height = 0;
 	Scr->SizeStringOffset = SIZE_HINDENT;
-	XResizeWindow(dpy, Scr->SizeWindow,
-	              Scr->SizeStringWidth + SIZE_HINDENT * 2,
-	              Scr->SizeFont.height + SIZE_VINDENT * 2);
+	MoveResizeSizeWindow(dragx, dragy,
+	                     Scr->SizeStringWidth + SIZE_HINDENT * 2,
+	                     Scr->SizeFont.height + SIZE_VINDENT * 2);
 	XMapRaised(dpy, Scr->SizeWindow);
 	DisplaySize(tmp_win, origWidth, origHeight);
 	if(! Scr->OpaqueResize)
@@ -723,7 +728,6 @@ void ConstrainSize(TwmWindow *tmp_win,
                    unsigned int *widthp, unsigned int *heightp)
 {
 #define makemult(a,b) ((b==1) ? (a) : (((int)((a)/(b))) * (b)) )
-#define _min(a,b) (((a) < (b)) ? (a) : (b))
 
 	int minWidth, minHeight, maxWidth, maxHeight, xinc, yinc, delta;
 	int baseWidth, baseHeight;
@@ -759,8 +763,8 @@ void ConstrainSize(TwmWindow *tmp_win,
 
 
 	if(tmp_win->hints.flags & PMaxSize) {
-		maxWidth = _min(Scr->MaxWindowWidth, tmp_win->hints.max_width);
-		maxHeight = _min(Scr->MaxWindowHeight, tmp_win->hints.max_height);
+		maxWidth = min(Scr->MaxWindowWidth, tmp_win->hints.max_width);
+		maxHeight = min(Scr->MaxWindowHeight, tmp_win->hints.max_height);
 	}
 	else {
 		maxWidth = Scr->MaxWindowWidth;
@@ -893,13 +897,7 @@ void fullzoom(TwmWindow *tmp_win, int func)
 {
 	Window      junkRoot;
 	unsigned int junkbw, junkDepth;
-	int basex, basey;
-	int border_x, border_y;
-	int frame_bw_times_2;
-	int zwidth  = Scr->rootw;
-	int zheight = Scr->rooth;
 	int tmpX, tmpY, tmpW, tmpH;
-
 
 	/*
 	 * All our callers [need to] do this, so moving it here saves a few
@@ -916,12 +914,6 @@ void fullzoom(TwmWindow *tmp_win, int func)
 	             &dragx, &dragy, (unsigned int *)&dragWidth, (unsigned int *)&dragHeight,
 	             &junkbw,
 	             &junkDepth);
-
-	basex = Scr->BorderLeft;
-	basey = Scr->BorderTop;
-
-	border_x = Scr->BorderLeft + Scr->BorderRight;
-	border_y = Scr->BorderTop + Scr->BorderBottom;
 
 	/*
 	 * Guard; if it was already not zoomed, and we're asking to unzoom
@@ -941,17 +933,6 @@ void fullzoom(TwmWindow *tmp_win, int func)
 		return;
 	}
 
-	if(tmp_win->winbox) {
-		XWindowAttributes winattrs;
-		if(XGetWindowAttributes(dpy, tmp_win->winbox->window, &winattrs)) {
-			zwidth   = winattrs.width;
-			zheight  = winattrs.height;
-		}
-		basex    = 0;
-		basey    = 0;
-		border_x = 0;
-		border_y = 0;
-	}
 	if(tmp_win->zoomed == func) {
 		/* It was already zoomed this way, unzoom it */
 		dragHeight = tmp_win->save_frame_height;
@@ -964,6 +945,28 @@ void fullzoom(TwmWindow *tmp_win, int func)
 		/* XXX _should_ it be falling through here? */
 	}
 	else {
+		RLayout *borderedLayout = NULL;
+		RArea area, finalArea = RAreaInvalid();
+		int frame_bw_times_2;
+
+#ifdef WINBOX
+		if(tmp_win->winbox) {
+			XWindowAttributes winattrs;
+			if(XGetWindowAttributes(dpy, tmp_win->winbox->window, &winattrs)) {
+				borderedLayout = RLayoutNew(
+				                         RAreaListNew(1,
+				                                      RAreaNew(winattrs.x,
+				                                                      winattrs.y,
+				                                                      winattrs.width,
+				                                                      winattrs.height),
+				                                      NULL));
+			}
+		}
+#endif
+		if(borderedLayout == NULL) {
+			borderedLayout = Scr->BorderedLayout;
+		}
+
 		if(tmp_win->zoomed == ZOOM_NONE) {
 			tmp_win->save_frame_x = dragx;
 			tmp_win->save_frame_y = dragy;
@@ -974,56 +977,100 @@ void fullzoom(TwmWindow *tmp_win, int func)
 
 		frame_bw_times_2 = 2 * tmp_win->frame_bw;
 
+		area = RAreaNew(dragx, dragy, dragWidth, dragHeight);
+
 		switch(func) {
 			case ZOOM_NONE:
 				break;
+			case F_XZOOM:
+				finalArea = RLayoutFullVert(borderedLayout, &area);
+			/* fall through */
 			case F_ZOOM:
-				dragHeight = zheight - border_y - frame_bw_times_2;
-				dragy = basey;
+				if(!RAreaIsValid(&finalArea)) {
+					finalArea = RLayoutFullVert1(borderedLayout, &area);
+				}
+				dragy = finalArea.y;
+				dragHeight = finalArea.height - frame_bw_times_2;
 				break;
+			case F_XHORIZOOM:
+				finalArea = RLayoutFullHoriz(borderedLayout, &area);
+			/* fall through */
 			case F_HORIZOOM:
-				dragx = basex;
-				dragWidth = zwidth - border_x - frame_bw_times_2;
+				if(!RAreaIsValid(&finalArea)) {
+					finalArea = RLayoutFullHoriz1(borderedLayout, &area);
+				}
+				dragx = finalArea.x;
+				dragWidth = finalArea.width - frame_bw_times_2;
 				break;
+			case F_XFULLZOOM:
+				finalArea = RLayoutFull(borderedLayout, &area);
+			/* fall through */
 			case F_FULLZOOM:
-				dragx = basex;
-				dragy = basey;
-				dragHeight = zheight - border_y - frame_bw_times_2;
-				dragWidth = zwidth - border_x - frame_bw_times_2;
+				if(!RAreaIsValid(&finalArea)) {
+					finalArea = RLayoutFull1(borderedLayout, &area);
+				}
+				dragx = finalArea.x;
+				dragy = finalArea.y;
+				dragWidth = finalArea.width - frame_bw_times_2;
+				dragHeight = finalArea.height - frame_bw_times_2;
+				break;
+			case F_XLEFTZOOM:
+				dragx = RLayoutFindLeftEdge(borderedLayout, &area);
+				dragWidth += area.x - dragx;
+				// TODO make it visible if hidden
 				break;
 			case F_LEFTZOOM:
-				dragx = basex;
-				dragy = basey;
-				dragHeight = zheight - border_y - frame_bw_times_2;
-				dragWidth = (zwidth - border_x) / 2 - frame_bw_times_2;
+				dragx = RLayoutFindMonitorLeftEdge(borderedLayout, &area);
+				dragWidth += area.x - dragx;
+				// TODO make it visible if hidden
 				break;
-			case F_RIGHTZOOM:
-				dragx = basex + (zwidth - border_x) / 2;
-				dragy = basey;
-				dragHeight = zheight - border_y - frame_bw_times_2;
-				dragWidth = (zwidth - border_x) / 2 - frame_bw_times_2;
+			case F_XRIGHTZOOM: {
+				int limit = RLayoutFindRightEdge(borderedLayout, &area);
+				dragWidth = limit - area.x + 1 - frame_bw_times_2;
+				// TODO make it visible if hidden
+			}
+			break;
+			case F_RIGHTZOOM: {
+				int limit = RLayoutFindMonitorRightEdge(borderedLayout, &area);
+				dragWidth = limit - area.x + 1 - frame_bw_times_2;
+				// TODO make it visible if hidden
+			}
+			break;
+			case F_XTOPZOOM:
+				dragy = RLayoutFindTopEdge(borderedLayout, &area);
+				dragHeight += area.y - dragy;
+				// TODO make it visible if hidden
 				break;
 			case F_TOPZOOM:
-				dragx = basex;
-				dragy = basey;
-				dragHeight = (zheight - border_y) / 2 - frame_bw_times_2;
-				dragWidth = zwidth - border_x - frame_bw_times_2;
+				dragy = RLayoutFindMonitorTopEdge(borderedLayout, &area);
+				dragHeight += area.y - dragy;
+				// TODO make it visible if hidden
 				break;
-			case F_BOTTOMZOOM:
-				dragx = basex;
-				dragy = basey + (zheight - border_y) / 2;
-				dragHeight = (zheight - border_y) / 2 - frame_bw_times_2;
-				dragWidth = zwidth - border_x - frame_bw_times_2;
-				break;
-			case F_FULLSCREENZOOM: {
+			case F_XBOTTOMZOOM: {
+				int limit = RLayoutFindBottomEdge(borderedLayout, &area);
+				dragHeight = limit - area.y + 1 - frame_bw_times_2;
+				// TODO make it visible if hidden
+			}
+			break;
+			case F_BOTTOMZOOM: {
+				int limit = RLayoutFindMonitorBottomEdge(borderedLayout, &area);
+				dragHeight = limit - area.y + 1 - frame_bw_times_2;
+				// TODO make it visible if hidden
+			}
+			break;
+			case F_FULLSCREENZOOM:
+			case F_XFULLSCREENZOOM: {
 				int bw3D = tmp_win->frame_bw3D;
 				int bw3D_times_2 = 2 * bw3D;
 				int bw = tmp_win->frame_bw + bw3D;
 
-				dragx = -bw;
-				dragy = -tmp_win->title_height - bw;
-				dragHeight = zheight + tmp_win->title_height + bw3D_times_2;
-				dragWidth = zwidth + bw3D_times_2;
+				finalArea = func == F_XFULLSCREENZOOM
+				            ? RLayoutFull(borderedLayout, &area)
+				            : RLayoutFull1(borderedLayout, &area);
+				dragx = finalArea.x - bw;
+				dragy = finalArea.y - tmp_win->title_height - bw;
+				dragWidth = finalArea.width + bw3D_times_2;
+				dragHeight = finalArea.height + tmp_win->title_height + bw3D_times_2;
 
 				/* and should ignore aspect ratio and size increments... */
 #ifdef EWMH
@@ -1033,6 +1080,11 @@ void fullzoom(TwmWindow *tmp_win, int func)
 				/* the OtpRaise below is effectively already done here... */
 #endif
 			}
+		}
+
+		/* Temporary built layout? */
+		if(borderedLayout != Scr->BorderedLayout) {
+			RLayoutFree(borderedLayout);
 		}
 	}
 

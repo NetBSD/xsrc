@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" baseProfile="full" width="606" height="406"
+  xmlns="http://www.w3.org/2000/svg">
+ <style type="text/css">
+  rect {
+   fill: #DDDDDD;
+   stroke: #000000;
+   stroke-width: 4;
+  }
+  rect.xwin {
+   fill: #000000;
+  }
+  polyline {
+   fill: none;
+   stroke: #000000;
+  }
+ </style>
+
+ <!-- Monitors -->
+ <rect width="400" height="200" x="3" y="3" class="monitors" />
+ <text x="15" y="25" class="monlabel">Mon1</text>
+ <rect width="200" height="400" x="403" y="3" class="monitors" />
+ <text x="585" y="25" text-anchor="end" class="monlabel">Mon2</text>
+
+ <!-- Fill out the rest of the root -->
+ <polyline points="2,202 2,404 402,404" class="monitors"
+   style="stroke-width: 2; stroke-dasharray: 2,3;" />
+ <text x="15" y="385" class="monlabel">(dead space)</text>
+
+ <!-- Horizontal stripes -->
+ <rect width="600" height="200" x="3" y="3" class="hstripe" />
+ <text x="15" y="25" class="hslabel">Hstripe1</text>
+ <rect width="200" height="200" x="403" y="203" class="hstripe" />
+ <text x="585" y="385" text-anchor="end" class="hslabel">Hstripe2</text>
+
+ <!-- Vertical stripes -->
+ <rect width="400" height="200" x="3" y="3" class="vstripe" />
+ <text x="15" y="25" class="vslabel">Vstripe1</text>
+ <rect width="200" height="400" x="403" y="3" class="vstripe" />
+ <text x="585" y="385" text-anchor="end" class="vslabel">Vstripe2</text>
+
+ <!-- A window to position -->
+ <rect width="150" height="150" x="25" y="25" class="xwin" id="xwin" />
+
+
+
+ <!-- JSery to grub out query params -->
+ <script type="text/javascript"><![CDATA[
+	// Parameters we expect and their defaults
+	var params = {
+		// Visibility
+		v_monitors: 0,
+		v_monlabel: 0,
+		v_hstripe: 0,
+		v_hslabel: 0,
+		v_vstripe: 0,
+		v_vslabel: 0,
+		v_xwin: 0,
+
+		// Opacity
+		o_monitors: 1.0,
+		o_hstripe:  1.0,
+		o_vstripe:  1.0,
+		o_xwin:     0.5,
+
+		// Flying around xtra window
+		g_xwin_w: 150,
+		g_xwin_h: 150,
+		g_xwin_x: 25,
+		g_xwin_y: 25,
+	};
+
+	// Stash keys
+	var pkeys = Object.keys(params);
+
+	// Params we were actually given (rather than defaulting)
+	var qpset = {};
+
+	// Parse params
+	(function() {
+		var qstr = window.location.hash.substring(1);
+		var xtr_re = /([^&=]+)=?([^&]*)/g;
+		var unencode = function (s) {
+			return decodeURIComponent(s.replace(/\+/g, " "));
+		};
+		var qv;
+
+		while(qv = xtr_re.exec(qstr)) {
+			if(typeof params[qv[1]] === 'undefined') {
+				console.log("Unexpected param: " + qv[1]);
+				continue;
+			}
+
+			params[unencode(qv[1])] = unencode(qv[2]);
+			qpset[unencode(qv[1])] = 1;
+		}
+	})();
+
+	// Do some defaulting
+	if(!qpset.v_monlabel)
+		params.v_monlabel = params.v_monitors;
+	if(!qpset.v_vslabel)
+		params.v_vslabel = params.v_vstripe;
+	if(!qpset.v_hslabel)
+		params.v_hslabel = params.v_hstripe;
+
+	function do_vis(fld) {
+		var vis;
+
+		// All vis params are v_
+		if(fld.indexOf('v_') !== 0) {
+			return;
+		}
+
+		if(typeof params[fld] === 'undefined')
+			return;
+		if(params[fld] != 0)
+			vis = 'visible';
+		else
+			vis = 'hidden';
+
+		var elclass = fld.substring(2);
+		var els = document.getElementsByClassName(elclass);
+		for(var i = 0 ; i < els.length ; i++) {
+			els[i].style.visibility = vis;
+		}
+
+		return;
+	}
+
+	function do_opacity(fld) {
+		// All opaq params are o_
+		if(fld.indexOf('o_') !== 0) {
+			return;
+		}
+
+		if(typeof params[fld] === 'undefined')
+			return;
+
+		var elclass = fld.substring(2);
+		var els = document.getElementsByClassName(elclass);
+		for(var i = 0 ; i < els.length ; i++) {
+			els[i].style.opacity = params[fld];
+		}
+
+		return;
+	}
+
+	function handle_geom(wname) {
+		var tw = document.getElementById(wname);
+		if(typeof tw === 'undefined' || tw == null) {
+			console.log("Can't find handle_geom(" + wname + ")");
+			return;
+		}
+
+		tw.setAttribute('width',  params["g_" + wname + "_w"]);
+		tw.setAttribute('height', params["g_" + wname + "_h"]);
+		tw.setAttribute('x',      params["g_" + wname + "_x"]);
+		tw.setAttribute('y',      params["g_" + wname + "_y"]);
+
+		return;
+	}
+
+	// Init
+	for(var i = 0 ; i < pkeys.length ; i++) {
+		var pk = pkeys[i];
+
+		if(pk.indexOf('v_') == 0) {
+			do_vis(pkeys[i]);
+		}
+		else if(pk.indexOf('o_') == 0) {
+			do_opacity(pkeys[i]);
+		}
+		else if(pk.indexOf('g_') == 0) {
+			// Geometry handling: do this separately
+		}
+	}
+
+	handle_geom('xwin');
+ ]]></script>
+</svg>
