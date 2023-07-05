@@ -126,6 +126,11 @@ isn&#8217;t present.
 <dd>Build with sound support via librplay. <code>USE_SOUND</code> is a still
 valid but deprecated alias for this, and will give a warning.
 (<strong>OFF</strong> by default)</dd>
+
+<dt>USE_XRANDR</dt>
+<dd>Enables the use of multi-monitors of different sizes via
+libXrandr. Disable if libXrandr isn&#8217;t present or is older than 1.5.
+(<strong>ON</strong> by default)</dd>
 </dl>
 
 <p>Additional vars you might need to set:</p>
@@ -162,10 +167,10 @@ funny prompt&gt; make
 <p>ctwm requires various X11 libraries to be present. That list will
 generally include libX11, libXext, libXmu, libXt, libSM, and libICE.
 Depending on your configuration, you may require extra libs as discussed
-above (libXpm and libjpeg are included in the default config). If you&#8217;re
-on a system that separates header files etc. from the shared lib itself
-(many Linux dists do), you&#8217;ll probably need -devel or similarly named
-packages installed for each of them as well.</p>
+above (libXpm, libjpeg, and libXrandr are included in the default
+config). If you&#8217;re on a system that separates header files etc. from the
+shared lib itself (many Linux dists do), you&#8217;ll probably need -devel or
+similarly named packages installed for each of them as well.</p>
 
 <h2 id="installation">Installation</h2>
 
@@ -192,7 +197,7 @@ sending a mail with the subject &#8220;subscribe ctwm&#8221; to
 
 <h3 id="repository">Repository</h3>
 
-<p>ctwm development uses bazaar (see <a href="http://bazaar.canonical.com/">http://bazaar.canonical.com/</a>) for
+<p>ctwm development uses breezy (see <a href="https://www.breezy-vcs.org/">https://www.breezy-vcs.org/</a>) for
 version control. The code is available on launchpad as <code>lp:ctwm</code>. See
 <a href="https://launchpad.net/ctwm">https://launchpad.net/ctwm</a> for more details.</p>
 

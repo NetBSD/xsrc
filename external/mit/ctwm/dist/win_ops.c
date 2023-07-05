@@ -229,7 +229,7 @@ Squeeze(TwmWindow *tmp_win)
 	             ? tmp_win->hints.win_gravity : NorthWestGravity);
 	long eventMask;
 	if(tmp_win->squeezed) {
-		tmp_win->squeezed = False;
+		tmp_win->squeezed = false;
 #ifdef EWMH
 		EwmhSet_NET_WM_STATE(tmp_win, EWMH_STATE_SHADED);
 #endif /* EWMH */
@@ -271,8 +271,8 @@ Squeeze(TwmWindow *tmp_win)
 		fy += tmp_win->frame_height - newh;
 	}
 	if(tmp_win->squeeze_info) {
-		fx  += tmp_win->title_x - tmp_win->frame_bw3D;
-		neww = tmp_win->title_width + 2 * (tmp_win->frame_bw + tmp_win->frame_bw3D);
+		fx  += tmp_win->title_x + tmp_win->frame_bw - tmp_win->frame_bw3D;
+		neww = tmp_win->title_width + 2 * tmp_win->frame_bw3D;
 	}
 
 	eventMask = mask_out_event(tmp_win->w, StructureNotifyMask);

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ctwm
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-07-21
+.\" Generator: Asciidoctor 2.0.18
+.\"      Date: 2023-03-26
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "CTWM" "1" "2019-07-21" "\ \&" "\ \&"
+.TH "CTWM" "1" "2023-03-26" "\ \&" "\ \&"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,19 +28,20 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-ctwm \- Claude\(aqs Tab Window Manager for the X Window System
+ctwm \- Claude\*(Aqs Tab Window Manager for the X Window System
 .SH "SYNTAX"
 .sp
 .if n .RS 4
 .nf
+.fam C
 ctwm [(\-\-display | \-d) dpy]  [\-\-replace]  [\-\-single]
      [(\-\-file | \-f) initfile]  [\-\-cfgchk]  [\-\-dumpcfg]
      [\-\-nom4 | \-n]  [(\-\-keep\-defs | \-k)]  [(\-\-keep | \-K) m4file]
      [\-\-verbose | \-v]  [\-\-quiet | \-q]  [\-\-mono]  [\-\-xrm resource]
      [\-\-version]  [\-\-info]  [\-\-nowelcome | \-W]
-     [(\-\-window | \-w) [win\-id]]  [\-\-name name]
      [\-\-clientId clid]  [\-\-restore resfname]
      [\-\-help | \-h]
+.fam
 .fi
 .if n .RE
 .SH "DESCRIPTION"
@@ -63,7 +64,8 @@ This program is usually started by the user\(cqs session manager or
 startup script.  When used from \f(CRxdm(1)\fP or \f(CRxinit(1)\fP without
 a session manager, ctwm is frequently executed in the foreground
 as the last client.  When run this way, exiting ctwm causes the
-session to be terminated (i.e. logged out).
+X session to be terminated, shutting down the X server and killing off
+any other running clients.
 .sp
 By default, application windows are surrounded by a \(lqframe\(rq with a
 titlebar at the top and a special border around the window.  The titlebar
@@ -202,25 +204,6 @@ ctwm just prints its version number.
 ctwm prints its detailed version and compile time options.
 .RE
 .sp
-\-\-window[=\f(CRwin\-id\fP], \-w[\f(CRwin\-id\fP]
-.RS 4
-If \f(CR\-w\fP is specified without a win\-id value, ctwm does not take over
-the whole screen(s); instead it creates a new window that becomes its
-root window.  If the win\-id value is given, it is considered to be the
-id of an existing window, in which case, ctwm will try to use this
-window as root window.  You can run any number of instantiations of
-ctwm at the same time.  You can even have embedded ctwm instantiations.
-This is totally useless, but I like it.  The f.adoptwindow function can
-be used to capture an existing window belonging to another ctwm.  A
-possible use of such mode can be to test new configuration file without
-restarting ctwm.
-.RE
-.sp
-\-\-name=\f(CRname\fP, \-n \f(CRname\fP
-.RS 4
-Set the captivename when using \f(CR\-\-window\fP.
-.RE
-.sp
 \-\-nowelcome, \-W
 .RS 4
 This option tells ctwm not to display any welcome when starting.
@@ -240,14 +223,6 @@ ctwm uses \f(CRgetopt_long()\fP for parsing the command\-line options.  This
 means that args can be passed via \f(CR\-\-long=arg\fP and \f(CR\-\-long arg\fP, as well
 as \f(CR\-l arg\fP and \f(CR\-larg\fP, and short args can be bundled like \f(CR\-vnk\fP as
 well as \f(CR\-v \-n \-k\fP.
-.RS 4
-.sp
-Note, however, that the handling of optional args is slightly different;
-they \fBmust\fP be specified with = or no space.  e.g., \f(CR\-\-window=123\fP will
-set the win\-id to 123, but \f(CR\-\-window 123\fP will not; the 123 will be
-treated as a separate argument.  Similarly, it must be set as \f(CR\-w123\fP,
-not \f(CR\-w 123\fP.
-.RE
 .SH "CUSTOMIZATION"
 .sp
 Much of ctwm\(cqs appearance and behavior can be controlled by providing
@@ -322,8 +297,10 @@ you want.  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 define(IRegion, translit(eval(WIDTH/3)*eval(HEIGHT/2)+eval(WIDTH\-WIDTH/3)\-0, *, x))
 IconRegion  "IRegion" SOUTH EAST 75 25
+.fam
 .fi
 .if n .RE
 .sp
@@ -502,25 +479,24 @@ Is defined if ctwm was compiled with I18N support.  This is no longer
 optional since 3.8 and is always compiled in.  The definition will be
 removed in a future version.
 .RE
-.SS "ctwm run\-time options"
-.sp
-TWM_CAPTIVE
-.RS 4
-This will be either \(lqYes\(rq or \(lqNo\(rq. \(lqYes\(rq if the current ctwm is captive
-(flag \-w), \(lqNo\(rq in the other case.
-.RE
-.sp
-TWM_CAPTIVE_NAME
-.RS 4
-Defined only if TWM_CAPTIVE is also defined. Contains the name of the captive
-ctwm (flag \-\-name).
-.RE
 .SS "Obsolete options"
 .sp
 GNOME
 .RS 4
 Defined when ctwm was compiled with GNOME1 support.  Removed after
 3.8.2.
+.RE
+.sp
+TWM_CAPTIVE
+.RS 4
+This was either \(lqYes\(rq or \(lqNo\(rq. \(lqYes\(rq if the current ctwm is captive
+(flag \-w), \(lqNo\(rq in the other case.  Removed in 4.1.0.
+.RE
+.sp
+TWM_CAPTIVE_NAME
+.RS 4
+Defined only if TWM_CAPTIVE is also defined. Contains the name of the captive
+ctwm (flag \-\-name).  Removed in 4.1.0.
 .RE
 .SH "VARIABLES"
 .sp
@@ -534,7 +510,9 @@ whitespace or a newline.  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 AutoRaise { "emacs" "XTerm" "Xmh" }
+.fam
 .fi
 .if n .RE
 .sp
@@ -542,12 +520,14 @@ or
 .sp
 .if n .RS 4
 .nf
+.fam C
 AutoRaise
 {
     "emacs"
     "XTerm"
     "Xmh"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -722,11 +702,13 @@ different types of windows.  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 BorderColor "gray50"
 {
     "XTerm" "red"
     "xmh"   "green"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -819,7 +801,9 @@ The value is a comprised between 0 and 100. The formula used is :
 .sp
 .if n .RS 4
 .nf
+.fam C
     clear.{RGB} = (65535 \- color.{RGB}) * (contrast / 100).
+.fam
 .fi
 .if n .RE
 .sp
@@ -870,6 +854,7 @@ For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Color
 {
     MenuBackground      "gray50"
@@ -878,6 +863,7 @@ Color
     TitleForeground     "yellow"
     TitleBackground     "blue"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -910,7 +896,9 @@ Shapes from the \f(CRcursor\fP font may be specified directly as:
 .sp
 .if n .RS 4
 .nf
+.fam C
     cursorname "string"
+.fam
 .fi
 .if n .RE
 .sp
@@ -922,7 +910,9 @@ from bitmap files, the following syntax is used instead:
 .sp
 .if n .RS 4
 .nf
+.fam C
     cursorname "image" "mask"
+.fam
 .fi
 .if n .RE
 .sp
@@ -933,6 +923,7 @@ The following example shows the default cursor definitions:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Cursors
 {
     Frame       "top_left_arrow"
@@ -947,6 +938,7 @@ Cursors
     Select      "dot"
     Destroy     "pirate"
 }
+.fam
 .fi
 .if n .RE
 .RE
@@ -958,7 +950,9 @@ The value is a comprised between 0 and 100. The formula used is :
 .sp
 .if n .RS 4
 .nf
+.fam C
     dark.{RGB}  = color.{RGB} * ((100 \- contrast) / 100),
+.fam
 .fi
 .if n .RE
 .sp
@@ -1059,6 +1053,7 @@ example shows all the valid options:
 .sp
 .if n .RS 4
 .nf
+.fam C
 EWMHIgnore
 {
     # Window states
@@ -1069,6 +1064,7 @@ EWMHIgnore
     "STATE_ABOVE"
     "STATE_BELOW"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1227,7 +1223,10 @@ This variable specifies the geometry of the icon manager window.  The
 the initial full size of the icon manager.  The icon manager window is
 then broken into \f(CRcolumns\fP pieces and scaled according to the number
 of entries in the icon manager.  Extra entries are wrapped to form
-additional rows.  The default number of columns is 1.
+additional rows.  The default number of columns is 1. When XrandR is
+compiled, the geometry can be relative to a monitor, by prefixing
+its name (visible with \f(CRxrandr(1)\fP command line) followed by \f(CR:\fP. This name
+is ignored when XrandR is not available.
 .RE
 .sp
 IconManagerHighlight \f(CRstring\fP [{ \f(CRwin\-list\fP }]
@@ -1249,23 +1248,30 @@ This variable specifies a list of icon managers to create.  Each item in the
 .sp
 .if n .RS 4
 .nf
+.fam C
     "winname" ["iconname"] "geometry" columns
+.fam
 .fi
 .if n .RE
 .sp
-where \f(CRwinname\fP is the name of the windows that should be put into this
-icon manager, \f(CRiconname\fP is the name of that icon manager window\(cqs icon,
-\f(CRgeometry\fP is a standard geometry specification, and \f(CRcolumns\fP is
-the number of columns in this icon manager as described in
-\f(CRIconManagerGeometry\fP.  For example:
+where \f(CRwinname\fP is the name of the windows that should be put into
+this icon manager, \f(CRiconname\fP is the name of that icon manager
+window\(cqs icon, \f(CRgeometry\fP is a standard geometry specification, and
+\f(CRcolumns\fP is the number of columns in this icon manager as described
+in \f(CRIconManagerGeometry\fP. When XrandR is compiled, the geometry can
+be relative to a monitor, by prefixing its name (visible with
+\f(CRxrandr(1)\fP command line) followed by \f(CR:\fP. This name is ignored when
+XrandR is not available.  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 IconManagers
 {
-    "XTerm"  "=300x5+800+5"  5
-    "myhost" "=400x5+100+5"  2
+    "XTerm"  "=300x5+800+5"       5
+    "myhost" "HDMI2:400x5+100+5"  2
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1296,7 +1302,10 @@ IconRegion \f(CRgeomstring\fP \f(CRvgrav hgrav gridwidth gridheight\fP [\f(CRico
 .RS 4
 This variable specifies an area on the root window in which icons are placed
 if no specific icon location is provided by the client.  The \f(CRgeomstring\fP
-is a quoted string containing a standard geometry specification. If more than
+is a quoted string containing a standard geometry specification. When XrandR
+is compiled, the geometry can be relative to a monitor, by prefixing
+its name (visible with \f(CRxrandr(1)\fP command line) followed by \f(CR:\fP.
+This name is ignored when XrandR is not available. If more than
 one \f(CRIconRegion\fP lines are given, icons will be put into the succeeding
 icon regions when the first is full. The \f(CRvgrav\fP argument should be either
 \f(CRNorth\fP or \f(CRSouth\fP  and is used to control whether icons are
@@ -1335,11 +1344,13 @@ should be used as their icons.  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Icons
 {
     "XTerm"  "xterm.icon"
     "xfd"    "xfd_icon"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1387,7 +1398,9 @@ num locks. You don\(cqt need IgnoreLockModifier any more with this option.
 .sp
 .if n .RS 4
 .nf
+.fam C
 IgnoreModifier { lock m2 }
+.fam
 .fi
 .if n .RE
 .RE
@@ -1398,7 +1411,9 @@ List of windows for which to ignore transients.
 .sp
 .if n .RS 4
 .nf
+.fam C
 IgnoreTransient { "Wine" }
+.fam
 .fi
 .if n .RE
 .RE
@@ -1410,6 +1425,7 @@ entry specified colors.  In the example below:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Menu "mymenu"
 {
     "Title"     ("black":"red")     f.title
@@ -1419,6 +1435,7 @@ Menu "mymenu"
     "entry4"                        f.nop
     "entry5"    ("red":"white")     f.nop
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1527,6 +1544,53 @@ can only be specified inside of a
 \f(CRColor\fP or \f(CRMonochrome\fP list.  The default is \(lqblack\(rq.
 .RE
 .sp
+MonitorLayout { \f(CRmonitor\-list\fP }
+.RS 4
+This allows manually configuring what ctwm will consider as the list of
+monitors.  If \f(CRXRANDR\fP support is compiled in (the default as of
+4.1.0), and the \f(CRRANDR\fP extension is available on your server, then
+\f(CRctwm\fP will use that to determine the size and layout of your monitors.
+.sp
+However, if either is not the case, or you want to override the results
+it returns, you can specify the names and layouts of your desired
+\(lqmonitors\(rq with this.  For instance, if you have a very wide monitor,
+and would prefer to treat it as several narrower side\-by\-side monitors,
+you could use this to tell ctwm to treat it that way.
+.sp
+.if n .RS 4
+.nf
+.fam C
+MonitorLayout
+{
+    # Imagine a 5000x1000 monitor, that we want to split into two 2k wide
+    # sections at the far left and right, with a 1k wide section in the
+    # middle.
+    "Left:2000x1000+0+0"
+    "1000x1000+2000+0"       # Middle section unnamed
+    "Right:2000x1000+3000+0"
+}
+.fam
+.fi
+.if n .RE
+.sp
+With \f(CRm4\fP support, you could even make it automatically split your full
+display into 2 \(lqmonitors\(rq:
+.sp
+.if n .RS 4
+.nf
+.fam C
+define(LeftWidth, eval(WIDTH / 2))dnl
+define(RightWidth, eval(WIDTH \- LeftWidth))dnl
+MonitorLayout
+{
+    "`AutoL:\*(AqLeftWidth`x\*(AqHEIGHT`+0+0\*(Aq"
+    "`AutoR:\*(AqRightWidth`x\*(AqHEIGHT`+\*(AqLeftWidth`+0\*(Aq"
+}
+.fam
+.fi
+.if n .RE
+.RE
+.sp
 Monochrome { \f(CRcolors\fP }
 .RS 4
 This variable specifies a list of color assignments that should be made if
@@ -1563,6 +1627,7 @@ example shows all the valid options:
 .sp
 .if n .RS 4
 .nf
+.fam C
 MWMIgnore
 {
     # en/disable window borders
@@ -1571,6 +1636,7 @@ MWMIgnore
     # en/disable titlebars
     "DECOR_TITLE"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1781,8 +1847,10 @@ This variable specifies which windows occupy which workspaces at startup.
 .sp
 .if n .RS 4
 .nf
+.fam C
         [Window]   win\-name  { wspc1 wspc2 ... }
 or      Workspace  wspc\-name { win1  win2 ...  }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1790,6 +1858,7 @@ Example :
 .sp
 .if n .RS 4
 .nf
+.fam C
 Occupy
 {
                "xload"   {"all"}
@@ -1797,6 +1866,7 @@ Occupy
                "xv"      {"images"}
     WorkSpace  "images"  {"xloadimage"}
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1822,12 +1892,14 @@ Example :
 .sp
 .if n .RS 4
 .nf
+.fam C
 OccupyAll
 {
     "xload"
     "xbiff"
     "xconsole"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1848,6 +1920,7 @@ Example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 OnTopPriority Icons \-1  # place icons a little in the background
 OnTopPriority Icons 1   # place mail icons on top of normal windows
 {
@@ -1860,6 +1933,7 @@ OnTopPriority 8         # keep these always on top of other windows
     "Emacs Icon Manager" "WorkSpaceManager"
     "TWM Icon Manager" "XDaliClock"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1924,11 +1998,13 @@ may be specified:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Pixmaps
 {
         TitleHighlight  "gray1"
 #       TitleHighlight  "supman%.xbm"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -1947,12 +2023,14 @@ Example :
 .sp
 .if n .RS 4
 .nf
+.fam C
 PixmapDirectory  "/usr/lib/X11/twm"
 Icons
 {
     "Axe"    "xpm:edit.xpm"
     "xterm"  "xpm:ball%.xpm"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2076,7 +2154,9 @@ contains entries of the form
 .sp
 .if n .RS 4
 .nf
+.fam C
     "EventName"   "/file/to/play.wav"
+.fam
 .fi
 .if n .RE
 .sp
@@ -2099,6 +2179,7 @@ For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 SaveColor
 {
     BorderColor
@@ -2108,6 +2189,7 @@ SaveColor
     "green"
     "blue"
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2177,7 +2259,9 @@ top of the window.  It contains entries of the form:
 .sp
 .if n .RS 4
 .nf
+.fam C
     "name"  justification num denom
+.fam
 .fi
 .if n .RE
 .sp
@@ -2197,6 +2281,7 @@ For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 SqueezeTitle
 {
     "XTerm"   left    0  0
@@ -2205,6 +2290,7 @@ SqueezeTitle
     "oclock"  center  1  2
     "emacs"   right   2  2
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2437,29 +2523,6 @@ UseThreeDWMap
 Tells ctwm to use 3D for the small windows in the workspace map.
 .RE
 .sp
-VirtualScreens { \f(CRgeometries\-list\fP }
-.RS 4
-.sp
-This variable specifies a list of geometries for virtual screens. Virtual screens
-are designed to be used when you have several physical screens bound together
-with the Xinerama X extension.
-.sp
-\f(CRgeometries\-list\fP is a list of valid geometry strings, that correspond to
-your actual physical screens.
-.sp
-Example :
-.sp
-.if n .RS 4
-.nf
-VirtualScreens
-{
-    "1280x1024+0+0"
-    "1600x1200+1280+0"
-}
-.fi
-.if n .RE
-.RE
-.sp
 WarpCursor [{ \f(CRwin\-list\fP }]
 .RS 4
 This variable indicates that the pointer should be warped into windows when
@@ -2475,7 +2538,9 @@ into the current workspace, if necessary. For example
 .sp
 .if n .RS 4
 .nf
+.fam C
 WarpOnDeIconify { "Emacs" }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2506,32 +2571,21 @@ binding that will pop a particular window (such as \f(CRxmh\fP), no matter
 where it is.  The default is for \f(CRf.warpto\fP to ignore iconified windows.
 .RE
 .sp
-WindowBox [{ \f(CRwin\-list\fP }]
-.RS 4
-creates a new window called a box, where
-all the client windows that match the windows list are opened in,
-instead of the root window. This is useful to group small windows
-in the same box (xload for instance)
-.sp
-.if n .RS 4
-.nf
-WindowBox "xloadbox" "320x100+0\-0" {
-    "xload"
-}
-.fi
-.if n .RE
-.RE
-.sp
 WindowGeometries { \f(CRwin\-list\fP }
 .RS 4
-Used to give a default geometry to some clients :
+Used to give a default geometry to some clients. When XrandR is
+compiled, the geometry can be relative to a monitor, by prefixing
+its name (visible with \f(CRxrandr(1)\fP command line) followed by \f(CR:\fP. This name
+is ignored when XrandR is not available:
 .sp
 .if n .RS 4
 .nf
+.fam C
 WindowGeometries {
     "Mozilla*"       "1000x800+10+10"
-    "jpilot*"        "800x600\-0\-0"
+    "jpilot*"        "HDMI1:800x600\-0\-0"
 }
+.fam
 .fi
 .if n .RE
 .RE
@@ -2588,12 +2642,18 @@ WorkSpaceManagerGeometry \f(CRstring\fP [ \f(CRcolumns\fP ]
 .RS 4
 This variable specifies the geometry of the workspace manager window. The
 \f(CRstring\fP argument is standard geometry specification that indicates
-the initial full size of the workspace manager. The \f(CRcolumns\fP argument
+the initial full size of the workspace manager. When XrandR is
+compiled, the geometry can be relative to a monitor, by prefixing
+its name (visible with \f(CRxrandr(1)\fP command line) followed by \f(CR:\fP. This name
+is ignored when XrandR is not available. The \f(CRcolumns\fP argument
 indicates the number of columns to use for the workspace manager window.
 .sp
 .if n .RS 4
 .nf
+.fam C
 WorkSpaceManagerGeometry        "360x60+60\-0" 8
+WorkSpaceManagerGeometry        "HDMI1:600x30+1235+0" 12
+.fam
 .fi
 .if n .RE
 .RE
@@ -2605,7 +2665,9 @@ Where \f(CRworkspace\-list\fP is :
 .sp
 .if n .RS 4
 .nf
+.fam C
 name [{bg\-button [fg\-button] [bg\-root] [fg\-root] [pixmap\-root]}]
+.fam
 .fi
 .if n .RE
 .sp
@@ -2642,6 +2704,7 @@ Example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 WorkSpaces
 {
   "One"   {"#686B9F" "white" "DeepSkyBlue3" "white" "jpeg:shark.jpg"}
@@ -2655,6 +2718,7 @@ WorkSpaces
   "Seven" {"#8C5b7A" "white" "chartreuse4"}
   "Eight" {"#686B9F" "white" "MidnightBlue"}
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2752,7 +2816,9 @@ pressed within them:
 .sp
 .if n .RS 4
 .nf
+.fam C
 LeftTitleButton "bitmapname" = function
+.fam
 .fi
 .if n .RE
 .sp
@@ -2760,11 +2826,13 @@ or
 .sp
 .if n .RS 4
 .nf
+.fam C
 LeftTitleButton "bitmapname" {
     Buttoni = modlist : function
     ...
     Buttonj = function
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2772,7 +2840,9 @@ or
 .sp
 .if n .RS 4
 .nf
+.fam C
 RightTitleButton "bitmapname" = function
+.fam
 .fi
 .if n .RE
 .sp
@@ -2780,11 +2850,13 @@ or
 .sp
 .if n .RS 4
 .nf
+.fam C
 RightTitleButton "bitmapname" {
     Buttoni = modlist : function
     ...
     Buttonj = function
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2799,13 +2871,17 @@ words, the following two lines are equivalent:
 .sp
 .if n .RS 4
 .nf
+.fam C
     Buttoni = function
+.fam
 .fi
 .if n .RE
 .sp
 .if n .RS 4
 .nf
+.fam C
     Buttoni = : function
+.fam
 .fi
 .if n .RE
 .SS "Key and pointer buttons"
@@ -2818,8 +2894,10 @@ keysym name; buttons are given as the keywords \f(CRButton1\fP\-\f(CRButton11\fP
 .sp
 .if n .RS 4
 .nf
+.fam C
 "FP1"   = modlist : context : function
 Button1 = modlist : context : function
+.fam
 .fi
 .if n .RE
 .sp
@@ -2828,6 +2906,7 @@ use the following bindings:
 .sp
 .if n .RS 4
 .nf
+.fam C
 "F1"    =       : all : f.iconify
 "F2"    =       : all : f.raiselower
 "F3"    =       : all : f.warpring "next"
@@ -2840,6 +2919,7 @@ use the following bindings:
 "Right" = m | s : all : f.forwiconmgr
 "Up"    = m     : all : f.upiconmgr
 "Down"  = m | s : all : f.downiconmgr
+.fam
 .fi
 .if n .RE
 .sp
@@ -2875,6 +2955,7 @@ a vertical bar (\f(CR|\fP).  For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 # Open the "top" menu with a Button1 (usually left mouse button) click in
 # the root window
 Button1 =        : root : f.menu "top"
@@ -2884,6 +2965,7 @@ Button1 =     s  : root : f.menu "top2"
 
 # And "top3" when control\-shift\-click
 Button1 = c | s  : root : f.menu "top3"
+.fam
 .fi
 .if n .RE
 .sp
@@ -2897,7 +2979,7 @@ modifiers refer to ctwm alternate keymaps; see the description of
 Note that if you\(cqre using the \f(CRm4\fP preprocessor, most implementations
 define a \f(CRshift\fP macro internally, so using that as a modifier will
 silently fail to work right.  To get around it, you\(cqll need to quote it
-so that \f(CRm4\fP passes it through as a literal string: \f(CR`shift\(aq\fP.
+so that \f(CRm4\fP passes it through as a literal string: \f(CR`shift\*(Aq\fP.
 .sp
 The \f(CRcontext\fP lets you specify which mappings apply based on where the
 pointer currently is on the screen.  The available options are
@@ -2925,9 +3007,11 @@ window context to all windows matching that name.  e.g.,
 .sp
 .if n .RS 4
 .nf
+.fam C
 # Pressing "F1" anywhere on the screen will cause all windows with name
 # "xterm" to raise themselves.
 "F1" = : "xterm" : f.raise
+.fam
 .fi
 .if n .RE
 .sp
@@ -2941,6 +3025,7 @@ For example, the default startup file contains the following bindings:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Button1 =   : root          : f.menu "TwmWindows"
 Button1 = m : window | icon : f.function "move\-or\-lower"
 Button2 = m : window | icon : f.iconify
@@ -2951,6 +3036,7 @@ Button1 =   : icon          : f.function "move\-or\-iconify"
 Button2 =   : icon          : f.iconify
 Button1 =   : iconmgr       : f.iconify
 Button2 =   : iconmgr       : f.iconify
+.fam
 .fi
 .if n .RE
 .sp
@@ -2960,10 +3046,12 @@ example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Function "move\-or\-lower"    { f.move f.deltastop f.lower }
 Function "move\-or\-raise"    { f.move f.deltastop f.raise }
 Function "move\-or\-iconify"  { f.move f.deltastop f.iconify }
 Function "restore\-colormap" { f.colormap "default" f.lower }
+.fam
 .fi
 .if n .RE
 .sp
@@ -2986,13 +3074,6 @@ This function adds the selected window to the workspace whose name is
 \f(CRstring\fP.
 .RE
 .sp
-f.adoptwindow
-.RS 4
-This function asks for the user to select a window with the mouse, and then
-adopt this window if it doesn\(cqt belong to the current ctwm. Useful only
-with the \-w flag.
-.RE
-.sp
 f.altcontext
 .RS 4
 Set the alternate context. The next key or button event ctwm receives will
@@ -3002,9 +3083,11 @@ For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 "Return" = m : all   : f.altcontext
 "n" =        : alter : f.nextworkspace
 "p" =        : alter : f.prevworkspace
+.fam
 .fi
 .if n .RE
 .RE
@@ -3019,12 +3102,14 @@ field of the binding command. For example:
 .sp
 .if n .RS 4
 .nf
+.fam C
 "Return" = c : all                  : f.altkeymap "1"
 "i" =     a1 : window|icon|iconmgr  : f.iconify
 "z" =     a1 : window               : f.zoom
 "d" =     a1 : window|icon          : f.delete
 "o" =     a1 : window|icon          : f.occupy
 "r" =     a1 : window|icon          : f.refresh
+.fam
 .fi
 .if n .RE
 .sp
@@ -3065,8 +3150,8 @@ This function sounds the keyboard bell.
 f.bottomzoom
 .RS 4
 This function stretches the bottom side of the window out to the bottom
-edge of the screen, or restores the original size if the window was
-already bottomzoom\(cqd.
+edge of the current monitor, or restores the original size if the
+window was already bottomzoom\(cqd.
 .RE
 .sp
 f.changepriority \f(CRrel\-value\fP
@@ -3090,6 +3175,7 @@ can never be set/changed to less than 1.
 .sp
 .if n .RS 4
 .nf
+.fam C
 "Right"  = c|s : all : f.changesize "right +10"
 "Left"   = c|s : all : f.changesize "right \-10"
 "Down"   = c|s : all : f.changesize "bottom +10"
@@ -3098,6 +3184,7 @@ can never be set/changed to less than 1.
 "F1"     = c|s : all : f.changesize "640x480"
 "F2"     = c|s : all : f.changesize "800x600"
 "F3"     = c|s : all : f.changesize "1024x768"
+.fam
 .fi
 .if n .RE
 .RE
@@ -3195,12 +3282,6 @@ f.fill \(lqvertical\(rq sets the window status to \(lqzoomed\(rq and toggles, ie
 calling it again will reset the previous window size.
 .RE
 .sp
-f.fittocontent
-.RS 4
-Can be used only with window boxes. The result is to have the box have the
-minimal size that contains all its children windows.
-.RE
-.sp
 f.focus
 .RS 4
 This function toggles the keyboard focus of the server to the
@@ -3231,8 +3312,8 @@ f.fullscreenzoom
 .RS 4
 This function is similar to the \f(CRf.fullzoom\fP function, except that it
 makes the client window (the part inside the frame) the size of the
-screen, so the window decorations are off\-screen.  This gives the same
-visual effect as the window covering the whole screen with no
+current monitor, so the window decorations are off\-screen.  This gives
+the same visual effect as the window covering the whole screen with no
 decorations.  If the window is already fullscreenzoom\(cqd, it restores
 the original size.
 .RE
@@ -3240,8 +3321,8 @@ the original size.
 f.fullzoom
 .RS 4
 This function resizes the selected window to the full size of the
-screen, or restores the original size if the window was already
-fullzoom\(cqd.
+current monitor, or restores the original size if the window was
+already fullzoom\(cqd.
 .RE
 .sp
 f.function \f(CRstring\fP
@@ -3273,20 +3354,13 @@ Unmap the WorkSpace manager.
 f.horizoom
 .RS 4
 This function stretches the window so that it covers the whole width of
-the screen, or restores the original size if the window was already
-horizoom\(cqd.
+the current monitor, or restores the original size if the window was
+already horizoom\(cqd.
 .RE
 .sp
 f.htzoom
 .RS 4
 This function is a synonym for \f(CRf.topzoom\fP.
-.RE
-.sp
-f.hypermove
-.RS 4
-Use this function to \(lqmove\(rq a window between 2 captives ctwm (or between a
-captive and the root ctwm). Of course 2 ctwms are completely different
-universes. You have to go in hyperspace to achieve this, hence the name.
 .RE
 .sp
 f.hzoom
@@ -3352,8 +3426,8 @@ manager.
 f.leftzoom
 .RS 4
 This function stretches the left side of the window out to the left
-edge of the screen, or restores the original size if the window was
-already leftzoom\(cqd.
+edge of the current monitor, or restores the original size if the
+window was already leftzoom\(cqd.
 .RE
 .sp
 f.lower
@@ -3412,6 +3486,10 @@ Takes one string argument which is a geometry with the
 standard X geometry syntax (e.g. 200x300+150\-0). Sets the current window
 to the specified geometry. The width and height are to be given in pixel,
 no base size or resize increment are used.
+When XrandR is compiled, the geometry can be relative to a monitor,
+by prefixing its name (visible with \f(CRxrandr(1)\fP command line) followed by
+\f(CR:\fP (e.g. HDMI1:200x300+150\-0). This name is ignored when XrandR is not
+available.
 .RE
 .sp
 f.movetitlebar
@@ -3426,7 +3504,9 @@ The default positioning is left\-justified, absolute at 0 pixels.
 .sp
 .if n .RS 4
 .nf
+.fam C
 Button1 = m1 : title : f.movetitlebar
+.fam
 .fi
 .if n .RE
 .sp
@@ -3605,8 +3685,8 @@ manager.
 f.rightzoom
 .RS 4
 This function stretches the right side of the window out to the right
-edge of the screen, or restores the original size if the window was
-already rightzoom\(cqd.
+edge of the current monitor, or restores the original size if the
+window was already rightzoom\(cqd.
 .RE
 .sp
 f.ring
@@ -3759,8 +3839,8 @@ it is mapped, it will be unmapped and vice versa.
 .sp
 f.topzoom
 .RS 4
-This function stretches the top side of the window out to the top
-edge of the screen, or restores the original size if the window was
+This function stretches the top side of the window out to the top edge
+of the current monitor, or restores the original size if the window was
 already topzoom\(cqd.
 .RE
 .sp
@@ -3874,11 +3954,59 @@ This function is similar to the \f(CRf.refresh\fP function except that only the
 selected window is refreshed.
 .RE
 .sp
+f.xbottomzoom
+.RS 4
+This function is similar to the \f(CRf.bottomzoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xfullscreenzoom
+.RS 4
+This function is similar to the \f(CRf.fullscreenzoom\fP function, but will
+cross monitors.
+.RE
+.sp
+f.xfullzoom
+.RS 4
+This function is similar to the \f(CRf.fullzoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xhorizoom
+.RS 4
+This function is similar to the \f(CRf.horizoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xleftzoom
+.RS 4
+This function is similar to the \f(CRf.leftzoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xrightzoom
+.RS 4
+This function is similar to the \f(CRf.rightzoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xtopzoom
+.RS 4
+This function is similar to the \f(CRf.topzoom\fP function, but will cross
+monitors.
+.RE
+.sp
+f.xzoom
+.RS 4
+This function is similar to the \f(CRf.zoom\fP function, but will cross
+monitors.
+.RE
+.sp
 f.zoom
 .RS 4
-This function stretches the window so that it covers the whole height of
-the screen, or restores the original size if the window was already
-zoom\(cqd.  It\(cqs the vertical counterpart fo \f(CRf.horizoom\fP; perhaps
+This function stretches the window so that it covers the whole height
+of the current monitor, or restores the original size if the window was
+already zoom\(cqd.  It\(cqs the vertical counterpart fo \f(CRf.horizoom\fP; perhaps
 \f(CRf.vertzoom\fP would be a better name...
 .RE
 .SH "MENUS"
@@ -3893,6 +4021,7 @@ individual items:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Menu "menuname" [ ("deffg":"defbg") ]
 {
     string1  [ ("fg1":"bg1") ]  function1
@@ -3902,6 +4031,7 @@ Menu "menuname" [ ("deffg":"defbg") ]
         .
     stringN  [ ("fgN":"bgN") ]  functionN
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -4009,7 +4139,9 @@ normal), you could run a command like:
 .sp
 .if n .RS 4
 .nf
+.fam C
 xprop \-f CTWM_WM_ICON_NAME 8u \-set CTWM_WM_ICON_NAME "I hate this window"
+.fam
 .fi
 .if n .RE
 .sp
@@ -4037,7 +4169,9 @@ syntax:
 .sp
 .if n .RS 4
 .nf
+.fam C
 {X event}: {sound file}
+.fam
 .fi
 .if n .RE
 .sp
@@ -4050,6 +4184,7 @@ However configured, the currently known X events that can be given are:
 .sp
 .if n .RS 4
 .nf
+.fam C
 KeyPress
 KeyRelease
 ButtonPress
@@ -4083,6 +4218,7 @@ SelectionNotify
 ColormapNotify
 ClientMessage
 MappingNotify
+.fam
 .fi
 .if n .RE
 .sp
@@ -4091,8 +4227,10 @@ when ctwm is started or shut down:
 .sp
 .if n .RS 4
 .nf
+.fam C
 Startup
 Shutdown
+.fam
 .fi
 .if n .RE
 .SH "BUGS"

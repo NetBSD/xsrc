@@ -117,12 +117,19 @@ static struct _CursorName {
 void NewFontCursor(Cursor *cp, const char *str)
 {
 	int i;
+	const Display *ldpy = dpy;  // Give compiler help to hoist
 
 	for(i = 0; i < sizeof(cursor_names) / sizeof(struct _CursorName); i++) {
 		if(strcmp(str, cursor_names[i].name) == 0) {
-			if(cursor_names[i].cursor == None)
+			if(ldpy == NULL) {
+				// No display connection, but we found it
+				*cp = None;
+				return;
+			}
+			if(cursor_names[i].cursor == None) {
 				cursor_names[i].cursor = XCreateFontCursor(dpy,
 				                         cursor_names[i].shape);
+			}
 			*cp = cursor_names[i].cursor;
 			return;
 		}
@@ -139,6 +146,12 @@ int NewBitmapCursor(Cursor *cp, char *source, char *mask)
 	unsigned int sw, sh, mw, mh;
 	Pixmap spm, mpm;
 	Colormap cmap = Scr->RootColormaps.cwins[0]->colormap->c;
+
+	if(dpy == NULL) {
+		// Handle special cases like --cfgchk
+		*cp = None;
+		return 0;
+	}
 
 	fore.pixel = Scr->Black;
 	XQueryColor(dpy, cmap, &fore);

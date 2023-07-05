@@ -260,7 +260,6 @@ menu "windowops" {
     "Toggle autoraise"	f.autoraise
     ""			f.separator
     "Beep"		f.beep
-    #"Adopt Window"	f.adoptwindow
     "Animation"		f.menu "Anim"
     "Zoom"		f.menu "Zoom"
     ""			f.separator

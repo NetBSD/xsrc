@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.4.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,11 +31,12 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_4_0_X_CTWM_MKTAR_ASYJVB_CTWM_4_0_3_BUILD_GRAM_TAB_H_INCLUDED
-# define YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_4_0_X_CTWM_MKTAR_ASYJVB_CTWM_4_0_3_BUILD_GRAM_TAB_H_INCLUDED
+#ifndef YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_DEV_CTWM_MKTAR_4Y0T7B_CTWM_4_1_0_BUILD_GRAM_TAB_H_INCLUDED
+# define YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_DEV_CTWM_MKTAR_4Y0T7B_CTWM_4_1_0_BUILD_GRAM_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -44,139 +45,145 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    LB = 258,
-    RB = 259,
-    LP = 260,
-    RP = 261,
-    MENUS = 262,
-    MENU = 263,
-    BUTTON = 264,
-    DEFAULT_FUNCTION = 265,
-    PLUS = 266,
-    MINUS = 267,
-    ALL = 268,
-    OR = 269,
-    CURSORS = 270,
-    PIXMAPS = 271,
-    ICONS = 272,
-    COLOR = 273,
-    SAVECOLOR = 274,
-    MONOCHROME = 275,
-    FUNCTION = 276,
-    ICONMGR_SHOW = 277,
-    ICONMGR = 278,
-    ALTER = 279,
-    WINDOW_FUNCTION = 280,
-    ZOOM = 281,
-    ICONMGRS = 282,
-    ICONMGR_GEOMETRY = 283,
-    ICONMGR_NOSHOW = 284,
-    MAKE_TITLE = 285,
-    ICONIFY_BY_UNMAPPING = 286,
-    DONT_ICONIFY_BY_UNMAPPING = 287,
-    AUTO_POPUP = 288,
-    NO_BORDER = 289,
-    NO_ICON_TITLE = 290,
-    NO_TITLE = 291,
-    AUTO_RAISE = 292,
-    NO_HILITE = 293,
-    ICON_REGION = 294,
-    WINDOW_REGION = 295,
-    META = 296,
-    SHIFT = 297,
-    LOCK = 298,
-    CONTROL = 299,
-    WINDOW = 300,
-    TITLE = 301,
-    ICON = 302,
-    ROOT = 303,
-    FRAME = 304,
-    COLON = 305,
-    EQUALS = 306,
-    SQUEEZE_TITLE = 307,
-    DONT_SQUEEZE_TITLE = 308,
-    WARP_ON_DEICONIFY = 309,
-    START_ICONIFIED = 310,
-    NO_TITLE_HILITE = 311,
-    TITLE_HILITE = 312,
-    MOVE = 313,
-    RESIZE = 314,
-    WAITC = 315,
-    SELECT = 316,
-    KILL = 317,
-    LEFT_TITLEBUTTON = 318,
-    RIGHT_TITLEBUTTON = 319,
-    NUMBER = 320,
-    KEYWORD = 321,
-    NKEYWORD = 322,
-    CKEYWORD = 323,
-    CLKEYWORD = 324,
-    FKEYWORD = 325,
-    FSKEYWORD = 326,
-    FNKEYWORD = 327,
-    PRIORITY_SWITCHING = 328,
-    PRIORITY_NOT_SWITCHING = 329,
-    SKEYWORD = 330,
-    SSKEYWORD = 331,
-    WINDOW_RING = 332,
-    WINDOW_RING_EXCLUDE = 333,
-    WARP_CURSOR = 334,
-    ERRORTOKEN = 335,
-    GRAVITY = 336,
-    SIJENUM = 337,
-    NO_STACKMODE = 338,
-    ALWAYS_ON_TOP = 339,
-    WORKSPACE = 340,
-    WORKSPACES = 341,
-    WORKSPCMGR_GEOMETRY = 342,
-    OCCUPYALL = 343,
-    OCCUPYLIST = 344,
-    MAPWINDOWCURRENTWORKSPACE = 345,
-    MAPWINDOWDEFAULTWORKSPACE = 346,
-    ON_TOP_PRIORITY = 347,
-    UNMAPBYMOVINGFARAWAY = 348,
-    OPAQUEMOVE = 349,
-    NOOPAQUEMOVE = 350,
-    OPAQUERESIZE = 351,
-    NOOPAQUERESIZE = 352,
-    DONTSETINACTIVE = 353,
-    CHANGE_WORKSPACE_FUNCTION = 354,
-    DEICONIFY_FUNCTION = 355,
-    ICONIFY_FUNCTION = 356,
-    AUTOSQUEEZE = 357,
-    STARTSQUEEZED = 358,
-    DONT_SAVE = 359,
-    AUTO_LOWER = 360,
-    ICONMENU_DONTSHOW = 361,
-    WINDOW_BOX = 362,
-    IGNOREMODIFIER = 363,
-    WINDOW_GEOMETRIES = 364,
-    ALWAYSSQUEEZETOGRAVITY = 365,
-    VIRTUAL_SCREENS = 366,
-    IGNORE_TRANSIENT = 367,
-    EWMH_IGNORE = 368,
-    MWM_IGNORE = 369,
-    RPLAY_SOUNDS = 370,
-    FORCE_FOCUS = 371,
-    STRING = 372
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    LB = 258,                      /* LB  */
+    RB = 259,                      /* RB  */
+    LP = 260,                      /* LP  */
+    RP = 261,                      /* RP  */
+    MENUS = 262,                   /* MENUS  */
+    MENU = 263,                    /* MENU  */
+    BUTTON = 264,                  /* BUTTON  */
+    DEFAULT_FUNCTION = 265,        /* DEFAULT_FUNCTION  */
+    PLUS = 266,                    /* PLUS  */
+    MINUS = 267,                   /* MINUS  */
+    ALL = 268,                     /* ALL  */
+    OR = 269,                      /* OR  */
+    CURSORS = 270,                 /* CURSORS  */
+    PIXMAPS = 271,                 /* PIXMAPS  */
+    ICONS = 272,                   /* ICONS  */
+    COLOR = 273,                   /* COLOR  */
+    SAVECOLOR = 274,               /* SAVECOLOR  */
+    MONOCHROME = 275,              /* MONOCHROME  */
+    FUNCTION = 276,                /* FUNCTION  */
+    ICONMGR_SHOW = 277,            /* ICONMGR_SHOW  */
+    ICONMGR = 278,                 /* ICONMGR  */
+    ALTER = 279,                   /* ALTER  */
+    WINDOW_FUNCTION = 280,         /* WINDOW_FUNCTION  */
+    ZOOM = 281,                    /* ZOOM  */
+    ICONMGRS = 282,                /* ICONMGRS  */
+    ICONMGR_GEOMETRY = 283,        /* ICONMGR_GEOMETRY  */
+    ICONMGR_NOSHOW = 284,          /* ICONMGR_NOSHOW  */
+    MAKE_TITLE = 285,              /* MAKE_TITLE  */
+    ICONIFY_BY_UNMAPPING = 286,    /* ICONIFY_BY_UNMAPPING  */
+    DONT_ICONIFY_BY_UNMAPPING = 287, /* DONT_ICONIFY_BY_UNMAPPING  */
+    AUTO_POPUP = 288,              /* AUTO_POPUP  */
+    NO_BORDER = 289,               /* NO_BORDER  */
+    NO_ICON_TITLE = 290,           /* NO_ICON_TITLE  */
+    NO_TITLE = 291,                /* NO_TITLE  */
+    AUTO_RAISE = 292,              /* AUTO_RAISE  */
+    NO_HILITE = 293,               /* NO_HILITE  */
+    ICON_REGION = 294,             /* ICON_REGION  */
+    WINDOW_REGION = 295,           /* WINDOW_REGION  */
+    META = 296,                    /* META  */
+    SHIFT = 297,                   /* SHIFT  */
+    LOCK = 298,                    /* LOCK  */
+    CONTROL = 299,                 /* CONTROL  */
+    WINDOW = 300,                  /* WINDOW  */
+    TITLE = 301,                   /* TITLE  */
+    ICON = 302,                    /* ICON  */
+    ROOT = 303,                    /* ROOT  */
+    FRAME = 304,                   /* FRAME  */
+    COLON = 305,                   /* COLON  */
+    EQUALS = 306,                  /* EQUALS  */
+    SQUEEZE_TITLE = 307,           /* SQUEEZE_TITLE  */
+    DONT_SQUEEZE_TITLE = 308,      /* DONT_SQUEEZE_TITLE  */
+    WARP_ON_DEICONIFY = 309,       /* WARP_ON_DEICONIFY  */
+    START_ICONIFIED = 310,         /* START_ICONIFIED  */
+    NO_TITLE_HILITE = 311,         /* NO_TITLE_HILITE  */
+    TITLE_HILITE = 312,            /* TITLE_HILITE  */
+    MOVE = 313,                    /* MOVE  */
+    RESIZE = 314,                  /* RESIZE  */
+    WAITC = 315,                   /* WAITC  */
+    SELECT = 316,                  /* SELECT  */
+    KILL = 317,                    /* KILL  */
+    LEFT_TITLEBUTTON = 318,        /* LEFT_TITLEBUTTON  */
+    RIGHT_TITLEBUTTON = 319,       /* RIGHT_TITLEBUTTON  */
+    NUMBER = 320,                  /* NUMBER  */
+    KEYWORD = 321,                 /* KEYWORD  */
+    NKEYWORD = 322,                /* NKEYWORD  */
+    CKEYWORD = 323,                /* CKEYWORD  */
+    CLKEYWORD = 324,               /* CLKEYWORD  */
+    FKEYWORD = 325,                /* FKEYWORD  */
+    FSKEYWORD = 326,               /* FSKEYWORD  */
+    FNKEYWORD = 327,               /* FNKEYWORD  */
+    PRIORITY_SWITCHING = 328,      /* PRIORITY_SWITCHING  */
+    PRIORITY_NOT_SWITCHING = 329,  /* PRIORITY_NOT_SWITCHING  */
+    SKEYWORD = 330,                /* SKEYWORD  */
+    SSKEYWORD = 331,               /* SSKEYWORD  */
+    WINDOW_RING = 332,             /* WINDOW_RING  */
+    WINDOW_RING_EXCLUDE = 333,     /* WINDOW_RING_EXCLUDE  */
+    WARP_CURSOR = 334,             /* WARP_CURSOR  */
+    ERRORTOKEN = 335,              /* ERRORTOKEN  */
+    GRAVITY = 336,                 /* GRAVITY  */
+    SIJENUM = 337,                 /* SIJENUM  */
+    NO_STACKMODE = 338,            /* NO_STACKMODE  */
+    ALWAYS_ON_TOP = 339,           /* ALWAYS_ON_TOP  */
+    WORKSPACE = 340,               /* WORKSPACE  */
+    WORKSPACES = 341,              /* WORKSPACES  */
+    WORKSPCMGR_GEOMETRY = 342,     /* WORKSPCMGR_GEOMETRY  */
+    OCCUPYALL = 343,               /* OCCUPYALL  */
+    OCCUPYLIST = 344,              /* OCCUPYLIST  */
+    MAPWINDOWCURRENTWORKSPACE = 345, /* MAPWINDOWCURRENTWORKSPACE  */
+    MAPWINDOWDEFAULTWORKSPACE = 346, /* MAPWINDOWDEFAULTWORKSPACE  */
+    ON_TOP_PRIORITY = 347,         /* ON_TOP_PRIORITY  */
+    UNMAPBYMOVINGFARAWAY = 348,    /* UNMAPBYMOVINGFARAWAY  */
+    OPAQUEMOVE = 349,              /* OPAQUEMOVE  */
+    NOOPAQUEMOVE = 350,            /* NOOPAQUEMOVE  */
+    OPAQUERESIZE = 351,            /* OPAQUERESIZE  */
+    NOOPAQUERESIZE = 352,          /* NOOPAQUERESIZE  */
+    DONTSETINACTIVE = 353,         /* DONTSETINACTIVE  */
+    CHANGE_WORKSPACE_FUNCTION = 354, /* CHANGE_WORKSPACE_FUNCTION  */
+    DEICONIFY_FUNCTION = 355,      /* DEICONIFY_FUNCTION  */
+    ICONIFY_FUNCTION = 356,        /* ICONIFY_FUNCTION  */
+    AUTOSQUEEZE = 357,             /* AUTOSQUEEZE  */
+    STARTSQUEEZED = 358,           /* STARTSQUEEZED  */
+    DONT_SAVE = 359,               /* DONT_SAVE  */
+    AUTO_LOWER = 360,              /* AUTO_LOWER  */
+    ICONMENU_DONTSHOW = 361,       /* ICONMENU_DONTSHOW  */
+    WINDOW_BOX = 362,              /* WINDOW_BOX  */
+    IGNOREMODIFIER = 363,          /* IGNOREMODIFIER  */
+    WINDOW_GEOMETRIES = 364,       /* WINDOW_GEOMETRIES  */
+    ALWAYSSQUEEZETOGRAVITY = 365,  /* ALWAYSSQUEEZETOGRAVITY  */
+    VIRTUAL_SCREENS = 366,         /* VIRTUAL_SCREENS  */
+    IGNORE_TRANSIENT = 367,        /* IGNORE_TRANSIENT  */
+    EWMH_IGNORE = 368,             /* EWMH_IGNORE  */
+    MWM_IGNORE = 369,              /* MWM_IGNORE  */
+    MONITOR_LAYOUT = 370,          /* MONITOR_LAYOUT  */
+    RPLAY_SOUNDS = 371,            /* RPLAY_SOUNDS  */
+    FORCE_FOCUS = 372,             /* FORCE_FOCUS  */
+    STRING = 373                   /* STRING  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 62 "gram.y"
+#line 64 "gram.y"
 
     int num;
     char *ptr;
 
-#line 180 "/home/fullermd/work/ctwm/bzr/4.0.x/ctwm-mktar.asYJVb/ctwm-4.0.3/build/gram.tab.h"
+#line 187 "/home/fullermd/work/ctwm/bzr/dev/ctwm-mktar.4Y0T7b/ctwm-4.1.0/build/gram.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -187,6 +194,8 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
+
 int yyparse (void);
 
-#endif /* !YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_4_0_X_CTWM_MKTAR_ASYJVB_CTWM_4_0_3_BUILD_GRAM_TAB_H_INCLUDED  */
+
+#endif /* !YY_YY_HOME_FULLERMD_WORK_CTWM_BZR_DEV_CTWM_MKTAR_4Y0T7B_CTWM_4_1_0_BUILD_GRAM_TAB_H_INCLUDED  */

@@ -5,6 +5,11 @@
 #ifndef _CTWM_CAPTIVE_H
 #define _CTWM_CAPTIVE_H
 
+// Guard to help catch non-ifdef'd references
+#ifndef CAPTIVE
+#error "You're unconditionally including captive.h!"
+#endif
+
 
 typedef struct CaptiveCTWM {
 	Window        root;

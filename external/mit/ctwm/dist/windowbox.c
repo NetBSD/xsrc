@@ -17,6 +17,7 @@
 #include "win_decorations.h"
 #include "win_resize.h"
 #include "win_utils.h"
+#include "xparsegeometry.h"
 
 name_list **addWindowBox(char *boxname, char *geometry)
 {
@@ -48,7 +49,8 @@ void createWindowBoxes(void)
 		unsigned int w, h;
 		Window win;
 
-		mask = XParseGeometry(winbox->geometry, &x, &y, &w, &h);
+		mask = RLayoutXParseGeometry(Scr->Layout, winbox->geometry,
+		                             &x, &y, &w, &h);
 		if(mask & XNegative) {
 			x += Scr->rootw  - w;
 			gravity = (mask & YNegative) ? SouthEastGravity : NorthEastGravity;

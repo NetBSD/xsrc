@@ -50,20 +50,26 @@
 #define  __attribute__(x)  /*NOTHING*/
 #endif
 
-/* signal(3) handlers have been void since c89 */
-#define SIGNAL_T void
-
 #define BW 2                    /* border width */
 #define BW2 4                   /* border width  * 2 */
 
 #define MAX_BUTTONS     11      /* max mouse buttons supported */
 
-/* contexts for button presses */
+
+/*
+ * Contexts for button presses.
+ * n.b.: These go alongside the ModXMask X11 defs, so better stay above
+ * them!
+ */
 #define Alt1Mask        (1<<8)
 #define Alt2Mask        (1<<9)
 #define Alt3Mask        (1<<10)
 #define Alt4Mask        (1<<11)
 #define Alt5Mask        (1<<12)
+
+// X-ref the Over_Mask's used for testing in mk_twmkeys_entry() if we
+// grow more here, to avoid collision.
+
 
 #define C_NO_CONTEXT    -1
 #define C_WINDOW        0
@@ -293,6 +299,7 @@ struct WindowEntry {
 	bool                used;
 };
 
+#ifdef WINBOX
 struct WindowBox {
 	struct WindowBox    *next;
 	char                *name;
@@ -301,6 +308,7 @@ struct WindowBox {
 	Window              window;
 	struct TwmWindow    *twmwin;
 };
+#endif
 
 
 /*
@@ -316,12 +324,8 @@ struct WindowBox {
 #define DoesWmDeleteWindow      (1L << 2)
 
 
-void Reborder(Time tim);
-SIGNAL_T Done(int signum) __attribute__((noreturn));
-void CreateFonts(ScreenInfo *scr);
-
-void RestoreWithdrawnLocation(TwmWindow *tmp);
 extern char *ProgramName;
+extern size_t ProgramNameLen;
 extern Display *dpy;
 extern XtAppContext appContext;
 extern Window ResizeWindow;     /* the window we are resizing */
@@ -360,10 +364,20 @@ extern char **Argv;
 
 extern bool RestartPreviousState;
 
-extern bool RestartFlag;        /* Flag that is set when SIGHUP is caught */
-void DoRestart(Time t);         /* Function to perform a restart */
+extern bool SignalFlag;    ///< Some signal flag has been set
 
 #define OCCUPY(w, b) ((b == NULL) ? 1 : (w->occupation & (1 << b->number)))
+
+
+/*
+ * Dev utils
+ */
+// Quiet static analyzer warnings
+#if defined(__clang_analyzer__)
+#define ALLOW_DEAD_STORE(x) (void)(x)
+#else
+#define ALLOW_DEAD_STORE(x) (void)0
+#endif
 
 
 /*
@@ -379,9 +393,11 @@ typedef struct _ctwm_cl_args {
 	bool   PrintErrorMessages; // --verbose, show more debug output
 	bool   ShowWelcomeWindow;  // ! --nowelcome, show splash screen
 
+#ifdef CAPTIVE
 	bool   is_captive;         // --window (flag), running captive
 	Window capwin;             // --window (arg), existing window to capture
 	char  *captivename;        // --name, captive name
+#endif
 
 #ifdef USEM4
 	bool   KeepTmpFile;        // --keep-defs, keep generated m4 defs

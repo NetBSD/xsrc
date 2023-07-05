@@ -1,0 +1,182 @@
+# RLayout
+
+
+## TODO
+
+This should be expanded to walk a little more through the codepaths the
+various examples take, with some detail of the structure contents in the
+various cases.
+
+Also, the meat of the examples should probably migrate into user-level
+documentation at some point, when we have things in shape to do that
+(_i.e._, not having a manpage as the main user doc).
+
+
+## Summary
+
+The RLayout code came in as part of the support for the RandR X
+extension, but isn't tied to RandR itself.  Rather, it's a generalized
+scheme for describing and determining intersecting layouts of abstract
+things.
+
+In practice, most uses boil down to a description of the layout of your
+monitor[s], and its functions are used to map windows onto them, figure
+out which monitor[s] the window is on, and figure out what it would mean
+to `f.*zoom` that window in various ways, either keeping it on a single
+monitor or crossing multiple.
+
+This document attempts to give an overview of the pieces defined in the
+various `r_area*.[ch]` and `r_layout.[ch]` files.  There is fairly
+extensive documentation in Doxygen comments on the structures and
+functions (x-ref <<doxygen.adoc,Doxygen bits>> in this manual for how to
+build and use them), as well as fairly extensive narrative comments
+through the code.  This document won't attempt to cover all those sort of
+details, but rather to give a high level view of the goals of the code.
+
+
+
+## Data Structures
+
+### RArea
+
+`RArea` defines an area of space, given by X/Y coordinates, and
+width/height extents.  In the global layout sense, each monitor is
+represented by an RArea giving its position on the whole desktop space.
+When positioning or sizing windows, an (emphemeral) `RArea` is created
+defining the window's size/position, to be used by the various
+`RArea*()` or `RLayout*()` functions.
+
+### RAreaList
+
+`RAreaList` is just a container for a set of ``RArea``'s.  It's used
+anywhere we need to build or pass around lists of ``RArea``'s.  Commonly
+these will involve monitors.  _e.g._, the list of all your monitors is an
+`RAreaList`, as would be the result of asking "`Which monitor[s] is this
+window being displayed on?`", etc.
+
+
+### RLayout
+
+`RLayout` is used to hold derived attributes of an `RAreaList`.  This
+generally means "`the layout of your monitors`".  It holds the list of
+monitors, and also separately (if your setup provides such) the list of
+output names provided by RandR, which can be used to set the geometry
+of things like icon managers in an output-relative way.
+
+It also contains pre-built ``RAreaList``'s of all the rectangular
+horizontal and vertical stripes that make up the space covered by the
+union of your monitors.  This is used in calculating horizontal and
+vertical ``f.zoom``'s of windows, so they cover the maximum available
+space without stretching outside the area covered by monitors.  This is
+important when your monitor setup doesn't make a single rectangle
+(_e.g._, you have 2 monitors with different resolutions).
+
+
+## Examples
+
+Let's consider an example layout.
+
+image::static/monitors.svg#v_monitors=1[opts=interactive]
+
+When starting up, ctwm will find the maximal horizontal:
+
+image::static/monitors.svg#v_hstripe=1[opts=interactive]
+
+and vertical:
+
+image::static/monitors.svg#v_vstripe=1[opts=interactive]
+
+stripes.  This get stashed up in the `RLayout` for the Screen, and will
+be used when figuring various zooms.
+
+
+### Zooming
+
+Let's put a window on the screen, and see what various ``f.zoom``'s will
+do to it.
+
+#### Horizontal zooming
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_x=300&g_xwin_y=40[opts=interactive]
+
+This window is now _mostly_ on `Mon1`, and mostly on the "top half" of
+things.  If we `f.horizoom` it, it thus zooms up to the full width of
+`Mon1`:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=400&g_xwin_x=3&g_xwin_y=40[opts=interactive]
+
+But if we `f.xhorizoom` it, it takes up the full width of the horizontal
+stripe it's on (_note showing stripes in the background here, not
+monitors like the surrounding images_):
+
+image::static/monitors.svg#v_hstripe=1&v_xwin=1&g_xwin_w=600&g_xwin_x=3&g_xwin_y=40[opts=interactive]
+
+Or, if we moved it over so most of it was on `Mon2` instead,
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_x=350&g_xwin_y=40[opts=interactive]
+
+then the `f.horizoom` would zoom it up to the full width of `Mon2`:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=200&g_xwin_x=403&g_xwin_y=40[opts=interactive]
+
+and `f.xhorizoom` would do the same thing as above.
+
+
+#### Vertical zooming
+
+Imagine the same thing, except adjusting the height on the vertical stripes.
+
+
+#### Full zooming
+
+Now let's consider `f.fullscreenzoom` and its `x` variant.
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_x=300&g_xwin_y=100[opts=interactive]
+
+The window is still mostly on `Mon1`.  Note that part of the window is
+currently in dead space, and so not visible.  If `f.fullscreenzoom` it,
+because it's mostly on `Mon1`, it will cover that monitor completely:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=400&g_xwin_h=200&g_xwin_x=3&g_xwin_y=3[opts=interactive]
+
+Or, if we pushed it over to be mostly on `Mon2`,
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_x=350&g_xwin_y=100[opts=interactive]
+
+then `f.fullscreenzoom` will fill that out:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=200&g_xwin_h=400&g_xwin_x=403&g_xwin_y=3[opts=interactive]
+
+`f.xfullscreenzoom`, like the other `x` variants, will span monitors.  In
+the case of `fullscreenzoom`, it will consider both the horizontal and
+vertical stripes the window lives in, and fill it over whichever makes
+the window bigger.
+
+In both cases above, the top horizontal stripe is the biggest; it's a
+full monitor size, plus half of another.  The bottom horizontal stripe is
+only half a monitor's size, and both vertical stripes are the same size
+as a monitor.  So ``f.xfullscreenzoom``'ing the window will make it cover
+up the whole top horizontal stripe:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=600&g_xwin_h=200&g_xwin_x=3&g_xwin_y=3[opts=interactive]
+
+If, however, we first moved it down so it didn't occupy the top
+horizontal stripe at all,
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_x=350&g_xwin_y=225[opts=interactive]
+
+then the largest stripe available for it to fill would be the right
+vertical stripe, leading to the same result as the right-size
+`f.fullscreenzoom` above:
+
+image::static/monitors.svg#v_monitors=1&v_xwin=1&g_xwin_w=200&g_xwin_h=400&g_xwin_x=403&g_xwin_y=3[opts=interactive]
+
+In this case, it's technically filling `Vstripe2`, rather than `Mon2`,
+but in the case of the particular layout we're working with, it's the
+same thing.
+
+In the case where your layout doesn't have any dead space (_e.g._, 2
+same-resolution monitors stacked horizontally or vertically, 4
+same-resolution monitors in a square, etc), there will only be one
+horizontal and one vertical stripe, which cover the whole desktop area.
+So `f.xfullscreenzoom` will always wind up covering the whole thing.

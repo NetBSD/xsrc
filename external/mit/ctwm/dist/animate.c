@@ -6,6 +6,7 @@
 #include "ctwm.h"
 
 #include <sys/time.h>
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -222,6 +223,10 @@ Animate(void)
 	}
 	MaybeAnimate |= AnimateRoot();
 	if(MaybeAnimate) {
+		// Impossible: scr==NULL means we had no valid screens, which
+		// means we'd'a bomed out WAY earlier than trying to animate
+		// something...
+		assert(scr != NULL);
 		Animating++;
 		send_clientmessage(scr->currentvs->wsw->w, XA_WM_END_OF_ANIMATION,
 		                   EventTime);

@@ -20,7 +20,7 @@
 #
 # START(main)
 addtoworkspace        S CS -
-adoptwindow           - -  -
+adoptwindow           - -  CAPTIVE
 altcontext            - -  -
 altkeymap             S -  -
 autolower             - CS -
@@ -43,7 +43,7 @@ downiconmgr           - -  -
 downworkspace         - -  -
 exec                  S -  -
 fill                  S CS -
-fittocontent          - CS -
+fittocontent          - CS WINBOX
 focus                 - CS -
 forcemove             - CM -
 forwiconmgr           - -  -
@@ -55,7 +55,7 @@ gotoworkspace         S -  -
 hideiconmgr           - -  -
 hideworkspacemgr      - -  -
 horizoom              - CS -
-hypermove             - CM -
+hypermove             - CM CAPTIVE
 iconify               - CS -
 identify              - CS -
 initsize              - CS -
@@ -140,6 +140,14 @@ warpto                S -  -
 warptoiconmgr         S -  -
 warptoscreen          S -  -
 winrefresh            - CS -
+xbottomzoom           - CS -
+xfullscreenzoom       - CS -
+xfullzoom             - CS -
+xhorizoom             - CS -
+xleftzoom             - CS -
+xrightzoom            - CS -
+xtopzoom              - CS -
+xzoom                 - CS -
 zoom                  - CS -
 # END(main)
 

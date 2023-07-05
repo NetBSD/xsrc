@@ -26,4 +26,8 @@ void add_ewmh_ignore(char *s);
 void proc_mwm_ignore(void);
 void add_mwm_ignore(char *s);
 
+void init_layout_override(void);
+void add_layout_override_entry(const char *s);
+void proc_layout_override(void);
+
 #endif /* _CTWM_PARSE_BE_H */

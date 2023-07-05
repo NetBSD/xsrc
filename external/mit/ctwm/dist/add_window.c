@@ -34,7 +34,9 @@
 #include <X11/extensions/shape.h>
 
 #include "add_window.h"
+#ifdef CAPTIVE
 #include "captive.h"
+#endif
 #include "colormaps.h"
 #include "ctwm_atoms.h"
 #include "functions.h"
@@ -51,17 +53,25 @@
 #include "occupation.h"
 #include "otp.h"
 #include "parse.h"
+#include "r_area.h"
+#include "r_layout.h"
 #include "screen.h"
+#ifdef SESSION
 #include "session.h"
+#endif
 #include "util.h"
 #include "vscreen.h"
+#ifdef WINBOX
 #include "windowbox.h"
+#endif
 #include "win_decorations.h"
 #include "win_ops.h"
 #include "win_regions.h"
 #include "win_resize.h"
+#include "win_ring.h"
 #include "win_utils.h"
 #include "workspace_manager.h"
+#include "xparsegeometry.h"
 
 
 int AddingX;
@@ -71,8 +81,10 @@ unsigned int AddingH;
 
 static int PlaceX = -1;
 static int PlaceY = -1;
+#ifdef VSCREEN
 static void DealWithNonSensicalGeometries(Display *dpy, Window vroot,
                 TwmWindow *tmp_win);
+#endif
 
 char NoName[] = "Untitled"; /* name if no name is specified */
 bool resizeWhenAdd;
@@ -105,19 +117,24 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	int gravx, gravy;                   /* gravity signs for positioning */
 	int namelen;
 	int bw2;
+#ifdef SESSION
 	short restore_icon_x, restore_icon_y;
 	bool restore_iconified = false;
 	bool restore_icon_info_present = false;
+#endif
 	bool restoredFromPrevSession = false;
 	int saved_occupation = 0; /* <== [ Matthew McNeill Feb 1997 ] == */
 	bool random_placed = false;
+#ifdef WINBOX
 	WindowBox *winbox;
+#endif
 	Window vroot;
 
 #ifdef DEBUG
 	fprintf(stderr, "AddWindow: w = 0x%x\n", w);
 #endif
 
+#ifdef CAPTIVE
 	/*
 	 * Possibly this window should be in a captive sub-ctwm?  If so, we
 	 * shouldn't mess with it at all.
@@ -126,6 +143,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		/* XXX x-ref comment by SetNoRedirect() */
 		return (NULL);
 	}
+#endif
 
 
 	/*
@@ -151,7 +169,9 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	tmp_win->iconmgrp = iconp;
 	tmp_win->iswspmgr = (wtype == AWT_WORKSPACE_MANAGER);
 	tmp_win->isoccupy = (wtype == AWT_OCCUPY);
+#ifdef WINBOX
 	tmp_win->iswinbox = (wtype == AWT_WINDOWBOX);
+#endif
 	tmp_win->vs = vs;
 	tmp_win->parent_vs = vs;
 	tmp_win->savevs = NULL;
@@ -257,6 +277,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	}
 
 
+#ifdef SESSION
 	/*
 	 * Look up saved X Session info for the window if we have it.
 	 */
@@ -291,6 +312,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 			}
 		}
 	}
+#endif
 
 
 	/*
@@ -321,6 +343,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		}
 	}
 
+#ifdef SESSION
 	/*
 	 * Override a few bits with saved stuff from previous session, if we
 	 * have it.
@@ -335,6 +358,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		tmp_win->wmhints->icon_y = restore_icon_y;
 		tmp_win->wmhints->flags |= IconPositionHint;
 	}
+#endif
 
 	/* Munge as necessary for other stuff */
 	munge_wmhints(tmp_win, tmp_win->wmhints);
@@ -437,20 +461,10 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	                 && EwmhOnWindowRing(tmp_win)
 #endif /* EWMH */
 	                 && !CHKL(WindowRingExcludeL))) {
-		if(Scr->Ring) {
-			tmp_win->ring.next = Scr->Ring->ring.next;
-			if(Scr->Ring->ring.next->ring.prev) {
-				Scr->Ring->ring.next->ring.prev = tmp_win;
-			}
-			Scr->Ring->ring.next = tmp_win;
-			tmp_win->ring.prev = Scr->Ring;
-		}
-		else {
-			tmp_win->ring.next = tmp_win->ring.prev = Scr->Ring = tmp_win;
-		}
+		AddWindowToRing(tmp_win);
 	}
 	else {
-		tmp_win->ring.next = tmp_win->ring.prev = NULL;
+		InitWindowNotOnRing(tmp_win);
 	}
 
 
@@ -537,6 +551,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		 * - And specific NoTitle overrides MakeTitle.
 		 */
 		have_title = true;
+		ALLOW_DEAD_STORE(have_title);
 #ifdef EWMH
 		have_title = EwmhHasTitle(tmp_win);
 #endif /* EWMH */
@@ -573,6 +588,16 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 			tmp_win->title_height = 0;
 		}
 	}
+
+
+#ifdef EWMH
+	/*
+	 * Now that we know the title_height and the frame border width, we
+	 * can set an EWMH property to tell the client how much we're adding
+	 * around them.
+	 */
+	EwmhSet_NET_FRAME_EXTENTS(tmp_win);
+#endif
 
 
 	/*
@@ -660,8 +685,10 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	SetupOccupation(tmp_win, saved_occupation);
 
 
+#ifdef WINBOX
 	/* Does it go in a window box? */
 	winbox = findWindowBox(tmp_win);
+#endif
 
 
 	/*
@@ -703,9 +730,10 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	{
 		char *geom = LookInListWin(Scr->WindowGeometries, tmp_win);
 		if(geom) {
-			int mask = XParseGeometry(geom, &tmp_win->attr.x, &tmp_win->attr.y,
-			                          (unsigned int *) &tmp_win->attr.width,
-			                          (unsigned int *) &tmp_win->attr.height);
+			int mask = RLayoutXParseGeometry(Scr->Layout, geom,
+			                                 &tmp_win->attr.x, &tmp_win->attr.y,
+			                                 (unsigned int *) &tmp_win->attr.width,
+			                                 (unsigned int *) &tmp_win->attr.height);
 
 			if(mask & XNegative) {
 				tmp_win->attr.x += Scr->rootw - tmp_win->attr.width;
@@ -726,9 +754,11 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		vroot = Scr->Root;      /* never */
 		tmp_win->parent_vs = Scr->currentvs;
 	}
+#ifdef WINBOX
 	if(winbox) {
 		vroot = winbox->window;
 	}
+#endif
 
 
 	/*
@@ -842,7 +872,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 				   pixels less wide than the screen. */
 				if((tmp_win->attr.x + tmp_win->attr.width)  > Scr->rootw) {
 					available = Scr->rootw - tmp_win->attr.width
-					            - 2 * (bw2 + tmp_win->frame_bw3D);
+					            - 2 * tmp_win->frame_bw3D - bw2;
 
 #ifdef DEBUG
 					fprintf(stderr, "DEBUG[DontMoveOff]: availableX: %d\n",
@@ -872,7 +902,8 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 				   with the title height and the frame widths.  */
 				if((tmp_win->attr.y + tmp_win->attr.height)  > Scr->rooth) {
 					available = Scr->rooth - tmp_win->attr.height
-					            - tmp_win->title_height - 2 * (bw2 + tmp_win->frame_bw3D);
+					            - tmp_win->title_height
+					            - 2 * tmp_win->frame_bw3D - bw2;
 
 #ifdef DEBUG
 					fprintf(stderr, "DEBUG[DontMoveOff]: availableY: %d\n",
@@ -968,9 +999,11 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 					}
 					firsttime = false;
 				}
+#ifdef WINBOX
 				if(winbox) {
 					vroot = winbox->window;
 				}
+#endif
 
 				/*
 				 * wait for buttons to come up; yuck
@@ -1000,15 +1033,16 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 				               tmp_win->name, namelen,
 				               &ink_rect, &logical_rect);
 				width = SIZE_HINDENT + ink_rect.width;
-				height = logical_rect.height + SIZE_VINDENT * 2;
+				height = Scr->SizeFont.height + SIZE_VINDENT * 2;
 
 				XmbTextExtents(Scr->SizeFont.font_set,
 				               ": ", 2,  NULL, &logical_rect);
 				Scr->SizeStringOffset = width + logical_rect.width;
 			}
 
-			XResizeWindow(dpy, Scr->SizeWindow, Scr->SizeStringOffset +
-			              Scr->SizeStringWidth + SIZE_HINDENT, height);
+			MoveResizeSizeWindow(AddingX, AddingY,
+			                     Scr->SizeStringOffset + Scr->SizeStringWidth + SIZE_HINDENT,
+			                     height);
 			XMapRaised(dpy, Scr->SizeWindow);
 			InstallRootColormap();
 			FB(Scr->DefaultC.fore, Scr->DefaultC.back);
@@ -1017,9 +1051,11 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 			                   SIZE_VINDENT + Scr->SizeFont.ascent,
 			                   tmp_win->name, namelen);
 
+#ifdef WINBOX
 			if(winbox) {
 				ConstrainedToWinBox(tmp_win, AddingX, AddingY, &AddingX, &AddingY);
 			}
+#endif
 
 			AddingW = tmp_win->attr.width + bw2 + 2 * tmp_win->frame_bw3D;
 			AddingH = tmp_win->attr.height + tmp_win->title_height +
@@ -1036,8 +1072,8 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 			 * The TryTo*() and DoResize() calls below rely on having
 			 * frame_{width,height} set, so set them.
 			 */
-			tmp_win->frame_width  = AddingW;
-			tmp_win->frame_height = AddingH;
+			tmp_win->frame_width  = AddingW - bw2;
+			tmp_win->frame_height = AddingH - bw2;
 			/*SetFocus (NULL, CurrentTime);*/
 			while(1) {
 				if(Scr->OpenWindowTimeout) {
@@ -1119,8 +1155,9 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 					               ": ", 2,  NULL, &logical_rect);
 					Scr->SizeStringOffset = width + logical_rect.width;
 
-					XResizeWindow(dpy, Scr->SizeWindow, Scr->SizeStringOffset +
-					              Scr->SizeStringWidth + SIZE_HINDENT, height);
+					MoveResizeSizeWindow(event.xbutton.x_root, event.xbutton.y_root,
+					                     Scr->SizeStringOffset + Scr->SizeStringWidth + SIZE_HINDENT,
+					                     height);
 
 					XmbDrawImageString(dpy, Scr->SizeWindow, Scr->SizeFont.font_set,
 					                   Scr->NormalGC, width,
@@ -1206,18 +1243,23 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 					}
 				}
 				else if(event.xbutton.button == Button3) {
-					int maxw = Scr->rootw - Scr->BorderRight  - AddingX - bw2;
-					int maxh = Scr->rooth - Scr->BorderBottom - AddingY - bw2;
+					RArea area;
+					int max_bottom, max_right;
+
+					area = RAreaNew(AddingX, AddingY, AddingW, AddingH);
+
+					max_bottom = RLayoutFindMonitorBottomEdge(Scr->BorderedLayout, &area) - bw2;
+					max_right = RLayoutFindMonitorRightEdge(Scr->BorderedLayout, &area) - bw2;
 
 					/*
 					 * Make window go to bottom of screen, and clip to right edge.
 					 * This is useful when popping up large windows and fixed
 					 * column text windows.
 					 */
-					if(AddingW > maxw) {
-						AddingW = maxw;
+					if(AddingX + AddingW - 1 > max_right) {
+						AddingW = max_right - AddingX + 1;
 					}
-					AddingH = maxh;
+					AddingH = max_bottom - AddingY + 1;
 
 					ConstrainSize(tmp_win, &AddingW, &AddingH);   /* w/o borders */
 					AddingW += bw2;
@@ -1359,20 +1401,7 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	 */
 	if(XGetGeometry(dpy, tmp_win->w, &JunkRoot, &JunkX, &JunkY,
 	                &JunkWidth, &JunkHeight, &JunkBW, &JunkDepth) == 0) {
-		TwmWindow *prev = tmp_win->ring.prev, *next = tmp_win->ring.next;
-
-		if(prev) {
-			prev->ring.next = next;
-		}
-		if(next) {
-			next->ring.prev = prev;
-		}
-		if(Scr->Ring == tmp_win) {
-			Scr->Ring = (next != tmp_win ? next : NULL);
-		}
-		if(!Scr->Ring || Scr->RingLeader == tmp_win) {
-			Scr->RingLeader = Scr->Ring;
-		}
+		UnlinkWindowFromRing(tmp_win);
 
 		/* XXX Leaky as all hell */
 		free(tmp_win);
@@ -1433,16 +1462,59 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 		}
 
 		/* No matter what, make sure SOME part of the window is on-screen */
-		if((tmp_win->frame_x > Scr->rootw) ||
-		                (tmp_win->frame_y > Scr->rooth) ||
-		                ((int)(tmp_win->frame_x + tmp_win->frame_width)  < 0) ||
-		                ((int)(tmp_win->frame_y + tmp_win->frame_height) < 0)) {
-			tmp_win->frame_x = 0;
-			tmp_win->frame_y = 0;
+		{
+			RArea area;
+			int min_x, min_y, max_bottom, max_right;
+			const RLayout *layout = Scr->BorderedLayout;
+
+			area = RAreaNew(tmp_win->frame_x, tmp_win->frame_y,
+			                (int)tmp_win->frame_width,
+			                (int)tmp_win->frame_height);
+
+#ifdef EWMH
+			// Hack: windows with EWMH struts defined are trying to
+			// reserve a bit of the screen for themselves.  We currently
+			// do that by hacking strut'ed space into the BorderedLayout,
+			// which is a bogus way of doing things.  But it also means
+			// that here we're forcing the windows to be outside their
+			// own struts, which is nonsensical.
+			//
+			// Hack around that by making strut'd windows just use
+			// Layout, rather than BorderedLayout.  This is Wrong(tm)
+			// because the whole point of BorderedLayout is space
+			// reservation by the user, which we'd now be ignoring.  Also
+			// just because a window has its own struts doesn't mean it
+			// should get to ignore everyone else's struts too. However,
+			// this is at least consistent with pre-4.1.0 behavior, so
+			// it's not a _new_ bug.  And forcing windows outside their
+			// own reservation is way stupider...
+			if(tmp_win->ewmhFlags & EWMH_HAS_STRUT) {
+				layout = Scr->Layout;
+			}
+#endif
+
+			RLayoutFindTopBottomEdges(layout, &area,
+			                          &min_y, &max_bottom);
+			RLayoutFindLeftRightEdges(layout, &area,
+			                          &min_x, &max_right);
+
+			// These conditions would only be true if the window was
+			// completely off-screen; in that case, the RLayout* calls
+			// above would have found the closest edges to move it to.
+			// We wind up sticking it in the top-left of the
+			// bottom-right-most monitor it would touch.
+			if(area.x > max_right || area.y > max_bottom ||
+			                area.x + area.width <= min_x ||
+			                area.y + area.height <= min_y) {
+				tmp_win->frame_x = min_x;
+				tmp_win->frame_y = min_y;
+			}
 		}
 
+#ifdef VSCREEN
 		/* May need adjusting for vscreens too */
 		DealWithNonSensicalGeometries(dpy, vroot, tmp_win);
+#endif
 
 
 		/*
@@ -1769,12 +1841,14 @@ AddWindow(Window w, AWType wtype, IconMgr *iconp, VirtualScreen *vs)
 	}
 
 
+#ifdef CAPTIVE
 	/*
 	 * If ths window being created is a new captive [sub-]ctwm, we setup
 	 * a property on it for unclear reasons.  x-ref comments on the
 	 * function.
 	 */
 	SetPropsIfCaptiveCtwm(tmp_win);
+#endif
 
 
 	/*
@@ -2014,6 +2088,7 @@ void GrabKeys(TwmWindow *tmp_win)
 #undef ungrabkey
 
 
+#ifdef VSCREEN
 /*
  * This is largely for Xinerama support with VirtualScreens.
  * In this case, windows may be on something other then the main screen
@@ -2072,3 +2147,4 @@ DealWithNonSensicalGeometries(Display *mydpy, Window vroot,
 	}
 
 }
+#endif // VSCREEN

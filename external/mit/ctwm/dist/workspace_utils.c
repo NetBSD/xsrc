@@ -119,9 +119,9 @@ GotoWorkSpace(VirtualScreen *vs, WorkSpace *ws)
 	                twmWin = OtpNextWinUp(twmWin)) {
 		if(twmWin->vs == vs) {
 			if(!OCCUPY(twmWin, newws)) {
-				VirtualScreen *tvs;
 
 				Vanish(vs, twmWin);
+#ifdef VSCREEN
 				/*
 				 * Now that the window has Vanished from one virtual screen,
 				 * check to see if it is wanted on another one.
@@ -129,6 +129,7 @@ GotoWorkSpace(VirtualScreen *vs, WorkSpace *ws)
 				 * top-to-bottom order here.
 				 */
 				if(Scr->numVscreens > 1) {
+					VirtualScreen *tvs;
 					for(tvs = Scr->vScreenList; tvs != NULL; tvs = tvs->next) {
 						if(tvs == vs) { /* no, not back on the old one */
 							continue;
@@ -139,6 +140,7 @@ GotoWorkSpace(VirtualScreen *vs, WorkSpace *ws)
 						}
 					}
 				}
+#endif
 			}
 			else if(twmWin->hasfocusvisible) {
 				focuswindow = twmWin;

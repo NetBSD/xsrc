@@ -30,6 +30,7 @@ ongfiles="${ongfiles} image_xpm.c"
 ongfiles="${ongfiles} image_jpeg.c"
 ongfiles="${ongfiles} parse_m4.c"
 ongfiles="${ongfiles} ewmh.c"
+ongfiles="${ongfiles} xrandr.c"
 
 
 # Top boilerplate

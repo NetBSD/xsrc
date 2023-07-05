@@ -27,6 +27,12 @@ OFILES+=${BDIR}/ewmh.o ${BDIR}/ewmh_atoms.o
 STDSRC+=${RTDIR}/ewmh.c
 GENSRC+=${BDIR}/ewmh_atoms.c
 
+# RANDR
+OPTDEFS+=XRANDR
+_LFLAGS+=-lXrandr
+OFILES+=${BDIR}/xrandr.o
+STDSRC+=${RTDIR}/xrandr.c
+
 
 
 ### Rules for generating various files

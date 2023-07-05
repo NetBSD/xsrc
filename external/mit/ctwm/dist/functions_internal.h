@@ -65,6 +65,14 @@ DFHANDLER(leftzoom);
 DFHANDLER(rightzoom);
 DFHANDLER(topzoom);
 DFHANDLER(bottomzoom);
+DFHANDLER(xhorizoom);
+DFHANDLER(xfullzoom);
+DFHANDLER(xfullscreenzoom);
+DFHANDLER(xleftzoom);
+DFHANDLER(xrightzoom);
+DFHANDLER(xtopzoom);
+DFHANDLER(xbottomzoom);
+DFHANDLER(xzoom);
 DFHANDLER(fill);
 DFHANDLER(initsize);
 DFHANDLER(moveresize);
@@ -94,9 +102,11 @@ DFHANDLER(upworkspace);
 DFHANDLER(downworkspace);
 
 
+#ifdef CAPTIVE
 /* functions_captive.c */
 DFHANDLER(adoptwindow);
 DFHANDLER(hypermove);
+#endif
 
 
 /* functions_identify.c */
@@ -157,7 +167,9 @@ DFHANDLER(quit);
 DFHANDLER(restart);
 DFHANDLER(beep);
 DFHANDLER(trace);
+#ifdef WINBOX
 DFHANDLER(fittocontent);
+#endif
 DFHANDLER(showbackground);
 DFHANDLER(raiseicons);
 DFHANDLER(rescuewindows);
@@ -182,6 +194,5 @@ extern Time last_time;
 
 /* Several places need to frob this to leave the cursor alone */
 extern bool func_reset_cursor;
-
 
 #endif /* _CTWM_FUNCTIONS_INTERNAL_H */

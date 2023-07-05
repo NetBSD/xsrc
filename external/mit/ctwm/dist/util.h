@@ -20,11 +20,23 @@
 #include <ctype.h>
 #include <stdio.h>
 
+
+/* Simple int utils */
+static inline int max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+static inline int min(int a, int b)
+{
+	return a < b ? a : b;
+}
+
 #ifndef MAX
-#define MAX(x,y) ((x)>(y)?(x):(y))
+#define MAX(x,y) (max(x,y))
 #endif
 #ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
+#define MIN(x,y) (min(x,y))
 #endif
 #ifndef ABS
 #define ABS(x) ((x)<0?-(x):(x))
@@ -48,8 +60,8 @@ char     *ExpandFilePath(char *path);
 
 void GetColor(int kind, Pixel *what, const char *name);
 void GetShadeColors(ColorPair *cp);
-void GetFont(MyFont *font);
 bool UpdateFont(MyFont *font, int height);
+void CreateFonts(ScreenInfo *scr);
 #if 0
 void move_to_after(TwmWindow *t, TwmWindow *after);
 #endif

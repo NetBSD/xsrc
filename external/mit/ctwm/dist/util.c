@@ -143,11 +143,25 @@ ExpandFilename(const char *name)
 }
 
 
+
+/*
+ * Some color utils
+ */
+/**
+ * Get info from the server about a given color.
+ */
 void
 GetColor(int kind, Pixel *what, const char *name)
 {
 	XColor color;
 	Colormap cmap = Scr->RootColormaps.cwins[0]->colormap->c;
+
+	// If we have no valid X connection (generally means a --cfgchk or
+	// similar run; wont' happen in normal operations), just stub out.
+	if(dpy == NULL) {
+		*what = 0;
+		return;
+	}
 
 #ifndef TOM
 	if(!Scr->FirstTime) {
@@ -223,7 +237,12 @@ gotit:
 	return;
 }
 
-void GetShadeColors(ColorPair *cp)
+
+/**
+ * Try and create a 'shaded' version of a color for prettier UI.
+ */
+void
+GetShadeColors(ColorPair *cp)
 {
 	XColor      xcol;
 	Colormap    cmap = Scr->RootColormaps.cwins[0]->colormap->c;
@@ -231,6 +250,14 @@ void GetShadeColors(ColorPair *cp)
 	float       clearfactor;
 	float       darkfactor;
 	char        clearcol [32], darkcol [32];
+
+	// If we have no valid X connection (generally means a --cfgchk or
+	// similar run; wont' happen in normal operations), just stub out.
+	if(dpy == NULL) {
+		cp->shadc = 0;
+		cp->shadd = 0;
+		return;
+	}
 
 	clearfactor = (float) Scr->ClearShadowContrast / 100.0;
 	darkfactor  = (100.0 - (float) Scr->DarkShadowContrast)  / 100.0;
@@ -253,6 +280,14 @@ void GetShadeColors(ColorPair *cp)
 	Scr->FirstTime = save;
 }
 
+
+
+/*
+ * Various font utils
+ */
+/**
+ * Try adjusting a font's height.  Used in drawing the icon manager.
+ */
 bool
 UpdateFont(MyFont *font, int height)
 {
@@ -271,7 +306,12 @@ UpdateFont(MyFont *font, int height)
 	return (prev != font->avg_height);
 }
 
-void GetFont(MyFont *font)
+
+/**
+ * Load up fontsets from the X server.  Only used by CreateFonts() below.
+ */
+static void
+GetFont(MyFont *font)
 {
 	char *deffontname = "fixed,*";
 	char **missing_charset_list_return;
@@ -285,6 +325,14 @@ void GetFont(MyFont *font)
 	int descent;
 	int fnum;
 	char *basename2;
+
+	// In special cases where we have no dpy, I don't think we're going
+	// to need details here, so just leave things untouched.  We may need
+	// to stub in some magic values; deal with that when we run into the
+	// case.
+	if(dpy == NULL) {
+		return;
+	}
 
 	if(font->font_set != NULL) {
 		XFreeFontSet(dpy, font->font_set);
@@ -326,6 +374,27 @@ void GetFont(MyFont *font)
 	font->avg_fheight = 0.0;
 	font->avg_count = 0;
 }
+
+
+/**
+ * Load up our various defined fonts
+ */
+void
+CreateFonts(ScreenInfo *scr)
+{
+#define LOADFONT(fld) (GetFont(&scr->fld##Font))
+	LOADFONT(TitleBar);
+	LOADFONT(Menu);
+	LOADFONT(Icon);
+	LOADFONT(Size);
+	LOADFONT(IconManager);
+	LOADFONT(Default);
+	LOADFONT(workSpaceMgr.window);
+#undef LOADFONT
+
+	scr->HaveFonts = true;
+}
+
 
 
 #if 0
@@ -395,6 +464,10 @@ void move_to_after(TwmWindow *t, TwmWindow *after)
 #endif
 
 
+
+/**
+ * Backend for f.rescuewindows
+ */
 void RescueWindows(void)
 {
 	TwmWindow *twm_win = Scr->FirstWindow;
@@ -471,7 +544,13 @@ void RescueWindows(void)
 	}
 }
 
-void DebugTrace(char *file)
+
+
+/**
+ * Backend for f.trace
+ */
+void
+DebugTrace(char *file)
 {
 	if(!file) {
 		return;
@@ -493,6 +572,7 @@ void DebugTrace(char *file)
 		fprintf(stderr, "logging events to : %s\n", file);
 	}
 }
+
 
 
 /*

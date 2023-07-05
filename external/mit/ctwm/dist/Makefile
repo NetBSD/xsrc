@@ -2,9 +2,10 @@
 all build ctwm man man-html man-all install clean: build/Makefile
 	( cd build && ${MAKE} ${@} )
 
+CMAKE?=cmake
 build/Makefile cmake: CMakeLists.txt
 	( mkdir -p build && cd build && \
-		cmake -DCMAKE_C_FLAGS:STRING="${CFLAGS}" ${CMAKE_EXTRAS} .. )
+		${CMAKE} -DCMAKE_C_FLAGS:STRING="${CFLAGS}" ${CMAKE_EXTRAS} .. )
 
 allclean distclean:
 	rm -rf build/*
@@ -22,13 +23,13 @@ man-pdf doxygen doxyclean tags: build/Makefile
 
 # Make sure everything's build before running tests
 .PHONY: test
-test:
+test: build/Makefile
 	( cd build && ${MAKE} test_bins )
 	( cd build && ${MAKE} CTEST_OUTPUT_ON_FAILURE=1 ${@} )
 
 # Reindent files
 indent:
-	astyle -n --options=tools/ctwm.astyle *.h *.c
+	astyle -n --options=tools/ctwm.astyle *.[ch] tests/*/*.[ch]
 
 
 # Build documentation files
@@ -83,7 +84,8 @@ ${GEN}/lex.c: ${GEN} lex.l build/MKTAR_GENFILES
 
 # Setup version file
 ${GEN}/version.c.in: ${GEN} version.c.in .bzr/checkout/dirstate
-	tools/rewrite_version_bzr.sh < version.c.in > ${GEN}/version.c.in
+	env BZR_CMD=brz tools/rewrite_version_bzr.sh < version.c.in \
+			> ${GEN}/version.c.in
 
 # Generate pregen'd manuals
 ${GEN}/ctwm.1: ${UMAN}/ctwm.1

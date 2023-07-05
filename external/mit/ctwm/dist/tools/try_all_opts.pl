@@ -38,6 +38,10 @@ my %OPTS = (
 	USE_EWMH =>  {
 		desc => 'EWMH support',
 	},
+	USE_XRANDR =>  {
+		desc => 'XRANDR support',
+		req_i => 'X11/extensions/Xrandr.h',
+	},
 );
 
 # Default include paths to check
@@ -117,6 +121,10 @@ my $tmpbase = $ENV{TMPDIR} // "/tmp";
 my $tmpdir = File::Temp->newdir("ctwm-opts-XXXXXXXX",
 		DIR => $tmpbase, CLEANUP => !$CLOPTS{keep});
 print "Testing in $tmpdir...\n";
+
+
+# Clear $DISPLAY
+delete $ENV{DISPLAY};
 
 
 # Now, actually running them.

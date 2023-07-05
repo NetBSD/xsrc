@@ -44,6 +44,10 @@ GetImage(const char *name, ColorPair cp)
 	if(name == NULL) {
 		return NULL;
 	}
+	if(dpy == NULL) {
+		// May happen in special cases like --cfgchk with no $DISPLAY
+		return NULL;
+	}
 	image = NULL;
 
 	list = &Scr->ImageCache;

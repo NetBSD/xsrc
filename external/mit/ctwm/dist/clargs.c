@@ -36,9 +36,11 @@ ctwm_cl_args CLarg = {
 #else
 	.ShowWelcomeWindow  = true,
 #endif
+#ifdef CAPTIVE
 	.is_captive      = false,
 	.capwin          = (Window) 0,
 	.captivename     = NULL,
+#endif
 #ifdef USEM4
 	.KeepTmpFile     = false,
 	.keepM4_filename = NULL,
@@ -84,9 +86,11 @@ clargs_parse(int argc, char *argv[])
 
 		/* Misc control bits */
 		{ "display",   required_argument, NULL, 'd' },
+		{ "xrm",       required_argument, NULL, 0 },
+#ifdef CAPTIVE
 		{ "window",    optional_argument, NULL, 'w' },
 		{ "name",      required_argument, NULL, 0 },
-		{ "xrm",       required_argument, NULL, 0 },
+#endif
 
 #ifdef EWMH
 		{ "replace",   no_argument,       NULL, 0 },
@@ -113,7 +117,10 @@ clargs_parse(int argc, char *argv[])
 	 * I assume '::' for optional args is portable; getopt_long(3)
 	 * doesn't describe it, but it's a GNU extension for getopt(3).
 	 */
-	const char *short_options = "vqWf:hd:w::"
+	const char *short_options = "vqWf:hd:"
+#ifdef CAPTIVE
+	                            "w::"
+#endif
 #ifdef USEM4
 	                            "kK:n"
 #endif
@@ -180,6 +187,7 @@ clargs_parse(int argc, char *argv[])
 			case 'd':
 				CLarg.display_name = optarg;
 				break;
+#ifdef CAPTIVE
 			case 'w':
 				CLarg.is_captive = true;
 				CLarg.MultiScreen = false;
@@ -188,6 +196,7 @@ clargs_parse(int argc, char *argv[])
 					/* Failure will just leave capwin as initialized */
 				}
 				break;
+#endif
 
 #ifdef USEM4
 			/* Args that only mean anything if we're built with m4 */
@@ -230,10 +239,12 @@ clargs_parse(int argc, char *argv[])
 #endif
 
 				/* Simple value-setting */
+#ifdef CAPTIVE
 				IFIS("name") {
 					CLarg.captivename = optarg;
 					break;
 				}
+#endif
 				IFIS("clientId") {
 					CLarg.client_id = optarg;
 					break;
@@ -320,11 +331,25 @@ clargs_check(void)
 	}
 #endif
 
+#ifdef CAPTIVE
 	/* If we're not captive, captivename is meaningless too */
 	if(CLarg.captivename && !CLarg.is_captive) {
 		fprintf(stderr, "--name is meaningless without --window.\n");
 		usage();
 	}
+
+	/*
+	 * Being captive and --cfgchk'ing is kinda meaningless.  There's no
+	 * reason to create a window just to destroy things, and it never
+	 * adds anything.  And it's one more way we're forcing changes on the
+	 * X side before we parse the actual config, so let's just disallow
+	 * it.
+	 */
+	if(CLarg.is_captive && CLarg.cfgchk) {
+		fprintf(stderr, "--window is incompatible with --cfgchk.\n");
+		usage();
+	}
+#endif
 
 	/* Guess that's it */
 	return;
@@ -361,7 +386,9 @@ usage(void)
 	fprintf(stderr, "%*s[--version]  [--info]  [--nowelcome | -W]\n",
 	        llen, "");
 
+#ifdef CAPTIVE
 	fprintf(stderr, "%*s[(--window | -w) [win-id]]  [--name name]\n", llen, "");
+#endif
 
 	/* Semi-intentionally not documenting --clientId/--restore */
 

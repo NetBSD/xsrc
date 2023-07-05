@@ -21,6 +21,9 @@
 #include "list.h"
 #include "occupation.h"
 #include "otp.h"
+#include "r_area.h"
+#include "r_area_list.h"
+#include "r_layout.h"
 #include "screen.h"
 #include "util.h"
 #include "win_decorations.h"
@@ -488,6 +491,20 @@ DisplayPosition(const TwmWindow *_unused_tmp_win, int x, int y)
 	                   Scr->SizeFont.ascent + SIZE_VINDENT, str, 13);
 }
 
+void
+MoveResizeSizeWindow(int x, int y, unsigned int width, unsigned int height)
+{
+	XResizeWindow(dpy, Scr->SizeWindow, width, height);
+
+	if(Scr->CenterFeedbackWindow) {
+		RArea monitor = RLayoutGetAreaAtXY(Scr->BorderedLayout, x, y);
+
+		XMoveWindow(dpy, Scr->SizeWindow,
+		            monitor.x + monitor.width / 2 - width / 2,
+		            monitor.y + monitor.height / 2 - height / 2);
+	}
+}
+
 
 /*
  * Various funcs for adjusting coordinates for windows based on
@@ -495,24 +512,75 @@ DisplayPosition(const TwmWindow *_unused_tmp_win, int x, int y)
  *
  * XXX In desperate need of better commenting.
  */
+static void
+_tryToPack(RArea *final, const RArea *cur_win)
+{
+	if(final->x >= cur_win->x + cur_win->width) {
+		return;
+	}
+	if(final->y >= cur_win->y + cur_win->height) {
+		return;
+	}
+	if(final->x + final->width <= cur_win->x) {
+		return;
+	}
+	if(final->y + final->height <= cur_win->y) {
+		return;
+	}
+
+	if(final->x + Scr->MovePackResistance > cur_win->x +
+	                cur_win->width) {  /* left */
+		final->x = MAX(final->x, cur_win->x + cur_win->width);
+		return;
+	}
+	if(final->x + final->width < cur_win->x +
+	                Scr->MovePackResistance) {  /* right */
+		final->x = MIN(final->x, cur_win->x - final->width);
+		return;
+	}
+	if(final->y + Scr->MovePackResistance > cur_win->y +
+	                cur_win->height) {  /* top */
+		final->y = MAX(final->y, cur_win->y + cur_win->height);
+		return;
+	}
+	if(final->y + final->height < cur_win->y +
+	                Scr->MovePackResistance) {  /* bottom */
+		final->y = MIN(final->y, cur_win->y - final->height);
+	}
+}
+
+static bool
+_tryToPackVsEachMonitor(const RArea *monitor_area, void *vfinal)
+{
+	_tryToPack((RArea *)vfinal, monitor_area);
+	return false;
+}
+
 void
 TryToPack(TwmWindow *tmp_win, int *x, int *y)
 {
 	TwmWindow   *t;
-	int         newx, newy;
-	int         w, h;
-	int         winw = tmp_win->frame_width  + 2 * tmp_win->frame_bw;
-	int         winh = tmp_win->frame_height + 2 * tmp_win->frame_bw;
+	RArea cur_win;
+	RArea final = RAreaNew(*x, *y,
+	                       tmp_win->frame_width  + 2 * tmp_win->frame_bw,
+	                       tmp_win->frame_height + 2 * tmp_win->frame_bw);
 
-	newx = *x;
-	newy = *y;
+	/* Global layout is not a single rectangle, check against the
+	 * monitor borders */
+	if(Scr->BorderedLayout->horiz->len > 1) {
+		RAreaListForeach(
+		        Scr->BorderedLayout->monitors, _tryToPackVsEachMonitor, &final);
+	}
+
 	for(t = Scr->FirstWindow; t != NULL; t = t->next) {
 		if(t == tmp_win) {
 			continue;
 		}
+#ifdef WINBOX
 		if(t->winbox != tmp_win->winbox) {
 			continue;
 		}
+#endif
 		if(t->vs != tmp_win->vs) {
 			continue;
 		}
@@ -520,40 +588,15 @@ TryToPack(TwmWindow *tmp_win, int *x, int *y)
 			continue;
 		}
 
-		w = t->frame_width  + 2 * t->frame_bw;
-		h = t->frame_height + 2 * t->frame_bw;
-		if(newx >= t->frame_x + w) {
-			continue;
-		}
-		if(newy >= t->frame_y + h) {
-			continue;
-		}
-		if(newx + winw <= t->frame_x) {
-			continue;
-		}
-		if(newy + winh <= t->frame_y) {
-			continue;
-		}
+		cur_win = RAreaNew(t->frame_x, t->frame_y,
+		                   t->frame_width  + 2 * t->frame_bw,
+		                   t->frame_height + 2 * t->frame_bw);
 
-		if(newx + Scr->MovePackResistance > t->frame_x + w) {  /* left */
-			newx = MAX(newx, t->frame_x + w);
-			continue;
-		}
-		if(newx + winw < t->frame_x + Scr->MovePackResistance) {  /* right */
-			newx = MIN(newx, t->frame_x - winw);
-			continue;
-		}
-		if(newy + Scr->MovePackResistance > t->frame_y + h) {  /* top */
-			newy = MAX(newy, t->frame_y + h);
-			continue;
-		}
-		if(newy + winh < t->frame_y + Scr->MovePackResistance) {  /* bottom */
-			newy = MIN(newy, t->frame_y - winh);
-			continue;
-		}
+		_tryToPack(&final, &cur_win);
 	}
-	*x = newx;
-	*y = newy;
+
+	*x = final.x;
+	*y = final.y;
 }
 
 
@@ -590,9 +633,11 @@ TryToPush_be(TwmWindow *tmp_win, int x, int y, PushDirection dir)
 		if(t == tmp_win) {
 			continue;
 		}
+#ifdef WINBOX
 		if(t->winbox != tmp_win->winbox) {
 			continue;
 		}
+#endif
 		if(t->vs != tmp_win->vs) {
 			continue;
 		}
@@ -701,6 +746,7 @@ TryToGrid(TwmWindow *tmp_win, int *x, int *y)
 
 
 
+#ifdef WINBOX
 /*
  * Functions related to keeping windows from being placed off-screen (or
  * off-screen too far).  Involved in handling of params like DontMoveOff
@@ -708,21 +754,82 @@ TryToGrid(TwmWindow *tmp_win, int *x, int *y)
  */
 static void ConstrainLeftTop(int *value, int border);
 static void ConstrainRightBottom(int *value, int size1, int border, int size2);
+#endif
+
+bool
+ConstrainByLayout(RLayout *layout, int move_off_res, int *left, int width,
+                  int *top, int height)
+{
+	RArea area = RAreaNew(*left, *top, width, height);
+	int limit;
+	bool clipped = false;
+
+	limit = RLayoutFindBottomEdge(layout, &area) - height + 1;
+	if(area.y > limit) {
+		if(move_off_res >= 0 && area.y >= limit + move_off_res) {
+			area.y -= move_off_res;
+		}
+		else {
+			area.y = limit;
+			clipped = true;
+		}
+	}
+
+	limit = RLayoutFindRightEdge(layout, &area) - width + 1;
+	if(area.x > limit) {
+		if(move_off_res >= 0 && area.x >= limit + move_off_res) {
+			area.x -= move_off_res;
+		}
+		else {
+			area.x = limit;
+			clipped = true;
+		}
+	}
+
+	limit = RLayoutFindLeftEdge(layout, &area);
+	if(area.x < limit) {
+		if(move_off_res >= 0 && area.x <= limit - move_off_res) {
+			area.x += move_off_res;
+		}
+		else {
+			area.x = limit;
+			clipped = true;
+		}
+	}
+
+	limit = RLayoutFindTopEdge(layout, &area);
+	if(area.y < limit) {
+		if(move_off_res >= 0 && area.y <= limit - move_off_res) {
+			area.y += move_off_res;
+		}
+		else {
+			area.y = limit;
+			clipped = true;
+		}
+	}
+
+	*left = area.x;
+	*top = area.y;
+
+	return clipped;
+}
 
 void
 ConstrainByBorders1(int *left, int width, int *top, int height)
 {
-	ConstrainRightBottom(left, width, Scr->BorderRight, Scr->rootw);
-	ConstrainLeftTop(left, Scr->BorderLeft);
-	ConstrainRightBottom(top, height, Scr->BorderBottom, Scr->rooth);
-	ConstrainLeftTop(top, Scr->BorderTop);
+	ConstrainByLayout(Scr->BorderedLayout, Scr->MoveOffResistance,
+	                  left, width, top, height);
 }
 
 void
 ConstrainByBorders(TwmWindow *twmwin, int *left, int width,
                    int *top, int height)
 {
-	if(twmwin->winbox) {
+	if(false) {
+		// Dummy
+	}
+#ifdef WINBOX
+	else if(twmwin->winbox) {
 		XWindowAttributes attr;
 		XGetWindowAttributes(dpy, twmwin->winbox->window, &attr);
 		ConstrainRightBottom(left, width, 0, attr.width);
@@ -730,11 +837,13 @@ ConstrainByBorders(TwmWindow *twmwin, int *left, int width,
 		ConstrainRightBottom(top, height, 0, attr.height);
 		ConstrainLeftTop(top, 0);
 	}
+#endif
 	else {
 		ConstrainByBorders1(left, width, top, height);
 	}
 }
 
+#ifdef WINBOX
 static void
 ConstrainLeftTop(int *value, int border)
 {
@@ -764,6 +873,7 @@ ConstrainRightBottom(int *value, int size1, int border, int size2)
 		}
 	}
 }
+#endif
 
 
 /*

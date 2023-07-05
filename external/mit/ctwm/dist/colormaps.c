@@ -97,7 +97,7 @@ InstallColormaps(int type, Colormaps *cmaps)
 
 	state = CM_INSTALLED;
 
-	for(i = n = 0; i < number_cwins; i++) {
+	for(i = 0; i < number_cwins; i++) {
 		cwins[i]->colormap->state &= ~CM_INSTALL;
 	}
 	for(i = n = 0; i < number_cwins && n < Scr->cmapInfo.maxCmaps; i++) {
@@ -123,6 +123,12 @@ InstallColormaps(int type, Colormaps *cmaps)
 			cmap->state |= CM_INSTALL;
 		}
 	}
+
+	// Hack: special-case startup
+	if(!dpy) {
+		return true;
+	}
+
 	Scr->cmapInfo.first_req = NextRequest(dpy);
 
 	for(; n > 0 && maxcwin >= &cwins[0]; maxcwin--) {
@@ -241,17 +247,19 @@ CreateTwmColormap(Colormap c)
 {
 	TwmColormap *cmap;
 	cmap = malloc(sizeof(TwmColormap));
-	if(!cmap || XSaveContext(dpy, c, ColormapContext, (XPointer) cmap)) {
-		if(cmap) {
-			free(cmap);
-		}
-		return (NULL);
+	if(!cmap) {
+		return NULL;
 	}
 	cmap->c = c;
 	cmap->state = 0;
 	cmap->install_req = 0;
 	cmap->w = None;
 	cmap->refcnt = 1;
+
+	if(XSaveContext(dpy, c, ColormapContext, (XPointer) cmap)) {
+		free(cmap);
+		return NULL;
+	}
 	return (cmap);
 }
 
@@ -270,48 +278,63 @@ CreateColormapWindow(Window w, bool creating_parent, bool property_window)
 	XWindowAttributes attributes;
 
 	cwin = malloc(sizeof(ColormapWindow));
-	if(cwin) {
-		if(!XGetWindowAttributes(dpy, w, &attributes) ||
-		                XSaveContext(dpy, w, ColormapContext, (XPointer) cwin)) {
+	if(cwin == NULL) {
+		return NULL;
+	}
+
+	// Common
+	cwin->w = w;
+
+	/*
+	 * Assume that windows in colormap list are
+	 * obscured if we are creating the parent window.
+	 * Otherwise, we assume they are unobscured.
+	 */
+	cwin->visibility = creating_parent ?
+	                   VisibilityPartiallyObscured : VisibilityUnobscured;
+	cwin->refcnt = 1;
+
+
+	// Stub for special cases
+	if(dpy == NULL) {
+		cwin->colormap = NULL;
+		cwin->colormap = calloc(1, sizeof(TwmColormap));
+		cwin->colormap->refcnt = 1;
+
+		return cwin;
+	}
+
+
+	if(!XGetWindowAttributes(dpy, w, &attributes) ||
+	                XSaveContext(dpy, w, ColormapContext, (XPointer) cwin)) {
+		free(cwin);
+		return (NULL);
+	}
+
+	if(XFindContext(dpy, attributes.colormap,  ColormapContext,
+	                (XPointer *)&cwin->colormap) == XCNOENT) {
+		cwin->colormap = cmap = CreateTwmColormap(attributes.colormap);
+		if(!cmap) {
+			XDeleteContext(dpy, w, ColormapContext);
 			free(cwin);
 			return (NULL);
 		}
+	}
+	else {
+		cwin->colormap->refcnt++;
+	}
 
-		if(XFindContext(dpy, attributes.colormap,  ColormapContext,
-		                (XPointer *)&cwin->colormap) == XCNOENT) {
-			cwin->colormap = cmap = CreateTwmColormap(attributes.colormap);
-			if(!cmap) {
-				XDeleteContext(dpy, w, ColormapContext);
-				free(cwin);
-				return (NULL);
-			}
-		}
-		else {
-			cwin->colormap->refcnt++;
-		}
-
-		cwin->w = w;
-		/*
-		 * Assume that windows in colormap list are
-		 * obscured if we are creating the parent window.
-		 * Otherwise, we assume they are unobscured.
-		 */
-		cwin->visibility = creating_parent ?
-		                   VisibilityPartiallyObscured : VisibilityUnobscured;
-		cwin->refcnt = 1;
-
-		/*
-		 * If this is a ColormapWindow property window and we
-		 * are not monitoring ColormapNotify or VisibilityNotify
-		 * events, we need to.
-		 */
-		if(property_window &&
-		                (attributes.your_event_mask &
-		                 (ColormapChangeMask | VisibilityChangeMask)) !=
-		                (ColormapChangeMask | VisibilityChangeMask)) {
-			XSelectInput(dpy, w, attributes.your_event_mask |
-			             (ColormapChangeMask | VisibilityChangeMask));
-		}
+	/*
+	 * If this is a ColormapWindow property window and we
+	 * are not monitoring ColormapNotify or VisibilityNotify
+	 * events, we need to.
+	 */
+	if(property_window &&
+	                (attributes.your_event_mask &
+	                 (ColormapChangeMask | VisibilityChangeMask)) !=
+	                (ColormapChangeMask | VisibilityChangeMask)) {
+		XSelectInput(dpy, w, attributes.your_event_mask |
+		             (ColormapChangeMask | VisibilityChangeMask));
 	}
 
 	return (cwin);
@@ -549,11 +572,12 @@ InsertRGBColormap(Atom a, XStandardColormap *maps, int nmaps,
 			        ProgramName, (unsigned long) sizeof(StdCmap));
 			return;
 		}
+		replace = false;  // Didn't find one, can't replace
 	}
 
 	if(replace) {                       /* just update contents */
 		if(sc->maps) {
-			XFree(maps);
+			XFree(sc->maps);
 		}
 		if(sc == Scr->StdCmapInfo.mru) {
 			Scr->StdCmapInfo.mru = NULL;

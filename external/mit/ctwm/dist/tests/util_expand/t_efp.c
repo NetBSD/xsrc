@@ -18,8 +18,9 @@ main(int argc, char *argv[])
 #define EXPECT "foo:FOO/bar"
 
 	char *ret = ExpandFilePath(in);
-	if(strcmp(ret, EXPECT) == 0)
+	if(strcmp(ret, EXPECT) == 0) {
 		exit(0);
+	}
 	fprintf(stderr, "'%s' != expected '%s'\n", ret, EXPECT);
 	exit(1);
 }

@@ -10,3 +10,4 @@ doc/devman/build
 doc/manual/ctwm.1
 doc/manual/ctwm.1.xml
 tags
+compile_commands.json

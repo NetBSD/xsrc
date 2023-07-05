@@ -17,12 +17,13 @@ set(CTWMSRC
 	# Basic files  ##STDSRC-START
 	add_window.c
 	animate.c
-	captive.c
 	clargs.c
 	clicktofocus.c
 	colormaps.c
 	ctopts.c
 	ctwm_main.c
+	ctwm_shutdown.c
+	ctwm_takeover.c
 	cursor.c
 	drawing.c
 	event_core.c
@@ -30,7 +31,6 @@ set(CTWMSRC
 	event_names.c
 	event_utils.c
 	functions.c
-	functions_captive.c
 	functions_icmgr_wsmgr.c
 	functions_identify.c
 	functions_misc.c
@@ -55,7 +55,10 @@ set(CTWMSRC
 	parse.c
 	parse_be.c
 	parse_yacc.c
-	session.c
+	r_area.c
+	r_area_list.c
+	r_layout.c
+	signals.c
 	util.c
 	vscreen.c
 	win_decorations.c
@@ -64,11 +67,12 @@ set(CTWMSRC
 	win_ops.c
 	win_regions.c
 	win_resize.c
+	win_ring.c
 	win_utils.c
-	windowbox.c
 	workspace_config.c
 	workspace_manager.c
 	workspace_utils.c
+	xparsegeometry.c
 
 	# External libs
 	ext/repl_str.c

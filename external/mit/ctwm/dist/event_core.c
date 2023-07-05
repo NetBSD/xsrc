@@ -35,7 +35,9 @@
 #include <X11/extensions/shape.h>
 
 #include "animate.h"
+#ifdef CAPTIVE
 #include "captive.h"
+#endif
 #include "colormaps.h"
 #include "events.h"
 #include "event_handlers.h"
@@ -45,6 +47,7 @@
 #include "iconmgr.h"
 #include "image.h"
 #include "screen.h"
+#include "signals.h"
 #include "util.h"
 #include "version.h"
 #include "win_utils.h"
@@ -221,8 +224,8 @@ CtwmNextEvent(Display *display, XEvent *event)
 
 #define NEXTEVENT XtAppNextEvent(appContext, event)
 
-	if(RestartFlag) {
-		DoRestart(CurrentTime);
+	if(SignalFlag) {
+		handle_signal_flag(CurrentTime);
 	}
 	if(XEventsQueued(display, QueuedAfterFlush) != 0) {
 		NEXTEVENT;
@@ -233,8 +236,8 @@ CtwmNextEvent(Display *display, XEvent *event)
 	if(animate) {
 		TryToAnimate();
 	}
-	if(RestartFlag) {
-		DoRestart(CurrentTime);
+	if(SignalFlag) {
+		handle_signal_flag(CurrentTime);
 	}
 	if(! MaybeAnimate) {
 		NEXTEVENT;
@@ -253,8 +256,8 @@ CtwmNextEvent(Display *display, XEvent *event)
 			timeout = AnimateTimeout;
 		}
 		found = select(fd + 1, &mask, NULL, NULL, tout);
-		if(RestartFlag) {
-			DoRestart(CurrentTime);
+		if(SignalFlag) {
+			handle_signal_flag(CurrentTime);
 		}
 		if(found < 0) {
 			if(errno != EINTR) {
@@ -270,8 +273,8 @@ CtwmNextEvent(Display *display, XEvent *event)
 			if(animate) {
 				TryToAnimate();
 			}
-			if(RestartFlag) {
-				DoRestart(CurrentTime);
+			if(SignalFlag) {
+				handle_signal_flag(CurrentTime);
 			}
 			if(! MaybeAnimate) {
 				NEXTEVENT;
@@ -315,6 +318,7 @@ DispatchEvent(void)
 	}
 	Scr = thisScr;
 
+#ifdef CAPTIVE
 	if(CLarg.is_captive) {
 		if((Event.type == ConfigureNotify)
 		                && (Event.xconfigure.window == Scr->CaptiveRoot)) {
@@ -322,6 +326,7 @@ DispatchEvent(void)
 			return false;
 		}
 	}
+#endif
 	FixRootEvent(&Event);
 	if(Event.type >= 0 && Event.type < MAX_X_EVENT) {
 #ifdef SOUNDS

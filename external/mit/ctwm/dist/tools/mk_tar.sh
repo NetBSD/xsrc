@@ -3,7 +3,7 @@
 # Setup and generate a release tarball
 
 # Make sure we're in the expected root of the tree
-rtdir=`bzr root $0`
+rtdir=`brz root $0`
 cd $rtdir
 
 # Figure out version
@@ -13,7 +13,7 @@ if [ ! -z "$1" ]; then
 	version=$1
 elif echo -n $version | grep -q '[^0-9\.]'; then
 	# If it's a non-release, append date
-    version="$version.`date '+%Y%m%d'`"
+	version="$version.`date '+%Y%m%d'`"
 fi
 
 # Setup the dir
@@ -31,7 +31,7 @@ fi
 mkdir -pm755 $dir
 
 # Create a totally fresh branch in it
-bzr branch --use-existing-dir $rtdir $dir
+brz branch --use-existing-dir $rtdir $dir
 
 # Do various setup in the branch to prepare
 (

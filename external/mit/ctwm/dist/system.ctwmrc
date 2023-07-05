@@ -138,7 +138,6 @@ menu "windowops" {
     ""			f.separator
     "Resize"		f.resize
     "Move"		f.move
-    "Adopt Window"	f.adoptwindow
     "Animate"		f.startanimation
     "Don't animate"	f.stopanimation
     ""			f.separator

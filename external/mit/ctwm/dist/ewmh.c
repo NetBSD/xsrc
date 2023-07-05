@@ -35,6 +35,7 @@
 #include <X11/extensions/shape.h>
 
 #include "ctwm_atoms.h"
+#include "ctwm_shutdown.h"
 #include "ewmh_atoms.h"
 #include "screen.h"
 #include "events.h"
@@ -46,6 +47,8 @@
 #include "list.h"
 #include "functions.h"
 #include "occupation.h"
+#include "r_layout.h"
+#include "util.h"
 #include "vscreen.h"
 #include "win_iconify.h"
 #include "win_ops.h"
@@ -80,6 +83,7 @@ static void EwmhClientMessage_NET_WM_DESKTOP(XClientMessageEvent *msg);
 static void EwmhClientMessage_NET_WM_STATE(XClientMessageEvent *msg);
 static void EwmhClientMessage_NET_ACTIVE_WINDOW(XClientMessageEvent *msg);
 static void EwmhClientMessage_NET_WM_MOVERESIZE(XClientMessageEvent *msg);
+static void EwmhClientMessage_NET_CLOSE_WINDOW(XClientMessageEvent *msg);
 static XEvent synth_btnevent_for_moveresize(TwmWindow *twm_win);
 static unsigned long EwmhGetWindowProperty(Window w, Atom name, Atom type);
 static void EwmhGetStrut(TwmWindow *twm_win, bool update);
@@ -193,11 +197,6 @@ static bool EwmhReplaceWM(ScreenInfo *scr)
 	Atom wmAtom;
 	Window selectionOwner;
 
-	/* If we're not trying to take over the screen, don't do this at all */
-	if(!scr->takeover) {
-		return false;
-	}
-
 	snprintf(atomname, sizeof(atomname), "WM_S%d", scr->screen);
 	wmAtom = XInternAtom(dpy, atomname, False);
 
@@ -309,14 +308,6 @@ bool EwmhInitScreenEarly(ScreenInfo *scr)
 {
 	XSetWindowAttributes attrib;
 
-	scr->ewmh_CLIENT_LIST_used = 0;
-	scr->ewmh_CLIENT_LIST_size = 16;
-	scr->ewmh_CLIENT_LIST = calloc(scr->ewmh_CLIENT_LIST_size,
-	                               sizeof(scr->ewmh_CLIENT_LIST[0]));
-	if(scr->ewmh_CLIENT_LIST == NULL) {
-		return false;
-	}
-
 #ifdef DEBUG_EWMH
 	fprintf(stderr, "EwmhInitScreenEarly: XCreateWindow\n");
 #endif
@@ -344,8 +335,6 @@ bool EwmhInitScreenEarly(ScreenInfo *scr)
 #endif
 		return false;
 	}
-
-	scr->ewmhStruts = NULL;
 
 #ifdef DEBUG_EWMH
 	fprintf(stderr, "EwmhInitScreenEarly: return true\n");
@@ -458,6 +447,7 @@ void EwmhInitScreenLate(ScreenInfo *scr)
 	supported[i++] = XA__NET_WM_STATE_SHADED;
 	supported[i++] = XA__NET_WM_STATE_ABOVE;
 	supported[i++] = XA__NET_WM_STATE_BELOW;
+	supported[i++] = XA__NET_CLOSE_WINDOW;
 
 	XChangeProperty(dpy, scr->XineramaRoot,
 	                XA__NET_SUPPORTED, XA_ATOM,
@@ -465,6 +455,8 @@ void EwmhInitScreenLate(ScreenInfo *scr)
 	                (unsigned char *)supported, i);
 }
 
+
+#ifdef VSCREEN
 /*
  * Set up the _NET_VIRTUAL_ROOTS property, which indicates that we're
  * using virtual root windows.
@@ -514,6 +506,8 @@ void EwmhInitVirtualRoots(ScreenInfo *scr)
 		                (unsigned char *)&d0, 1);
 	}
 }
+#endif
+
 
 static void EwmhTerminateScreen(ScreenInfo *scr)
 {
@@ -554,7 +548,7 @@ void EwmhSelectionClear(XSelectionClearEvent *sev)
 #ifdef DEBUG_EWMH
 	fprintf(stderr, "sev->window = %x\n", (unsigned)sev->window);
 #endif
-	Done(0);
+	DoShutdown();
 }
 
 /*
@@ -587,6 +581,10 @@ bool EwmhClientMessage(XClientMessageEvent *msg)
 		EwmhClientMessage_NET_WM_MOVERESIZE(msg);
 		return true;
 	}
+	else if(msg->message_type == XA__NET_CLOSE_WINDOW) {
+		EwmhClientMessage_NET_CLOSE_WINDOW(msg);
+		return true;
+	}
 
 	/* Messages regarding the root window */
 	if(msg->window != Scr->XineramaRoot &&
@@ -604,6 +602,7 @@ bool EwmhClientMessage(XClientMessageEvent *msg)
 	}
 	else if(msg->message_type == XA__NET_SHOWING_DESKTOP) {
 		ShowBackground(Scr->currentvs, msg->data.l[0] ? 1 : 0);
+		return true;
 	}
 	else {
 #ifdef DEBUG_EWMH
@@ -649,7 +648,7 @@ Image *EwmhGetIcon(ScreenInfo *scr, TwmWindow *twm_win)
 	int smaller_offset, larger_offset;
 	int i;
 
-	int area, width, height;
+	int width, height;
 
 	fetch_offset = 0;
 	if(XGetWindowProperty(dpy, twm_win->w, XA__NET_WM_ICON,
@@ -677,7 +676,6 @@ Image *EwmhGetIcon(ScreenInfo *scr, TwmWindow *twm_win)
 	wanted_area = Scr->PreferredIconWidth * Scr->PreferredIconHeight;
 	smaller = 0;
 	larger = 999999;
-	offset = 0;
 	smaller_offset = -1;
 	larger_offset = -1;
 	i = 0;
@@ -689,7 +687,7 @@ Image *EwmhGetIcon(ScreenInfo *scr, TwmWindow *twm_win)
 		int h = prop[i++];
 		int size = w * h;
 
-		area = w * h;
+		const int area = w * h;
 
 #ifdef DEBUG_EWMH
 		fprintf(stderr, "[%d+%d] w=%d h=%d\n", fetch_offset, offset, w, h);
@@ -751,7 +749,8 @@ Image *EwmhGetIcon(ScreenInfo *scr, TwmWindow *twm_win)
 	/*
 	 * Choose which icon approximates our desired size best.
 	 */
-	area = 0;
+	int area = 0;
+	ALLOW_DEAD_STORE(area); // all branches below init it
 
 	if(smaller_offset >= 0) {
 		if(larger_offset >= 0) {
@@ -1371,6 +1370,34 @@ synth_btnevent_for_moveresize(TwmWindow *twm_win)
 
 
 /*
+ * Implementation of _NET_CLOSE_WINDOW
+ *
+ * window = window to be closed
+ * message_type = _NET_CLOSE_WINDOW
+ * format = 32
+ * data.l[0] = timestamp
+ * data.l[1] = source indication:
+ *             0 Clients that support only older version of this spec
+ *             1 for normal applications, and
+ *             2 for pagers and other Clients that represent direct user actions
+ * data.l[2] = 0
+ * data.l[3] = 0
+ * data.l[4] = 0
+ */
+static void EwmhClientMessage_NET_CLOSE_WINDOW(XClientMessageEvent *msg)
+{
+	TwmWindow *tmp_win;
+
+	tmp_win = GetTwmWindow(msg->window);
+
+	if(tmp_win != NULL) {
+		ButtonPressed = -1;
+		ExecuteFunction(F_DELETE, NULL, msg->window, tmp_win,
+		                (XEvent *)msg, C_NO_CONTEXT, 0);
+	}
+}
+
+/*
  * Handle any PropertyNotify.
  */
 int EwmhHandlePropertyNotify(XPropertyEvent *event, TwmWindow *twm_win)
@@ -1879,11 +1906,6 @@ bool EwmhOnWindowRing(TwmWindow *twm_win)
 	}
 }
 
-static inline int max(int a, int b)
-{
-	return a > b ? a : b;
-}
-
 /*
  * Recalculate the effective border values from the remembered struts.
  * Interestingly it is not documented how to do that.
@@ -1911,6 +1933,13 @@ static void EwmhRecalculateStrut(void)
 	Scr->BorderRight  = right;
 	Scr->BorderTop    = top;
 	Scr->BorderBottom = bottom;
+
+	// Bordered layout may have changed
+	Scr->BorderedLayout = RLayoutCopyCropped(Scr->Layout,
+	                      left, right, top, bottom);
+	if(Scr->BorderedLayout == NULL) {
+		Scr->BorderedLayout = Scr->Layout;        // nothing to crop
+	}
 
 	EwmhSet_NET_WORKAREA(Scr);
 }
@@ -2057,6 +2086,32 @@ static void EwmhRemoveStrut(TwmWindow *twm_win)
 		strut = strut->next;
 	}
 }
+
+
+/**
+ * Set _NET_FRAME_EXTENTS property.
+ * This tells the client how much space is being taken up by the window
+ * decorations.  Some clients may need this information to position other
+ * windows on top of themselves.  e.g., Firefox's form autofill and
+ * context menu will be positioned a bit wrong (high, by the height of
+ * the titlebar) without this.
+ */
+void EwmhSet_NET_FRAME_EXTENTS(TwmWindow *twm_win)
+{
+	long data[4];
+	const long w = twm_win->frame_bw3D + twm_win->frame_bw;
+
+	data[0] = w; // left
+	data[1] = w; // right
+	data[2] = twm_win->title_height + w; // top
+	data[3] = w; // bottom
+
+	XChangeProperty(dpy, twm_win->w,
+	                XA__NET_FRAME_EXTENTS, XA_CARDINAL,
+	                32, PropModeReplace,
+	                (unsigned char *)data, 4);
+}
+
 
 void EwmhSet_NET_SHOWING_DESKTOP(int state)
 {

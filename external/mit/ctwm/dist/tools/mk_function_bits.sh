@@ -156,7 +156,7 @@ typedef enum {
 static const _fdef_table_cursor fdef_table[] = {
 EOF
 
-	while read func curs
+	while read func curs ifdef
 	do
 		if [ "X${func}" = "X" ]; then
 			echo "Got no function!"
@@ -173,10 +173,16 @@ EOF
 			exit 1
 		fi
 
+		if [ "X${ifdef}" != "X-" ]; then
+			echo "#ifdef ${ifdef}"
+		fi
 		printf "\t%-23s = %s,\n" "[F_${func}]" "${scurs}"
+		if [ "X${ifdef}" != "X-" ]; then
+			echo "#endif"
+		fi
 	done << EOF
 	$(getsect main \
-		| ${AWK} '{ if ($3 != "-") {printf "%s %s\n", toupper($1), $3;} }')
+		| ${AWK} '{ if ($3 != "-") {printf "%s %s %s\n", toupper($1), $3, $4;} }')
 EOF
 
 	cat << EOF

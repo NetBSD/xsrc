@@ -279,7 +279,10 @@ DFHANDLER(delete)
 		HideIconManager();
 		return;
 	}
-	if(tmp_win->iswinbox || tmp_win->iswspmgr
+	if(tmp_win->iswspmgr
+#ifdef WINBOX
+	                || tmp_win->iswinbox
+#endif
 	                || (Scr->workSpaceMgr.occupyWindow
 	                    && tmp_win == Scr->workSpaceMgr.occupyWindow->twm_win)) {
 		XBell(dpy, 0);
@@ -303,7 +306,10 @@ DFHANDLER(delete)
 
 DFHANDLER(destroy)
 {
-	if(tmp_win->isiconmgr || tmp_win->iswinbox || tmp_win->iswspmgr
+	if(tmp_win->isiconmgr || tmp_win->iswspmgr
+#ifdef WINBOX
+	                || tmp_win->iswinbox
+#endif
 	                || (Scr->workSpaceMgr.occupyWindow
 	                    && tmp_win == Scr->workSpaceMgr.occupyWindow->twm_win)) {
 		XBell(dpy, 0);
@@ -327,7 +333,10 @@ DFHANDLER(deleteordestroy)
 		HideIconManager();
 		return;
 	}
-	if(tmp_win->iswinbox || tmp_win->iswspmgr
+	if(tmp_win->iswspmgr
+#ifdef WINBOX
+	                || tmp_win->iswinbox
+#endif
 	                || (Scr->workSpaceMgr.occupyWindow
 	                    && tmp_win == Scr->workSpaceMgr.occupyWindow->twm_win)) {
 		XBell(dpy, 0);
@@ -561,11 +570,13 @@ DFHANDLER(movetitlebar)
 	}
 
 	/* now move the mouse */
+#ifdef WINBOX
 	if(tmp_win->winbox) {
 		XTranslateCoordinates(dpy, Scr->Root, tmp_win->winbox->window,
 		                      eventp->xbutton.x_root, eventp->xbutton.y_root,
 		                      &eventp->xbutton.x_root, &eventp->xbutton.y_root, &JunkChild);
 	}
+#endif
 	/*
 	 * the event is always a button event, since key events
 	 * are "weeded out" - although incompletely only
@@ -598,9 +609,11 @@ DFHANDLER(movetitlebar)
 	}
 
 	grabwin = Scr->Root;
+#ifdef WINBOX
 	if(tmp_win->winbox) {
 		grabwin = tmp_win->winbox->window;
 	}
+#endif
 	XGrabPointer(dpy, grabwin, True,
 	             ButtonPressMask | ButtonReleaseMask |
 	             ButtonMotionMask | PointerMotionMask, /* PointerMotionHintMask */
@@ -681,11 +694,13 @@ DFHANDLER(movetitlebar)
 		              &JunkX, &JunkY, &JunkMask);
 
 		FixRootEvent(eventp);
+#ifdef WINBOX
 		if(tmp_win->winbox) {
 			XTranslateCoordinates(dpy, Scr->Root, tmp_win->winbox->window,
 			                      eventp->xmotion.x_root, eventp->xmotion.y_root,
 			                      &eventp->xmotion.x_root, &eventp->xmotion.y_root, &JunkChild);
 		}
+#endif
 
 		if(!Scr->NoRaiseMove && Scr->OpaqueMove && !WindowMoved) {
 			OtpRaise(tmp_win, WinWin);
