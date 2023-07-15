@@ -1,4 +1,4 @@
-.\" $NetBSD: x11-ssh-askpass.man.in,v 1.3 2021/11/02 22:07:43 abs Exp $
+.\" $NetBSD: x11-ssh-askpass.man.in,v 1.4 2023/07/15 20:40:52 gutteridge Exp $
 .\"
 .\" x11-ssh-askpass.man
 .\" Created by Matthieu Herrb <matthieu@laas.fr> for OpenBSD
@@ -233,7 +233,7 @@ The following resources are recognized by the Dialog widget:
 .It Cm title ( No class Cm Title )
 The title of the application as specified to the window manager.
 .It Cm label ( No class Cm Label )
-The label displayed above the led indicators.
+The label displayed above the LED indicators.
 .It Cm font ( No class Cm Font )
 The font to be used to display the first line of label.
 .It Cm fixedFont ( No class Cm FixedFont )
@@ -247,10 +247,10 @@ indicator widgets and the main widget to customize the 3D appearance
 .It Cm foreground ( No class Cm Foreground )
 The foreground color of the widget.
 This is the text color of the label for buttons and dialog and the
-color of the active led for the indicator.
+color of the active LED for the indicator.
 .It Cm background ( No class Cm Background )
 The background color of the widget.
-In the case of the indicator this is the color of the inactive led.
+In the case of the indicator this is the color of the inactive LED.
 .It Cm topShadowColor ( No class Cm TopShadowColor )
 The color used by the sides of the widget exposed to the light (top
 and left).
