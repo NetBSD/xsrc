@@ -619,8 +619,10 @@ lp_is_function(LLVMValueRef v)
 extern "C" void
 lp_set_module_stack_alignment_override(LLVMModuleRef MRef, unsigned align)
 {
+#if 0
 #if LLVM_VERSION_MAJOR >= 13
    llvm::Module *M = llvm::unwrap(MRef);
    M->setOverrideStackAlignment(align);
+#endif
 #endif
 }
