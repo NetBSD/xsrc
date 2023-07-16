@@ -28,10 +28,10 @@
   * manually or commit it into version control.
   */
 
-static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
+static const struct mesa_format_info format_info[MESA_FORMAT_COUNT] =
 {
 
-   {
+   [MESA_FORMAT_NONE] = {
       .Name = MESA_FORMAT_NONE,
       .StrName = "MESA_FORMAT_NONE",
       .Layout = MESA_FORMAT_LAYOUT_OTHER,
@@ -45,7 +45,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 4, 4, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A8B8G8R8_UNORM] = {
       .Name = MESA_FORMAT_A8B8G8R8_UNORM,
       .StrName = "MESA_FORMAT_A8B8G8R8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -57,9 +57,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 3, 2, 1, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 3, 2, 1, 0),
    },
-   {
+   [MESA_FORMAT_X8B8G8R8_UNORM] = {
       .Name = MESA_FORMAT_X8B8G8R8_UNORM,
       .StrName = "MESA_FORMAT_X8B8G8R8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -71,9 +71,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 3, 2, 1, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 3, 2, 1, 5),
    },
-   {
+   [MESA_FORMAT_R8G8B8A8_UNORM] = {
       .Name = MESA_FORMAT_R8G8B8A8_UNORM,
       .StrName = "MESA_FORMAT_R8G8B8A8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -85,9 +85,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_R8G8B8X8_UNORM] = {
       .Name = MESA_FORMAT_R8G8B8X8_UNORM,
       .StrName = "MESA_FORMAT_R8G8B8X8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -99,9 +99,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_B8G8R8A8_UNORM] = {
       .Name = MESA_FORMAT_B8G8R8A8_UNORM,
       .StrName = "MESA_FORMAT_B8G8R8A8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -113,9 +113,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 2, 1, 0, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 2, 1, 0, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 2, 1, 0, 3),
    },
-   {
+   [MESA_FORMAT_B8G8R8X8_UNORM] = {
       .Name = MESA_FORMAT_B8G8R8X8_UNORM,
       .StrName = "MESA_FORMAT_B8G8R8X8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -127,9 +127,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 2, 1, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 2, 1, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 2, 1, 0, 5),
    },
-   {
+   [MESA_FORMAT_A8R8G8B8_UNORM] = {
       .Name = MESA_FORMAT_A8R8G8B8_UNORM,
       .StrName = "MESA_FORMAT_A8R8G8B8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -141,9 +141,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 2, 3, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 1, 2, 3, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 1, 2, 3, 0),
    },
-   {
+   [MESA_FORMAT_X8R8G8B8_UNORM] = {
       .Name = MESA_FORMAT_X8R8G8B8_UNORM,
       .StrName = "MESA_FORMAT_X8R8G8B8_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -155,37 +155,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 2, 3, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 1, 2, 3, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 1, 2, 3, 5),
    },
-   {
-      .Name = MESA_FORMAT_L16A16_UNORM,
-      .StrName = "MESA_FORMAT_L16A16_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 16,
-      .LuminanceBits = 16, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 2, 0, 0, 0, 1),
-   },
-   {
-      .Name = MESA_FORMAT_A16L16_UNORM,
-      .StrName = "MESA_FORMAT_A16L16_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 16,
-      .LuminanceBits = 16, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 1, 1, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 2, 1, 1, 1, 0),
-   },
-   {
+   [MESA_FORMAT_B5G6R5_UNORM] = {
       .Name = MESA_FORMAT_B5G6R5_UNORM,
       .StrName = "MESA_FORMAT_B5G6R5_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -199,7 +171,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R5G6B5_UNORM] = {
       .Name = MESA_FORMAT_R5G6B5_UNORM,
       .StrName = "MESA_FORMAT_R5G6B5_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -213,7 +185,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B4G4R4A4_UNORM] = {
       .Name = MESA_FORMAT_B4G4R4A4_UNORM,
       .StrName = "MESA_FORMAT_B4G4R4A4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -227,7 +199,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B4G4R4X4_UNORM] = {
       .Name = MESA_FORMAT_B4G4R4X4_UNORM,
       .StrName = "MESA_FORMAT_B4G4R4X4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -241,7 +213,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A4R4G4B4_UNORM] = {
       .Name = MESA_FORMAT_A4R4G4B4_UNORM,
       .StrName = "MESA_FORMAT_A4R4G4B4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -255,7 +227,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A1B5G5R5_UNORM] = {
       .Name = MESA_FORMAT_A1B5G5R5_UNORM,
       .StrName = "MESA_FORMAT_A1B5G5R5_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -269,7 +241,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_X1B5G5R5_UNORM] = {
       .Name = MESA_FORMAT_X1B5G5R5_UNORM,
       .StrName = "MESA_FORMAT_X1B5G5R5_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -283,7 +255,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B5G5R5A1_UNORM] = {
       .Name = MESA_FORMAT_B5G5R5A1_UNORM,
       .StrName = "MESA_FORMAT_B5G5R5A1_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -297,7 +269,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B5G5R5X1_UNORM] = {
       .Name = MESA_FORMAT_B5G5R5X1_UNORM,
       .StrName = "MESA_FORMAT_B5G5R5X1_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -311,7 +283,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A1R5G5B5_UNORM] = {
       .Name = MESA_FORMAT_A1R5G5B5_UNORM,
       .StrName = "MESA_FORMAT_A1R5G5B5_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -325,63 +297,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
-      .Name = MESA_FORMAT_L8A8_UNORM,
-      .StrName = "MESA_FORMAT_L8A8_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 0, 0, 0, 1),
-   },
-   {
-      .Name = MESA_FORMAT_A8L8_UNORM,
-      .StrName = "MESA_FORMAT_A8L8_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 1, 1, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 1, 1, 1, 0),
-   },
-   {
-      .Name = MESA_FORMAT_R8G8_UNORM,
-      .StrName = "MESA_FORMAT_R8G8_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 0, 1, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_G8R8_UNORM,
-      .StrName = "MESA_FORMAT_G8R8_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 1, 0, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 1, 0, 4, 5),
-   },
-   {
+   [MESA_FORMAT_L4A4_UNORM] = {
       .Name = MESA_FORMAT_L4A4_UNORM,
       .StrName = "MESA_FORMAT_L4A4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -395,7 +311,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 0, 0, 1 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B2G3R3_UNORM] = {
       .Name = MESA_FORMAT_B2G3R3_UNORM,
       .StrName = "MESA_FORMAT_B2G3R3_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -409,35 +325,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
-      .Name = MESA_FORMAT_R16G16_UNORM,
-      .StrName = "MESA_FORMAT_R16G16_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 2, 0, 1, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_G16R16_UNORM,
-      .StrName = "MESA_FORMAT_G16R16_UNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 1, 0, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 2, 1, 0, 4, 5),
-   },
-   {
+   [MESA_FORMAT_B10G10R10A2_UNORM] = {
       .Name = MESA_FORMAT_B10G10R10A2_UNORM,
       .StrName = "MESA_FORMAT_B10G10R10A2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -451,7 +339,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B10G10R10X2_UNORM] = {
       .Name = MESA_FORMAT_B10G10R10X2_UNORM,
       .StrName = "MESA_FORMAT_B10G10R10X2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -465,7 +353,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R10G10B10A2_UNORM] = {
       .Name = MESA_FORMAT_R10G10B10A2_UNORM,
       .StrName = "MESA_FORMAT_R10G10B10A2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -479,7 +367,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R10G10B10X2_UNORM] = {
       .Name = MESA_FORMAT_R10G10B10X2_UNORM,
       .StrName = "MESA_FORMAT_R10G10B10X2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -493,7 +381,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_S8_UINT_Z24_UNORM] = {
       .Name = MESA_FORMAT_S8_UINT_Z24_UNORM,
       .StrName = "MESA_FORMAT_S8_UINT_Z24_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -507,7 +395,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 6, 6 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_X8_UINT_Z24_UNORM] = {
       .Name = MESA_FORMAT_X8_UINT_Z24_UNORM,
       .StrName = "MESA_FORMAT_X8_UINT_Z24_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -519,9 +407,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 6, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(3, 0, 0, 1, 2, 0, 6, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH, 3, 0, 0, 1, 2, 0, 6, 6, 6),
    },
-   {
+   [MESA_FORMAT_Z24_UNORM_S8_UINT] = {
       .Name = MESA_FORMAT_Z24_UNORM_S8_UINT,
       .StrName = "MESA_FORMAT_Z24_UNORM_S8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -535,7 +423,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 0, 6, 6 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_Z24_UNORM_X8_UINT] = {
       .Name = MESA_FORMAT_Z24_UNORM_X8_UINT,
       .StrName = "MESA_FORMAT_Z24_UNORM_X8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -547,9 +435,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 6, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(3, 0, 0, 1, 2, 1, 6, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH, 3, 0, 0, 1, 2, 1, 6, 6, 6),
    },
-   {
+   [MESA_FORMAT_R3G3B2_UNORM] = {
       .Name = MESA_FORMAT_R3G3B2_UNORM,
       .StrName = "MESA_FORMAT_R3G3B2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -563,7 +451,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A4B4G4R4_UNORM] = {
       .Name = MESA_FORMAT_A4B4G4R4_UNORM,
       .StrName = "MESA_FORMAT_A4B4G4R4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -577,7 +465,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R4G4B4A4_UNORM] = {
       .Name = MESA_FORMAT_R4G4B4A4_UNORM,
       .StrName = "MESA_FORMAT_R4G4B4A4_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -591,7 +479,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R5G5B5A1_UNORM] = {
       .Name = MESA_FORMAT_R5G5B5A1_UNORM,
       .StrName = "MESA_FORMAT_R5G5B5A1_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -605,7 +493,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A2B10G10R10_UNORM] = {
       .Name = MESA_FORMAT_A2B10G10R10_UNORM,
       .StrName = "MESA_FORMAT_A2B10G10R10_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -619,7 +507,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A2R10G10B10_UNORM] = {
       .Name = MESA_FORMAT_A2R10G10B10_UNORM,
       .StrName = "MESA_FORMAT_A2R10G10B10_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -633,7 +521,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_YCBCR] = {
       .Name = MESA_FORMAT_YCBCR,
       .StrName = "MESA_FORMAT_YCBCR",
       .Layout = MESA_FORMAT_LAYOUT_OTHER,
@@ -647,7 +535,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_YCBCR_REV] = {
       .Name = MESA_FORMAT_YCBCR_REV,
       .StrName = "MESA_FORMAT_YCBCR_REV",
       .Layout = MESA_FORMAT_LAYOUT_OTHER,
@@ -661,7 +549,35 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RG_RB_UNORM8] = {
+      .Name = MESA_FORMAT_RG_RB_UNORM8,
+      .StrName = "MESA_FORMAT_RG_RB_UNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_OTHER,
+      .BaseFormat = GL_RGB,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 8, .GreenBits = 8, .BlueBits = 8, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 2, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 1, 2, 5 },
+      .ArrayFormat = 0,
+   },
+   [MESA_FORMAT_GR_BR_UNORM8] = {
+      .Name = MESA_FORMAT_GR_BR_UNORM8,
+      .StrName = "MESA_FORMAT_GR_BR_UNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_OTHER,
+      .BaseFormat = GL_RGB,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 8, .GreenBits = 8, .BlueBits = 8, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 2, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 1, 2, 5 },
+      .ArrayFormat = 0,
+   },
+   [MESA_FORMAT_A_UNORM8] = {
       .Name = MESA_FORMAT_A_UNORM8,
       .StrName = "MESA_FORMAT_A_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -673,9 +589,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_UNORM16] = {
       .Name = MESA_FORMAT_A_UNORM16,
       .StrName = "MESA_FORMAT_A_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -687,9 +603,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_L_UNORM8] = {
       .Name = MESA_FORMAT_L_UNORM8,
       .StrName = "MESA_FORMAT_L_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -701,9 +617,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_UNORM16] = {
       .Name = MESA_FORMAT_L_UNORM16,
       .StrName = "MESA_FORMAT_L_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -715,9 +631,37 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_LA_UNORM8] = {
+      .Name = MESA_FORMAT_LA_UNORM8,
+      .StrName = "MESA_FORMAT_LA_UNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_LUMINANCE_ALPHA,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
+      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 0, 0, 1 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 2, 0, 0, 0, 1),
+   },
+   [MESA_FORMAT_LA_UNORM16] = {
+      .Name = MESA_FORMAT_LA_UNORM16,
+      .StrName = "MESA_FORMAT_LA_UNORM16",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_LUMINANCE_ALPHA,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 16,
+      .LuminanceBits = 16, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 4,
+      .Swizzle = { 0, 0, 0, 1 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 2, 0, 0, 0, 1),
+   },
+   [MESA_FORMAT_I_UNORM8] = {
       .Name = MESA_FORMAT_I_UNORM8,
       .StrName = "MESA_FORMAT_I_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -729,9 +673,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_UNORM16] = {
       .Name = MESA_FORMAT_I_UNORM16,
       .StrName = "MESA_FORMAT_I_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -743,9 +687,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_R_UNORM8] = {
       .Name = MESA_FORMAT_R_UNORM8,
       .StrName = "MESA_FORMAT_R_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -757,9 +701,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_UNORM16] = {
       .Name = MESA_FORMAT_R_UNORM16,
       .StrName = "MESA_FORMAT_R_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -771,9 +715,37 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_UNORM8] = {
+      .Name = MESA_FORMAT_RG_UNORM8,
+      .StrName = "MESA_FORMAT_RG_UNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_RG,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 1, 4, 5 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 2, 0, 1, 4, 5),
+   },
+   [MESA_FORMAT_RG_UNORM16] = {
+      .Name = MESA_FORMAT_RG_UNORM16,
+      .StrName = "MESA_FORMAT_RG_UNORM16",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_RG,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 4,
+      .Swizzle = { 0, 1, 4, 5 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 2, 0, 1, 4, 5),
+   },
+   [MESA_FORMAT_BGR_UNORM8] = {
       .Name = MESA_FORMAT_BGR_UNORM8,
       .StrName = "MESA_FORMAT_BGR_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -785,9 +757,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 3,
       .Swizzle = { 2, 1, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 3, 2, 1, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 3, 2, 1, 0, 5),
    },
-   {
+   [MESA_FORMAT_RGB_UNORM8] = {
       .Name = MESA_FORMAT_RGB_UNORM8,
       .StrName = "MESA_FORMAT_RGB_UNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -799,9 +771,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 3,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBA_UNORM16] = {
       .Name = MESA_FORMAT_RGBA_UNORM16,
       .StrName = "MESA_FORMAT_RGBA_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -813,9 +785,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBX_UNORM16] = {
       .Name = MESA_FORMAT_RGBX_UNORM16,
       .StrName = "MESA_FORMAT_RGBX_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -827,9 +799,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_Z_UNORM16] = {
       .Name = MESA_FORMAT_Z_UNORM16,
       .StrName = "MESA_FORMAT_Z_UNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -841,9 +813,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 6, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 1, 1, 0, 6, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH, 2, 0, 0, 1, 1, 0, 6, 6, 6),
    },
-   {
+   [MESA_FORMAT_Z_UNORM32] = {
       .Name = MESA_FORMAT_Z_UNORM32,
       .StrName = "MESA_FORMAT_Z_UNORM32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -855,9 +827,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 6, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 1, 1, 0, 6, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH, 4, 0, 0, 1, 1, 0, 6, 6, 6),
    },
-   {
+   [MESA_FORMAT_S_UINT8] = {
       .Name = MESA_FORMAT_S_UINT8,
       .StrName = "MESA_FORMAT_S_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -869,9 +841,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 6, 0, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 1, 6, 0, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_STENCIL, 1, 0, 0, 0, 1, 6, 0, 6, 6),
    },
-   {
+   [MESA_FORMAT_A8B8G8R8_SNORM] = {
       .Name = MESA_FORMAT_A8B8G8R8_SNORM,
       .StrName = "MESA_FORMAT_A8B8G8R8_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -883,9 +855,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 4, 3, 2, 1, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 4, 3, 2, 1, 0),
    },
-   {
+   [MESA_FORMAT_X8B8G8R8_SNORM] = {
       .Name = MESA_FORMAT_X8B8G8R8_SNORM,
       .StrName = "MESA_FORMAT_X8B8G8R8_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -897,9 +869,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 4, 3, 2, 1, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 4, 3, 2, 1, 5),
    },
-   {
+   [MESA_FORMAT_R8G8B8A8_SNORM] = {
       .Name = MESA_FORMAT_R8G8B8A8_SNORM,
       .StrName = "MESA_FORMAT_R8G8B8A8_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -911,9 +883,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_R8G8B8X8_SNORM] = {
       .Name = MESA_FORMAT_R8G8B8X8_SNORM,
       .StrName = "MESA_FORMAT_R8G8B8X8_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -925,93 +897,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 4, 0, 1, 2, 5),
    },
-   {
-      .Name = MESA_FORMAT_R16G16_SNORM,
-      .StrName = "MESA_FORMAT_R16G16_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 2, 0, 1, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_G16R16_SNORM,
-      .StrName = "MESA_FORMAT_G16R16_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 1, 0, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 2, 1, 0, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_R8G8_SNORM,
-      .StrName = "MESA_FORMAT_R8G8_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 2, 0, 1, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_G8R8_SNORM,
-      .StrName = "MESA_FORMAT_G8R8_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_RG,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 1, 0, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 2, 1, 0, 4, 5),
-   },
-   {
-      .Name = MESA_FORMAT_L8A8_SNORM,
-      .StrName = "MESA_FORMAT_L8A8_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 2, 0, 0, 0, 1),
-   },
-   {
-      .Name = MESA_FORMAT_A8L8_SNORM,
-      .StrName = "MESA_FORMAT_A8L8_SNORM",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_SIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 1, 1, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 2, 1, 1, 1, 0),
-   },
-   {
+   [MESA_FORMAT_A_SNORM8] = {
       .Name = MESA_FORMAT_A_SNORM8,
       .StrName = "MESA_FORMAT_A_SNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1023,9 +911,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_SNORM16] = {
       .Name = MESA_FORMAT_A_SNORM16,
       .StrName = "MESA_FORMAT_A_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1037,9 +925,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_L_SNORM8] = {
       .Name = MESA_FORMAT_L_SNORM8,
       .StrName = "MESA_FORMAT_L_SNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1051,9 +939,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_SNORM16] = {
       .Name = MESA_FORMAT_L_SNORM16,
       .StrName = "MESA_FORMAT_L_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1065,9 +953,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_I_SNORM8] = {
       .Name = MESA_FORMAT_I_SNORM8,
       .StrName = "MESA_FORMAT_I_SNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1079,9 +967,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_SNORM16] = {
       .Name = MESA_FORMAT_I_SNORM16,
       .StrName = "MESA_FORMAT_I_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1093,9 +981,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_R_SNORM8] = {
       .Name = MESA_FORMAT_R_SNORM8,
       .StrName = "MESA_FORMAT_R_SNORM8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1107,9 +995,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_SNORM16] = {
       .Name = MESA_FORMAT_R_SNORM16,
       .StrName = "MESA_FORMAT_R_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1121,9 +1009,23 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_LA_SNORM8] = {
+      .Name = MESA_FORMAT_LA_SNORM8,
+      .StrName = "MESA_FORMAT_LA_SNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_LUMINANCE_ALPHA,
+      .DataType = GL_SIGNED_NORMALIZED,
+      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
+      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 0, 0, 1 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 2, 0, 0, 0, 1),
+   },
+   [MESA_FORMAT_LA_SNORM16] = {
       .Name = MESA_FORMAT_LA_SNORM16,
       .StrName = "MESA_FORMAT_LA_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1135,9 +1037,37 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_RG_SNORM8] = {
+      .Name = MESA_FORMAT_RG_SNORM8,
+      .StrName = "MESA_FORMAT_RG_SNORM8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_RG,
+      .DataType = GL_SIGNED_NORMALIZED,
+      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 1, 4, 5 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 1, 2, 0, 1, 4, 5),
+   },
+   [MESA_FORMAT_RG_SNORM16] = {
+      .Name = MESA_FORMAT_RG_SNORM16,
+      .StrName = "MESA_FORMAT_RG_SNORM16",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_RG,
+      .DataType = GL_SIGNED_NORMALIZED,
+      .RedBits = 16, .GreenBits = 16, .BlueBits = 0, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 0,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 4,
+      .Swizzle = { 0, 1, 4, 5 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 2, 0, 1, 4, 5),
+   },
+   [MESA_FORMAT_RGB_SNORM16] = {
       .Name = MESA_FORMAT_RGB_SNORM16,
       .StrName = "MESA_FORMAT_RGB_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1149,9 +1079,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 6,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBA_SNORM16] = {
       .Name = MESA_FORMAT_RGBA_SNORM16,
       .StrName = "MESA_FORMAT_RGBA_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1163,9 +1093,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBX_SNORM16] = {
       .Name = MESA_FORMAT_RGBX_SNORM16,
       .StrName = "MESA_FORMAT_RGBX_SNORM16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1177,9 +1107,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_A8B8G8R8_SRGB] = {
       .Name = MESA_FORMAT_A8B8G8R8_SRGB,
       .StrName = "MESA_FORMAT_A8B8G8R8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1191,9 +1121,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 3, 2, 1, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 3, 2, 1, 0),
    },
-   {
+   [MESA_FORMAT_B8G8R8A8_SRGB] = {
       .Name = MESA_FORMAT_B8G8R8A8_SRGB,
       .StrName = "MESA_FORMAT_B8G8R8A8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1205,9 +1135,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 2, 1, 0, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 2, 1, 0, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 2, 1, 0, 3),
    },
-   {
+   [MESA_FORMAT_A8R8G8B8_SRGB] = {
       .Name = MESA_FORMAT_A8R8G8B8_SRGB,
       .StrName = "MESA_FORMAT_A8R8G8B8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1219,9 +1149,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 2, 3, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 1, 2, 3, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 1, 2, 3, 0),
    },
-   {
+   [MESA_FORMAT_B8G8R8X8_SRGB] = {
       .Name = MESA_FORMAT_B8G8R8X8_SRGB,
       .StrName = "MESA_FORMAT_B8G8R8X8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1233,9 +1163,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 2, 1, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 2, 1, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 2, 1, 0, 5),
    },
-   {
+   [MESA_FORMAT_X8R8G8B8_SRGB] = {
       .Name = MESA_FORMAT_X8R8G8B8_SRGB,
       .StrName = "MESA_FORMAT_X8R8G8B8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1247,9 +1177,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 2, 3, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 1, 2, 3, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 1, 2, 3, 5),
    },
-   {
+   [MESA_FORMAT_R8G8B8A8_SRGB] = {
       .Name = MESA_FORMAT_R8G8B8A8_SRGB,
       .StrName = "MESA_FORMAT_R8G8B8A8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1261,9 +1191,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_R8G8B8X8_SRGB] = {
       .Name = MESA_FORMAT_R8G8B8X8_SRGB,
       .StrName = "MESA_FORMAT_R8G8B8X8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1275,9 +1205,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_X8B8G8R8_SRGB] = {
       .Name = MESA_FORMAT_X8B8G8R8_SRGB,
       .StrName = "MESA_FORMAT_X8B8G8R8_SRGB",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1289,37 +1219,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 4, 3, 2, 1, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 4, 3, 2, 1, 5),
    },
-   {
-      .Name = MESA_FORMAT_L8A8_SRGB,
-      .StrName = "MESA_FORMAT_L8A8_SRGB",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 1,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 0, 0, 0, 1),
-   },
-   {
-      .Name = MESA_FORMAT_A8L8_SRGB,
-      .StrName = "MESA_FORMAT_A8L8_SRGB",
-      .Layout = MESA_FORMAT_LAYOUT_PACKED,
-      .BaseFormat = GL_LUMINANCE_ALPHA,
-      .DataType = GL_UNSIGNED_NORMALIZED,
-      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
-      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 1,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 2,
-      .Swizzle = { 1, 1, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 2, 1, 1, 1, 0),
-   },
-   {
+   [MESA_FORMAT_R_SRGB8] = {
       .Name = MESA_FORMAT_R_SRGB8,
       .StrName = "MESA_FORMAT_R_SRGB8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1331,9 +1233,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_L_SRGB8] = {
       .Name = MESA_FORMAT_L_SRGB8,
       .StrName = "MESA_FORMAT_L_SRGB8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1345,9 +1247,37 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_RG_SRGB8] = {
+      .Name = MESA_FORMAT_RG_SRGB8,
+      .StrName = "MESA_FORMAT_RG_SRGB8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_RG,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 8, .GreenBits = 8, .BlueBits = 0, .AlphaBits = 0,
+      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 1,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 1, 4, 5 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 2, 0, 1, 4, 5),
+   },
+   [MESA_FORMAT_LA_SRGB8] = {
+      .Name = MESA_FORMAT_LA_SRGB8,
+      .StrName = "MESA_FORMAT_LA_SRGB8",
+      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
+      .BaseFormat = GL_LUMINANCE_ALPHA,
+      .DataType = GL_UNSIGNED_NORMALIZED,
+      .RedBits = 0, .GreenBits = 0, .BlueBits = 0, .AlphaBits = 8,
+      .LuminanceBits = 8, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
+      .IsSRGBFormat = 1,
+      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
+      .BytesPerBlock = 2,
+      .Swizzle = { 0, 0, 0, 1 },
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 2, 0, 0, 0, 1),
+   },
+   [MESA_FORMAT_BGR_SRGB8] = {
       .Name = MESA_FORMAT_BGR_SRGB8,
       .StrName = "MESA_FORMAT_BGR_SRGB8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1359,9 +1289,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 3,
       .Swizzle = { 2, 1, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 1, 3, 2, 1, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 1, 3, 2, 1, 0, 5),
    },
-   {
+   [MESA_FORMAT_R9G9B9E5_FLOAT] = {
       .Name = MESA_FORMAT_R9G9B9E5_FLOAT,
       .StrName = "MESA_FORMAT_R9G9B9E5_FLOAT",
       .Layout = MESA_FORMAT_LAYOUT_OTHER,
@@ -1375,7 +1305,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R11G11B10_FLOAT] = {
       .Name = MESA_FORMAT_R11G11B10_FLOAT,
       .StrName = "MESA_FORMAT_R11G11B10_FLOAT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1389,7 +1319,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = {
       .Name = MESA_FORMAT_Z32_FLOAT_S8X24_UINT,
       .StrName = "MESA_FORMAT_Z32_FLOAT_S8X24_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1403,7 +1333,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 0, 6, 6 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A_FLOAT16] = {
       .Name = MESA_FORMAT_A_FLOAT16,
       .StrName = "MESA_FORMAT_A_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1415,9 +1345,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_FLOAT32] = {
       .Name = MESA_FORMAT_A_FLOAT32,
       .StrName = "MESA_FORMAT_A_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1429,9 +1359,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_L_FLOAT16] = {
       .Name = MESA_FORMAT_L_FLOAT16,
       .StrName = "MESA_FORMAT_L_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1443,9 +1373,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_FLOAT32] = {
       .Name = MESA_FORMAT_L_FLOAT32,
       .StrName = "MESA_FORMAT_L_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1457,9 +1387,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_LA_FLOAT16] = {
       .Name = MESA_FORMAT_LA_FLOAT16,
       .StrName = "MESA_FORMAT_LA_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1471,9 +1401,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_FLOAT32] = {
       .Name = MESA_FORMAT_LA_FLOAT32,
       .StrName = "MESA_FORMAT_LA_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1485,9 +1415,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_I_FLOAT16] = {
       .Name = MESA_FORMAT_I_FLOAT16,
       .StrName = "MESA_FORMAT_I_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1499,9 +1429,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_FLOAT32] = {
       .Name = MESA_FORMAT_I_FLOAT32,
       .StrName = "MESA_FORMAT_I_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1513,9 +1443,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_R_FLOAT16] = {
       .Name = MESA_FORMAT_R_FLOAT16,
       .StrName = "MESA_FORMAT_R_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1527,9 +1457,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_FLOAT32] = {
       .Name = MESA_FORMAT_R_FLOAT32,
       .StrName = "MESA_FORMAT_R_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1541,9 +1471,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_FLOAT16] = {
       .Name = MESA_FORMAT_RG_FLOAT16,
       .StrName = "MESA_FORMAT_RG_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1555,9 +1485,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_FLOAT32] = {
       .Name = MESA_FORMAT_RG_FLOAT32,
       .StrName = "MESA_FORMAT_RG_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1569,9 +1499,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RGB_FLOAT16] = {
       .Name = MESA_FORMAT_RGB_FLOAT16,
       .StrName = "MESA_FORMAT_RGB_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1583,9 +1513,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 6,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_FLOAT32] = {
       .Name = MESA_FORMAT_RGB_FLOAT32,
       .StrName = "MESA_FORMAT_RGB_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1597,9 +1527,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 12,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBA_FLOAT16] = {
       .Name = MESA_FORMAT_RGBA_FLOAT16,
       .StrName = "MESA_FORMAT_RGBA_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1611,9 +1541,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBA_FLOAT32] = {
       .Name = MESA_FORMAT_RGBA_FLOAT32,
       .StrName = "MESA_FORMAT_RGBA_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1625,9 +1555,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBX_FLOAT16] = {
       .Name = MESA_FORMAT_RGBX_FLOAT16,
       .StrName = "MESA_FORMAT_RGBX_FLOAT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1639,9 +1569,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 1, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 1, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_FLOAT32] = {
       .Name = MESA_FORMAT_RGBX_FLOAT32,
       .StrName = "MESA_FORMAT_RGBX_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1653,9 +1583,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 1, 1, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_Z_FLOAT32] = {
       .Name = MESA_FORMAT_Z_FLOAT32,
       .StrName = "MESA_FORMAT_Z_FLOAT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1667,9 +1597,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 6, 6, 6 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 1, 1, 1, 0, 6, 6, 6),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_DEPTH, 4, 1, 1, 1, 1, 0, 6, 6, 6),
    },
-   {
+   [MESA_FORMAT_A8B8G8R8_UINT] = {
       .Name = MESA_FORMAT_A8B8G8R8_UINT,
       .StrName = "MESA_FORMAT_A8B8G8R8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1681,9 +1611,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 3, 2, 1, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 3, 2, 1, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 4, 3, 2, 1, 0),
    },
-   {
+   [MESA_FORMAT_A8R8G8B8_UINT] = {
       .Name = MESA_FORMAT_A8R8G8B8_UINT,
       .StrName = "MESA_FORMAT_A8R8G8B8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1695,9 +1625,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 1, 2, 3, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 1, 2, 3, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 4, 1, 2, 3, 0),
    },
-   {
+   [MESA_FORMAT_R8G8B8A8_UINT] = {
       .Name = MESA_FORMAT_R8G8B8A8_UINT,
       .StrName = "MESA_FORMAT_R8G8B8A8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1709,9 +1639,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_B8G8R8A8_UINT] = {
       .Name = MESA_FORMAT_B8G8R8A8_UINT,
       .StrName = "MESA_FORMAT_B8G8R8A8_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1723,9 +1653,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 2, 1, 0, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 2, 1, 0, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 4, 2, 1, 0, 3),
    },
-   {
+   [MESA_FORMAT_B10G10R10A2_UINT] = {
       .Name = MESA_FORMAT_B10G10R10A2_UINT,
       .StrName = "MESA_FORMAT_B10G10R10A2_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1739,7 +1669,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R10G10B10A2_UINT] = {
       .Name = MESA_FORMAT_R10G10B10A2_UINT,
       .StrName = "MESA_FORMAT_R10G10B10A2_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1753,7 +1683,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A2B10G10R10_UINT] = {
       .Name = MESA_FORMAT_A2B10G10R10_UINT,
       .StrName = "MESA_FORMAT_A2B10G10R10_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1767,7 +1697,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A2R10G10B10_UINT] = {
       .Name = MESA_FORMAT_A2R10G10B10_UINT,
       .StrName = "MESA_FORMAT_A2R10G10B10_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1781,7 +1711,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B5G6R5_UINT] = {
       .Name = MESA_FORMAT_B5G6R5_UINT,
       .StrName = "MESA_FORMAT_B5G6R5_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1795,7 +1725,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R5G6B5_UINT] = {
       .Name = MESA_FORMAT_R5G6B5_UINT,
       .StrName = "MESA_FORMAT_R5G6B5_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1809,7 +1739,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B2G3R3_UINT] = {
       .Name = MESA_FORMAT_B2G3R3_UINT,
       .StrName = "MESA_FORMAT_B2G3R3_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1823,7 +1753,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R3G3B2_UINT] = {
       .Name = MESA_FORMAT_R3G3B2_UINT,
       .StrName = "MESA_FORMAT_R3G3B2_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1837,7 +1767,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A4B4G4R4_UINT] = {
       .Name = MESA_FORMAT_A4B4G4R4_UINT,
       .StrName = "MESA_FORMAT_A4B4G4R4_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1851,7 +1781,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R4G4B4A4_UINT] = {
       .Name = MESA_FORMAT_R4G4B4A4_UINT,
       .StrName = "MESA_FORMAT_R4G4B4A4_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1865,7 +1795,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B4G4R4A4_UINT] = {
       .Name = MESA_FORMAT_B4G4R4A4_UINT,
       .StrName = "MESA_FORMAT_B4G4R4A4_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1879,7 +1809,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A4R4G4B4_UINT] = {
       .Name = MESA_FORMAT_A4R4G4B4_UINT,
       .StrName = "MESA_FORMAT_A4R4G4B4_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1893,7 +1823,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A1B5G5R5_UINT] = {
       .Name = MESA_FORMAT_A1B5G5R5_UINT,
       .StrName = "MESA_FORMAT_A1B5G5R5_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1907,7 +1837,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 3, 2, 1, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_B5G5R5A1_UINT] = {
       .Name = MESA_FORMAT_B5G5R5A1_UINT,
       .StrName = "MESA_FORMAT_B5G5R5A1_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1921,7 +1851,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 2, 1, 0, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A1R5G5B5_UINT] = {
       .Name = MESA_FORMAT_A1R5G5B5_UINT,
       .StrName = "MESA_FORMAT_A1R5G5B5_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1935,7 +1865,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 1, 2, 3, 0 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R5G5B5A1_UINT] = {
       .Name = MESA_FORMAT_R5G5B5A1_UINT,
       .StrName = "MESA_FORMAT_R5G5B5A1_UINT",
       .Layout = MESA_FORMAT_LAYOUT_PACKED,
@@ -1949,7 +1879,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_A_UINT8] = {
       .Name = MESA_FORMAT_A_UINT8,
       .StrName = "MESA_FORMAT_A_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1961,9 +1891,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_UINT16] = {
       .Name = MESA_FORMAT_A_UINT16,
       .StrName = "MESA_FORMAT_A_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1975,9 +1905,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_UINT32] = {
       .Name = MESA_FORMAT_A_UINT32,
       .StrName = "MESA_FORMAT_A_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -1989,9 +1919,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_SINT8] = {
       .Name = MESA_FORMAT_A_SINT8,
       .StrName = "MESA_FORMAT_A_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2003,9 +1933,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_SINT16] = {
       .Name = MESA_FORMAT_A_SINT16,
       .StrName = "MESA_FORMAT_A_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2017,9 +1947,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_A_SINT32] = {
       .Name = MESA_FORMAT_A_SINT32,
       .StrName = "MESA_FORMAT_A_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2031,9 +1961,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 4, 4, 4, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 1, 4, 4, 4, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 1, 4, 4, 4, 0),
    },
-   {
+   [MESA_FORMAT_I_UINT8] = {
       .Name = MESA_FORMAT_I_UINT8,
       .StrName = "MESA_FORMAT_I_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2045,9 +1975,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_UINT16] = {
       .Name = MESA_FORMAT_I_UINT16,
       .StrName = "MESA_FORMAT_I_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2059,9 +1989,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_UINT32] = {
       .Name = MESA_FORMAT_I_UINT32,
       .StrName = "MESA_FORMAT_I_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2073,9 +2003,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_SINT8] = {
       .Name = MESA_FORMAT_I_SINT8,
       .StrName = "MESA_FORMAT_I_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2087,9 +2017,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_SINT16] = {
       .Name = MESA_FORMAT_I_SINT16,
       .StrName = "MESA_FORMAT_I_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2101,9 +2031,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_I_SINT32] = {
       .Name = MESA_FORMAT_I_SINT32,
       .StrName = "MESA_FORMAT_I_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2115,9 +2045,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 0 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 1, 0, 0, 0, 0),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 1, 0, 0, 0, 0),
    },
-   {
+   [MESA_FORMAT_L_UINT8] = {
       .Name = MESA_FORMAT_L_UINT8,
       .StrName = "MESA_FORMAT_L_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2129,9 +2059,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_UINT16] = {
       .Name = MESA_FORMAT_L_UINT16,
       .StrName = "MESA_FORMAT_L_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2143,9 +2073,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_UINT32] = {
       .Name = MESA_FORMAT_L_UINT32,
       .StrName = "MESA_FORMAT_L_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2157,9 +2087,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_SINT8] = {
       .Name = MESA_FORMAT_L_SINT8,
       .StrName = "MESA_FORMAT_L_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2171,9 +2101,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_SINT16] = {
       .Name = MESA_FORMAT_L_SINT16,
       .StrName = "MESA_FORMAT_L_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2185,9 +2115,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_L_SINT32] = {
       .Name = MESA_FORMAT_L_SINT32,
       .StrName = "MESA_FORMAT_L_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2199,9 +2129,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 1, 0, 0, 0, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 1, 0, 0, 0, 5),
    },
-   {
+   [MESA_FORMAT_LA_UINT8] = {
       .Name = MESA_FORMAT_LA_UINT8,
       .StrName = "MESA_FORMAT_LA_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2213,9 +2143,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_UINT16] = {
       .Name = MESA_FORMAT_LA_UINT16,
       .StrName = "MESA_FORMAT_LA_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2227,9 +2157,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_UINT32] = {
       .Name = MESA_FORMAT_LA_UINT32,
       .StrName = "MESA_FORMAT_LA_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2241,9 +2171,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_SINT8] = {
       .Name = MESA_FORMAT_LA_SINT8,
       .StrName = "MESA_FORMAT_LA_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2255,9 +2185,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_SINT16] = {
       .Name = MESA_FORMAT_LA_SINT16,
       .StrName = "MESA_FORMAT_LA_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2269,9 +2199,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_LA_SINT32] = {
       .Name = MESA_FORMAT_LA_SINT32,
       .StrName = "MESA_FORMAT_LA_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2283,9 +2213,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 0, 0, 1 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 2, 0, 0, 0, 1),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 2, 0, 0, 0, 1),
    },
-   {
+   [MESA_FORMAT_R_UINT8] = {
       .Name = MESA_FORMAT_R_UINT8,
       .StrName = "MESA_FORMAT_R_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2297,9 +2227,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_UINT16] = {
       .Name = MESA_FORMAT_R_UINT16,
       .StrName = "MESA_FORMAT_R_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2311,9 +2241,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_UINT32] = {
       .Name = MESA_FORMAT_R_UINT32,
       .StrName = "MESA_FORMAT_R_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2325,9 +2255,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_SINT8] = {
       .Name = MESA_FORMAT_R_SINT8,
       .StrName = "MESA_FORMAT_R_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2339,9 +2269,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 1,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_SINT16] = {
       .Name = MESA_FORMAT_R_SINT16,
       .StrName = "MESA_FORMAT_R_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2353,9 +2283,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_R_SINT32] = {
       .Name = MESA_FORMAT_R_SINT32,
       .StrName = "MESA_FORMAT_R_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2367,9 +2297,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 4, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 1, 0, 4, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 1, 0, 4, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_UINT8] = {
       .Name = MESA_FORMAT_RG_UINT8,
       .StrName = "MESA_FORMAT_RG_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2381,9 +2311,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_UINT16] = {
       .Name = MESA_FORMAT_RG_UINT16,
       .StrName = "MESA_FORMAT_RG_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2395,9 +2325,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_UINT32] = {
       .Name = MESA_FORMAT_RG_UINT32,
       .StrName = "MESA_FORMAT_RG_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2409,9 +2339,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_SINT8] = {
       .Name = MESA_FORMAT_RG_SINT8,
       .StrName = "MESA_FORMAT_RG_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2423,9 +2353,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 2,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_SINT16] = {
       .Name = MESA_FORMAT_RG_SINT16,
       .StrName = "MESA_FORMAT_RG_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2437,9 +2367,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RG_SINT32] = {
       .Name = MESA_FORMAT_RG_SINT32,
       .StrName = "MESA_FORMAT_RG_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2451,9 +2381,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 4, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 2, 0, 1, 4, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 2, 0, 1, 4, 5),
    },
-   {
+   [MESA_FORMAT_RGB_UINT8] = {
       .Name = MESA_FORMAT_RGB_UINT8,
       .StrName = "MESA_FORMAT_RGB_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2465,9 +2395,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 3,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_UINT16] = {
       .Name = MESA_FORMAT_RGB_UINT16,
       .StrName = "MESA_FORMAT_RGB_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2479,9 +2409,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 6,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_UINT32] = {
       .Name = MESA_FORMAT_RGB_UINT32,
       .StrName = "MESA_FORMAT_RGB_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2493,9 +2423,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 12,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_SINT8] = {
       .Name = MESA_FORMAT_RGB_SINT8,
       .StrName = "MESA_FORMAT_RGB_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2507,9 +2437,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 3,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_SINT16] = {
       .Name = MESA_FORMAT_RGB_SINT16,
       .StrName = "MESA_FORMAT_RGB_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2521,9 +2451,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 6,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_SINT32] = {
       .Name = MESA_FORMAT_RGB_SINT32,
       .StrName = "MESA_FORMAT_RGB_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2535,23 +2465,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 12,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 3, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 3, 0, 1, 2, 5),
    },
-   {
-      .Name = MESA_FORMAT_RGBA_UINT8,
-      .StrName = "MESA_FORMAT_RGBA_UINT8",
-      .Layout = MESA_FORMAT_LAYOUT_ARRAY,
-      .BaseFormat = GL_RGBA,
-      .DataType = GL_UNSIGNED_INT,
-      .RedBits = 8, .GreenBits = 8, .BlueBits = 8, .AlphaBits = 8,
-      .LuminanceBits = 0, .IntensityBits = 0, .DepthBits = 0, .StencilBits = 0,
-      .IsSRGBFormat = 0,
-      .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
-      .BytesPerBlock = 4,
-      .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 0, 1, 2, 3),
-   },
-   {
+   [MESA_FORMAT_RGBA_UINT16] = {
       .Name = MESA_FORMAT_RGBA_UINT16,
       .StrName = "MESA_FORMAT_RGBA_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2563,9 +2479,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBA_UINT32] = {
       .Name = MESA_FORMAT_RGBA_UINT32,
       .StrName = "MESA_FORMAT_RGBA_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2577,9 +2493,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBA_SINT8] = {
       .Name = MESA_FORMAT_RGBA_SINT8,
       .StrName = "MESA_FORMAT_RGBA_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2591,9 +2507,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBA_SINT16] = {
       .Name = MESA_FORMAT_RGBA_SINT16,
       .StrName = "MESA_FORMAT_RGBA_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2605,9 +2521,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBA_SINT32] = {
       .Name = MESA_FORMAT_RGBA_SINT32,
       .StrName = "MESA_FORMAT_RGBA_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2619,9 +2535,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 3 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 4, 0, 1, 2, 3),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 4, 0, 1, 2, 3),
    },
-   {
+   [MESA_FORMAT_RGBX_UINT8] = {
       .Name = MESA_FORMAT_RGBX_UINT8,
       .StrName = "MESA_FORMAT_RGBX_UINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2633,9 +2549,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 0, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 0, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_UINT16] = {
       .Name = MESA_FORMAT_RGBX_UINT16,
       .StrName = "MESA_FORMAT_RGBX_UINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2647,9 +2563,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 0, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 0, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_UINT32] = {
       .Name = MESA_FORMAT_RGBX_UINT32,
       .StrName = "MESA_FORMAT_RGBX_UINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2661,9 +2577,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 0, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 0, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_SINT8] = {
       .Name = MESA_FORMAT_RGBX_SINT8,
       .StrName = "MESA_FORMAT_RGBX_SINT8",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2675,9 +2591,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 4,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(1, 1, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 1, 1, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_SINT16] = {
       .Name = MESA_FORMAT_RGBX_SINT16,
       .StrName = "MESA_FORMAT_RGBX_SINT16",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2689,9 +2605,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 8,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(2, 1, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 2, 1, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGBX_SINT32] = {
       .Name = MESA_FORMAT_RGBX_SINT32,
       .StrName = "MESA_FORMAT_RGBX_SINT32",
       .Layout = MESA_FORMAT_LAYOUT_ARRAY,
@@ -2703,9 +2619,9 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .BlockWidth = 1, .BlockHeight = 1, .BlockDepth = 1,
       .BytesPerBlock = 16,
       .Swizzle = { 0, 1, 2, 5 },
-      .ArrayFormat = MESA_ARRAY_FORMAT(4, 1, 0, 0, 4, 0, 1, 2, 5),
+      .ArrayFormat = MESA_ARRAY_FORMAT(MESA_ARRAY_FORMAT_BASE_FORMAT_RGBA_VARIANTS, 4, 1, 0, 0, 4, 0, 1, 2, 5),
    },
-   {
+   [MESA_FORMAT_RGB_DXT1] = {
       .Name = MESA_FORMAT_RGB_DXT1,
       .StrName = "MESA_FORMAT_RGB_DXT1",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2719,7 +2635,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_DXT1] = {
       .Name = MESA_FORMAT_RGBA_DXT1,
       .StrName = "MESA_FORMAT_RGBA_DXT1",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2733,7 +2649,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_DXT3] = {
       .Name = MESA_FORMAT_RGBA_DXT3,
       .StrName = "MESA_FORMAT_RGBA_DXT3",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2747,7 +2663,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_DXT5] = {
       .Name = MESA_FORMAT_RGBA_DXT5,
       .StrName = "MESA_FORMAT_RGBA_DXT5",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2761,7 +2677,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB_DXT1] = {
       .Name = MESA_FORMAT_SRGB_DXT1,
       .StrName = "MESA_FORMAT_SRGB_DXT1",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2775,7 +2691,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGBA_DXT1] = {
       .Name = MESA_FORMAT_SRGBA_DXT1,
       .StrName = "MESA_FORMAT_SRGBA_DXT1",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2789,7 +2705,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGBA_DXT3] = {
       .Name = MESA_FORMAT_SRGBA_DXT3,
       .StrName = "MESA_FORMAT_SRGBA_DXT3",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2803,7 +2719,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGBA_DXT5] = {
       .Name = MESA_FORMAT_SRGBA_DXT5,
       .StrName = "MESA_FORMAT_SRGBA_DXT5",
       .Layout = MESA_FORMAT_LAYOUT_S3TC,
@@ -2817,7 +2733,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGB_FXT1] = {
       .Name = MESA_FORMAT_RGB_FXT1,
       .StrName = "MESA_FORMAT_RGB_FXT1",
       .Layout = MESA_FORMAT_LAYOUT_FXT1,
@@ -2831,7 +2747,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_FXT1] = {
       .Name = MESA_FORMAT_RGBA_FXT1,
       .StrName = "MESA_FORMAT_RGBA_FXT1",
       .Layout = MESA_FORMAT_LAYOUT_FXT1,
@@ -2845,7 +2761,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R_RGTC1_UNORM] = {
       .Name = MESA_FORMAT_R_RGTC1_UNORM,
       .StrName = "MESA_FORMAT_R_RGTC1_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_RGTC,
@@ -2859,7 +2775,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 4, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_R_RGTC1_SNORM] = {
       .Name = MESA_FORMAT_R_RGTC1_SNORM,
       .StrName = "MESA_FORMAT_R_RGTC1_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_RGTC,
@@ -2873,7 +2789,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 4, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RG_RGTC2_UNORM] = {
       .Name = MESA_FORMAT_RG_RGTC2_UNORM,
       .StrName = "MESA_FORMAT_RG_RGTC2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_RGTC,
@@ -2887,7 +2803,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RG_RGTC2_SNORM] = {
       .Name = MESA_FORMAT_RG_RGTC2_SNORM,
       .StrName = "MESA_FORMAT_RG_RGTC2_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_RGTC,
@@ -2901,7 +2817,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_L_LATC1_UNORM] = {
       .Name = MESA_FORMAT_L_LATC1_UNORM,
       .StrName = "MESA_FORMAT_L_LATC1_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_LATC,
@@ -2915,7 +2831,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 0, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_L_LATC1_SNORM] = {
       .Name = MESA_FORMAT_L_LATC1_SNORM,
       .StrName = "MESA_FORMAT_L_LATC1_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_LATC,
@@ -2929,7 +2845,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 0, 0, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_LA_LATC2_UNORM] = {
       .Name = MESA_FORMAT_LA_LATC2_UNORM,
       .StrName = "MESA_FORMAT_LA_LATC2_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_LATC,
@@ -2943,7 +2859,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 0, 0, 1 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_LA_LATC2_SNORM] = {
       .Name = MESA_FORMAT_LA_LATC2_SNORM,
       .StrName = "MESA_FORMAT_LA_LATC2_SNORM",
       .Layout = MESA_FORMAT_LAYOUT_LATC,
@@ -2957,7 +2873,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 0, 0, 1 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC1_RGB8] = {
       .Name = MESA_FORMAT_ETC1_RGB8,
       .StrName = "MESA_FORMAT_ETC1_RGB8",
       .Layout = MESA_FORMAT_LAYOUT_ETC1,
@@ -2971,7 +2887,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_RGB8] = {
       .Name = MESA_FORMAT_ETC2_RGB8,
       .StrName = "MESA_FORMAT_ETC2_RGB8",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -2985,7 +2901,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_SRGB8] = {
       .Name = MESA_FORMAT_ETC2_SRGB8,
       .StrName = "MESA_FORMAT_ETC2_SRGB8",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -2999,7 +2915,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_RGBA8_EAC] = {
       .Name = MESA_FORMAT_ETC2_RGBA8_EAC,
       .StrName = "MESA_FORMAT_ETC2_RGBA8_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3013,7 +2929,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = {
       .Name = MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC,
       .StrName = "MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3027,7 +2943,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_R11_EAC] = {
       .Name = MESA_FORMAT_ETC2_R11_EAC,
       .StrName = "MESA_FORMAT_ETC2_R11_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3041,7 +2957,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 4, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_RG11_EAC] = {
       .Name = MESA_FORMAT_ETC2_RG11_EAC,
       .StrName = "MESA_FORMAT_ETC2_RG11_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3055,7 +2971,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_SIGNED_R11_EAC] = {
       .Name = MESA_FORMAT_ETC2_SIGNED_R11_EAC,
       .StrName = "MESA_FORMAT_ETC2_SIGNED_R11_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3069,7 +2985,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 4, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = {
       .Name = MESA_FORMAT_ETC2_SIGNED_RG11_EAC,
       .StrName = "MESA_FORMAT_ETC2_SIGNED_RG11_EAC",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3083,7 +2999,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 4, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] = {
       .Name = MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1,
       .StrName = "MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3097,7 +3013,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] = {
       .Name = MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1,
       .StrName = "MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1",
       .Layout = MESA_FORMAT_LAYOUT_ETC2,
@@ -3111,7 +3027,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_BPTC_RGBA_UNORM] = {
       .Name = MESA_FORMAT_BPTC_RGBA_UNORM,
       .StrName = "MESA_FORMAT_BPTC_RGBA_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_BPTC,
@@ -3125,7 +3041,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM] = {
       .Name = MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM,
       .StrName = "MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM",
       .Layout = MESA_FORMAT_LAYOUT_BPTC,
@@ -3139,7 +3055,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT] = {
       .Name = MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT,
       .StrName = "MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT",
       .Layout = MESA_FORMAT_LAYOUT_BPTC,
@@ -3153,7 +3069,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT] = {
       .Name = MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT,
       .StrName = "MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT",
       .Layout = MESA_FORMAT_LAYOUT_BPTC,
@@ -3167,7 +3083,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_4x4] = {
       .Name = MESA_FORMAT_RGBA_ASTC_4x4,
       .StrName = "MESA_FORMAT_RGBA_ASTC_4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3181,7 +3097,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_5x4] = {
       .Name = MESA_FORMAT_RGBA_ASTC_5x4,
       .StrName = "MESA_FORMAT_RGBA_ASTC_5x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3195,7 +3111,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_5x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_5x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3209,7 +3125,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_6x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_6x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_6x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3223,7 +3139,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_6x6] = {
       .Name = MESA_FORMAT_RGBA_ASTC_6x6,
       .StrName = "MESA_FORMAT_RGBA_ASTC_6x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3237,7 +3153,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_8x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_8x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_8x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3251,7 +3167,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_8x6] = {
       .Name = MESA_FORMAT_RGBA_ASTC_8x6,
       .StrName = "MESA_FORMAT_RGBA_ASTC_8x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3265,7 +3181,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_8x8] = {
       .Name = MESA_FORMAT_RGBA_ASTC_8x8,
       .StrName = "MESA_FORMAT_RGBA_ASTC_8x8",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3279,7 +3195,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_10x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_10x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_10x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3293,7 +3209,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_10x6] = {
       .Name = MESA_FORMAT_RGBA_ASTC_10x6,
       .StrName = "MESA_FORMAT_RGBA_ASTC_10x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3307,7 +3223,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_10x8] = {
       .Name = MESA_FORMAT_RGBA_ASTC_10x8,
       .StrName = "MESA_FORMAT_RGBA_ASTC_10x8",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3321,7 +3237,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_10x10] = {
       .Name = MESA_FORMAT_RGBA_ASTC_10x10,
       .StrName = "MESA_FORMAT_RGBA_ASTC_10x10",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3335,7 +3251,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_12x10] = {
       .Name = MESA_FORMAT_RGBA_ASTC_12x10,
       .StrName = "MESA_FORMAT_RGBA_ASTC_12x10",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3349,7 +3265,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_12x12] = {
       .Name = MESA_FORMAT_RGBA_ASTC_12x12,
       .StrName = "MESA_FORMAT_RGBA_ASTC_12x12",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3363,7 +3279,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3377,7 +3293,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3391,7 +3307,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3405,7 +3321,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3419,7 +3335,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3433,7 +3349,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3447,7 +3363,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x6] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x6,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3461,7 +3377,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x8] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x8,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_8x8",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3475,7 +3391,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3489,7 +3405,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x6] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x6,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3503,7 +3419,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x8] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x8,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x8",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3517,7 +3433,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x10] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x10,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_10x10",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3531,7 +3447,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x10] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x10,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x10",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3545,7 +3461,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3559,7 +3475,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_3x3x3] = {
       .Name = MESA_FORMAT_RGBA_ASTC_3x3x3,
       .StrName = "MESA_FORMAT_RGBA_ASTC_3x3x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3573,7 +3489,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_4x3x3] = {
       .Name = MESA_FORMAT_RGBA_ASTC_4x3x3,
       .StrName = "MESA_FORMAT_RGBA_ASTC_4x3x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3587,7 +3503,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_4x4x3] = {
       .Name = MESA_FORMAT_RGBA_ASTC_4x4x3,
       .StrName = "MESA_FORMAT_RGBA_ASTC_4x4x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3601,7 +3517,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_4x4x4] = {
       .Name = MESA_FORMAT_RGBA_ASTC_4x4x4,
       .StrName = "MESA_FORMAT_RGBA_ASTC_4x4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3615,7 +3531,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_5x4x4] = {
       .Name = MESA_FORMAT_RGBA_ASTC_5x4x4,
       .StrName = "MESA_FORMAT_RGBA_ASTC_5x4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3629,7 +3545,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_5x5x4] = {
       .Name = MESA_FORMAT_RGBA_ASTC_5x5x4,
       .StrName = "MESA_FORMAT_RGBA_ASTC_5x5x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3643,7 +3559,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_5x5x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_5x5x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_5x5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3657,7 +3573,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_6x5x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_6x5x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_6x5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3671,7 +3587,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_6x6x5] = {
       .Name = MESA_FORMAT_RGBA_ASTC_6x6x5,
       .StrName = "MESA_FORMAT_RGBA_ASTC_6x6x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3685,7 +3601,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_RGBA_ASTC_6x6x6] = {
       .Name = MESA_FORMAT_RGBA_ASTC_6x6x6,
       .StrName = "MESA_FORMAT_RGBA_ASTC_6x6x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3699,7 +3615,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_3x3x3] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_3x3x3,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_3x3x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3713,7 +3629,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x3x3] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x3x3,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x3x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3727,7 +3643,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x3] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x3,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x3",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3741,7 +3657,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x4] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x4,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_4x4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3755,7 +3671,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4x4] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4x4,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x4x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3769,7 +3685,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x4] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x4,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x4",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3783,7 +3699,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_5x5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3797,7 +3713,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3811,7 +3727,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3825,7 +3741,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6] = {
       .Name = MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6,
       .StrName = "MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6",
       .Layout = MESA_FORMAT_LAYOUT_ASTC,
@@ -3839,7 +3755,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ATC_RGB] = {
       .Name = MESA_FORMAT_ATC_RGB,
       .StrName = "MESA_FORMAT_ATC_RGB",
       .Layout = MESA_FORMAT_LAYOUT_ATC,
@@ -3853,7 +3769,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 5 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ATC_RGBA_EXPLICIT] = {
       .Name = MESA_FORMAT_ATC_RGBA_EXPLICIT,
       .StrName = "MESA_FORMAT_ATC_RGBA_EXPLICIT",
       .Layout = MESA_FORMAT_LAYOUT_ATC,
@@ -3867,7 +3783,7 @@ static const struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       .Swizzle = { 0, 1, 2, 3 },
       .ArrayFormat = 0,
    },
-   {
+   [MESA_FORMAT_ATC_RGBA_INTERPOLATED] = {
       .Name = MESA_FORMAT_ATC_RGBA_INTERPOLATED,
       .StrName = "MESA_FORMAT_ATC_RGBA_INTERPOLATED",
       .Layout = MESA_FORMAT_LAYOUT_ATC,

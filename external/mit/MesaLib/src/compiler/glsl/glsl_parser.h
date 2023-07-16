@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.2.4.  */
+/* A Bison parser, made by GNU Bison 3.7.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY__MESA_GLSL_SRC_COMPILER_GLSL_GLSL_PARSER_H_INCLUDED
 # define YY__MESA_GLSL_SRC_COMPILER_GLSL_GLSL_PARSER_H_INCLUDED
@@ -43,155 +45,160 @@
 extern int _mesa_glsl_debug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ATTRIBUTE = 258,
-    CONST_TOK = 259,
-    BASIC_TYPE_TOK = 260,
-    BREAK = 261,
-    BUFFER = 262,
-    CONTINUE = 263,
-    DO = 264,
-    ELSE = 265,
-    FOR = 266,
-    IF = 267,
-    DISCARD = 268,
-    RETURN = 269,
-    SWITCH = 270,
-    CASE = 271,
-    DEFAULT = 272,
-    CENTROID = 273,
-    IN_TOK = 274,
-    OUT_TOK = 275,
-    INOUT_TOK = 276,
-    UNIFORM = 277,
-    VARYING = 278,
-    SAMPLE = 279,
-    NOPERSPECTIVE = 280,
-    FLAT = 281,
-    SMOOTH = 282,
-    IMAGE1DSHADOW = 283,
-    IMAGE2DSHADOW = 284,
-    IMAGE1DARRAYSHADOW = 285,
-    IMAGE2DARRAYSHADOW = 286,
-    COHERENT = 287,
-    VOLATILE = 288,
-    RESTRICT = 289,
-    READONLY = 290,
-    WRITEONLY = 291,
-    SHARED = 292,
-    STRUCT = 293,
-    VOID_TOK = 294,
-    WHILE = 295,
-    IDENTIFIER = 296,
-    TYPE_IDENTIFIER = 297,
-    NEW_IDENTIFIER = 298,
-    FLOATCONSTANT = 299,
-    DOUBLECONSTANT = 300,
-    INTCONSTANT = 301,
-    UINTCONSTANT = 302,
-    BOOLCONSTANT = 303,
-    INT64CONSTANT = 304,
-    UINT64CONSTANT = 305,
-    FIELD_SELECTION = 306,
-    LEFT_OP = 307,
-    RIGHT_OP = 308,
-    INC_OP = 309,
-    DEC_OP = 310,
-    LE_OP = 311,
-    GE_OP = 312,
-    EQ_OP = 313,
-    NE_OP = 314,
-    AND_OP = 315,
-    OR_OP = 316,
-    XOR_OP = 317,
-    MUL_ASSIGN = 318,
-    DIV_ASSIGN = 319,
-    ADD_ASSIGN = 320,
-    MOD_ASSIGN = 321,
-    LEFT_ASSIGN = 322,
-    RIGHT_ASSIGN = 323,
-    AND_ASSIGN = 324,
-    XOR_ASSIGN = 325,
-    OR_ASSIGN = 326,
-    SUB_ASSIGN = 327,
-    INVARIANT = 328,
-    PRECISE = 329,
-    LOWP = 330,
-    MEDIUMP = 331,
-    HIGHP = 332,
-    SUPERP = 333,
-    PRECISION = 334,
-    VERSION_TOK = 335,
-    EXTENSION = 336,
-    LINE = 337,
-    COLON = 338,
-    EOL = 339,
-    INTERFACE = 340,
-    OUTPUT = 341,
-    PRAGMA_DEBUG_ON = 342,
-    PRAGMA_DEBUG_OFF = 343,
-    PRAGMA_OPTIMIZE_ON = 344,
-    PRAGMA_OPTIMIZE_OFF = 345,
-    PRAGMA_WARNING_ON = 346,
-    PRAGMA_WARNING_OFF = 347,
-    PRAGMA_INVARIANT_ALL = 348,
-    LAYOUT_TOK = 349,
-    DOT_TOK = 350,
-    ASM = 351,
-    CLASS = 352,
-    UNION = 353,
-    ENUM = 354,
-    TYPEDEF = 355,
-    TEMPLATE = 356,
-    THIS = 357,
-    PACKED_TOK = 358,
-    GOTO = 359,
-    INLINE_TOK = 360,
-    NOINLINE = 361,
-    PUBLIC_TOK = 362,
-    STATIC = 363,
-    EXTERN = 364,
-    EXTERNAL = 365,
-    LONG_TOK = 366,
-    SHORT_TOK = 367,
-    HALF = 368,
-    FIXED_TOK = 369,
-    UNSIGNED = 370,
-    INPUT_TOK = 371,
-    HVEC2 = 372,
-    HVEC3 = 373,
-    HVEC4 = 374,
-    FVEC2 = 375,
-    FVEC3 = 376,
-    FVEC4 = 377,
-    SAMPLER3DRECT = 378,
-    SIZEOF = 379,
-    CAST = 380,
-    NAMESPACE = 381,
-    USING = 382,
-    RESOURCE = 383,
-    PATCH = 384,
-    SUBROUTINE = 385,
-    ERROR_TOK = 386,
-    COMMON = 387,
-    PARTITION = 388,
-    ACTIVE = 389,
-    FILTER = 390,
-    ROW_MAJOR = 391,
-    THEN = 392
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    ATTRIBUTE = 258,               /* ATTRIBUTE  */
+    CONST_TOK = 259,               /* CONST_TOK  */
+    BASIC_TYPE_TOK = 260,          /* BASIC_TYPE_TOK  */
+    BREAK = 261,                   /* BREAK  */
+    BUFFER = 262,                  /* BUFFER  */
+    CONTINUE = 263,                /* CONTINUE  */
+    DO = 264,                      /* DO  */
+    ELSE = 265,                    /* ELSE  */
+    FOR = 266,                     /* FOR  */
+    IF = 267,                      /* IF  */
+    DEMOTE = 268,                  /* DEMOTE  */
+    DISCARD = 269,                 /* DISCARD  */
+    RETURN = 270,                  /* RETURN  */
+    SWITCH = 271,                  /* SWITCH  */
+    CASE = 272,                    /* CASE  */
+    DEFAULT = 273,                 /* DEFAULT  */
+    CENTROID = 274,                /* CENTROID  */
+    IN_TOK = 275,                  /* IN_TOK  */
+    OUT_TOK = 276,                 /* OUT_TOK  */
+    INOUT_TOK = 277,               /* INOUT_TOK  */
+    UNIFORM = 278,                 /* UNIFORM  */
+    VARYING = 279,                 /* VARYING  */
+    SAMPLE = 280,                  /* SAMPLE  */
+    NOPERSPECTIVE = 281,           /* NOPERSPECTIVE  */
+    FLAT = 282,                    /* FLAT  */
+    SMOOTH = 283,                  /* SMOOTH  */
+    IMAGE1DSHADOW = 284,           /* IMAGE1DSHADOW  */
+    IMAGE2DSHADOW = 285,           /* IMAGE2DSHADOW  */
+    IMAGE1DARRAYSHADOW = 286,      /* IMAGE1DARRAYSHADOW  */
+    IMAGE2DARRAYSHADOW = 287,      /* IMAGE2DARRAYSHADOW  */
+    COHERENT = 288,                /* COHERENT  */
+    VOLATILE = 289,                /* VOLATILE  */
+    RESTRICT = 290,                /* RESTRICT  */
+    READONLY = 291,                /* READONLY  */
+    WRITEONLY = 292,               /* WRITEONLY  */
+    SHARED = 293,                  /* SHARED  */
+    STRUCT = 294,                  /* STRUCT  */
+    VOID_TOK = 295,                /* VOID_TOK  */
+    WHILE = 296,                   /* WHILE  */
+    IDENTIFIER = 297,              /* IDENTIFIER  */
+    TYPE_IDENTIFIER = 298,         /* TYPE_IDENTIFIER  */
+    NEW_IDENTIFIER = 299,          /* NEW_IDENTIFIER  */
+    FLOATCONSTANT = 300,           /* FLOATCONSTANT  */
+    DOUBLECONSTANT = 301,          /* DOUBLECONSTANT  */
+    INTCONSTANT = 302,             /* INTCONSTANT  */
+    UINTCONSTANT = 303,            /* UINTCONSTANT  */
+    BOOLCONSTANT = 304,            /* BOOLCONSTANT  */
+    INT64CONSTANT = 305,           /* INT64CONSTANT  */
+    UINT64CONSTANT = 306,          /* UINT64CONSTANT  */
+    FIELD_SELECTION = 307,         /* FIELD_SELECTION  */
+    LEFT_OP = 308,                 /* LEFT_OP  */
+    RIGHT_OP = 309,                /* RIGHT_OP  */
+    INC_OP = 310,                  /* INC_OP  */
+    DEC_OP = 311,                  /* DEC_OP  */
+    LE_OP = 312,                   /* LE_OP  */
+    GE_OP = 313,                   /* GE_OP  */
+    EQ_OP = 314,                   /* EQ_OP  */
+    NE_OP = 315,                   /* NE_OP  */
+    AND_OP = 316,                  /* AND_OP  */
+    OR_OP = 317,                   /* OR_OP  */
+    XOR_OP = 318,                  /* XOR_OP  */
+    MUL_ASSIGN = 319,              /* MUL_ASSIGN  */
+    DIV_ASSIGN = 320,              /* DIV_ASSIGN  */
+    ADD_ASSIGN = 321,              /* ADD_ASSIGN  */
+    MOD_ASSIGN = 322,              /* MOD_ASSIGN  */
+    LEFT_ASSIGN = 323,             /* LEFT_ASSIGN  */
+    RIGHT_ASSIGN = 324,            /* RIGHT_ASSIGN  */
+    AND_ASSIGN = 325,              /* AND_ASSIGN  */
+    XOR_ASSIGN = 326,              /* XOR_ASSIGN  */
+    OR_ASSIGN = 327,               /* OR_ASSIGN  */
+    SUB_ASSIGN = 328,              /* SUB_ASSIGN  */
+    INVARIANT = 329,               /* INVARIANT  */
+    PRECISE = 330,                 /* PRECISE  */
+    LOWP = 331,                    /* LOWP  */
+    MEDIUMP = 332,                 /* MEDIUMP  */
+    HIGHP = 333,                   /* HIGHP  */
+    SUPERP = 334,                  /* SUPERP  */
+    PRECISION = 335,               /* PRECISION  */
+    VERSION_TOK = 336,             /* VERSION_TOK  */
+    EXTENSION = 337,               /* EXTENSION  */
+    LINE = 338,                    /* LINE  */
+    COLON = 339,                   /* COLON  */
+    EOL = 340,                     /* EOL  */
+    INTERFACE_TOK = 341,           /* INTERFACE_TOK  */
+    OUTPUT = 342,                  /* OUTPUT  */
+    PRAGMA_DEBUG_ON = 343,         /* PRAGMA_DEBUG_ON  */
+    PRAGMA_DEBUG_OFF = 344,        /* PRAGMA_DEBUG_OFF  */
+    PRAGMA_OPTIMIZE_ON = 345,      /* PRAGMA_OPTIMIZE_ON  */
+    PRAGMA_OPTIMIZE_OFF = 346,     /* PRAGMA_OPTIMIZE_OFF  */
+    PRAGMA_WARNING_ON = 347,       /* PRAGMA_WARNING_ON  */
+    PRAGMA_WARNING_OFF = 348,      /* PRAGMA_WARNING_OFF  */
+    PRAGMA_INVARIANT_ALL = 349,    /* PRAGMA_INVARIANT_ALL  */
+    LAYOUT_TOK = 350,              /* LAYOUT_TOK  */
+    DOT_TOK = 351,                 /* DOT_TOK  */
+    ASM = 352,                     /* ASM  */
+    CLASS = 353,                   /* CLASS  */
+    UNION = 354,                   /* UNION  */
+    ENUM = 355,                    /* ENUM  */
+    TYPEDEF = 356,                 /* TYPEDEF  */
+    TEMPLATE = 357,                /* TEMPLATE  */
+    THIS = 358,                    /* THIS  */
+    PACKED_TOK = 359,              /* PACKED_TOK  */
+    GOTO = 360,                    /* GOTO  */
+    INLINE_TOK = 361,              /* INLINE_TOK  */
+    NOINLINE = 362,                /* NOINLINE  */
+    PUBLIC_TOK = 363,              /* PUBLIC_TOK  */
+    STATIC = 364,                  /* STATIC  */
+    EXTERN = 365,                  /* EXTERN  */
+    EXTERNAL = 366,                /* EXTERNAL  */
+    LONG_TOK = 367,                /* LONG_TOK  */
+    SHORT_TOK = 368,               /* SHORT_TOK  */
+    HALF = 369,                    /* HALF  */
+    FIXED_TOK = 370,               /* FIXED_TOK  */
+    UNSIGNED = 371,                /* UNSIGNED  */
+    INPUT_TOK = 372,               /* INPUT_TOK  */
+    HVEC2 = 373,                   /* HVEC2  */
+    HVEC3 = 374,                   /* HVEC3  */
+    HVEC4 = 375,                   /* HVEC4  */
+    FVEC2 = 376,                   /* FVEC2  */
+    FVEC3 = 377,                   /* FVEC3  */
+    FVEC4 = 378,                   /* FVEC4  */
+    SAMPLER3DRECT = 379,           /* SAMPLER3DRECT  */
+    SIZEOF = 380,                  /* SIZEOF  */
+    CAST = 381,                    /* CAST  */
+    NAMESPACE = 382,               /* NAMESPACE  */
+    USING = 383,                   /* USING  */
+    RESOURCE = 384,                /* RESOURCE  */
+    PATCH = 385,                   /* PATCH  */
+    SUBROUTINE = 386,              /* SUBROUTINE  */
+    ERROR_TOK = 387,               /* ERROR_TOK  */
+    COMMON = 388,                  /* COMMON  */
+    PARTITION = 389,               /* PARTITION  */
+    ACTIVE = 390,                  /* ACTIVE  */
+    FILTER = 391,                  /* FILTER  */
+    ROW_MAJOR = 392,               /* ROW_MAJOR  */
+    THEN = 393                     /* THEN  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 98 "../src/compiler/glsl/glsl_parser.yy" /* yacc.c:1906  */
+#line 101 "../src/compiler/glsl/glsl_parser.yy"
 
    int n;
    int64_t n64;
@@ -232,9 +239,9 @@ union YYSTYPE
 
    const glsl_type *type;
 
-#line 236 "src/compiler/glsl/glsl_parser.h" /* yacc.c:1906  */
-};
+#line 243 "src/compiler/glsl/glsl_parser.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
