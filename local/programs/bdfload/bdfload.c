@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.19 2022/10/25 13:36:35 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.20 2023/07/27 08:44:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -320,6 +320,9 @@ interpret(FILE *foo)
 			    "syntax error - no valid FONTBOUNDINGBOX\n");
 			memset(cbitmap, 0, charsize);
 			strlcpy(charname, arg, 64);
+			if (dump && (strlen(charname) > 0))
+				printf("name: %s\n", charname);
+
 		} else if (strcmp(line, "ENDCHAR") == 0) {
 			in_char = 0;
 			/* only commit the glyph if it's in range */
