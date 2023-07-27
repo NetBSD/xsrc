@@ -1,10 +1,22 @@
 This will attempt to load a .bdf font into wsdisplay, to be used with
 wsconsctl -dw font=<name>
+Optionally it can:
+- produce a header to be used with src/sys/dev/wsfont/
+- write a .wsf file to be used with wsfontload
+- produce debug output
+
+Command line options:
+ -o <file> will write a file instead of trying to feed the font to wsdisplay,
+    default format is wsf
+ -h to be used with -o, will write a header usable with dev/wsfont/
+ -f force bdfload to use a non-monospaced font, which would otherwise be
+    rejected. Use with caution, results will look uneven.
+ -v be verbose. This will dump various font parameters to the console.
+ -d dump glyph shapes to the console, mostly for font debugging
+ -e <encoding> override the font's encoding
+ -N <name> override the font's name for both file output and wsdisplay
+
 Caveats:
 - fonts wider than 16 pixels won't work yet
-- the program does not distinguish between monospace and proportional fonts,
-  and terminal output is necessarily monospace. Proportional fonts should
-  work but the glyphs will be left justified in the character cell so things
-  will look uneven.
 - some drivers may have trouble with font widths that are not a multiple of 4
 - no attempt has been made to make this play nice with vga text mode
