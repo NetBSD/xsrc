@@ -363,8 +363,8 @@ parseArgs(int argc, char **argv,
   bail:
     if (path)
 	free(path);
-    if (argv)
-	free(argv);
+    if (child_argv)
+	free(child_argv);
     return -1;
 }
 
