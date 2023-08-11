@@ -1658,8 +1658,8 @@ mk_twmkeys_entry(const FuncKey *key)
 {
 	char *ret;
 	//         S+  C+  5(Mx+)  5(Ax+)
-#define MSLEN (2 + 2 + 5 * 3 + 5 * 3)
-	char modStr[64];
+#define MSLEN (2 + 2 + 2 + 5 * 3 + 5 * 3 + 1 + 26)
+	char modStr[MSLEN + 1];
 	char *modStrCur = modStr;
 
 	// Init
