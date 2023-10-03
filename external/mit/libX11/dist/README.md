@@ -31,6 +31,17 @@ For patch submission instructions, see:
 
   https://www.x.org/wiki/Development/Documentation/SubmittingPatches
 
+## Release 1.8.7
+
+ * Security fixes and hardening in XImage and pixmap handling code
+   (CVE-2023-43786, CVE-2023-43787, !234)
+ * Fix buffer allocation in _XkbReadKeySyms() (CVE-2023-43785)
+ * Fail XOpenDisplay() if server-provided default visual is invalid (!233)
+ * Bring XKB docs in line with actual implementation (!231, !228)
+ * Xutil.h: declare XEmptyRegion() and XEqualRegion() as Bool (!225)
+ * Assorted updates to en_US.UTF-8 compose keys (!213, !214, !215, !216,
+   !217, !219, !220, !222, !223, !226, !227, !229)
+
 ## Release 1.8.6
 
  * Add bounds checks in InitExt.c (CVE-2023-3138)

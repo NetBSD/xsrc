@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.70])
-AC_INIT([libX11], [1.8.6],
+AC_INIT([libX11], [1.8.7],
         [https://gitlab.freedesktop.org/xorg/lib/libx11/-/issues], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
@@ -98,7 +98,6 @@ m4_pattern_forbid([^XTRANS_CONNECTION_FLAGS$])
 XTRANS_CONNECTION_FLAGS
 
 # Check for dlopen
-AC_MSG_CHECKING([if run-time linking is supported])
 AC_SEARCH_LIBS(dlopen,[dl svld])
 if test "x$ac_cv_search_dlopen" = xno; then
 	AC_SEARCH_LIBS(shl_load,[dld])
@@ -111,6 +110,7 @@ else
 	AC_DEFINE(HAVE_DLOPEN,1,[Use dlopen to load shared libraries])
 	AC_CHECK_HEADERS([dlfcn.h])
 fi
+AC_MSG_CHECKING([if run-time linking is supported])
 if test "x$ac_cv_header_dlfcn_h" = xyes -o "x$ac_cv_header_dl_h" = xyes; then
 	HAVE_LOADABLE_MODULES=yes
 else
