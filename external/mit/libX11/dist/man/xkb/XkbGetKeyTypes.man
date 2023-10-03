@@ -77,6 +77,6 @@ The Xkb extension has not been properly initialized
 .B BadValue
 An argument is out of range
 .SH "SEE ALSO"
-.BR XkbKeyType (__libmansuffix__),
-.BR XkbKeyTypeIndex (__libmansuffix__)
+.BR XkbKeyKeyType (__libmansuffix__),
+.BR XkbKeyKeyTypeIndex (__libmansuffix__)
 

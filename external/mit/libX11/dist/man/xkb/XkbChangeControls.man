@@ -312,7 +312,6 @@ typedef struct _XkbControlsChanges {
 XkbChangeControls(__libmansuffix__),
 XkbChangeDeviceInfo(__libmansuffix__),
 XkbChangeEnabledControls(__libmansuffix__),
-XkbChangeIndicators(__libmansuffix__),
 XkbChangeMap(__libmansuffix__),
 XkbChangeNames(__libmansuffix__),
 XkbChangeTypesOfKey(__libmansuffix__)
