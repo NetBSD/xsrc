@@ -473,6 +473,10 @@ XOpenDisplay (
 		}
 	    }
 	    sp->root_visual = _XVIDtoVisual(dpy, root_visualID);
+	    if (sp->root_visual == NULL) {
+		OutOfMemory(dpy);
+		return(NULL);
+	    }
 	}
 
 	if(usedbytes != setuplength){

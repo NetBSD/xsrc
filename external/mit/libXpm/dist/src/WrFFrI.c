@@ -315,7 +315,7 @@ WriteExtensions(
 
 
 #ifndef NO_ZPIPE
-FUNC(xpmPipeThrough, FILE*, (int fd,
+HFUNC(xpmPipeThrough, FILE*, (int fd,
 			     const char* cmd,
 			     const char* arg1,
 			     const char* mode));
@@ -336,13 +336,17 @@ OpenWriteFile(
 #ifndef NO_ZPIPE
 	size_t len;
 #endif
-	int fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+	int fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0644);
 	if ( fd < 0 )
 	    return(XpmOpenFailed);
 #ifndef NO_ZPIPE
 	len = strlen(filename);
 	if (len > 2 && !strcmp(".Z", filename + (len - 2))) {
+#ifdef XPM_PATH_COMPRESS
 	    mdata->stream.file = xpmPipeThrough(fd, XPM_PATH_COMPRESS, NULL, "w");
+#else
+	    mdata->stream.file = NULL;
+#endif
 	    mdata->type = XPMPIPE;
 	} else if (len > 3 && !strcmp(".gz", filename + (len - 3))) {
 	    mdata->stream.file = xpmPipeThrough(fd, XPM_PATH_GZIP, "-q", "w");

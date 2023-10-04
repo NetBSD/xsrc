@@ -1,8 +1,8 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libXpm], [3.5.15],
-        [https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues], [libXpm])
+AC_INIT([libXpm], [3.5.17],
+        [https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues/], [libXpm])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -11,7 +11,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Initialize libtool
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Require X.Org macros 1.16 or later for XORG_MEMORY_CHECK_FLAGS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -52,9 +52,8 @@ AM_CONDITIONAL(USE_GETTEXT, test "x$USE_GETTEXT" = "xyes")
 dnl Helper macro to find absolute path to program and add a #define for it
 AC_DEFUN([XPM_PATH_PROG],[
 AC_PATH_PROG([$1], [$2], [])
-AS_IF([test "x$$1" = "x"],
-      [AC_MSG_ERROR([$2 not found, set $1 or use --disable-stat-zfile])])
-AC_DEFINE_UNQUOTED([$1], ["$$1"], [Path to $2])
+AS_IF([test "x$$1" = "x"], [$3],
+      [AC_DEFINE_UNQUOTED([$1], ["$$1"], [Path to $2])])
 ]) dnl End of AC_DEFUN([XPM_PATH_PROG]...
 
 # Optional feature: When a filename ending in .Z or .gz is requested,
@@ -74,9 +73,17 @@ AM_CONDITIONAL(COMPRESSED_PIXMAPS, test "x$OPEN_ZFILE" = "xyes")
 if test x$OPEN_ZFILE = xno ; then
         AC_DEFINE(NO_ZPIPE, 1, [Define to 1 to disable decompression via pipes])
 else
-        XPM_PATH_PROG([XPM_PATH_COMPRESS], [compress])
+        # gzip is absolutely required for the compressed file handling code
+        XPM_PATH_PROG([XPM_PATH_GZIP], [gzip],
+            [AC_MSG_ERROR([gzip not found, set XPM_PATH_GZIP or use --disable-open-zfile])])
+
+        # if compress is not found, we disable writing to .Z files,
+        # but leave the rest of the compression code active
+        XPM_PATH_PROG([XPM_PATH_COMPRESS], [compress],
+            [AC_MSG_WARN([compress not found, disabling writing of .Z files])])
+        # if uncompress is not found, we use gzip to read .Z files
         XPM_PATH_PROG([XPM_PATH_UNCOMPRESS], [uncompress])
-        XPM_PATH_PROG([XPM_PATH_GZIP], [gzip])
+
         AC_CHECK_FUNCS([closefrom close_range], [break])
 fi
 
@@ -96,6 +103,9 @@ fi
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 XORG_ENABLE_UNIT_TESTS
 XORG_WITH_GLIB([2.46])
+if test "x$have_glib" = x"yes"; then
+       AC_CHECK_FUNCS([g_pattern_spec_match_string])
+fi
 XORG_MEMORY_CHECK_FLAGS
 
 AC_CONFIG_FILES([Makefile

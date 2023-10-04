@@ -38,6 +38,10 @@
 #include "TestAllFiles.h"
 #include "CompareXpmImage.h"
 
+#ifndef O_CLOEXEC
+# define O_CLOEXEC 0
+#endif
+
 #ifndef g_assert_no_errno /* defined in glib 2.66 & later */
 #define g_assert_no_errno(n) g_assert_cmpint(n, >=, 0)
 #endif
@@ -57,6 +61,22 @@ is_compressed(const char *filepath)
     }
 
     return FALSE;
+}
+
+/*
+ * If a filename ends in ".Z" or ".gz", remove that extension to avoid
+ * confusing libXpm into applying compression when not desired.
+ */
+static inline void
+strip_compress_ext(char *filepath)
+{
+    char *ext = strrchr(filepath, '.');
+
+    if ((ext != NULL) &&
+        (((ext[1] == 'Z') && (ext[2] == 0)) ||
+         ((ext[1] == 'g') && (ext[2] == 'z') && (ext[3] == 0)))) {
+        *ext = '\0';
+    }
 }
 
 /*
@@ -114,6 +134,7 @@ TestWriteFileFromXpmImage(const gchar *filepath)
     g_assert_no_error(err);
 
     filename = g_path_get_basename(filepath);
+    strip_compress_ext(filename);
     newfilepath = g_build_filename(testdir, filename, NULL);
 
     test_WFFXI_helper(newfilepath, &imageA, &infoA);
@@ -123,9 +144,11 @@ TestWriteFileFromXpmImage(const gchar *filepath)
     test_WFFXI_helper(cmpfilepath, &imageA, &infoA);
     g_free(cmpfilepath);
 
+#ifdef XPM_PATH_COMPRESS
     cmpfilepath = g_strdup_printf("%s.Z", newfilepath);
     test_WFFXI_helper(cmpfilepath, &imageA, &infoA);
     g_free(cmpfilepath);
+#endif
 #endif
 
     XpmFreeXpmImage(&imageA);
@@ -203,6 +226,7 @@ TestWriteFileFromData(const gchar *filepath)
     g_assert_no_error(err);
 
     filename = g_path_get_basename(filepath);
+    strip_compress_ext(filename);
     newfilepath = g_build_filename(testdir, filename, NULL);
 
     test_WFFXD_helper(newfilepath, data);
@@ -212,9 +236,11 @@ TestWriteFileFromData(const gchar *filepath)
     test_WFFXD_helper(cmpfilepath, data);
     g_free(cmpfilepath);
 
+#ifdef XPM_PATH_COMPRESS
     cmpfilepath = g_strdup_printf("%s.Z", newfilepath);
     test_WFFXD_helper(cmpfilepath, data);
     g_free(cmpfilepath);
+#endif
 #endif
 
     XpmFree(data);
@@ -259,6 +285,7 @@ TestWriteFileFromBuffer(const gchar *filepath)
     g_assert_no_error(err);
 
     filename = g_path_get_basename(filepath);
+    strip_compress_ext(filename);
     newfilepath = g_build_filename(testdir, filename, NULL);
     g_test_message("...writing %s", newfilepath);
 
@@ -272,7 +299,7 @@ TestWriteFileFromBuffer(const gchar *filepath)
         ssize_t rd;
 
         /* Read file ourselves and verify the data matches */
-        g_assert_no_errno(fd = open(newfilepath, O_RDONLY));
+        g_assert_no_errno(fd = open(newfilepath, O_RDONLY | O_CLOEXEC));
         while ((rd = read(fd, readbuf, sizeof(readbuf))) > 0) {
             g_assert_cmpmem(b, rd, readbuf, rd);
             b += rd;
@@ -307,7 +334,7 @@ int
 main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
-    g_test_bug_base("https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues/");
+    g_test_bug_base(PACKAGE_BUGREPORT);
 
 
     g_test_add_func("/XpmRead/XpmWriteFileFromXpmImage",

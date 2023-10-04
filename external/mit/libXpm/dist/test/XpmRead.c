@@ -33,6 +33,10 @@
 
 #include "TestAllFiles.h"
 
+#ifndef O_CLOEXEC
+# define O_CLOEXEC 0
+#endif
+
 #ifndef g_assert_no_errno /* defined in glib 2.66 & later */
 #define g_assert_no_errno(n) g_assert_cmpint(n, >=, 0)
 #endif
@@ -147,7 +151,7 @@ TestReadFileToBuffer(const gchar *filepath)
         g_assert_nonnull(buffer);
 
         /* Read file ourselves and verify the data matches */
-        g_assert_no_errno(fd = open(filepath, O_RDONLY));
+        g_assert_no_errno(fd = open(filepath, O_RDONLY | O_CLOEXEC));
         while ((rd = read(fd, readbuf, sizeof(readbuf))) > 0) {
             g_assert_cmpmem(b, rd, readbuf, rd);
             b += rd;
@@ -182,7 +186,7 @@ int
 main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
-    g_test_bug_base("https://gitlab.freedesktop.org/xorg/lib/libxpm/-/issues/");
+    g_test_bug_base(PACKAGE_BUGREPORT);
 
     g_test_add_func("/XpmRead/XpmReadFileToXpmImage",
                     test_XpmReadFileToXpmImage);

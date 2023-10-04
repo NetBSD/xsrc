@@ -32,6 +32,12 @@
 
 #include "config.h"
 
+/* g_pattern_spec_match_string is available in glib 2.70 and later,
+   to replace the deprecated g_pattern_match_string */
+#ifdef HAVE_G_PATTERN_SPEC_MATCH_STRING
+#define g_pattern_match_string g_pattern_spec_match_string
+#endif
+
 #define DEFAULT_TIMEOUT 10 /* maximum seconds for each file */
 
 static sigjmp_buf jump_env;
@@ -156,5 +162,9 @@ TestAllNormalFiles(const char *subdir, int expected, testfilefunc testfunc)
 static void
 TestAllCompressedFiles(const char *subdir, int expected, testfilefunc testfunc)
 {
+#ifdef NO_ZPIPE
+    g_test_message("compression disabled, skipping compressed file tests");
+#else
     TestAllFilesByType(G_TEST_BUILT, TRUE, subdir, expected, testfunc);
+#endif
 }
