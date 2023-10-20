@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #include "ctwm_shutdown.h"
 #include "signals.h"
@@ -26,6 +28,15 @@ static bool sig_shutdown = false;
 // needs to trigger an action.
 bool SignalFlag = false;
 
+void ChildExit(int signum)
+{
+	int Errno = errno;
+	/* reap dead children, ignore status */
+	while (waitpid(-1, NULL, WNOHANG) > 0)
+		continue;
+	/* restore errno for interrupted sys calls */
+	errno = Errno;
+}
 
 /**
  * Setup signal handlers (run during startup)
@@ -46,9 +57,12 @@ setup_signal_handlers(void)
 	// die...
 	signal(SIGALRM, SIG_IGN);
 
-	// This should be set by default, but just in case; explicitly don't
-	// leave zombies.
-	signal(SIGCHLD, SIG_IGN);
+	/* Setting SIGCHLD to SIG_IGN detaches children from the parent
+	 * immediately, so it need not be waited for.
+	 * In fact, you cannot wait for it, so a function like system()
+	 * breaks.
+	 */
+	signal(SIGCHLD, ChildExit);
 
 	return;
 }
