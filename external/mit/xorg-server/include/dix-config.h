@@ -111,9 +111,6 @@
 /* Build a standalone xpbproxy */
 /* #undef STANDALONE_XPBPROXY */
 
-/* Define to 1 if you have the `bsd' library (-lbsd). */
-/* #undef HAVE_LIBBSD */
-
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
 
@@ -146,9 +143,6 @@
 
 /* Define to 1 if you have the `reallocarray' function. */
 #define HAVE_REALLOCARRAY 1
-
-/* Define to 1 if you have the `arc4random_buf' function. */
-#define HAVE_ARC4RANDOM_BUF 1
 
 /* Define to use libc SHA1 functions */
 #define HAVE_SHA1_IN_LIBC 1
@@ -349,7 +343,7 @@
 #define XINERAMA 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 8)
+#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 9)
 
 /* Build Xv Extension */
 #define XvExtension 1
