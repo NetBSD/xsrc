@@ -410,8 +410,8 @@ AC_DEFUN([XORG_FONTSUBDIR],[
 
 AC_DEFUN([XORG_FONTDIR],[XORG_FONTSUBDIR([FONTDIR], [fontdir], [$1])])
 
-# pkg.m4 - Macros to locate and utilise pkg-config.   -*- Autoconf -*-
-# serial 11 (pkg-config-0.29.1)
+# pkg.m4 - Macros to locate and use pkg-config.   -*- Autoconf -*-
+# serial 12 (pkg-config-0.29.2)
 
 dnl Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
 dnl Copyright © 2012-2015 Dan Nicholson <dbn.lists@gmail.com>
@@ -453,7 +453,7 @@ dnl
 dnl See the "Since" comment for each macro you use to see what version
 dnl of the macros you require.
 m4_defun([PKG_PREREQ],
-[m4_define([PKG_MACROS_VERSION], [0.29.1])
+[m4_define([PKG_MACROS_VERSION], [0.29.2])
 m4_if(m4_version_compare(PKG_MACROS_VERSION, [$1]), -1,
     [m4_fatal([pkg.m4 version $1 or higher is required but ]PKG_MACROS_VERSION[ found])])
 ])dnl PKG_PREREQ
@@ -498,7 +498,7 @@ dnl Check to see whether a particular set of modules exists. Similar to
 dnl PKG_CHECK_MODULES(), but does not set variables or print errors.
 dnl
 dnl Please remember that m4 expands AC_REQUIRE([PKG_PROG_PKG_CONFIG])
-dnl only at the first occurence in configure.ac, so if the first place
+dnl only at the first occurrence in configure.ac, so if the first place
 dnl it's called might be skipped (such as if it is within an "if", you
 dnl have to call PKG_CHECK_EXISTS manually
 AC_DEFUN([PKG_CHECK_EXISTS],
@@ -554,7 +554,7 @@ AC_ARG_VAR([$1][_CFLAGS], [C compiler flags for $1, overriding pkg-config])dnl
 AC_ARG_VAR([$1][_LIBS], [linker flags for $1, overriding pkg-config])dnl
 
 pkg_failed=no
-AC_MSG_CHECKING([for $1])
+AC_MSG_CHECKING([for $2])
 
 _PKG_CONFIG([$1][_CFLAGS], [cflags], [$2])
 _PKG_CONFIG([$1][_LIBS], [libs], [$2])
@@ -564,17 +564,17 @@ and $1[]_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.])
 
 if test $pkg_failed = yes; then
-   	AC_MSG_RESULT([no])
+        AC_MSG_RESULT([no])
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
-        else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
+        else
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
+        # Put the nasty error message in config.log where it belongs
+        echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
 
-	m4_default([$4], [AC_MSG_ERROR(
+        m4_default([$4], [AC_MSG_ERROR(
 [Package requirements ($2) were not met:
 
 $$1_PKG_ERRORS
@@ -585,8 +585,8 @@ installed software in a non-standard prefix.
 _PKG_TEXT])[]dnl
         ])
 elif test $pkg_failed = untried; then
-     	AC_MSG_RESULT([no])
-	m4_default([$4], [AC_MSG_FAILURE(
+        AC_MSG_RESULT([no])
+        m4_default([$4], [AC_MSG_FAILURE(
 [The pkg-config script could not be found or is too old.  Make sure it
 is in your PATH or set the PKG_CONFIG environment variable to the full
 path to pkg-config.
@@ -596,10 +596,10 @@ _PKG_TEXT
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
         ])
 else
-	$1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
-	$1[]_LIBS=$pkg_cv_[]$1[]_LIBS
+        $1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
+        $1[]_LIBS=$pkg_cv_[]$1[]_LIBS
         AC_MSG_RESULT([yes])
-	$3
+        $3
 fi[]dnl
 ])dnl PKG_CHECK_MODULES
 
@@ -756,7 +756,7 @@ AS_IF([test "$AS_TR_SH([with_]m4_tolower([$1]))" = "yes"],
 
 dnl xorg-macros.m4.  Generated from xorg-macros.m4.in xorgversion.m4 by configure.
 dnl
-dnl Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, 2023, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -793,7 +793,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.3])
+m4_define([vers_have], [1.20.0])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -1123,7 +1123,7 @@ AC_SUBST(MAKE_HTML)
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-xmlto option, it allows maximum flexibilty in making decisions
+# the --with-xmlto option, it allows maximum flexibility in making decisions
 # as whether or not to use the xmlto package. When DEFAULT is not specified,
 # --with-xmlto assumes 'auto'.
 #
@@ -1337,7 +1337,7 @@ AM_CONDITIONAL([HAVE_PERL], [test "$have_perl" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-asciidoc option, it allows maximum flexibilty in making decisions
+# the --with-asciidoc option, it allows maximum flexibility in making decisions
 # as whether or not to use the asciidoc package. When DEFAULT is not specified,
 # --with-asciidoc assumes 'auto'.
 #
@@ -1407,7 +1407,7 @@ AM_CONDITIONAL([HAVE_ASCIIDOC], [test "$have_asciidoc" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-doxygen option, it allows maximum flexibilty in making decisions
+# the --with-doxygen option, it allows maximum flexibility in making decisions
 # as whether or not to use the doxygen package. When DEFAULT is not specified,
 # --with-doxygen assumes 'auto'.
 #
@@ -1491,7 +1491,7 @@ AM_CONDITIONAL([HAVE_DOXYGEN], [test "$have_doxygen" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-groff option, it allows maximum flexibilty in making decisions
+# the --with-groff option, it allows maximum flexibility in making decisions
 # as whether or not to use the groff package. When DEFAULT is not specified,
 # --with-groff assumes 'auto'.
 #
@@ -1599,7 +1599,7 @@ AM_CONDITIONAL([HAVE_GROFF_HTML], [test "$have_groff_html" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-fop option, it allows maximum flexibilty in making decisions
+# the --with-fop option, it allows maximum flexibility in making decisions
 # as whether or not to use the fop package. When DEFAULT is not specified,
 # --with-fop assumes 'auto'.
 #
@@ -1693,7 +1693,7 @@ AC_SUBST([M4], [$ac_cv_path_M4])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-ps2pdf option, it allows maximum flexibilty in making decisions
+# the --with-ps2pdf option, it allows maximum flexibility in making decisions
 # as whether or not to use the ps2pdf package. When DEFAULT is not specified,
 # --with-ps2pdf assumes 'auto'.
 #
@@ -1748,7 +1748,7 @@ AM_CONDITIONAL([HAVE_PS2PDF], [test "$have_ps2pdf" = yes])
 # not at the appropriate level. This macro enables a builder to skip all
 # documentation targets except traditional man pages.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -1781,7 +1781,7 @@ AC_MSG_RESULT([$build_docs])
 #
 # This macro enables a builder to skip all developer documentation.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -1814,7 +1814,7 @@ AC_MSG_RESULT([$build_devel_docs])
 #
 # This macro enables a builder to skip all functional specification targets.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -2289,7 +2289,11 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 AC_DEFUN([XORG_COMPILER_BRAND], [
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 	],
 	[C++], [
 		AC_REQUIRE([AC_PROG_CXX])
@@ -2305,7 +2309,7 @@ AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 # Minimum version: 1.16.0
 #
 # Test if the compiler works when passed the given flag as a command line argument.
-# If it succeeds, the flag is appeneded to the given variable.  If not, it tries the
+# If it succeeds, the flag is appended to the given variable.  If not, it tries the
 # next flag in the list until there are no more options.
 #
 # Note that this does not guarantee that the compiler supports the flag as some
@@ -2321,7 +2325,11 @@ AC_LANG_COMPILER_REQUIRE
 
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 		define([PREFIX], [C])
 		define([CACHE_PREFIX], [cc])
 		define([COMPILER], [$CC])
@@ -2462,7 +2470,7 @@ XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wlogical-op])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-align])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-qual])
 
-# Turn some warnings into errors, so we don't accidently get successful builds
+# Turn some warnings into errors, so we don't accidentally get successful builds
 # when there are problems that should be fixed.
 
 if test "x$SELECTIVE_WERROR" = "xyes" ; then
@@ -2571,23 +2579,35 @@ AC_SUBST([BASE_]PREFIX[FLAGS])
 AC_LANG_CASE([C], AC_SUBST([CWARNFLAGS]))
 ]) # XORG_STRICT_OPTION
 
-# XORG_DEFAULT_OPTIONS
-# --------------------
-# Minimum version: 1.3.0
+# XORG_DEFAULT_NOCODE_OPTIONS
+# ---------------------------
+# Minimum version: 1.20.0
 #
-# Defines default options for X.Org modules.
+# Defines default options for X.Org modules which don't compile code,
+# such as fonts, bitmaps, cursors, and docs.
 #
-AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_DEFUN([XORG_DEFAULT_NOCODE_OPTIONS], [
 AC_REQUIRE([AC_PROG_INSTALL])
-XORG_COMPILER_FLAGS
-XORG_CWARNFLAGS
-XORG_STRICT_OPTION
 XORG_RELEASE_VERSION
 XORG_CHANGELOG
 XORG_INSTALL
 XORG_MANPAGE_SECTIONS
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
     [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+]) # XORG_DEFAULT_NOCODE_OPTIONS
+
+# XORG_DEFAULT_OPTIONS
+# --------------------
+# Minimum version: 1.3.0
+#
+# Defines default options for X.Org modules which compile code.
+#
+AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_REQUIRE([AC_PROG_INSTALL])
+XORG_COMPILER_FLAGS
+XORG_CWARNFLAGS
+XORG_STRICT_OPTION
+XORG_DEFAULT_NOCODE_OPTIONS
 ]) # XORG_DEFAULT_OPTIONS
 
 # XORG_INSTALL()
