@@ -243,4 +243,7 @@ union _InternalEvent {
 #endif
 };
 
+extern void
+LeaveWindow(DeviceIntPtr dev);
+
 #endif
