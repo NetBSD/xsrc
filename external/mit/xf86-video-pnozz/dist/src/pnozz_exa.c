@@ -29,6 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/* $NetBSD: pnozz_exa.c,v 1.6 2023/11/05 17:06:14 jdc Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
