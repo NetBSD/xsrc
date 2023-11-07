@@ -445,12 +445,14 @@ OpenKeyboard(InputInfoPtr pInfo)
            case WSKBD_TYPE_PC_AT:
                printWsType("AT", pInfo->name);
                break;
+#ifndef USE_WSKBD_GETMAP
            case 0:
                /* If wsKbdType==0, no keyboard attached to the mux. Assume USB. */
                xf86Msg(X_WARNING, "%s: No keyboard attached, assuming USB\n",
                                   pInfo->name);
                pKbd->wsKbdType = WSKBD_TYPE_USB;
                /* FALLTHROUGH */
+#endif
            case WSKBD_TYPE_USB:
                printWsType("USB", pInfo->name);
                break;
@@ -484,6 +486,9 @@ OpenKeyboard(InputInfoPtr pInfo)
                printWsType("Sun5", pInfo->name);
                break;
 #endif
+#ifdef USE_WSKBD_GETMAP
+           case 0:
+#endif
            default:
                xf86Msg(X_WARNING, "%s: Unsupported wskbd type \"%d\"\n",
                                   pInfo->name, pKbd->wsKbdType);
@@ -506,7 +511,11 @@ xf86OSKbdPreInit(InputInfoPtr pInfo)
     pKbd->Bell		= SoundBell;
     pKbd->SetLeds	= SetKbdLeds;
     pKbd->GetLeds	= GetKbdLeds;
+#ifdef USE_WSKBD_GETMAP
+    pKbd->KbdGetMapping	= KbdGetMappingFromWsksym;
+#else
     pKbd->KbdGetMapping	= KbdGetMapping;
+#endif
 
     pKbd->RemapScanCode = NULL;
 
