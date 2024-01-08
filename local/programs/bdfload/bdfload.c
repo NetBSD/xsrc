@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.20 2023/07/27 08:44:42 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.21 2024/01/08 18:09:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -103,6 +103,8 @@ int verbose = 0;
 int dump = 0;
 int header = 0;
 int force = 0;
+int scale = 0;
+int smoothe = 0;
 char commentbuf[2048] = "";
 int commentptr = 0;
 char fontname[64] = "";
@@ -125,9 +127,11 @@ dump_line(char *gptr, int stride)
 }
  
 void
-write_wsf(const char *oname, struct wsdisplay_font *f, char *buffer, int buflen)
+write_wsf(const char *oname, struct wsdisplay_font *f)
 {
 	struct wsfthdr h;
+	uint8_t *buffer = f->data;
+	int buflen = f->numchars * f->stride * f->fontheight;
 
 	memset(&h, 0, sizeof(h));
 	strncpy(h.magic, "WSFT", sizeof(h.magic));
@@ -161,10 +165,10 @@ write_wsf(const char *oname, struct wsdisplay_font *f, char *buffer, int buflen)
 }
 
 int
-write_header(const char *filename, struct wsdisplay_font *f, 
-             char *buffer, int buflen)
+write_header(const char *filename, struct wsdisplay_font *f)
 {
 	FILE *output;
+	char *buffer = f->data;
 	int i, j, x, y, idx, pxls, left;
 	char name[64], c, msk;
 	
@@ -200,11 +204,11 @@ write_header(const char *filename, struct wsdisplay_font *f,
 	fprintf(output, "\t%s_data\t\t/* data */\n", name);
 	fprintf(output, "};\n\n");
 	fprintf(output, "static u_char %s_data[] = {\n", name);
-	for (i = f->firstchar; i < f->firstchar + f->numchars; i++) {
+	for (i = 0; i < f->numchars; i++) {
 		if (names[i] != NULL) {
-			fprintf(output, "\t/* %d %s */\n", i, names[i]);
+			fprintf(output, "\t/* %d %s */\n", i + f->firstchar, names[i]);
 		} else			
-			fprintf(output, "\t/* %d */\n", i);
+			fprintf(output, "\t/* %d */\n", i + f->firstchar);
 		idx = i * f->stride * f->fontheight;
 		for (y = 0; y < f->fontheight; y++) {
 			for (x = 0; x < f->stride; x++) {
@@ -231,6 +235,79 @@ write_header(const char *filename, struct wsdisplay_font *f,
 	fprintf(output, "};\n");
 	fclose(output);
 	return 0;
+}
+
+void
+double_pixels(uint8_t *inbuf, uint16_t *outbuf, int bytes)
+{
+	int i, j;
+	uint16_t outmask, out;
+	uint8_t in, inmask;
+
+	for (i = 0; i < bytes; i++) {
+		inmask = 0x80;
+		outmask = 0xc000;
+		out = 0;
+		in = inbuf[i];
+		for (j = 0; j < 8; j++) {
+			if (in & inmask) {
+				out |= outmask;
+			}
+			inmask = inmask >> 1;
+			outmask = outmask >> 2;
+		}
+		outbuf[i * 2] = htobe16(out);
+	}
+}
+
+void fill_dup(uint16_t *buf, int lines)
+{
+	int i;
+	for (i = 0; i < lines; i++) {
+		buf[2 * i + 1] = buf[2 * i];
+	}
+}
+
+void smoothe_pixels(uint16_t *buf, int lines)
+{
+	int i, j, topright, topleft, botright, botleft;
+	uint16_t pmask, in, prev, next, out;
+	for (i = 0; i < lines; i++) {
+		pmask = 0xc000;
+		in = be16toh(buf[i]);
+		out = in;
+		prev = next = 0;
+		if (i > 1) prev = be16toh(buf[i - 2]);
+		if (i < (lines - 2)) next = be16toh(buf[i + 2]);
+		for (j = 0; j < 8; j++) {
+			if ((in & pmask) == 0) {
+				/* empty pixel, check surroundings */
+				topright = topleft = botright = botleft = 0;
+				if (((i & 1) == 0) && (j < 6))
+					topright = (((prev & pmask) == pmask) &&
+						    ((prev & (pmask >> 2)) != 0) &&
+						    ((in & (pmask >> 2)) != 0));
+				if (((i & 1) == 0) && (j > 0))
+					topleft = (((prev & pmask) == pmask) &&
+						    ((prev & (pmask << 2)) != 0) &&
+						    ((in & (pmask << 2)) != 0));
+				if ((i & 1) && (j < 6))
+					botright = (((next & pmask) == pmask) &&
+						    ((next & (pmask >> 2)) != 0) &&
+						    ((in & (pmask >> 2)) != 0));
+				if ((i & 1) && (j > 0))
+					botleft = (((next & pmask) == pmask) &&
+						    ((next & (pmask << 2)) != 0) &&
+						    ((in & (pmask << 2)) != 0));
+				if ((topright + topleft + botright + botleft) == 1) {
+					if (topleft || botleft) out |= pmask << 1;
+					if (topright || botright) out |= pmask >> 1;
+				}
+			}
+			pmask = pmask >> 2;
+		}
+		buf[i] = htobe16(out);
+	}
 }
 
 void
@@ -404,18 +481,59 @@ interpret(FILE *foo)
 	}
 
 	/* now stuff it into a something wsfont understands */
-	f.fontwidth = width /*(width + 3) & ~3*/;
-	f.fontheight = height;
 	f.firstchar = first;
 	f.numchars = last - first + 1;
-	f.stride = stride;
 	f.encoding = encoding;
 	if (fontname[0] == 0) {
 		f.name = name;
 	} else f.name = fontname;
 	f.bitorder = WSDISPLAY_FONTORDER_L2R;
 	f.byteorder = WSDISPLAY_FONTORDER_L2R;
-	f.data = &buffer[first * charsize];
+
+	if (scale) {
+		uint16_t *outbuf;
+		uint8_t *inbuf;
+		int i;
+
+		if (stride != 1) err(EXIT_FAILURE,
+		    "scaling works only on fonts up to 8 pixels wide\n");
+		f.fontwidth = width * 2 /*(width + 3) & ~3*/;
+		f.fontheight = height * 2;
+		f.stride = stride * 2;
+		outbuf = calloc(1, f.numchars * charsize * 4);
+		if (outbuf == NULL) err(EXIT_FAILURE, 
+		    "failed to allocete memory for scale buffer\n");
+		f.data = outbuf;
+		inbuf = &buffer[first * charsize];
+		for (i = 0; i < f.numchars; i++) {
+			double_pixels(inbuf, outbuf, charsize);
+			fill_dup(outbuf, charsize);
+			if (smoothe) smoothe_pixels(outbuf, charsize * 2);
+			inbuf += charsize;
+			outbuf += charsize * 2;
+		}
+		
+	} else {
+		f.fontwidth = width /*(width + 3) & ~3*/;
+		f.fontheight = height;
+		f.stride = stride;
+		f.data = &buffer[first * charsize];
+	}
+if (0) {
+	int i;
+	uint16_t pixbuf[16];
+	double_pixels(&buffer[charsize * 'Q'], pixbuf, charsize);
+	fill_dup(pixbuf, charsize);
+	for (i = 0; i < charsize * 2; i++) {	
+		printf("%2d: ", i);
+		dump_line((char *)&pixbuf[i], 2); 
+	}
+	smoothe_pixels(pixbuf, charsize * 2);
+	for (i = 0; i < charsize * 2; i++) {	
+		printf("%2d: ", i);
+		dump_line((char *)&pixbuf[i], 2); 
+	}
+}
 
 	if (ofile == NULL) {
 		int fdev = open("/dev/wsfont", O_RDWR, 0);
@@ -428,16 +546,16 @@ interpret(FILE *foo)
 	}
 	else {
 		if (header == 0)
-			write_wsf(ofile, &f, buffer, buflen);
+			write_wsf(ofile, &f);
 		else
-			write_header(ofile, &f, buffer, buflen);
+			write_header(ofile, &f);
 	}
 }
 
 __dead void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-vdhf] [-e encoding] [-N name] "
+	fprintf(stderr, "Usage: %s [-vdhf2s] [-e encoding] [-N name] "
 	    "[-o ofile.wsf] font.bdf\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -449,7 +567,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:N:vdhf")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:N:vdhf2s")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -479,6 +597,12 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			force = 1;
+			break;
+		case '2':
+			scale = 1;
+			break;
+		case 's':
+			smoothe = 1;
 			break;
 		case 'N':
 			strncpy(fontname, optarg, 64);
