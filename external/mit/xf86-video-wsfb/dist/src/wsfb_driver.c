@@ -590,6 +590,12 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	if (pScrn->depth == 24 && pix24bpp == 0)
 		pix24bpp = xf86GetBppFromDepth(pScrn, 24);
 
+#ifdef	WSDISPLAY_TYPE_VAX_MONO
+	if (wstype == WSDISPLAY_TYPE_VAX_MONO) {
+		pScrn->bitmapBitOrder = LSBFirst;
+	}
+#endif
+
 	/* Handle options. */
 	xf86CollectOptions(pScrn, NULL);
 	fPtr->Options = (OptionInfoRec *)malloc(sizeof(WsfbOptions));
