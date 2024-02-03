@@ -73,6 +73,7 @@ typedef struct {
 	void *			shadow;
 	Bool			HWCursor;
 	Bool			useSwap32;
+	Bool			useRGB16ToYUY2;
 #ifdef HAVE_SHADOW_AFB
 	Bool			planarAfb;
 #endif

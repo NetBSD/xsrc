@@ -133,6 +133,7 @@ static void WsfbDGASetViewport(ScrnInfoPtr, int, int, int);
 static Bool WsfbDGAInit(ScrnInfoPtr, ScreenPtr);
 #endif
 
+static void WsfbShadowUpdateRGB16ToYUY2(ScreenPtr, shadowBufPtr);
 static void WsfbShadowUpdateSwap32(ScreenPtr, shadowBufPtr);
 static void WsfbShadowUpdateSplit(ScreenPtr, shadowBufPtr);
 
@@ -153,6 +154,13 @@ enum { WSFB_ROTATE_NONE = 0,
  * It indicates the binding choice made in the first PreInit.
  */
 static int pix24bpp = 0;
+
+/*
+ * Screen-independent lookup table for RGB16 to YUV conversions.
+ */
+static unsigned char *mapRGB16ToY = NULL;
+static unsigned char *mapRGB16ToU = NULL;
+static unsigned char *mapRGB16ToV = NULL;
 
 #define WSFB_VERSION		4000
 #define WSFB_NAME		"wsfb"
@@ -610,6 +618,25 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			fPtr->shadowFB = TRUE;
 		}
 	}
+
+	fPtr->useRGB16ToYUY2 = FALSE;
+#ifdef WSDISPLAY_TYPE_HOLLYWOOD
+	if (wstype == WSDISPLAY_TYPE_HOLLYWOOD) {
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "Enabling RGB16->YUY2 conversion for Hollywood\n");
+		fPtr->useRGB16ToYUY2 = TRUE;
+		if (!fPtr->shadowFB) {
+			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+				   "Shadow FB forced on for RGB16->YUY2 conversion\n");
+			fPtr->shadowFB = TRUE;
+		}
+		/*
+		 * Hollywood has a YUY2 framebuffer, but we treat it as
+		 * RGB565 and convert with a custom shadowproc.
+		 */
+		fPtr->fbi.fbi_pixeltype = WSFB_RGB;
+	}
+#endif
 	/* Rotation */
 	fPtr->rotate = WSFB_ROTATE_NONE;
 	if ((s = xf86GetOptValString(fPtr->Options, OPTION_ROTATE))) {
@@ -823,6 +850,35 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
 	if (fPtr->fbi.fbi_flags & WSFB_VRAM_IS_SPLIT) {
 		shadowproc = WsfbShadowUpdateSplit;
+	} else if (fPtr->useRGB16ToYUY2) {
+		/* Build RGB16 to Y, U, and V lookup tables */
+		if (mapRGB16ToY == NULL) {
+			mapRGB16ToY = malloc(0x30000);
+			if (mapRGB16ToY == NULL) {
+				xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				    "Cannot malloc %d bytes for RGB16->YUY2\n",
+				    0x30000);
+				return FALSE;
+			}
+			mapRGB16ToU = mapRGB16ToY + 0x10000;
+			mapRGB16ToV = mapRGB16ToY + 0x20000;
+        		for (unsigned int n = 0; n < 0x10000; n++) {
+                		/* RGB565 values, scaled to 8 bits */
+                		const double R = (((n >> 11) & 0x1f) * 255) / 31;
+                		const double G = (((n >> 5) & 0x3f) * 255) / 63;
+                		const double B = (((n >> 0) & 0x1f) * 255) / 31;
+
+				/* Convert to YUV */
+	                	mapRGB16ToY[n] =
+				    0.257 * R + 0.504 * G + 0.098 * B +  16;
+	                	mapRGB16ToU[n] =
+				   -0.148 * R - 0.291 * G + 0.439 * B + 128;
+	                	mapRGB16ToV[n] =
+				    0.439 * R - 0.368 * G - 0.071 * B + 128;
+			}
+		}
+        
+		shadowproc = WsfbShadowUpdateRGB16ToYUY2;
 	} else if (fPtr->useSwap32) {
 		shadowproc = WsfbShadowUpdateSwap32;
 	} else if (fPtr->rotate) {
@@ -1679,6 +1735,101 @@ WsfbDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
 	default:
 		return FALSE;
 	}
+}
+
+static inline void
+WsfbCopyRGB16ToYUY2(void *dest, void *src, int len)
+{
+	uint16_t *src16 = src;
+	uint32_t *dest32 = dest;
+
+	while (len > 0) {
+		const uint16_t rgb0 = src16[0];
+		const uint16_t rgb1 = src16[1];
+		const uint16_t rgb = ((rgb0 >> 1) & ~0x8410) +
+				     ((rgb1 >> 1) & ~0x8410) +
+				     ((rgb0 & rgb1) & 0x0841);
+		const uint32_t y0 = mapRGB16ToY[rgb0];
+		const uint32_t y1 = mapRGB16ToY[rgb1];
+		const uint32_t u = mapRGB16ToU[rgb];
+		const uint32_t v = mapRGB16ToV[rgb];
+
+		*dest32 = (y0 << 24) | (u << 16) | (y1 << 8) | v;
+
+		dest32++;
+		src16 += 2;
+		len -= 4;
+	}
+}
+
+void
+WsfbShadowUpdateRGB16ToYUY2(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    RegionPtr	damage = DamageRegion (pBuf->pDamage);
+    PixmapPtr	pShadow = pBuf->pPixmap;
+    int		nbox = RegionNumRects (damage);
+    BoxPtr	pbox = RegionRects (damage);
+    FbBits	*shaBase, *shaLine, *sha;
+    FbStride	shaStride;
+    int		scrBase, scrLine, scr;
+    int		shaBpp;
+    int		shaXoff, shaYoff; /* XXX assumed to be zero */
+    int		x, y, w, h, width;
+    int         i;
+    FbBits	*winBase = NULL, *win;
+    CARD32      winSize;
+
+    fbGetDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
+    while (nbox--)
+    {
+	x = pbox->x1 * shaBpp;
+	y = pbox->y1;
+	w = (pbox->x2 - pbox->x1) * shaBpp;
+	h = pbox->y2 - pbox->y1;
+
+	scrLine = (x >> FB_SHIFT);
+	shaLine = shaBase + y * shaStride + (x >> FB_SHIFT);
+				   
+	x &= FB_MASK;
+	w = (w + x + FB_MASK) >> FB_SHIFT;
+	
+	while (h--)
+	{
+	    winSize = 0;
+	    scrBase = 0;
+	    width = w;
+	    scr = scrLine;
+	    sha = shaLine;
+	    while (width) {
+		/* how much remains in this window */
+		i = scrBase + winSize - scr;
+		if (i <= 0 || scr < scrBase)
+		{
+		    winBase = (FbBits *) (*pBuf->window) (pScreen,
+							  y,
+							  scr * sizeof (FbBits),
+							  SHADOW_WINDOW_WRITE,
+							  &winSize,
+							  pBuf->closure);
+		    if(!winBase)
+			return;
+		    scrBase = scr;
+		    winSize /= sizeof (FbBits);
+		    i = winSize;
+		}
+		win = winBase + (scr - scrBase);
+		if (i > width)
+		    i = width;
+		width -= i;
+		scr += i;
+		WsfbCopyRGB16ToYUY2(win, sha, i * sizeof(FbBits));
+		sha += i;
+	    }
+	    shaLine += shaStride;
+	    y++;
+	}
+	pbox++;
+    }
 }
 
 static inline void
