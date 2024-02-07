@@ -747,7 +747,9 @@ wsReadInput(InputInfoPtr pInfo)
 			dw = 0;
 		}
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
-		if (hscroll || vscroll) {
+		static int warned = 0;
+		if ((hscroll || vscroll) && !warned) {
+			warned = 1;
 			xf86Msg(X_WARNING, "%s: hscroll=%d, vscroll=%d\n",
 			    pInfo->name, hscroll, vscroll);
 			valuator_mask_zero(priv->scroll_mask);
