@@ -15,6 +15,8 @@ Command line options:
  -d dump glyph shapes to the console, mostly for font debugging
  -e <encoding> override the font's encoding
  -N <name> override the font's name for both file output and wsdisplay
+ -2 double the size of a font
+ -s smoothe pixel staircases when enlarging
 
 Caveats:
 - fonts wider than 16 pixels won't work yet

@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.21 2024/01/08 18:09:33 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.22 2024/03/12 09:36:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -168,9 +168,10 @@ int
 write_header(const char *filename, struct wsdisplay_font *f)
 {
 	FILE *output;
-	char *buffer = f->data;
+	uint8_t *buffer = f->data;
+	uint8_t c, msk;
 	int i, j, x, y, idx, pxls, left;
-	char name[64], c, msk;
+	char name[64];
 	
 	/* now output as a header file */
 	snprintf(name, sizeof(name), "%s_%dx%d", f->name, 
