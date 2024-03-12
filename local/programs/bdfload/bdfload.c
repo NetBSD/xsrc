@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.22 2024/03/12 09:36:06 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.23 2024/03/12 09:42:55 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -520,21 +520,6 @@ interpret(FILE *foo)
 		f.stride = stride;
 		f.data = &buffer[first * charsize];
 	}
-if (0) {
-	int i;
-	uint16_t pixbuf[16];
-	double_pixels(&buffer[charsize * 'Q'], pixbuf, charsize);
-	fill_dup(pixbuf, charsize);
-	for (i = 0; i < charsize * 2; i++) {	
-		printf("%2d: ", i);
-		dump_line((char *)&pixbuf[i], 2); 
-	}
-	smoothe_pixels(pixbuf, charsize * 2);
-	for (i = 0; i < charsize * 2; i++) {	
-		printf("%2d: ", i);
-		dump_line((char *)&pixbuf[i], 2); 
-	}
-}
 
 	if (ofile == NULL) {
 		int fdev = open("/dev/wsfont", O_RDWR, 0);
