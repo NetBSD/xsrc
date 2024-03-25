@@ -554,14 +554,20 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	if (wstype == WSDISPLAY_TYPE_AMIGACC) {
 		/*
 		 * Video memory is organized in bitplanes.
-		 * 8bpp or 1bpp supported in this driver.
-		 * With 8bpp conversion to bitplane format
-		 * is done in shadow update proc.
+		 * 8bpp, 4bpp, and 1bpp supported in this driver.
+		 * With 8bpp/4bpp conversion to bitplane format
+		 * is done in shadow update proc. In both cases
+		 * shadow fb uses 8bpp memory layout and shadow
+		 * update proc ignores the possible extra bits.
 		 * With 1bpp no conversion needed.
 		 */
 #ifdef HAVE_SHADOW_AFB
 		if (bitsperpixel == 8) {
 			fPtr->planarAfb = TRUE;
+		} else if (bitsperpixel == 4) {
+			fPtr->planarAfb = TRUE;
+			default_depth = 4;
+			bitsperpixel = 8;
 		} else
 #endif
 		{
@@ -641,6 +647,16 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		 * RGB565 and convert with a custom shadowproc.
 		 */
 		fPtr->fbi.fbi_pixeltype = WSFB_RGB;
+	}
+#endif
+#ifdef HAVE_SHADOW_AFB
+	if (fPtr->planarAfb)
+	{
+		if (!fPtr->shadowFB) {
+			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+				   "Shadow FB forced on for planar framebuffer\n");
+			fPtr->shadowFB = TRUE;
+		}
 	}
 #endif
 	/* Rotation */
@@ -891,8 +907,11 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 		shadowproc = wsfbUpdateRotatePacked;
 	} else
 #ifdef HAVE_SHADOW_AFB
-	if (fPtr->planarAfb) {
+	if (fPtr->planarAfb && fPtr->fbi.fbi_bitsperpixel == 8) {
 		shadowproc = shadowUpdateAfb8;
+		windowproc = WsfbWindowAfb;
+	} else if (fPtr->planarAfb && fPtr->fbi.fbi_bitsperpixel == 4) {
+		shadowproc = shadowUpdateAfb4x8;
 		windowproc = WsfbWindowAfb;
 	} else
 #endif

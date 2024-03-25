@@ -137,3 +137,70 @@ shadowUpdateAfb4(ScreenPtr pScreen, shadowBufPtr pBuf)
         pbox++;
     }
 }
+
+    /*
+     * Like above, except input is 8-bit chunky pixels (upper 4 bits zero)
+     */
+void
+shadowUpdateAfb4x8(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    RegionPtr damage = DamageRegion(pBuf->pDamage);
+    PixmapPtr pShadow = pBuf->pPixmap;
+    int nbox = RegionNumRects(damage);
+    BoxPtr pbox = RegionRects(damage);
+    FbBits *shaBase;
+    CARD32 *shaLine, *sha;
+    FbStride shaStride;
+    int scrLine;
+    _X_UNUSED int shaBpp, shaXoff, shaYoff;
+    int x, y, w, h;
+    int i, n;
+    CARD32 *win;
+    CARD32 off, winStride;
+    CARD32 dwords[4];
+
+    fbGetDrawable(&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff,
+                  shaYoff);
+    if (sizeof(FbBits) != sizeof(CARD32))
+        shaStride = shaStride * sizeof(FbBits) / sizeof(CARD32);
+
+    while (nbox--) {
+        x = pbox->x1;
+        y = pbox->y1;
+        w = pbox->x2 - pbox->x1;
+        h = pbox->y2 - pbox->y1;
+
+        scrLine = x & -32;
+        shaLine = (CARD32 *)shaBase + y * shaStride + scrLine / sizeof(CARD32);
+
+        off = scrLine / 8;              /* byte offset in bitplane scanline */
+        n = ((x & 31) + w + 31) / 32;   /* number of c2p units in scanline */
+
+        while (h--) {
+            sha = shaLine;
+            win = (CARD32 *) (*pBuf->window) (pScreen,
+                                             y,
+                                             off,
+                                             SHADOW_WINDOW_WRITE,
+                                             &winStride,
+                                             pBuf->closure);
+            if (!win)
+                return;
+            for (i = 0; i < n; i++) {
+                dwords[0] = (sha[0] << 4) | sha[1];
+                dwords[2] = (sha[2] << 4) | sha[3];
+                dwords[1] = (sha[4] << 4) | sha[5];
+                dwords[3] = (sha[6] << 4) | sha[7];
+                transp4(dwords, 16, 1);
+                transp4(dwords, 8, 2);
+                transp4(dwords, 2, 1);
+                transp4(dwords, 1, 2);
+                store_afb4(win++, winStride, dwords);
+                sha += 8;
+            }
+            shaLine += shaStride;
+            y++;
+        }
+        pbox++;
+    }
+}
