@@ -65,6 +65,10 @@
 #define R_AMDGPU_RELATIVE64    13
 #endif
 
+#ifndef STN_UNDEF
+#define	STN_UNDEF	0
+#endif
+
 /* For the UMR disassembler. */
 #define DEBUGGER_END_OF_CODE_MARKER 0xbf9f0000 /* invalid instruction */
 #define DEBUGGER_NUM_MARKERS        5
