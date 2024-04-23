@@ -478,6 +478,8 @@ typedef int lock_cap_t;
 #endif
 
 /* TODO: this could be different on non-x86 architectures. */
+#ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
+#endif
 
 #endif /* UTIL_MACROS_H */
