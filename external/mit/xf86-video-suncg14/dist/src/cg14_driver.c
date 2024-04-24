@@ -395,6 +395,12 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     pCg14->use_xrender = xf86ReturnOptValBool(pCg14->Options, OPTION_XRENDER,
         FALSE);
 
+    if (pScrn->depth < 24) {
+	if (pCg14->use_xrender)
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Disabling xrender on depth < 24\n");
+	pCg14->use_xrender = FALSE;
+    }
+
     /*
      * This must happen after pScrn->display has been set because
      * xf86SetWeight references it.
