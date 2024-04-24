@@ -437,7 +437,7 @@ check_os_arm_support(void)
 #if defined(PIPE_ARCH_MIPS64)
 #ifdef __NetBSD__
 static void
-check_os_arm_support(void)
+check_os_mips64_support(void)
 {
     util_cpu_caps.has_msa = false;	/* XXX seems there is no way to detect MSA support from userland */
 }
