@@ -50,7 +50,7 @@
 #define HAVE_X11_EXTENSIONS_XF86DGA_H 1
 
 /* Define to 1 if you have the <X11/extensions/xf86misc.h> header file. */
-#define HAVE_X11_EXTENSIONS_XF86MISC_H 1
+/* #undef HAVE_X11_EXTENSIONS_XF86MISC_H 1 */
 
 /* Define to 1 if you have the <X11/extensions/xf86mscstr.h> header file. */
 #define HAVE_X11_EXTENSIONS_XF86MSCSTR_H 1
