@@ -367,10 +367,12 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     
     if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb|Support32bppFb))
 		return FALSE;
+
     /* Check that the returned depth is one we support */
     switch (pScrn->depth) {
 	case 32:
 	case 24:
+	case 16:
 	case 8:
 	    /* OK */
 	    break;
@@ -405,15 +407,20 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
      * This must happen after pScrn->display has been set because
      * xf86SetWeight references it.
      */
-    if (pScrn->depth > 8) {
+    if (pScrn->depth > 16) {
 	rgb weight = {0, 0, 0};
 	rgb mask = {0xff, 0xff00, 0xff0000};
                                        
 	if (!xf86SetWeight(pScrn, weight, mask)) {
 	    return FALSE;
 	}
-    }
-                                                                           
+    } else if (pScrn->depth > 8) {
+  	rgb zeroes = {0, 0, 0};
+                                       
+	if (!xf86SetWeight(pScrn, zeroes, zeroes)) {
+	    return FALSE;
+	}
+    }                                                             
     if (!xf86SetDefaultVisual(pScrn, -1))
 	return FALSE;
     else if (pScrn->depth > 8) {
@@ -804,10 +811,10 @@ CG14WindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
-    int shift = (pScrn->bitsPerPixel > 8) ? 2 : 0;
+    int mul = (pScrn->bitsPerPixel >> 3);
 
-    *size = pCg14->width << shift;
-    return (CARD8 *)pCg14->fb + row * (pCg14->width << shift) + offset;
+    *size = pCg14->width * mul;
+    return (CARD8 *)pCg14->fb + row * (pCg14->width * mul) + offset;
 }
 
 /* Free up any per-generation data structures */
@@ -875,17 +882,27 @@ static void
 CG14InitCplane24(ScrnInfoPtr pScrn)
 {
   Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
-  int size, bpp;
-              
+  int size, bpp = 0;
+
   size = pScrn->virtualX * pScrn->virtualY;
-  if (pScrn->bitsPerPixel > 8) {
-  	bpp = 32;
-  } else
-  	bpp = 8;
+  switch (pScrn->bitsPerPixel) {
+  	case 8:
+  	case 16:
+  	    bpp = pScrn->bitsPerPixel;
+  	    break;
+  	case 24:
+  	case 32:
+  	    bpp = 32;
+  	default:
+  	    xf86Msg(X_ERROR, "Unsupported depth %d\n", pScrn->bitsPerPixel);
+  }
+  if (bpp == 0) return;
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
   memset (pCg14->fb, 0, size * (bpp >> 3));
   memset (pCg14->x32, 0, size);
+#ifndef __NetBSD__
   memset (pCg14->xlut, 0, 0x200);
+#endif
 }                                                  
 
 /*

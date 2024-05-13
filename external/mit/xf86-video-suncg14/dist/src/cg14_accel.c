@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.32 2022/05/11 21:13:13 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.33 2024/05/13 10:13:10 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -68,6 +68,7 @@ int src_formats[] = {PICT_a8r8g8b8, PICT_x8r8g8b8,
 int tex_formats[] = {PICT_a8r8g8b8, PICT_a8b8g8r8, PICT_a8};
 
 static void CG14Copy32(PixmapPtr, int, int, int, int, int, int);
+static void CG14Copy16(PixmapPtr, int, int, int, int, int, int);
 static void CG14Copy8(PixmapPtr, int, int, int, int, int, int);
 
 static inline void
@@ -120,6 +121,9 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	switch (pSrcPixmap->drawable.bitsPerPixel)  {
 		case 8:
 			p->pExa->Copy = CG14Copy8;
+			break;
+		case 16:
+			p->pExa->Copy = CG14Copy16;
 			break;
 		case 32:
 			p->pExa->Copy = CG14Copy32;
@@ -610,6 +614,13 @@ CG14Copy8_short_norop(Cg14Ptr p, int srcstart, int dststart, int w, int h,
 }
 
 static void
+CG14Copy16(PixmapPtr pDstPixmap,
+         int srcX, int srcY, int dstX, int dstY, int w, int h)
+{
+	CG14Copy8(pDstPixmap, srcX << 1, srcY, dstX << 1, dstY, w << 1, h);
+}
+
+static void
 CG14Copy8(PixmapPtr pDstPixmap,
          int srcX, int srcY, int dstX, int dstY, int w, int h)
 {
@@ -896,9 +907,11 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 			fg = 0xffffffff;
 			break;
 	}
-	/* repeat the colour in every sub byte if we're in 8 bit */
+	/* repeat the colour in every sub byte if we're in 8 or 16 bit */
 	if (pPixmap->drawable.bitsPerPixel == 8) {
 		fg |= fg << 8;
+		fg |= fg << 16;
+	} else if (pPixmap->drawable.bitsPerPixel == 16) {
 		fg |= fg << 16;
 	}
 	write_sx_reg(p, SX_QUEUED(8), fg);
@@ -968,6 +981,90 @@ CG14Solid32(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
 				sxm(SX_ST, ptr, 74, num - 1);
 				x += 32;
 			}
+			start += pitch;
+		}
+	}
+}
+
+static void
+CG14Solid16(Cg14Ptr p, uint32_t start, uint32_t pitch, int w, int h)
+{
+	int line, num, pre, cnt;
+	uint32_t ptr;
+
+	ENTER;
+	pre = start & 2;
+	if (pre != 0) pre = 1;
+
+	if (p->last_rop == 0xcc) {
+		/* simple fill */
+		for (line = 0; line < h; line++) {
+			ptr = start;
+			cnt = w;
+			if (pre) {
+				sxm(SX_STW, ptr, 8, 0);
+				ptr += 2;
+				cnt -= 1;
+				if (cnt == 0) goto next;
+			}
+			/* now do the aligned pixels in 32bit chunks */
+			if (ptr & 3) xf86Msg(X_ERROR, "%s %x\n", __func__, ptr);
+			while(cnt > 1) {
+				num = min(32, cnt >> 1);
+				sxm(SX_STS, ptr, 8, num - 1);
+				ptr += num << 2;
+				cnt -= num << 1;
+			}
+			if (cnt > 1) xf86Msg(X_ERROR, "%s cnt %d\n", __func__, cnt);
+			if (cnt > 0) {
+				sxm(SX_STW, ptr, 8, 0);
+			}
+next:
+			start += pitch;
+		}
+	} else if (p->last_rop == 0xaa) {
+		/* nothing to do here */
+		return;
+	} else {
+		/* alright, let's do actual ROP stuff */
+
+		/* first repeat the fill colour into 16 registers */
+		sxi(SX_SELECT_S, 8, 8, 10, 15);
+
+		for (line = 0; line < h; line++) {
+			ptr = start;
+			cnt = w;
+			pre = min(pre, cnt);
+			if (pre) {
+				sxm(SX_LDW, ptr, 26, 0);
+				sxi(SX_ROP, 10, 26, 42, 0);
+				sxm(SX_STW, ptr, 42, 0);
+				ptr += 2;
+				cnt -= 1;
+				if (cnt == 0) goto next2;
+			}
+			/* now do the aligned pixels in 32bit chunks */
+			if (ptr & 3) xf86Msg(X_ERROR, "%s %x\n", __func__, ptr);
+			while(cnt > 1) {
+				num = min(32, cnt >> 1);
+				sxm(SX_LD, ptr, 26, num - 1);
+				if (num <= 16) {
+					sxi(SX_ROP, 10, 26, 58, num - 1);
+				} else {
+					sxi(SX_ROP, 10, 26, 58, 15);
+					sxi(SX_ROP, 10, 42, 74, num - 17);
+				}
+				sxm(SX_ST, ptr, 58, num - 1);
+				ptr += num << 2;
+				cnt -= num << 1;
+			}
+			if (cnt > 1) xf86Msg(X_ERROR, "%s cnt %d\n", __func__, cnt);
+			if (cnt > 0) {
+				sxm(SX_LDW, ptr, 26, 0);
+				sxi(SX_ROP, 10, 26, 42, 0);
+				sxm(SX_STW, ptr, 42, 0);
+			}
+next2:
 			start += pitch;
 		}
 	}
@@ -1077,6 +1174,10 @@ CG14Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 		case 32:
 			start = dstoff + (y1 * dstpitch) + (x1 << 2);
 			CG14Solid32(p, start, dstpitch, w, h);
+			break;
+		case 16:
+			start = dstoff + (y1 * dstpitch) + (x1 << 1);
+			CG14Solid16(p, start, dstpitch, w, h);
 			break;
 		case 8:
 			start = dstoff + (y1 * dstpitch) + x1;
