@@ -818,6 +818,7 @@ xf86CVTMode(int HDisplay, int VDisplay, float VRefresh, Bool Reduced,
     Mode->VTotal     = libxcvt_mode_info->vtotal;
     Mode->VRefresh   = libxcvt_mode_info->vrefresh;
     Mode->Flags      = libxcvt_mode_info->mode_flags;
+    xf86SetModeDefaultName(Mode);
 
     free(libxcvt_mode_info);
 
