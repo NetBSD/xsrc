@@ -952,6 +952,9 @@ inl(unsigned PORT_SIZE port)
 #endif
 
 #ifdef __alpha__
+
+#include <X11/Xmd.h>
+
 static inline int
 xf86ReadMmio8(void *Base, unsigned long Offset)
 {
