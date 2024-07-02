@@ -1,3 +1,303 @@
+commit a465588218c1643eedc35b3c24409cb775454eee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 5 15:50:06 2024 -0700
+
+    libX11 1.8.9
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 52a191ee096e93cf711f77b6a56c508b68afc0b6
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Apr 5 13:15:32 2024 +1000
+
+    Revert "ximcp: Unmark to fabricate key events with XKeyEvent serial"
+    
+    This commit causes a regression, see #205, #206, #207, #208.
+    
+    This reverts commit 024d229fdf88a7755577b01b46af6ef908d599e0.
+
+commit 3ea9f4f769fecbbc8c5210c5833ad83ab8d9e97e
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Apr 5 13:14:33 2024 +1000
+
+    Revert "imDefLkup: Commit first info in XimCommitInfo"
+    
+    This commit causes a regression, see #205, #206, #207, #208.
+    
+    This reverts commit 041b5291f0956c5cda5054be2981c0d02b009a4c.
+
+commit 9afd55ada5d7a3c1d3ed23ff8451629a1d989a7f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 25 11:51:03 2024 -0700
+
+    xlibi18n: restore parse_line1 for WIN32 builds
+    
+    Accidentally removed by __UNIXOS2__ cleanup
+    Closes: #204
+    Fixes: 225a4bbb ("unifdef __UNIXOS2__")
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e4927d0c4fbf950bc45fc27309290e1911e75f42
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 15:02:23 2024 -0700
+
+    libX11 1.8.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ab58f26d388c82ffe46ef1c7dd1cee6259eec8a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 21 18:23:36 2024 -0800
+
+    unifdef NULL_NOT_ZERO
+    
+    I can't find any evidence this was ever defined, should only have
+    been needed for odd-ball pre-C89 compilers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7bb2a5050a2f6049c92b301fae1cf89532b70060
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 21 18:18:46 2024 -0800
+
+    unifdef USL_SHAREDLIB
+    
+    I can't find any history of this being set in the imake or autoconf builds
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4400a68b3a5ecacd1f997d41a0572544fa8fe544
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:37:41 2024 -0800
+
+    unifdef Lynx
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1e56b27429667e772b15b0f39863a8467297062b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:15:00 2024 -0800
+
+    unifdef __QNX__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ab0a3014822687da48cd3784253c34dea0a6ad2c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:10:59 2024 -0800
+
+    unifdef __uxp__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ce3962b701c502acc96b6eaf104a5ffc317c5d7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:07:15 2024 -0800
+
+    unifdef __vax__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 65a6f162fd9fee4e647ac49c546c5d6a1655c58c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:03:19 2024 -0800
+
+    unifdef __sgi_not_xconsortium
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3296d7b8d14a6c114489d40b76e8da339e11b25c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:01:25 2024 -0800
+
+    unifdef __sgi
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4322fff7e125c7975dc1b83c433b904c7d3384b5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 15:00:34 2024 -0800
+
+    unifdef sgi
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 613d3624c2cc0ab2f18206e165a3e4a02e261148
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 14:59:28 2024 -0800
+
+    unifdef hpux
+    
+    Also removes shl_load() support, which was only buildable for HP-UX
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 225a4bbbbd174e26cc408640e10f3c37f81f3a3f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 14:56:22 2024 -0800
+
+    unifdef __UNIXOS2__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0df284b450933e0239d1a85a7ff2d0c9d44d22af
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 14:50:29 2024 -0800
+
+    unifdef ultrix
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c3f3eb1284c59305568288923810dc155df6025c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 14:49:13 2024 -0800
+
+    unifdef AIXV3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b35344c9a74b478509e33384cc99bcc4fd092a2d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 14:47:31 2024 -0800
+
+    unifdef __osf__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 041b5291f0956c5cda5054be2981c0d02b009a4c
+Author: Takao Fujiwara <tfujiwar@redhat.com>
+Date:   Wed Jan 31 20:27:57 2024 +0900
+
+    imDefLkup: Commit first info in XimCommitInfo
+    
+    Xic.private.proto.commit_info can receive multiple XimCommitInfo
+    when typing keys very quickly like an bar code scanner (or evemu-play)
+    and the first info in XimCommitInfo should be committed to keep
+    the typing key order.
+    
+    Fixes: #198
+
+commit 024d229fdf88a7755577b01b46af6ef908d599e0
+Author: Takao Fujiwara <tfujiwar@redhat.com>
+Date:   Wed Jan 31 20:26:40 2024 +0900
+
+    ximcp: Unmark to fabricate key events with XKeyEvent serial
+    
+    _XimProtoKeypressFilter() and _XimProtoKeyreleaseFilter() can
+    receive XKeyEvent from both the typing on the keyboard and the
+    callback of XIM_FORWARD_EVENT.
+    
+    If the filter functions unmark to fabricate XKeyEvent from the typing
+    on the keyboard during receiving XKeyEvent from the callback of
+    XIM_FORWARD_EVENT with typing keys very quickly likes an bar code
+    scanner (or evemu-play), XIM server cannot receive some key events and
+    it causes the key typing order to get scrambled.
+    
+    Now XIM client saves the serial in XKeyEvent and the filter functions
+    unmark to fabricate XKeyEvent from the callback of XIM_FORWARD_EVENT
+    only.
+    
+    Fixes: #198
+
+commit ae3eca18cec44a953789c7f77ffab888713ed132
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Nov 30 15:05:51 2023 +1000
+
+    Fix _XkbReadGetDeviceInfoReply for nButtons == dev->buttons
+    
+    XkbGetDeviceInfo(dpy, XkbXI_ButtonActionsMask, 2, 0, 0) always returns
+    NULL because the number of buttons on the device equals (unsurpisingly)
+    the number of buttons requested (i.e. first + nBtns == dev->nbuttons).
+    
+    This currently causes it to bail out and return NULL.
+    
+    Fixes f293659d5a4024bda386305bb7ebeb4647c40934
+
+commit 0a951047f64e87c5ab328084310bf27bcd4964f3
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 17:18:19 2024 +0100
+
+    _XimProtoIMFree:no need to check arg for Xfree()
+    
+       Xfree() will happily ignore NULL, no need to check
+
+commit dce614623e1f069d79d33a233305e0754fa2fd48
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 17:01:44 2024 +0100
+
+    _XimEncodeString:no need to check arg for Xfree()
+    
+    Xfree() will happily ignore NULL, no need to check
+
+commit 4f78b615806fa1cfe2bdcf3f7c868b8a00dede77
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 16:50:52 2024 +0100
+
+    Fix XCreateIC() memory leak (Part 2)
+    
+    Direct leak of 12 byte(s) in 2 object(s) allocated from:
+        #0 0x7f4f25c3f7a7 in strdup (/usr/lib64/libasan.so.6+0x5c7a7)
+        #1 0x7f4f252ce6a1 in _XimEncodeString libX11-1.8.3/modules/im/ximcp/imRm.c:818
+        #2 0x7f4f252ce6a1 in _XimEncodeString libX11-1.8.3/modules/im/ximcp/imRm.c:807
+        #3 0x7f4f252d2f0f in _XimSetICValueData libX11-1.8.3/modules/im/ximcp/imRm.c:2912
+        #4 0x7f4f252b536a in _XimLocalCreateIC libX11-1.8.3/modules/im/ximcp/imLcIc.c:176
+        #5
+    
+     0x7f4f251f0105 in XCreateIC libX11-1.8.3/src/xlibi18n/ICWrap.c:251
+    
+    detected and fix by Patrick Lerda <patrick9876@free.fr>
+    applied with adjustment, do changes when OOM (unlikely but good practise)
+
+commit ed0b97e480d7d07c24719007273989b2eb3e4046
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 16:21:02 2024 +0100
+
+    _XimLocalDestroyIC:fix possible mem leak
+    
+    Adapted:
+    Fix XCreateIC() memory leak by Patrick Lerda <patrick9876@free.fr> Part 1
+
+commit 07978634b8f4f7d9537c7f46ddcd48f2ab3efcb8
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 15:16:11 2024 +0100
+
+    _XimLocalCreateIC: get rid of bzero
+
+commit 59c9a89e250d479334bdd4d800ca6cfa919b8fc3
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 15:09:49 2024 +0100
+
+    _XimLocalCreateIC: minor cleanup
+    
+    minor cleanup, no code change
+
+commit e5b14e59a16fa49c7e7af0acfc1e4311bebec536
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 13:35:28 2024 +0100
+
+    _XimLocalCreateIC:no need to check arg for Xfree()
+    
+    Xfree() will happily ignore NULL, no need to check
+
+commit e6310b5212f1dea184e1626ad5eeec167fcb41ac
+Author: Walter Harms <wharms@bfs.de>
+Date:   Mon Jan 8 13:06:03 2024 +0100
+
+    _XimLocalDestroyIC: no need to check arg for Xfree()
+    
+    Xfree() will happily ignore NULL, no need to check
+
+commit 1261802fb316f088504b99ffe80095d13825a85b
+Author: Walter Harms <wharms@bfs.de>
+Date:   Sun Jan 7 18:30:30 2024 +0100
+
+    fix table width
+    
+    the width of first column was to small and
+    caused a hyphenation. there is only one word,
+    fix for me.
+
 commit c745719e23af44a4b40ab4508447637b35d91a1e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Oct 3 09:00:01 2023 -0700
