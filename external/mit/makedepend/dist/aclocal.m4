@@ -14,8 +14,8 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.71],,
-[m4_warning([this file was generated for autoconf 2.71.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.72],,
+[m4_warning([this file was generated for autoconf 2.72.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
@@ -1426,7 +1426,7 @@ AS_VAR_IF([$1], [""], [$5], [$4])dnl
 
 dnl xorg-macros.m4.  Generated from xorg-macros.m4.in xorgversion.m4 by configure.
 dnl
-dnl Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, 2023, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -1463,7 +1463,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.3])
+m4_define([vers_have], [1.20.0])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -1509,10 +1509,10 @@ rm -f conftest.$ac_ext
 
 AC_MSG_CHECKING([if $RAWCPP requires -traditional])
 AC_LANG_CONFTEST([AC_LANG_SOURCE([[Does cpp preserve   "whitespace"?]])])
-if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
-	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 		TRADITIONALCPPFLAGS="-traditional"
 		RAWCPPFLAGS="${RAWCPPFLAGS} -traditional"
 		AC_MSG_RESULT([yes])
@@ -2959,7 +2959,11 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 AC_DEFUN([XORG_COMPILER_BRAND], [
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 	],
 	[C++], [
 		AC_REQUIRE([AC_PROG_CXX])
@@ -2991,7 +2995,11 @@ AC_LANG_COMPILER_REQUIRE
 
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 		define([PREFIX], [C])
 		define([CACHE_PREFIX], [cc])
 		define([COMPILER], [$CC])
@@ -3241,23 +3249,35 @@ AC_SUBST([BASE_]PREFIX[FLAGS])
 AC_LANG_CASE([C], AC_SUBST([CWARNFLAGS]))
 ]) # XORG_STRICT_OPTION
 
-# XORG_DEFAULT_OPTIONS
-# --------------------
-# Minimum version: 1.3.0
+# XORG_DEFAULT_NOCODE_OPTIONS
+# ---------------------------
+# Minimum version: 1.20.0
 #
-# Defines default options for X.Org modules.
+# Defines default options for X.Org modules which don't compile code,
+# such as fonts, bitmaps, cursors, and docs.
 #
-AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_DEFUN([XORG_DEFAULT_NOCODE_OPTIONS], [
 AC_REQUIRE([AC_PROG_INSTALL])
-XORG_COMPILER_FLAGS
-XORG_CWARNFLAGS
-XORG_STRICT_OPTION
 XORG_RELEASE_VERSION
 XORG_CHANGELOG
 XORG_INSTALL
 XORG_MANPAGE_SECTIONS
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
     [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+]) # XORG_DEFAULT_NOCODE_OPTIONS
+
+# XORG_DEFAULT_OPTIONS
+# --------------------
+# Minimum version: 1.3.0
+#
+# Defines default options for X.Org modules which compile code.
+#
+AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_REQUIRE([AC_PROG_INSTALL])
+XORG_COMPILER_FLAGS
+XORG_CWARNFLAGS
+XORG_STRICT_OPTION
+XORG_DEFAULT_NOCODE_OPTIONS
 ]) # XORG_DEFAULT_OPTIONS
 
 # XORG_INSTALL()
