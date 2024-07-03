@@ -1,3 +1,28 @@
+commit 3588595dc47736773a2d577db615e51a2dc7b48a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 15:47:53 2024 -0700
+
+    lndir 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ab11cfec562772e540468fc861d8acb1a38b5fad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 20 13:04:08 2023 -0700
+
+    Fix #1: Segmentation fault on trailing slashes
+    
+    dodir may pass a NULL pointer for the **p argument so we verify the
+    pointer is not NULL before dereferencing it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5b0c98895caa066a760384cf1967ceb966151f04
+Author: Naïm Favier <n@monade.li>
+Date:   Wed Mar 29 12:39:59 2023 +0000
+
+    Make existing link warning more explicit
+
 commit ca7786249d4f0cb1b0ef2c3694dfb89d6c9962a9
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Dec 4 16:01:42 2022 -0800

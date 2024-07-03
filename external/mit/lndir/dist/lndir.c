@@ -127,7 +127,7 @@ equivalent(char *lname, const char *rname, char **p)
 	while (s[1] == '/') {
 	    size_t len = strlen(s+2);
 	    memmove(s+1, s+2, len+1);
-	    if (*p) (*p)--;
+	    if (p && *p) (*p)--;
 	}
     }
     return !strcmp(lname, rname);
@@ -290,7 +290,7 @@ dodir (const char *fn,		/* name of "from" directory, either absolute or
 	    /* Link exists in new tree.  Print message if it doesn't match. */
 	    if (!equivalent (basesymlen>=0 ? basesym : buf, symbuf,
 			     basesymlen>=0 ? (char **) 0 : &p))
-		msg ("%s: %s", dp->d_name, symbuf);
+		msg ("%s: Keeping existing link to %s", dp->d_name, symbuf);
 	} else {
 	    char *sympath;
 
