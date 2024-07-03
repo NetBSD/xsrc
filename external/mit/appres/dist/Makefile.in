@@ -375,7 +375,7 @@ appres_SOURCES = \
          appres.c
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
-EXTRA_DIST = README.md
+EXTRA_DIST = README.md meson.build
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
