@@ -954,7 +954,7 @@ typedef struct VBVAHOSTCMDEVENT
 
 typedef struct VBVAHOSTCMD
 {
-    /* destination ID if >=0 specifies display index, otherwize the command is directed to the miniport */
+    /* destination ID if >=0 specifies display index, otherwise the command is directed to the miniport */
     int32_t iDstID;
     int32_t customOpCode;
     union
@@ -1241,7 +1241,7 @@ typedef struct VBVAQUERYMODEHINTS
 } VBVAQUERYMODEHINTS;
 
 /** Structure in which a mode hint is returned.  The guest allocates an array
- *  of these immediately after the VBVAQUERYMODEHINTS structure.  To accomodate
+ *  of these immediately after the VBVAQUERYMODEHINTS structure.  To accommodate
  *  future extensions, the VBVAQUERYMODEHINTS structure specifies the size of
  *  the VBVAMODEHINT structures allocated by the guest, and the host only fills
  *  out structure elements which fit into that size.  The host should fill any
@@ -1268,8 +1268,8 @@ typedef struct VBVAMODEHINT
  *  @see VBVA_REPORT_INPUT_MAPPING. */
 typedef struct VBVAREPORTINPUTMAPPING
 {
-    int32_t x;    /**< Upper left X co-ordinate relative to the first screen. */
-    int32_t y;    /**< Upper left Y co-ordinate relative to the first screen. */
+    int32_t x;    /**< Upper left X coordinate relative to the first screen. */
+    int32_t y;    /**< Upper left Y coordinate relative to the first screen. */
     uint32_t cx;  /**< Rectangle width. */
     uint32_t cy;  /**< Rectangle height. */
 } VBVAREPORTINPUTMAPPING;
@@ -1302,7 +1302,7 @@ typedef struct VBOXSHGSMIHEADER
 {
     uint64_t pvNext;    /*<- completion processing queue */
     uint32_t fFlags;    /*<- see VBOXSHGSMI_FLAG_XXX Flags */
-    uint32_t cRefs;     /*<- command referece count */
+    uint32_t cRefs;     /*<- command reference count */
     uint64_t u64Info1;  /*<- contents depends on the fFlags value */
     uint64_t u64Info2;  /*<- contents depends on the fFlags value */
 } VBOXSHGSMIHEADER, *PVBOXSHGSMIHEADER;
@@ -1441,7 +1441,7 @@ typedef struct VBOXVDMA_SURF_DESC
 /*typedef uint64_t VBOXVDMAPHADDRESS;*/
 typedef uint64_t VBOXVDMASURFHANDLE;
 
-/* region specified as a rectangle, otherwize it is a size of memory pointed to by phys address */
+/* region specified as a rectangle, otherwise it is a size of memory pointed to by phys address */
 #define VBOXVDMAOPERAND_FLAGS_RECTL       0x1
 /* Surface handle is valid */
 #define VBOXVDMAOPERAND_FLAGS_PRIMARY        0x2

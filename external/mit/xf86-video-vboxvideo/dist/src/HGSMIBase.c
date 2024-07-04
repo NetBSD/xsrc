@@ -47,7 +47,7 @@ DECLHIDDEN(bool) VBoxHGSMIIsSupported(void)
  * @returns  VERR_NOT_IMPLEMENTED  if the host does not support the command.
  * @returns  VERR_NO_MEMORY        if a heap allocation fails.
  * @param    pCtx                  the context of the guest heap to use.
- * @param    offLocation           the offset chosen for the flags withing guest VRAM.
+ * @param    offLocation           the offset chosen for the flags within guest VRAM.
  */
 DECLHIDDEN(int) VBoxHGSMIReportFlagsLocation(PHGSMIGUESTCOMMANDCONTEXT pCtx, HGSMIOFFSET offLocation)
 {

@@ -1,3 +1,176 @@
+commit 208421df7cdb1a44d5a88c6d189caecae01f1cde
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 11 18:25:27 2024 -0700
+
+    xf86-video-vboxvideo 1.0.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b66441a27fa85e2a3b63f10a0a5a846344327042
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 11 18:43:53 2024 -0700
+
+    Fix builds with C23 compilers
+    
+    Relies on C99 & later stdbool.h header to avoid making our own
+    definitions of bool, true, & false that C23 already defines for us.
+    
+    ./VBoxVideoIPRT.h:35:5: error: expected identifier before ‘false’
+       35 |     false = 0,
+          |     ^~~~~
+    ./VBoxVideoIPRT.h:37:3: error: expected ‘;’, identifier or ‘(’ before ‘bool’
+       37 | } bool;
+          |   ^~~~
+    ./VBoxVideoIPRT.h:37:3: warning: useless type name in empty declaration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 006126987bd85cff4d17eca28cbed65fa27d0661
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 16 14:37:17 2024 -0800
+
+    COPYING: include all three MIT/X11 license variants from source files
+    
+    Different source files have slightly different variants of the MIT/X11
+    license in, so include all three in the COPYING file.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9684853f4654c0cbd2fc5433c960f80f7ba68f62
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 16 14:18:04 2024 -0800
+
+    Stop building helpers.c
+    
+    Clears -Wmissing-prototypes warning for every function in it,
+    none of which are referenced in any other file.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 42e39d102f5fc9e4834431b351e9d584052b4f75
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 16 14:14:02 2024 -0800
+
+    Fix 142 instances of -Wredundant-decls warning for RTASSERTVAR
+    
+    ./VBoxVideoIPRT.h:77:16: warning: redundant redeclaration of ‘RTASSERTVAR’ [-Wredundant-decls]
+       77 |     extern int RTASSERTVAR[1] __attribute__((__unused__)), \
+          |                ^~~~~~~~~~~
+    ./VBoxVideoIPRT.h:80:5: note: in expansion of macro ‘AssertCompile’
+       80 |     AssertCompile(sizeof(type) == (size))
+          |     ^~~~~~~~~~~~~
+    ./VBoxVideoIPRT.h:73:12: note: previous declaration of ‘RTASSERTVAR’ with type ‘int[1]’
+       73 | extern int RTASSERTVAR[1];
+          |            ^~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5abe92c24fa3de28f740490228b66ca5f42f3322
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:44:21 2024 -0800
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bc4fa3b99e979bb1ad63812bc53ff0979c8baac4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 16 14:28:07 2024 -0800
+
+    Silence some standard X.Org warnings that cause too much noise
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 293a6b927b032ed96fc611f04bad1bb9ab903dd7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:38:33 2024 -0800
+
+    Add X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8dc8094c36b38e5c8f60c59fb5adecb56ee4a46e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:33:07 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:44: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:44: You should run autoupdate.
+    aclocal.m4:3515: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:44: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1a950f1e3e028b6b99268bad595b277ef1c6e4c0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 6 14:36:33 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a3da399dfc1290afdec713a3902d5aebab8df2fd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fa736a8e3e65beb700406ad5d95bfe10e87e1f0f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:55:11 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 479aa89713c766c627aca06db64dfc8acded6aa5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:54:30 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 450a7a11f47bf23fc55d2e103dc0835b5ce9a999
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 29 15:51:16 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4f3a2bea254ebebcca4328bc780ce6b8f08dddfa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:19:02 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8b88ebfb4325156db3550278e1b2c19bd7d783b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:42:19 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 948bc1ae047668df040d62a19cae6d7a49e452fd
 Author: Michael Thayer <michael.thayer@oracle.com>
 Date:   Tue Nov 28 11:58:30 2017 +0100

@@ -149,7 +149,7 @@ void HGSMIAreaClear(HGSMIAREA *pArea)
 }
 
 /* Initialize the memory buffer including its checksum.
- * No changes alloed to the header and the tail after that.
+ * No changes allowed to the header and the tail after that.
  */
 HGSMIOFFSET HGSMIBufferInitializeSingle(const HGSMIAREA *pArea,
                                         HGSMIBUFFERHEADER *pHeader,
