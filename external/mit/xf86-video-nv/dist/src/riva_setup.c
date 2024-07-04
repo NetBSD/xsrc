@@ -233,7 +233,7 @@ Riva3Setup(ScrnInfoPtr pScrn)
     pRiva->riva.EnableIRQ = 0;
     pRiva->riva.IO      = VGA_IOBASE_COLOR;
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 #define MAP(ptr, offset, size) { \
     void *tmp; \
     pci_device_map_range(pRiva->PciInfo, (offset), (size), \

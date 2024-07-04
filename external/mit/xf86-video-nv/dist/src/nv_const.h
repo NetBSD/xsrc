@@ -6,7 +6,7 @@
 #define NV_DRIVER_NAME "nv"
 
 /* libpciaccess gratuitous API changes */
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
  #define MEMBASE(p,n)     (p)->regions[n].base_addr
  #define VENDOR_ID(p)     (p)->vendor_id
  #define DEVICE_ID(p)     (p)->device_id

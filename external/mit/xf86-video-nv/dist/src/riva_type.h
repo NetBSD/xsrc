@@ -53,7 +53,7 @@ typedef struct {
     RIVA_HW_STATE       SavedReg;
     RIVA_HW_STATE       ModeReg;
     EntityInfoPtr       pEnt;
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     struct pci_device  *PciInfo;
 #else
     pciVideoPtr         PciInfo;
