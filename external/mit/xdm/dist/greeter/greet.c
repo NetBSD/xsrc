@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -121,9 +121,7 @@ struct group    *(*__xdm_getgrent)(void) = NULL;
 void    (*__xdm_endgrent)(void) = NULL;
 # ifdef HAVE_GETSPNAM
 struct spwd   *(*__xdm_getspnam)(GETSPNAM_ARGS) = NULL;
-#  ifndef QNX4
 void   (*__xdm_endspent)(void) = NULL;
-#  endif /* QNX4 doesn't use endspent */
 # endif
 struct passwd   *(*__xdm_getpwnam)(GETPWNAM_ARGS) = NULL;
 # if defined(linux) || defined(__GLIBC__)
@@ -153,11 +151,16 @@ static XtAppContext	context;
 static XtIntervalId	pingTimeout;
 
 #ifdef USE_PAM
-static int pamconv(int num_msg,
-# ifndef sun
-		   const
-# endif
-		   struct pam_message **msg,
+
+#ifdef __sun
+/* Solaris does not const qualify arguments to pam_get_item() or the
+   PAM conversation function that Linux-PAM and others do. */
+# define XDM_PAM_QUAL /**/
+#else
+# define XDM_PAM_QUAL const
+#endif
+
+static int pamconv(int num_msg, XDM_PAM_QUAL struct pam_message **msg,
 		   struct pam_response **response, void *appdata_ptr);
 
 # define PAM_ERROR_PRINT(pamfunc, pamh)	\
@@ -453,9 +456,7 @@ greet_user_rtn GreetUser(
     __xdm_endgrent = dlfuncs->_endgrent;
 # ifdef HAVE_GETSPNAM
     __xdm_getspnam = dlfuncs->_getspnam;
-#  ifndef QNX4
     __xdm_endspent = dlfuncs->_endspent;
-#  endif /* QNX4 doesn't use endspent */
 # endif
     __xdm_getpwnam = dlfuncs->_getpwnam;
 # if defined(linux) || defined(__GLIBC__)
@@ -583,7 +584,8 @@ greet_user_rtn GreetUser(
 	    char *username	= NULL;
 
 	    RUN_AND_CHECK_PAM_ERROR(pam_get_item,
-				    (*pamhp, PAM_USER, (void *) &username));
+                                    (*pamhp, PAM_USER,
+                                     (XDM_PAM_QUAL void **) &username));
 	    if (username != NULL) {
 		Debug("PAM_USER: %s\n", username);
 		greet->name = username;
@@ -603,12 +605,12 @@ greet_user_rtn GreetUser(
 	    break;
 	} else {
 	    /* Try to fill in username for failed login error log */
-	    char *username = greet->name;
+	    XDM_PAM_QUAL char *username = greet->name;
 
 	    if (username == NULL) {
 		RUN_AND_CHECK_PAM_ERROR(pam_get_item,
 					(*pamhp, PAM_USER,
-					 (void *) &username));
+					 (XDM_PAM_QUAL void **) &username));
 	    }
 	    FailedLogin (d, username);
 	    RUN_AND_CHECK_PAM_ERROR(pam_end,
@@ -695,11 +697,7 @@ greet_user_rtn GreetUser(
 
 
 #ifdef USE_PAM
-static int pamconv(int num_msg,
-# ifndef sun
-		   const
-# endif
-		   struct pam_message **msg,
+static int pamconv(int num_msg, XDM_PAM_QUAL struct pam_message **msg,
 		   struct pam_response **response, void *appdata_ptr)
 {
     int i;
@@ -730,12 +728,12 @@ static int pamconv(int num_msg,
     }
 
     for (i = 0; i < num_msg; i++ , m++ , r++) {
-	char *username;
+	XDM_PAM_QUAL char *username;
 	int promptId = 0;
 	loginPromptState pStyle = LOGIN_PROMPT_ECHO_OFF;
 
-	if ((pam_get_item(*pamhp, PAM_USER, (void *) &username) == PAM_SUCCESS)
-	    && (username != NULL) && (*username != '\0')) {
+	if ((pam_get_item(*pamhp, PAM_USER, (XDM_PAM_QUAL void **) &username)
+             == PAM_SUCCESS) && (username != NULL) && (*username != '\0')) {
 	    SetPrompt(login, LOGIN_PROMPT_USERNAME,
 		      NULL, LOGIN_TEXT_INFO, False);
 	    SetValue(login, LOGIN_PROMPT_USERNAME, username);

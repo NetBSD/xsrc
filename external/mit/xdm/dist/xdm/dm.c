@@ -83,10 +83,6 @@ from The Open Group.
 # endif
 #endif
 
-#if defined(SVR4) && !defined(sun)
-extern FILE    *fdopen();
-#endif
-
 static void	StopAll (int n), RescanNotify (int n);
 static void	RescanServers (void);
 static void	RestartDisplay (struct display *d, int forceReserver);
@@ -106,9 +102,7 @@ static char *Title;
 static int TitleLen;
 #endif
 
-#ifndef UNRELIABLE_SIGNALS
 static void ChildNotify (int n);
-#endif
 
 static long StorePid (void);
 static void RemovePid (void);
@@ -248,9 +242,7 @@ main (int argc, char **argv)
     AddOtherEntropy();
 #endif
     (void) Signal (SIGHUP, RescanNotify);
-#ifndef UNRELIABLE_SIGNALS
     (void) Signal (SIGCHLD, ChildNotify);
-#endif
     Debug ("startup successful; entering main loop\n");
     while (
 #ifdef XDMCP
@@ -263,7 +255,7 @@ main (int argc, char **argv)
 	    RescanServers ();
 	    Rescan = 0;
 	}
-#if defined(UNRELIABLE_SIGNALS) || !defined(XDMCP)
+#ifndef XDMCP
 	WaitForChild ();
 #else
 	WaitForSomething ();
@@ -283,9 +275,6 @@ RescanNotify (int n)
 
     Debug ("Caught SIGHUP\n");
     Rescan = 1;
-#ifdef SIGNALS_RESET_WHEN_CAUGHT
-    (void) Signal (SIGHUP, RescanNotify);
-#endif
     errno = olderrno;
 }
 
@@ -447,11 +436,6 @@ StopAll (int n)
     DestroyWellKnownSockets ();
 #endif
     ForEachDisplay (StopDisplay);
-#ifdef SIGNALS_RESET_WHEN_CAUGHT
-    /* to avoid another one from killing us unceremoniously */
-    (void) Signal (SIGTERM, StopAll);
-    (void) Signal (SIGINT, StopAll);
-#endif
     errno = olderrno;
 }
 
@@ -462,7 +446,6 @@ StopAll (int n)
 
 int	ChildReady;
 
-#ifndef UNRELIABLE_SIGNALS
 /* ARGSUSED */
 static void
 ChildNotify (int n)
@@ -472,7 +455,6 @@ ChildNotify (int n)
     ChildReady = 1;
     errno = olderrno;
 }
-#endif
 
 void
 WaitForChild (void)
@@ -480,16 +462,12 @@ WaitForChild (void)
     pid_t		pid;
     struct display	*d;
     waitType	status;
-#if !defined(X_NOT_POSIX) && !defined(__UNIXOS2__)
+#if !defined(X_NOT_POSIX)
     sigset_t mask, omask;
 #else
     int		omask;
 #endif
 
-#ifdef UNRELIABLE_SIGNALS
-    /* XXX classic System V signal race condition here with RescanNotify */
-    if ((pid = wait (&status)) != -1)
-#else
 # ifndef X_NOT_POSIX
     sigemptyset(&mask);
     sigaddset(&mask, SIGCHLD);
@@ -513,7 +491,6 @@ WaitForChild (void)
     sigsetmask (omask);
 # endif
     while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
-#endif
     {
 	Debug ("Manager wait returns pid: %d sig %d core %d code %d\n",
 	       pid, waitSig(status), waitCore(status), waitCode(status));
