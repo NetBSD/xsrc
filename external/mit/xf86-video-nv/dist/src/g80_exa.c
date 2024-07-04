@@ -28,6 +28,7 @@
 
 #include "g80_type.h"
 #include "g80_dma.h"
+#include "g80_exa.h"
 #include "g80_xaa.h"
 
 static void

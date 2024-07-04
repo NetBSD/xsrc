@@ -101,7 +101,7 @@ static int ShowHideCursor
 #define GFIFO_SIZE_128	256
 #define MFIFO_SIZE	120
 #define VFIFO_SIZE	256
-#define	ABS(a)	(a>0?a:-a)
+#define	ABS(a)	((a) > 0 ? (a) : -(a))
 typedef struct {
   int gdrain_rate;
   int vdrain_rate;

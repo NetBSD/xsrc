@@ -72,6 +72,7 @@ static const int NVCopyROP_PM[16] =
    0xFA             /* GXset */
 };
 
+#ifdef HAVE_XAA_H
 static const int NVPatternROP[16] =
 {
    0x00,
@@ -91,6 +92,7 @@ static const int NVPatternROP[16] =
    0x5F,
    0xFF
 };
+#endif
 
 void
 NVDmaKickoff(NVPtr pNv)
@@ -291,6 +293,7 @@ void NVSync(ScrnInfoPtr pScrn)
     while(pNv->PGRAPH[0x0700/4]);
 }
 
+#ifdef HAVE_XAA_H
 static void
 NVDMAKickoffCallback (ScrnInfoPtr pScrn)
 {
@@ -300,7 +303,6 @@ NVDMAKickoffCallback (ScrnInfoPtr pScrn)
    pNv->DMAKickoffCallback = NULL;
 }
 
-#ifdef HAVE_XAA_H
 static void
 NVSetupForScreenToScreenCopy(
    ScrnInfoPtr pScrn, 

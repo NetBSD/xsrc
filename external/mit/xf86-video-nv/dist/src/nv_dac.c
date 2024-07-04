@@ -42,7 +42,7 @@ NVDACPanelTweaks(NVPtr pNv, NVRegPtr state)
           we can do is experiment and apply hacks. */
 
        if(((pNv->Chipset & 0xffff) == 0x0328) && (state->bpp == 32)) {
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
           if (((pNv->PciInfo->subvendor_id & 0xffff) == 0x1179) &&
               ((pNv->PciInfo->subdevice_id & 0xffff) == 0x0020))
 #else

@@ -316,7 +316,7 @@ rivaProbeDDC(ScrnInfoPtr pScrn, int index)
 
 Bool RivaI2CInit(ScrnInfoPtr pScrn)
 {
-    char *mod = "i2c";
+    const char *mod = "i2c";
 
     if (xf86LoadSubModule(pScrn, mod)) {
 
@@ -385,7 +385,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
  
     /* Find the PCI info for this screen */
     pRiva->PciInfo = xf86GetPciInfoForEntity(pRiva->pEnt->index);
-#if !XSERVER_LIBPCIACCESS
+#ifndef XSERVER_LIBPCIACCESS
     pRiva->PciTag = pciTag(pRiva->PciInfo->bus, pRiva->PciInfo->device,
 			  pRiva->PciInfo->func);
 #endif
@@ -825,7 +825,7 @@ RivaMapMem(ScrnInfoPtr pScrn)
     /*
      * Map IO registers to virtual address space
      */ 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     void *tmp;
 
     pci_device_map_range(pRiva->PciInfo, pRiva->IOAddress, 0x1000000,
@@ -890,7 +890,7 @@ RivaUnmapMem(ScrnInfoPtr pScrn)
     /*
      * Unmap IO registers to virtual address space
      */ 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     pci_device_unmap_range(pRiva->PciInfo, pRiva->IOBase, 0x1000000);
     pci_device_unmap_range(pRiva->PciInfo, pRiva->FbBase, pRiva->FbMapSize);
 #else
@@ -1210,9 +1210,14 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
                case 16:	refreshArea = RivaRefreshArea16;	break;
                case 32:	refreshArea = RivaRefreshArea32;	break;
 	   }
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
            xf86DisableRandR();
            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                       "Driver rotation enabled, RandR disabled\n");
+#else
+           xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                      "Driver rotation enabled\n");
+#endif
 	}
 
 	ShadowFBInit(pScreen, refreshArea);

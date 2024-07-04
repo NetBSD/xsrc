@@ -41,7 +41,7 @@ typedef enum AccelMethod {
 } AccelMethod;
 
 typedef struct G80Rec {
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     struct pci_device  *pPci;
 #endif
     volatile CARD32 *   reg;

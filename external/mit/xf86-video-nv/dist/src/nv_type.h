@@ -78,7 +78,7 @@ typedef struct {
     CARD32              Architecture;
     CARD32              CursorStart;
     EntityInfoPtr       pEnt;
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     struct pci_device  *PciInfo;
 #else
     pciVideoPtr         PciInfo;

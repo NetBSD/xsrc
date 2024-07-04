@@ -1,3 +1,171 @@
+commit 0c96dc00014104edcd890fa2eab3322534b13821
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 12:39:44 2024 -0700
+
+    xf86-video-nv 2.1.23
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d06264d7a350846584dd12b11203769c61c23023
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Sat Feb 17 14:35:11 2024 -0800
+
+    treewide: #if -> #ifdef
+    
+    I think the latest version of gcc got stricter in regards to this
+    for some reason.
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+
+commit c8ab8f7868c1891a146e9f679278b990f1e23516
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 26 09:27:20 2024 -0800
+
+    riva_hw.c: Ensure ABS macro expands correctly
+    
+    Handles warning from Oracle Parfait static analyser:
+    
+    Error: Misleading macro
+       Misleading macro [misleading-macro]:
+          misleading evaluation of unary '-' operator in expansion of macro ABS due to missing parentheses
+            at line 104 of src/riva_hw.c.
+            binary '+' operator has lower precedence than unary '-' operator inside macro body at line 298
+            if (ABS(ainfo->vburst_size) + (ABS(ainfo->wcvlwm + 32) & ~0xf)  - tmp> VFIFO_SIZE)
+            low precedence binary '+' operator is hidden by expansion of macro argument a at line 104
+            #define ABS(a)  (a>0?a:-a)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eff27e0d6a18350cfd7ad226cacc538c15f49995
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:38:23 2024 -0800
+
+    Fix warning: no previous prototype for ‘G80ExaInit’ [-Wmissing-prototypes]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fa0bd081e060b065a29dcd7679f04a0139773ca2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:24:25 2024 -0800
+
+    Fix -Wdiscarded-qualifiers warning in G80PreInit
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 947720bc20f8dcba8502e1db46ae0f180c5fa8d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:10:39 2024 -0800
+
+    Fix warning: ‘NVPatternROP’ defined but not used [-Wunused-const-variable=]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0176634d5e14f59dbd93895f4056ece528efd950
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:09:14 2024 -0800
+
+    Fix warning: ‘NVDMAKickoffCallback’ defined but not used [-Wunused-function]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 57cfa71b2ca68a705c665c6b0ee920690b8eccb3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:05:42 2024 -0800
+
+    Fix 4 -Wdiscarded-qualifiers warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 52db99b4d88c7dfdfa813bbeefd17f3c6f5751d9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:03:29 2024 -0800
+
+    Add X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 85198960a80ee751047551c332c5bad44bb2da92
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 14:01:21 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:45: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:45: You should run autoupdate.
+    aclocal.m4:3515: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:45: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e64b5ac6dbef000ad4c26a151cc4e3d4f21e2ad0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 7 18:23:53 2023 -0800
+
+    Don't call xf86DisableRandR in ABI_VIDEODRV_VERSION 24 & later
+    
+    The API was removed by Xserver commit dd00e5466a0e4ea313d1860824da4123692827ed
+    in xorg-server-1.20.0 and later.
+    
+    Found by gcc -Werror=implicit:
+    
+    riva_driver.c: In function ‘RivaScreenInit’:
+    riva_driver.c:1213:12: error: implicit declaration of function
+     ‘xf86DisableRandR’; did you mean ‘xf86DisableIO’?
+     [-Werror=implicit-function-declaration]
+     1213 |            xf86DisableRandR();
+          |            ^~~~~~~~~~~~~~~~
+          |            xf86DisableIO
+    nv_driver.c: In function ‘NVScreenInit’:
+    nv_driver.c:2635:16: error: implicit declaration of function
+     ‘xf86DisableRandR’; did you mean ‘xf86DisableIO’?
+     [-Werror=implicit-function-declaration]
+     2635 |                xf86DisableRandR();
+          |                ^~~~~~~~~~~~~~~~
+          |                xf86DisableIO
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b536401064a7a20ff644719012c3c80f810791dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Oct 5 17:25:52 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 04f4578f5b9004a58e69dddc37d4bdd73572c84b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 09:13:29 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1b735e8c9681dcccd54ea0295c4853763dabb8d1
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Thu Jul 28 21:03:56 2022 -0500
+
+    fix nv on powerpc
+    
+    Written by either Julio Merino <julio at meroh.net> or Nathan Whitehorn
+    <nwhitehorn at freebsd.org> (emails obfuscated similar to freebsd
+    convention, authorship is in doubt)
+
+commit adbd442a21ab67cb8da9445fcae339b4cd1134b3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit bc1b6343f776ffcf1c398792b3aa3ad2ea5ded2a
 Author: Yusuf Khan <yusisamerican@gmail.com>
 Date:   Wed Jul 27 15:12:44 2022 -0400
@@ -1237,7 +1405,7 @@ Date:   Tue Feb 19 14:17:57 2008 -0800
     G80: Fix connector mapping and TMDS initialization on certain GPUs.
 
 commit 3f2a1898fedbada151da31fc163ae54daac0e896
-Author: Søren Sandmann Pedersen  <sandmann@redhat.com>
+Author: Søren Sandmann Pedersen <sandmann@redhat.com>
 Date:   Wed Feb 13 10:43:28 2008 -0800
 
     [PATCH] Bug #14484: Fix G80SorSetProperty return value.
@@ -2151,7 +2319,7 @@ Date:   Mon Oct 17 00:09:04 2005 +0000
     Use sed & cpp to substitute variables in driver man pages
 
 commit 1e3c84f332b7b9a4b320b370b8b2ecafbbdd8f8a
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Oct 4 21:36:51 2005 +0000
 
     Link nvidida readme file into nvidia driver, Exclude duplicated neomagic
@@ -2230,7 +2398,7 @@ Date:   Fri Jul 29 21:22:44 2005 +0000
     - Update modular Xorg version
 
 commit 6ea22f19210448605b9a18bf500c33168a77e77c
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 18:40:29 2005 +0000
 
     Build system for nv

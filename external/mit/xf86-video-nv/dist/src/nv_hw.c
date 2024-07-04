@@ -653,7 +653,7 @@ static void nv30UpdateArbitrationSettings (
     *lwm = graphics_lwm >> 3;
 }
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 static inline uint32_t
 pciaccessReadLong(struct pci_device *const dev, pciaddr_t offset) {
     uint32_t tmp;
@@ -670,7 +670,7 @@ static void nForceUpdateArbitrationSettings (
     NVPtr        pNv
 )
 {
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     struct pci_device *const dev1 = pci_device_find_by_slot(0, 0, 0, 1);
     struct pci_device *const dev2 = pci_device_find_by_slot(0, 0, 0, 2);
     struct pci_device *const dev3 = pci_device_find_by_slot(0, 0, 0, 3);
