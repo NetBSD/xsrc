@@ -794,7 +794,7 @@ doit(FILE *outfd, const char *cmd, const char **argv)
 			showargs(argv);
 		if (outfd)
 			dup2(fileno(outfd), 1);
-		execvp(cmd, argv);
+		execvp(cmd, (char * const *) argv);
 		LogFatal("Cannot exec %s.", cmd);
 	}
 #endif
