@@ -63,23 +63,23 @@ from the X Consortium.
 
 typedef unsigned long Pixel;
 
-const char *Yes = "YES";
-const char *No = "NO";
-const char *Unknown = "unknown";
+static const char *Yes = "YES";
+static const char *No = "NO";
+static const char *Unknown = "unknown";
 
-const char *ProgramName;
-Display *dpy;
-int screen;
+static const char *ProgramName;
+static Display *dpy;
+static int screen;
 
-XIC xic = NULL;
+static XIC xic = NULL;
 
-Atom wm_delete_window;
-Atom wm_protocols;
+static Atom wm_delete_window;
+static Atom wm_protocols;
 
-Bool have_rr;
-int rr_event_base, rr_error_base;
+static Bool have_rr;
+static int rr_event_base, rr_error_base;
 
-Bool single_line = False;
+static Bool single_line = False;
 
 enum EventMaskIndex {
     EVENT_MASK_INDEX_CORE,
@@ -125,7 +125,7 @@ output(enum OutputFlags flags, const char* format, ...)
     }
 }
 
-static void
+static void _X_NORETURN
 graceful_exit(int status)
 {
     if (single_line) {
@@ -178,13 +178,13 @@ do_KeyPress(XEvent *eventp)
     if (e->type == KeyPress && xic) {
         do {
             nmbbytes = XmbLookupString(xic, e, buf, bsize - 1, &ks, &status);
-            buf[nmbbytes] = '\0';
 
             if (status == XBufferOverflow) {
                 bsize = nmbbytes + 1;
                 buf = realloc(buf, bsize);
             }
         } while (status == XBufferOverflow);
+        buf[nmbbytes] = '\0';
     }
 
     if (ks == NoSymbol)
