@@ -14,8 +14,8 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.71],,
-[m4_warning([this file was generated for autoconf 2.71.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.72],,
+[m4_warning([this file was generated for autoconf 2.72.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
@@ -1148,56 +1148,6 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
-dnl Copyright 2005 Red Hat, Inc
-dnl 
-dnl Permission to use, copy, modify, distribute, and sell this software and its
-dnl documentation for any purpose is hereby granted without fee, provided that
-dnl the above copyright notice appear in all copies and that both that
-dnl copyright notice and this permission notice appear in supporting
-dnl documentation.
-dnl 
-dnl The above copyright notice and this permission notice shall be included
-dnl in all copies or substantial portions of the Software.
-dnl 
-dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-dnl MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-dnl IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
-dnl OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-dnl ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-dnl OTHER DEALINGS IN THE SOFTWARE.
-dnl 
-dnl Except as contained in this notice, the name of the copyright holders shall
-dnl not be used in advertising or otherwise to promote the sale, use or
-dnl other dealings in this Software without prior written authorization
-dnl from the copyright holders.
-dnl 
-
-# XORG_DRIVER_CHECK_EXT(MACRO, PROTO)
-# --------------------------
-# Checks for the MACRO define in xorg-server.h (from the sdk).  If it
-# is defined, then add the given PROTO to $REQUIRED_MODULES.
-
-AC_DEFUN([XORG_DRIVER_CHECK_EXT],[
-	AC_REQUIRE([PKG_PROG_PKG_CONFIG])
-	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -I`$PKG_CONFIG --variable=sdkdir xorg-server`"
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include "xorg-server.h"
-#if !defined $1
-#error $1 not defined
-#endif
-		]])],
-		[_EXT_CHECK=yes],
-		[_EXT_CHECK=no])
-	CFLAGS="$SAVE_CFLAGS"
-	AC_MSG_CHECKING([if $1 is defined])
-	AC_MSG_RESULT([$_EXT_CHECK])
-	if test "$_EXT_CHECK" != no; then
-		REQUIRED_MODULES="$REQUIRED_MODULES $2"
-	fi
-])
-
 dnl pkg.m4 - Macros to locate and utilise pkg-config.   -*- Autoconf -*-
 dnl serial 11 (pkg-config-0.29)
 dnl
@@ -1559,10 +1509,10 @@ rm -f conftest.$ac_ext
 
 AC_MSG_CHECKING([if $RAWCPP requires -traditional])
 AC_LANG_CONFTEST([AC_LANG_SOURCE([[Does cpp preserve   "whitespace"?]])])
-if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
-	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 		TRADITIONALCPPFLAGS="-traditional"
 		RAWCPPFLAGS="${RAWCPPFLAGS} -traditional"
 		AC_MSG_RESULT([yes])
@@ -3412,6 +3362,56 @@ touch \$(top_srcdir)/ChangeLog; \
 echo 'git failed to create ChangeLog: installing empty ChangeLog.' >&2))"
 AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
+
+dnl Copyright 2005 Red Hat, Inc
+dnl 
+dnl Permission to use, copy, modify, distribute, and sell this software and its
+dnl documentation for any purpose is hereby granted without fee, provided that
+dnl the above copyright notice appear in all copies and that both that
+dnl copyright notice and this permission notice appear in supporting
+dnl documentation.
+dnl 
+dnl The above copyright notice and this permission notice shall be included
+dnl in all copies or substantial portions of the Software.
+dnl 
+dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+dnl MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+dnl IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
+dnl OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+dnl ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+dnl OTHER DEALINGS IN THE SOFTWARE.
+dnl 
+dnl Except as contained in this notice, the name of the copyright holders shall
+dnl not be used in advertising or otherwise to promote the sale, use or
+dnl other dealings in this Software without prior written authorization
+dnl from the copyright holders.
+dnl 
+
+# XORG_DRIVER_CHECK_EXT(MACRO, PROTO)
+# --------------------------
+# Checks for the MACRO define in xorg-server.h (from the sdk).  If it
+# is defined, then add the given PROTO to $REQUIRED_MODULES.
+
+AC_DEFUN([XORG_DRIVER_CHECK_EXT],[
+	AC_REQUIRE([PKG_PROG_PKG_CONFIG])
+	SAVE_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS `$PKG_CONFIG --cflags xorg-server`"
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include "xorg-server.h"
+#if !defined $1
+#error $1 not defined
+#endif
+		]])],
+		[_EXT_CHECK=yes],
+		[_EXT_CHECK=no])
+	CFLAGS="$SAVE_CFLAGS"
+	AC_MSG_CHECKING([if $1 is defined])
+	AC_MSG_RESULT([$_EXT_CHECK])
+	if test "$_EXT_CHECK" != no; then
+		REQUIRED_MODULES="$REQUIRED_MODULES $2"
+	fi
+])
 
 # libtool.m4 - Configure libtool for the host system. -*-Autoconf-*-
 #
