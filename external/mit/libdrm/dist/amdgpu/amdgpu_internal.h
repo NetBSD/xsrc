@@ -57,11 +57,21 @@ struct amdgpu_bo_va_mgr {
 };
 
 struct amdgpu_va {
-	amdgpu_device_handle dev;
 	uint64_t address;
 	uint64_t size;
 	enum amdgpu_gpu_va_range range;
 	struct amdgpu_bo_va_mgr *vamgr;
+};
+
+struct amdgpu_va_manager {
+	/** The VA manager for the lower virtual address space */
+	struct amdgpu_bo_va_mgr vamgr_low;
+	/** The VA manager for the 32bit address space */
+	struct amdgpu_bo_va_mgr vamgr_32;
+	/** The VA manager for the high virtual address space */
+	struct amdgpu_bo_va_mgr vamgr_high;
+	/** The VA manager for the 32bit high address space */
+	struct amdgpu_bo_va_mgr vamgr_high_32;
 };
 
 struct amdgpu_device {
@@ -81,14 +91,8 @@ struct amdgpu_device {
 	pthread_mutex_t bo_table_mutex;
 	struct drm_amdgpu_info_device dev_info;
 	struct amdgpu_gpu_info info;
-	/** The VA manager for the lower virtual address space */
-	struct amdgpu_bo_va_mgr vamgr;
-	/** The VA manager for the 32bit address space */
-	struct amdgpu_bo_va_mgr vamgr_32;
-	/** The VA manager for the high virtual address space */
-	struct amdgpu_bo_va_mgr vamgr_high;
-	/** The VA manager for the 32bit high address space */
-	struct amdgpu_bo_va_mgr vamgr_high_32;
+
+	struct amdgpu_va_manager va_mgr;
 };
 
 struct amdgpu_bo {

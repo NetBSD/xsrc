@@ -25,7 +25,7 @@ libdrm_omap = library(
   c_args : libdrm_c_args,
   gnu_symbol_visibility : 'hidden',
   link_with : libdrm,
-  dependencies : [dep_pthread_stubs, dep_atomic_ops],
+  dependencies : [dep_threads, dep_atomic_ops],
   version : '1.0.0',
   install : true,
 )
@@ -56,6 +56,6 @@ test(
   args : [
     '--lib', libdrm_omap,
     '--symbols-file', files('omap-symbols.txt'),
-    '--nm', prog_nm.path(),
+    '--nm', prog_nm.full_path(),
   ],
 )
