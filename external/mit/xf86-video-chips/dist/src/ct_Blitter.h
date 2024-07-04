@@ -11,9 +11,9 @@
 /*        15-12 reserved (0)  */
 /*        27-16 destination offset, width of screen */
 /*        31-28 reserved (0)  */
-/* 87D0:  20-0  pattern (alinged 8 pixel x 8 line)  pointer */
+/* 87D0:  20-0  pattern (aligned 8 pixel x 8 line)  pointer */
 /*        31-21 reserved (0)  */
-/* 8BD0:  15-0  backgroud colour */
+/* 8BD0:  15-0  background colour */
 /*        31-6  duplicate of 15-0  */
 /* 8FD0:  15-0  foregroud/solid colour */
 /*        31-6  duplicate of 15-0  */

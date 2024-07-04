@@ -109,7 +109,7 @@
 /*
  * PIO Access to the C&T extension registers
  */
-void
+static void
 chipsStdWriteXR(CHIPSPtr cPtr, CARD8 index, CARD8 value)
 {
     outb(cPtr->PIOBase + CHIPS_XR_INDEX, index);

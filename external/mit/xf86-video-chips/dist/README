@@ -436,13 +436,13 @@
                        the ct65555 and only when used with a DSTN LCD.
 
      Option            The HiQV chipsets contain a multimedia engine
-                       that allow a 16bpp window to be overlayed on the
+                       that allow a 16bpp window to be overlaid on the
                        screen. This driver uses this capability to
                        include a 16bpp framebuffer on top of an 8bpp
                        framebuffer. In this way PseudoColor and
                        TrueColor visuals can be used on the same screen.
                        XFree86 believes that the 8bpp framebuffer is
-                       overlayed on the 16bpp framebuffer. Therefore to
+                       overlaid on the 16bpp framebuffer. Therefore to
                        use this option the server must be started in
                        either 15 or 16bpp depth. Also the maximum size
                        of the desktop with this option is 1024x1024, as
@@ -992,7 +992,7 @@
         the server attempts to read the panel size from the chip. If the
         user has used the "UseModeline" or "FixPanelSize" options the
         panel timings are derived from the mode, which can be different
-        than the panel size. Try deleting theses options from xorg.conf
+        than the panel size. Try deleting these options from xorg.conf
         or using an LCD/CRT switch.
 
       I can't get a 320x240 mode to occupy the whole 640x480 LCD

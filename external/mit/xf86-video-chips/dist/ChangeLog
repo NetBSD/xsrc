@@ -1,3 +1,186 @@
+commit 0bb1c9ec61ddf8df4a66799905b184632de191a7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 11:48:07 2024 -0700
+
+    xf86-video-chips 1.5.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b8b3a9e5b3c4001bd25e8699b99177c24672f930
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:52:41 2024 -0800
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 005a3d281fd63864528f3c4dfc3cbd25854a66dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:49:19 2024 -0800
+
+    Remove ifdef checks for non-Solaris SVR4 systems
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e9eb029d6e44d06fa9a596c4973c3f1d61341138
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:46:41 2024 -0800
+
+    unifdef __USLC__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2155e139c7cfc873636229b9d6b5fd6265a3a9a0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:45:40 2024 -0800
+
+    unifdef __SCO__
+    
+    ../common/scoasm.h didn't even exist, so this would have broken the
+    build if it was ever set
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 12522375428d3f5b155af6e8295d833fafcb8e95
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:44:33 2024 -0800
+
+    unifdef Lynx
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e0d87dd8e64a9283b0b106f3f87806b026bfa11e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 15:41:58 2024 -0800
+
+    unifdef NCR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0fd51582d9a8f5f62d6e2114348143f3a3820f0a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:27:20 2024 -0800
+
+    AsmMacros.h: convert function definitions from K&R to C89
+    
+    Fixes many -Wold-style-definition & -Wstrict-prototypes warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 009e8cd65600eff56a97b178da66051543aa7a28
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:19:19 2024 -0800
+
+    Handle 4 -Wmissing-prototypes warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 17d22a0c0f77ce448a6efbafa17e55b335f9f169
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:15:20 2024 -0800
+
+    Fix -Wmisleading-indentation warning in chipsPreInitHiQV()
+    
+    ct_driver.c: In function ‘chipsPreInitHiQV’:
+    ct_driver.c:1928:21: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+     1928 |                     if ((pMon = xf86PrintEDID(xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn),
+          |                     ^~
+    ct_driver.c:1931:24: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+     1931 |                        xf86SetDDCproperties(pScrn,pMon);
+          |                        ^~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3010ffc8ec8e989a2b6a258b25ae1ef6112e601f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:13:22 2024 -0800
+
+    Add X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a4a96b580db669f13fb97b87622a5256025e3444
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:07:14 2024 -0800
+
+    configure: quote call to AC_LANG_SOURCE in AC_LINK_IFELSE
+    
+    Clears autoconf warning:
+    
+    configure.ac:107: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+    ./lib/autoconf/lang.m4:199: AC_LANG_CONFTEST is expanded from...
+    ./lib/autoconf/general.m4:2892: _AC_LINK_IFELSE is expanded from...
+    ./lib/autoconf/general.m4:2909: AC_LINK_IFELSE is expanded from...
+    configure.ac:107: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d7a23964c8a06c3690d2986baadcd2f297f5f4c7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 6 09:03:33 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:44: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:44: You should run autoupdate.
+    aclocal.m4:3515: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:44: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5da1b77bfa75ba7b22ea8529f7b0dde748e62d63
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 1 11:17:31 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9bce7e28c0a841d834df486b98557571c99a73c6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 94464a708c0d5ee33f09a10b5ba6aeaaeca8d67b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 09:46:15 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7f216da92ebd51ceb19358f00650c276dec34c05
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 09:42:47 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dd4337729a2eb59152ef84a6f2dae07598f69127
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 09:38:38 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 7d9a0594a0fa1c63d04ad929125233917e2e227c
 Author: Kevin Brace <kevinbrace@gmx.com>
 Date:   Fri Feb 15 15:39:38 2019 -0800
