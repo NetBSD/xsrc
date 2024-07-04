@@ -193,7 +193,7 @@ VGAOUT8(SMIPtr pSmi, int port, CARD8 data)
 	mem_barrier();							\
 	if (IS_MSOC(pSmi)) {						\
 	    /*	20:20	2D Engine FIFO Status. This bit is read-only.
-	     *		0:	FIFO not emtpy.
+	     *		0:	FIFO not empty.
 	     *		1:	FIFO empty.
 	     */								\
 	    while (loop-- &&						\
@@ -318,7 +318,7 @@ VGAOUT8(SMIPtr pSmi, int port, CARD8 data)
     (SMI501_MAX_CURSOR * SMI501_MAX_CURSOR * 2)
 #endif
 
-/* HWCursor definitons for Panel AND CRT */
+/* HWCursor definitions for Panel AND CRT */
 #define SMI501_MASK_HWCENABLE			0x80000000
 #define SMI501_MASK_MAXBITS			0x000007FF
 #define SMI501_MASK_BOUNDARY			0x00000800

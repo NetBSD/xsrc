@@ -1,3 +1,170 @@
+commit 6bb016cbec5d23de1ee531d149f987fb95a85674
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 27 17:57:10 2023 -0700
+
+    xf86-video-siliconmotion 1.7.10
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6f3c8acd0723542a62aa4b2d62a910123604bdad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 26 18:20:52 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1eace804079236bd8f1c5fe1afdda111a38607f0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 09:14:16 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f3e48a4a0435ae17cff0b570d208a222fcd7fc58
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 15 09:20:41 2022 -0800
+
+    Replace malloc()+memset() with calloc()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 343b595d28a2808f08c99faabbde2d999e43b5e7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 15 09:13:22 2022 -0800
+
+    Replace malloc()+snprintf() with Xasprintf()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8cddfb1205dd000e5071c237fbbda84656149242
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 18:03:11 2022 -0800
+
+    Quiet -Wempty-body warning
+    
+    smi_video.c: In function ‘SetAttrSAA7111’:
+    smi_video.c:802:33: warning: suggest braces around empty body
+      in an ‘if’ statement [-Wempty-body]
+          if ((j&7) == 7) DEBUG("\n");
+                                     ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7c145c65e2feaf6ea63fdfba67bf7c0cd44b2fbe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 8 17:58:02 2022 -0800
+
+    constify some char * declarations
+    
+    Clears 6 of 17 -Wdiscarded-qualifiers warnings from gcc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 92f5cf6fcbec4bb9f59e4828d6eb38174aadb2a0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ff3dbb3ee82958f441d6106eaf61d97335689e27
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 28 15:00:06 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3e608e2332e99477aa219027c518d5e09af4e5b6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 28 14:57:43 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 725459b05f6a641db34c58cffdae0646cc9450cb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 28 14:30:03 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8e7eea6e1c6fc1e3a3c9d01b517a2a9ad1a11dac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:08:46 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1449cbc907092a17336bfc596d27fbbac256788c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:17:10 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1f94cd4f4b9a4455cc184af4e460d6d1a7fe354b
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 8bdddcca77a01560552a87d99f58c246f4f76ceb
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit edb34b0b2e544240d69cf0ece6359ab075f7bcc3
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 0cb46dfb3a39a0f8a79d3a85536e02ce30269e44
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 59df21072192434e24d5eb39bd49cc5c100f2a65
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jan 26 11:18:06 2017 +1000
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit d269962724b57e21142c9e1c6631a45a46d87b47
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:44:51 2017 -0800
@@ -918,20 +1085,20 @@ Date:   Fri Dec 12 15:50:53 2008 -0200
     placeholder for choosing alternate clocks when programming MMIO 0x68.
     But it should be noted that the smi 501 databook says:
     Miscellaneous Timing
-    	Read/Write MMIO_base + 0x000068
-    	Power-on Default 0x00000000
-    	[...]
-    	5:4 Divider Output Frequency Selection for Second PLL.
-    		00: 336 MHz.
-    		01: 288 MHz.
-    		10: 240 MHz.
-    		11: 192 MHz.
+            Read/Write MMIO_base + 0x000068
+            Power-on Default 0x00000000
+            [...]
+            5:4 Divider Output Frequency Selection for Second PLL.
+                    00: 336 MHz.
+                    01: 288 MHz.
+                    10: 240 MHz.
+                    11: 192 MHz.
     while the 502 databook says:
-    	Miscellaneous Timing
-    	Read/Write MMIO_base + 0x000068
-    	Power-on Default 0b0000.00xx.0000.1001.0000.1001.0000.0000
-    	[...]
-    	5:4 Reserved These bits are reserved.
+            Miscellaneous Timing
+            Read/Write MMIO_base + 0x000068
+            Power-on Default 0b0000.00xx.0000.1001.0000.1001.0000.0000
+            [...]
+            5:4 Reserved These bits are reserved.
     but still tells to refer to those bits.
 
 commit a2352ff23787f37530dff68e03028dd78925e4b4
@@ -985,7 +1152,7 @@ Date:   Mon Nov 24 15:15:43 2008 -0200
     Use a single debug macro for leaving functions.
     
       The LEAVE() macro, when debug is disabled, now is defined as:
-    <hash>define LEAVE(...)		return __VA_ARGS__
+    <hash>define LEAVE(...)         return __VA_ARGS__
     This avoids the requirement of a return statement after the LEAVE()
     macro call, what can be confusing.
 
@@ -1618,8 +1785,8 @@ Date:   Wed Oct 1 18:27:27 2008 -0300
     details that are unclear (for the extended 502 modesetting mode) should be
     resolved soon, and those are:
     *  MMIO:0x74:bit15 (PLL Output Divided by 2)
-    	0: Disable.
-    	1: Enable.
+            0: Disable.
+            1: Enable.
        (does this mean it can use a 12MHz clock instead of 24? or anything else?)
     *  Should bit 31 of "current clock" always be set when using the alternate
        mode setting for the 502? The alternate modesetting allows a very closer
