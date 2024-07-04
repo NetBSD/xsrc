@@ -408,8 +408,8 @@ typedef struct _FcStrBuf {
 
 typedef struct _FcHashTable	FcHashTable;
 
-typedef FcChar32 (* FcHashFunc)	   (const void *data);
-typedef int	 (* FcCompareFunc) (const void *v1, const void *v2);
+typedef FcChar32 (* FcHashFunc)	   (const FcChar8 *data);
+typedef int	 (* FcCompareFunc) (const FcChar8 *v1, const FcChar8 *v2);
 typedef FcBool	 (* FcCopyFunc)	   (const void *src, void **dest);
 
 
@@ -524,7 +524,6 @@ struct _FcConfig {
      * and those directives may occur in any order
      */
     FcStrSet	*configDirs;	    /* directories to scan for fonts */
-    FcStrSet	*configMapDirs;	    /* mapped names to generate cache entries */
     /*
      * List of directories containing fonts,
      * built by recursively scanning the set

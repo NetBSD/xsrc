@@ -15,16 +15,16 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 
 /* Additional font directories */
-#define FC_ADD_FONTS "/usr/pkg/lib/X11/fonts,/usr/pkg/share/fonts"
+#define FC_ADD_FONTS "/usr/X11R7/lib/X11/fonts,/usr/pkg/share/fonts/urw,/usr/pkg/share/ghostscript/fonts,/usr/pkg/share/fonts/X11"
 
 /* Architecture prefix to use for cache file names */
 /* #undef FC_ARCHITECTURE */
 
 /* System font directory */
-#define FC_DEFAULT_FONTS "<dir>/usr/X11R7/lib/X11/fonts</dir>"
+#define FC_DEFAULT_FONTS "<dir>/usr/pkg/share/fonts/X11</dir>"
 
 /* The type of len parameter of the gperf hash/lookup function */
 #define FC_GPERF_SIZE_T size_t
@@ -51,7 +51,7 @@
 
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
-/* #undef HAVE_DCGETTEXT */
+#define HAVE_DCGETTEXT 1
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -102,7 +102,7 @@
 #define HAVE_GETPROGNAME 1
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
-/* #undef HAVE_GETTEXT */
+#define HAVE_GETTEXT 1
 
 /* Define if you have the iconv() function and it works. */
 #define HAVE_ICONV 1
@@ -144,10 +144,10 @@
 #define HAVE_POSIX_FADVISE 1
 
 /* Have POSIX threads */
-/* #undef HAVE_PTHREAD */
+#define HAVE_PTHREAD 1
 
 /* Have PTHREAD_PRIO_INHERIT. */
-/* #undef HAVE_PTHREAD_PRIO_INHERIT */
+#define HAVE_PTHREAD_PRIO_INHERIT 1
 
 /* Define to 1 if you have the `rand' function. */
 #define HAVE_RAND 1
@@ -173,7 +173,7 @@
 /* Have Solaris __machine_*_barrier and atomic_* operations */
 /* #undef HAVE_SOLARIS_ATOMIC_OPS */
 
-/* Have Intel __sync_* atomic primitives */
+/* Have C99 stdatomic atomic primitives */
 #define HAVE_STDATOMIC_PRIMITIVES 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -278,7 +278,7 @@
 #define PACKAGE_NAME "fontconfig"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "fontconfig 2.14.1"
+#define PACKAGE_STRING "fontconfig 2.15.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "fontconfig"
@@ -287,7 +287,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.14.1"
+#define PACKAGE_VERSION "2.15.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -408,7 +408,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.14.1"
+#define VERSION "2.15.0"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
