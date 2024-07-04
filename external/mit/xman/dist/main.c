@@ -117,12 +117,10 @@ static XtActionsRec xman_actions[] = {
     {"Search", Search},
     {"PopupHelp", PopupHelp},
     {"PopupSearch", PopupSearch},
+    {"RemoveSearch", RemoveSearch},
     {"CreateNewManpage", CreateNewManpage},
     {"RemoveThisManpage", RemoveThisManpage},
     {"SaveFormattedPage", SaveFormattedPage},
-#ifdef INCLUDE_XPRINT_SUPPORT
-    {"PrintThisManpage", PrintThisManpage},
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
     {"ShowVersion", ShowVersion},
 };
 
@@ -150,6 +148,23 @@ main(int argc, char **argv)
     bcopy(argv, saved_argv, argc * sizeof(char *));
 
     XtSetLanguageProc(NULL, (XtLanguageProc) NULL, NULL);
+
+    /* Handle args that don't require opening a display */
+    for (int i = 1; i < argc; i++) {
+        const char *arg = argv[i];
+        /* accept single or double dash for -help & -version */
+        if (arg[0] == '-' && arg[1] == '-') {
+            arg++;
+        }
+        if (strcmp(arg, "-help") == 0) {
+            ArgError(0, NULL);
+            exit(0);
+        }
+        if (strcmp(arg, "-version") == 0) {
+            puts(PACKAGE_STRING);
+            exit(0);
+        }
+    }
 
     initial_widget = XtAppInitialize(&app_con, "Xman", xman_options,
                                      XtNumber(xman_options), &argc, argv,

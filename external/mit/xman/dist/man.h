@@ -147,11 +147,6 @@ typedef struct _ManpageGlobals {
         search_entry, both_screens_entry, remove_entry,
         open_entry, print_entry, version_entry, quit_entry;
 
-#ifdef INCLUDE_XPRINT_SUPPORT
-    /* Print objects and data */
-    Widget printdialog_shell;   /* Shell for the print dialog */
-    Widget printdialog;         /* Print dialog */
-#endif                          /*INCLUDE_XPRINT_SUPPORT */
     /* Misc. */
 
     char manpage_title[80];     /* The label to use for the current manpage. */
@@ -235,6 +230,8 @@ void PopupHelp(Widget w, XEvent * event, String * params,
                Cardinal * num_params);
 void PopupSearch(Widget w, XEvent * event, String * params,
                  Cardinal * num_params);
+void RemoveSearch(Widget w, XEvent * event, String * params,
+                 Cardinal * num_params);
 void Quit(Widget w, XEvent * event, String * params, Cardinal * num_params);
 void RemoveThisManpage(Widget w, XEvent * event, String * params,
                        Cardinal * num_params);
@@ -242,10 +239,6 @@ void SaveFormattedPage(Widget w, XEvent * event, String * params,
                        Cardinal * num_params);
 void Search(Widget w, XEvent * event, String * params, Cardinal * num_params);
 
-#ifdef INCLUDE_XPRINT_SUPPORT
-void PrintThisManpage(Widget w, XEvent * event, String * params,
-                      Cardinal * num_params);
-#endif /* INCLUDE_XPRINT_SUPPORT */
 void ShowVersion(Widget w, XEvent * event, String * params,
                  Cardinal * num_params);
 

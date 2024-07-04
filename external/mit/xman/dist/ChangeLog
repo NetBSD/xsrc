@@ -1,3 +1,210 @@
+commit a545f985ac404a771424d08e5ced63e63601c9f5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 10:51:04 2024 -0700
+
+    xman 1.2.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7cd313b41e64862a5786cf87290c57899c96a67a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 13 17:33:10 2024 -0800
+
+    unifdef NO_COMPRESS
+    
+    Had only been defined if defined(__SCO__) || defined(__UNIXWARE__)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3fd68cb4ed34958cfc4d6cea123377f070561181
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 13 17:31:00 2024 -0800
+
+    unifdef INCLUDE_XPRINT_SUPPORT
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8d5ae4a89ac057bc26db9c819136460331ffd29b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 19:12:41 2024 -0800
+
+    unifdef ATHENA
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6a54a5630ee0e33f34387131e16d33d2b8c63aec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 19:11:14 2024 -0800
+
+    unifdef BSD < 199103
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4c47303a0af4b5045f7735ccc848cd02fef6995d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 19:07:56 2024 -0800
+
+    unifdef __bsdi__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3ecea7a4526f571949b9d45430cfc44c59e406b6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 19:06:59 2024 -0800
+
+    unifdef defined(SVR4) && !defined(sun)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 70ebfeb53325e65c9b11aca55d1722a9a76f8aa9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 18:06:17 2024 -0800
+
+    unifdef sony
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 01484cf8029253e704482817ebcff6c0d7449672
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 18:01:44 2024 -0800
+
+    unifdef SCO, __SCO__, and __UNIXWARE__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c48217d6d977c15ef8bba9fc767a1997a1e91e99
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 17:53:21 2024 -0800
+
+    unifdef hpux
+    
+    Since NO_MANPATH_SUPPORT was only defined if hpux was defined,
+    removes it too.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0ee97550e4103bed00118a10f4adf87767079dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 17:51:22 2024 -0800
+
+    unifdef __osf__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ae798c59e34eba8a83995579943b689fc42987bb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 17:49:07 2024 -0800
+
+    unifdef sgi
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7f69157bb051c52526c3ba210f75564c86654d2f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 12 17:47:27 2024 -0800
+
+    unifdef ISC
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5eaec0c56f2afac5dea8f63f7a7b01c26e06382a
+Author: gldrk <me@rarity.fan>
+Date:   Wed Oct 4 05:36:30 2023 +0300
+
+    Restore formatting with modern man-db
+
+commit b8ee816d8045b4a0c216825ed96a5e0515c6d94e
+Author: gldrk <me@rarity.fan>
+Date:   Tue Sep 26 23:21:54 2023 +0300
+
+    Free buffered file contents when closing man page
+
+commit 4208a0947f08562a727a855ddcd4605d201c99bd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 28 17:44:13 2023 -0700
+
+    xman 1.1.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9bbfa9f3509480f87bf31ae2c37f822b6d9518b3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 9 13:46:09 2022 -0800
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b7825b2ab93b5ac41d295d0fa0c2b081e624cb7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 18 12:44:40 2023 -0800
+
+    Install WM_DELETE_WINDOW handler for search window
+    
+    Allows using window manager close icon to close search window without
+    killing the entire program.
+    
+    Fixes: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=720266
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d6c728b4d7c86fb486cd9f18c749f3b61ff8fb63
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 4 15:10:45 2023 -0800
+
+    Add -version option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 73aecaafd3e4b80c57a2549e399b7f0b769bcf5e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 18:58:48 2022 -0800
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    While xman can't handle files more than 2gb in size, due to libXt
+    API limits, it can handle files with large inodes. (Not that any
+    man page should ever be more than even 1mb in size in reality.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 204e4512a11cac5e906a0c8f422ef7e51fa559af
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c3b7728096667404ea19c5fbddec5cff29e8bbe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 2 12:48:45 2022 -0700
+
+    man page: remove out-of-date reference to X(7)
+    
+    The X(7) man page doesn't list any license information as this had claimed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5ac741677cc861796b4c4fae0d03eb009a67c722
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 12:26:47 2021 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 60d96fb66acea82724104591a77b3cfcca838c9b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 12:26:44 2021 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit aed0ca367a69a7defd29bbbe357914b1b45ca4b9
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Jul 14 13:10:32 2019 -0700
