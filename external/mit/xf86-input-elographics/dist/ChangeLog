@@ -1,3 +1,96 @@
+commit 0cbfcfdff7feba11093f8c0d3b092eb052e544fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 27 18:32:38 2024 -0800
+
+    xf86-input-elographics 1.4.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7c8048e4ce50fc022823f4ab03683b7d4ad378df
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Thu Feb 22 10:32:07 2024 +0100
+
+    .gitignore: add some missing entries
+    
+    two generated files were missing:
+    
+        compile
+        man/elographics.4
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+
+commit 26822a39eeedcac94b36f5878a18a4aca5a2872b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:44:21 2024 -0800
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 66300521464033e5a11d9b11f5983b83268a53e7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 17 11:45:27 2024 -0800
+
+    Move X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1e97032b43ef5bf98fb568e284c35b806f253601
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 17 11:38:11 2024 -0800
+
+    configure: clear up obsolete macro warnings from autoconf
+    
+    configure.ac:48: warning: The macro 'AC_HELP_STRING' is obsolete.
+    configure.ac:48: You should run autoupdate.
+    ./lib/autoconf/general.m4:204: AC_HELP_STRING is expanded from...
+    configure.ac:48: the top level
+    configure.ac:67: warning: The macro 'AC_HEADER_STDC' is obsolete.
+    configure.ac:67: You should run autoupdate.
+    ./lib/autoconf/headers.m4:663: AC_HEADER_STDC is expanded from...
+    configure.ac:67: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5b069df52d18d0bb08c7bdcd9e116d6ddf0b35aa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:33:07 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:44: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:44: You should run autoupdate.
+    aclocal.m4:3515: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:44: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 64ee239f8263502a40f10f74cfcd6de60fd87ce6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 1 11:17:31 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5c9b63f1becf7d5b26613051d8852856fc939df4
+Author: Tamura Dai <Tamura.Dai@dh.MitsubishiElectric.co.jp>
+Date:   Wed May 24 16:20:56 2023 +0900
+
+    Use memmove() for copying overlaped areas.
+    
+    Signed-off-by: Tamura Dai <Tamura.Dai@dh.MitsubishiElectric.co.jp>
+
 commit 72def66b047bdd95b29ac0522b77baf7de0be07e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Dec 8 15:55:39 2022 -0800
@@ -210,7 +303,7 @@ Date:   Mon Aug 20 11:11:41 2012 +1000
     Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
 
 commit 3f5e8141145b861f978bc1d250f4400915e1fba4
-Author: Søren Holm  <sh@mikrofyn.com>
+Author: Søren Holm <sh@mikrofyn.com>
 Date:   Thu Aug 16 13:09:10 2012 +0200
 
     Added correct scaling of axes.
@@ -844,7 +937,7 @@ Date:   Thu Aug 18 09:03:38 2005 +0000
     Update autogen.sh to one that does objdir != srcdir.
 
 commit 5410d26cb4a8df005a1ee9cb7f4ec05d5371b0e0
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Aug 10 14:07:22 2005 +0000
 
     Don\'t lose existing CFLAGS in all the input drivers and some of the video

@@ -23,9 +23,9 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-elographics],
-        [1.4.3],
+        [1.4.4],
         [https://gitlab.freedesktop.org/xorg/driver/xf86-input-elographics/-/issues],
-        xf86-input-elographics)
+        [xf86-input-elographics])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_AUX_DIR(.)
 AC_CONFIG_HEADERS([config.h])
@@ -39,16 +39,14 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
-# Checks for programs.
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
-AC_PROG_CC
+# Initialize libtool
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
 AC_ARG_WITH(xorg-module-dir,
-            AC_HELP_STRING([--with-xorg-module-dir=DIR],
-                           [Default xorg module directory [[default=$libdir/xorg/modules]]]),
+            AS_HELP_STRING([--with-xorg-module-dir=DIR],
+              [Default xorg module directory [[default=$libdir/xorg/modules]]]),
             [moduledir="$withval"],
             [moduledir="$libdir/xorg/modules"])
 inputdir=${moduledir}/input
@@ -61,12 +59,15 @@ XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10.0] xproto $REQUIRED_MODULES)
 sdkdir=$(pkg-config --variable=sdkdir xorg-server)
-XORG_CFLAGS="$CWARNFLAGS $XORG_CFLAGS"
 
 # Checks for libraries.
 
 # Checks for header files.
-AC_HEADER_STDC
+
+# Checks for library functions
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
 
 DRIVER_NAME=elographics
 AC_SUBST([DRIVER_NAME])
