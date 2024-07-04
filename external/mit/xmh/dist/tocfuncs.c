@@ -963,7 +963,7 @@ static void TwiddleSequence(Scrn scrn, TwiddleOperation op)
     argv[0] = "mark";
     argv[1] = TocMakeFolderName(toc);
     argv[2] = "-sequence";
-    argv[3] = selectedseq->name;
+    argv[3] = __UNCONST(selectedseq->name);
     switch (op) {
       case ADD:
 	argv[4] = "-add";
