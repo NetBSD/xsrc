@@ -1,0 +1,8 @@
+# XXX hack for netbsd pkgconfig processing.
+
+# Identity of this package.
+PACKAGE_NAME='libpciaccess'
+PACKAGE_TARNAME='libpciaccess'
+PACKAGE_VERSION='0.18.1'
+PACKAGE_STRING='libpciaccess 0.18.1'
+PACKAGE_URL=''
