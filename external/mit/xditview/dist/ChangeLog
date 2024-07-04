@@ -1,3 +1,162 @@
+commit 4075ab7c7bec2b26fd23fe9a025f185b83ed8ba3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 3 14:03:52 2024 -0800
+
+    xditview 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5c1b311c8672f0dcbb7824a205f6b9c0a07584be
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 9 18:30:48 2023 -0800
+
+    Add -help and -version options
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1293789eca465dfec7c5874b65cafb70c4f90125
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 9 18:26:14 2023 -0800
+
+    Print which argument was unknown before giving usage message
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 543f75af78446d6456fab89233ae1ab8eaf4c223
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 17 15:45:51 2023 -0800
+
+    Add .git-blame-ignore-revs to hide whitespace commits from git blame
+    
+    To use this in your local repo clone, you will need to either run
+    `git blame --ignore-revs-file .git-blame-ignore-revs`
+    or set it permanently with
+    `git config blame.ignoreRevsFile .git-blame-ignore-revs`
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 591e62a56ba2ab90ad159ae89406b9790bd96a11
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 15 11:12:10 2023 -0800
+
+    GetLine: resolve -Wmaybe-uninitialized warning
+    
+    lex.c: In function ‘GetLine’:
+    lex.c:38:8: warning: ‘c’ may be used uninitialized [-Wmaybe-uninitialized]
+       38 |     if (c == '\n')
+          |        ^
+    lex.c:29:16: note: ‘c’ was declared here
+       29 |     int i = 0, c;
+          |                ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 95c3038f4a7e03c28ec6b209ec111cb2e3444646
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 15 11:00:08 2023 -0800
+
+    Add CWARNFLAGS to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f536e9d910088d689ff010259f413d0abea915e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 18:06:58 2023 -0800
+
+    Mark more char * as const
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 982c9d064fc05740374ae6fed02045527adb7d6a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 17:58:03 2023 -0800
+
+    configure: Add --with-xft and --without-xft flags to control USE_XFT
+    
+    USE_XFT ifdefs have been in since the import from XFree86, but
+    never enabled by the autoconf build, oops!
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit df1c5c7755441c32e26eec37d1b3d0fa0dbeceb3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 16:44:17 2023 -0800
+
+    Initialize more variables in their declarations
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 282857a907624ce29566b50b60687273dcd56f42
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 16:14:57 2023 -0800
+
+    More variable scope reductions as recommended by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c623f10e9acc9033b2df436126799424eb5830b8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 16:19:00 2023 -0800
+
+    Add bounds check to getstr()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0ca4db4996abd5e6161567575fe318663d8dd117
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 12:42:33 2023 -0800
+
+    Replace strcpy() calls with strncpy() or memcpy()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 42e0ce4adc008430e32c54a5374b7744c2c2cfe4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 12:28:30 2023 -0800
+
+    lex.c: increment length counters when adding to buffer
+    
+    Simple test case:
+    % python -c 'print("A"*60000)' > buf
+    % xditview buf
+    
+    Reported-by: constantine110@protonmail.com
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f1762e6d2964705887b924b824568aeff352dd46
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 12:08:53 2023 -0800
+
+    Convert to X.Org standard code style
+    
+    Mostly via util/modular/x-indent-all.sh, plus some manual cleanup
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 81e3522d79efdc629cd1815b451dac39208673b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 14 11:09:20 2023 -0800
+
+    Dvi.c: remove unused XtStrlen macro
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 13d3bad03a200e953d082b5aa5719b48045a108e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 19:13:32 2022 -0800
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 13f184b00d1ed1480b5704f8b5eb314039d61fd2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 12:46:32 2022 -0800
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 065c42427d137053dd4490b8aaee9bf3ecd81539
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Oct 15 10:08:17 2022 -0700
@@ -731,7 +890,7 @@ Date:   Sat Jul 16 21:59:14 2005 +0000
         against tempfile race conditions in many places)
 
 commit a72338b2f0fef721d6388d292ece4b21f19e9def
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 19:53:30 2005 +0000
 
     Build system for xditview

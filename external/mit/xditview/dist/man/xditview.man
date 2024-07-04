@@ -49,6 +49,12 @@ the server to save the window contents so that when it is scrolled around the
 viewport, the window is painted from contents saved in backing store.
 \fIbacking-store-type\fP can be one of \fBAlways\fP, \fPWhenMapped\fP or
 \fPNotUseful\fP.
+.TP 8
+.B \-help
+This option indicates that \fIxditview\fP should print a usage message and exit.
+.TP 8
+.B \-version
+This option indicates that \fIxditview\fP should print version info and exit.
 .PP
 The following standard X Toolkit command line arguments are commonly used with
 .I xditview:

@@ -47,7 +47,7 @@ typedef struct _xFontName {
 
 typedef char	XFontNameString[256];
 
-extern Bool	XParseFontName(XFontNameString, XFontName *, unsigned int *);
+extern Bool	XParseFontName(const char *, XFontName *, unsigned int *);
 extern Bool	XFormatFontName(XFontName *, unsigned int, XFontNameString);
 
 #endif

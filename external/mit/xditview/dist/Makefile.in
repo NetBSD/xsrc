@@ -133,7 +133,7 @@ am_xditview_OBJECTS = draw.$(OBJEXT) Dvi.$(OBJEXT) DviChar.$(OBJEXT) \
 	xditview.$(OBJEXT) XFontName.$(OBJEXT)
 xditview_OBJECTS = $(am_xditview_OBJECTS)
 am__DEPENDENCIES_1 =
-xditview_DEPENDENCIES = $(am__DEPENDENCIES_1)
+xditview_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -354,6 +354,8 @@ STRIP = @STRIP@
 VERSION = @VERSION@
 XDITVIEW_CFLAGS = @XDITVIEW_CFLAGS@
 XDITVIEW_LIBS = @XDITVIEW_LIBS@
+XFT_CFLAGS = @XFT_CFLAGS@
+XFT_LIBS = @XFT_LIBS@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -409,8 +411,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = man
 AM_CPPFLAGS = -D_CONST_X_STRING
-AM_CFLAGS = $(XDITVIEW_CFLAGS)
-xditview_LDADD = $(XDITVIEW_LIBS) -lm
+AM_CFLAGS = $(XDITVIEW_CFLAGS) $(XFT_CFLAGS) $(CWARNFLAGS)
+xditview_LDADD = $(XDITVIEW_LIBS) $(XFT_LIBS) -lm
 xditview_SOURCES = \
         draw.c \
         Dvi.c \

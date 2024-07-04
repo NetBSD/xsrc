@@ -32,11 +32,11 @@
 #define XtCPadding		"Padding"
 #define XtCSelection		"Selection"
 
-typedef struct _MenuRec *MenuWidget;  /* completely defined in MenuPrivate.h */
-typedef struct _MenuClassRec *MenuWidgetClass;    /* completely defined in MenuPrivate.h */
+typedef struct _MenuRec *MenuWidget;    /* completely defined in MenuPrivate.h */
+typedef struct _MenuClassRec *MenuWidgetClass;  /* completely defined in MenuPrivate.h */
 
 extern WidgetClass menuWidgetClass;
 
-extern Widget	XawMenuCreate ();
+extern Widget XawMenuCreate();
 #endif /* _XtMenu_h */
 /* DON'T ADD STUFF AFTER THIS #endif */
