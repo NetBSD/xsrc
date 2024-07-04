@@ -1,4 +1,4 @@
-/* $XTermId: xutf8.c,v 1.17 2019/09/16 20:29:20 tom Exp $ */
+/* $XTermId: xutf8.c,v 1.18 2020/06/23 22:45:51 tom Exp $ */
 
 /*
  * Copyright 2002-2019,2020 by Thomas E. Dickey

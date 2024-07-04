@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: query-color.pl,v 1.25 2020/12/13 15:48:11 tom Exp $
+# $XTermId: query-color.pl,v 1.26 2020/12/13 18:17:40 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

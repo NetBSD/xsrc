@@ -1,4 +1,4 @@
-/* $XTermId: xstrings.h,v 1.29 2015/08/27 23:31:23 Martin.Tournoij Exp $ */
+/* $XTermId: xstrings.h,v 1.30 2016/12/22 23:48:38 tom Exp $ */
 
 /*
  * Copyright 2000-2015,2016 by Thomas E. Dickey

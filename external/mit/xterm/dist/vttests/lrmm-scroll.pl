@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-lrmm-scroll,v 1.14 2022/10/10 17:07:48 tom Exp $
+# $XTermId: lrmm-scroll.pl,v 1.14 2022/10/10 17:07:48 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2019,2022 by Thomas E. Dickey
 #

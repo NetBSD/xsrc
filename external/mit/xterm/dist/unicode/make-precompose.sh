@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: make-precompose.sh,v 1.5 2005/04/03 16:58:30 tom Exp $
+# $XTermId: make-precompose.sh,v 1.6 2007/02/05 01:06:36 Thomas.Wolff Exp $
 # $XFree86: xc/programs/xterm/unicode/make-precompose.sh,v 1.4 2005/03/29 04:00:32 tsi Exp $
 
 cat precompose.c.head | sed -e's/@/$/g'

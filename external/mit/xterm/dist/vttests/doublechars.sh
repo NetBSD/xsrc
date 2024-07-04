@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: doublechars.sh,v 1.25 2022/04/25 08:19:38 tom Exp $
+# $XTermId: doublechars.sh,v 1.26 2022/04/25 23:25:41 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

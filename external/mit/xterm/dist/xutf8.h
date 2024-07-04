@@ -1,5 +1,5 @@
 /*
- * $XTermId: xc/programs/xterm/xutf8.h,v 1.1 2001/06/18 19:09:28 dickey Exp $
+ * $XTermId: xutf8.h,v 1.4 2010/10/10 14:10:12 Jeremy.Huddleston Exp $
  */
 /*
 Copyright (c) 2001 by Juliusz Chroboczek

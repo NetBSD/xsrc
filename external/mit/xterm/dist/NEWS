@@ -1,13 +1,19 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #382 - 2023/05/30
+                            Patch #392 - 2024/05/22
 
-     * amend change to CursorBack in patch #380, allowing the result to be
-       on  the  hidden  right-half  of  double-cell  characters (report by
-       Rajeev V. Pillai).
-     * amend  xtermDrawString, fixing regression with --disable-wide-chars
-       configuration from patch #380.
-     * corrected   pathname   for  run-tic.sh,  for  full  install  in  an
-       out-of-tree build (report by Rajeev V. Pillai).
+     * improve  input decoding for non-Latin1 character sets by preserving
+       the sense of GL/GR.
+     * add  resource  preferLatin1  to simplify UPSS configuration (Gentoo
+       #932154).
+     * build-fix  for --disable-boxchars; patch #390 reuses that feature's
+       code  to draw the part of the DEC Technical character set which has
+       no Unicode equivalent.
+     * modify #include of pty.h to work with musl (report by Khem Raj).
+     * improve    definitions    used    in    clock_gettime    logic   in
+       graphics_sixel.c, as well as updating comments (patch by Ben Wong).
+     * amend allowC1Printable changes from patch #391, restoring a special
+       case  which  caused C1 characters to be ignored (report/testcase by
+       Dmytro Bagrii).
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: title.sh,v 1.25 2022/04/24 23:36:20 tom Exp $
+# $XTermId: title.sh,v 1.26 2022/04/25 08:19:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

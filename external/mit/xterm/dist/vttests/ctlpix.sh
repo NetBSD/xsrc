@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: ctlpix.sh,v 1.5 2022/04/25 08:01:30 tom Exp $
+# $XTermId: ctlpix.sh,v 1.6 2022/04/25 08:03:21 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

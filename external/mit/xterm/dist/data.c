@@ -1,4 +1,4 @@
-/* $XTermId: data.c,v 1.99 2021/05/27 19:48:14 tom Exp $ */
+/* $XTermId: data.c,v 1.100 2021/05/27 22:29:26 tom Exp $ */
 
 /*
  * Copyright 2002-2017,2021 by Thomas E. Dickey

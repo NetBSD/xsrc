@@ -1,4 +1,4 @@
-/* $XTermId: vms.c,v 1.14 2020/01/18 18:32:45 tom Exp $ */
+/* $XTermId: vms.c,v 1.15 2022/10/06 19:35:35 tom Exp $ */
 
 /*  vms.c
  *

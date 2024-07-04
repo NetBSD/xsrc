@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: vxt-altchars,v 1.4 2020/10/29 00:32:02 tom Exp $
+# $XTermId: altchars.sh,v 1.4 2020/10/29 00:32:02 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

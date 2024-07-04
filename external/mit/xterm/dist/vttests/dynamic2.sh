@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: dynamic2.sh,v 1.10 2022/04/24 23:36:20 tom Exp $
+# $XTermId: dynamic2.sh,v 1.11 2022/04/25 08:19:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

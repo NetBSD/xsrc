@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $XTermId: convmap.pl,v 1.14 2016/05/22 19:57:09 tom Exp $
+# $XTermId: convmap.pl,v 1.15 2018/09/09 17:22:24 tom Exp $
 #
 # Generate keysym2ucs.c file
 #

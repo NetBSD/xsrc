@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: dynamic.pl,v 1.4 2017/01/22 18:34:06 tom Exp $
+# $XTermId: dynamic.pl,v 1.5 2018/08/10 15:01:35 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

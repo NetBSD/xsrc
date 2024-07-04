@@ -1,4 +1,4 @@
-/* $XTermId: doublechr.c,v 1.107 2022/05/05 22:23:43 tom Exp $ */
+/* $XTermId: doublechr.c,v 1.108 2022/10/23 14:46:14 tom Exp $ */
 
 /*
  * Copyright 1997-2021,2022 by Thomas E. Dickey

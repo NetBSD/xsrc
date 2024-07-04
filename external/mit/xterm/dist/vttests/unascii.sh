@@ -1,5 +1,5 @@
 #!/bin/bash
-# $XTermId: unascii.sh,v 1.3 2022/04/25 00:39:00 tom Exp $
+# $XTermId: unascii.sh,v 1.4 2022/04/25 07:58:15 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

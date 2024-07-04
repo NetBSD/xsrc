@@ -1,4 +1,4 @@
-/* $XTermId: input.c,v 1.369 2022/11/24 12:48:54 tom Exp $ */
+/* $XTermId: input.c,v 1.370 2023/05/09 08:14:04 tom Exp $ */
 
 /*
  * Copyright 1999-2022,2023 by Thomas E. Dickey

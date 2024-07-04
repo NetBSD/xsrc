@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: query-status.pl,v 1.9 2021/11/11 21:11:33 tom Exp $
+# $XTermId: query-status.pl,v 1.10 2021/11/11 21:31:48 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

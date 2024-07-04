@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: query-fonts.pl,v 1.7 2018/08/10 15:01:35 tom Exp $
+# $XTermId: query-fonts.pl,v 1.8 2019/05/19 08:57:31 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,4 +1,4 @@
-/* $XTermId: xstrings.c,v 1.79 2022/11/16 23:54:32 tom Exp $ */
+/* $XTermId: xstrings.c,v 1.80 2023/05/09 08:13:56 tom Exp $ */
 
 /*
  * Copyright 2000-2022,2023 by Thomas E. Dickey

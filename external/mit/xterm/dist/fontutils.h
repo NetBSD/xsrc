@@ -1,7 +1,7 @@
-/* $XTermId: fontutils.h,v 1.141 2022/10/22 00:44:03 tom Exp $ */
+/* $XTermId: fontutils.h,v 1.145 2024/05/17 19:55:52 tom Exp $ */
 
 /*
- * Copyright 1998-2021,2022 by Thomas E. Dickey
+ * Copyright 1998-2022,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -123,11 +123,11 @@ extern char *xtermSpecialFont (XTermDraw * /* params */);
 	  ? ((font)->known_missing[(Char)(ch)] > 1) \
 	  : ((FontIsIncomplete(font) && xtermMissingChar(ch, font)) \
 	   || ForceBoxChars(screen, ch)))
-
-extern void xtermDrawBoxChar (XTermDraw * /* params */, unsigned /* ch */, GC /* gc */, int /* x */, int /* y */, int /* cols */, Bool /* xftords */);
 #else
 #define IsXtermMissingChar(screen, ch, font) False
 #endif
+
+extern void xtermDrawBoxChar (XTermDraw * /* params */, unsigned /* ch */, GC /* gc */, int /* x */, int /* y */, int /* cols */, Bool /* xftords */);
 
 #if OPT_BOX_CHARS || OPT_REPORT_FONTS
 extern Bool xtermMissingChar (unsigned /* ch */, XTermFonts */* font */);
@@ -142,7 +142,10 @@ extern Bool xtermLoadWideFonts (XtermWidget /* w */, Bool /* nullOk */);
 extern void xtermSaveVTFonts (XtermWidget /* xw */);
 #endif
 
+/* checks for internal charset codes */
+#define xtermIsDecTechnical(ch)	((ch) >= XTERM_PUA && (ch) <= XTERM_PUA + 6)
 #define xtermIsDecGraphic(ch)	((ch) > 0 && (ch) < 32)
+#define xtermIsInternalCs(ch)	(xtermIsDecGraphic(ch) || xtermIsDecTechnical(ch))
 
 #if OPT_RENDERFONT
 extern Boolean maybeXftCache(XtermWidget /* xw */, XftFont * /* font */);

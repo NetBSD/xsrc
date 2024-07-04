@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-erase,v 1.4 2007/07/18 21:15:08 tom Exp $
+# $XTermId: erase.pl,v 1.4 2007/07/18 21:15:08 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2007 by Thomas E. Dickey
 #

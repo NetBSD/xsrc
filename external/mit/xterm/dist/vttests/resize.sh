@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: resize.sh,v 1.24 2022/04/24 23:36:20 tom Exp $
+# $XTermId: resize.sh,v 1.25 2022/04/25 08:19:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

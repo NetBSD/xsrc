@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: halves.pl,v 1.10 2022/10/10 23:59:05 tom Exp $
+# $XTermId: halves.pl,v 1.11 2022/11/17 00:45:00 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

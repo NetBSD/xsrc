@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: modify-keys.pl,v 1.91 2020/11/15 16:43:35 tom Exp $
+# $XTermId: modify-keys.pl,v 1.92 2022/11/24 12:43:26 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,4 +1,4 @@
-/* $XTermId$
+/* $XTermId: keysym2ucs.c,v 1.19 2018/09/09 17:35:05 tom Exp $
  * This module converts keysym values into the corresponding ISO 10646
  * (UCS, Unicode) values.
  *

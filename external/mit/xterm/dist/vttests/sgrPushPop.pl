@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: sgrPushPop.pl,v 1.9 2018/08/01 01:19:23 tom Exp $
+# $XTermId: sgrPushPop.pl,v 1.10 2018/08/02 21:09:46 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm, contributed by Dan Thompson
 #

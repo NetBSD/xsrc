@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: version.sh,v 1.5 2022/04/25 22:45:22 tom Exp $
+# $XTermId: version.sh,v 1.6 2022/04/25 22:47:07 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

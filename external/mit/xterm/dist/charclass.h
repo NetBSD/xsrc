@@ -1,4 +1,4 @@
-/* $XTermId: charclass.h,v 1.8 2020/01/18 18:29:41 tom Exp $ */
+/* $XTermId: charclass.h,v 1.9 2023/01/04 09:28:05 tom Exp $ */
 
 /* $XFree86: xc/programs/xterm/charclass.h,v 1.3 2006/02/13 01:14:58 dickey Exp $ */
 

@@ -1,4 +1,4 @@
-/* $XTermId: graphics_regis.c,v 1.138 2023/03/07 09:27:50 tom Exp $ */
+/* $XTermId: graphics_regis.c,v 1.149 2023/10/08 23:11:35 tom Exp $ */
 
 /*
  * Copyright 2014-2022,2023 by Ross Combs
@@ -68,7 +68,7 @@
 #undef DEBUG_COMPUTED_FONT_METRICS
 #undef DEBUG_FONT_NAME
 #undef DEBUG_FONT_SIZE_SEARCH
-#undef DEBUG_XFT_GLYPH
+#undef DEBUG_XFT_GLYPH_COPY
 #undef DEBUG_GLYPH_RETRIEVAL
 #undef DEBUG_XFT_GLYPH_LOADING
 #undef DEBUG_LOAD
@@ -588,9 +588,6 @@ draw_shaded_polygon(RegisGraphicsContext *context)
     for (p = 0U; p < context->fill_point_count; p++) {
 	int new_x = context->fill_points[p].x;
 	int new_y = context->fill_points[p].y;
-#if 0
-	printf("got %d,%d (%d,%d) inside=%d\n", new_x, new_y, old_x, old_y, inside);
-#endif
 
 	/*
 	 * FIXME: This is using pixels to represent lines which loses
@@ -650,9 +647,6 @@ draw_filled_polygon(RegisGraphicsContext *context)
     for (p = 0U; p < context->fill_point_count; p++) {
 	int new_x = context->fill_points[p].x;
 	int new_y = context->fill_points[p].y;
-#if 0
-	printf("got %d,%d (%d,%d) inside=%d\n", new_x, new_y, old_x, old_y, inside);
-#endif
 
 	/*
 	 * FIXME: This is using pixels to represent lines which loses
@@ -1834,32 +1828,54 @@ get_xft_glyph_dimensions(XtermWidget xw, XftFont *font, unsigned *w,
 
 #define FONT_SIZE_CACHE_SIZE 32U
 
+typedef struct {
+    XftFont *font_data;
+    char fontname[REGIS_FONTNAME_LEN];
+    unsigned maxw, maxh, max_pixels;
+    unsigned targeth;
+    unsigned w, h;
+    unsigned xmin;
+    unsigned ymin;
+} FONT_CACHE;
+
+static FONT_CACHE font_cache[FONT_SIZE_CACHE_SIZE];
+
+static void
+close_xft_font(XtermWidget xw, XftFont *font)
+{
+    if (font != NULL) {
+	Display *display = XtDisplay(xw);
+	unsigned ii;
+	for (ii = 0; ii < FONT_SIZE_CACHE_SIZE; ++ii) {
+	    if (font == font_cache[ii].font_data) {
+		font_cache[ii].font_data = NULL;
+		break;
+	    }
+	}
+	XftFontClose(display, font);
+    }
+}
+
 /* Find the font pixel size which returns the font which is closest to the given
  * maxw and maxh without overstepping either dimension.
  */
 static XftFont *
 find_best_xft_font_size(XtermWidget xw,
 			char const *fontname,
-			unsigned maxw, unsigned maxh, unsigned max_pixels,
-			unsigned *w, unsigned *h,
-			unsigned *xmin, unsigned *ymin)
+			unsigned maxw,
+			unsigned maxh,
+			unsigned max_pixels,
+			unsigned *w,
+			unsigned *h,
+			unsigned *xmin,
+			unsigned *ymin)
 {
     Display *display = XtDisplay(xw);
     Screen *screen = XtScreen(xw);
     XftFont *font;
     unsigned targeth;
-    unsigned ii, cacheindex;
-    /* FIXME: change cache to just cache the final result and put it in a
-     * wrapper function
-     */
-    static struct {
-	char fontname[REGIS_FONTNAME_LEN];
-	unsigned maxw, maxh, max_pixels;
-	unsigned targeth;
-	unsigned w, h;
-	unsigned xmin;
-	unsigned ymin;
-    } cache[FONT_SIZE_CACHE_SIZE];
+    unsigned ii;
+    FONT_CACHE *cp = NULL;
 
     assert(display);
     assert(screen);
@@ -1870,24 +1886,36 @@ find_best_xft_font_size(XtermWidget xw,
     assert(ymin);
 
 #ifdef DEBUG_FONT_SIZE_SEARCH
-    TRACE(("determining best size of font '%s' for %ux%u glyph with max_pixels=%u\n",
+    TRACE(("determining best size of font \"%s\" for %ux%u glyph with max_pixels=%u\n",
 	   fontname, maxw, maxh, max_pixels));
 #endif
-    cacheindex = FONT_SIZE_CACHE_SIZE;
     for (ii = 0U; ii < FONT_SIZE_CACHE_SIZE; ii++) {
-	if (cache[ii].maxw == maxw && cache[ii].maxh == maxh &&
-	    cache[ii].max_pixels == max_pixels &&
-	    strcmp(cache[ii].fontname, fontname) == 0) {
-	    cacheindex = ii;
+	if (font_cache[ii].maxw == maxw &&
+	    font_cache[ii].maxh == maxh &&
+	    font_cache[ii].max_pixels == max_pixels &&
+	    strcmp(font_cache[ii].fontname, fontname) == 0) {
+	    cp = &font_cache[ii];
+	    if (cp->font_data) {
+		*w = cp->w;
+		*h = cp->h;
+		*xmin = cp->xmin;
+		*ymin = cp->ymin;
+		return cp->font_data;
+	    }
 	    break;
 	}
     }
 
-    if (cacheindex < FONT_SIZE_CACHE_SIZE) {
-	targeth = cache[cacheindex].targeth;
+    if (cp != NULL) {
+	targeth = cp->targeth;
     } else {
-	targeth = maxh * 10U + 5U;
+	targeth = maxh * 8U + 5U;
     }
+
+#define MAX_TARGETH 720U	/* above this level, fontconfig chokes */
+    if (targeth > MAX_TARGETH)
+	targeth = MAX_TARGETH;
+
     for (;;) {
 	if (targeth <= 5U) {
 	    TRACE(("Giving up finding suitable Xft font size for \"%s\" at %ux%u.\n",
@@ -1925,17 +1953,8 @@ find_best_xft_font_size(XtermWidget xw,
 		TRACE(("trying targeth=%g\n", targeth / 10.0));
 #endif
 		XftPatternBuild(pat,
-#if 0
-		/* arbitrary value */
-				XFT_SIZE, XftTypeDouble, 12.0,
-#endif
 				XFT_PIXEL_SIZE, XftTypeDouble, (double)
 				targeth / 10.0,
-#if 0
-				XFT_CHAR_WIDTH, XftTypeInteger, (int) maxw,
-				XFT_CHAR_HEIGHT, XftTypeInteger, (int)
-				(targeth / 10U),
-#endif
 				XFT_SPACING, XftTypeInteger, XFT_MONO,
 				XFT_SLANT, XftTypeInteger, 0,
 				XFT_ANTIALIAS, XftTypeBool, False,
@@ -1950,15 +1969,7 @@ find_best_xft_font_size(XtermWidget xw,
 	    }
 	}
 	if (!font) {
-#ifdef DEBUG_FONT_SIZE_SEARCH
-	    {
-		char buffer[1024];
-
-		if (XftNameUnparse(font->pattern, buffer, (int) sizeof(buffer)))
-		    printf("font name unparsed: \"%s\"\n", buffer);
-	    }
-#endif
-	    TRACE(("unable to open a monospaced Xft font matching '%s' with pixelsize %g\n",
+	    TRACE(("unable to open a monospaced Xft font matching \"%s\" with pixelsize %g\n",
 		   fontname, targeth / 10.0));
 	    return NULL;
 	}
@@ -1974,12 +1985,12 @@ find_best_xft_font_size(XtermWidget xw,
 	}
 #endif
 
-	if (cacheindex < FONT_SIZE_CACHE_SIZE &&
-	    targeth == cache[cacheindex].targeth) {
-	    *w = cache[cacheindex].w;
-	    *h = cache[cacheindex].h;
-	    *xmin = cache[cacheindex].xmin;
-	    *ymin = cache[cacheindex].ymin;
+	if (cp != NULL &&
+	    targeth == cp->targeth) {
+	    *w = cp->w;
+	    *h = cp->h;
+	    *xmin = cp->xmin;
+	    *ymin = cp->ymin;
 	} else {
 	    get_xft_glyph_dimensions(xw, font, w, h, xmin, ymin);
 
@@ -1998,28 +2009,26 @@ find_best_xft_font_size(XtermWidget xw,
 #endif
 
 	if (*h > maxh) {
+	    float ratio = (float) (*h) / (float) maxh;
 	    XftFontClose(display, font);
 #ifdef DEBUG_FONT_SIZE_SEARCH
 	    TRACE(("got %ux%u glyph; too tall; reducing target size\n", *w, *h));
 #endif
-	    if (*h > 2U * maxh) {
-		targeth /= (*h / maxh);
-	    } else if (targeth > 10U && *h > maxh + 1U) {
-		targeth -= 10U;
+	    if (targeth >= 10U && ratio > 1.1) {
+		targeth = (unsigned) ((float) targeth / ratio);
 	    } else {
 		targeth--;
 	    }
 	    continue;
 	}
 	if (*w > maxw) {
+	    float ratio = (float) (*w) / (float) maxw;
 	    XftFontClose(display, font);
 #ifdef DEBUG_FONT_SIZE_SEARCH
 	    TRACE(("got %ux%u glyph; too wide; reducing target size\n", *w, *h));
 #endif
-	    if (*w > 2U * maxw) {
-		targeth /= (*w / maxw);
-	    } else if (targeth > 10U && *w > maxw + 1U) {
-		targeth -= 10U;
+	    if (targeth >= 10U && ratio > 1.1) {
+		targeth = (unsigned) ((float) targeth / ratio);
 	    } else {
 		targeth--;
 	    }
@@ -2060,34 +2069,32 @@ find_best_xft_font_size(XtermWidget xw,
 	}
 #endif
 
-	if (cacheindex == FONT_SIZE_CACHE_SIZE) {
+	if (cp == NULL) {
 	    for (ii = 0U; ii < FONT_SIZE_CACHE_SIZE; ii++) {
-		if (cache[ii].maxw == 0U || cache[ii].maxh == 0U ||
-		    cache[ii].max_pixels == 0U) {
-		    CopyFontname(cache[ii].fontname, fontname);
-		    cache[ii].maxw = maxw;
-		    cache[ii].maxh = maxh;
-		    cache[ii].max_pixels = max_pixels;
-		    cache[ii].targeth = targeth;
-		    cache[ii].w = *w;
-		    cache[ii].h = *h;
-		    cache[ii].xmin = *xmin;
-		    cache[ii].ymin = *ymin;
+		if (font_cache[ii].maxw == 0U ||
+		    font_cache[ii].maxh == 0U ||
+		    font_cache[ii].max_pixels == 0U) {
+		    cp = &font_cache[ii];
 		    break;
 		}
 	    }
-	    if (ii == FONT_SIZE_CACHE_SIZE) {
+	    if (cp == NULL) {
 		ii = targeth % FONT_SIZE_CACHE_SIZE;
-		CopyFontname(cache[ii].fontname, fontname);
-		cache[ii].maxw = maxw;
-		cache[ii].maxh = maxh;
-		cache[ii].max_pixels = max_pixels;
-		cache[ii].targeth = targeth;
-		cache[ii].w = *w;
-		cache[ii].h = *h;
-		cache[ii].xmin = *xmin;
-		cache[ii].ymin = *ymin;
+		cp = &font_cache[ii];
+		close_xft_font(xw, cp->font_data);
 	    }
+	    CopyFontname(cp->fontname, fontname);
+	    cp->maxw = maxw;
+	    cp->maxh = maxh;
+	    cp->max_pixels = max_pixels;
+	    cp->targeth = targeth;
+	    cp->w = *w;
+	    cp->h = *h;
+	    cp->xmin = *xmin;
+	    cp->ymin = *ymin;
+	}
+	if (cp != NULL) {
+	    cp->font_data = font;
 	}
 	return font;
     }
@@ -2110,7 +2117,6 @@ get_xft_bitmap_of_character(RegisGraphicsContext const *context,
      */
 #ifdef XRENDERFONT
     XtermWidget xw = context->destination_graphic->xw;
-    Display *display = XtDisplay(xw);
     XftFont *font;
     unsigned xmin = 0U, ymin = 0U;
 
@@ -2125,17 +2131,16 @@ get_xft_bitmap_of_character(RegisGraphicsContext const *context,
 
     if (*w == 0U || *h == 0U) {
 	TRACE(("empty glyph found for '%c'\n", ch));
-	XftFontClose(display, font);
+	close_xft_font(xw, font);
 	return 1;
     }
 
     if (!copy_bitmap_from_xft_font(xw, font, CharOf(ch), pixels, *w, *h,
 				   xmin, ymin)) {
 	TRACE(("Unable to create bitmap for '%c'\n", ch));
-	XftFontClose(display, font);
+	close_xft_font(xw, font);
 	return 0;
     }
-    XftFontClose(display, font);
 # ifdef DEBUG_XFT_GLYPH_LOADING
     TRACE(("loaded glyph '%c' at max size %dx%d\n", ch, maxw, maxh));
 # endif
@@ -2373,7 +2378,7 @@ get_bitmap_of_character(RegisGraphicsContext const *context, int ch,
 
     if (fontname) {
 #ifdef DEBUG_GLYPH_RETRIEVAL
-	TRACE(("using xft font %s\n", fontname));
+	TRACE(("using xft font \"%s\"\n", fontname));
 #endif
 	if (get_xft_bitmap_of_character(context, fontname, ch,
 					maxw, maxh, pixels,
@@ -3460,33 +3465,56 @@ regis_num_to_int(RegisDataFragment const *input, int *out)
     return 1;
 }
 
+#define spec_H xBIT(0)
+#define spec_L xBIT(1)
+#define spec_S xBIT(2)
+
+#define spec_HLS (spec_H | spec_L | spec_S)
+
+#define spec_R xBIT(3)
+#define spec_G xBIT(4)
+#define spec_B xBIT(5)
+
+#define spec_RGB (spec_R | spec_G | spec_B)
+
 static int
 load_regis_colorspec(RegisGraphicsContext const *context,
 		     RegisDataFragment const *input,
-		     short *r_out, short *g_out, short *b_out)
+		     ColorRegister *colors)
 {
     RegisDataFragment colorspec;
-    short r = -1, g = -1, b = -1;
+    short r = colors->r;
+    short g = colors->g;
+    short b = colors->b;
     short l = -1;
     int simple;
+    unsigned len;
+    unsigned spec = 0;
 
     assert(context);
     assert(input);
-    assert(r_out);
-    assert(g_out);
-    assert(b_out);
+    assert(colors);
 
     copy_fragment(&colorspec, input);
     TRACE(("colorspec option: \"%s\"\n", fragment_to_tempstr(&colorspec)));
 
     skip_regis_whitespace(&colorspec);
     simple = 0;
-    if (fragment_remaining(&colorspec) == 1U) {
+    if ((len = fragment_remaining(&colorspec)) == 1U) {
 	simple = 1;
-    } else if (fragment_remaining(&colorspec) > 1U) {
-	char after = get_fragment(&colorspec, 1U);
-	if (IsSpace(after))
-	    simple = 1;
+    } else if (len > 1U) {
+	unsigned n;
+	for (n = 1; n < len; ++n) {
+	    char after = get_fragment(&colorspec, n);
+	    /* if no parameters, we might see a right-parenthesis, but on error
+	     * we can anything */
+	    if (strchr("[(,)]", after) != NULL) {
+		simple = 1;
+		break;
+	    } else if (!IsSpace(after)) {
+		break;
+	    }
+	}
     }
     if (simple) {
 	char ch = pop_fragment(&colorspec);
@@ -3615,7 +3643,7 @@ load_regis_colorspec(RegisGraphicsContext const *context,
 		return 0;
 	    }
 	    if (!regis_num_to_int(&num, &val)) {
-		TRACE(("DATA_ERROR: component value %s is not a number\n",
+		TRACE(("DATA_ERROR: component value \"%s\" is not a number\n",
 		       fragment_to_tempstr(&num)));
 		return 0;
 	    }
@@ -3628,38 +3656,56 @@ load_regis_colorspec(RegisGraphicsContext const *context,
 	    switch (comp) {
 	    case 'H':
 		h = (short) val;
+		spec |= spec_H;
 		break;
 	    case 'L':
 		l = (short) val;
+		spec |= spec_L;
 		break;
 	    case 'S':
 		s = (short) val;
+		spec |= spec_S;
 		break;
 	    case 'R':
 		r = (short) val;
+		spec |= spec_R;
 		break;
 	    case 'G':
 		g = (short) val;
+		spec |= spec_G;
 		break;
 	    case 'B':
 		b = (short) val;
+		spec |= spec_B;
 		break;
 	    }
 	}
 
-	if (h >= 0 && l >= 0 && s >= 0 && r < 0 && g < 0 && b < 0) {
+	if ((spec & spec_HLS) && (spec & spec_RGB)) {
+	    TRACE(("DATA_ERROR: conflicting colorspec format\n"));
+	    return 0;
+	} else if (spec == spec_HLS) {
 	    TRACE(("found HLS colorspec to be converted: %hd,%hd,%hd\n",
 		   h, l, s));
 	    hls2rgb(h, l, s, &r, &g, &b);
 	    TRACE(("converted to RGB: %hd,%hd,%hd\n", r, g, b));
-	} else if (h < 0 && l < 0 && s < 0 && r >= 0 && g >= 0 && b >= 0) {
+	} else if (spec == spec_RGB) {
 	    TRACE(("found RGB colorspec: %hd,%hd,%hd\n", r, g, b));
 	    l = (short) ((MIN3(r, g, b) + MAX3(r, g, b)) / 2);
 	    TRACE(("calculated L: %d\n", l));
-	} else if (h < 0 && l >= 0 && s < 0 && r < 0 && g < 0 && b < 0) {
-	    TRACE(("found L colorspec to be converted: %hd,%hd,%hd\n",
+	} else if ((spec & spec_HLS)) {
+	    short old_h, old_l, old_s;
+	    TRACE(("using partial HLS %hd,%hd,%hd\n", h, l, s));
+	    rgb2hls(r, g, b, &old_h, &old_l, &old_s);
+	    if (h < 0)
+		h = old_h;
+	    if (l < 0)
+		l = old_l;
+	    if (s < 0)
+		s = old_s;
+	    TRACE(("resulting HLS colorspec to convert: %hd,%hd,%hd\n",
 		   h, l, s));
-	    hls2rgb(0, l, 0, &r, &g, &b);
+	    hls2rgb(h, l, s, &r, &g, &b);
 	    TRACE(("converted to RGB: %hd,%hd,%hd\n", r, g, b));
 	} else {
 	    TRACE(("DATA_ERROR: unrecognized colorspec format\n"));
@@ -3675,9 +3721,9 @@ load_regis_colorspec(RegisGraphicsContext const *context,
 	TRACE(("converted to grayscale: %hd,%hd,%hd\n", r, g, b));
     }
 
-    *r_out = r;
-    *g_out = g;
-    *b_out = b;
+    colors->r = r;
+    colors->g = g;
+    colors->b = b;
 
     skip_regis_whitespace(&colorspec);
     if (!fragment_consumed(&colorspec)) {
@@ -3710,7 +3756,7 @@ load_regis_regnum_or_colorspec(RegisGraphicsContext const *context,
 
     if (extract_regis_num(&colorspec, &num)) {
 	if (!regis_num_to_int(&num, &val)) {
-	    TRACE(("DATA_ERROR: colorspec value %s is not a valid register\n",
+	    TRACE(("DATA_ERROR: colorspec value \"%s\" is not a valid register\n",
 		   fragment_to_tempstr(&num)));
 	    return 0;
 	}
@@ -3744,15 +3790,16 @@ load_regis_regnum_or_colorspec(RegisGraphicsContext const *context,
     }
 
     if (extract_regis_parenthesized_data(&colorspec, &coloroption)) {
-	short r, g, b;
+	ColorRegister find_reg =
+	{-1, -1, -1};
 
-	if (!load_regis_colorspec(context, &coloroption, &r, &g, &b)) {
+	if (!load_regis_colorspec(context, &coloroption, &find_reg)) {
 	    TRACE(("unable to parse colorspec\n"));
 	    return 0;
 	}
 
 	*out = find_color_register(context->destination_graphic->color_registers,
-				   r, g, b);
+				   find_reg.r, find_reg.g, find_reg.b);
 	TRACE(("colorspec maps to closest register %u\n", *out));
 
 	return 1;
@@ -3886,11 +3933,11 @@ load_regis_mult_extent(char const *extent, int *w, int *h)
     int px, py;
 
     if (!load_regis_raw_extent(extent, &relx, &rely, &px, &py, 1)) {
-	TRACE(("invalid coordinates in extent %s\n", extent));
+	TRACE(("invalid coordinates in extent \"%s\"\n", extent));
 	return 0;
     }
     if (relx | rely) {
-	TRACE(("invalid relative value in multiplier extent %s\n", extent));
+	TRACE(("invalid relative value in multiplier extent \"%s\"\n", extent));
 	return 0;
     }
 
@@ -3908,7 +3955,7 @@ load_regis_pixel_extent(char const *extent, int origx, int origy,
     int px, py;
 
     if (!load_regis_raw_extent(extent, &relx, &rely, &px, &py, 1)) {
-	TRACE(("invalid coordinates in extent %s\n", extent));
+	TRACE(("invalid coordinates in extent \"%s\"\n", extent));
 	return 0;
     }
 
@@ -3933,7 +3980,7 @@ load_regis_coord_extent(RegisGraphicsContext const *context, char const *extent,
     int ux, uy;
 
     if (!load_regis_raw_extent(extent, &relx, &rely, &ux, &uy, COORD_SCALE)) {
-	TRACE(("invalid coordinates in extent %s\n", extent));
+	TRACE(("invalid coordinates in extent \"%s\"\n", extent));
 	return 0;
     }
 
@@ -6087,7 +6134,7 @@ parse_regis_option(RegisParseState *state, RegisGraphicsContext *context)
 		    if (extract_regis_num(&optionarg, &regnum)) {
 			int register_num;
 			int color_only;
-			short r, g, b;
+			ColorRegister my_reg;
 
 			if (!regis_num_to_int(&regnum, &register_num)) {
 			    TRACE(("DATA_ERROR: unable to parse int in screen color register mapping option: \"%s\"\n",
@@ -6120,10 +6167,17 @@ parse_regis_option(RegisParseState *state, RegisGraphicsContext *context)
 			    break;
 			}
 
-			TRACE(("mapping register %d to color spec: \"%s\"\n",
-			       register_num, fragment_to_tempstr(&colorspec)));
-			if (!load_regis_colorspec(context, &colorspec,
-						  &r, &g, &b)) {
+			fetch_color_register(context->destination_graphic,
+					     (RegisterNum) register_num,
+					     &my_reg);
+
+			TRACE(("mapping register %d %d,%d,%d to color spec: \"%s\"\n",
+			       register_num,
+			       my_reg.r,
+			       my_reg.g,
+			       my_reg.b,
+			       fragment_to_tempstr(&colorspec)));
+			if (!load_regis_colorspec(context, &colorspec, &my_reg)) {
 			    TRACE(("DATA_ERROR: unable to use colorspec for mapping of register %d\n",
 				   register_num));
 			    return 1;
@@ -6133,13 +6187,13 @@ parse_regis_option(RegisParseState *state, RegisGraphicsContext *context)
 			    (context->graphics_termid == 240 ||
 			     context->graphics_termid == 330)) {
 			    TRACE(("NOT setting color register %d to %hd,%hd,%hd\n",
-				   register_num, r, g, b));
+				   register_num, my_reg.r, my_reg.g, my_reg.b));
 			} else {
 			    TRACE(("setting color register %d to %hd,%hd,%hd\n",
-				   register_num, r, g, b));
+				   register_num, my_reg.r, my_reg.g, my_reg.b));
 			    update_color_register(context->destination_graphic,
 						  (RegisterNum) register_num,
-						  r, g, b);
+						  my_reg.r, my_reg.g, my_reg.b);
 			}
 			continue;
 		    } {
@@ -7460,12 +7514,6 @@ parse_regis_toplevel(RegisParseState *state, RegisGraphicsContext *context)
 {
     RegisDataFragment parenthesized;
     char ch;
-#if 0
-    TRACE(("reference line: shading=%d ref=%u loc=%d\n",
-	   context->temporary_write_controls.shading_enabled,
-	   context->temporary_write_controls.shading_reference_dim,
-	   context->temporary_write_controls.shading_reference));
-#endif
 
 #ifdef DEBUG_PARSING
     TRACE(("parsing top level: char %u of %u (next char '%c')\n",
@@ -7606,6 +7654,13 @@ parse_regis_toplevel(RegisParseState *state, RegisGraphicsContext *context)
 	TRACE(("DATA_ERROR: skipping unexpected character at top level: \"%c\"\n", ch));
     }
     return 0;
+}
+
+void
+reset_regis(void)
+{
+    persistent_context.width = 0;
+    persistent_context.height = 0;
 }
 
 void
