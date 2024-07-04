@@ -21,9 +21,6 @@
 /* Define to 1 if you have the `is_system_labeled' function. */
 #undef HAVE_IS_SYSTEM_LABELED
 
-/* launchd support available */
-#undef HAVE_LAUNCHD
-
 /* Define to 1 if you have the `ws2_32' library (-lws2_32). */
 #undef HAVE_LIBWS2_32
 
@@ -203,6 +200,12 @@
 
 /* XCB buffer queue size */
 #undef XCB_QUEUE_BUFFER_SIZE
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Defined if needed to expose struct msghdr.msg_control */
 #undef _XOPEN_SOURCE
