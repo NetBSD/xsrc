@@ -24,7 +24,6 @@
 
  ********************************************************/
 
-#include "utils.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <X11/keysym.h>
