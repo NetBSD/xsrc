@@ -245,10 +245,11 @@ FreeGlyphPicture(GlyphPtr glyph)
     }
 }
 
-static void
+void
 FreeGlyph(GlyphPtr glyph, int format)
 {
     CheckDuplicates(&globalGlyphs[format], "FreeGlyph");
+    BUG_RETURN(glyph->refcnt == 0);
     if (--glyph->refcnt == 0) {
         GlyphRefPtr gr;
         int i;
@@ -290,8 +291,6 @@ AddGlyph(GlyphSetPtr glyphSet, GlyphPtr glyph, Glyph id)
     gr = FindGlyphRef(&globalGlyphs[glyphSet->fdepth], signature,
                       TRUE, glyph->sha1);
     if (gr->glyph && gr->glyph != DeletedGlyph && gr->glyph != glyph) {
-        FreeGlyphPicture(glyph);
-        dixFreeObjectWithPrivates(glyph, PRIVATE_GLYPH);
         glyph = gr->glyph;
     }
     else if (gr->glyph != glyph) {
@@ -354,7 +353,7 @@ AllocateGlyph(xGlyphInfo * gi, int fdepth)
     glyph = (GlyphPtr) malloc(size);
     if (!glyph)
         return 0;
-    glyph->refcnt = 0;
+    glyph->refcnt = 1;
     glyph->size = size + sizeof(xGlyphInfo);
     glyph->info = *gi;
     dixInitPrivates(glyph, (char *) glyph + head_size, PRIVATE_GLYPH);
