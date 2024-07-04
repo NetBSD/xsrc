@@ -22,9 +22,9 @@ To do so, use the procedure documented by the package, typically 'autoreconf'.])
 
 dnl fontutil.m4.  Generated from fontutil.m4.in by configure.
 dnl
-dnl This file comes from X.Org's font-util 1.3.1
+dnl This file comes from X.Org's font-util 1.4.1
 dnl
-dnl Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2009, 2023, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -87,7 +87,7 @@ dnl from the copyright holders.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_FONT_MACROS_VERSION],[
-m4_define([vers_have], [1.3.1])
+m4_define([vers_have], [1.4.1])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -270,6 +270,10 @@ AC_DEFUN([XORG_FONT_BDF_UTILS],[
 # Offer a --with-compression flag to control what compression method is
 # used for pcf font files.   Offers all the methods currently supported
 # by libXfont, including no compression.
+#
+# If COMPRESS_FLAGS is not set, and the compression method has flags needed
+# for reproducible builds, such as gzip -n to not record timestamp, will
+# set COMPRESS_FLAGS to those options.
 
 AC_DEFUN([XORG_FONT_CHECK_COMPRESSION],[
 	AC_MSG_CHECKING([font compression method])
@@ -283,7 +287,8 @@ AC_DEFUN([XORG_FONT_CHECK_COMPRESSION],[
 	AC_MSG_RESULT([${compression}])
 	case ${compression} in
 	 *compress)	COMPRESS_SUFFIX=".Z" ;;
-	 *gzip)		COMPRESS_SUFFIX=".gz" ;;
+	 *gzip)		COMPRESS_SUFFIX=".gz" ;
+			COMPRESS_FLAGS="${COMPRESS_FLAGS--n}" ;;
 	 *bzip2)	COMPRESS_SUFFIX=".bz2" ;;
 	 no|none)	COMPRESS_SUFFIX="" ; COMPRESS="cat" ;;
 	 *) AC_MSG_ERROR([${compression} is not a supported compression method]) ;;
@@ -291,6 +296,9 @@ AC_DEFUN([XORG_FONT_CHECK_COMPRESSION],[
 	if test x"$COMPRESS_SUFFIX" != "x" ; then
 	   XORG_FONT_REQUIRED_PROG(COMPRESS, ${compression})
 	fi
+	AC_MSG_CHECKING([options to font compression command])
+	AC_MSG_RESULT([${COMPRESS_FLAGS:-none}])
+	AC_SUBST([COMPRESS_FLAGS])
 	AC_SUBST([COMPRESS_SUFFIX])
 ])
 
@@ -2694,7 +2702,7 @@ AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
 dnl
-dnl Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -2817,7 +2825,7 @@ AC_DEFUN([XTRANS_CONNECTION_FLAGS],[
 	XTRANS_TCP_FLAGS
  fi
  [case $host_os in
-	solaris*|sco*|sysv4*)	localdef="yes" ;;
+	solaris*)		localdef="yes" ;;
 	*)			localdef="no"  ;;
  esac]
  AC_ARG_ENABLE(local-transport,

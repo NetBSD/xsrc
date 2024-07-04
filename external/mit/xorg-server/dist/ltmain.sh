@@ -2668,10 +2668,17 @@ libtool_validate_options ()
     # preserve --debug
     test : = "$debug_cmd" || func_append preserve_args " --debug"
 
-    # Keeping compiler generated duplicates in $postdeps and $predeps is not
-    # harmful, and is necessary in a majority of systems that use it to satisfy
-    # symbol dependencies.
-    opt_duplicate_compiler_generated_deps=:
+    case $host in
+      # Solaris2 added to fix http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16452
+      # see also: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59788
+      *cygwin* | *mingw* | *pw32* | *cegcc* | *solaris2* | *os2*)
+        # don't eliminate duplications in $postdeps and $predeps
+        opt_duplicate_compiler_generated_deps=:
+        ;;
+      *)
+        opt_duplicate_compiler_generated_deps=$opt_preserve_dup_deps
+        ;;
+    esac
 
     $opt_help || {
       # Sanity checks first:
@@ -7348,6 +7355,16 @@ func_mode_link ()
 	    *" $arg "*) ;;
 	    * ) func_append new_inherited_linker_flags " $arg" ;;
 	esac
+
+	# As we are forced to pass -nostdlib to g++ during linking, the option
+	# -pthread{,s} is not in effect;  add the -lpthread to $deplist
+	# explicitly to link correctly.
+	if test "$tagname" = CXX -a x"$with_gcc" = xyes; then
+	  case "$arg" in
+	    -pthread*) func_append deplibs " -lpthread" ;;
+	  esac
+	fi
+
 	continue
 	;;
 
@@ -7551,10 +7568,11 @@ func_mode_link ()
       # -fsanitize=*         Clang/GCC memory and address sanitizer
       # -fuse-ld=*           Linker select flags for GCC
       # -Wa,*                Pass flags directly to the assembler
+      # -Werror, -Werror=*   Report (specified) warnings as errors
       -64|-mips[0-9]|-r[0-9][0-9]*|-xarch=*|-xtarget=*|+DA*|+DD*|-q*|-m*| \
       -t[45]*|-txscale*|-p|-pg|--coverage|-fprofile-*|-F*|@*|-tp=*|--sysroot=*| \
       -O*|-g*|-flto*|-fwhopr*|-fuse-linker-plugin|-fstack-protector*|-stdlib=*| \
-      -specs=*|-fsanitize=*|-fuse-ld=*|-Wa,*)
+      -specs=*|-fsanitize=*|-fuse-ld=*|-Wa,*|-Werror|-Werror=*)
         func_quote_arg pretty "$arg"
 	arg=$func_quote_arg_result
         func_append compile_command " $arg"
