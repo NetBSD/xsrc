@@ -315,7 +315,7 @@ static void nv10GetConfig (NVPtr pNv)
     }
 #endif
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     {
     /* [AGP]: I don't know if this is correct */
     struct pci_device *dev = pci_device_find_by_slot(0, 0, 0, 1);
@@ -374,7 +374,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     int FlatPanel = -1;   /* really means the CRTC is slaved */
     Bool Television = FALSE;
     void *tmp;
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     int err;
 #endif
 
@@ -406,7 +406,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     pVga->MMIOBase   = (CARD8 *)pNv;
     pVga->MMIOOffset = 0;
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     err = pci_device_map_range(pNv->PciInfo, pNv->IOAddress, 0x01000000,
 			       PCI_DEV_MAP_FLAG_WRITABLE, &tmp);
     if (err != 0) {

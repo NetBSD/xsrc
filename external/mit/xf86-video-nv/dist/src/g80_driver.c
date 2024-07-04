@@ -151,7 +151,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
 {
     G80Ptr pNv;
     EntityInfoPtr pEnt;
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     struct pci_device *pPci;
     int err;
     void *p;
@@ -184,14 +184,14 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
     if(pEnt->location.type != BUS_PCI) goto fail;
     pPci = xf86GetPciInfoForEntity(pEnt->index);
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     /* Need this to unmap */
     pNv->pPci = pPci;
 #endif
     primary = xf86IsPrimaryPci(pPci);
 
     /* The ROM size sometimes isn't read correctly, so fix it up here. */
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     if(pPci->rom_size == 0)
         /* The BIOS is 64k */
         pPci->rom_size = 64 * 1024;
@@ -304,7 +304,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->memPhysBase = MEMBASE(pPci, 1);
     pScrn->fbOffset = 0;
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     err = pci_device_map_range(pPci, pPci->regions[0].base_addr, G80_REG_SIZE,
                                PCI_DEV_MAP_FLAG_WRITABLE, &p);
     if(err) {
@@ -336,7 +336,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Determine the size of BAR1 */
     /* Some configs have BAR1 < total RAM < 256 MB */
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     BAR1sizeKB = pPci->regions[1].size / 1024;
 #else
     BAR1sizeKB = 1UL << (pPci->size[1] - 10);
@@ -366,7 +366,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "  Mapped memory: %.1f MB\n",
                pScrn->videoRam / 1024.0);
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     err = pci_device_map_range(pPci, pPci->regions[1].base_addr,
                                pScrn->videoRam * 1024,
                                PCI_DEV_MAP_FLAG_WRITABLE |
@@ -521,7 +521,7 @@ G80CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
     if(xf86ServerIsExiting()) {
         if(pNv->int10) xf86FreeInt10(pNv->int10);
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
         pci_device_unmap_range(pNv->pPci, pNv->mem, pNv->videoRam * 1024);
         pci_device_unmap_range(pNv->pPci, (void*)pNv->reg, G80_REG_SIZE);
 #else

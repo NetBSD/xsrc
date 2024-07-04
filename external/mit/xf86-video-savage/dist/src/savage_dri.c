@@ -1370,9 +1370,6 @@ SAVAGEDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 #endif
 }
 
-/* Definition in savage_accel.c */
-int SavageGetCopyROP(int rop);
-
 static void 
 SAVAGEDRISetupForScreenToScreenCopy(
     ScrnInfoPtr pScrn,

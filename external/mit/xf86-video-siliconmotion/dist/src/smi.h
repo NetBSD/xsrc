@@ -400,7 +400,7 @@ Bool SMI_MapMem(ScrnInfoPtr pScrn);
 void SMI_UnmapMem(ScrnInfoPtr pScrn);
 void SMI_AdjustFrame(ADJUST_FRAME_ARGS_DECL);
 Bool SMI_SwitchMode(SWITCH_MODE_ARGS_DECL);
-void SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
+void SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 		     LOCO *colors, VisualPtr pVisual);
 xf86MonPtr SMI_ddc1(ScrnInfoPtr pScrn);
 void SMI_PrintRegs(ScrnInfoPtr pScrn);

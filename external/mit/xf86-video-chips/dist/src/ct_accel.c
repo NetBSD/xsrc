@@ -29,7 +29,7 @@
  * When monochrome tiles/stipples are cached on the HiQV chipsets the
  * pitch of the monochrome data is the displayWidth. The HiQV manuals
  * state that the source pitch is ignored with monochrome data, and so
- * "offically" there the XAA cached monochrome data can't be used. But
+ * "officially" there the XAA cached monochrome data can't be used. But
  * it appears that by not setting the monochrome source alignment in
  * BR03, the monochrome source pitch is forced to the displayWidth!!
  *

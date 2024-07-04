@@ -43,7 +43,7 @@ Bool    G80GetScrnInfoRec(PciChipsets *chips, int chip);
 /* Mandatory functions */
 static const OptionInfoRec * NVAvailableOptions(int chipid, int busid);
 static void    NVIdentify(int flags);
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 static Bool    NVPciProbe(DriverPtr, int entity, struct pci_device*, intptr_t data);
 #else
 static Bool    NVProbe(DriverPtr drv, int flags);
@@ -76,7 +76,7 @@ static void	NVRestore(ScrnInfoPtr pScrn);
 static Bool	NVModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static Bool	NVSetModeVBE(ScrnInfoPtr pScrn, DisplayModePtr pMode);
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 /* For now, just match any NVIDIA display device and sort through them in the
  * probe routine */
 
@@ -109,7 +109,7 @@ _X_EXPORT DriverRec NV = {
         NV_VERSION,
 	NV_DRIVER_NAME,
         NVIdentify,
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
         NULL,
 #else
         NVProbe,
@@ -118,7 +118,7 @@ _X_EXPORT DriverRec NV = {
         NULL,
         0,
         NULL,
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
         NVPciIdMatchList,
         NVPciProbe,
 #endif
@@ -712,7 +712,7 @@ nvSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
         setupDone = TRUE;
         xf86AddDriver(&NV, module,
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
             HaveDriverFuncs
 #else
             0
@@ -766,7 +766,7 @@ NVGetScrnInfoRec(PciChipsets *chips, int chip)
     pScrn->driverName       = NV_DRIVER_NAME;
     pScrn->name             = NV_NAME;
 
-#if !XSERVER_LIBPCIACCESS
+#ifndef XSERVER_LIBPCIACCESS
     pScrn->Probe            = NVProbe;
 #endif
     pScrn->PreInit          = NVPreInit;
@@ -785,14 +785,14 @@ NVGetScrnInfoRec(PciChipsets *chips, int chip)
 
 
 static CARD32 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 NVGetPCIXpressChip (struct pci_device *dev)
 #else
 NVGetPCIXpressChip (pciVideoPtr pVideo)
 #endif
 {
     volatile CARD32 *regs;
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     uint32_t pciid, pcicmd;
     void *tmp;
 
@@ -902,7 +902,7 @@ NVIsSupported(CARD32 id)
 }
 
 /* Mandatory */
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
 static Bool
 NVPciProbe(DriverPtr drv, int entity, struct pci_device *dev, intptr_t data)
 {
@@ -1305,7 +1305,7 @@ nvProbeDDC(ScrnInfoPtr pScrn, int index)
 
 Bool NVI2CInit(ScrnInfoPtr pScrn)
 {
-    char *mod = "i2c";
+    const char *mod = "i2c";
 
     if (xf86LoadSubModule(pScrn, mod)) {
 
@@ -1400,7 +1400,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
  
     /* Find the PCI info for this screen */
     pNv->PciInfo = xf86GetPciInfoForEntity(pNv->pEnt->index);
-#if !XSERVER_LIBPCIACCESS
+#ifndef XSERVER_LIBPCIACCESS
     pNv->PciTag = pciTag(pNv->PciInfo->bus, pNv->PciInfo->device,
 			  pNv->PciInfo->func);
 #endif
@@ -1553,7 +1553,11 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86FreeInt10(pNv->pInt);
 	return FALSE;
     }
+#ifdef __powerpc__ /* XXX probably MI */
+    vgaHWSetMmioFuncs(VGAHWPTR(pScrn), pNv->IOAddress, 0);
+#else
     vgaHWSetStdFuncs(VGAHWPTR(pScrn));
+#endif
     
     /* We use a programmable clock */
     pScrn->progClock = TRUE;
@@ -2120,7 +2124,7 @@ NVMapMem(ScrnInfoPtr pScrn)
 {
     NVPtr pNv = NVPTR(pScrn);
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     void *tmp;
 
     pci_device_map_range(pNv->PciInfo, pNv->FbAddress, pNv->FbMapSize,
@@ -2167,7 +2171,7 @@ NVUnmapMem(ScrnInfoPtr pScrn)
     
     pNv = NVPTR(pScrn);
 
-#if XSERVER_LIBPCIACCESS
+#ifdef XSERVER_LIBPCIACCESS
     pci_device_unmap_range(pNv->PciInfo, pNv->FbBase, pNv->FbMapSize);
 #else
     xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pNv->FbBase, pNv->FbMapSize);
@@ -2657,11 +2661,15 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
                case 32:	refreshArea = NVRefreshArea32;	break;
 	   }
            if(!pNv->RandRRotation) {
-#if 0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
                xf86DisableRandR();
 #endif
                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                           "Driver rotation enabled, RandR disabled\n");
+#else
+               xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                          "Driver rotation enabled\n");
+#endif
            }
 	}
         pNv->refreshArea = refreshArea;
