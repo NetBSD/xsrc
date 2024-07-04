@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-savage],
-        [2.4.0],
+        [2.4.1],
         [https://gitlab.freedesktop.org/xorg/driver/xf86-video-savage/-/issues],
         [xf86-video-savage])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -40,8 +40,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Initialize libtool
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
@@ -141,6 +140,11 @@ if test "x$XSERVER_LIBPCIACCESS" = xyes; then
     PKG_CHECK_MODULES([PCIACCESS], [pciaccess >= 0.10])
 fi
 AM_CONDITIONAL(XSERVER_LIBPCIACCESS, test "x$XSERVER_LIBPCIACCESS" = xyes)
+
+# Checks for library functions
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
 
 AC_SUBST([moduledir])
 

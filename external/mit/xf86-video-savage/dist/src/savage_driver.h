@@ -596,6 +596,7 @@ void SavageHideCursor(ScrnInfoPtr);
 
 Bool SavageInitAccel(ScreenPtr);
 void SavageInitialize2DEngine(ScrnInfoPtr);
+int SavageGetCopyROP(int rop);
 void SavageSetGBD(ScrnInfoPtr);
 void SavageAccelSync(ScrnInfoPtr);
 /*int SavageHelpSolidROP(ScrnInfoPtr pScrn, int *fg, int pm, int *rop);*/

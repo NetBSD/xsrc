@@ -69,9 +69,6 @@ SavageDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h, char *dst, 
 #define	GXset	0xFF
 #endif
 
-/* Definition moved to savage_accel.c */
-int SavageGetCopyROP(int rop);
-
 static int SavageGetSolidROP(int rop) {
 
     int ALUSolidROP[16] =
@@ -567,7 +564,7 @@ SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int 
 Bool
 SavageDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h, char *dst, int dst_pitch)
 {
-    unsigned char *src = (unsigned char *) exaGetPixmapFirstPixel(pSrc);
+    unsigned char *src = pSrc->devPrivate.ptr;
     int	src_pitch = exaGetPixmapPitch(pSrc);
     int	bpp = pSrc->drawable.bitsPerPixel;
 

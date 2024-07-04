@@ -1,3 +1,149 @@
+commit 129baf3518193da8cc7d2638d10b3a72649a5f45
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 13:03:24 2024 -0700
+
+    xf86-video-savage 2.4.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ac67fa9515ceb9a115feb56e28b8191af886a563
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:44:21 2024 -0800
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9a57874a00557663e21679c40c02469f3079d953
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 18:11:12 2024 -0800
+
+    Fix 5 -Wshadow warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2548cd71e8f466097c2d6fbebd5bb1ba4de6cd25
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:57:18 2024 -0800
+
+    Use C99 named initializers for XF86ModReqInfo in SavagePreInit()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e1e06b461d7e7b9896b2bd760ccd9fa4c5d72526
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:53:35 2024 -0800
+
+    Fix -Wdeclaration-after-statement warning in SavagePreInit()
+    
+    savage_driver.c: In function ‘SavagePreInit’:
+    savage_driver.c:2168:13: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+     2168 |             XF86ModReqInfo req;
+          |             ^~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ceb83fad85b836622793807f3dc0cfdb5bbb000
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:50:05 2024 -0800
+
+    Fix warning: no previous prototype for ‘SavageGetCopyROP’
+    
+    savage_accel.c:1541:5: warning: no previous prototype for ‘SavageGetCopyROP’ [-Wmissing-prototypes]
+     1541 | int SavageGetCopyROP(int rop) {
+          |     ^~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ab02c63fb4acb318ff4f996a84d3c623507433cb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:44:14 2024 -0800
+
+    Revert "exa: Use exaGetPixmapFirstPixel() instead of devPrivate.ptr"
+    
+    This reverts commit ac460e6836bdd2cd16c9d29743376c16fdc6924e.
+    
+    Fixes gcc error:
+    savage_exa.c: In function ‘SavageDownloadFromScreen’:
+    savage_exa.c:570:26: warning: cast from function call of type ‘CARD32’ {aka ‘unsigned int’} to non-matching type ‘unsigned char *’ [-Wbad-function-cast]
+       570 |     unsigned char *src = (unsigned char *) exaGetPixmapFirstPixel(pSrc);
+           |                          ^
+
+commit f7d999c336adc1f503a58c1859b6f0c48c03497b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:26:28 2024 -0800
+
+    Add X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 17e977672f9a45bf94df5ec6a847133ee054838e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 10 17:24:43 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:44: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:44: You should run autoupdate.
+    aclocal.m4:3515: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:44: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ce15de3a23a2088d29532ff2e1bd83a46ff47439
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 7 18:39:21 2023 -0800
+
+    Don't build unused code for HorizScaleFactor != 1
+    
+    Clears gcc 13.2 warning:
+    savage_driver.c: In function ‘SavageModeInit’:
+    savage_driver.c:3731:13: warning: this condition has identical branches
+     [-Wduplicated-branches]
+     3731 |     else if (pScrn->bitsPerPixel == 16)
+          |             ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit de5aa430a225ccc526cb55ca72c899bc2a199653
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 7 18:36:00 2023 -0800
+
+    Don't call xf86DisableRandR in ABI_VIDEODRV_VERSION 24 & later
+    
+    The API was removed by Xserver commit dd00e5466a0e4ea313d1860824da4123692827ed
+    in xorg-server-1.20.0 and later.
+    
+    Found by gcc -Werror=implicit:
+    
+    savage_driver.c: In function ‘SavagePreInit’:
+    savage_driver.c:1237:13: error: implicit declaration of function
+     ‘xf86DisableRandR’; did you mean ‘xf86DisableIO’?
+     [-Werror=implicit-function-declaration]
+     1237 |             xf86DisableRandR();
+          |             ^~~~~~~~~~~~~~~~
+          |             xf86DisableIO
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 64c525938c3a338625f36dab6a8543216a1cfb48
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 6 16:00:49 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit bd0a761059d8542323cf69138755eb8ccbfd8d9f
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Apr 9 13:00:26 2023 -0700
@@ -1035,7 +1181,7 @@ Date:   Thu May 28 15:16:22 2009 -0400
     Remove useless loader symbol lists.
 
 commit f2742755352d49a1ff4cbf9a1a5050a0a50e9e6b
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Sun Apr 12 16:07:06 2009 -0500
 
     Do not use XAAGetCopyROP outside of XAA-specific code
@@ -1047,7 +1193,7 @@ Date:   Sun Apr 12 16:07:06 2009 -0500
     It is disturbing that this has not been caught before.
 
 commit a5ad3e8f509ca07c429a43810cc3e2f80e70a1dc
-Author: Alex Villacís Lasso  <alex@karlalex.palosanto.com>
+Author: Alex Villacís Lasso <alex@karlalex.palosanto.com>
 Date:   Sat Apr 11 19:12:31 2009 -0500
 
     Implement use of Mastered Image Transfer through AGP for UploadToScreen EXA acceleration.
@@ -1055,7 +1201,7 @@ Date:   Sat Apr 11 19:12:31 2009 -0500
     Under some conditions (documented in this patch), the UploadToScreen implementation can make use of the AGP scratch buffer used for XVideo as a convenient source for Mastered Image Transfer. The previous implementation is still available as a fallback for when AGP acceleration is not possible. This requires the AGP scratch buffer to be persistent, so the XVideo code is also made aware of an existing DRM mapping for the scratch buffer.
 
 commit 0f4369c95b6ef948743c9b244709e454b8b8ef7f
-Author: Alex Villacís Lasso  <alex@karlalex.palosanto.com>
+Author: Alex Villacís Lasso <alex@karlalex.palosanto.com>
 Date:   Sat Mar 14 21:34:48 2009 -0500
 
     Fix crash by null pointer access when DRI is not available.
@@ -1114,7 +1260,7 @@ Date:   Thu Jan 22 01:22:53 2009 -0500
     https://bugs.launchpad.net/bugs/294899
 
 commit 8241b8edaf1f100b0d9f308fdf921b2ab548f3dc
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:22:42 2009 -0500
 
     EXA: UTS Optimization
@@ -1123,7 +1269,7 @@ Date:   Fri Jan 16 16:22:42 2009 -0500
     a loop for every dword
 
 commit 50bcd4bd6f32ed2fd9631b3607a203a187b2e4a2
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:20:23 2009 -0500
 
     Add AGPforXv Option
@@ -1132,7 +1278,7 @@ Date:   Fri Jan 16 16:20:23 2009 -0500
     for Xv image upload
 
 commit 91d5c09c891c944ae4188ecac607ebdb44ed81d7
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:18:25 2009 -0500
 
     YUV packed buffer and YV12 planar buffer (if required) are now separate allocations
@@ -1141,7 +1287,7 @@ Date:   Fri Jan 16 16:18:25 2009 -0500
     buffer, no longer restricted to space past packed buffer.
 
 commit 9bcbdcc0e2535ea1e7c5e234b07d0a4be173a78f
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Fri Jan 16 16:16:46 2009 -0500
 
     Document the existence of the IgnoreEDID option
@@ -1153,7 +1299,7 @@ Date:   Fri Jan 9 16:33:29 2009 -0800
     Remove xorgconfig & xorgcfg from See Also list in man page
 
 commit aea0496f662fa25b40c59e65a50daf58a8a0d6d0
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Thu Nov 6 16:10:30 2008 -0500
 
     Fix EXA Copy
@@ -1161,7 +1307,7 @@ Date:   Thu Nov 6 16:10:30 2008 -0500
     patch from Alex Villacís Lasso with minor updates from me
 
 commit e6b6506a0e77e1198d6a83eecddf342b746f31f4
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Thu Nov 6 14:11:49 2008 -0500
 
     Bug #18378: Use xfVillKeyHelperDrawable if available.
@@ -1212,7 +1358,7 @@ Date:   Sat May 10 14:58:14 2008 +1000
     savage: fix typos in error message
 
 commit 9cb124b3542c942622a54d0ce429661516b1e2f4
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Thu Apr 10 12:51:47 2008 -0400
 
     EXA upload to screen must honor pitch of the source data
@@ -1260,25 +1406,25 @@ Date:   Sun Feb 24 21:46:43 2008 -0500
     Bug #11139: Remove some dead code.
 
 commit 583051fce0d39fd2b8b5022016599e88d0af9041
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:49:05 2008 -0500
 
     [PATCH] Do not wait for vertical retrace anymore on old streams engine.
 
 commit 52029dede1924c25275a1c6f20f68e98ba210e22
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:47:42 2008 -0500
 
     [PATCH] Reset lastKnownPitch to 0 right after enabling streams.
 
 commit efd4ae6fda22a9283663cde23e6deead13130f6f
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:46:11 2008 -0500
 
     [PATCH] Prevent use of BCI for YV12 -> YUY2 conversion from scribbling past the end of the allocated video buffer.
 
 commit ee5b54a66495e51fb2a27b4ecb5875dae776b3c9
-Author: Alex Villacís Lasso  <a_villacis@palosanto.com>
+Author: Alex Villacís Lasso <a_villacis@palosanto.com>
 Date:   Wed Jan 30 21:45:19 2008 -0500
 
     [PATCH] BCI can only handle widths that are multiple of 16, so only use BCI for these (for now).
@@ -1286,7 +1432,7 @@ Date:   Wed Jan 30 21:45:19 2008 -0500
     Small optimizations (use memcpy instead of copy loop).
 
 commit 1169cb5bd96f7a4ac0deea6d085133d446ec0d6a
-Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:08:50 2008 -0500
 
     Implement driver option IgnoreEDID
@@ -1298,7 +1444,7 @@ Date:   Sat Jan 19 12:08:50 2008 -0500
     that the EDID monitor information can be explictly disabled.
 
 commit ce182d1883bba35491858b47291c8240441443d0
-Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:06:25 2008 -0500
 
     Fix ambiguous operator precedence
@@ -1309,7 +1455,7 @@ Date:   Sat Jan 19 12:06:25 2008 -0500
     patch than anything else.
 
 commit 88141fd21214c501cafed73b1bba084b8a2bb929
-Author: Alex Villací­s Lasso < <a_villacis@palosanto.com>
+Author: Alex Villací­s Lasso <a_villacis@palosanto.com>
 Date:   Sat Jan 19 12:02:56 2008 -0500
 
     Make sure MMIO region is mapped VIDMEM_MMIO, not VIDMEM_FRAMEBUFFER
@@ -1889,14 +2035,14 @@ Date:   Fri Jul 29 21:22:44 2005 +0000
     - Update modular Xorg version
 
 commit 593267735819585c87652a62d62ca231a9e8f01b
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 21:23:29 2005 +0000
 
     Add xf86driproto to dependencies for drivers with DRI support. Patch from
         Donnie Berkholz
 
 commit cacbac692c3725e372e9c25177f4b26d86a8c0d5
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 22:11:46 2005 +0000
 
     Build system for savage

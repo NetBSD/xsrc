@@ -1234,17 +1234,29 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 
 	    psav->shadowFB = TRUE;
 	    psav->rotate = 1;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
             xf86DisableRandR();
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
 		       "Rotating screen clockwise"
                        "- acceleration and RandR disabled\n");
+#else
+	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		       "Rotating screen clockwise"
+                       "- acceleration disabled\n");
+#endif
 	} else if(!xf86NameCmp(s, "CCW")) {
 	    psav->shadowFB = TRUE;
 	    psav->rotate = -1;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
             xf86DisableRandR();
             xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
                    "Rotating screen counter clockwise"
                    " - acceleration and RandR disabled\n");
+#else
+            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+                   "Rotating screen counter clockwise"
+                   " - acceleration disabled\n");
+#endif
 
 	} else {
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "\"%s\" is not a valid"
@@ -2149,15 +2161,14 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     if( !psav->NoAccel ) {
-        const char *modName = NULL;
-
 	if (psav->useEXA) {
-	    modName = "exa";
-	    XF86ModReqInfo req;
+	    const char *modName = "exa";
+
+	    XF86ModReqInfo req = {
+		.majorversion = 2,
+		.minorversion = 0
+	    };
 	    int errmaj, errmin;
-	    memset(&req, 0, sizeof(req));
-	    req.majorversion = 2;
-	    req.minorversion = 0;
 	    
 	    if( !LoadSubModule(pScrn->module, modName, 
 		NULL, NULL, NULL, &req, &errmaj, &errmin) ) {
@@ -2168,7 +2179,8 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    	return FALSE;
 	    }
 	} else {
-	    modName = "xaa";
+	    const char *modName = "xaa";
+
 	    if( !xf86LoadSubModule(pScrn, modName) ) {
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 			   "Falling back to shadowfb\n");
@@ -3664,8 +3676,6 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     SavageRegPtr new = &psav->ModeReg;
     vgaRegPtr vganew = &hwp->ModeReg;
     int vgaCRIndex, vgaCRReg, vgaIOBase;
-    int refresh;
-    unsigned int newmode=0, newrefresh=0;
 
     vgaIOBase = hwp->IOBase;
     vgaCRIndex = vgaIOBase + 4;
@@ -3694,7 +3704,8 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 #endif
 
     if (psav->IsSecondary) {
-	refresh = SavageGetRefresh(mode);
+	int refresh = SavageGetRefresh(mode);
+	unsigned int newmode=0, newrefresh=0;
 
         SavageMatchBiosMode(pScrn,mode->HDisplay,mode->VDisplay,refresh,
                             &newmode,&newrefresh);
@@ -3714,6 +3725,7 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
 
+#if 0
     if (pScrn->bitsPerPixel == 8)
 	psav->HorizScaleFactor = 1;
     else if (pScrn->bitsPerPixel == 16)
@@ -3732,6 +3744,9 @@ static Bool SavageModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    mode->CrtcHSkew *= 2;
 	    mode->CrtcHAdjusted = TRUE;
 	}
+#else
+    psav->HorizScaleFactor = 1;
+#endif
     
     if (!vgaHWInit(pScrn, mode))
 	return FALSE;
@@ -4297,15 +4312,15 @@ void SavageLoadPaletteSavage4(ScrnInfoPtr pScrn, int numColors, int *indices,
 		       LOCO *colors, VisualPtr pVisual)
 {
     SavagePtr psav = SAVPTR(pScrn);
-    int i, index;
+    int index;
     int updateKey = -1;
     
     VerticalRetraceWait();
 
-    for (i=0; i<numColors; i++) {
-          if (!(inStatus1() & 0x08))
+    for (int n = 0; n < numColors; n++) {
+	if (!(inStatus1() & 0x08))
   	    VerticalRetraceWait(); 
-	index = indices[i];
+	index = indices[n];
 	VGAOUT8(0x3c8, index);
 	VGAOUT8(0x3c9, colors[index].red);
 	VGAOUT8(0x3c9, colors[index].green);
