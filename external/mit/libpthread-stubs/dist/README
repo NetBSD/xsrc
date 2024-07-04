@@ -1,9 +1,105 @@
-This library provides weak aliases for pthread functions not provided in libc
-or otherwise available by default.  Libraries like libxcb rely on pthread
-stubs to use pthreads optionally, becoming thread-safe when linked to
-libpthread, while avoiding any performance hit when running single-threaded.
-libpthread-stubs supports this behavior even on platforms which do not supply
-all the necessary pthread stubs.  On platforms which already supply all the
-necessary pthread stubs, this package ships only the pkg-config file
-pthread-stubs.pc, to allow libraries to unconditionally express a dependency
-on pthread-stubs and still obtain correct behavior.
+Project description
+-------------------
+
+Currently the project provides only a pkg-config [.pc] file, pthread-stubs.pc.
+The latter contains the Cflags/Libs flags applicable to programs/libraries
+that use only lightweight pthread API. See the next sections for the reasoning
+and implementation details.
+
+Historically this project used to provide either:
+ - a .pc file, when the C runtime was providing the pthread symbols
+or
+ - a .pc file and a library which implements weak stubs for the pthread symbols,
+which are not available in the C runtime.
+
+Since then, the latter case was found to have a fundamental design issue.
+
+
+Design
+------
+
+On platforms where the lightweight pthread symbols are provided by the runtime,
+the .pc files provides empty Cflags/Libs flags.
+
+Currently the following platforms fit the above category:
+ - GNU/Linux - GCC/Clang/GLibC/Musl
+ - Solaris 10 and later
+ - Cygwin
+ - GNU/Hurd
+ - GNU/kFreeBSD
+
+For others, each of Cflags/Libs expands to full blown pthread.
+
+For example:
+ - FreeBSD and derivatives
+ - OpenBSD - uses a heavily patched copy of pthread-stubs to workaround this
+ - other BSD platforms ?
+
+Unchecked:
+ - MSYS/MINGW
+ - Darwin - GCC/Clang - should be the same as their Linux counter part
+
+
+Many platforms have their own eccentric way of managing pthread compilation and
+linkage. The ones realistically supported by pthread-stubs [and projects that
+depend on it] work with '-pthread'.
+
+GCC supports -pthread for:
+Aarch64, ARM, Darwin, IA-64, MIPS, PowerPC, SPARC, x86
+Cygwin and x86 Windows may need a trivial patch for older GCC versions.
+See SVN rev 214161 and 171833/171834 respectively.
+
+
+Clang:
+Aarch64, ARM, x86 and likely others.
+
+SunCC/Oracle compiler:
+Requires -mt -lpthread. As of Solaris 10 (oldest currently supported version)
+all the pthread API lives in libc. Thus we'll _never_ get here.
+
+
+With previous design, one could get mismatched calls to the pthreads API.
+Consider the following scenario:
+ - Program and/or its dependencies links only against libpthread-stubs,
+since it uses lightweight API. Say pthread_mutex_lock.
+ - At a later stage the program and/or its dependencies dlopens a library
+which effectively [either directly or via any of its own dependencies] pulls a
+full blown pthread. Let's call that libB.
+ - The libpthread-stubs weak symbols get overridden by the libB ones.
+ - pthread_mutex_unlock is executed (which now originates from libB) and BOOM.
+
+Amount and severity of issues depend on a number of factors. In either case
+things go horribly wrong sooner on later.
+
+
+The symbols
+-----------
+
+The following list of symbols is taken from the libc provided by GLibC.
+
+It is deemed sufficient and reasonably accurate of what the 'lightweight'
+pthread symbols are, since GLibC is one of the few (the only) implementations
+which has the distinct split.
+
+Most/all other C runtime implementations provide all the pthread API in a
+single library.
+
+Note that the following list is incomplete wrt libc-2.24.so and that further
+symbols may be added in the future to bring the two closer. Adding symbols
+which are not available in GLibC libc is NOT allowed.
+
+   pthread_condattr_destroy
+   pthread_condattr_init
+   pthread_cond_broadcast
+   pthread_cond_destroy
+   pthread_cond_init
+   pthread_cond_signal
+   pthread_cond_timedwait
+   pthread_cond_wait
+   pthread_equal
+   pthread_exit
+   pthread_mutex_destroy
+   pthread_mutex_init
+   pthread_mutex_lock
+   pthread_mutex_unlock
+   pthread_self

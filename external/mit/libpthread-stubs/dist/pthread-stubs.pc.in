@@ -1,8 +1,5 @@
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-libdir=@libdir@
-
 Name: pthread stubs
-Description: Stubs missing from libc for standard pthread functions
+Description: Meta package for pthread symbols - defaults to heavyweight ones if the C runtime does not provide lightweight ones.
 Version: @PACKAGE_VERSION@
+Cflags: @PKG_CONFIG_CFLAGS@
 Libs: @PKG_CONFIG_LIBS@
