@@ -78,7 +78,7 @@ DECLHIDDEN(bool) VBoxVideoAnyWidthAllowed(void)
 
 /**
  * Tell the host about how VRAM is divided up between each screen via an HGSMI
- * command.  It is acceptable to specifiy identical data for each screen if
+ * command.  It is acceptable to specify identical data for each screen if
  * they share a single framebuffer.
  *
  * @returns iprt status code, either VERR_NO_MEMORY or the status returned by
@@ -286,8 +286,8 @@ DECLHIDDEN(void) VBoxHGSMIProcessDisplayInfo(PHGSMIGUESTCOMMANDCONTEXT pCtx,
  *  for any screen, at which time it is reset to the bounding rectangle of all
  *  virtual screens.
  * @param  pCtx      The context containing the heap to use.
- * @param  cOriginX  Upper left X co-ordinate relative to the first screen.
- * @param  cOriginY  Upper left Y co-ordinate relative to the first screen.
+ * @param  cOriginX  Upper left X coordinate relative to the first screen.
+ * @param  cOriginY  Upper left Y coordinate relative to the first screen.
  * @param  cWidth    Rectangle width.
  * @param  cHeight   Rectangle height.
  * @returns  iprt status code.

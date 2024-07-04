@@ -123,7 +123,7 @@ DECLHIDDEN(uint16_t) VBoxHGSMIGetScreenFlags(PHGSMIGUESTCOMMANDCONTEXT pCtx);
 
 struct VBVAINFOVIEW;
 /**
- * Callback funtion called from @a VBoxHGSMISendViewInfo to initialise
+ * Callback function called from @a VBoxHGSMISendViewInfo to initialise
  * the @a VBVAINFOVIEW structure for each screen.
  *
  * @returns  iprt status code

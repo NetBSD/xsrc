@@ -33,7 +33,7 @@ RT_C_DECLS_BEGIN
 /** @name Base HGSMI Buffer APIs
  * @{ */
 
-/** Acknowlege an IRQ. */
+/** Acknowledge an IRQ. */
 DECLINLINE(void) VBoxHGSMIClearIrq(PHGSMIHOSTCOMMANDCONTEXT pCtx)
 {
     VBVO_PORT_WRITE_U32(pCtx->port, HGSMIOFFSET_VOID);

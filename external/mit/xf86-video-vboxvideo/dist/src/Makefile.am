@@ -27,7 +27,7 @@
 # _ladir passes a dummy rpath to libtool so the thing will actually link
 # TODO: -nostdlib/-Bstatic/-lgcc platform magic, not installing the .a, etc.
 
-AM_CFLAGS = $(XORG_CFLAGS) $(PCIACCESS_CFLAGS) \
+AM_CFLAGS = $(BASE_CFLAGS) $(XORG_CFLAGS) $(PCIACCESS_CFLAGS) \
         -DXORG_7X \
         -DIN_RING3 \
         -DPCIACCESS \
@@ -41,7 +41,6 @@ vboxvideo_drv_ladir = @moduledir@/drivers
 vboxvideo_drv_la_SOURCES = \
          edid.c \
          getmode.c \
-         helpers.c \
          HGSMIBase.c \
          HGSMIBase.h \
          HGSMIBuffers.c \

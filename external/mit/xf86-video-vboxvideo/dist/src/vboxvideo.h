@@ -1,4 +1,4 @@
-/* $Id: vboxvideo.h,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: vboxvideo.h,v 1.1.1.2 2024/07/04 06:29:04 mrg Exp $ */
 /** @file
  * VirtualBox X11 Additions graphics driver
  */
@@ -54,6 +54,10 @@
 #endif
 
 #include <VBoxVideoVBE.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "xf86.h"
 #include "xf86str.h"
@@ -154,7 +158,7 @@ typedef struct VBOXRec
     unsigned long cbView;
     /** Whether the pre-X-server mode was a VBE mode */
     Bool fSavedVBEMode;
-    /** Paramters of the saved pre-X-server VBE mode, invalid if there is none
+    /** Parameters of the saved pre-X-server VBE mode, invalid if there is none
      */
     uint16_t cSavedWidth, cSavedHeight, cSavedPitch, cSavedBPP, fSavedFlags;
     CloseScreenProcPtr CloseScreen;

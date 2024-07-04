@@ -1,4 +1,4 @@
-/* $Id: edid.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: edid.c,v 1.1.1.2 2024/07/04 06:29:04 mrg Exp $ */
 /** @file
  *
  * Linux Additions X11 graphics driver, EDID construction
@@ -35,6 +35,10 @@
  *    Dave Airlie <airlied@redhat.com>
  *    Michael Thayer <michael.thayer@oracle.com>
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "misc.h"
 #include "xf86DDC.h"

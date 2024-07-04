@@ -23,15 +23,15 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-vboxvideo],
-        [1.0.0],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [1.0.1],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-vbox/-/issues],
         [xf86-video-vboxvideo])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -39,9 +39,14 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
+# Disable some of the warnings xorg-macros.m4 sets by default that cause
+# too much noise here
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wno-declaration-after-statement])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wno-unused-but-set-variable])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wno-unused-value])
+
 # Initialize libtool
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
@@ -84,7 +89,10 @@ if test "x$XSERVER_LIBPCIACCESS" = xyes; then
     PKG_CHECK_MODULES([PCIACCESS], [pciaccess >= 0.12.901])
 fi
 
-# Checks for libraries.
+# Checks for library functions
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
 
 DRIVER_NAME=vboxvideo
 AC_SUBST([DRIVER_NAME])

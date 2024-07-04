@@ -1,4 +1,4 @@
-/* $Id: pointer.c,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: pointer.c,v 1.1.1.2 2024/07/04 06:29:04 mrg Exp $ */
 /** @file
  * VirtualBox X11 Additions graphics driver utility functions
  */
@@ -24,6 +24,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #ifndef PCIACCESS
 # include "xf86Pci.h"

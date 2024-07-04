@@ -25,7 +25,7 @@
 
 /* GUEST <-> HOST Communication API */
 
-/** @todo FIXME: Either dynamicly ask host for this or put somewhere high in
+/** @todo FIXME: Either dynamically ask host for this or put somewhere high in
  *               physical memory like 0xE0000000. */
 
 #define VBE_DISPI_BANK_ADDRESS          0xA0000

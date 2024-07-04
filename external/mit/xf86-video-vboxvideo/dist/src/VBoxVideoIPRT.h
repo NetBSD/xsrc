@@ -1,6 +1,6 @@
-/* $Id: VBoxVideoIPRT.h,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: VBoxVideoIPRT.h,v 1.1.1.2 2024/07/04 06:29:04 mrg Exp $ */
 /*
- * Copyright (C) 2017 Oracle Corporation
+ * Copyright (C) 2017, 2024, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,11 +30,15 @@
 # include "VBoxVideoErr.h"
 
 #ifndef __cplusplus
+#if __STDC_VERSION__ >= 199901L
+#include <stdbool.h>
+#else
 typedef enum
 {
     false = 0,
     true
 } bool;
+#endif
 # define RT_C_DECLS_BEGIN
 # define RT_C_DECLS_END
 #else
@@ -69,13 +73,34 @@ RT_C_DECLS_END
 # include <string.h>
 #endif  /* !(defined(IN_XF86_MODULE) && !defined(NO_ANSIC)) */
 
+#ifndef __has_feature
+# define __has_feature(x) 0
+#endif
+#if __has_feature(cxx_static_assert) || __has_feature(c_static_assert)
+# define RTASSERT_HAVE_STATIC_ASSERT
+#elif defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+# define RTASSERT_HAVE_STATIC_ASSERT
+#elif !defined(__cplusplus) && (__STDC_VERSION__ >= 201112L)
+# define RTASSERT_HAVE_STATIC_ASSERT
+#endif
+
+#if !defined(__cplusplus) || !defined(RTASSERT_HAVE_STATIC_ASSERT)
 RT_C_DECLS_BEGIN
 extern int RTASSERTVAR[1];
 RT_C_DECLS_END
+#endif
 
-#define AssertCompile(expr) \
+#ifdef RTASSERT_HAVE_STATIC_ASSERT
+# ifdef __cplusplus
+#  define AssertCompile(expr)    static_assert(!!(expr), #expr)
+# else
+#  define AssertCompile(expr)    _Static_assert(!!(expr), #expr)
+# endif
+#else
+# define AssertCompile(expr) \
     extern int RTASSERTVAR[1] __attribute__((__unused__)), \
     RTASSERTVAR[(expr) ? 1 : 0] __attribute__((__unused__))
+#endif
 #define AssertCompileSize(type, size) \
     AssertCompile(sizeof(type) == (size))
 #define AssertPtrNullReturnVoid(a) do { } while(0)
@@ -137,7 +162,7 @@ RT_C_DECLS_END
 #define unlikely _X_UNLIKELY
 
 /**
- * A point in a two dimentional coordinate system.
+ * A point in a two dimensional coordinate system.
  */
 typedef struct RTPOINT
 {
