@@ -45,7 +45,7 @@ from The Open Group.
 # define GETPWNAM_ARGS /*unknown*/
 #endif
 
-#if defined(__FreeBSD__) || defined(__bsdi__) || defined(__osf__)
+#if defined(__FreeBSD__) || defined(__bsdi__)
 # define SETGRENT_TYPE int
 #else
 # define SETGRENT_TYPE void
@@ -76,9 +76,7 @@ struct dlfuncs {
     void (*_endgrent)(void);		/* no longer used */
 #ifdef HAVE_GETSPNAM
     struct spwd *(*_getspnam)(GETSPNAM_ARGS);
-# ifndef QNX4
     void (*_endspent)(void);
-# endif /* QNX4 doesn't use endspent */
 #endif
     struct passwd *(*_getpwnam)(GETPWNAM_ARGS);
 #if defined(linux) || defined(__GLIBC__)
@@ -160,9 +158,7 @@ extern	struct group    *(*__xdm_getgrent)(void);
 extern	void    (*__xdm_endgrent)(void);
 # ifdef HAVE_GETSPNAM
 extern	struct spwd   *(*__xdm_getspnam)(GETSPNAM_ARGS);
-#  ifndef QNX4
 extern	void    (*__xdm_endspent)(void);
-#  endif /* QNX4 doesn't use endspent */
 # endif
 extern	struct passwd   *(*__xdm_getpwnam)(GETPWNAM_ARGS);
 # if defined(linux) || defined(__GLIBC__)
@@ -202,9 +198,7 @@ extern  pam_handle_t    **(*__xdm_thepamhp)(void);
 # define	endgrent		(*__xdm_endgrent)
 # ifdef HAVE_GETSPNAM
 #  define	getspnam		(*__xdm_getspnam)
-#  ifndef QNX4
 #   define	endspent		(*__xdm_endspent)
-#  endif /* QNX4 doesn't use endspent */
 # endif
 # define	getpwnam		(*__xdm_getpwnam)
 # if defined(linux) || defined(__GLIBC__)

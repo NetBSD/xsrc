@@ -226,10 +226,6 @@ FormatChooserArgument (char *buf, int len)
 	    result_len = 4 + localAddress->length;
 	}
 	break;
-# ifdef AF_DECnet
-    case AF_DECnet:
-	break;
-# endif
     default:
 	Debug ("Chooser family %d isn't known\n", netfamily);
 	return 0;

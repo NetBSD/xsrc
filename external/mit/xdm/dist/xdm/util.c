@@ -304,7 +304,7 @@ void (*Signal (int sig, SIGFUNC handler))(int)
     sigact.sa_flags = 0;
     sigaction(sig, &sigact, &osigact);
     return osigact.sa_handler;
-#else /* __UNIXOS2__ */
+#else
     return signal(sig, handler);
 #endif
 }

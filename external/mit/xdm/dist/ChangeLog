@@ -1,3 +1,292 @@
+commit 55cb37f064fc32998a035e78d41f3aa852270642
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Apr 4 17:00:32 2024 -0700
+
+    xdm 1.1.16
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b451b9915e3a379974a3c2b5fe9d4798f0c136b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 25 13:06:28 2024 -0700
+
+    Define _CONST_X_STRING when including Xaw & Xt headers
+    
+    Fixes build when building against libXaw 1.0.16 since
+    xorg/lib/libxaw@d0fcbd97 changed the definition of XawListChange
+    in <X11/Xaw/List.h> from _Xconst char * to String *, where
+    String is defined as const if _CONST_X_STRING is defined.
+    
+    This also clears up 105 of the 162 -Wdiscarded-qualifiers warnings.
+    
+    Closes: #16
+    Fixes: bccb777 ("Fix -Wincompatible-pointer-types warning from gcc (issue #15)")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1a408d7f74618d28db6ec4ec377ab479bd8f75aa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 23 15:15:52 2024 -0700
+
+    xdm 1.1.15
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 634f47a8aec386b7dedb8f716a65a9b56c0d7de7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 11:27:55 2024 -0800
+
+    session.c: clear -Wredundant-decls warnings on Solaris
+    
+    Include standard headers for getpwnam() & crypt() instead of
+    local prototype redefinitions.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2693b540f90e1a79c277bac7ec9fa5e40d05a281
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 11:22:21 2024 -0800
+
+    unifdef __osf__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c8af3994d76bc5cc3ee8443c1ee366353daea840
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 11:12:15 2024 -0800
+
+    include <shadow.h> on all platforms with HAVE_GETSPNAM set, not just SVR4
+    
+    Matches what we already do in greeter/verify.c
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7e8a581cda4aaac7e1d6af3d0000a0d03816adc3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 11:02:38 2024 -0800
+
+    Remove support for SVR4 systems other than Solaris/illumos
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 387bcf8bad11196967943a3352b9eb0d0f1f897e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:47:13 2024 -0800
+
+    unifdef FRAGILE_DEV_MEM
+    
+    It was only defined in the old Imakefiles, and not in any autoconf config
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c31f9dcc8055fdf6b5ff2cc59fef89e1cf09a0ab
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:44:17 2024 -0800
+
+    unifdef UNRELIABLE_SIGNALS
+    
+    UNRELIABLE_SIGNALS was only defined if SYSV was defined
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 48ad0d9b915f858fda2b005d4e7f01ca465a51f9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:42:24 2024 -0800
+
+    unifdef SIGNALS_RESET_WHEN_CAUGHT
+    
+    SIGNALS_RESET_WHEN_CAUGHT was only defined if SYSV was defined
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8a9a4e5be8d4906aa7b1365140445db33e6cbbbd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:41:09 2024 -0800
+
+    unifdef SYSV
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ae942bf8aba373f3d7db6af868e0f8154fdd23f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:35:12 2024 -0800
+
+    unifdef AF_DECnet
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 493673ef4914f56c8ee471b88f16b02e468f9c3b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:34:22 2024 -0800
+
+    unifdef AF_CHAOS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 37f80c7716759ed066af68011a35459706e70262
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:26:05 2024 -0800
+
+    unifdef QNX4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee19d5f4352135a9044a238112738dc66ec50b46
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:17:35 2024 -0800
+
+    unifdef __UNIXOS2__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2956192801a3e85136d54277409c2ebdea15b3be
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:13:04 2024 -0800
+
+    unifdef pegasus
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 279dba5bed1706ddce0164f78c32a81389b85909
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:08:32 2024 -0800
+
+    unifdef hpux
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 52578f77a14808b7d8925b3ee309d5ceac674b22
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 10:02:29 2024 -0800
+
+    unifdef __convex__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1fe9ab1cbf7f0a1684b1f1e53f1a6816916bb3fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 09:58:51 2024 -0800
+
+    unifdef PowerMAX_OS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9660da78eac0da9ff951ddf0367ad0d09eca885f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 09:55:27 2024 -0800
+
+    unifdef sony
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0c49eecefffc16d5ea30709e7901bcdd41136a7c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 11 09:51:03 2024 -0800
+
+    unifdef ultrix
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 86e227cdfdb9d2454571aa2eb63c81bca139552e
+Author: Alisson Bruno <alissonbruno.sa@gmail.com>
+Date:   Sun Feb 11 16:56:55 2024 +0000
+
+    Fix --with-systemd-daemon option
+
+commit 9602a9f11dd5ac928a7275ceb1a58d5328b9d49e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 1 18:16:59 2024 -0800
+
+    greeter: Constify value argument to SetValue()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3672840c24e0826b7305d5143c95b2d070c57366
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 1 18:14:56 2024 -0800
+
+    greeter: Handle const qualification differences between Solaris & Linux PAM
+    
+    Solaris does not specify "const" on the first argument to PAM conversation
+    functions, nor the third argument to pam_get_item().  Linux PAM does both.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bccb77746528134aa2e865ca4f44fd9424738b3f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 5 17:25:28 2023 -0800
+
+    Fix -Wincompatible-pointer-types warning from gcc (issue #15)
+    
+    chooser.c:280:26: warning: passing argument 2 of ‘XawListChange’ from
+     incompatible pointer type [-Wincompatible-pointer-types]
+      280 |     XawListChange (list, newTable, size, 0, TRUE);
+          |                          ^~~~~~~~
+          |                          |
+          |                          char **
+    In file included from chooser.c:59:
+    /usr/include/X11/Xaw/List.h:170:27: note: expected ‘const char **’ but
+     argument is of type ‘char **’
+      170 |  _Xconst char           **list,
+    
+    Closes: #15
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b2569e49dda3f15b9cbf8df60c86bee9ed01a40a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 2 10:58:23 2023 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:37: warning: The macro 'AC_LIBTOOL_DLOPEN' is obsolete.
+    configure.ac:37: You should run autoupdate.
+    m4/ltoptions.m4:113: AC_LIBTOOL_DLOPEN is expanded from...
+    configure.ac:37: the top level
+    configure.ac:37: warning: AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
+    configure.ac:37: put the 'dlopen' option into LT_INIT's first parameter.
+    ./lib/autoconf/general.m4:2434: AC_DIAGNOSE is expanded from...
+    m4/ltoptions.m4:113: AC_LIBTOOL_DLOPEN is expanded from...
+    configure.ac:37: the top level
+    configure.ac:38: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:38: You should run autoupdate.
+    m4/libtool.m4:100: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:38: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b378b79ce9ae1036fc3d3865186eddf0a56112db
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 15:18:27 2023 -0700
+
+    gitlab CI: Update to latest CI templates & Debian stable release
+    
+    Current template fails to rebuild the CI container with the current
+    Debian stable release (a new release since the last update)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d2efd22bd2cbee6a04da0bcaec35d03890522dcc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 08:58:08 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0a94a0a23880e1f6aae6f603d5aab7f7f4df7504
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 022b959f5f26e6b70d2ab6524ca39b5934e4c42e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Dec 3 13:34:29 2022 -0800
@@ -232,7 +521,7 @@ Date:   Wed May 4 17:46:15 2016 +0100
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 7a56946260616f7f5ff43ecbaac1f2ada9b0afcd
-Author: Chí-Thanh Christopher Nguyễn <c <chithanh@gentoo.org>
+Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
 Date:   Mon Jan 6 15:52:47 2014 +0000
 
     xdm uses setproctitle without proper includes for Linux libbsd
@@ -240,7 +529,7 @@ Date:   Mon Jan 6 15:52:47 2014 +0000
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 786b2c7ed39fb0cdd4c34e51f5c58f980087dcc1
-Author: Chí-Thanh Christopher Nguyễn <c <chithanh@gentoo.org>
+Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
 Date:   Mon Jan 6 15:52:00 2014 +0000
 
     xdm uses arc4random without proper includes for Linux libbsd
@@ -264,7 +553,7 @@ Date:   Fri Nov 16 21:30:06 2018 -0800
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 768a8c524642955527066ba90be6ffd511e30ed5
-Author: Björn Esser  <besser82@fedoraproject.org>
+Author: Björn Esser <besser82@fedoraproject.org>
 Date:   Thu Aug 16 15:42:34 2018 -0400
 
     glibc: Include <crypt.h> if needed, fix build with 2.28
@@ -900,7 +1189,7 @@ Date:   Sat Oct 22 17:14:46 2011 +0200
     Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 8eee942be0db913511b4c53f94829e1201dfdf00
-Author: Michał Górny < <mgorny@gentoo.org>
+Author: Michał Górny <mgorny@gentoo.org>
 Date:   Wed Sep 28 21:25:17 2011 +0200
 
     Support systemd startup notification.
@@ -965,7 +1254,7 @@ Date:   Tue Sep 20 17:39:34 2011 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 8016dfd9080393c23d19b1c34e81d1f544655d5a
-Author: Matěj Cepl  <mcepl@redhat.com>
+Author: Matěj Cepl <mcepl@redhat.com>
 Date:   Mon Aug 8 21:26:47 2011 +0200
 
     Use explicitly /bin/sh for running of Xwilling script via su.
@@ -979,7 +1268,7 @@ Date:   Mon Aug 8 21:26:47 2011 +0200
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 0782f1c24c658c06736907dd143f8e67359ac235
-Author: Michał Górny < <mgorny@gentoo.org>
+Author: Michał Górny <mgorny@gentoo.org>
 Date:   Wed Aug 31 18:02:53 2011 +0200
 
     Support installing systemd unit file.
@@ -1312,7 +1601,7 @@ Date:   Sat Feb 19 13:15:58 2011 -0800
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit c4031966dcbc47b2cc85b83ad78efcc64455cf72
-Author: Fernando Tarlá Cardoso Lemos  <fernandotcl@gmail.com>
+Author: Fernando Tarlá Cardoso Lemos <fernandotcl@gmail.com>
 Date:   Sat Feb 19 17:53:08 2011 -0200
 
     Fix missing linking dependency on -ldl.
@@ -2785,7 +3074,7 @@ Date:   Fri Jul 17 21:17:36 2009 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
 
 commit 0c57a398cef50d13a821ad341ffb15ab0cbd2bad
-Author: Matěj Cepl  <mcepl@redhat.com>
+Author: Matěj Cepl <mcepl@redhat.com>
 Date:   Fri Jul 17 20:59:48 2009 -0700
 
     Add variable DisplayManager.authDir to xdm-config (Fedora bug 388431)
@@ -3808,7 +4097,7 @@ Date:   Sun Oct 2 19:44:42 2005 +0000
     Add Chooser app-defaults file to app/xdm
 
 commit 51a6b1de8beeb33858d3e8eb151cfad004a62ef8
-Author: Kristian Høgsberg  <krh@redhat.com>
+Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Wed Sep 28 21:13:12 2005 +0000
 
     Add Xservers.fs.
@@ -3927,7 +4216,7 @@ Date:   Thu Jul 28 01:10:49 2005 +0000
     Add -D_XOPEN_SOURCE for Linux
 
 commit ac5184384d6347ea97da5cc7f85e9687ff060641
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 22:37:02 2005 +0000
 
     Add XPROTO_CFLAGS to XDM_CFLAGS and CHOOSER_CFLAGS, also add _BSD_SOURCE to
@@ -3954,7 +4243,7 @@ Date:   Thu Jul 14 22:55:17 2005 +0000
     - Add libXdmcp to CHOOSER_LIBS
 
 commit 90b6e7d98567f77981adca5c2b9acc71d07f1442
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Fri Jul 8 20:45:03 2005 +0000
 
     Add build system for xdm

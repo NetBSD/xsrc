@@ -53,26 +53,9 @@ from The Open Group.
 
 #include	"greet.h"
 
-#ifdef QNX4
-extern char *crypt(const char *, const char *);
-#endif
 
 static const char *envvars[] = {
-    "TZ",			/* SYSV and SVR4, but never hurts */
-#if defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV)
-    "bootdev",
-    "boothowto",
-    "cputype",
-    "ioptype",
-    "machine",
-    "model",
-    "CONSDEVTYPE",
-    "SYS_LANGUAGE",
-    "SYS_CODE",
-#endif
-#if (defined(SVR4) || defined(SYSV)) && defined(i386) && !defined(sun)
-    "XLOCAL",
-#endif
+    "TZ",
     NULL
 };
 
@@ -363,17 +346,11 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 	} else {
 	    user_pass = sp->sp_pwdp;
 	}
-#   ifndef QNX4
 	endspent();
-#   endif  /* QNX4 doesn't need endspent() to end shadow passwd ops */
 #  endif /* HAVE_GETSPNAM */
-#  if defined(ultrix) || defined(__ultrix__)
-	if (authenticate_user(p, greet->password, NULL) < 0)
-#  else
 	crypted_pass = crypt (greet->password, user_pass);
 	if ((crypted_pass == NULL)
 	    || (strcmp (crypted_pass, user_pass)))
-#  endif
 	{
 		if(!greet->allow_null_passwd || strlen(p->pw_passwd) > 0) {
 			Debug ("password verify failed\n");

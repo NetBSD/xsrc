@@ -326,14 +326,6 @@ AddPreGetEntropy (void)
     AddTimerEntropy();
     if ((readlen = sumFile (randomFile, BSIZ, SEEK_SET, offset)) == BSIZ) {
 	offset += readlen;
-# ifdef FRAGILE_DEV_MEM
-	if (!strcmp (randomFile, "/dev/mem")) {
-	    if (offset == 0xa0000) /* skip 640kB-1MB ROM mappings */
-		offset = 0x100000;
-	    else if (offset == 0xf00000) /* skip 15-16MB memory hole */
-		offset = 0x1000000;
-	}
-# endif
 	return;
     } else if (readlen >= 0 && offset) {
 	if ((offset = sumFile (randomFile, BSIZ, SEEK_SET, 0)) == BSIZ)

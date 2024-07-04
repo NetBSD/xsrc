@@ -145,8 +145,6 @@ sendForward (
 # if defined(IPv6) && defined(AF_INET6)
     struct sockaddr_in6	    in6_addr;
 # endif
-# ifdef AF_DECnet
-# endif
     struct sockaddr	    *addr;
     int			    addrlen;
 
@@ -181,9 +179,6 @@ sendForward (
 	memcpy(&in6_addr.sin6_addr, address->data, address->length);
 	addrlen = sizeof (struct sockaddr_in6);
 	break;
-# endif
-# ifdef AF_DECnet
-    case FamilyDECnet:
 # endif
     default:
 	return;
@@ -819,14 +814,6 @@ forward_respond (
 			       FORWARD_QUERY, fd);
 		}
 		break;
-# endif
-# ifdef AF_CHAOS
-	    case AF_CHAOS:
-		goto badAddress;
-# endif
-# ifdef AF_DECnet
-	    case AF_DECnet:
-		goto badAddress;
 # endif
 	    }
 	}
