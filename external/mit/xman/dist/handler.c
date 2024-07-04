@@ -41,10 +41,6 @@ from the X Consortium.
 #include <sys/stat.h>
 #include "globals.h"
 #include "vendor.h"
-#ifdef INCLUDE_XPRINT_SUPPORT
-#include "printdialog.h"
-#include "print.h"
-#endif /* INCLUDE_XPRINT_SUPPORT */
 
 #ifdef RELEASE_VERSION
 #define XMAN_VERSION "Xman Version " PACKAGE_VERSION " - X11R" RELEASE_VERSION
@@ -90,10 +86,6 @@ OptionCallback(Widget w, XtPointer pointer, XtPointer junk)
         RemoveThisManpage(XtParent(w), NULL, NULL, NULL);
     else if (w == man_globals->open_entry)      /* Open new manpage */
         CreateNewManpage(XtParent(w), NULL, NULL, NULL);
-#ifdef INCLUDE_XPRINT_SUPPORT
-    else if (w == man_globals->print_entry)     /* Print current manpage */
-        PrintThisManpage(XtParent(w), NULL, NULL, NULL);
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
     else if (w == man_globals->version_entry)   /* Get version */
         ShowVersion(XtParent(w), NULL, NULL, NULL);
     else if (w == man_globals->quit_entry)      /* Quit. */
@@ -327,21 +319,15 @@ SaveFormattedPage(Widget w, XEvent * event, String * params,
     case 'S':
     case 's':
 
-#ifndef NO_COMPRESS
         if (!man_globals->compress)
-#endif
-
             snprintf(cmdbuf, sizeof(cmdbuf), "%s %s %s", COPY,
                      man_globals->tempfile, man_globals->save_file);
-
-#ifndef NO_COMPRESS
         else if (man_globals->gzip)
             snprintf(cmdbuf, sizeof(cmdbuf), "%s < %s > %s", GZIP_COMPRESS,
                      man_globals->tempfile, man_globals->save_file);
         else
             snprintf(cmdbuf, sizeof(cmdbuf), "%s < %s > %s", COMPRESS,
                      man_globals->tempfile, man_globals->save_file);
-#endif
 
         if (!system(cmdbuf)) {
             /* make sure the formatted man page is fully accessible by the world */
@@ -487,9 +473,32 @@ PopupSearch(Widget w, XEvent * event, String * params, Cardinal * num_params)
             XtRealizeWidget(man_globals->search_widget);
             AddCursor(man_globals->search_widget,
                       resources.cursors.search_entry);
+/*
+ * Set up ICCCM delete window.
+ */
+            XtOverrideTranslations(man_globals->search_widget,
+              XtParseTranslationTable("<Message>WM_PROTOCOLS: RemoveSearch()"));
+            XSetWMProtocols(XtDisplay(man_globals->search_widget),
+                            XtWindow(man_globals->search_widget),
+                            &wm_delete_window, 1);
         }
         Popup(man_globals->search_widget, XtGrabNone);
     }
+}
+
+/*      Function Name: RemoveSearch
+ *      Description: Removes this search widget.
+ *      Arguments: w - search widget
+ *                 event - NOT USED.
+ *                 params, num_params - NOT USED.
+ *      Returns: none.
+ */
+
+/*ARGSUSED*/
+void
+RemoveSearch(Widget w, XEvent * event, String * params, Cardinal * num_params)
+{
+    XtPopdown(w);
 }
 
 /*      Function Name: CreateNewManpage
@@ -616,112 +625,6 @@ Search(Widget w, XEvent * event, String * params, Cardinal * num_params)
     }
 }
 
-#ifdef INCLUDE_XPRINT_SUPPORT
-static void
-printshellDestroyXtProc(Widget w, XtPointer client_data, XtPointer callData)
-{
-    ManpageGlobals *mg = GetGlobals(w);
-
-    XawPrintDialogClosePrinterConnection(mg->printdialog, False);
-}
-
-static void
-printOKXtProc(Widget w, XtPointer client_data, XtPointer callData)
-{
-    XawPrintDialogCallbackStruct *pdcs =
-        (XawPrintDialogCallbackStruct *) callData;
-    Cardinal n;
-    Arg args[2];
-    ManpageGlobals *mg = GetGlobals(w);
-    Widget topwindow = mg->This_Manpage;
-    FILE *file;
-
-    Log(("printOKXtProc: OK.\n"));
-
-    /* Get file object */
-    n = 0;
-    XtSetArg(args[n], XtNfile, &file);
-    n++;
-    XtGetValues(mg->manpagewidgets.manpage, args, n);
-    Assertion(file != NULL, (("printOKXtProc: file == NULL.\n")));
-
-    DoPrintManpage("Xman",
-                   file, topwindow,
-                   pdcs->pdpy, pdcs->pcontext, pdcs->colorspace,
-                   printshellDestroyXtProc,
-                   mg->manpage_title,
-                   pdcs->printToFile ? pdcs->printToFileName : NULL);
-
-    XtPopdown(mg->printdialog_shell);
-}
-
-static void
-printCancelXtProc(Widget w, XtPointer client_data, XtPointer callData)
-{
-    ManpageGlobals *mg = GetGlobals(w);
-
-    Log(("printCancelXtProc: cancel.\n"));
-    XtPopdown(mg->printdialog_shell);
-
-    Log(("destroying print dialog shell...\n"));
-    XtDestroyWidget(mg->printdialog_shell);
-    mg->printdialog_shell = NULL;
-    mg->printdialog = NULL;
-    Log(("... done\n"));
-}
-
-/*      Function Name: PrintThisManpage
- *      Description: Print the current manual page.
- *      Arguments: mg - manpage globals
- *      Returns: none.
- */
-
-/*ARGSUSED*/
-void
-PrintThisManpage(Widget w, XEvent * event, String * params,
-                 Cardinal * num_params)
-{
-    ManpageGlobals *mg = GetGlobals(w);
-    Dimension width, height;
-    Position x, y;
-    Widget parent = mg->This_Manpage;
-    Widget topwindow = mg->This_Manpage;
-
-    Log(("print!\n"));
-
-    if (!mg->printdialog) {
-        int n;
-        Arg args[20];
-
-        n = 0;
-        XtSetArg(args[n], XtNallowShellResize, True);
-        n++;
-        mg->printdialog_shell = XtCreatePopupShell("printdialogshell",
-                                                   transientShellWidgetClass,
-                                                   topwindow, args, n);
-        n = 0;
-        mg->printdialog =
-            XtCreateManagedWidget("printdialog", printDialogWidgetClass,
-                                  mg->printdialog_shell, args, n);
-        XtAddCallback(mg->printdialog, XawNOkCallback, printOKXtProc, NULL);
-        XtAddCallback(mg->printdialog, XawNCancelCallback, printCancelXtProc,
-                      NULL);
-
-        XtRealizeWidget(mg->printdialog_shell);
-    }
-
-    /* Center dialog */
-    XtVaGetValues(mg->printdialog_shell,
-                  XtNwidth, &width, XtNheight, &height, NULL);
-
-    x = (Position) (XWidthOfScreen(XtScreen(parent)) - width) / 2;
-    y = (Position) (XHeightOfScreen(XtScreen(parent)) - height) / 3;
-
-    XtVaSetValues(mg->printdialog_shell, XtNx, x, XtNy, y, NULL);
-
-    XtPopup(mg->printdialog_shell, XtGrabNonexclusive);
-}
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
 
 /*      Function Name: ShowVersion
  *      Description: Show current version.

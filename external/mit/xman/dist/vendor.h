@@ -51,10 +51,7 @@ from the X Consortium.
  */
 
 #define SEARCHDIR  MAN
-
-#if (defined(sgi) || (defined(SVR4) && !defined(sun)) || (defined(BSD) && (BSD >= 199103)) || defined(linux) || defined(__CYGWIN__) )
-# define SEARCHOTHER CAT
-#endif
+#define SEARCHOTHER CAT
 
 /*
  * The default manual page directory.
@@ -64,20 +61,14 @@ from the X Consortium.
 
 #ifndef SYSMANPATH
 
-#if defined(__bsdi__)
-#  define SYSMANPATH "/usr/share/man:/usr/contrib/man:/usr/contrib/isode/man:/usr/local/man"
-#elif defined(__OpenBSD__) || defined(__DARWIN__)
+#if defined(__OpenBSD__) || defined(__DARWIN__)
 #  define SYSMANPATH "/usr/share/man:/usr/local/man:/usr/X11R6/man"
 #elif defined(SVR4) && defined(sun)
 #  define SYSMANPATH "/usr/share/man:/usr/X11/man:/usr/openwin/share/man:/usr/dt/share/man:/usr/sfw/share/man"
-#elif defined(SVR4) || defined(__osf__) || (defined(BSD) && (BSD >= 199103))
-#  define SYSMANPATH "/usr/share/man"
-#elif defined(sgi)
-#  define SYSMANPATH "/usr/catman/a_man:/usr/catman/g_man:/usr/catman/p_man:/usr/catman/u_man:/usr/man/p_man:/usr/man/u_man:/usr/man"
 #endif
 
 #ifndef SYSMANPATH
-#  define SYSMANPATH "/usr/man"
+#  define SYSMANPATH "/usr/share/man"
 #endif
 
 #endif
@@ -86,59 +77,29 @@ from the X Consortium.
  * Compression Definitions.
  */
 
-#if defined(sgi)
-#  define COMPRESSION_EXTENSION   "z"
-#  define UNCOMPRESS_FORMAT       "pcat %s > %s"
-#  define NO_COMPRESS           /* mac can't handle using pack as a filter and
-                                   xman needs it to be done that way. */
-#elif defined (ISC) || defined(__SCO__) || defined(__UNIXWARE__)
-#  define COMPRESSION_EXTENSION   "Z"           /* dummy */
-#  if !defined(__SCO__) && !defined(__UNIXWARE__)
-#    define COMPRESSION_EXTENSIONS  "zZF"       /* pack, compress, freeze */
-#  else
-#    define COMPRESSION_EXTENSIONS  "zZ"        /* pack, compress */
-#  endif
-#  define UNCOMPRESS_FORMAT       uncompress_format
-#  define UNCOMPRESS_FORMAT_1     "pcat %s > %s"
-#  define UNCOMPRESS_FORMAT_2     "zcat < %s > %s"
-#  define UNCOMPRESS_FORMAT_3     "fcat < %s > %s"
-#  define NO_COMPRESS
-#else
-#  define COMPRESSION_EXTENSION "Z"
-#  define UNCOMPRESS_FORMAT     "zcat < %s >> %s"
-#  define COMPRESS              "compress"
-#  define GZIP_EXTENSION "gz"
-#  define GUNZIP_FORMAT "gzip -c -d < %s >> %s"
-#  define GZIP_COMPRESS "gzip"
-#  define BZIP2_EXTENSION "bz2"
-#  define BUNZIP2_FORMAT "bunzip2 -c -d < %s >> %s"
-#  define BZIP2_COMPRESS "bzip2"
-#  define LZMA_EXTENSION "lzma"
-#  define UNLZMA_FORMAT "unlzma -c -d < %s >> %s"
-#  define LZMA_COMPRESS "lzma"
-#endif
-
+#define COMPRESSION_EXTENSION "Z"
+#define UNCOMPRESS_FORMAT     "zcat < %s >> %s"
+#define COMPRESS              "compress"
+#define GZIP_EXTENSION "gz"
+#define GUNZIP_FORMAT "gzip -c -d < %s >> %s"
+#define GZIP_COMPRESS "gzip"
+#define BZIP2_EXTENSION "bz2"
+#define BUNZIP2_FORMAT "bunzip2 -c -d < %s >> %s"
+#define BZIP2_COMPRESS "bzip2"
+#define LZMA_EXTENSION "lzma"
+#define UNLZMA_FORMAT "unlzma -c -d < %s >> %s"
+#define LZMA_COMPRESS "lzma"
 
 
 /*
  * The command filters for the manual and apropos searches.
  */
 
-#if defined(hpux)
-#  define NO_MANPATH_SUPPORT
-#endif
-
-#ifdef NO_MANPATH_SUPPORT
-#  define APROPOS_FORMAT ("man -k %s | pr -h Apropos >> %s")
-#else
-#  define APROPOS_FORMAT ("man -M %s -k %s | pr -h Apropos >> %s")
-#endif
+#define APROPOS_FORMAT ("man -M %s -k %s | pr -h Apropos >> %s")
 
 #ifndef HANDLE_ROFFSEQ
 # if defined(CSRG_BASED)
 #  define FORMAT "| eqn | tbl | nroff -mandoc"
-# elif defined(BSD) && (BSD >= 199103)
-#  define FORMAT "| eqn | tbl | nroff -man"
 # elif defined(linux) || defined(__CYGWIN__)
 #  define FORMAT "| pic | eqn | tbl -Tlatin1 | GROFF_NO_SGR= groff -Tlatin1 -mandoc"
 # else
@@ -173,17 +134,8 @@ from the X Consortium.
  * Names of the man and cat dirs.
  */
 
-#ifdef __bsdi__
-#define MAN "cat"
-#else
 #define MAN "man"
-#endif
-
-#if defined(SCO)
-#  define CAT "cat."
-#else
-#  define CAT "cat"
-#endif
+#define CAT "cat"
 
 /* Solaris has nroff man pages in "man" and sgml man pages in "sman" */
 #if defined(sun) && defined(SVR4)

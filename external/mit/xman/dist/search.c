@@ -189,7 +189,7 @@ DoSearch(ManpageGlobals * man_globals, int type)
         fd = mkstemp(tmp);
 	umask(omask);
         if (fd < 0) {
-            PopupWarning(man_globals, "Cant create temp file");
+            PopupWarning(man_globals, "Can't create temp file");
             return NULL;
         }
         mantmp = tmp;
@@ -214,12 +214,8 @@ DoSearch(ManpageGlobals * man_globals, int type)
         snprintf(label, sizeof(label),
                  "Results of apropos search on: %s", search_string);
 
-#ifdef NO_MANPATH_SUPPORT       /* not quite correct, but the best I can do. */
-        snprintf(cmdbuf, sizeof(cmdbuf), APROPOS_FORMAT, search_string, mantmp);
-#else
         snprintf(cmdbuf, sizeof(cmdbuf), APROPOS_FORMAT, path, search_string,
                  mantmp);
-#endif
 
         if (system(cmdbuf) != 0) {      /* execute search. */
             snprintf(error_buf, sizeof(error_buf),
