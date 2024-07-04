@@ -74,7 +74,12 @@ These three options have corresponding application-specific resources,
 can be specified in a resource file.
 .PP
 The standard toolkit command line options are given in \fIX(__miscmansuffix__)\fP.
-
+.TP 8
+.B \-help
+This option indicates that \fIxmh\fP should print a usage message and exit.
+.TP 8
+.B \-version
+This option indicates that \fIxmh\fP should print version info and exit.
 .SH INSTALLATION
 .PP
 \fIxmh\fR requires that the user is already set up

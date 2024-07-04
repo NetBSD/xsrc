@@ -30,16 +30,16 @@
 
 	/* for radio button boxes only */
 
-extern ButtonBox RadioBBoxCreate      (Scrn, char *);
-extern void	 RadioBBoxAddButton   (ButtonBox, char *, Boolean);
+extern ButtonBox RadioBBoxCreate      (Scrn, const char *);
+extern void	 RadioBBoxAddButton   (ButtonBox, const char *, Boolean);
 extern void	 RadioBBoxSet	      (Button);
 extern char *	 RadioBBoxGetCurrent  (ButtonBox);
 extern void	 RadioBBoxDeleteButton(Button);
 
 	/* for other kinds of button boxes */
 
-extern ButtonBox BBoxCreate	      (Scrn, char *);
-extern void	 BBoxAddButton (ButtonBox, char *, WidgetClass, Boolean);
+extern ButtonBox BBoxCreate	      (Scrn, const char *);
+extern void	 BBoxAddButton (ButtonBox, const char *, WidgetClass, Boolean);
 extern void	 BBoxDeleteButton     (Button);
 
 	/* for all kinds of button boxes */
@@ -47,7 +47,7 @@ extern void	 BBoxDeleteButton     (Button);
 extern void	 BBoxInit             (void);
 extern void	 BBoxEnable	      (Button);
 extern void	 BBoxDisable	      (Button);
-extern Button	 BBoxFindButtonNamed  (ButtonBox, char *);
+extern Button	 BBoxFindButtonNamed  (ButtonBox, const char *);
 extern Button	 BBoxFindButton	      (ButtonBox, Widget);
 extern Button	 BBoxButtonNumber     (ButtonBox, int);
 extern int	 BBoxNumButtons	      (ButtonBox);
@@ -58,6 +58,6 @@ extern Boolean	 BBoxIsGrandparent    (ButtonBox, Widget);
 
 	/* operations upon folder buttons */
 
-extern void	BBoxMailFlag	      (ButtonBox, char*, int);
+extern void	BBoxMailFlag	      (ButtonBox, const char*, int);
 
 #endif /* _bbox_h */

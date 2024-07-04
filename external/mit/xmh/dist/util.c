@@ -39,16 +39,16 @@
 #define abs(x)		((x) < 0 ? (-(x)) : (x))
 #endif
 
-static char *SysErrorMsg (int n)
+static const char *SysErrorMsg (int n)
 {
-    char *s = strerror(n);
+    const char *s = strerror(n);
 
     return (s ? s : "no such error");
 }
 
 /* Something went wrong; panic and quit. */
 
-void Punt(char *str)
+void Punt(const char *str)
 {
     (void) fprintf( stderr, "%s: %s\nerrno = %d; %s\007\n",
 		    progName, str, errno, SysErrorMsg(errno) );
@@ -65,7 +65,7 @@ void Punt(char *str)
 }
 
 
-int myopen(char *path, int flags, int mode)
+int myopen(const char *path, int flags, int mode)
 {
     int fid;
     fid = open(path, flags, mode);
@@ -74,7 +74,7 @@ int myopen(char *path, int flags, int mode)
 }
 
 
-FILE *myfopen(char *path, char *mode)
+FILE *myfopen(const char *path, const char *mode)
 {
     FILE *result;
     result = fopen(path, mode);
@@ -107,8 +107,8 @@ char *MakeNewTempFileName(void)
     static char name[60];
     static int  uniqueid = 0;
     do {
-	(void) sprintf(name, "%s/xmh_%ld_%d", app_resources.temp_dir,
-		       (long)getpid(), uniqueid++);
+	snprintf(name, sizeof(name), "%s/xmh_%ld_%d", app_resources.temp_dir,
+                 (long)getpid(), uniqueid++);
     } while (FileExists(name));
     return name;
 }
@@ -119,7 +119,7 @@ char *MakeNewTempFileName(void)
 char **MakeArgv(int n)
 {
     char **result;
-    result = ((char **) XtMalloc((unsigned) (n+1) * sizeof(char *)));
+    result = XtMallocArray((unsigned) (n+1), sizeof(char *));
     result[n] = NULL;
     return result;
 }
@@ -127,21 +127,21 @@ char **MakeArgv(int n)
 
 char **ResizeArgv(char **argv, int n)
 {
-    argv = ((char **) XtRealloc((char *) argv, (unsigned) (n+1) * sizeof(char *)));
+    argv = XtReallocArray(argv, (unsigned) (n+1), sizeof(char *));
     argv[n] = NULL;
     return argv;
 }
 
 /* Open a file, and punt if we can't. */
 
-FILEPTR FOpenAndCheck(char *name, char *mode)
+FILEPTR FOpenAndCheck(const char *name, const char *mode)
 {
     FILEPTR result;
     result = myfopen(name, mode);
     if (result == NULL) {
 	char str[500];
 	perror(progName);
-	(void)sprintf(str, "Error in FOpenAndCheck(%s, %s)", name, mode);
+	snprintf(str, sizeof(str), "Error in FOpenAndCheck(%s, %s)", name, mode);
 	Punt(str);
     }
     return result;
@@ -195,17 +195,17 @@ char *ReadLineWithCR(FILEPTR fid)
 
 /* Delete a file, and Punt if it fails. */
 
-void DeleteFileAndCheck(char *name)
+void DeleteFileAndCheck(const char *name)
 {
     if (strcmp(name, "/dev/null") != 0 && unlink(name) == -1) {
 	char str[500];
 	perror(progName);
-	(void)sprintf(str, "DeleteFileAndCheck(%s) failed!", name);
+	snprintf(str, sizeof(str), "DeleteFileAndCheck(%s) failed!", name);
 	Punt(str);
     }
 }
 
-void CopyFileAndCheck(char *from, char *to)
+void CopyFileAndCheck(const char *from, const char *to)
 {
     int fromfid, tofid, n;
     char buf[512];
@@ -213,7 +213,7 @@ void CopyFileAndCheck(char *from, char *to)
     tofid = myopen(to, O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (fromfid < 0 || tofid < 0) {
 	perror(progName);
-	(void)sprintf(buf, "CopyFileAndCheck(%s->%s) failed!", from, to);
+	snprintf(buf, sizeof(buf), "CopyFileAndCheck(%s->%s) failed!", from, to);
 	Punt(buf);
     }
     do {
@@ -225,13 +225,13 @@ void CopyFileAndCheck(char *from, char *to)
 }
 
 
-void RenameAndCheck(char *from, char *to)
+void RenameAndCheck(const char *from, const char *to)
 {
     if (rename(from, to) == -1) {
 	if (errno != EXDEV) {
 	    char str[500];
 	    perror(progName);
-	    (void)sprintf(str, "RenameAndCheck(%s->%s) failed!", from, to);
+	    snprintf(str, sizeof(str), "RenameAndCheck(%s->%s) failed!", from, to);
 	    Punt(str);
 	}
 	CopyFileAndCheck(from, to);
@@ -242,60 +242,62 @@ void RenameAndCheck(char *from, char *to)
 
 char *CreateGeometry(int gbits, int x, int y, int width, int height)
 {
-    char   *result, str1[10], str2[10], str3[10], str4[10];
+    char   *result, str1[12], str2[12], str3[12], str4[12];
     if (gbits & WidthValue)
-	(void) sprintf(str1, "=%d", width);
+	snprintf(str1, sizeof(str1), "=%d", width);
     else
 	(void) strcpy(str1, "=");
     if (gbits & HeightValue)
-	(void) sprintf(str2, "x%d", height);
+	snprintf(str2, sizeof(str2), "x%d", height);
     else
 	(void) strcpy(str2, "x");
     if (gbits & XValue)
-	(void) sprintf(str3, "%c%d", (gbits & XNegative) ? '-' : '+', abs(x));
+	snprintf(str3, sizeof(str3),
+                 "%c%d", (gbits & XNegative) ? '-' : '+', abs(x));
     else
 	(void) strcpy(str3, "");
     if (gbits & YValue)
-	(void) sprintf(str4, "%c%d", (gbits & YNegative) ? '-' : '+', abs(y));
+	snprintf(str4, sizeof(str4),
+                 "%c%d", (gbits & YNegative) ? '-' : '+', abs(y));
     else
 	(void) strcpy(str4, "");
     result = XtMalloc((unsigned) 22);
-    (void) sprintf(result, "%s%s%s%s", str1, str2, str3, str4);
+    snprintf(result, 22, "%s%s%s%s", str1, str2, str3, str4);
     return result;
 }
 
-int FileExists(char *file)
+int FileExists(const char *file)
 {
     return (access(file, F_OK) == 0);
 }
 
-long LastModifyDate(char *file)
+long LastModifyDate(const char *file)
 {
     struct stat buf;
     if (stat(file, &buf)) return -1;
     return buf.st_mtime;
 }
 
-int GetFileLength(char *file)
+int GetFileLength(const char *file)
 {
     struct stat buf;
     if (stat(file, &buf)) return -1;
     return buf.st_size;
 }
 
-Boolean IsSubfolder(char *foldername)
+Boolean IsSubfolder(const char *foldername)
 {
     return (strchr(foldername, '/')) ? True : False;
 }
 
-void SetCurrentFolderName(Scrn scrn, char *foldername)
+void SetCurrentFolderName(Scrn scrn, const char *foldername)
 {
     scrn->curfolder = foldername;
     ChangeLabel((Widget) scrn->folderlabel, foldername);
 }
 
 
-void ChangeLabel(Widget widget, char *str)
+void ChangeLabel(Widget widget, const char *str)
 {
     static Arg arglist[] = {{XtNlabel, (XtArgVal)NULL}};
     arglist[0].value = (XtArgVal) str;
@@ -305,7 +307,7 @@ void ChangeLabel(Widget widget, char *str)
 
 Widget CreateTextSW(
     Scrn scrn,
-    char *name,
+    const char *name,
     ArgList args,
     Cardinal num_args)
 {
@@ -316,7 +318,7 @@ Widget CreateTextSW(
 }
 
 
-Widget CreateTitleBar(Scrn scrn, char *name)
+Widget CreateTitleBar(Scrn scrn, const char *name)
 {
     Widget result;
     int height;
@@ -396,7 +398,7 @@ Toc CurrentToc(Scrn scrn)
 }
 
 
-int strncmpIgnoringCase(char *str1, char *str2, int length)
+int strncmpIgnoringCase(const char *str1, const char *str2, int length)
 {
     int i, diff;
     for (i=0 ; i<length ; i++, str1++, str2++) {
@@ -408,7 +410,7 @@ int strncmpIgnoringCase(char *str1, char *str2, int length)
 }
 
 
-void StoreWindowName(Scrn scrn, char *str)
+void StoreWindowName(Scrn scrn, const char *str)
 {
     static Arg arglist[] = {
 	{XtNiconName,	(XtArgVal) NULL},

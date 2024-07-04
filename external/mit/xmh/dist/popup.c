@@ -348,13 +348,13 @@ void PopupNotice(
 	    if (l && command[--l] == ':')
 		command[l] = '\0';
 	}
-	(void) sprintf( label, "%.64s command returned:", command );
+	snprintf(label, sizeof(label), "%.64s command returned:", command);
     } else {
 	/* arbitrary shell command */
 	int len = strlen(popup_status->shell_command);
-	(void) sprintf(label, "%.88s %s\nshell command returned:",
-		       popup_status->shell_command,
-		       ((len > 88) ? "[truncated]" : ""));
+	snprintf(label, sizeof(label), "%.88s %s\nshell command returned:",
+                 popup_status->shell_command,
+                 ((len > 88) ? "[truncated]" : ""));
     }
 
     DeterminePopupPosition(&x, &y, &transientFor);
@@ -497,8 +497,8 @@ void PopupWarningHandler(
 	bzero( &par[i], (10-i) * sizeof(String));
 	if (*num > 10)
 	    par[9] = "(truncated)";
-	(void) sprintf(message, buffer, par[0], par[1], par[2], par[3],
-		       par[4], par[5], par[6], par[7], par[8], par[9]);
+	snprintf(message, sizeof(message), buffer, par[0], par[1], par[2],
+                 par[3], par[4], par[5], par[6], par[7], par[8], par[9]);
 	ptr = message;
     } else {
 	ptr = buffer;

@@ -72,7 +72,7 @@ struct _resources {
     int		mail_interval;		/* how often to check for new mail */
     int		rescan_interval;	/* how often to check viewed tocs */
     int		checkpoint_interval;	/* how often to save edits */
-    char *	checkpoint_name_format; /* format of checkpoint file name */
+    const char *checkpoint_name_format; /* format of checkpoint file name */
     Pixmap	flag_up;		/* folder has new mail */
     Pixmap	flag_down;		/* folder has no new mail */
     Pixmap	new_mail_icon;		/* new mail icon for wm hints */
@@ -125,14 +125,14 @@ extern Boolean	subProcessRunning; /* interlock for DoCommand/CheckMail */
 
 
 typedef struct _XmhMenuEntry {
-    char	*name;			/* menu entry name */
+    const char	*name;			/* menu entry name */
     void   	(*function)(XMH_CB_ARGS); /* menu entry callback function */
 } XmhMenuEntryRec, *XmhMenuEntry;
 
 
 typedef struct _XmhMenuButtonDesc {
-    char	*button_name;		/* menu button name */
-    char	*menu_name;		/* menu name */
+    const char	*button_name;		/* menu button name */
+    const char	*menu_name;		/* menu name */
     int		id;			/* an internal key */
     XmhMenuEntry entry;			/* list of menu entries */
     Cardinal	num_entries;		/* count of menu entries in list */

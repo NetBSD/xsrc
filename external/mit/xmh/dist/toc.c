@@ -35,19 +35,20 @@
 
 #include <sys/stat.h>
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
+#endif
+
 static int IsDir(char *name)
 {
     char str[500];
     struct stat buf;
     if (*name == '.')
 	return FALSE;
-    (void) sprintf(str, "%s/%s", app_resources.mail_path, name);
+    if (snprintf(str, sizeof(str), "%s/%s", app_resources.mail_path, name)
+        >= sizeof(str)) return False;
     if (stat(str, &buf) /* failed */) return False;
-#ifdef S_ISDIR
     return S_ISDIR(buf.st_mode);
-#else
-    return (buf.st_mode & S_IFMT) == S_IFDIR;
-#endif
 }
 
 
@@ -60,11 +61,13 @@ static void MakeSureFolderExists(
     char str[200];
     for (i=0 ; i<*numfoldersptr ; i++)
 	if (strcmp((*namelistptr)[i], name) == 0) return;
-    (void) sprintf(str, "%s/%s", app_resources.mail_path, name);
+    if (snprintf(str, sizeof(str), "%s/%s", app_resources.mail_path, name)
+        >= sizeof(str)) goto punt;
     (void) mkdir(str, 0700);
     *numfoldersptr = ScanDir(app_resources.mail_path, namelistptr, IsDir);
     for (i=0 ; i<*numfoldersptr ; i++)
 	if (strcmp((*namelistptr)[i], name) == 0) return;
+  punt:
     Punt("Can't create new mail folder!");
 }
 
@@ -88,17 +91,16 @@ static void MakeSureSubfolderExists(
 
     /* The parent folder exists.  Make sure the subfolder exists. */
 
-    (void) sprintf(subfolder_path, "%s/%s", app_resources.mail_path, name);
+    if (snprintf(subfolder_path, sizeof(subfolder_path), "%s/%s",
+                 app_resources.mail_path, name) >= sizeof(subfolder_path))
+        goto punt;
     if (stat(subfolder_path, &buf) /* failed */) {
 	(void) mkdir(subfolder_path, 0700);
 	if (stat(subfolder_path, &buf) /* failed */)
 	    Punt("Can't create new xmh subfolder!");
     }
-#ifdef S_ISDIR
     if (!S_ISDIR(buf.st_mode))
-#else
-    if ((buf.st_mode & S_IFMT) != S_IFDIR)
-#endif
+      punt:
 	Punt("Can't create new xmh subfolder!");
 }
 
@@ -106,16 +108,11 @@ int TocFolderExists(Toc toc)
 {
     struct stat buf;
     if (! toc->path) {
-	char str[500];
-	(void) sprintf(str, "%s/%s", app_resources.mail_path, toc->foldername);
-	toc->path = XtNewString(str);
+	XtAsprintf(&toc->path, "%s/%s",
+                   app_resources.mail_path, toc->foldername);
     }
     return ((stat(toc->path, &buf) == 0) &&
-#ifdef S_ISDIR
 	    (S_ISDIR(buf.st_mode)));
-#else
-	    ((buf.st_mode & S_IFMT) == S_IFDIR));
-#endif
 }
 
 static void LoadCheckFiles(void)
@@ -123,7 +120,7 @@ static void LoadCheckFiles(void)
     FILE *fid;
     char str[1024];
 
-    (void) sprintf(str, "%s/.xmhcheck", homeDir);
+    snprintf(str, sizeof(str), "%s/.xmhcheck", homeDir);
     fid = myfopen(str, "r");
     if (fid) {
 	int i;
@@ -181,7 +178,7 @@ void TocInit(void)
     else
 	MakeSureFolderExists(&namelist, &numFolders,
 			     app_resources.drafts_folder_name);
-    folderList = (Toc *) XtMalloc((Cardinal)numFolders * sizeof(Toc));
+    folderList = XtMallocArray((Cardinal)numFolders, sizeof(Toc));
     for (i=0 ; i<numFolders ; i++) {
 	toc = folderList[i] = TUMalloc();
 	toc->foldername = XtNewString(namelist[i]);
@@ -200,13 +197,12 @@ void TocInit(void)
 
 /* Create a toc and add a folder to the folderList.  */
 
-Toc TocCreate(char *foldername)
+Toc TocCreate(const char *foldername)
 {
     Toc		toc = TUMalloc();
 
     toc->foldername = XtNewString(foldername);
-    folderList = (Toc *) XtRealloc((char *) folderList,
-				   (unsigned) ++numFolders * sizeof(Toc));
+    folderList = XtReallocArray(folderList, ++numFolders, sizeof(Toc));
     folderList[numFolders - 1] = toc;
     return toc;
 }
@@ -214,12 +210,13 @@ Toc TocCreate(char *foldername)
 
 /* Create a new folder with the given name. */
 
-Toc TocCreateFolder(char *foldername)
+Toc TocCreateFolder(const char *foldername)
 {
     Toc toc;
     char str[500];
     if (TocGetNamed(foldername)) return NULL;
-    (void) sprintf(str, "%s/%s", app_resources.mail_path, foldername);
+    if (snprintf(str, sizeof(str), "%s/%s", app_resources.mail_path, foldername)
+        >= sizeof(str)) return NULL;
     if (mkdir(str, 0700) < 0) return NULL;
     toc = TocCreate(foldername);
     return toc;
@@ -426,17 +423,14 @@ void TocSetScrn(Toc toc, Scrn scrn)
 	StoreWindowName(scrn, progName);
     } else {
 	toc->num_scrns++;
-	toc->scrn = (Scrn *) XtRealloc((char *) toc->scrn,
-				       (unsigned)toc->num_scrns*sizeof(Scrn));
+	toc->scrn = XtReallocArray(toc->scrn, toc->num_scrns, sizeof(Scrn));
 	toc->scrn[toc->num_scrns - 1] = scrn;
 	TUEnsureScanIsValidAndOpen(toc, True);
 	TUResetTocLabel(scrn);
 	if (app_resources.prefix_wm_and_icon_name) {
 	    char wm_name[64];
-	    int length = strlen(progName);
-	    (void) strncpy(wm_name, progName, length);
-	    (void) strncpy(wm_name + length , ": ", 2);
-	    (void) strcpy(wm_name + length + 2, toc->foldername);
+	    snprintf(wm_name, sizeof(wm_name), "%s: %s",
+		     progName, toc->foldername);
 	    StoreWindowName(scrn, wm_name);
 	}
 	else
@@ -651,7 +645,7 @@ void TocChangeViewedSeq(Toc toc, Sequence seq)
 
 /* Return the sequence with the given name in the given toc. */
 
-Sequence TocGetSeqNamed(Toc toc, char *name)
+Sequence TocGetSeqNamed(Toc toc, const char *name)
 {
     register int i;
     if (name == NULL)
@@ -797,8 +791,8 @@ void TocSetCacheValid(Toc toc)
 
 char *TocMakeFolderName(Toc toc)
 {
-    char* name = XtMalloc((Cardinal) (strlen(toc->path) + 2) );
-    (void)sprintf( name, "+%s", toc->path );
+    char* name;
+    XtAsprintf(&name, "+%s", toc->path);
     return name;
 }
 
@@ -811,7 +805,7 @@ char *TocName(Toc toc)
 
 /* Given a foldername, return the corresponding toc. */
 
-Toc TocGetNamed(char *name)
+Toc TocGetNamed(const char *name)
 {
     int i;
     for (i=0; i<numFolders ; i++)
@@ -872,8 +866,9 @@ int TocConfirmCataclysm(
 	char		str[300];
 	Widget		tocwidget;
 
-	(void)sprintf(str,"Are you sure you want to remove all changes to %s?",
-		      toc->foldername);
+	snprintf(str, sizeof(str),
+                 "Are you sure you want to remove all changes to %s?",
+                 toc->foldername);
 	yes_callbacks[0].closure = (XtPointer) toc;
 	yes_callbacks[1].callback = confirms[0].callback;
 	yes_callbacks[1].closure = confirms[0].closure;
@@ -967,7 +962,7 @@ void TocCommitChanges(
 	    if (curfate != Fignore &&
 		  curfate == fate && desttoc == curdesttoc) {
 		argv = ResizeArgv(argv, cur + 1);
-		(void) sprintf(str, "%d", MsgGetId(msg));
+		snprintf(str, sizeof(str), "%d", MsgGetId(msg));
 		argv[cur++] = XtNewString(str);
 		MsgSetFate(msg, Fignore, (Toc)NULL);
 		if (curdesttoc) {
@@ -1044,7 +1039,7 @@ int TocIncorporate(Toc toc)
     argv[0] = "inc";
     argv[1] = TocMakeFolderName(toc);
     argv[2] = "-width";
-    (void) sprintf(str, "%d", app_resources.toc_width);
+    snprintf(str, sizeof(str), "%d", app_resources.toc_width);
     argv[3] = str;
     if (toc->incfile) {
 	argv[4] = "-file";
@@ -1097,10 +1092,10 @@ void TocMsgChanged(Toc toc, Msg msg)
     argv = MakeArgv(6);
     argv[0] = "scan";
     argv[1] = TocMakeFolderName(toc);
-    (void) sprintf(str, "%d", msg->msgid);
+    snprintf(str, sizeof(str), "%d", msg->msgid);
     argv[2] = str;
     argv[3] = "-width";
-    (void) sprintf(str2, "%d", app_resources.toc_width);
+    snprintf(str2, sizeof(str2), "%d", app_resources.toc_width);
     argv[4] = str2;
     argv[5] = "-noheader";
     ptr = DoCommandToString(argv);
@@ -1135,11 +1130,7 @@ Msg TocMsgFromId(Toc toc, int msgid)
     l = 0;
     h = toc->nummsgs - 1;
     if (h < 0) {
-	if (app_resources.debug) {
-	    char str[100];
-	    (void)sprintf(str, "Toc is empty! folder=%s\n", toc->foldername);
-	    DEBUG( str )
-	}
+	DEBUG1("Toc is empty! folder=%s\n", toc->foldername)
 	return NULL;
     }
     while (l < h - 1) {
@@ -1153,9 +1144,9 @@ Msg TocMsgFromId(Toc toc, int msgid)
     if (toc->msgs[h]->msgid == msgid) return toc->msgs[h];
     if (app_resources.debug) {
 	char str[100];
-	(void) sprintf(str,
-		      "TocMsgFromId search failed! hi=%d, lo=%d, msgid=%d\n",
-		      h, l, msgid);
+	snprintf(str, sizeof(str),
+                 "TocMsgFromId search failed! hi=%d, lo=%d, msgid=%d\n",
+                 h, l, msgid);
 	DEBUG( str )
     }
     return NULL;
@@ -1196,7 +1187,7 @@ void XmhPopSequence(
     Cardinal	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
-    char	*seqname;
+    const char	*seqname;
     Widget	sequenceMenu, selected, original;
     Button	button;
     Sequence	sequence;
@@ -1215,6 +1206,6 @@ void XmhPopSequence(
 	    sequence = TocGetSeqNamed(scrn->toc, seqname);
 	    TocSetSelectedSequence(scrn->toc, sequence);
 	}
-	XtFree(seqname);
+	XtFree((char *)seqname);
     }
 }

@@ -519,9 +519,9 @@ void XmhPrint(
     if (! num_params || ! *num_params) {
 	/* use the print command specified in application resources */
 	Cardinal argc = 1;
-	String *argv = MakeArgv(argc);
+	char **argv = MakeArgv(argc);
 	argv[0] = app_resources.print_command;
-	XmhShellCommand(w, event, argv, &argc);
+	XmhShellCommand(w, event, (String *) argv, &argc);
 	XtFree((char *) argv);
     } else {
 	/* do whatever the user has specified as action parameters */
@@ -783,7 +783,7 @@ void DoPickMessages(
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
     Scrn	nscrn;
-    char *	toseq;
+    const char *toseq;
     Sequence	selectedseq;
     Boolean	recycled;
 
@@ -938,7 +938,7 @@ typedef enum {ADD, REMOVE, DELETE} TwiddleOperation;
 static void TwiddleSequence(Scrn scrn, TwiddleOperation op)
 {
     Toc toc = scrn->toc;
-    char **argv, str[100];
+    char **argv;
     int i;
     MsgList mlist;
     Sequence	selectedseq;
@@ -979,8 +979,9 @@ static void TwiddleSequence(Scrn scrn, TwiddleOperation op)
 	break;
     }
     for (i = 0; i < mlist->nummsgs; i++) {
-	(void) sprintf(str, "%d", MsgGetId(mlist->msglist[i]));
-	argv[6 + i] = XtNewString(str);
+	char *str;
+	XtAsprintf(&str, "%d", MsgGetId(mlist->msglist[i]));
+	argv[6 + i] = str;
     }
     DoCommand(argv, (char *) NULL, (char *) NULL);
     for (i = 0; i < mlist->nummsgs; i++)

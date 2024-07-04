@@ -42,6 +42,6 @@ extern void	TUSaveTocFile			(Toc);
 extern void	TUEnsureScanIsValidAndOpen	(Toc, Boolean);
 extern void	TURefigureTocPositions		(Toc);
 extern void	TUGetFullFolderInfo		(Toc);
-extern Msg	TUAppendToc			(Toc, char *);
+extern Msg	TUAppendToc			(Toc, const char *);
 
 #endif /* _tocutil_h */

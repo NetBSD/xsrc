@@ -36,9 +36,9 @@
 
 	/* from command.c */
 
-extern int	DoCommand		(char **, char *, char *);
-extern char *	DoCommandToFile		(char **);
-extern char *	DoCommandToString	(char **);
+extern int	DoCommand		(char * const *, const char *, const char *);
+extern char *	DoCommandToFile		(char * const *);
+extern char *	DoCommandToString	(char * const *);
 
 	/* from compfuncs.c */
 
@@ -54,8 +54,8 @@ extern void 	DoOpenFolderInNewWindow	(XMH_CB_ARGS);
 extern void	DoCreateFolder		(XMH_CB_ARGS);
 extern void 	DoDeleteFolder		(XMH_CB_ARGS);
 extern void	DoSaveYourself		(XMH_CB_ARGS);
-extern void	Push			(Stack *, char *);
-extern char *	Pop			(Stack *);
+extern void	Push			(Stack *, const char *);
+extern const char *	Pop		(Stack *);
 
 	/* from init.c */
 
@@ -63,15 +63,15 @@ extern void	InitializeWorld		(int, char **);
 
 	/* from menu.c */
 
-extern void	AttachMenuToButton	(Button, Widget, char *);
-extern void 	AddMenuEntry		(Widget, char *, ...);
+extern void	AttachMenuToButton	(Button, Widget, const char *);
 extern void	DoRememberMenuSelection (XMH_CB_ARGS);
-extern void	SendMenuEntryEnableMsg	(Button, char *, int);
+extern void	SendMenuEntryEnableMsg	(Button, const char *, int);
 extern void	ToggleMenuItem		(Widget, Boolean);
 
 	/* from miscfuncs.c */
 
-extern int	ScanDir			(char *, char ***, int (*)(char *));
+extern int	ScanDir			(const char *, char ***,
+                                         int (*)(char *));
 
 	/* from msg.c */
 
@@ -81,7 +81,7 @@ extern char*	MsgName			(Msg);
 	/* from pick.c */
 
 extern void	InitPick		(void);
-extern void	AddPick			(Scrn, Toc, char *, char *);
+extern void	AddPick			(Scrn, Toc, const char *, const char *);
 
 	/* from popup.c */
 
@@ -90,7 +90,7 @@ extern void	WMDeletePopup		(Widget, XEvent*);
 extern void	PopupPrompt		(Widget, String, XtCallbackProc);
 extern void	PopupConfirm		(Widget, String,
 					 XtCallbackList, XtCallbackList);
-extern void	PopupNotice		(char *, XtCallbackProc, XtPointer);
+extern void	PopupNotice		(String, XtCallbackProc, XtPointer);
 extern void 	PopupError		(Widget, String);
 extern void	PopupWarningHandler(String, String, String, String, String *, Cardinal *);
 
@@ -139,37 +139,37 @@ extern void	DoDeleteSeq		(XMH_CB_ARGS);
 
 	/* from util.c */
 
-extern void	Punt			(char *);
-extern int	myopen			(char *, int, int);
-extern FILE *	myfopen			(char *, char *);
+extern void	Punt			(const char *) _X_NORETURN;
+extern int	myopen			(const char *, int, int);
+extern FILE *	myfopen			(const char *, const char *);
 extern void	myclose			(int);
 extern void	myfclose		(FILE *);
 extern char *	MakeNewTempFileName	(void);
 extern char **	MakeArgv		(int);
 extern char **	ResizeArgv		(char **, int);
-extern FILEPTR	FOpenAndCheck		(char *, char *);
+extern FILEPTR	FOpenAndCheck		(const char *, const char *);
 extern char *	ReadLine		(FILE *);
 extern char *	ReadLineWithCR		(FILE *);
-extern void	DeleteFileAndCheck	(char *);
-extern void	CopyFileAndCheck	(char *, char *);
-extern void	RenameAndCheck		(char *, char *);
+extern void	DeleteFileAndCheck	(const char *);
+extern void	CopyFileAndCheck	(const char *, const char *);
+extern void	RenameAndCheck		(const char *, const char *);
 extern char *	CreateGeometry		(int, int, int, int, int);
-extern int	FileExists		(char *);
-extern long	LastModifyDate		(char *);
-extern int	GetFileLength		(char *);
-extern Boolean	IsSubfolder		(char *);
-extern void 	SetCurrentFolderName	(Scrn, char *);
-extern void	ChangeLabel		(Widget, char *);
-extern Widget	CreateTextSW		(Scrn, char *, ArgList, Cardinal);
-extern Widget	CreateTitleBar		(Scrn, char *);
+extern int	FileExists		(const char *);
+extern long	LastModifyDate		(const char *);
+extern int	GetFileLength		(const char *);
+extern Boolean	IsSubfolder		(const char *);
+extern void 	SetCurrentFolderName	(Scrn, const char *);
+extern void	ChangeLabel		(Widget, const char *);
+extern Widget	CreateTextSW		(Scrn, const char *, ArgList, Cardinal);
+extern Widget	CreateTitleBar		(Scrn, const char *);
 extern void	Feep			(int, int, Window);
 extern MsgList	CurMsgListOrCurMsg	(Toc);
 extern int	GetWidth		(Widget);
 extern int	GetHeight		(Widget);
 extern Toc	SelectedToc		(Scrn);
 extern Toc	CurrentToc		(Scrn);
-extern int	strncmpIgnoringCase(char *, char *, int);
-extern void 	StoreWindowName		(Scrn, char *);
+extern int	strncmpIgnoringCase	(const char *, const char *, int);
+extern void 	StoreWindowName		(Scrn, const char *);
 extern void	InitBusyCursor		(Scrn);
 extern void	ShowBusyCursor		(void);
 extern void 	UnshowBusyCursor	(void);

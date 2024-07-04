@@ -1,3 +1,149 @@
+commit 9f9696760885d3572b60d7b8a8f34d84bf2b03b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 3 14:49:13 2024 -0800
+
+    xmh 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b03ef1199698f13dc9b349d5e94e2ff6c91ce012
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 16:11:04 2024 -0800
+
+    Simplify fallback code for systems without S_ISDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 692b6a728e08ff4e936728b904d7b13bc4d301ed
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 16:05:43 2024 -0800
+
+    Convert allocation calls to XtMallocArray or XtReallocArray where appropriate
+    
+    Raises minimum libXt requirement to 1.3.0 for these calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8b22282c564763bb3fb6baf5aae7b341dfbb33db
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 15:35:09 2024 -0800
+
+    Handle -Wformat-security warnings from the DEBUG macro
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b7d18901774b955e000610b4138e93ed528613f7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 15:20:46 2024 -0800
+
+    Plug memory leaks in error paths of ScanDir()
+    
+    Found by -Wanalyzer-malloc-leak warning from gcc 13.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a92147737501dc07996d7211a7b56f2b3f9cf3f6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 14:32:09 2024 -0800
+
+    Clear 4 of 6 -Wstringop-truncation warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 834a388e533abb3f7e926bff7d37fa480f2eda70
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 14:14:53 2024 -0800
+
+    Fix 4 of 4 -Wformat-truncation warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aef5af610ef4847140f957b1c62f9178e06965f1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 14:04:41 2024 -0800
+
+    Mark Punt as _X_NORETURN
+    
+    Clears gcc warning:
+    util.c: In function ‘Punt’:
+    util.c:51:6: warning: function might be candidate for attribute ‘noreturn’
+     [-Wsuggest-attribute=noreturn]
+       51 | void Punt(const char *str)
+          |      ^~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2525547dfd5fae9d820232af1ea1d3f517c399d4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 14:01:05 2024 -0800
+
+    Further reduce the number of -Wdiscarded-qualifiers warnings from 276 to 76
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ab0228c679932b4f5439e9304db8c6a1b8f50909
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 11:26:54 2024 -0800
+
+    Use _CONST_X_STRING to make libXt declare String as const char *
+    
+    Drops number of -Wdiscarded-qualifiers warnings from 489 to 276
+    from gcc 13.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d8fbc4184089beaded2fc1d7bf8bbd23d3e923a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 11:19:34 2024 -0800
+
+    Replace sprintf calls with snprintf or XtAsprintf
+    
+    Raises minimum libXt requirement to 1.1.0 for XtAsprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 283787c9fbeef6cb7c452847a52ecc7f14b6af4a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 09:54:40 2024 -0800
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ef7b330df43bca2d595386824ff266f73cc45731
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 21 09:52:46 2024 -0800
+
+    Modernize lseek() calls
+    
+    Use off_t for second argument, symbolic constant for third.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ef6cc7ce80c9ba3ff24bfd7b2374fb014efec279
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 11 16:33:50 2023 -0800
+
+    Add -help and -version options
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c3f4b549c080a400f2fd2cb8daa8702f7f287e21
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 11 16:28:12 2023 -0800
+
+    Print which arguments were unknown before giving usage message
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f22538b6e6b2a44f87ad7e6a9e39712f5f58d39e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 6d2a692ccc8804134862edaa07336149a522062a
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Aug 30 17:48:08 2022 -0700
@@ -563,13 +709,13 @@ Date:   Wed Jul 20 19:32:03 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 2493ff8b81f07674fbc877cf0ac5d047471fd72a
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 22:40:16 2005 +0000
 
     Add _BSD_SOURCE to lots of applications - patch from Stefan Dirsch
 
 commit 43170770ed537cc4a2d06eafbc99d123bbbb53d4
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 5 22:51:11 2005 +0000
 
     Add build systems for xlogo, xlsatoms, xlsclients, xmag, xman, xmessage,
