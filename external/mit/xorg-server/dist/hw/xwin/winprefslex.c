@@ -16,6 +16,7 @@
 /* First, we deal with  platform-specific or compiler-specific issues. */
 
 /* begin standard C headers. */
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -32,8 +33,8 @@
 
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
-/* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types. 
+/* C++ systems might need __STDC_LIMIT_MACROS defined before including
+ * <stdint.h>, if you want the limit (max/min) macros for int types.
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -687,9 +688,9 @@ static char *makestr(char *str)
   return ptr;
 }
 
-#line 690 "winprefslex.c"
+#line 691 "winprefslex.c"
 #define YY_NO_INPUT 1
-#line 692 "winprefslex.c"
+#line 693 "winprefslex.c"
 
 #define INITIAL 0
 
@@ -906,7 +907,7 @@ YY_DECL
 	{
 #line 63 "winprefslex.l"
 
-#line 909 "winprefslex.c"
+#line 910 "winprefslex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1145,7 +1146,7 @@ YY_RULE_SETUP
 #line 100 "winprefslex.l"
 ECHO;
 	YY_BREAK
-#line 1148 "winprefslex.c"
+#line 1149 "winprefslex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
