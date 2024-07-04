@@ -202,7 +202,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-DATA = $(dist_appdefault_DATA)
+DATA = $(dist_appdefault_DATA) $(noinst_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -322,6 +322,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
+LOCALEDIR = @LOCALEDIR@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MAN_SUBSTS = @MAN_SUBSTS@
@@ -403,6 +404,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = man
 AM_CPPFLAGS = -D_CONST_X_STRING
+@USE_GETTEXT_TRUE@AM_CPPFLAGS = -DLOCALEDIR='"$(LOCALEDIR)"'
 AM_CFLAGS = $(XFONTSEL_CFLAGS) $(CWARNFLAGS)
 xfontsel_LDADD = $(XFONTSEL_LIBS)
 xfontsel_SOURCES = \
@@ -419,6 +421,8 @@ dist_appdefault_DATA = \
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 EXTRA_DIST = README.md
+@USE_GETTEXT_TRUE@noinst_DATA = xfontsel.po
+@USE_GETTEXT_TRUE@CLEANFILES = xfontsel.po
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -903,6 +907,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -1019,6 +1024,9 @@ ChangeLog:
 	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog INSTALL
+
+@USE_GETTEXT_TRUE@xfontsel.po: $(xfontsel_SOURCES:%=$(srcdir)/%)
+@USE_GETTEXT_TRUE@	$(AM_V_GEN)xgettext -d xfontsel -c -n $(xfontsel_SOURCES:%=$(srcdir)/%)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
