@@ -24,7 +24,7 @@ dnl Process this file with autoconf to create configure.
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xditview],
-	[1.0.6],
+	[1.0.7],
 	[https://gitlab.freedesktop.org/xorg/app/xditview/-/issues],
 	[xditview])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -38,6 +38,9 @@ m4_ifndef([XORG_MACROS_VERSION],
           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 # Checks for library functions.
 AC_CHECK_FUNC([mkstemp], 
@@ -54,8 +57,26 @@ AC_ARG_WITH(appdefaultdir,
 	[appdefaultdir="$withval"], [appdefaultdir="${xt_appdefaultdir}"])
 AC_SUBST(appdefaultdir)
 
+# Check whether to use Xft to draw text
+AC_ARG_WITH(xft,
+        AS_HELP_STRING([--with-xft],
+                        [Use Xft to draw text (default is YES if installed)]),
+        [USE_XFT="$withval"],
+        PKG_CHECK_EXISTS([xft xrender fontconfig],
+                         [USE_XFT="yes"], [USE_XFT="no"]))
+
+if test "x$USE_XFT" = "xyes" ; then
+        PKG_CHECK_MODULES(XFT, [xft xrender fontconfig])
+        AC_DEFINE([USE_XFT], 1,
+            [Define to 1 to use Xft for text rendering])
+fi
+
 
 AC_CONFIG_FILES([
 	Makefile
 	man/Makefile])
 AC_OUTPUT
+
+echo ""
+echo "$PACKAGE_STRING will be built with the following settings:"
+echo " XFT:            "$USE_XFT

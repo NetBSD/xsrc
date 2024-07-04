@@ -30,7 +30,7 @@
  */
 
 typedef struct _DviClass {
-	int		makes_compiler_happy;  /* not used */
+    int makes_compiler_happy;   /* not used */
 } DviClassPart;
 
 /*
@@ -38,9 +38,9 @@ typedef struct _DviClass {
  */
 
 typedef struct _DviClassRec {
-    CoreClassPart	core_class;
-    SimpleClassPart	simple_class;
-    DviClassPart	command_class;
+    CoreClassPart core_class;
+    SimpleClassPart simple_class;
+    DviClassPart command_class;
 } DviClassRec;
 
 extern DviClassRec dviClassRec;
@@ -56,33 +56,33 @@ extern DviClassRec dviClassRec;
  */
 
 typedef struct _dviFontSizeList {
-	struct _dviFontSizeList	*next;
-	int			size;
-	char			*x_name;
+    struct _dviFontSizeList *next;
+    int size;
+    char *x_name;
 #ifdef USE_XFT
-	XftFont			*font;
-	Bool			core;
+    XftFont *font;
+    Bool core;
 #else
-	XFontStruct		*font;
+    XFontStruct *font;
 #endif
-	int			doesnt_exist;
+    int doesnt_exist;
 } DviFontSizeList;
 
 typedef struct _dviFontList {
-	struct _dviFontList	*next;
-	char			*dvi_name;
-	char			*x_name;
-	int			dvi_number;
-	Boolean			initialized;
-	Boolean			scalable;
-	DviFontSizeList		*sizes;
-	DviCharNameMap		*char_map;
+    struct _dviFontList *next;
+    char *dvi_name;
+    char *x_name;
+    int dvi_number;
+    Boolean initialized;
+    Boolean scalable;
+    DviFontSizeList *sizes;
+    DviCharNameMap *char_map;
 } DviFontList;
 
 typedef struct _dviFontMap {
-	struct _dviFontMap	*next;
-	char			*dvi_name;
-	char			*x_name;
+    struct _dviFontMap *next;
+    char *dvi_name;
+    char *x_name;
 } DviFontMap;
 
 #define DVI_TEXT_CACHE_SIZE	256
@@ -90,49 +90,49 @@ typedef struct _dviFontMap {
 
 #ifdef USE_XFT
 typedef struct _dviTextItem {
-	char		*chars;
-	int		nchars;
-	int		x;
-	XftFont		*font;
+    char *chars;
+    int nchars;
+    int x;
+    XftFont *font;
 } DviTextItem;
 #endif
 
 typedef struct _dviCharCache {
 #ifdef USE_XFT
-	DviTextItem	cache[DVI_TEXT_CACHE_SIZE];
+    DviTextItem cache[DVI_TEXT_CACHE_SIZE];
 #else
-	XTextItem	cache[DVI_TEXT_CACHE_SIZE];
+    XTextItem cache[DVI_TEXT_CACHE_SIZE];
 #endif
-	char		char_cache[DVI_CHAR_CACHE_SIZE];
-	int		index;
-	int		max;
-	int		char_index;
-	int		font_size;
-	int		font_number;
+    char char_cache[DVI_CHAR_CACHE_SIZE];
+    int index;
+    int max;
+    int char_index;
+    int font_size;
+    int font_number;
 #ifdef USE_XFT
-	XftFont		*font;
+    XftFont *font;
 #else
-	XFontStruct	*font;
+    XFontStruct *font;
 #endif
-	int		start_x, start_y;
-	int		x, y;
+    int start_x, start_y;
+    int x, y;
 } DviCharCache;
 
 typedef struct _dviState {
-	struct _dviState	*next;
-	int			font_size;
-	int			font_bound;
-	int			font_number;
-	int			line_style;
-	int			line_width;
-	int			x;
-	int			y;
+    struct _dviState *next;
+    int font_size;
+    int font_bound;
+    int font_number;
+    int line_style;
+    int line_width;
+    int x;
+    int y;
 } DviState;
 
 typedef struct _dviFileMap {
-	struct _dviFileMap	*next;
-	long			position;
-	int			page_number;
+    struct _dviFileMap *next;
+    long position;
+    int page_number;
 } DviFileMap;
 
 /*
@@ -140,64 +140,64 @@ typedef struct _dviFileMap {
  */
 
 typedef struct {
-	/*
-	 * resource specifiable items
-	 */
-	char		*font_map_string;
-	unsigned long	foreground;
-	int		requested_page;
-	int		last_page;
-	FILE		*file;
-	Boolean		seek;		/* file is "seekable" */
+    /*
+     * resource specifiable items
+     */
+    char *font_map_string;
+    unsigned long foreground;
+    int requested_page;
+    int last_page;
+    FILE *file;
+    Boolean seek;               /* file is "seekable" */
 #ifdef USE_XFT
-	XftFont		*default_font;
+    XftFont *default_font;
 #else
-	XFontStruct	*default_font;
+    XFontStruct *default_font;
 #endif
-	int		backing_store;
-	Boolean		noPolyText;
-	int		screen_resolution;
-	float		page_width;
-	float		page_height;
-	int		size_scale_set;
-	/*
- 	 * private state
- 	 */
-	FILE		*tmpFile;	/* used when reading stdin */
-	char		readingTmp;	/* reading now from tmp */
-	char		ungot;		/* have ungetc'd a char */
-	GC		normal_GC;
+    int backing_store;
+    Boolean noPolyText;
+    int screen_resolution;
+    float page_width;
+    float page_height;
+    int size_scale_set;
+    /*
+     * private state
+     */
+    FILE *tmpFile;              /* used when reading stdin */
+    char readingTmp;            /* reading now from tmp */
+    char ungot;                 /* have ungetc'd a char */
+    GC normal_GC;
 #ifdef USE_XFT
-	XftDraw		*draw;
-	XftColor	black;
+    XftDraw *draw;
+    XftColor black;
 #endif
-	DviFileMap	*file_map;
-	DviFontList	*fonts;
-	DviFontMap	*font_map;
-	int		current_page;
-	int		font_size;
-	int		font_number;
-	int		device_resolution;
-	int		line_width;
-	int		line_style;
-	int		desired_width;
-	int		desired_height;
-	int		size_scale;	/* font size scale */
+    DviFileMap *file_map;
+    DviFontList *fonts;
+    DviFontMap *font_map;
+    int current_page;
+    int font_size;
+    int font_number;
+    int device_resolution;
+    int line_width;
+    int line_style;
+    int desired_width;
+    int desired_height;
+    int size_scale;             /* font size scale */
 #ifdef USE_XFT
-	XftFont		*font;
+    XftFont *font;
 #else
-	XFontStruct	*font;
+    XFontStruct *font;
 #endif
-	int		display_enable;
-	double		scale;		/* device coordinates to pixels */
-	struct ExposedExtents {
-	    int x1, y1, x2, y2;
-	}		extents;
-	DviState	*state;
-	DviCharCache	cache;
+    int display_enable;
+    double scale;               /* device coordinates to pixels */
+    struct ExposedExtents {
+        int x1, y1, x2, y2;
+    } extents;
+    DviState *state;
+    DviCharCache cache;
 } DviPart;
 
-extern int		DviGetAndPut(DviWidget, int *);
+extern int DviGetAndPut(DviWidget, int *);
 
 #define DviGetIn(dw,cp)\
     (dw->dvi.tmpFile ? (\
@@ -238,9 +238,9 @@ extern int		DviGetAndPut(DviWidget, int *);
  */
 
 typedef struct _DviRec {
-    CorePart	core;
-    SimplePart	simple;
-    DviPart	dvi;
+    CorePart core;
+    SimplePart simple;
+    DviPart dvi;
 } DviRec;
 
 /* previously in draw.c */
@@ -269,41 +269,42 @@ VerticalGoto(DviWidget dw, int NewPosition)
 }
 
 /* draw.c */
-extern void		FlushCharCache(DviWidget);
-extern void		SetGCForDraw(DviWidget);
-extern void		DrawLine(DviWidget, int, int);
-extern void		DrawCircle(DviWidget, int);
-extern void		DrawEllipse(DviWidget, int, int);
-extern void		DrawArc(DviWidget, int, int, int, int);
-extern void		DrawSpline(DviWidget, const char *, int);
+extern void FlushCharCache(DviWidget);
+extern void SetGCForDraw(DviWidget);
+extern void DrawLine(DviWidget, int, int);
+extern void DrawCircle(DviWidget, int);
+extern void DrawEllipse(DviWidget, int, int);
+extern void DrawArc(DviWidget, int, int, int, int);
+extern void DrawSpline(DviWidget, const char *, int);
 
 /* font.c */
-extern void		ParseFontMap(DviWidget);
-extern void		DestroyFontMap(DviFontMap *);
-extern void		SetFontPosition(DviWidget, int, const char *, const char *);
+extern void ParseFontMap(DviWidget);
+extern void DestroyFontMap(DviFontMap *);
+extern void SetFontPosition(DviWidget, int, const char *, const char *);
+
 #ifdef USE_XFT
-extern XftFont *	QueryFont(DviWidget, int, int);
+extern XftFont *QueryFont(DviWidget, int, int);
 #else
-extern XFontStruct *	QueryFont(DviWidget, int, int);
+extern XFontStruct *QueryFont(DviWidget, int, int);
 #endif
-extern DviCharNameMap *	QueryFontMap(DviWidget, int);
+extern DviCharNameMap *QueryFontMap(DviWidget, int);
 
 /* lex.c */
-extern char *		GetLine(DviWidget, char *, int);
-extern char *		GetWord(DviWidget, char *, int);
-extern int		GetNumber(DviWidget);
+extern char *GetLine(DviWidget, char *, int);
+extern char *GetWord(DviWidget, char *, int);
+extern int GetNumber(DviWidget);
 
 /* page.c */
-extern void		DestroyFileMap(DviFileMap *);
-extern void		ForgetPagePositions(DviWidget);
-extern void		RememberPagePosition(DviWidget, int);
-extern long		SearchPagePosition(DviWidget, int);
-extern void		FileSeek(DviWidget, long);
+extern void DestroyFileMap(DviFileMap *);
+extern void ForgetPagePositions(DviWidget);
+extern void RememberPagePosition(DviWidget, int);
+extern long SearchPagePosition(DviWidget, int);
+extern void FileSeek(DviWidget, long);
 
 /* parse.c */
-extern int		ParseInput(DviWidget);
+extern int ParseInput(DviWidget);
 
 /* Dvi.c */
-extern void		SetDeviceResolution(DviWidget, int);
+extern void SetDeviceResolution(DviWidget, int);
 
-#endif /* _XtDviP_h */
+#endif                          /* _XtDviP_h */

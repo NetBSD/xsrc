@@ -23,8 +23,8 @@ SUBDIRS = man
 bin_PROGRAMS = xditview
 
 AM_CPPFLAGS = -D_CONST_X_STRING
-AM_CFLAGS = $(XDITVIEW_CFLAGS)
-xditview_LDADD = $(XDITVIEW_LIBS) -lm
+AM_CFLAGS = $(XDITVIEW_CFLAGS) $(XFT_CFLAGS) $(CWARNFLAGS)
+xditview_LDADD = $(XDITVIEW_LIBS) $(XFT_LIBS) -lm
 
 xditview_SOURCES =	\
         draw.c \
