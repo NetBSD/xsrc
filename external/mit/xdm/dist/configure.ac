@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xdm], [1.1.14],
+AC_INIT([xdm], [1.1.16],
         [https://gitlab.freedesktop.org/xorg/app/xdm/-/issues], [xdm])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -33,9 +33,7 @@ AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Initialize libtool
-AC_DISABLE_STATIC
-AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
+LT_INIT([disable-static dlopen])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -194,16 +192,17 @@ AM_CONDITIONAL(HAVE_SYSTEMD, [test "x$with_systemdsystemunitdir" != "xno"])
 # This requires libsystemd.
 AC_ARG_WITH([systemd-daemon], AS_HELP_STRING([--with-systemd-daemon],
 	[Add support for systemd startup notification (default is autodetected)]),
-	[USE_SYSTEMD_DAEMON=$withval], [USE_SYSTEMD_DAEMON=auto])
+	[USE_SYSTEMD_DAEMON=$withval],
+        PKG_CHECK_EXISTS(libsystemd, [USE_SYSTEMD_DAEMON="yes"], [USE_SYSTEMD_DAEMON="no"]))
 AS_IF([test "x$USE_SYSTEMD_DAEMON" != "xno"], [
     PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd],
-	[AC_DEFINE(USE_SYSTEMD_DAEMON,1,[Use systemd startup notification])],
+	[AC_DEFINE(USE_SYSTEMD_DAEMON,1 ,[Use systemd startup notification])],
 	[AS_IF([test "x$USE_SYSTEMD_DAEMON" = "xyes"],
 	    [AC_MSG_ERROR([systemd startup notification support requested, but libsystemd not found.])]
 	)]
     )
 ])
-AM_CONDITIONAL(USE_SYSTEMD_DAEMON, [test "x$USE_SYSTEMD_DAEMON" != "xno"])
+AM_CONDITIONAL(USE_SYSTEMD_DAEMON, [test "x$USE_SYSTEMD_DAEMON" = "xyes"])
 
 # FIXME: Find better test for which OS'es use su -m  - for now, just try to
 # mirror the Imakefile setting of:
@@ -418,6 +417,7 @@ AC_SUBST(XDM_PIXMAPDIR)
 # Packages used by multiple programs
 
 PKG_CHECK_MODULES(XDM_TOOLKIT, xaw7)
+XDM_TOOLKIT_CFLAGS="$XDM_TOOLKIT_CFLAGS -D_CONST_X_STRING"
 PKG_CHECK_MODULES(DMCP, xdmcp)
 PKG_CHECK_MODULES(XLIB, x11)
 PKG_CHECK_MODULES(AUTH, xau)

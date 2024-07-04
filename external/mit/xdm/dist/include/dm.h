@@ -69,9 +69,6 @@ from The Open Group.
 #  include <X11/Xdmcp.h>
 # endif
 
-# ifdef pegasus
-#  undef dirty		/* Some bozo put a macro called dirty in sys/param.h */
-# endif /* pegasus */
 
 # ifndef X_NOT_POSIX
 #  ifdef _POSIX_SOURCE
@@ -86,18 +83,11 @@ from The Open Group.
 #  define waitCore(w)    0	/* not in POSIX.  so what? */
 typedef int		waitType;
 # else /* X_NOT_POSIX */
-#  ifdef SYSV
-#   define waitCode(w)	(((w) >> 8) & 0x7f)
-#   define waitSig(w)	((w) & 0xff)
-#   define waitCore(w)	(((w) >> 15) & 0x01)
-typedef int		waitType;
-#  else /* SYSV */
 #   include <sys/wait.h>
 #   define waitCode(w)	((w).w_T.w_Retcode)
 #   define waitSig(w)	((w).w_T.w_Termsig)
 #   define waitCore(w)	((w).w_T.w_Coredump)
 typedef union wait	waitType;
-#  endif
 # endif /* X_NOT_POSIX */
 
 # ifdef USE_PAM
@@ -495,10 +485,6 @@ extern void ProcessRequestSocket(int fd);
 # include <stdlib.h>
 
 # if defined(X_NOT_POSIX) || defined(__NetBSD__) && defined(__sparc__)
-#  if defined(SYSV)
-#   define SIGNALS_RESET_WHEN_CAUGHT
-#   define UNRELIABLE_SIGNALS
-#  endif
 #  define Setjmp(e)	setjmp(e)
 #  define Longjmp(e,v)	longjmp(e,v)
 #  define Jmp_buf		jmp_buf

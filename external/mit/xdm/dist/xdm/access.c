@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -548,11 +548,6 @@ tryagain:
 # if defined(IPv6) && defined(AF_INET6)
 	    case AF_INET6:
 		display->connectionType = FamilyInternet6;
-		break;
-# endif
-# ifdef AF_DECnet
-	    case AF_DECnet:
-		display->connectionType = FamilyDECnet;
 		break;
 # endif
 	    default:

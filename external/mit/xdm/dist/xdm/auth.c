@@ -52,22 +52,12 @@ from The Open Group.
 # include "dm_socket.h"
 #endif
 
-#if defined(hpux)
-# include <sys/utsname.h>
-#endif
 
-#if defined(SYSV) && defined(i386)
-# include <sys/stream.h>
-#endif /* i386 */
 
 #ifdef SVR4
 # include <netdb.h>
 # include <sys/sockio.h>
 # include <sys/stropts.h>
-#endif
-#ifdef __convex__
-# include <sync/queue.h>
-# include <sync/sema.h>
 #endif
 #ifdef __GNU__
 # include <netdb.h>
@@ -86,11 +76,6 @@ from The Open Group.
 # define USE_SIOCGLIFCONF
 #endif
 
-#if (defined(SVR4) && !defined(sun)) &&                 \
-    defined(SIOCGIFCONF) && !defined(USE_SIOCGLIFCONF)
-# define SYSV_SIOCGIFCONF
-#endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 # ifdef BSD
@@ -100,11 +85,6 @@ from The Open Group.
 # endif
 #endif
 
-#ifdef __UNIXOS2__
-# define link rename
-int chown(int a,int b,int c) {}
-# include <io.h>
-#endif
 
 struct AuthProtocol {
     unsigned short  name_length;
@@ -777,27 +757,6 @@ DefineLocal (FILE *file, Xauth *auth)
  *       and so, you may be better off using gethostname (if it exists).
  */
 
-#if defined(hpux)
-	/*
-	 * For HP-UX, HP's Xlib expects a fully-qualified domain name, which
-	 * is achieved by using gethostname().  For compatibility, we must
-	 * also still create the entry using uname().
-	 */
-	char	tmp_displayname[100];
-	struct utsname name;
-
-	tmp_displayname[0] = 0;
-	uname(&name);
-	snprintf(tmp_displayname, sizeof(tmp_displayname), "%s", name.nodename);
-	writeAddr (FamilyLocal, strlen (tmp_displayname), tmp_displayname,
-		   file, auth);
-
-	/*
-	 * If _XGetHostname() returned the same value as uname(), don't
-	 * write a duplicate entry.
-	 */
-	if (strcmp (displayname, tmp_displayname))
-#endif
 
 	writeAddr (FamilyLocal, len, displayname, file, auth);
 }
@@ -852,40 +811,6 @@ DefineSelf(int fd, FILE *file, Xauth *auth)
     Debug("DefineSelf done\n");
 }
 #else  /* GETIFADDRS */
-
-# ifdef SYSV_SIOCGIFCONF
-
-/* Deal with different SIOCGIFCONF ioctl semantics on SYSV, SVR4 */
-
-static int
-ifioctl (int fd, int cmd, char *arg)
-{
-    struct strioctl ioc;
-    int ret;
-
-    bzero((char *) &ioc, sizeof(ioc));
-    ioc.ic_cmd = cmd;
-    ioc.ic_timout = 0;
-    if (cmd == SIOCGIFCONF)
-    {
-	ioc.ic_len = ((struct ifconf *) arg)->ifc_len;
-	ioc.ic_dp = ((struct ifconf *) arg)->ifc_buf;
-    }
-    else
-    {
-	ioc.ic_len = sizeof(struct ifreq);
-	ioc.ic_dp = arg;
-    }
-    ret = ioctl(fd, I_STR, (char *) &ioc);
-    if (ret >= 0 && cmd == SIOCGIFCONF)
-	((struct ifconf *) arg)->ifc_len = ioc.ic_len;
-    return(ret);
-}
-# else /* SYSV_SIOCGIFCONF */
-#  define ifioctl ioctl
-# endif /* SYSV_SIOCGIFCONF */
-
-
 
 # if defined(SIOCGIFCONF) || defined (USE_SIOCGLIFCONF)
 
@@ -960,7 +885,7 @@ DefineSelf (int fd, FILE *file, Xauth *auth)
 #   define IFR_IFR_NAME ifr->ifr_name
 #  endif
 
-    if (ifioctl (fd, IFC_IOCTL_REQ, (char *) &ifc) < 0) {
+    if (ioctl (fd, IFC_IOCTL_REQ, (char *) &ifc) < 0) {
         LogError ("Trouble getting network interface configuration");
 
 #  ifdef USE_SIOCGLIFCONF

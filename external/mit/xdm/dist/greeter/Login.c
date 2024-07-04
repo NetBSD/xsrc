@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -910,7 +910,7 @@ GetPrompt(Widget ctx, int promptNum)
 
 _X_INTERNAL
 int
-SetValue(Widget ctx, int promptNum, char *value)
+SetValue(Widget ctx, int promptNum, const char *value)
 {
     LoginWidget	w = (LoginWidget) ctx;
 

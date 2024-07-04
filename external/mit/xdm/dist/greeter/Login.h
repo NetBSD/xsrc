@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -220,7 +220,7 @@ extern int SetPrompt(Widget ctx, int promptId, const char *message,
 		     loginPromptState state, Boolean minimumTime);
 extern const char *GetPrompt(Widget ctx, int promptId);
 
-extern int SetValue(Widget ctx, int promptId, char *value);
+extern int SetValue(Widget ctx, int promptId, const char *value);
 extern const char *GetValue(Widget ctx, int promptId);
 
 #endif /* _XtLogin_h */

@@ -110,9 +110,6 @@ char * NetaddrAddress(XdmcpNetaddr netaddrp, int *lenp)
     }
 #  endif
 # endif
-# ifdef AF_CHAOS
-    case AF_CHAOS:
-# endif
     default:
 	*lenp = 0;
 	return NULL;
@@ -139,11 +136,9 @@ int ConvertAddr (XdmcpNetaddr saddr, int *len, char **addr)
 	break;
 # endif
 # ifdef AF_UNIX
-#  ifndef hpux
       case AF_UNIX:
         retval = FamilyLocal;
 	break;
-#  endif
 # endif
 # ifdef TCPCONN
       case AF_INET:
@@ -157,11 +152,6 @@ int ConvertAddr (XdmcpNetaddr saddr, int *len, char **addr)
 	    retval = FamilyInternet6;
 	break;
 #  endif
-# endif
-# ifdef AF_CHAOS
-    case AF_CHAOS:
-	retval = FamilyChaos;
-	break;
 # endif
       default:
 	retval = -1;

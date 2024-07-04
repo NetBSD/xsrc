@@ -75,12 +75,6 @@ in this Software without prior written authorization from The Open Group.
 #if defined(SVR4)
 # include    <sys/sockio.h>
 #endif
-#if defined(SVR4) && defined(PowerMAX_OS)
-# include    <sys/stropts.h>
-#endif
-#if defined(SYSV) && defined(i386)
-# include    <sys/stream.h>
-#endif
 
 #include    "dm_socket.h"
 
@@ -107,19 +101,7 @@ in this Software without prior written authorization from The Open Group.
 # define ishexdigit(c)	(isdigit(c) || ('a' <= (c) && (c) <= 'f'))
 #endif
 
-#ifdef hpux
-# include <sys/utsname.h>
-# ifdef HAS_IFREQ
-#  include <net/if.h>
-# endif
-#else
-# ifdef __convex__
-#  include <sync/queue.h>
-#  include <sync/sema.h>
-# endif
-# include <net/if.h>
-#endif /* hpux */
-
+#include    <net/if.h>
 #include    <netdb.h>
 #include    <X11/keysym.h>
 
@@ -193,39 +175,6 @@ static int  pingTry;
 static XdmcpBuffer	directBuffer, broadcastBuffer;
 static XdmcpBuffer	buffer;
 
-#if (defined(SVR4) && !defined(sun) && !defined(__sgi) && !defined(NCR)) && defined(SIOCGIFCONF)
-
-/* Deal with different SIOCGIFCONF ioctl semantics on these OSs */
-
-static int
-ifioctl (int fd, int cmd, char *arg)
-{
-    struct strioctl ioc;
-    int ret;
-
-    bzero((char *) &ioc, sizeof(ioc));
-    ioc.ic_cmd = cmd;
-    ioc.ic_timout = 0;
-    if (cmd == SIOCGIFCONF)
-    {
-	ioc.ic_len = ((struct ifconf *) arg)->ifc_len;
-	ioc.ic_dp = ((struct ifconf *) arg)->ifc_buf;
-    }
-    else
-    {
-	ioc.ic_len = sizeof(struct ifreq);
-	ioc.ic_dp = arg;
-    }
-    ret = ioctl(fd, I_STR, (char *) &ioc);
-    if (ret >= 0 && cmd == SIOCGIFCONF)
-	((struct ifconf *) arg)->ifc_len = ioc.ic_len;
-    return(ret);
-}
-#else /* (SVR4 && !sun && !NCR) && SIOCGIFCONF */
-# define ifioctl ioctl
-#endif /* (SVR4 && !sun && !NCR) && SIOCGIFCONF */
-
-
 /* ARGSUSED */
 static void
 PingHosts (XtPointer closure, XtIntervalId *id)
@@ -277,7 +226,7 @@ RebuildTable (int size)
 	    newTable[i] = names->fullname;
 	qsort (newTable, size, sizeof (char *), HostnameCompare);
     }
-    XawListChange (list, newTable, size, 0, TRUE);
+    XawListChange (list, (_Xconst char **) newTable, size, 0, TRUE);
     free (NameTable);
     NameTable = newTable;
     NameTableSize = size;
@@ -538,7 +487,7 @@ RegisterHostname (char *name)
     {
 	ifc.ifc_len = sizeof (buf);
 	ifc.ifc_buf = buf;
-	if (ifioctl (socketFD, (int) SIOCGIFCONF, (char *) &ifc) < 0)
+	if (ioctl (socketFD, (int) SIOCGIFCONF, (char *) &ifc) < 0)
 	    return;
 
 	cplim = (char *) ifc.ifc_req + ifc.ifc_len;
@@ -557,13 +506,13 @@ RegisterHostname (char *name)
 		struct ifreq    broad_req;
 
 		broad_req = *ifr;
-		if (ifioctl (socketFD, SIOCGIFFLAGS, (char *) &broad_req) != -1 &&
+		if (ioctl (socketFD, SIOCGIFFLAGS, (char *) &broad_req) != -1 &&
 		    (broad_req.ifr_flags & IFF_BROADCAST) &&
 		    (broad_req.ifr_flags & IFF_UP)
 		    )
 		{
 		    broad_req = *ifr;
-		    if (ifioctl (socketFD, SIOCGIFBRDADDR, &broad_req) != -1)
+		    if (ioctl (socketFD, SIOCGIFBRDADDR, &broad_req) != -1)
 			broad_addr = broad_req.ifr_addr;
 		    else
 			continue;

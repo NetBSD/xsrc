@@ -54,9 +54,6 @@ CatchUsr1 (int n)
 {
     int olderrno = errno;
 
-#ifdef SIGNALS_RESET_WHEN_CAUGHT
-    (void) Signal (SIGUSR1, CatchUsr1);
-#endif
     Debug ("display manager caught SIGUSR1\n");
     ++receivedUsr1;
     errno = olderrno;
@@ -175,17 +172,10 @@ serverPause (unsigned t, pid_t serverPid)
     if (!Setjmp (pauseAbort)) {
 	(void) Signal (SIGALRM, serverPauseAbort);
 	(void) Signal (SIGUSR1, serverPauseUsr1);
-#ifdef SYSV
-	if (receivedUsr1)
-	    (void) alarm ((unsigned) 1);
-	else
-	    (void) alarm (t);
-#else
 	if (!receivedUsr1)
 	    (void) alarm (t);
 	else
 	    Debug ("Already received USR1\n");
-#endif
 	for (;;) {
 	    /*
 	     * wait() is unsafe.  Other Xserver or xdm processes may

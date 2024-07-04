@@ -132,14 +132,9 @@ extern	void	endgrent(void);
 #endif
 
 #ifdef HAVE_GETSPNAM
-# if defined(SVR4)
-#  include <shadow.h>
-# else
-extern	struct spwd	*getspnam(GETSPNAM_ARGS);
-extern	void	endspent(void);
-# endif
+# include <shadow.h>
 #endif
-#if defined(CSRG_BASED) || defined(__GLIBC__)
+#if defined(CSRG_BASED) || defined(__GLIBC__) || defined(__sun)
 # include <pwd.h>
 # include <unistd.h>
 # if defined(__GLIBC__) && !defined(_XOPEN_CRYPT)
@@ -199,9 +194,7 @@ static	struct dlfuncs	dlfuncs = {
 	endgrent,
 #ifdef HAVE_GETSPNAM
 	getspnam,
-# ifndef QNX4
 	endspent,
-# endif /* QNX4 doesn't use endspent */
 #endif
 	getpwnam,
 #if defined(linux) || defined(__GLIBC__)
@@ -254,7 +247,7 @@ waitAbort (int n)
 	Longjmp (tenaciousClient, 1);
 }
 
-#if defined(_POSIX_SOURCE) || defined(SYSV) || defined(SVR4)
+#if defined(_POSIX_SOURCE) || defined(SVR4)
 # define killpg(pgrp, sig) kill(-(pgrp), sig)
 #endif
 
@@ -633,13 +626,11 @@ StartClient (
 	    return (0);
 	}
 # endif
-# ifndef QNX4
 	if (initgroups (name, verify->gid) < 0) {
 	    LogError ("initgroups for \"%s\" failed: %s\n",
 		      name, _SysErrorMsg (errno));
 	    return (0);
 	}
-# endif   /* QNX4 doesn't support multi-groups, no initgroups() */
 #endif /* !HAVE_SETUSERCONTEXT */
 
 #ifdef USE_PAM
@@ -903,8 +894,7 @@ execute (char **argv, char **environ)
     Debug ("execve() of %s failed: %s\n", argv[0], _SysErrorMsg (errno));
     /*
      * In case this is a shell script which hasn't been
-     * made executable (or this is a SYSV box), do
-     * a reasonable thing
+     * made executable, do a reasonable thing.
      */
     if (err != ENOENT) {
 	char	program[1024], *e, *p, *optarg;
