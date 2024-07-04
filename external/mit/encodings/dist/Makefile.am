@@ -15,6 +15,7 @@ ENCODING_FILES =		\
 	ibm-cp866.enc		\
 	iso8859-11.enc		\
 	iso8859-13.enc		\
+	iso8859-14.enc		\
 	iso8859-16.enc		\
 	iso8859-6.16.enc	\
 	iso8859-6.8x.enc	\
@@ -37,7 +38,13 @@ ENCODING_FILES =		\
 	tis620-2.enc		\
 	viscii1.1-1.enc
 
-EXTRA_DIST = $(ENCODING_FILES) README.md
+EXTRA_DIST = \
+        $(ENCODING_FILES) \
+        large/meson.build \
+        meson.build \
+        meson_options.txt \
+        mkencodingsdir.in \
+        README.md
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
