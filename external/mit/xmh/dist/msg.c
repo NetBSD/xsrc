@@ -28,11 +28,11 @@
 
 /* msgs.c -- handle operations on messages. */
 
-#include <X11/Xaw/Cardinals.h>
-
 #include "xmh.h"
 #include "tocintrnl.h"
 #include "actions.h"
+
+#include <X11/Xaw/Cardinals.h>
 
 static int SetScrn(Msg, Scrn, Boolean, XtCallbackList, XtCallbackList);
 
@@ -79,7 +79,7 @@ IsEditable(Msg msg)
 char *MsgName(Msg msg)
 {
     static char result[100];
-    (void) sprintf(result, "%s:%d", msg->toc->foldername, msg->msgid);
+    snprintf(result, sizeof(result), "%s:%d", msg->toc->foldername, msg->msgid);
     return result;
 }
 
@@ -208,7 +208,7 @@ static void RestoreDraft(void)
 char *MsgFileName(Msg msg)
 {
     static char result[500];
-    (void) sprintf(result, "%s/%d", msg->toc->path, msg->msgid);
+    snprintf(result, sizeof(result), "%s/%d", msg->toc->path, msg->msgid);
     return result;
 }
 
@@ -231,7 +231,7 @@ int MsgSaveChanges(Msg msg)
 	}
 	else {
 	    char str[256];
-	    (void) sprintf(str, "Cannot save changes to \"%s/%d\"!",
+	    snprintf(str, sizeof(str), "Cannot save changes to \"%s/%d\"!",
 			   msg->toc->foldername, msg->msgid);
 	    PopupError((Widget)NULL, str);
 	    return False;
@@ -302,8 +302,7 @@ static void SetScrnNewMsg(
 	}
     } else {
 	msg->num_scrns++;
-	msg->scrn = (Scrn *) XtRealloc((char *)msg->scrn,
-				       (unsigned) sizeof(Scrn)*msg->num_scrns);
+	msg->scrn = XtReallocArray(msg->scrn, msg->num_scrns, sizeof(Scrn));
 	msg->scrn[msg->num_scrns - 1] = scrn;
 	if (msg->source == NULL)
 	    msg->source = CreateFileSource(scrn->viewwidget, MsgFileName(msg),
@@ -351,10 +350,10 @@ static int SetScrn(
     if (scrn == NULL) {
 	if (msg == NULL || msg->num_scrns == 0) return 0;
 	if (!force && XawAsciiSourceChanged(msg->source)) {
-	    char str[100];
-	    (void) sprintf(str,
-			   "Are you sure you want to remove changes to %s?",
-			   MsgName(msg));
+	    char str[150];
+	    snprintf(str, sizeof(str),
+                     "Are you sure you want to remove changes to %s?",
+                     MsgName(msg));
 
 	    yes_callbacks[0].callback = ConfirmedNoScrn;
 	    yes_callbacks[0].closure = (XtPointer) msg;
@@ -385,9 +384,9 @@ static int SetScrn(
 		cb_data = XtNew(MsgAndScrnRec);
 		cb_data->msg = msg;
 		cb_data->scrn = scrn;
-		(void)sprintf(str,
-			      "Are you sure you want to remove changes to %s?",
-			      MsgName(scrn->msg));
+		snprintf(str, sizeof(str),
+                         "Are you sure you want to remove changes to %s?",
+                         MsgName(scrn->msg));
 		yes_callbacks[0].callback = ConfirmedWithScrn;
 		yes_callbacks[0].closure = (XtPointer) cb_data;
 		yes_callbacks[1].callback = confirms[0].callback;
@@ -645,7 +644,7 @@ void MsgSend(Msg msg)
     (void) MsgSaveChanges(msg);
     from = FOpenAndCheck(MsgFileName(msg), "r");
     sendcount = (sendcount + 1) % 10;
-    (void) sprintf(str, "%s%d", xmhDraftFile, sendcount);
+    snprintf(str, sizeof(str), "%s%d", xmhDraftFile, sendcount);
     to = FOpenAndCheck(str, "w");
     sendwidth = app_resources.send_line_width;
     sendbreakwidth = app_resources.break_send_line_width;
@@ -719,7 +718,7 @@ void MsgSend(Msg msg)
 
 void MsgLoadComposition(Msg msg)
 {
-    static char *blankcomp = NULL; /* Array containing comp template */
+    static const char *blankcomp = NULL; /* Array containing comp template */
     static int compsize = 0;
     static XawTextPosition startPos;
     char *file, **argv;
@@ -736,9 +735,10 @@ void MsgLoadComposition(Msg msg)
 	XtFree((char *) argv);
 	compsize = GetFileLength(file);
 	if (compsize > 0) {
-	    blankcomp = XtMalloc((Cardinal) compsize);
+	    char *readcomp = XtMalloc((Cardinal) compsize);
+	    blankcomp = readcomp;
 	    fid = myopen(file, O_RDONLY, 0666);
-	    if (compsize != read(fid, blankcomp, compsize))
+	    if (compsize != read(fid, readcomp, compsize))
 		Punt("Error reading in MsgLoadComposition!");
 	    myclose(fid);
 	    DeleteFileAndCheck(file);
@@ -776,7 +776,7 @@ void MsgLoadReply(
     argv = MakeArgv(5 + num_params);
     argv[0] = "repl";
     argv[1] = TocMakeFolderName(frommsg->toc);
-    (void) sprintf(str, "%d", frommsg->msgid);
+    snprintf(str, sizeof(str), "%d", frommsg->msgid);
     argv[2] = str;
     argv[3] = "-nowhatnowproc";
     argv[4] = "-nodraftfolder";
@@ -814,7 +814,7 @@ void MsgLoadForward(
     argv[0] = "forw";
     argv[1] = TocMakeFolderName(mlist->msglist[0]->toc);
     for (i = 0; i < mlist->nummsgs; i++) {
-        (void) sprintf(str, "%d", mlist->msglist[i]->msgid);
+        snprintf(str, sizeof(str), "%d", mlist->msglist[i]->msgid);
         argv[2 + i] = XtNewString(str);
     }
     argv[2 + i] = "-nowhatnowproc";
@@ -856,17 +856,18 @@ void MsgCheckPoint(Msg msg)
 	return;
 
     if (*app_resources.checkpoint_name_format == '/') {
-	(void) sprintf(file, app_resources.checkpoint_name_format, msg->msgid);
+	snprintf(file, sizeof(file),
+                 app_resources.checkpoint_name_format, msg->msgid);
     } else {
-	(void) sprintf(file, "%s/", msg->toc->path);
+	snprintf(file, sizeof(file), "%s/", msg->toc->path);
 	len = strlen(file);
-	(void) sprintf(file + len, app_resources.checkpoint_name_format,
-		       msg->msgid);
+	snprintf(file + len, sizeof(file) - len,
+                 app_resources.checkpoint_name_format, msg->msgid);
     }
     if (!XawAsciiSaveAsFile(msg->source, file)) {
 	char str[256];
-	(void) sprintf(str, "Unsaved edits cannot be checkpointed to %s.",
-		       file);
+	snprintf(str, sizeof(str),
+                 "Unsaved edits cannot be checkpointed to %s.",file);
 	PopupError((Widget)NULL, str);
     }
     TocSetCacheValid(msg->toc);
@@ -901,7 +902,7 @@ void XmhInsert(
 	char *argv[4];
 	argv[0] = "/bin/sh";
 	argv[1] = "-c";
-	sprintf(command, "%s %s", app_resources.insert_filter,
+	snprintf(command, sizeof(command), "%s %s", app_resources.insert_filter,
 		MsgFileName(scrn->assocmsg));
 	argv[2] = command;
 	argv[3] = NULL;

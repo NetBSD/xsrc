@@ -66,7 +66,7 @@ void TUCheckSequenceMenu(Toc toc)
     Scrn	scrn;
     register int i, n;
     Arg		query_args[2];
-    char 	*name;
+    const char 	*name;
     Cardinal	j;
     int		numChildren;
     Widget	menu, item;
@@ -135,14 +135,14 @@ void TUScanFileForToc(Toc toc)
 	if (toc->num_scrns) scrn = toc->scrn[0];
 	else scrn = scrnList[0];
 
-	(void) sprintf(str, "Rescanning %s", toc->foldername);
+	snprintf(str, sizeof(str), "Rescanning %s", toc->foldername);
 	ChangeLabel(scrn->toclabel, str);
 
 	argv = MakeArgv(5);
 	argv[0] = "scan";
 	argv[1] = TocMakeFolderName(toc);
 	argv[2] = "-width";
-	(void) sprintf(str, "%d", app_resources.toc_width);
+	snprintf(str,  sizeof(str), "%d", app_resources.toc_width);
 	argv[3] = str;
 	argv[4] = "-noheader";
 	DoCommand(argv, (char *) NULL, toc->scanfile);
@@ -180,9 +180,9 @@ int TUGetMsgPosition(Toc toc, Msg msg)
     for (l = 0; l < toc->nummsgs; l++) {
 	if (msgid == toc->msgs[l]->msgid) return l;
     }
-    (void) sprintf(str,
-		   "TUGetMsgPosition search failed! hi=%d, lo=%d, msgid=%d",
-		   h, l, msgid);
+    snprintf(str, sizeof(str),
+             "TUGetMsgPosition search failed! hi=%d, lo=%d, msgid=%d",
+             h, l, msgid);
     Punt(str);
     return 0; /* Keep lint happy. */
 }
@@ -201,8 +201,8 @@ void TUResetTocLabel(Scrn scrn)
 		toc->needslabelupdate = TRUE;
 		return;
 	    }
-	    (void) sprintf(str, "%s:%s", toc->foldername,
-			   toc->viewedseq->name);
+	    snprintf(str, sizeof(str), "%s:%s", toc->foldername,
+                     toc->viewedseq->name);
 	    toc->needslabelupdate = FALSE;
 	}
 	ChangeLabel((Widget) scrn->toclabel, str);
@@ -266,7 +266,7 @@ void TULoadSeqLists(Toc toc)
     seq->mlist = NULL;
     toc->viewedseq = seq;
     toc->selectseq = seq;
-    (void) sprintf(str, "%s/.mh_sequences", toc->path);
+    snprintf(str, sizeof(str), "%s/.mh_sequences", toc->path);
     fid = myfopen(str, "r");
     if (fid) {
 	while ((ptr = ReadLine(fid))) {
@@ -277,9 +277,8 @@ void TULoadSeqLists(Toc toc)
 		    strcmp(ptr, "cur") != 0 &&
 		    strcmp(ptr, "unseen") != 0) {
 		    toc->numsequences++;
-		    toc->seqlist = (Sequence *)
-			XtRealloc((char *) toc->seqlist, (Cardinal)
-				  toc->numsequences * sizeof(Sequence));
+		    toc->seqlist = XtReallocArray(toc->seqlist,
+                                       toc->numsequences, sizeof(Sequence));
 		    seq = toc->seqlist[toc->numsequences - 1] =
 			XtNew(SequenceRec);
 		    seq->name = XtNewString(ptr);
@@ -378,7 +377,7 @@ void TULoadTocFile(Toc toc)
     if (maxmsgs == 0) maxmsgs = 100;
     toc->nummsgs = 0;
     origmsgs = toc->msgs;
-    toc->msgs = (Msg *) XtMalloc((Cardinal) maxmsgs * sizeof(Msg));
+    toc->msgs = XtMallocArray((Cardinal) maxmsgs, sizeof(Msg));
     position = 0;
     i = 0;
     curmsg = NULL;
@@ -410,8 +409,7 @@ void TULoadTocFile(Toc toc)
 	msg->visible = TRUE;
 	if (toc->nummsgs >= maxmsgs) {
 	    maxmsgs += 100;
-	    toc->msgs = (Msg *) XtRealloc((char *) toc->msgs,
-					  (Cardinal) maxmsgs * sizeof(Msg));
+	    toc->msgs = XtReallocArray(toc->msgs, maxmsgs, sizeof(Msg));
 	}
 	while (i < orignummsgs && origmsgs[i]->msgid < msg->msgid) i++;
 	if (i < orignummsgs) {
@@ -421,8 +419,7 @@ void TULoadTocFile(Toc toc)
 	}
     }
     toc->length = toc->origlength = toc->lastPos = position;
-    toc->msgs = (Msg *) XtRealloc((char *) toc->msgs,
-				  (Cardinal) toc->nummsgs * sizeof(Msg));
+    toc->msgs = XtReallocArray(toc->msgs, toc->nummsgs, sizeof(Msg));
     (void) myfclose(fid);
     if ( (toc->source == NULL) && ( toc->num_scrns > 0 ) ) {
         Arg args[1];
@@ -468,7 +465,7 @@ void TUSaveTocFile(Toc toc)
     Msg msg;
     int fid;
     int i;
-    XawTextPosition position;
+    off_t position;
     char c;
     if (toc->stopupdate) {
 	toc->needscachesave = TRUE;
@@ -480,7 +477,7 @@ void TUSaveTocFile(Toc toc)
 	msg = toc->msgs[i];
 	if (fid < 0 && msg->changed) {
 	    fid = myopen(toc->scanfile, O_RDWR, 0666);
-	    (void) lseek(fid, (long)position, 0);
+	    (void) lseek(fid, position, SEEK_SET);
 	}
 	if (fid >= 0) {
 	    c = msg->buf[MARKPOS];
@@ -573,16 +570,13 @@ void TURefigureTocPositions(Toc toc)
 
 void TUGetFullFolderInfo(Toc toc)
 {
-    char str[500];
     if (! toc->scanfile) {
 	if (! toc->path) {
 	    /* usually preset by TocFolderExists */
-	    (void) sprintf(str, "%s/%s", app_resources.mail_path,
-			   toc->foldername);
-	    toc->path = XtNewString(str);
+	    XtAsprintf(&toc->path, "%s/%s", app_resources.mail_path,
+                       toc->foldername);
 	}
-	(void) sprintf(str, "%s/.xmhcache", toc->path);
-	toc->scanfile = XtNewString(str);
+	XtAsprintf(&toc->scanfile, "%s/.xmhcache", toc->path);
 	toc->lastreaddate = LastModifyDate(toc->scanfile);
 	if (TUScanFileOutOfDate(toc))
 	    toc->validity = invalid;
@@ -597,7 +591,7 @@ void TUGetFullFolderInfo(Toc toc)
    routine will figure out the message number, and change the scan line
    accordingly. */
 
-Msg TUAppendToc(Toc toc, char *ptr)
+Msg TUAppendToc(Toc toc, const char *ptr)
 {
     Msg msg;
     int msgid;
@@ -611,15 +605,14 @@ Msg TUAppendToc(Toc toc, char *ptr)
     else
 	msgid = 1;
     (toc->nummsgs)++;
-    toc->msgs = (Msg *) XtRealloc((char *) toc->msgs,
-				  (Cardinal) toc->nummsgs * sizeof(Msg));
+    toc->msgs = XtReallocArray(toc->msgs, toc->nummsgs, sizeof(Msg));
     toc->msgs[toc->nummsgs - 1] = msg = XtNew(MsgRec);
     bzero((char *) msg, (int) sizeof(MsgRec));
     msg->toc = toc;
     msg->buf = XtNewString(ptr);
     if (msgid >= 10000)
 	msgid %= 10000;
-    (void)sprintf(msg->buf, "%4d", msgid);
+    snprintf(msg->buf, strlen(msg->buf) + 1, "%4d", msgid);
     msg->buf[MARKPOS] = ' ';
     msg->msgid = msgid;
     msg->position = toc->lastPos;

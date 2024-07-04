@@ -34,7 +34,7 @@ in this Software without prior written authorization from the X Consortium.
 void AttachMenuToButton(
     Button	 button,
     Widget	 menu,
-    char	*menu_name)
+    const char	*menu_name)
 {
     Arg		args[3];
 
@@ -62,7 +62,7 @@ void DoRememberMenuSelection(
 
 void SendMenuEntryEnableMsg(
     Button	 button,
-    char	*entry_name,
+    const char	*entry_name,
     int		 value)
 {
     Widget	entry;

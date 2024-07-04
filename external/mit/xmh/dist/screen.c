@@ -194,7 +194,7 @@ static void MakeTocAndView(Scrn scrn)
     register int	i;
     XmhMenuButtonDesc	mbd;
     ButtonBox		buttonbox;
-    char		*name;
+    const char		*name;
     static XawTextSelectType sarray[] = {XawselectLine,
 					XawselectPosition,
 					XawselectAll,
@@ -240,11 +240,11 @@ static void MakeTocAndView(Scrn scrn)
     /* the optional miscellaneous command buttons */
 
     if (app_resources.command_button_count > 0) {
-	char	name[12];
+	char	name[18];
 	if (app_resources.command_button_count > 500)
 	    app_resources.command_button_count = 500;
 	for (i=1; i <= app_resources.command_button_count; i++) {
-	    sprintf(name, "button%d", i);
+	    snprintf(name, sizeof(name), "button%d", i);
 	    BBoxAddButton(scrn->miscbuttons, name, commandWidgetClass, True);
 	}
     }
@@ -294,8 +294,7 @@ Scrn CreateNewScrn(ScrnKind kind)
     }
 
     numScrns++;
-    scrnList = (Scrn *)
-	XtRealloc((char *) scrnList, (unsigned) numScrns*sizeof(Scrn));
+    scrnList = XtReallocArray(scrnList, numScrns, sizeof(Scrn));
     scrn = scrnList[numScrns - 1] = XtNew(ScrnRec);
     bzero((char *)scrn, sizeof(ScrnRec));
     scrn->kind = kind;

@@ -51,7 +51,7 @@ static int stdwidth = -1;	/* Width to make text fields, and other
 				   things that want to be the same width as
 				   text fields. */
 
-static char *TypeName[NUMROWTYPE];
+static const char *TypeName[NUMROWTYPE];
 static short true_data = 1;	/* radio data */
 static short false_data = 0;	/* radio data */
 
@@ -129,7 +129,7 @@ static void ExecuteUpdate(FormBox form)
     XtManageChild(form->outer);
 }
 
-static void AddLabel(RowList row, char *text, int usestd)
+static void AddLabel(RowList row, const char *text, int usestd)
 {
     static Arg arglist[] = {
 	{XtNlabel, (XtArgVal)NULL},
@@ -145,7 +145,7 @@ static void AddLabel(RowList row, char *text, int usestd)
 }
 
 
-static void AddButton(RowList row, char *text, void (*func)(XMH_CB_ARGS))
+static void AddButton(RowList row, const char *text, void (*func)(XMH_CB_ARGS))
 {
     FormEntry entry;
     static Arg args[] = {
@@ -160,7 +160,7 @@ static void AddButton(RowList row, char *text, void (*func)(XMH_CB_ARGS))
 
 static void AddToggle(
     RowList	row,
-    char	*text,
+    const char	*text,
     int		initial_state,
     Widget	radio_group,
     XtPointer	radio_data)
@@ -180,7 +180,7 @@ static void AddToggle(
 }
 
 
-static void AddTextEntry(RowList row, char *str)
+static void AddTextEntry(RowList row, const char *str)
 {
     FormEntry	entry;
     static Arg arglist[] = {
@@ -197,7 +197,7 @@ static void AddTextEntry(RowList row, char *str)
 }
 
 
-static void ChangeTextEntry(FormEntry entry, char *str)
+static void ChangeTextEntry(FormEntry entry, const char *str)
 {
     Arg arglist[1];
     char *ptr;
@@ -247,7 +247,7 @@ static char **argv;
 static int argvsize;
 
 
-static void AppendArgv(char *ptr)
+static void AppendArgv(const char *ptr)
 {
     argvsize++;
     argv = ResizeArgv(argv, argvsize);
@@ -310,7 +310,7 @@ static Boolean ParseRow(RowList row)
 		case RTother:
 		    XtSetArg(args[0], XtNstring, &other);
 		    XtGetValues(row->wlist[2]->widget, args, (Cardinal) 1);
-		    (void) sprintf(str, "--%s", other);
+		    snprintf(str, sizeof(str), "--%s", other);
 		    AppendArgv(str);
 		    break;
 	    }
@@ -379,7 +379,7 @@ static void ExecOK(
     XtGetValues(row0->wlist[3]->widget, args, (Cardinal) 1);
     if (TocGetSeqNamed(toc, fromseq) == NULL) {
 	char str[200];
-	(void) sprintf(str, "Sequence \"%s\" doesn't exist!", fromseq);
+	snprintf(str, sizeof(str), "Sequence \"%s\" doesn't exist!", fromseq);
 	PopupError(pick->scrn->parent, str);
 	return;
     }
@@ -473,9 +473,7 @@ static FormEntry CreateWidget(
     FormEntry entry;
 
     row->numwidgets++;
-    row->wlist = (FormEntry *)
-	XtRealloc((char *) row->wlist,
-		  (unsigned) row->numwidgets * sizeof(FormEntry));
+    row->wlist = XtReallocArray(row->wlist, row->numwidgets, sizeof(FormEntry));
     entry = XtNew(FormEntryRec);
     entry->row = row;
     entry->type = class;
@@ -533,9 +531,7 @@ static RowList AddRow(Group group, int type)
     };
     RowList row;
     group->numrows++;
-    group->rlist = (RowList *)
-	XtRealloc((char *) group->rlist,
-		  (unsigned) group->numrows * sizeof(RowList));
+    group->rlist = XtReallocArray(group->rlist, group->numrows, sizeof(RowList));
     group->rlist[group->numrows - 1] = row = XtNew(RowListRec);
     row->type = type;
     row->numwidgets = 0;
@@ -575,9 +571,7 @@ static Group AddGroup(FormBox form)
     };
     Group group;
     form->numgroups++;
-    form->glist = (Group *)
-	XtRealloc((char *) form->glist,
-		  (unsigned) form->numgroups * sizeof(Group));
+    form->glist = XtReallocArray(form->glist, form->numgroups, sizeof(Group));
     form->glist[form->numgroups - 1] = group =
 	(Group) XtMalloc((Cardinal) sizeof(GroupRec));
     group->numrows = 0;
@@ -654,7 +648,7 @@ static void AddGeneralGroup(FormBox form)
 }
 
 
-static void InitGeneral(Pick pick, char *fromseq, char *toseq)
+static void InitGeneral(Pick pick, const char *fromseq, const char *toseq)
 {
     RowList row;
     row = pick->general->glist[0]->rlist[0];
@@ -709,7 +703,7 @@ static FormBox MakeAForm(Pick pick)
 }
 
 
-void AddPick(Scrn scrn, Toc toc, char *fromseq, char *toseq)
+void AddPick(Scrn scrn, Toc toc, const char *fromseq, const char *toseq)
 {
     Pick pick;
     FormBox general, details;
@@ -747,7 +741,7 @@ void AddPick(Scrn scrn, Toc toc, char *fromseq, char *toseq)
     }
     pick->toc = toc;
     InitGeneral(pick, fromseq, toseq);
-    (void) sprintf(str, "Pick: %s", TocName(toc));
+    snprintf(str, sizeof(str), "Pick: %s", TocName(toc));
     ChangeLabel(pick->label, str);
     StoreWindowName(scrn, str);
 }

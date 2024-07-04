@@ -49,9 +49,8 @@ MsgList MakeNullMsgList(void)
 void AppendMsgList(MsgList mlist, Msg msg)
 {
     mlist->nummsgs++;
-    mlist->msglist =
-	(Msg *) XtRealloc((char *) mlist->msglist,
-			  (unsigned) (mlist->nummsgs + 1) * sizeof(Msg));
+    mlist->msglist = XtReallocArray(mlist->msglist,
+			  (unsigned) (mlist->nummsgs + 1), sizeof(Msg));
     mlist->msglist[mlist->nummsgs - 1] = msg;
     mlist->msglist[mlist->nummsgs] = NULL;
 }

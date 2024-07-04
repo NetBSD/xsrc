@@ -31,6 +31,7 @@
 
 #include "config.h"
 #define XMH_VERSION PACKAGE_STRING
+#define _CONST_X_STRING
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -69,7 +70,7 @@
 
 #define DEBUG(msg) \
 	if (app_resources.debug) \
-	    {(void)fprintf(stderr, msg); (void)fflush(stderr);}
+	    {(void)fputs(msg, stderr); (void)fflush(stderr);}
 
 #define DEBUG1(msg, arg) \
 	if (app_resources.debug) \
@@ -101,7 +102,7 @@ typedef enum {
 } ScrnKind;
 
 typedef struct _StackRec {
-    char		*data;
+    const char		*data;
     struct _StackRec	*next;
 } StackRec, *Stack;
 
@@ -120,7 +121,7 @@ typedef struct _ScrnRec {
    Widget	viewlabel;	/* View titlebar. */
    Widget	viewwidget;	/* View text. */
    ButtonBox 	viewbuttons;	/* View control buttons. */
-   char *	curfolder;	/* Currently selected folder name */
+   const char *	curfolder;	/* Currently selected folder name */
    Toc		toc;		/* The table of contents. */
    Msg		msg;		/* The message being viewed. */
    Pick		pick;		/* Pick in this screen. */
@@ -139,7 +140,7 @@ typedef struct {
 
 
 typedef struct {
-   char		*name;		/* Name of this sequence. */
+   const char	*name;		/* Name of this sequence. */
    MsgList	mlist;		/* Messages in this sequence. */
 } SequenceRec, *Sequence;
 

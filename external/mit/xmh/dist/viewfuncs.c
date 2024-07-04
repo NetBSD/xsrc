@@ -247,7 +247,7 @@ void DoPrintView(
     char	str[200];
 
     if (! scrn->msg) return;
-    (void) sprintf(str, "%s %s", app_resources.print_command,
+    snprintf(str, sizeof(str), "%s %s", app_resources.print_command,
 		   MsgFileName(scrn->msg));
     argv = MakeArgv(3);
     argv[0] = "/bin/sh";

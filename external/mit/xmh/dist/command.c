@@ -67,10 +67,10 @@ typedef char* Pointer;
 static void FreeStatus(XMH_CB_ARGS);
 static void CheckReadFromPipe(int, char **, int *, Bool);
 
-static void SystemError(char* text)
+static void SystemError(const char* text)
 {
     char msg[BUFSIZ];
-    sprintf( msg, "%s; errno = %d %s", text, errno,
+    snprintf( msg, sizeof(msg), "%s; errno = %d %s", text, errno,
 	     strerror(errno));
     XtWarning( msg );
 }
@@ -78,10 +78,10 @@ static void SystemError(char* text)
 
 /* Return the full path name of the given mh command. */
 
-static char *FullPathOfCommand(char *str)
+static char *FullPathOfCommand(const char *str)
 {
     static char result[100];
-    (void) sprintf(result, "%s/%s", app_resources.mh_path, str);
+    snprintf(result, sizeof(result), "%s/%s", app_resources.mh_path, str);
     return result;
 }
 
@@ -125,7 +125,7 @@ ChildDone(int n)
    long commands.  Returns 0 if stderr empty, -1 otherwise. */
 
 static int _DoCommandToFileOrPipe(
-  char **argv,			/* The command to execute, and its args. */
+  char * const *argv,		/* The command to execute, and its args. */
   int inputfd,			/* Input stream for command. */
   int outputfd,			/* Output stream; /dev/null if == -1 */
   char **bufP,			/* output buffer ptr if outputfd == -2 */
@@ -275,8 +275,8 @@ static int _DoCommandToFileOrPipe(
 	      case MotionNotify:
 		if (type_ahead_count < TYPEAHEADSIZE) {
 		    if (++type_ahead_count == TYPEAHEADSIZE) {
-			altQueue = (XEvent*)XtMalloc(
-				(Cardinal)TYPEAHEADSIZE*sizeof(XEvent) );
+			altQueue = XtMallocArray(
+			    (Cardinal)TYPEAHEADSIZE, sizeof(XEvent) );
 			alt_queue_size = TYPEAHEADSIZE;
 			eventP = altQueue;
 		    }
@@ -286,9 +286,8 @@ static int _DoCommandToFileOrPipe(
 		else {
 		    if (++alt_queue_count == alt_queue_size) {
 			alt_queue_size += TYPEAHEADSIZE;
-			altQueue = (XEvent*)XtRealloc(
-				(char*)altQueue,
-				(Cardinal)alt_queue_size*sizeof(XEvent) );
+			altQueue = XtReallocArray(altQueue,
+			    (Cardinal)alt_queue_size, sizeof(XEvent) );
 			eventP = &altQueue[alt_queue_count];
 		    }
 		    else
@@ -417,9 +416,9 @@ static void FreeStatus(
    in the specified file path.  Returns 0 if stderr empty, -1 otherwise */
 
 int DoCommand(
-  char **argv,			/* The command to execute, and its args. */
-  char *inputfile,		/* Input file for command. */
-  char *outputfile)		/* Output file for command. */
+  char * const *argv,		/* The command to execute, and its args. */
+  const char *inputfile,	/* Input file for command. */
+  const char *outputfile)	/* Output file for command. */
 {
     int fd_in, fd_out;
     int status;
@@ -448,7 +447,7 @@ int DoCommand(
 /* Execute the given command, waiting until it's finished.  Put the output
    in a newly mallocced string, and return a pointer to that string. */
 
-char *DoCommandToString(char ** argv)
+char *DoCommandToString(char * const *argv)
 {
     char *result = NULL;
     int len = 0;
@@ -462,7 +461,7 @@ char *DoCommandToString(char ** argv)
 
 /* Execute the command to a temporary file, and return the name of the file. */
 
-char *DoCommandToFile(char **argv)
+char *DoCommandToFile(char * const *argv)
 {
     char *name;
     FILEPTR file;

@@ -30,8 +30,8 @@
 #define _toc_h
 
 extern void	TocInit			(void);
-extern Toc	TocCreate		(char *);
-extern Toc	TocCreateFolder		(char *);
+extern Toc	TocCreate		(const char *);
+extern Toc	TocCreateFolder		(const char *);
 extern int	TocHasMail		(Toc);
 extern void	TocCheckForNewMail	(Boolean);
 extern Boolean	TocTestAndSetDeletePending(Toc);
@@ -51,7 +51,7 @@ extern void	TocReloadSeqLists	(Toc);
 extern int	TocHasSequences		(Toc);
 extern void	TocChangeViewedSeq	(Toc, Sequence);
 extern Sequence	TocViewedSequence	(Toc);
-extern Sequence	TocGetSeqNamed		(Toc, char *);
+extern Sequence	TocGetSeqNamed		(Toc, const char *);
 extern void	TocSetSelectedSequence	(Toc, Sequence);
 extern Sequence	TocSelectedSequence	(Toc);
 
@@ -64,7 +64,7 @@ extern void	TocSetCacheValid	(Toc);
 
 extern char *	TocMakeFolderName	(Toc);
 extern char *	TocName			(Toc);
-extern Toc	TocGetNamed		(char*);
+extern Toc	TocGetNamed		(const char *);
 
 extern int	TocConfirmCataclysm(Toc, XtCallbackList, XtCallbackList);
 extern void	TocCommitChanges	(Widget, XtPointer, XtPointer);

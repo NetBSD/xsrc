@@ -52,7 +52,7 @@ void BBoxInit(void)
 
 ButtonBox BBoxCreate(
     Scrn	scrn,
-    char	*name)	/* name of the buttonbox widgets */
+    const char	*name)	/* name of the buttonbox widgets */
 {
     Cardinal	n;
     ButtonBox	buttonbox = XtNew(ButtonBoxRec);
@@ -77,7 +77,7 @@ ButtonBox BBoxCreate(
 
 ButtonBox RadioBBoxCreate(
     Scrn	scrn,
-    char	*name)	/* name of the buttonbox widgets */
+    const char	*name)	/* name of the buttonbox widgets */
 {
     return BBoxCreate(scrn, name);
 }
@@ -87,7 +87,7 @@ ButtonBox RadioBBoxCreate(
 
 static void bboxAddButton(
     ButtonBox	buttonbox,
-    char	*name,
+    const char	*name,
     WidgetClass	kind,
     Boolean	enabled,
     Boolean	radio)
@@ -98,9 +98,8 @@ static void bboxAddButton(
     Arg		args[5];
 
     buttonbox->numbuttons++;
-    buttonbox->button = (Button *)
-	XtRealloc((char *) buttonbox->button,
-		  (unsigned) buttonbox->numbuttons * sizeof(Button));
+    buttonbox->button = XtReallocArray(buttonbox->button,
+                                       buttonbox->numbuttons, sizeof(Button));
     button = buttonbox->button[buttonbox->numbuttons - 1] = XtNew(ButtonRec);
     button->buttonbox = buttonbox;
     button->name = XtNewString(name);
@@ -137,7 +136,7 @@ static void bboxAddButton(
 
 void BBoxAddButton(
     ButtonBox	buttonbox,
-    char	*name,
+    const char	*name,
     WidgetClass	kind,
     Boolean	enabled)
 {
@@ -147,7 +146,7 @@ void BBoxAddButton(
 
 void RadioBBoxAddButton(
     ButtonBox	buttonbox,
-    char	*name,
+    const char	*name,
     Boolean	enabled)
 {
     bboxAddButton(buttonbox, name, toggleWidgetClass, enabled, True);
@@ -261,7 +260,7 @@ void BBoxDisable(
 
 Button BBoxFindButtonNamed(
     ButtonBox buttonbox,
-    char *name)
+    const char *name)
 {
     register int i;
     for (i=0 ; i<buttonbox->numbuttons; i++)
@@ -350,7 +349,7 @@ Boolean BBoxIsGrandparent(
 
 void BBoxMailFlag(
     ButtonBox	buttonbox,
-    char*	name,
+    const char*	name,
     int		up)
 {
     Arg		args[1];

@@ -37,42 +37,44 @@ static int StrCmp(char **a, char **b)
 
 int
 ScanDir(
-    char		  *Name,
+    const char		  *Name,
     char		***List,
     int			 (*Selector)(char *))
 {
     register char	 **names;
     register ENTRY	  *E;
-    register DIR	  *Dp;
-    register int	   i;
-    register int	   size;
+    register DIR	  *Dp = NULL;
+    register size_t	   i = 0;
+    register size_t	   size;
 
     /* Get initial list space and open directory. */
     size = INITIAL_SIZE;
-    if (!(names = (char **)malloc(size * sizeof(char *))) ||
+    if (!(names = malloc(size * sizeof(char *))) ||
 	!(Dp = opendir(Name)))
-	return(-1);
+	goto failure;
 
     /* Read entries in the directory. */
-    for (i = 0; (E = readdir(Dp)); )
+    while ((E = readdir(Dp))) {
 	if (!Selector || (*Selector)(E->d_name)) {
 	    /* User wants them all, or he wants this one. */
 	    if (++i >= size) {
+		char **newnames = NULL;
 		size <<= 1;
-		names = (char**)realloc((char *)names, size * sizeof(char*));
-		if (!names) {
-		    closedir(Dp);
-		    return(-1);
+		newnames = realloc(names, size * sizeof(char*));
+		if (!newnames) {
+		    i--;
+		    goto failure;
 		}
+		names = newnames;
 	    }
 
 	    /* Copy the entry. */
-	    if (!(names[i - 1] = (char *)malloc(strlen(E->d_name) + 1))) {
-		closedir(Dp);
-		return(-1);
+	    names[i - 1] = strdup(E->d_name);
+	    if (names[i - 1] == NULL) {
+		goto failure;
 	    }
-	    (void)strcpy(names[i - 1], E->d_name);
 	}
+    }
 
     /* Close things off. */
     names[i] = (char *)0;
@@ -85,4 +87,13 @@ ScanDir(
 	      (int (*)(const void *, const void *))StrCmp);
 
     return(i);
+
+  failure:
+    for (size_t n = 0; n < i; n++) {
+	free(names[i]);
+    }
+    free(names);
+    if (Dp != NULL)
+	closedir(Dp);
+    return(-1);
 }

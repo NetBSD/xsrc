@@ -57,6 +57,10 @@ static void DeleteFolderMenuEntry(Button, char *);
 extern Boolean ExitLoop;
 #endif
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
+#endif
+
 /* Close this toc&view scrn.  If this is the last toc&view, quit xmh. */
 
 /*ARGSUSED*/
@@ -263,7 +267,7 @@ static void CreateFolder(
     char	*name;
     Widget	dialog = (Widget) client_data;
     Arg		args[3];
-    char 	str[300], *label;
+    char 	*label;
 
     name = XawDialogGetValueString(dialog);
     for (i=0 ; name[i] > ' ' ; i++) ;
@@ -272,15 +276,15 @@ static void CreateFolder(
     if ((toc) || (i==0) || (name[0]=='/') || ((toc = TocCreateFolder(name))
 					      == NULL)) {
 	if (toc)
-	    (void) sprintf(str, "Folder \"%s\" already exists.  Try again.",
-			   name);
+	    XtAsprintf(&label, "Folder \"%s\" already exists.  Try again.",
+                       name);
 	else if (name[0]=='/')
-	    (void) sprintf(str, "Please specify folders relative to \"%s\".",
-			   app_resources.mail_path);
+	    XtAsprintf(&label, "Please specify folders relative to \"%s\".",
+                       app_resources.mail_path);
 	else
-	    (void) sprintf(str, "Cannot create folder \"%s\".  Try again.",
-			   name);
-	label = XtNewString(str);
+	    XtAsprintf(&label, "Cannot create folder \"%s\".  Try again.",
+                       name);
+
 	XtSetArg(args[0], XtNlabel, label);
 	XtSetArg(args[1], XtNvalue, "");
 	XtSetValues(dialog, args, TWO);
@@ -404,7 +408,8 @@ static void CheckAndConfirmDeleteFolder(
 
     yes_callbacks[0].closure = client_data;
     no_callbacks[0].closure =  client_data;
-    (void) sprintf(str, "Are you sure you want to destroy %s?", TocName(toc));
+    snprintf(str, sizeof(str),
+             "Are you sure you want to destroy %s?", TocName(toc));
     PopupConfirm(scrn->tocwidget, str, yes_callbacks, no_callbacks);
 }
 
@@ -566,13 +571,11 @@ static int IsFolder(char *name)
     else if (name[0] == '.')
 	return FALSE;
 
-    (void) sprintf(filename + flen, "/%s", name);
+    if (flen >= sizeof(filename)) return False;
+    if (snprintf(filename + flen, sizeof(filename) - flen, "/%s", name)
+        >= sizeof(filename)) return False;
     if (stat(filename, &buf) /* failed */) return False;
-#ifdef S_ISDIR
     return S_ISDIR(buf.st_mode);
-#else
-    return (buf.st_mode & S_IFMT) == S_IFDIR;
-#endif
 }
 
 
@@ -674,13 +677,16 @@ static void CreateFolderMenu(
     register int i, n, length;
     char	directory[500];
 
-    n = strlen(app_resources.mail_path);
-    (void) strncpy(directory, app_resources.mail_path, n);
-    directory[n++] = '/';
-    (void) strcpy(directory + n, button->name);
-    flen = strlen(directory);		/* for IsFolder */
-    (void) strcpy(filename, directory);	/* for IsFolder */
-    n = ScanDir(directory, &namelist, IsFolder);
+    n = 0;
+    if (snprintf(directory, sizeof(directory), "%s/%s",
+		 app_resources.mail_path, button->name) < sizeof(directory))
+    {
+	flen = strlen(directory);		/* for IsFolder */
+	if (flen < sizeof(filename)) {
+	    strcpy(filename, directory);	/* for IsFolder */
+	    n = ScanDir(directory, &namelist, IsFolder);
+	}
+    }
     if (n <= 0) {
 	/* no subfolders, therefore no menu */
 	button->menu = NoMenuForButton;
@@ -697,7 +703,7 @@ static void CreateFolderMenu(
     /* Build the menu by adding all the current entries to the new menu. */
 
     length = strlen(button->name);
-    (void) strncpy(directory, button->name, length);
+    memcpy(directory, button->name, length);
     directory[length++] = '/';
     for (i=0; i < n; i++) {
 	(void) strcpy(directory + length, namelist[i]);
@@ -838,7 +844,7 @@ void XmhLeaveFolderButton(
 
 void Push(
     Stack	*stack_ptr,
-    char 	*data)
+    const char 	*data)
 {
     Stack	new = XtNew(StackRec);
     new->data = data;
@@ -846,11 +852,11 @@ void Push(
     *stack_ptr = new;
 }
 
-char * Pop(
+const char * Pop(
     Stack	*stack_ptr)
 {
     Stack	top;
-    char 	*data = NULL;
+    const char 	*data = NULL;
 
     if ((top = *stack_ptr) != NULL) {
 	data = top->data;
@@ -891,7 +897,7 @@ void XmhPopFolder(
     Cardinal 	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
-    char	*folder;
+    const char	*folder;
 
     if ((folder = Pop(&scrn->folder_stack)) != NULL)
 	SetCurrentFolderName(scrn, folder);
@@ -919,8 +925,8 @@ void XmhWMProtocols(
 {
     Boolean	dw = False;	/* will we do delete window? */
     Boolean	sy = False;	/* will we do save yourself? */
-    static char*WM_DELETE_WINDOW = "WM_DELETE_WINDOW";
-    static char*WM_SAVE_YOURSELF = "WM_SAVE_YOURSELF";
+    static const char *WM_DELETE_WINDOW = "WM_DELETE_WINDOW";
+    static const char *WM_SAVE_YOURSELF = "WM_SAVE_YOURSELF";
 
 #define DO_DELETE_WINDOW InParams(WM_DELETE_WINDOW, params, *num_params)
 #define DO_SAVE_YOURSELF InParams(WM_SAVE_YOURSELF, params, *num_params)
@@ -1056,7 +1062,8 @@ static void CommitMsgInteract(
 
     yes_callbacks[0].closure = no_callbacks[0].closure = (XtPointer) iToken;
 
-    (void)sprintf(str,"Save changes to message %s?", MsgName(scrn->msg));
+    snprintf(str, sizeof(str),
+             "Save changes to message %s?", MsgName(scrn->msg));
 
     /* %%% should add cancel button */
     PopupConfirm(scrn->parent, str, yes_callbacks, no_callbacks);
@@ -1129,7 +1136,8 @@ static void CommitTocInteract(
 
     yes_callbacks[0].closure = no_callbacks[0].closure = (XtPointer) iToken;
 
-    (void)sprintf(str,"Commit all changes to %s folder?", toc->foldername);
+    snprintf(str, sizeof(str),
+             "Commit all changes to %s folder?", toc->foldername);
 
     tocwidget = NULL;
     for (i=0; i < toc->num_scrns; i++)

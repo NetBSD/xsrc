@@ -173,11 +173,13 @@ static XrmOptionDescRec table[] = {
 };
 
 /* Tell the user how to use this program. */
-static void Syntax(char *call)
+static void Syntax(const char *call, int exitval)
 {
-    (void) fprintf(stderr, "usage: %s [-path <path>] [-initial <folder>]\n",
-		   call);
-    exit(2);
+    fprintf(stderr,
+	    "usage: %s [-path <path>] [-initial <folder>] [toolkit options]\n"
+	    "       %s [-help|-version]\n",
+	    call, call);
+    exit(exitval);
 }
 
 
@@ -368,12 +370,35 @@ void InitializeWorld(int argc, char **argv)
     if (ptr) progName = ptr + 1;
     else progName = argv[0];
 
+    /* Handle args that don't require opening a display */
+    for (int n = 1; n < argc; n++) {
+        const char *argn = argv[n];
+        /* accept single or double dash for -help & -version */
+        if (argn[0] == '-' && argn[1] == '-') {
+            argn++;
+        }
+        if (strcmp(argn, "-help") == 0) {
+            Syntax(progName, 0);
+        }
+        if (strcmp(argn, "-version") == 0) {
+            puts(PACKAGE_STRING);
+            exit(0);
+        }
+    }
+
     shell_args[2].value = (XtArgVal)environ;
     toplevel = XtOpenApplication(&app, "Xmh", table, XtNumber(table),
 				 &argc, argv, FallbackResources,
 				 sessionShellWidgetClass,
 				 shell_args, XtNumber(shell_args));
-    if (argc > 1) Syntax(progName);
+    if (argc > 1) {
+	fputs("Unknown argument(s):", stderr);
+	for (int n = 1; n < argc; n++) {
+	    fprintf(stderr, " %s", argv[n]);
+	}
+	fputs("\n\n", stderr);
+	Syntax(progName, 2);
+    }
 
     XSetIOErrorHandler(_IOErrorHandler);
 
@@ -405,7 +430,7 @@ void InitializeWorld(int argc, char **argv)
 
     ptr = getenv("MH");
     if (!ptr) {
-	(void) sprintf(str, "%s/.mh_profile", homeDir);
+	snprintf(str, sizeof(str), "%s/.mh_profile", homeDir);
 	ptr = str;
     }
     fid = myfopen(ptr, "r");
@@ -435,12 +460,10 @@ void InitializeWorld(int argc, char **argv)
     if (str[0] == '/')
 	(void) strcpy(str2, str);
     else
-	(void) sprintf(str2, "%s/%s", homeDir, str);
+	snprintf(str2, sizeof(str2), "%s/%s", homeDir, str);
 
-    (void) sprintf(str, "%s/draft", str2);
-    draftFile = XtNewString(str);
-    (void) sprintf(str, "%s/xmhdraft", str2);
-    xmhDraftFile = XtNewString(str);
+    XtAsprintf(&draftFile, "%s/draft", str2);
+    XtAsprintf(&xmhDraftFile, "%s/xmhdraft", str2);
 
     if (app_resources.mail_path == NULL)
 	app_resources.mail_path = XtNewString(str2);

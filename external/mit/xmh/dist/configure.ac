@@ -23,7 +23,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xmh], [1.0.4],
+AC_INIT([xmh], [1.0.5],
         [https://gitlab.freedesktop.org/xorg/app/xmh/-/issues], [xmh])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -38,7 +38,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XMH, xaw7 xmu xt x11 xbitmaps >= 1.1.0)
+PKG_CHECK_MODULES(XMH, xaw7 xmu xt >= 1.3 x11 xbitmaps >= 1.1.0 xproto >= 7.0.17)
 
 PKG_CHECK_MODULES(APPDEFS, xt)
 xt_appdefaultdir=`$PKG_CONFIG --variable=appdefaultdir xt`
@@ -47,6 +47,9 @@ AC_ARG_WITH(appdefaultdir,
 	  [specify directory for app-defaults files (default is autodetected)]),
 	[appdefaultdir="$withval"], [appdefaultdir="${xt_appdefaultdir}"])
 AC_SUBST(appdefaultdir)
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 # Checks for library functions.
 AC_FUNC_FORK
