@@ -223,7 +223,7 @@ DIST_SUBDIRS = fontconfig fc-case fc-lang src fc-cache fc-cat \
 	fc-validate conf.d its po po-conf test doc
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/fontconfig-zip.in $(srcdir)/fontconfig.pc.in \
-	ABOUT-NLS AUTHORS COPYING ChangeLog INSTALL NEWS README \
+	ABOUT-NLS AUTHORS COPYING ChangeLog INSTALL NEWS README.md \
 	compile config.guess config.rpath config.sub depcomp \
 	install-sh ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
