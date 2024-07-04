@@ -25,7 +25,7 @@ libdrm_exynos = library(
   gnu_symbol_visibility : 'hidden',
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
-  dependencies : [dep_pthread_stubs],
+  dependencies : [dep_threads],
   version : '1.0.0',
   install : true,
 )
@@ -56,6 +56,6 @@ test(
   args : [
     '--lib', libdrm_exynos,
     '--symbols-file', files('exynos-symbols.txt'),
-    '--nm', prog_nm.path(),
+    '--nm', prog_nm.full_path(),
   ],
 )

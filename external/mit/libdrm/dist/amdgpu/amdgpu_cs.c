@@ -56,9 +56,21 @@ drm_public int amdgpu_cs_ctx_create2(amdgpu_device_handle dev,
 	union drm_amdgpu_ctx args;
 	int i, j, k;
 	int r;
+	char *override_priority;
 
 	if (!dev || !context)
 		return -EINVAL;
+
+	override_priority = getenv("AMD_PRIORITY");
+	if (override_priority) {
+		/* The priority is a signed integer. The variable type is
+		 * wrong. If parsing fails, priority is unchanged.
+		 */
+		if (sscanf(override_priority, "%i", &priority) == 1) {
+			printf("amdgpu: context priority changed to %i\n",
+			       priority);
+		}
+	}
 
 	gpu_context = calloc(1, sizeof(struct amdgpu_context));
 	if (!gpu_context)
@@ -128,8 +140,8 @@ drm_public int amdgpu_cs_ctx_free(amdgpu_context_handle context)
 	for (i = 0; i < AMDGPU_HW_IP_NUM; i++) {
 		for (j = 0; j < AMDGPU_HW_IP_INSTANCE_MAX_COUNT; j++) {
 			for (k = 0; k < AMDGPU_CS_MAX_RINGS; k++) {
-				amdgpu_semaphore_handle sem;
-				LIST_FOR_EACH_ENTRY(sem, &context->sem_list[i][j][k], list) {
+				amdgpu_semaphore_handle sem, tmp;
+				LIST_FOR_EACH_ENTRY_SAFE(sem, tmp, &context->sem_list[i][j][k], list) {
 					list_del(&sem->list);
 					amdgpu_cs_reset_sem(sem);
 					amdgpu_cs_unreference_sem(sem);
@@ -586,24 +598,31 @@ drm_public int amdgpu_cs_signal_semaphore(amdgpu_context_handle ctx,
 			       uint32_t ring,
 			       amdgpu_semaphore_handle sem)
 {
+	int ret;
+
 	if (!ctx || !sem)
 		return -EINVAL;
 	if (ip_type >= AMDGPU_HW_IP_NUM)
 		return -EINVAL;
 	if (ring >= AMDGPU_CS_MAX_RINGS)
 		return -EINVAL;
-	/* sem has been signaled */
-	if (sem->signal_fence.context)
-		return -EINVAL;
+
 	pthread_mutex_lock(&ctx->sequence_mutex);
+	/* sem has been signaled */
+	if (sem->signal_fence.context) {
+		ret = -EINVAL;
+		goto unlock;
+	}
 	sem->signal_fence.context = ctx;
 	sem->signal_fence.ip_type = ip_type;
 	sem->signal_fence.ip_instance = ip_instance;
 	sem->signal_fence.ring = ring;
 	sem->signal_fence.fence = ctx->last_seq[ip_type][ip_instance][ring];
 	update_references(NULL, &sem->refcount);
+	ret = 0;
+unlock:
 	pthread_mutex_unlock(&ctx->sequence_mutex);
-	return 0;
+	return ret;
 }
 
 drm_public int amdgpu_cs_wait_semaphore(amdgpu_context_handle ctx,
