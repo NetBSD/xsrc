@@ -78,32 +78,25 @@
 #endif
 
 static __inline__ void
-outb(port, val)
-unsigned long port;
-char val;
+outb(unsigned long port, char val)
 {
   __asm__ __volatile__("stba %0, [%1] %2" : : "r" (val), "r" (port), "i" (ASI_PL));
 }
 
 static __inline__ void
-outw(port, val)
-unsigned long port;
-char val;
+outw(unsigned long port, char val)
 {
   __asm__ __volatile__("stha %0, [%1] %2" : : "r" (val), "r" (port), "i" (ASI_PL));
 }
 
 static __inline__ void
-outl(port, val)
-unsigned long port;
-char val;
+outl(unsigned long port, char val)
 {
   __asm__ __volatile__("sta %0, [%1] %2" : : "r" (val), "r" (port), "i" (ASI_PL));
 }
 
 static __inline__ unsigned int
-inb(port)
-unsigned long port;
+inb(unsigned long port)
 {
    unsigned char ret;
    __asm__ __volatile__("lduba [%1] %2, %0" : "=r" (ret) : "r" (port), "i" (ASI_PL));
@@ -111,8 +104,7 @@ unsigned long port;
 }
 
 static __inline__ unsigned int
-inw(port)
-unsigned long port;
+inw(unsigned long port)
 {
    unsigned char ret;
    __asm__ __volatile__("lduha [%1] %2, %0" : "=r" (ret) : "r" (port), "i" (ASI_PL));
@@ -120,8 +112,7 @@ unsigned long port;
 }
 
 static __inline__ unsigned int
-inl(port)
-unsigned long port;
+inl(unsigned long port)
 {
    unsigned char ret;
    __asm__ __volatile__("lda [%1] %2, %0" : "=r" (ret) : "r" (port), "i" (ASI_PL));
@@ -132,9 +123,7 @@ unsigned long port;
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void
-outb(port, val)
-     short port;
-     char val;
+outb(short port, char val)
 {
 	 if ((unsigned short)port >= 0x400) return;
 
@@ -142,9 +131,7 @@ outb(port, val)
 }
 
 static __inline__ void
-outw(port, val)
-     short port;
-     short val;
+outw(short port, short val)
 {
 	 if ((unsigned short)port >= 0x400) return;
 
@@ -152,9 +139,7 @@ outw(port, val)
 }
 
 static __inline__ void
-outl(port, val)
-     short port;
-     int val;
+outl(short port, int val)
 {
 	 if ((unsigned short)port >= 0x400) return;
 
@@ -162,8 +147,7 @@ outl(port, val)
 }
 
 static __inline__ unsigned int
-inb(port)
-     short port;
+inb(short port)
 {
 	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
 
@@ -171,8 +155,7 @@ inb(port)
 }
 
 static __inline__ unsigned int
-inw(port)
-     short port;
+inw(short port)
 {
 	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
 
@@ -180,78 +163,13 @@ inw(port)
 }
 
 static __inline__ unsigned int
-inl(port)
-     short port;
+inl(short port)
 {
 	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
 
 	return(*(volatile unsigned long*)(((unsigned short)(port))+IOPortBase));
 }
 #else /* __arm32__ */
-#if defined(Lynx) && defined(__powerpc__)
-extern unsigned char *ioBase;
-
-static volatile void
-eieio()
-{
-	__asm__ __volatile__ ("eieio");
-}
-
-static void
-outb(port, value)
-short port;
-unsigned char value;
-{
-	*(uchar *)(ioBase + port) = value; eieio();
-}
-
-static void
-outw(port, value)
-short port;
-unsigned short value;
-{
-	*(unsigned short *)(ioBase + port) = value; eieio();
-}
-
-static void
-outl(port, value)
-short port;
-unsigned long value;
-{
-	*(unsigned long *)(ioBase + port) = value; eieio();
-}
-
-static unsigned char
-inb(port)
-short port;
-{
-	unsigned char val;
-
-	val = *((unsigned char *)(ioBase + port)); eieio();
-	return(val);
-}
-
-static unsigned short
-inw(port)
-short port;
-{
-	unsigned short val;
-
-	val = *((unsigned short *)(ioBase + port)); eieio();
-	return(val);
-}
-
-static unsigned long
-inl(port)
-short port;
-{
-	unsigned long val;
-
-	val = *((unsigned long *)(ioBase + port)); eieio();
-	return(val);
-}
-
-#else
 #if defined(__FreeBSD__) && defined(__alpha__)
 
 #include <sys/types.h>
@@ -266,32 +184,25 @@ extern u_int32_t inl(u_int32_t port);
 #else
 #ifdef GCCUSESGAS
 static __inline__ void
-outb(port, val)
-short port;
-char val;
+outb(short port, char val)
 {
    __asm__ __volatile__("outb %0,%1" : :"a" (val), "d" (port));
 }
 
 static __inline__ void
-outw(port, val)
-short port;
-short val;
+outw(short portm, short val)
 {
    __asm__ __volatile__("outw %0,%1" : :"a" (val), "d" (port));
 }
 
 static __inline__ void
-outl(port, val)
-short port;
-unsigned int val;
+outl(short port, unsigned int val)
 {
    __asm__ __volatile__("outl %0,%1" : :"a" (val), "d" (port));
 }
 
 static __inline__ unsigned int
-inb(port)
-short port;
+inb(short port)
 {
    unsigned char ret;
    __asm__ __volatile__("inb %1,%0" :
@@ -301,8 +212,7 @@ short port;
 }
 
 static __inline__ unsigned int
-inw(port)
-short port;
+inw(short port)
 {
    unsigned short ret;
    __asm__ __volatile__("inw %1,%0" :
@@ -312,8 +222,7 @@ short port;
 }
 
 static __inline__ unsigned int
-inl(port)
-short port;
+inl(short port)
 {
    unsigned int ret;
    __asm__ __volatile__("inl %1,%0" :
@@ -325,32 +234,25 @@ short port;
 #else /* GCCUSESGAS */
 
 static __inline__ void
-outb(port, val)
-     short port;
-     char val;
+outb(short port, char val)
 {
   __asm__ __volatile__("out%B0 (%1)" : :"a" (val), "d" (port));
 }
 
 static __inline__ void
-outw(port, val)
-     short port;
-     short val;
+outw(short port, short val)
 {
   __asm__ __volatile__("out%W0 (%1)" : :"a" (val), "d" (port));
 }
 
 static __inline__ void
-outl(port, val)
-     short port;
-     unsigned int val;
+outl(short port, unsigned int val)
 {
   __asm__ __volatile__("out%L0 (%1)" : :"a" (val), "d" (port));
 }
 
 static __inline__ unsigned int
-inb(port)
-     short port;
+inb(short port)
 {
   unsigned int ret;
   __asm__ __volatile__("in%B0 (%1)" :
@@ -360,8 +262,7 @@ inb(port)
 }
 
 static __inline__ unsigned int
-inw(port)
-     short port;
+inw(short port)
 {
   unsigned int ret;
   __asm__ __volatile__("in%W0 (%1)" :
@@ -371,8 +272,7 @@ inw(port)
 }
 
 static __inline__ unsigned int
-inl(port)
-     short port;
+inl(short port)
 {
   unsigned int ret;
   __asm__ __volatile__("in%L0 (%1)" :
@@ -382,13 +282,12 @@ inl(port)
 }
 
 #endif /* GCCUSESGAS */
-#endif /* Lynx && __powerpc__ */
 #endif /* arm32 */
 #endif /* linux && __sparc__ */
 #endif /* linux && __alpha__ */
 #endif /* __FreeBSD__ && __alpha__ */
 
-#if defined(linux) || defined(__arm32__) || (defined(Lynx) && defined(__powerpc__))
+#if defined(linux) || defined(__arm32__)
 
 #define intr_disable()
 #define intr_enable()
@@ -396,13 +295,13 @@ inl(port)
 #else 
 
 static __inline__ void
-intr_disable()
+intr_disable(void)
 {
   __asm__ __volatile__("cli");
 }
 
 static __inline__ void
-intr_enable()
+intr_enable(void)
 {
   __asm__ __volatile__("sti");
 }
@@ -426,21 +325,12 @@ void outl(U16_t, U32_t);
 #else /* not _MINIX and _ACK */
 
 # if defined(__STDC__) && (__STDC__ == 1)
-#  ifndef NCR
 #  define asm __asm
-#  endif
 # endif
 # ifdef SVR4
 #  include <sys/types.h>
-#  ifndef __USLC__
-#   define __USLC__
-#  endif
 # endif
-# ifndef __SCO__
-#  include <sys/inline.h>
-# else
-#  include "../common/scoasm.h"
-# endif
+# include <sys/inline.h>
 # define intr_disable() asm("cli")
 # define intr_enable()  asm("sti")
 

@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef Lynx
 #include <fnmatch.h>
-#endif
 
 #include "iopl.h"
 
@@ -37,7 +35,7 @@
 #define MemClk 1
 #define IS_MemClk(X) X&0x1
 
-int compute_clock (
+static int compute_clock (
 		   unsigned int ChipType,
 		   double target,
 		   double Fref,
@@ -68,7 +66,7 @@ int compute_clock (
     return 1;
   }
 
-  /* Other parameters available onthe 65548 but not the 65545, and
+  /* Other parameters available on the 65548 but not the 65545, and
      not documented in the Clock Synthesizer doc in rev 1.0 of the
      65548 datasheet:
 
@@ -161,7 +159,7 @@ int compute_clock (
   return 1;
 }
 
-int set_clock(
+static int set_clock(
 	      unsigned int ChipType,
 	      unsigned int ClockType,
 	      unsigned int ProgClock,
@@ -230,7 +228,7 @@ int set_clock(
   return 0;
 }
 
-unsigned int probe_chip(void) {
+static unsigned int probe_chip(void) {
 
   unsigned int ChipType, temp;
 
@@ -328,11 +326,7 @@ int main (int argc, char *argv[]) {
   }
 
   ClockType = DotClk;
-#ifndef Lynx
   if (! fnmatch("*memClock",argv[0],FNM_PATHNAME)) {
-#else
-  if (strstr("memClock",argv[0]) != NULL) {
-#endif
     ClockType = MemClk;
   }
 

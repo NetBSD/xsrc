@@ -842,7 +842,7 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
 	cPtr->Chipset = match_data;
 	/*
 	 * For cards that can do dual head per entity, mark the entity
-	 * as sharable. 
+	 * as shareable. 
 	 */
 	if (match_data == CHIPS_CT69030) {
 	    CHIPSEntPtr cPtrEnt = NULL;
@@ -924,7 +924,7 @@ CHIPSProbe(DriverPtr drv, int flags)
 
 		/*
 		 * For cards that can do dual head per entity, mark the entity
-		 * as sharable.
+		 * as shareable.
 		 */
 		pEnt = xf86GetEntityInfo(usedChips[i]);
 		if (pEnt->chipset == CHIPS_CT69030) {
@@ -1926,9 +1926,10 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 	    if (xf86LoadSubModule(pScrn, "i2c")) {
 		if (chips_i2cInit(pScrn)) {
 		    if ((pMon = xf86PrintEDID(xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn),
-						      cPtr->I2C))) != NULL)
+						      cPtr->I2C))) != NULL) {
 		       ddc_done = TRUE;
 		       xf86SetDDCproperties(pScrn,pMon);
+		    }
 		}
 	    }
 	if (!ddc_done)
@@ -2171,7 +2172,7 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 
     /* 
      * Some chips seem to dislike some clocks in one of the PLL's. Give
-     * the user the oppurtunity to change it
+     * the user the opportunity to change it
      */
     if (xf86GetOptValInteger(cPtr->Options, OPTION_CRT_CLK_INDX, &indx)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Force CRT Clock index to %d\n",
@@ -5314,7 +5315,7 @@ chipsModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
  * Normally the alternalte registers are set by the BIOS to optimized 
  * values. 
  * While the horizontal an vertical refresh rates are fixed independent
- * of the visible display size to ensure optimal performace of both 
+ * of the visible display size to ensure optimal performance of both 
  * displays they can be adapted to the screen resolution and CRT
  * requirements in CRT mode by programming the standard timing registers
  * in the VGA fashion.
@@ -5324,7 +5325,7 @@ chipsModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
  * by the _alternate_ horizontal and vertical display size registers.
  * The size of the visible should always be equal or less than the
  * physical size.
- * For the 69030 chipsets, the CRT and LCD display channels are seperate
+ * For the 69030 chipsets, the CRT and LCD display channels are separate
  * and so can be driven independently.
  */
 static Bool
@@ -5857,7 +5858,7 @@ chipsModeInitWingine(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     /* 
      * This chipset seems to have problems if 
-     * HBlankEnd is choosen equals HTotal
+     * HBlankEnd is chosen equals HTotal
      */
     if (!mode->CrtcHAdjusted)
       mode->CrtcHBlankEnd = min(mode->CrtcHSyncEnd, mode->CrtcHTotal - 2);
@@ -6093,7 +6094,7 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
     
     /* 
      * This chipset seems to have problems if 
-     * HBlankEnd is choosen equals HTotal
+     * HBlankEnd is chosen equals HTotal
      */
     if (!mode->CrtcHAdjusted)
       mode->CrtcHBlankEnd = min(mode->CrtcHSyncEnd, mode->CrtcHTotal - 2);
@@ -6525,7 +6526,7 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
     }
 
-    /* This stuff was emprically derived several years ago. Not sure its 
+    /* This stuff was empirically derived several years ago. Not sure its 
      * still needed, and I'd love to get rid of it as its ugly
      */
     switch (cPtr->Chipset) {
@@ -6599,7 +6600,7 @@ chipsRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, CHIPSRegPtr ChipsReg,
     /* set extended regs */
     chipsRestoreExtendedRegs(pScrn, ChipsReg);
 #if 0
-    /* if people complain about lock ups or blank screens -- reenable */
+    /* if people complain about lock ups or blank screens -- re-enable */
     /* set CRTC registers - do it before sequencer restarts */
     for (i=0; i<25; i++) 
 	hwp->writeCrtc(hwp, i, VgaReg->CRTC[i]);
@@ -6625,7 +6626,7 @@ chipsRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, CHIPSRegPtr ChipsReg,
 	chipsRestoreStretching(pScrn, (unsigned char)ChipsReg->FR[0x40],
 			       (unsigned char)ChipsReg->FR[0x48]);
 #if 0 
-	/* if people report about stretching not working -- reenable */
+	/* if people report about stretching not working -- re-enable */
 	/* why twice ? :
 	 * sometimes the console is not well restored even if these registers 
 	 * are good, re-write the registers works around it
@@ -6640,7 +6641,7 @@ chipsRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, CHIPSRegPtr ChipsReg,
     /* perform a synchronous reset */
     if (!cPtr->SyncResetIgn) {
 	if (!IS_HiQV(cPtr)) {
-	    /* enable syncronous reset on 655xx */
+	    /* enable synchronous reset on 655xx */
 	    tmp = cPtr->readXR(cPtr, 0x0E);
 	    cPtr->writeXR(cPtr, 0x0E, tmp & 0x7F);
 	}

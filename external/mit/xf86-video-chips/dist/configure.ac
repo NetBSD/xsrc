@@ -23,15 +23,15 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-chips],
-        [1.4.0],
-        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-chips/issues],
+        [1.5.0],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-chips/-/issues],
         [xf86-video-chips])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -40,8 +40,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Initialize libtool
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
@@ -105,16 +104,20 @@ CFLAGS="$save_CFLAGS"
 
 # Checks for functions (often defined as inlines in compiler.h)
 AC_MSG_CHECKING([for inb])
-AC_LINK_IFELSE(AC_LANG_SOURCE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include "util/AsmMacros.h"
 
 int main() {
 	int x = inb(0);
 	return x;
 }
-]), [HAVE_INB=yes], [HAVE_INB=no])
+])], [HAVE_INB=yes], [HAVE_INB=no])
 AC_MSG_RESULT([$HAVE_INB])
 AM_CONDITIONAL(BUILD_UTILS, [test x$HAVE_INB = xyes])
+
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
 
 AC_SUBST([moduledir])
 

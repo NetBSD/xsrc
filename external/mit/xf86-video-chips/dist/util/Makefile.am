@@ -1,3 +1,5 @@
+AM_CFLAGS = $(BASE_CFLAGS)
+
 # these are not even built in the monolith, so don't install them
 if BUILD_UTILS
 noinst_PROGRAMS = dRegs mRegs modClock memClock

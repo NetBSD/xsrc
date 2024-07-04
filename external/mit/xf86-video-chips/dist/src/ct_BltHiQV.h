@@ -55,7 +55,7 @@
 /* For some odd reason the blitter busy bit occasionly "locks up" when 
  * it gets polled to fast. However I have observed this behavior only 
  * when doing ScreenToScreenColorExpandFill on a 65550. This operation
- * was broken anyway (the source offest register is not observed) therefore
+ * was broken anyway (the source offset register is not observed) therefore
  * no action was taken.
  *
  * This function uses indirect access to XR20 to test whether the blitter
