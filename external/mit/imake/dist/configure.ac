@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([imake], [1.0.9],
+AC_INIT([imake], [1.0.10],
         [https://gitlab.freedesktop.org/xorg/util/imake/-/issues], [imake])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -41,7 +41,11 @@ XORG_PROG_RAWCPP
 CPP_PROGRAM=${RAWCPP}
 AC_SUBST(CPP_PROGRAM)
 
+# Checks for library functions.
 AC_CHECK_FUNCS([mkstemp])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 AC_CHECK_PROG(HAS_PERL, perl, yes)
 AM_CONDITIONAL([HAS_PERL], [test "x$HAS_PERL" = xyes])

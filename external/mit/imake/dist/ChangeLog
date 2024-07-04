@@ -1,3 +1,50 @@
+commit 0de70ff2270fc363b0c0acf7bdb9fea0299bfc01
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 8 10:29:48 2024 -0800
+
+    imake 1.0.10
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f730aecd3d939655f28ebd292b98eed754d8ad36
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 11 13:46:56 2023 -0800
+
+    Fix -Wincompatible-pointer-types warning (Issue #3)
+    
+    Fixes warning from gcc 13 that is becoming an error in gcc 14
+    
+    imake.c: In function ‘doit’:
+    imake.c:797:29: error: passing argument 2 of ‘execvp’ from incompatible
+     pointer type [-Werror=incompatible-pointer-types]
+      797 |                 execvp(cmd, argv);
+          |                             ^~~~
+          |                             |
+          |                             const char **
+    In file included from imake.c:172:
+    /usr/include/unistd.h:359:33: note: expected ‘char * const*’
+     but argument is of type ‘const char **’
+      359 | extern int execvp(const char *, char *const *);
+          |                                 ^~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d789120225d8ce63c368797e644cc9ccc003ce4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 15 16:50:35 2022 -0800
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 828185ebd754270c5391d5646d986fe0a82ced23
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit d9b33435847e27b44b8e357327728cb3e39d5822
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Oct 19 10:29:38 2022 -0700
