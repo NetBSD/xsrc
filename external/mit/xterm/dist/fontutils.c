@@ -1,7 +1,7 @@
-/* $XTermId: fontutils.c,v 1.773 2023/05/08 00:00:38 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.782 2024/05/17 19:54:51 tom Exp $ */
 
 /*
- * Copyright 1998-2022,2023 by Thomas E. Dickey
+ * Copyright 1998-2023,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -44,6 +44,7 @@
 
 #include <main.h>
 #include <data.h>
+#include <error.h>
 #include <menu.h>
 #include <xstrings.h>
 #include <xterm.h>
@@ -393,7 +394,7 @@ get_font_name_props(Display *dpy, XFontStruct *fs, char **result)
      * first get the full font name
      */
     name = 0;
-    fontatom = XInternAtom(dpy, "FONT", False);
+    fontatom = CachedInternAtom(dpy, "FONT");
     if (fontatom != 0) {
 	XFontProp *fp;
 	int i;
@@ -1775,7 +1776,7 @@ xtermLoadFont(XtermWidget xw,
 	    UIntSet(screen->fnt_boxes, 2);
 	    for (ch = 1; ch < 32; ch++) {
 		unsigned n = dec2ucs(screen, ch);
-		if ((n != UCS_REPL)
+		if (!is_UCS_SPECIAL(n)
 		    && (n != ch)
 		    && (screen->fnt_boxes & 2)) {
 		    if (xtermMissingChar(n, &new_fonts[fNorm]) ||
@@ -3272,7 +3273,7 @@ checkFontInfo(int value, const char *tag, int failed)
     if (value == 0 || failed) {
 	if (value == 0) {
 	    xtermWarning("Selected font has no non-zero %s for ISO-8859-1 encoding\n", tag);
-	    exit(1);
+	    exit(ERROR_MISC);
 	} else {
 	    xtermWarning("Selected font has no valid %s for ISO-8859-1 encoding\n", tag);
 	}
@@ -3816,7 +3817,7 @@ xtermMissingChar(unsigned ch, XTermFonts * font)
 }
 #endif
 
-#if OPT_BOX_CHARS
+#if OPT_BOX_CHARS || OPT_WIDE_CHARS
 /*
  * The grid is arbitrary, enough resolution that nothing's lost in
  * initialization.
@@ -3990,6 +3991,39 @@ xtermDrawBoxChar(XTermDraw * params,
 	SEG(  0,	  2*BOX_HIGH/3,	  CHR_WIDE,   2*BOX_HIGH/3),
 	SEG(  0,	    MID_HIGH,	  CHR_WIDE,	MID_HIGH),
 	-1
+    }, sigma_1[] =
+    {
+	SEG(BOX_WIDE,	    MID_HIGH,	  BOX_WIDE/2,	MID_HIGH),
+	SEG(BOX_WIDE/2,	    MID_HIGH,	  BOX_WIDE,	BOX_HIGH),
+	-1
+    }, sigma_2[] =
+    {
+	SEG(BOX_WIDE,	    MID_HIGH,	  BOX_WIDE/2,	MID_HIGH),
+	SEG(BOX_WIDE/2,	    MID_HIGH,	  BOX_WIDE,	0),
+	-1
+    }, sigma_3[] =
+    {
+	SEG(  0,	    0,	  	  BOX_WIDE,	BOX_HIGH),
+	-1
+    }, sigma_4[] =
+    {
+	SEG(  0,	    BOX_HIGH,	  BOX_WIDE,	0),
+	-1
+    }, sigma_5[] =
+    {
+	SEG(  0,	    MID_HIGH,	  MID_WIDE,	MID_HIGH),
+	SEG(MID_WIDE,	    MID_HIGH,	  MID_WIDE,	BOX_HIGH),
+	-1
+    }, sigma_6[] =
+    {
+	SEG(  0,	    MID_HIGH,	  MID_WIDE,	MID_HIGH),
+	SEG(MID_WIDE,	    MID_HIGH,	  MID_WIDE,	0),
+	-1
+    }, sigma_7[] =
+    {
+	SEG(  0,	    0,		  MID_WIDE,	MID_HIGH),
+	SEG(  0,	    BOX_HIGH,	  MID_WIDE,	MID_HIGH),
+	-1
     };
 
     static const struct {
@@ -4029,6 +4063,14 @@ xtermDrawBoxChar(XTermDraw * params,
 	{ 0, not_equal_to },		/* 1D */
 	{ 0, 0 },			/* 1E LB */
 	{ 0, 0 },			/* 1F bullet */
+	{ 0, 0 },			/* 20 space */
+	{ 3, sigma_1 },			/* PUA(0) */
+	{ 3, sigma_2 },			/* PUA(1) */
+	{ 3, sigma_3 },			/* PUA(2) */
+	{ 3, sigma_4 },			/* PUA(3) */
+	{ 3, sigma_5 },			/* PUA(4) */
+	{ 3, sigma_6 },			/* PUA(5) */
+	{ 3, sigma_7 },			/* PUA(6) */
     };
     /* *INDENT-ON* */
 
@@ -4055,7 +4097,7 @@ xtermDrawBoxChar(XTermDraw * params,
 	&& !UsingRenderFont(params->xw)
 #endif
 	&& (ch > 127)
-	&& (ch != UCS_REPL)) {
+	&& !is_UCS_SPECIAL(ch)) {
 	int which = (params->attr_flags & BOLD) ? fBold : fNorm;
 	unsigned n;
 	for (n = 1; n < 32; n++) {
@@ -4084,7 +4126,7 @@ xtermDrawBoxChar(XTermDraw * params,
 #endif
 
     /*
-     * Line-drawing characters show use the full (scaled) cellsize, while
+     * Line-drawing characters display using the full (scaled) cellsize, while
      * other characters should be shifted to center them vertically.
      */
     if (!xftords) {
@@ -4093,6 +4135,11 @@ xtermDrawBoxChar(XTermDraw * params,
 	} else {
 	    y += ScaleShift(screen);
 	}
+    }
+
+    if (xtermIsDecTechnical(ch)) {
+	ch -= XTERM_PUA;
+	ch += 33;
     }
 
     TRACE(("DRAW_BOX(%02X) cell %dx%d at %d,%d%s\n",
@@ -4125,16 +4172,16 @@ xtermDrawBoxChar(XTermDraw * params,
 
     thick = ((params->attr_flags & BOLD)
 	     ? (Max((unsigned) screen->fnt_high / 12, 1))
-	     : (Max((unsigned) screen->fnt_high / 16, 1))),
-	XSetLineAttributes(screen->display, gc2,
+	     : (Max((unsigned) screen->fnt_high / 16, 1)));
+    setXtermLineAttributes(screen->display, gc2,
 			   thick,
 			   ((ch < XtNumber(lines))
 			    ? LineSolid
-			    : LineOnOffDash),	/* like xtermDrawMissing */
-			   CapProjecting,
-			   JoinMiter);
+			    : LineOnOffDash));
 
-    if (ch == 1) {		/* diamond */
+    if (ch == 32) {		/* space! */
+	;			/* boxing a missing space is pointless */
+    } else if (ch == 1) {	/* diamond */
 	XPoint points[5];
 	int npoints = 5, n;
 
@@ -4240,8 +4287,9 @@ xtermDrawBoxChar(XTermDraw * params,
 	    XSetClipMask(screen->display, gc2, None);
 	}
     }
+    resetXtermLineAttributes(screen->display, gc2);
 }
-#endif /* OPT_BOX_CHARS */
+#endif /* OPT_BOX_CHARS || OPT_WIDE_CHARS */
 
 #if OPT_RENDERFONT
 static int
@@ -4570,9 +4618,8 @@ findXftGlyph(XtermWidget xw, XTermXftFonts *fontData, unsigned wc)
 		    TRACE_FALLBACK(xw, "new", wc, result, actual);
 		    break;
 		} else {
-		    Bool ok;
 		    if (defer >= 0
-			&& (ok = !slowXftMissing(xw, check, wc))
+			&& !slowXftMissing(xw, check, wc)
 			&& checkXftGlyph(xw, check, wc)) {
 			XTermFontMap *font_map = &(fontData->font_map);
 			TRACE(("checkrecover2 %d\n", n));
@@ -4688,7 +4735,7 @@ ucs2dec(TScreen *screen, unsigned ch)
 
     (void) screen;
     if ((ch > 127)
-	&& (ch != UCS_REPL)) {
+	&& !is_UCS_SPECIAL(ch)) {
 #if OPT_VT52_MODE
 	if (screen != 0 && !(screen->vtXX_level)) {
 	    /*
