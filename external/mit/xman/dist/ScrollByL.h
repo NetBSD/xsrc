@@ -41,17 +41,10 @@ from the X Consortium.
  * The default fonts.
  */
 
-#ifdef ATHENA
-#define MANPAGE_NORMAL   "fixed"
-#define MANPAGE_BOLD     "helvetica-bold12"
-#define MANPAGE_ITALIC   "helvetica-boldoblique12"
-#define MANPAGE_SYMBOL   "symbol-medium12"
-#else
 #define MANPAGE_NORMAL   "*-new century schoolbook-medium-r-normal--*-120-*"
 #define MANPAGE_BOLD     "*-new century schoolbook-bold-r-normal--*-120-*"
 #define MANPAGE_ITALIC   "*-new century schoolbook-bold-i-normal--*-120-*"
 #define MANPAGE_SYMBOL   "*-symbol-medium-r-normal--*-120-*"
-#endif /* ATHENA */
 
 #define XtNindent           "indent"
 #define XtNforceVert        "forceVert"

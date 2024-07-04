@@ -437,11 +437,7 @@ ReadCurrentSection(Manual * local_manual, char *path)
  */
 
     if ((ptr = strrchr(path, '.')) != NULL) {
-#if !defined(__SCO__) && !defined(ISC)
         if (streq(ptr + 1, COMPRESSION_EXTENSION))
-#else
-        if (strpbrk(ptr + 1, COMPRESSION_EXTENSIONS) != NULL)
-#endif
             *ptr = '\0';
 #ifdef GZIP_EXTENSION
         else if (streq(ptr + 1, GZIP_EXTENSION))
@@ -483,11 +479,7 @@ ReadCurrentSection(Manual * local_manual, char *path)
  */
 
         if ((ptr = strrchr(full_name, '.')) != NULL) {
-#if !defined(__SCO__) && !defined(ISC)
             if (streq(ptr + 1, COMPRESSION_EXTENSION))
-#else
-            if (strpbrk(ptr + 1, COMPRESSION_EXTENSIONS) != NULL)
-#endif
                 *ptr = '\0';
 #ifdef GZIP_EXTENSION
             else if (streq(ptr + 1, GZIP_EXTENSION))

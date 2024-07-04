@@ -60,16 +60,6 @@ static Boolean ConstructCommand(char *cmdbuf, const char *path,
                                 const char *filename, const char *tempfile);
 #endif
 
-#if defined(ISC) || defined(__SCO__) || defined(__UNIXWARE__)
-static char *uncompress_format = NULL;
-
-static char *uncompress_formats[] = {
-    UNCOMPRESS_FORMAT_1,
-    UNCOMPRESS_FORMAT_2,
-    UNCOMPRESS_FORMAT_3
-};
-#endif
-
 /*	Function Name: PopupWarning
  *	Description: This function pops up a warning message.
  *	Arguments: string - the specific warning string.
@@ -196,10 +186,6 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
     const char *entry = manual[section_num].entries[entry_num];
     int len_cat = strlen(CAT);
 
-#if defined(ISC) || defined(__SCO__) || defined(__UNIXWARE__)
-    int i;
-#endif
-
     temp = CreateManpageName(entry, 0, 0);
     snprintf(man_globals->manpage_title, sizeof(man_globals->manpage_title),
              "The current manual page is: %s.", temp);
@@ -227,7 +213,6 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
  * Then for compressed files in an uncompressed directory.
  */
 
-#if !defined(ISC) && !defined(__UNIXWARE__)
 #if defined(__OpenBSD__) || defined(__NetBSD__)
     /* look in machine subdir first */
     snprintf(filename, sizeof(filename), "%s/%s%s/%s/%s.%s", path, CAT,
@@ -273,18 +258,6 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
     {
         snprintf(filename, sizeof(filename), "%s/%s%s/%s.%s", path, CAT,
                  section + len_cat, page, LZMA_EXTENSION);
-        if ((file = Uncompress(man_globals, filename)) != NULL)
-            return (file);
-    }
-#endif
-#else
-    for (i = 0; i < strlen(COMPRESSION_EXTENSIONS); i++) {
-        snprintf(filename, sizeof(filename), "%s/%s%s/%s.%c", path, CAT,
-                 section + len_cat, page, COMPRESSION_EXTENSIONS[i]);
-        uncompress_format = uncompress_formats[i];
-#ifdef DEBUG
-        printf("Trying .%c ...\n", COMPRESSION_EXTENSIONS[i]);
-#endif
         if ((file = Uncompress(man_globals, filename)) != NULL)
             return (file);
     }
@@ -662,7 +635,8 @@ ConstructCommand(char *cmdbuf, const char *path,
                  const char *filename, const char *tempfile)
 {
 #ifdef HAVE_MANDB
-    int used = snprintf(cmdbuf, BUFSIZ, "man -l %s > %s 2>/dev/null",
+    int used = snprintf(cmdbuf, BUFSIZ, "MAN_KEEP_FORMATTING=x GROFF_NO_SGR= "
+                        "man -l %s > %s 2>/dev/null",
                         filename, tempfile);
     if (used >= BUFSIZ - 1)
 	return FALSE;

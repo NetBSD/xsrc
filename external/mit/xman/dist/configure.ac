@@ -23,13 +23,13 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xman], [1.1.5],
-        [https://gitlab.freedesktop.org/xorg/app/xman/issues], [xman])
+AC_INIT([xman], [1.2.0],
+        [https://gitlab.freedesktop.org/xorg/app/xman/-/issues/], [xman])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -49,6 +49,10 @@ if test x"$MANDB" = xyes; then
 	AC_DEFINE([HAVE_MANDB], 1, [Define if the man implementation is man-db])
 fi
 
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
+
+# Checks for library functions.
 AC_CHECK_FUNCS([mkstemp])
 
 AC_ARG_WITH(helpdir,
@@ -76,7 +80,7 @@ if test x$LOCALMANPATH != x; then
 	[Default local man page search path (default: none)])
 fi
 
-# Obtain compiler/linker options from depedencies
+# Obtain compiler/linker options from dependencies
 PKG_CHECK_MODULES(XMAN, [xproto >= 7.0.17 xaw7 xt])
 
 AC_ARG_WITH(manconfig,

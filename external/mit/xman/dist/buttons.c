@@ -282,10 +282,6 @@ CreateManpageWidget(ManpageGlobals * man_globals,
         XtSetValues(man_globals->both_screens_entry, arglist, ONE);
     }
 
-#ifdef INCLUDE_XPRINT_SUPPORT
-    XtSetArg(arglist[0], XtNsensitive, True);
-    XtSetValues(man_globals->print_entry, arglist, ONE);
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
 
     man_globals->label = XtCreateManagedWidget("manualTitle", labelWidgetClass,
                                                hpane, NULL, (Cardinal) 0);
@@ -441,9 +437,6 @@ CreateOptionMenu(ManpageGlobals * man_globals, Widget parent)
         BOTH_SCREENS,
         REMOVE_MANPAGE,
         OPEN_MANPAGE,
-#ifdef INCLUDE_XPRINT_SUPPORT
-        PRINT_MANPAGE,
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
         SHOW_VERSION,
         QUIT
     };
@@ -479,33 +472,18 @@ CreateOptionMenu(ManpageGlobals * man_globals, Widget parent)
         case 6:
             man_globals->open_entry = entry;
             break;
-#ifdef INCLUDE_XPRINT_SUPPORT
-        case 7:
-            man_globals->print_entry = entry;
-            break;
-        case 8:
-            man_globals->version_entry = entry;
-            break;
-        case 9:
-            man_globals->quit_entry = entry;
-            break;
-#else                           /* !INCLUDE_XPRINT_SUPPORT */
         case 7:
             man_globals->version_entry = entry;
             break;
         case 8:
             man_globals->quit_entry = entry;
             break;
-#endif                          /* !INCLUDE_XPRINT_SUPPORT */
         default:
             Error(("CreateOptionMenu: Unknown id=%d\n", i));
             break;
         }
     }
 
-#ifdef INCLUDE_XPRINT_SUPPORT
-    XtVaSetValues(man_globals->print_entry, XtNsensitive, FALSE, NULL);
-#endif                          /* INCLUDE_XPRINT_SUPPORT */
 }
 
 /*      Function Name: CreateSectionMenu

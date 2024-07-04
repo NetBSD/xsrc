@@ -40,6 +40,10 @@ Starts without the Top Menu with the three buttons in it.
 Sets the size and location of the Top Menu with the three buttons in it.
 .IP "\fB\-pagesize\fP \fIWxH+X+Y\fP"
 Sets the size and location of all the Manual Pages.
+.IP "\fB\-help\fP"
+Print a usage message and exit.
+.IP "\fB\-version\fP"
+Print the program version and exit.
 .SH "CUSTOMIZING XMAN"
 .PP
 .I Xman
@@ -378,8 +382,6 @@ A string that will have ``Xman'' appended to it.  This string will be
 the full path name of a user app-defaults file to be merged into the
 resource database after the system app-defaults file, and before
 the resources that are attached to the display.
-.br
-See \fIX(__miscmansuffix__)\fP for a full statement of rights and permissions.
 .SH AUTHORS
 Chris Peterson, MIT X Consortium from the V10 version written by Barry
 Shein formerly of Boston University.

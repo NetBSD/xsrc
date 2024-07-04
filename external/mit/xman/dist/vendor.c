@@ -38,55 +38,6 @@ typedef struct sectionName {
     const char *suffix;
 } SectionNameRec;
 
-#if (defined(__osf__) || defined(SVR4)) && !defined(sun)
-
-static SectionNameRec SectionNames[] = {
-    {"(1) User Commands",               "1"},
-    {"(1m) Sys, Administration",        "1m"},
-    {"(2) System Calls",                "2"},
-    {"(3) Subroutines",                 "3"},
-    {"(4) File Formats",                "4"},
-    {"(5) Miscellaneous",               "5"},
-    {"(6) Games",                       "6"},
-    {"(7) Devices",                     "7"},
-    {"(8) Sys. Administration",         "8"},
-    {"(l) Local",                       "l"},
-    {"(n) New",                         "n"},
-    {"(o) Old",                         "o"}
-#ifdef __SCO__
-    ,
-    {"(ADM) System Administration", "ADM"},
-    {"(ADMN) Network Administration", "ADMN"},
-    {"(ADMP) Protocol Administration", "ADMP"},
-    {"(C) Commands", "C"},
-    {"(CMD) DOS Commands", "CMD"},
-    {"(CP) Programming Commands", "CP"},
-    {"(DOS) DOS Subroutines and Libraries", "DOS"},
-    {"(F) File Formats", "F"},
-    {"(HW) Hardware Dependant", "HW"},
-    {"(K) Kernel Subroutines", "K"},
-    {"(LOCAL) Local utilities for your system", "LOCAL"},
-    {"(M) Miscellaneous", "M"},
-    {"(NADM) NFS Administration", "NADM"},
-    {"(NC) Network Commands", "NC"},
-    {"(NF) Network File Formats", "NF"},
-    {"(NS) Network Subroutines", "NS"},
-    {"(NSL) Network Services", "NSL"},
-    {"(S) Subroutines and Libraries", "S"},
-    {"(SCO) Product Engineering Toolkit", "SCO"},
-    {"(SFF) Socket File Formats", "SFF"},
-    {"(STR) Streams", "STR"},
-    {"(TC) Transport Layer Commands", "TC"},
-    {"(X) X Man pages", "X"},
-    {"(XNX) Xenix Subroutines, Commands and Libs", "XNX"},
-    {"(XS) X11 Subroutines and Libraries", "XS"},
-    {"(Xm) Motif Commands and Subroutines", "Xm"},
-    {"(Xt) X Intrinsics", "Xt"}
-#endif
-};
-
-#else
-
 #if defined(sun) && defined(SVR4)
 /* losing man.cf is useless because it has no section names */
 
@@ -204,14 +155,10 @@ static SectionNameRec SectionNames[] = {
     {"(l) Local",                               "l"},
     {"(n) New",                                 "n"},
     {"(o) Old",                                 "o"},
-#ifdef sony
-    {"(p) Public Domain",                       "p"},
-    {"(s) Sony Specific",                       "s"},
-#endif
 };
 
 #endif
-#endif
+
 
 /*	Function Name: AddStandardSections
  *	Description: Adds all the standard sections to the list for this path.
