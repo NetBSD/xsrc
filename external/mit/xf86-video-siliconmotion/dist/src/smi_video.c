@@ -182,7 +182,7 @@ typedef enum _VideoInput { VID_COMPOSITE, VID_SVIDEO } VideoInput;
 /* video input formats */
 
 typedef struct _VideoInputDataRec {
-    char* name;
+    const char* name;
 } VideoInputDataRec;
 
 static VideoInputDataRec VideoInputs[] = {
@@ -198,7 +198,7 @@ static VideoInputDataRec VideoInputs[] = {
 typedef enum _VideoNorm { PAL, NTSC, SECAM } VideoNorm;
 
 typedef struct _VideoNormDataRec {
-    char* name;
+    const char* name;
     unsigned long Wt;
     unsigned long Wa;
     unsigned long Ht;
@@ -509,26 +509,32 @@ static int
 SMI_AddEncoding(XF86VideoEncodingPtr enc, int i,
 		int norm, int input, int channel)
 {
-    char* norm_string;
-    char* input_string;
+    const char* norm_string;
+    const char* input_string;
     char channel_string[20];
+    char* name_string;
 
     ENTER();
 
     norm_string = VideoNorms[norm].name;
     input_string = VideoInputs[input].name;
-    sprintf(channel_string, "%d", channel);
+    snprintf(channel_string, sizeof(channel_string), "%d", channel);
     enc[i].id     = i;
-    enc[i].name   = malloc(strlen(norm_string) +
-			   strlen(input_string) + 
-			   strlen(channel_string)+3);
-    if (NULL == enc[i].name)
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 10
+    if (Xasprintf(&name_string, "%s-%s-%s",
+                  norm_string, input_string, channel_string) < 0)
+        LEAVE(-1);
+#else
+    name_string = Xprintf("%s-%s-%s",
+                          norm_string, input_string, channel_string);
+    if (NULL == name_string)
 	LEAVE(-1);
+#endif
+    enc[i].name   = name_string;
 
     enc[i].width  = VideoNorms[norm].Wa;
     enc[i].height = VideoNorms[norm].Ha;
     enc[i].rate   = VideoNorms[norm].rate;
-    sprintf(enc[i].name,"%s-%s-%s", norm_string, input_string, channel_string);
 
     LEAVE(0);
 }
@@ -546,25 +552,24 @@ SMI_BuildEncodings(SMI_PortPtr p)
     ENTER();
 
     /* allocate memory for encoding array */
-    p->enc = malloc(sizeof(XF86VideoEncodingRec) * N_ENCODINGS);
+    p->enc = calloc(N_ENCODINGS, sizeof(XF86VideoEncodingRec));
     if (NULL == p->enc)
 	goto fail;
-    memset(p->enc,0,sizeof(XF86VideoEncodingRec) * N_ENCODINGS);
+
     /* allocate memory for video norm array */
-    p->norm = malloc(sizeof(int) * N_ENCODINGS);
+    p->norm = calloc(N_ENCODINGS, sizeof(int));
     if (NULL == p->norm)
 	goto fail;
-    memset(p->norm,0,sizeof(int) * N_ENCODINGS);
+
     /* allocate memory for video input format array */
-    p->input = malloc(sizeof(int) * N_ENCODINGS);
+    p->input = calloc(N_ENCODINGS, sizeof(int));
     if (NULL == p->input)
 	goto fail;
-    memset(p->input,0,sizeof(int) * N_ENCODINGS);
+
     /* allocate memory for video channel number array */
-    p->channel = malloc(sizeof(int) * N_ENCODINGS);
+    p->channel = calloc(N_ENCODINGS, sizeof(int));
     if (NULL == p->channel)
 	goto fail;
-    memset(p->channel,0,sizeof(int) * N_ENCODINGS);
 
     /* fill arrays */
     p->nenc = 0;
@@ -797,7 +802,9 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	DEBUG("SAA7111 Registers\n");
 	for (j=0; j<32; j++) {
 	    DEBUG("%02X=%02X ", j, i2c_bytes[j]);
-	    if ((j&7) == 7) DEBUG("\n");
+	    if ((j&7) == 7) {
+		DEBUG("\n");
+	    }
 	}
     }
 
@@ -852,7 +859,7 @@ SMI_SetupVideo(ScreenPtr pScreen)
     ptrAdaptor->nEncodings = smiPortPtr->nenc;
     ptrAdaptor->pEncodings = smiPortPtr->enc;
 #if 0
-    /* aaa whats this? */
+    /* aaa what's this? */
 	for (i = 0; i < nElems(SMI_VideoEncodings); i++)
 	{
 		SMI_VideoEncodings[i].width = pSmi->lcdWidth;
@@ -921,7 +928,7 @@ SMI_SetupVideo(ScreenPtr pScreen)
 	    xvContrast   = MAKE_ATOM(XV_CONTRAST_NAME);
 	    
 	    xvInterlaced = MAKE_ATOM(XV_INTERLACED_NAME);
-	    DEBUG("SAA7111 intialized\n");
+	    DEBUG("SAA7111 initialized\n");
     
 	} else { 
 	    xf86DestroyI2CDevRec(&(smiPortPtr->I2CDev),FALSE);
@@ -1109,7 +1116,7 @@ SMI_PutVideo(
 
     /* cpr00:
        Bit 0      = 1: Video Capture Enable                     = enabled
-       Bit 8      = 0: Capture Control                          = continous
+       Bit 8      = 0: Capture Control                          = continuous
        Bit 9      = 0: Double Buffer Enable                     = s. below
        Bit 10     = 0: Interlace Data Capture                   = s. below
        Bit 13..11 = 0: Frame Skip Enable                        = s. below
@@ -1216,7 +1223,7 @@ SMI_PutVideo(
     DEBUG("xscale==%d yscale=%d width=%d height=%d\n",
 	  xscale, yscale, width, height);
 
-    /* aaa whats this                     ----------------------v ?
+    /* aaa what's this                    ----------------------v ?
     vid_address = (pPort->area->box.y1 * fbPitch) + ((y1 >> 16) * vid_pitch);*/
     vid_address = pPort->video_offset;
 

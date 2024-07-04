@@ -53,7 +53,7 @@ SMI_OutputModeValid(xf86OutputPtr output, DisplayModePtr mode)
 
     /* FIXME May also need to test for IS_MSOC(pSmi) here.
      * Only accept modes matching the panel size because the panel cannot
-     * be centered neither shrinked/expanded due to hardware bugs.
+     * be centered neither shrunk/expanded due to hardware bugs.
      * Note that as long as plane tr/br and plane window x/y are set to 0
      * and the mode height matches the panel height, it will work and
      * set the mode, but at offset 0, and properly program the crt.

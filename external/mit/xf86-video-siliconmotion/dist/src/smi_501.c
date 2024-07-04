@@ -58,7 +58,7 @@ static void SMI501_SetClock(SMIPtr pSmi, int32_t port,
 
 
 /*
- * Implemementation
+ * Implementation
  */
 
 void

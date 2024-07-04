@@ -108,7 +108,7 @@ int gSMIEntityIndex = -1;
 /*
  * This contains the functions needed by the server after loading the
  * driver module.  It must be supplied, and gets added the driver list by
- * the Module Setup funtion in the dynamic case.  In the static case a
+ * the Module Setup function in the dynamic case.  In the static case a
  * reference to this is compiled in, and this requires that the name of
  * this DriverRec be an upper-case version of the driver name.
  */
@@ -950,7 +950,7 @@ SMI_EnterVT(VT_FUNC_ARGS_DECL)
 		   "Done writing mode.  Register dump:\n");
     SMI_PrintRegs(pScrn);
 
-    /* Reset the grapics engine */
+    /* Reset the graphics engine */
     if (!pSmi->NoAccel)
 	SMI_EngineReset(pScrn);
 
@@ -1658,7 +1658,7 @@ SMI_ScreenInit(SCREEN_INIT_ARGS_DECL)
 
     /*
      * The next step is to setup the screen's visuals, and initialise the
-     * framebuffer code.  In cases where the framebuffer's default choises for
+     * framebuffer code.  In cases where the framebuffer's default choices for
      * things like visual layouts and bits per RGB are OK, this may be as simple
      * as calling the framebuffer's ScreenInit() function.  If not, the visuals
      * will need to be setup before calling a fb ScreenInit() function and fixed
@@ -1930,7 +1930,7 @@ SMI_SwitchMode(SWITCH_MODE_ARGS_DECL)
 }
 
 void
-SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
+SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 		LOCO *colors, VisualPtr pVisual)
 {
     xf86CrtcConfigPtr crtcConf = XF86_CRTC_CONFIG_PTR(pScrn);
@@ -1945,7 +1945,7 @@ SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
 	    SMICrtcPrivatePtr crtcPriv = SMICRTC(crtcConf->crtc[crtc_idx]);
 
 	    for(i=0; i<numColors; i++){
-		int idx = indicies[i];
+		int idx = indices[i];
 
 		if(idx<32){
 		    for(j=0; j<8; j++){
@@ -1965,7 +1965,7 @@ SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
 	    SMICrtcPrivatePtr crtcPriv = SMICRTC(crtcConf->crtc[crtc_idx]);
 
     for(i = 0; i < numColors; i++) {
-		int idx = indicies[i];
+		int idx = indices[i];
 
 		crtcPriv->lut_r[idx] = colors[idx].red << 8;
 		crtcPriv->lut_g[idx] = colors[idx].green << 8;
