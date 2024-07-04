@@ -1,4 +1,4 @@
-/* $XTermId: TekPrsTbl.c,v 1.8 2006/02/13 01:14:57 tom Exp $ */
+/* $XTermId: TekPrsTbl.c,v 1.9 2006/02/13 01:14:57 tom Exp $ */
 
 /*
  * Copyright 1998-2001,2006 by Thomas E. Dickey

@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1.1.6 2023/06/20 02:02:00 mrg Exp $
+# $NetBSD: Makefile,v 1.1.1.7 2024/07/04 09:08:11 mrg Exp $
 
-DISTNAME=	xterm-382
+DISTNAME=	xterm-392
 PKGREVISION=	1
 CATEGORIES=	x11
 MASTER_SITES=	ftp://ftp.invisible-island.net/xterm/

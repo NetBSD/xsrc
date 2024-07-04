@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-blink,v 1.2 2007/07/13 00:28:38 tom Exp $
+# $XTermId: blink.pl,v 1.2 2007/07/13 00:28:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

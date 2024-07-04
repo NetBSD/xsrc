@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: acolors.sh,v 1.15 2022/04/24 23:36:20 tom Exp $
+# $XTermId: acolors.sh,v 1.16 2022/04/25 08:19:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-bold-italics,v 1.1 2019/09/22 19:44:57 tom Exp $
+# $XTermId: bold-italics.pl,v 1.1 2019/09/22 19:44:57 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: xorblink.pl,v 1.15 2017/12/24 21:03:54 tom Exp $
+# $XTermId: xorblink.pl,v 1.16 2017/12/24 21:03:54 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2017 by Thomas E. Dickey
 #

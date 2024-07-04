@@ -1,4 +1,4 @@
-/* $XTermId: wcwidth.h,v 1.13 2017/06/16 23:29:40 tom Exp $ */
+/* $XTermId: wcwidth.h,v 1.14 2017/06/18 17:56:35 tom Exp $ */
 
 /* $XFree86: xc/programs/xterm/wcwidth.h,v 1.5 2005/05/03 00:38:25 dickey Exp $ */
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: 88colors2.pl,v 1.21 2022/10/11 00:05:15 tom Exp $
+# $XTermId: 88colors2.pl,v 1.22 2022/10/11 00:05:34 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

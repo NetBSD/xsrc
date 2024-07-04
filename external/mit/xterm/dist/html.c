@@ -1,4 +1,4 @@
-/* $XTermId: html.c,v 1.22 2021/09/19 16:37:52 tom Exp $ */
+/* $XTermId: html.c,v 1.23 2021/09/19 18:30:48 tom Exp $ */
 
 /*
  * Copyright 2018-2020,2021	Thomas E. Dickey

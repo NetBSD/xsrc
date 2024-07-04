@@ -1,4 +1,4 @@
-/* $XTermId$ */
+/* $XTermId: vms.h,v 1.6 2022/10/06 19:37:30 tom Exp $ */
 
 /* vms.h
  */

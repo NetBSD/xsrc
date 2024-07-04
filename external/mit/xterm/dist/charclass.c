@@ -1,4 +1,4 @@
-/* $XTermId: charclass.c,v 1.49 2023/03/31 23:06:48 tom Exp $ */
+/* $XTermId: charclass.c,v 1.50 2023/04/01 00:11:47 tom Exp $ */
 
 /*
  * Copyright 2002-2022,2023 by Thomas E. Dickey

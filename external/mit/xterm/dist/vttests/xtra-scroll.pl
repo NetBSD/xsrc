@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-xtra-scroll,v 1.12 2021/09/03 18:34:50 tom Exp $
+# $XTermId: xtra-scroll.pl,v 1.12 2021/09/03 18:34:50 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

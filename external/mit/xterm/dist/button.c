@@ -1,7 +1,7 @@
-/* $XTermId: button.c,v 1.653 2023/02/13 22:34:51 tom Exp $ */
+/* $XTermId: button.c,v 1.663 2024/04/19 07:42:00 tom Exp $ */
 
 /*
- * Copyright 1999-2022,2023 by Thomas E. Dickey
+ * Copyright 1999-2023,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -77,6 +77,7 @@ button.c	Handles button events in the terminal emulator.
 #include <menu.h>
 #include <charclass.h>
 #include <xstrings.h>
+#include <xterm_io.h>
 
 #if OPT_SELECT_REGEX
 #if defined(HAVE_PCRE2POSIX_H)
@@ -1669,6 +1670,8 @@ DECtoASCII(unsigned ch)
     if (xtermIsDecGraphic(ch)) {
 	ch = CharOf("###########+++++##-##++++|######"[ch]);
 	/*           01234567890123456789012345678901 */
+    } else {
+	ch = '?';		/* DEC Technical has no mapping */
     }
     return ch;
 }
@@ -1701,20 +1704,22 @@ UTF8toLatin1(TScreen *screen, Char *s, unsigned long len, unsigned long *result)
 
     if (len != 0) {
 	PtyData data;
+	Boolean save_vt100 = screen->vt100_graphics;
 
 	fakePtyData(&data, s, s + len);
+	screen->vt100_graphics = False;		/* temporary override */
 	while (decodeUtf8(screen, &data)) {
 	    Bool fails = False;
 	    Bool extra = False;
 	    IChar value;
 	    skipPtyData(&data, value);
-	    if (value == UCS_REPL) {
+	    if (is_UCS_SPECIAL(value)) {
 		fails = True;
 	    } else if (value < 256) {
 		AddChar(&buffer, &used, offset, CharOf(value));
 	    } else {
 		unsigned eqv = ucs2dec(screen, value);
-		if (xtermIsDecGraphic(eqv)) {
+		if (xtermIsInternalCs(eqv)) {
 		    AddChar(&buffer, &used, offset, DECtoASCII(eqv));
 		} else {
 		    eqv = AsciiEquivs(value);
@@ -1744,6 +1749,7 @@ UTF8toLatin1(TScreen *screen, Char *s, unsigned long len, unsigned long *result)
 		AddChar(&buffer, &used, offset, ' ');
 	}
 	AddChar(&buffer, &used, offset, '\0');
+	screen->vt100_graphics = save_vt100;
 	*result = (unsigned long) (offset - 1);
     } else {
 	*result = 0;
@@ -2547,11 +2553,82 @@ removeControls(XtermWidget xw, char *value)
 	dst = strlen(value);
     } else {
 	size_t src = 0;
+	Boolean *disallowed = screen->disallow_paste_ops;
+	TERMIO_STRUCT data;
+	char current_chars[epLAST];
+
+	if (disallowed[epSTTY] && ttyGetAttr(screen->respond, &data) == 0) {
+	    int n;
+	    int disabled = xtermDisabledChar();
+
+	    TRACE(("disallow(STTY):"));
+	    memcpy(current_chars, disallowed, sizeof(current_chars));
+
+	    for (n = 0; n < NCCS; ++n) {
+		PasteControls nc = (data.c_cc[n] < 32
+				    ? data.c_cc[n]
+				    : (data.c_cc[n] == 127
+				       ? epDEL
+				       : epLAST));
+		if (nc == epNUL || nc == epLAST)
+		    continue;
+		if (CharOf(data.c_cc[n]) == CharOf(disabled))
+		    continue;
+		if ((n == VMIN || n == VTIME) && !(data.c_lflag & ICANON))
+		    continue;
+		switch (n) {
+		    /* POSIX */
+		case VEOF:
+		case VEOL:
+		case VERASE:
+		case VINTR:
+		case VKILL:
+		case VQUIT:
+		case VSTART:
+		case VSTOP:
+		case VSUSP:
+		    /* system-dependent */
+#ifdef VDISCARD
+		case VDISCARD:
+#endif
+#ifdef VDSUSP
+		case VDSUSP:
+#endif
+#ifdef VEOL2
+		case VEOL2:
+#endif
+#ifdef VLNEXT
+		case VLNEXT:
+#endif
+#ifdef VREPRINT
+		case VREPRINT:
+#endif
+#ifdef VSTATUS
+		case VSTATUS:
+#endif
+#ifdef VSWTC
+		case VSWTC:	/* System V SWTCH */
+#endif
+#ifdef VWERASE
+		case VWERASE:
+#endif
+		    break;
+		default:
+		    continue;
+		}
+		if (nc != epLAST) {
+		    TRACE((" \\%03o", data.c_cc[n]));
+		    current_chars[nc] = 1;
+		}
+	    }
+	    TRACE(("\n"));
+	    disallowed = current_chars;
+	}
 	while ((value[dst] = value[src]) != '\0') {
 	    int ch = CharOf(value[src++]);
 
 #define ReplacePaste(n) \
-	    if (screen->disallow_paste_ops[n]) \
+	    if (disallowed[n]) \
 		value[dst] = ' '
 
 	    if (ch < 32) {
@@ -3928,6 +4005,7 @@ do_select_regex(TScreen *screen, CELL *startc, CELL *endc)
 						indexed)) != 0) {
 		    int len = (int) strlen(search);
 		    int col;
+		    int offset;
 		    int best_col = -1;
 		    int best_len = -1;
 
@@ -3936,12 +4014,13 @@ do_select_regex(TScreen *screen, CELL *startc, CELL *endc)
 		    endc->row = 0;
 		    endc->col = 0;
 
-		    for (col = 0; indexed[col] < len; ++col) {
+		    for (col = 0; (offset = indexed[col]) < len; ++col) {
 			if (regexec(&preg,
-				    search + indexed[col],
-				    (size_t) 1, &match, 0) == 0) {
-			    int start_inx = (int) (match.rm_so + indexed[col]);
-			    int finis_inx = (int) (match.rm_eo + indexed[col]);
+				    search + offset,
+				    (size_t) 1, &match,
+				    col ? REG_NOTBOL : 0) == 0) {
+			    int start_inx = (int) (match.rm_so + offset);
+			    int finis_inx = (int) (match.rm_eo + offset);
 			    int start_col = indexToCol(indexed, len, start_inx);
 			    int finis_col = indexToCol(indexed, len, finis_inx);
 
@@ -3968,11 +4047,10 @@ do_select_regex(TScreen *screen, CELL *startc, CELL *endc)
 			       indexed[best_col],
 			       indexed[best_nxt]));
 			TRACE(("matched:%d:%s\n",
-			       indexed[best_nxt] + 1 -
+			       indexed[best_nxt] -
 			       indexed[best_col],
 			       visibleChars((Char *) (search + indexed[best_col]),
-					    (unsigned) (indexed[best_nxt] +
-							1 -
+					    (unsigned) (indexed[best_nxt] -
 							indexed[best_col]))));
 		    }
 		    free(search);
@@ -5091,6 +5169,8 @@ SaveText(TScreen *screen,
 	unsigned c;
 	assert(i < (int) ld->lineSize);
 	c = E2A(ld->charData[i]);
+	if (ld->attribs[i] & INVISIBLE)
+	    continue;
 #if OPT_WIDE_CHARS
 	/* We want to strip out every occurrence of HIDDEN_CHAR AFTER a
 	 * wide character.

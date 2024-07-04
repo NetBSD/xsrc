@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $XTermId: vxt-nrcs,v 1.10 2013/09/08 19:46:07 tom Exp $
+# $XTermId: nrcs.pl,v 1.10 2013/09/08 19:46:07 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: other-sgr.sh,v 1.8 2022/03/13 18:27:29 Ryan.Schmidt Exp $
+# $XTermId: other-sgr.sh,v 1.9 2022/04/24 23:36:20 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

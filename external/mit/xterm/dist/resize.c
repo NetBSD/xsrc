@@ -1,4 +1,4 @@
-/* $XTermId: resize.c,v 1.149 2023/01/26 00:43:18 tom Exp $ */
+/* $XTermId: resize.c,v 1.150 2023/03/31 23:09:38 tom Exp $ */
 
 /*
  * Copyright 2003-2022,2023 by Thomas E. Dickey

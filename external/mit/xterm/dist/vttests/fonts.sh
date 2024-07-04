@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: fonts.sh,v 1.19 2022/04/24 23:36:20 tom Exp $
+# $XTermId: fonts.sh,v 1.20 2022/04/25 08:19:38 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

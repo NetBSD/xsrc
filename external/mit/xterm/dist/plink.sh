@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: plink.sh,v 1.16 2022/02/13 14:30:17 tom Exp $
+# $XTermId: plink.sh,v 1.17 2022/03/13 18:27:29 Ryan.Schmidt Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

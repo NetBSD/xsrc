@@ -1,4 +1,4 @@
-# $XTermId: termcap,v 1.87 2017/12/25 21:22:54 tom Exp $
+# $XTermId: termcap,v 1.88 2017/12/25 21:24:41 tom Exp $
 #
 # These are termcap entries that correspond to xterm's terminfo file.
 # The file is formatted using ncurses' "tic -CNx", but is not mechanically

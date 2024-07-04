@@ -1,4 +1,4 @@
-/* $XTermId: svg.c,v 1.22 2023/03/31 22:31:23 tom Exp $ */
+/* $XTermId: svg.c,v 1.23 2023/03/31 23:08:13 tom Exp $ */
 
 /*
  * Copyright 2017-2021,2023	Thomas E. Dickey

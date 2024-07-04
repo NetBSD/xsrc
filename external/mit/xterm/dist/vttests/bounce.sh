@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XTermId: vxt-bounce,v 1.3 2020/01/12 22:51:16 tom Exp $
+# $XTermId: bounce.sh,v 1.3 2020/01/12 22:51:16 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

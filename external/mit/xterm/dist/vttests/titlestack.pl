@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-titlestack,v 1.29 2019/09/20 00:50:10 tom Exp $
+# $XTermId: titlestack.pl,v 1.29 2019/09/20 00:50:10 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #

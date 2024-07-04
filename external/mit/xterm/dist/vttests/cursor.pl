@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-cursor,v 1.8 2007/12/03 00:56:29 tom Exp $
+# $XTermId: cursor.pl,v 1.8 2007/12/03 00:56:29 tom Exp $
 # -----------------------------------------------------------------------------
 # Copyright 2007 by Thomas E. Dickey
 #

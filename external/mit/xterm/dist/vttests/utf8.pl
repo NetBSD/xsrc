@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $XTermId: vxt-utf8,v 1.12 2022/07/08 18:32:43 tom Exp $
+# $XTermId: utf8.pl,v 1.12 2022/07/08 18:32:43 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
