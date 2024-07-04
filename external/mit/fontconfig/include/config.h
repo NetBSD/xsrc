@@ -15,7 +15,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Additional font directories */
 #define FC_ADD_FONTS "/usr/X11R7/lib/X11/fonts,/usr/pkg/share/fonts/urw,/usr/pkg/share/ghostscript/fonts,/usr/pkg/share/fonts/X11"
@@ -24,7 +24,7 @@
 /* #undef FC_ARCHITECTURE */
 
 /* System font directory */
-#define FC_DEFAULT_FONTS "<dir>/usr/pkg/share/fonts/X11</dir>"
+#define FC_DEFAULT_FONTS "<dir>/usr/X11R7/lib/X11/fonts</dir>"
 
 /* The type of len parameter of the gperf hash/lookup function */
 #define FC_GPERF_SIZE_T size_t
@@ -51,7 +51,7 @@
 
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
-#define HAVE_DCGETTEXT 1
+/* #undef HAVE_DCGETTEXT */
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -102,7 +102,7 @@
 #define HAVE_GETPROGNAME 1
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
-#define HAVE_GETTEXT 1
+/* #undef HAVE_GETTEXT */
 
 /* Define if you have the iconv() function and it works. */
 #define HAVE_ICONV 1
@@ -144,10 +144,10 @@
 #define HAVE_POSIX_FADVISE 1
 
 /* Have POSIX threads */
-#define HAVE_PTHREAD 1
+/* #undef HAVE_PTHREAD */
 
 /* Have PTHREAD_PRIO_INHERIT. */
-#define HAVE_PTHREAD_PRIO_INHERIT 1
+/* #undef HAVE_PTHREAD_PRIO_INHERIT */
 
 /* Define to 1 if you have the `rand' function. */
 #define HAVE_RAND 1
