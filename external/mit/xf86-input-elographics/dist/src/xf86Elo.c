@@ -263,7 +263,7 @@ xf86EloGetPacket(unsigned char	*buffer,
        */
       ErrorF("Elographics: Dropping one byte in an attempt to synchronize: '%c' 0x%X\n",
 	     buffer[0], buffer[0]);
-      memcpy(&buffer[0], &buffer[1], num_bytes-1);
+      memmove(&buffer[0], &buffer[1], num_bytes-1);
     }
     else {
       /*
