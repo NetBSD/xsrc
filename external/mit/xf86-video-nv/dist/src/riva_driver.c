@@ -1212,7 +1212,6 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
 	   }
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
            xf86DisableRandR();
-#endif
            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                       "Driver rotation enabled, RandR disabled\n");
 #else

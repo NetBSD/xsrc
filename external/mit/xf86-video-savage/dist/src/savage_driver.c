@@ -1238,7 +1238,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    psav->rotate = 1;
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
             xf86DisableRandR();
-#endif
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
 		       "Rotating screen clockwise"
                        "- acceleration and RandR disabled\n");
@@ -1252,7 +1251,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    psav->rotate = -1;
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24
             xf86DisableRandR();
-#endif
             xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
                    "Rotating screen counter clockwise"
                    " - acceleration and RandR disabled\n");
