@@ -1554,7 +1554,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 #ifdef __powerpc__ /* XXX probably MI */
-    vgaHWSetMmioFuncs(VGAHWPTR(pScrn), pNv->IOAddress, 0);
+    vgaHWSetMmioFuncs(VGAHWPTR(pScrn), (char *)pNv->IOAddress, 0);
 #else
     vgaHWSetStdFuncs(VGAHWPTR(pScrn));
 #endif
