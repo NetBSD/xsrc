@@ -64,6 +64,10 @@
 #endif
 #include "compat-api.h"
 
+#if defined(__NetBSD__)
+#include <sys/sysctl.h>
+#endif
+
 /* Mandatory functions */
 static const OptionInfoRec * VESAAvailableOptions(int chipid, int busid);
 static void VESAIdentify(int flags);
@@ -483,6 +487,18 @@ VESAPciProbe(DriverPtr drv, int entity_num, struct pci_device *dev,
         VESAFileExistsPrefix("/dev/dri", "card")) {
         ErrorF("vesa: Refusing to run, Framebuffer or dri device present\n");
         return FALSE;
+    }
+#endif
+#if defined(__NetBSD__)
+    {
+	char method[10];
+	size_t len = sizeof(method);
+
+        if (sysctlbyname("machdep.bootmethod", &method, &len, NULL, 0) == 0 &&
+	    strcmp(method, "UEFI") == 0) {
+            ErrorF("vesa: Refusing to run, UEFI booted\n");
+            return FALSE;
+        }
     }
 #endif
 
