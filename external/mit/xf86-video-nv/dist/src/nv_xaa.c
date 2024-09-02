@@ -307,8 +307,7 @@ crap:
     NVResetGraphics(pScrn);
 }
 
-#ifdef HAVE_XAA_H
-static void
+void
 NVDMAKickoffCallback (ScrnInfoPtr pScrn)
 {
    NVPtr pNv = NVPTR(pScrn);
@@ -317,6 +316,7 @@ NVDMAKickoffCallback (ScrnInfoPtr pScrn)
    pNv->DMAKickoffCallback = NULL;
 }
 
+#ifdef HAVE_XAA_H
 static void
 NVSetupForScreenToScreenCopy(
    ScrnInfoPtr pScrn, 
