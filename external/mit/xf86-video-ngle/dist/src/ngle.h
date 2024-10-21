@@ -34,12 +34,13 @@
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 
-#include "xorgVersion.h"
-
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#include "compiler.h"
+#include "xorgVersion.h"
 #include "xf86Cursor.h"
-
+#include "exa.h"
 #include "compat-api.h"
 
 #ifndef NGLE_H
@@ -56,15 +57,21 @@ typedef struct {
 	CloseScreenProcPtr	CloseScreen;
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	EntityInfoPtr		pEnt;
-
 	struct wsdisplay_cursor cursor;
 	int			maskoffset;
 	xf86CursorInfoPtr	CursorInfoRec;
 	OptionInfoPtr		Options;
+	ExaDriverPtr		pExa;
+	uint32_t		gid, buf, fbacc;
+	int 			offset, hwmode;
+#define HW_FB	0
+#define HW_FILL	1
+#define HW_BLIT	2
 } NGLERec, *NGLEPtr;
 
 #define NGLEPTR(p) ((NGLEPtr)((p)->driverPrivate))
 
 Bool NGLESetupCursor(ScreenPtr);
+Bool NGLEInitAccel(ScreenPtr);
 
 #endif

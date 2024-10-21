@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.1 2024/10/16 11:00:36 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.2 2024/10/21 13:40:53 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -330,7 +330,7 @@ static Bool
 NGLEPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	NGLEPtr fPtr;
-	int default_depth, bitsperpixel, wstype;
+	int default_depth, bitsperpixel, gid;
 	const char *dev;
 	char *mod = NULL;
 	const char *reqSym = NULL;
@@ -362,13 +362,26 @@ NGLEPreInit(ScrnInfoPtr pScrn, int flags)
 			   strerror(errno));
 		return FALSE;
 	}
-	if (ioctl(fPtr->fd, WSDISPLAYIO_GTYPE, &wstype) == -1) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "ioctl WSDISPLAY_GTYPE: %s\n",
-			   strerror(errno));
+
+	if (ioctl(fPtr->fd, GCID, &gid) == -1)
 		return FALSE;
+
+	fPtr->gid = gid;
+	fPtr->fbacc = 0;
+	
+	switch (gid) {
+		case STI_DD_EG:
+			fPtr->buf = BINapp1I;
+			fPtr->fbacc = BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, fPtr->buf, 0);
+			break;
+		case STI_DD_HCRX:
+			/* XXX BINovly if in 8 bit */
+			fPtr->buf = BINapp0F8;
+			fPtr->fbacc = BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, fPtr->buf, 0);
+	break;
 	}
-        
+	xf86Msg(X_ERROR, "gid %08x fb access %08x\n", fPtr->gid, fPtr->fbacc);		
+
 	/* Handle depth */
 	default_depth = fPtr->fbi.fbi_bitsperpixel <= 24 ? fPtr->fbi.fbi_bitsperpixel : 24;
 	bitsperpixel = fPtr->fbi.fbi_bitsperpixel == 15 ? 16 : fPtr->fbi.fbi_bitsperpixel;
@@ -504,7 +517,7 @@ NGLEScreenInit(SCREEN_INIT_ARGS_DECL)
 			   strerror(errno));
 		return FALSE;
 	}
-	fPtr->regs = ngle_mmap(0x40000, 0x80000000, fPtr->fd, 0);
+	fPtr->regs = ngle_mmap(0x400000, 0x80000000, fPtr->fd, 0);
 
 	if (fPtr->regs == NULL) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -567,8 +580,8 @@ NGLEScreenInit(SCREEN_INIT_ARGS_DECL)
 	xf86SetBackingStore(pScreen);
 
 	if (fPtr) {
-		/* init accel here */
-		//xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using acceleration\n");
+		NGLEInitAccel(pScreen);
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using acceleration\n");
 	}
 
 	/* software cursor */
