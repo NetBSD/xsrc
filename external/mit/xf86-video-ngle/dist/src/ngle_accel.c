@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ngle_accel.c,v 1.1 2024/10/21 13:40:53 macallan Exp $ */
+/* $NetBSD: ngle_accel.c,v 1.2 2024/10/22 07:42:15 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
@@ -182,7 +182,7 @@ NGLEPrepareSolid(
 	NGLEWrite4(fPtr, NGLE_REG_14, 
 	    IBOvals(alu, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
 
-	/* XXX HCRX needs ifferent values here */
+	/* XXX HCRX needs different values here */
 	/* dst bitmap access */
 	NGLEWrite4(fPtr, NGLE_REG_11,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
@@ -213,6 +213,13 @@ NGLESolid(
 	
 	y1 += offset >> 11;
 
+	/*
+	 * XXX
+	 * Turns out this thing always fills rectangles to the next 32 pixel
+	 * boundary on te right. To get around this we split the rectangle
+	 * into a multiples-of-32 part and the rest, so we can mask off the
+	 * excess pixels.
+	 */
 	rest = w & 0x1f;
 	wi = w & 0xffffe0;
 	if (wi > 0) {
@@ -227,6 +234,7 @@ NGLESolid(
 	if (rest > 0) {
 		mask = 0xffffffff << (32 - w);
 		/* transfer data */
+		NGLEWaitFifo(fPtr, 3);
 		NGLEWrite4(fPtr, NGLE_REG_8, mask);
 		/* dst XY */
 		NGLEWrite4(fPtr, NGLE_REG_6, ((x1 + wi) << 16) | y1);

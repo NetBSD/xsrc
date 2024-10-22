@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.2 2024/10/21 13:40:53 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.3 2024/10/22 07:42:15 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -371,7 +371,7 @@ NGLEPreInit(ScrnInfoPtr pScrn, int flags)
 	
 	switch (gid) {
 		case STI_DD_EG:
-			fPtr->buf = BINapp1I;
+			fPtr->buf = BINapp0I;
 			fPtr->fbacc = BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, fPtr->buf, 0);
 			break;
 		case STI_DD_HCRX:
