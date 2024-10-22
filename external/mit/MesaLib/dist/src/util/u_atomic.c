@@ -62,6 +62,18 @@ __atomic_fetch_sub_8(volatile long long *ptr, long long val, int memorder)
    return r;
 }
 
+WEAK long long
+__atomic_load_8(const volatile long long *ptr, int memorder)
+{
+   long long r;
+
+   pthread_mutex_lock(&sync_mutex);
+   r = *ptr;
+   pthread_mutex_unlock(&sync_mutex);
+
+   return r;
+}
+
 #ifndef __clang__
 WEAK long long
 __sync_val_compare_and_swap_8(volatile long long *ptr, long long oldval, long long newval)
