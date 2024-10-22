@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ngle_accel.c,v 1.2 2024/10/22 07:42:15 macallan Exp $ */
+/* $NetBSD: ngle_accel.c,v 1.3 2024/10/22 08:46:07 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
@@ -98,7 +98,7 @@ NGLEWaitFifo(NGLEPtr fPtr, int slots)
 }
 
 static Bool
-NGLEPrepareCopy
+NGLEPrepareCopy_EG
 (
     PixmapPtr pSrcPixmap,
     PixmapPtr pDstPixmap,
@@ -122,6 +122,40 @@ NGLEPrepareCopy
 	NGLEWrite4(fPtr, NGLE_REG_10,
 	    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
 	NGLEWrite4(fPtr, NGLE_REG_14, ((alu << 8) & 0xf00) | 0x23000000);
+	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+
+	fPtr->hwmode = HW_BLIT;
+
+	LEAVE;
+	return TRUE;
+}
+
+static Bool
+NGLEPrepareCopy_HCRX
+(
+    PixmapPtr pSrcPixmap,
+    PixmapPtr pDstPixmap,
+    int       xdir,
+    int       ydir,
+    int       alu,
+    Pixel     planemask
+)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+	NGLEPtr fPtr = NGLEPTR(pScrn);
+	int srcpitch = exaGetPixmapPitch(pSrcPixmap);
+	int srcoff = exaGetPixmapOffset(pSrcPixmap);
+
+	ENTER;
+
+	DBGMSG(X_ERROR, "%s %d %d\n", __func__, srcoff, srcpitch);
+	fPtr->offset = srcoff / srcpitch;
+	NGLEWaitMarker(pDstPixmap->drawable.pScreen, 0);
+	/* XXX HCRX needs ifferent values here */
+	NGLEWrite4(fPtr, NGLE_REG_10,
+	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
+	NGLEWrite4(fPtr, NGLE_REG_14, IBOvals(RopSrc, 0, BitmapExtent32, 0, DataDynamic, MaskOtc,
+			0, 0));
 	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
 
 	fPtr->hwmode = HW_BLIT;
@@ -165,7 +199,7 @@ NGLEDoneCopy(PixmapPtr pDstPixmap)
 }
 
 static Bool
-NGLEPrepareSolid(
+NGLEPrepareSolid_EG(
     PixmapPtr pPixmap,
     int alu,
     Pixel planemask,
@@ -186,6 +220,35 @@ NGLEPrepareSolid(
 	/* dst bitmap access */
 	NGLEWrite4(fPtr, NGLE_REG_11,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
+    	NGLEWrite4(fPtr, NGLE_REG_35, fg);
+	fPtr->hwmode = HW_FILL;
+
+	LEAVE;
+	return TRUE;
+}
+
+static Bool
+NGLEPrepareSolid_HCRX(
+    PixmapPtr pPixmap,
+    int alu,
+    Pixel planemask,
+    Pixel fg)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+	NGLEPtr fPtr = NGLEPTR(pScrn);
+
+	ENTER;
+	NGLEWaitFifo(fPtr, 4);
+	/* plane mask */
+	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+	/* bitmap op */
+	NGLEWrite4(fPtr, NGLE_REG_14, 
+	    IBOvals(alu, 0, BitmapExtent32, 0, DataDynamic, MaskOtc, 1, 0));
+
+	/* XXX HCRX needs different values here */
+	/* dst bitmap access */
+	NGLEWrite4(fPtr, NGLE_REG_11,
+	    BA(FractDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0F8, 0));
     	NGLEWrite4(fPtr, NGLE_REG_35, fg);
 	fPtr->hwmode = HW_FILL;
 
@@ -246,7 +309,7 @@ NGLESolid(
 }
 
 Bool
-NGLEPrepareAccess(PixmapPtr pPixmap, int index)
+NGLEPrepareAccess_EG(PixmapPtr pPixmap, int index)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	NGLEPtr fPtr = NGLEPTR(pScrn);
@@ -254,7 +317,8 @@ NGLEPrepareAccess(PixmapPtr pPixmap, int index)
 	if (fPtr->hwmode == HW_FB) return TRUE;
 
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
-	NGLEWrite4(fPtr, NGLE_REG_10, fPtr->fbacc);
+	NGLEWrite4(fPtr, NGLE_REG_10,
+	    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
 	NGLEWrite4(fPtr, NGLE_REG_14, 0x83000300);
 	NGLEWrite4(fPtr, NGLE_REG_13, 0xff);
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
@@ -263,6 +327,24 @@ NGLEPrepareAccess(PixmapPtr pPixmap, int index)
 	return TRUE;
 }
 
+Bool
+NGLEPrepareAccess_HCRX(PixmapPtr pPixmap, int index)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+	NGLEPtr fPtr = NGLEPTR(pScrn);
+
+	if (fPtr->hwmode == HW_FB) return TRUE;
+
+	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
+	NGLEWrite4(fPtr, NGLE_REG_10,
+	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
+	NGLEWrite4(fPtr, NGLE_REG_14, 0x83000300);
+	NGLEWrite4(fPtr, NGLE_REG_13, 0xffffffff);
+	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
+	NGLEWrite1(fPtr, NGLE_REG_16b1, 1);
+	fPtr->hwmode = HW_FB;
+	return TRUE;
+}
 Bool
 NGLEInitAccel(ScreenPtr pScreen)
 {
@@ -296,13 +378,26 @@ NGLEInitAccel(ScreenPtr pScreen)
 	fPtr->hwmode = -1;
 
 	pExa->WaitMarker = NGLEWaitMarker;
-	pExa->PrepareSolid = NGLEPrepareSolid;
 	pExa->Solid = NGLESolid;
 	pExa->DoneSolid = NGLEDoneCopy;
-	pExa->PrepareCopy = NGLEPrepareCopy;
 	pExa->Copy = NGLECopy;
 	pExa->DoneCopy = NGLEDoneCopy;
-	pExa->PrepareAccess = NGLEPrepareAccess;
+	switch (fPtr->gid) {
+		case STI_DD_EG:
+			pExa->PrepareCopy = NGLEPrepareCopy_EG;
+			pExa->PrepareSolid = NGLEPrepareSolid_EG;
+			pExa->PrepareAccess = NGLEPrepareAccess_EG;
+			break;
+		case STI_DD_HCRX:
+			pExa->PrepareCopy = NGLEPrepareCopy_HCRX;
+			pExa->PrepareSolid = NGLEPrepareSolid_HCRX;
+			pExa->PrepareAccess = NGLEPrepareAccess_HCRX;
+			break;
+		default:
+			xf86Msg(X_ERROR,
+			    "unsupported dvice GID %08x\n", fPtr->gid);
+			return FALSE;
+	}
 	NGLEWaitMarker(pScreen, 0);
 
 	return exaDriverInit(pScreen, pExa);

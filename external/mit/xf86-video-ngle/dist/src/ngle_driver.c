@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.3 2024/10/22 07:42:15 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.4 2024/10/22 08:46:07 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -378,6 +378,14 @@ NGLEPreInit(ScrnInfoPtr pScrn, int flags)
 			/* XXX BINovly if in 8 bit */
 			fPtr->buf = BINapp0F8;
 			fPtr->fbacc = BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, fPtr->buf, 0);
+			/*
+			 * XXX
+			 * we don't know yet how much usable video memory we 
+			 * have but EXA gets cranky if there is no off screen
+			 * memory at all, so we give it one line and cross
+			 * fingers
+			 */
+			fPtr->fbi.fbi_fbsize += 8192;
 	break;
 	}
 	xf86Msg(X_ERROR, "gid %08x fb access %08x\n", fPtr->gid, fPtr->fbacc);		
