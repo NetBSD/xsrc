@@ -1,3 +1,381 @@
+commit b25ad9b8f0ebcc3ebe09ce9991410c60f3a8b2ce
+Author: José Expósito <jexposit@redhat.com>
+Date:   Tue Oct 29 14:40:34 2024 +0100
+
+    xserver 21.1.14
+    
+    Signed-off-by: José Expósito <jexposit@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1734>
+
+commit ba1d14f8eff2a123bd7ff4d48c02e1d5131358e0
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Thu Oct 10 10:37:28 2024 +0200
+
+    xkb: Fix buffer overflow in _XkbSetCompatMap()
+    
+    The _XkbSetCompatMap() function attempts to resize the `sym_interpret`
+    buffer.
+    
+    However, It didn't update its size properly. It updated `num_si` only,
+    without updating `size_si`.
+    
+    This may lead to local privilege escalation if the server is run as root
+    or remote code execution (e.g. x11 over ssh).
+    
+    CVE-2024-9632, ZDI-CAN-24756
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Tested-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: José Expósito <jexposit@redhat.com>
+    (cherry picked from commit 85b776571487f52e756f68a069c768757369bfe3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1734>
+
+commit e3e14369c62a3647b8f125d9dcb7072f370c10f1
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sat Oct 14 19:06:22 2023 +0200
+
+    Fix a double-free on syntax error without a new line.
+    
+    $ echo "#foo\nfoo" > custom_config $ X -config custom_config
+    
+    will trigger the double free because the contents of xf86_lex_val.str
+    have been realloc()ed aready  when free is called in read.c:209.
+    
+    This copies the lex token and adds all the necessary free() calls to
+    avoid leaking it
+    
+    (cherry picked from commit fbc034e847a3862a0a28e5872135a3c502da6518)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1719>
+
+commit 4adb5d589f4bb90bf0ff9f1c88096ce60c41286c
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sat Feb 17 16:47:38 2024 +0100
+
+    Return NULL in *cmdname if the client argv or argv[0] is NULL
+    
+    (cherry picked from commit 59f5445a7ff3ee1468d86f03943c976c790c0893)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1719>
+
+commit 5f9cac4c34e6212e3e4fc22ff4c182d6013eeafc
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Fri Nov 11 14:58:02 2022 +0100
+
+    Don't crash if the client argv or argv[0] is NULL.
+    
+    Report from  bauerm at pestilenz dot org.
+    
+    (cherry picked from commit a8512146ba9f475a384a35337f51c7730ba7b4ce)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1719>
+
+commit 9d310679476abb150b8b9055ad44132ffbfa0e3b
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Thu Feb 15 16:15:02 2024 +0100
+
+    Xnest: fix broken exposure events
+    
+    Xnest fails to properly pass through expose events: the coordinates are
+    miscalculated in xnestCollectExposures(), before miSendExposures() is called.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1735
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/132
+    Fixes: 605e6764df - Fix Motif menu drawing in Xnest
+    Backport-Of: https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1397
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1651>
+
+commit 00d0eba826bbf4b35becbd3fab1ee10e8b3bb89d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 13:27:45 2024 -0700
+
+    dix: FindBestPixel: fix implicit fallthrough warning
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 9c9e1afeb277030380daa9b22f88b05e1af783a0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 52813e32f26c16b8210dbf5e4e2be7b8a4406360
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 13:21:14 2024 -0700
+
+    dix: GetPairedDevice: check if GetMaster returned NULL
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/devices.c: In function ‘GetPairedDevice’:
+    ../dix/devices.c:2734:15: warning: dereference of NULL ‘dev’
+     [CWE-476] [-Wanalyzer-null-dereference]
+     2734 |     return dev->spriteInfo? dev->spriteInfo->paired: NULL;
+          |            ~~~^~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit e6fc0861d8016ab31536329acac6d6de4bc64164)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 65644c32b8062dd73b10e5f9092dfb833f469719
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 11:59:07 2024 -0700
+
+    dix: HashResourceID: use unsigned integers for bit shifting
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/resource.c: In function ‘HashResourceID’:
+    ../dix/resource.c:691:44: warning: left shift of negative value
+     [-Wshift-negative-value]
+      691 |     return (id ^ (id >> numBits)) & ~((~0) << numBits);
+          |                                            ^~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 26a7ab09eae24fda6cbf51e03f974c7572e80e69)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit f12dd2436f2b70dc2fb8e29bee9dfaf907764ca0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 11:15:03 2024 -0700
+
+    dix: ProcListProperties: skip unneeded work if numProps is 0
+    
+    No real harm, but clears warning from gcc 14.1:
+    
+    ../dix/property.c: In function ‘ProcListProperties’:
+    ..//dix/property.c:605:27: warning: dereference of NULL ‘temppAtoms’
+     [CWE-476] [-Wanalyzer-null-dereference]
+      605 |             *temppAtoms++ = pProp->propertyName;
+          |             ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 39f337fd497d6fd95efaae9ff5a62d60b49e16aa)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 83a9950d7a8e365d13acaa1c38136d1b9068f4be
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 11:03:41 2024 -0700
+
+    dix: dixChangeWindowProperty: don't call memcpy if malloc failed
+    
+    It shouldn't matter, since it would have a length of 0, but it
+    clears warnings from gcc 14.1:
+    
+    ../dix/property.c: In function ‘dixChangeWindowProperty’:
+    ../dix/property.c:287:9: warning: use of possibly-NULL ‘data’ where
+     non-null expected [CWE-690] [-Wanalyzer-possible-null-argument]
+      287 |         memcpy(data, value, totalSize);
+          |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ../dix/property.c:324:13: warning: use of possibly-NULL ‘data’ where
+     non-null expected [CWE-690] [-Wanalyzer-possible-null-argument]
+      324 |             memcpy(data, value, totalSize);
+          |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 10cafd0bbebfbb92c4e73088ba168ef96fcb983c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 3bca0f56fa509c57715ad9f2f1742d73f6ffee6d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 10:41:33 2024 -0700
+
+    dix: InitPredictableAccelerationScheme: avoid memory leak on failure
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/ptrveloc.c: In function ‘InitPredictableAccelerationScheme’:
+    ../dix/ptrveloc.c:149:9: warning: leak of ‘<unknown>’
+     [CWE-401] [-Wanalyzer-malloc-leak]
+      149 |         free(vel);
+          |         ^~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 462d13c2f6dc25adea1f19e6b621f97b997236af)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 6cefa3a592ce433a203ddc69e0d5bd1d8a0504fd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 10:03:08 2024 -0700
+
+    dix: CreateScratchGC: avoid dereference of pointer we just set to NULL
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/gc.c: In function ‘CreateScratchGC’:
+    ../dix/gc.c:818:28: warning: dereference of NULL ‘pGC’
+     [CWE-476] [-Wanalyzer-null-dereference]
+      818 |     pGC->graphicsExposures = FALSE;
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7ee3a520184b355820923bc7a955d0834eb8afbd)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit abaf3c6f204a42006ce1da4fc6d8206477d302e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 09:57:36 2024 -0700
+
+    dix: enterleave.c: fix implicit fallthrough warnings
+    
+    Clears 7 -Wimplicit-fallthrough warnings from gcc 14.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 0cb826e3d0fd366914c34ab18e5917930f6695b4)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 0f10584ec43eb29512ac9c4748eccc7b1d60988b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 09:45:54 2024 -0700
+
+    dix: SetFontPath: don't set errorValue on Success
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/dixfonts.c: In function ‘SetFontPath’:
+    ../dix/dixfonts.c:1697:28: warning: use of uninitialized value ‘bad’
+     [CWE-457] [-Wanalyzer-use-of-uninitialized-value]
+     1697 |         client->errorValue = bad;
+          |         ~~~~~~~~~~~~~~~~~~~^~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 1a86fba0d9ae2e107e3ed23519ab3b84d2e5240e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit f9a5bc6532f76758f7a7fd44047731541ebd23d5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 09:28:19 2024 -0700
+
+    dix: PolyText: fully initialize local_closure
+    
+    Clears warning from gcc 14.1:
+    
+    ../dix/dixfonts.c:1352:15: warning: use of uninitialized value ‘*c.data’
+     [CWE-457] [-Wanalyzer-use-of-uninitialized-value]
+     1352 |         free(c->data);
+          |              ~^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit d78836a3a6b827a282957c48898f9ba4cb0dbcf5)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 02e6639547361578e856a079814caef08db5260f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 09:17:17 2024 -0700
+
+    dix: check for calloc() failure in Xi event conversion routines
+    
+    Clears up 12 -Wanalyzer-possible-null-dereference warnings from gcc 14.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 25762834c9a5da3a7c672d89a7da73297252d905)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 111dc7058891bd01b117f3984cf5ac701011e053
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Jan 22 14:22:12 2024 +1000
+
+    dix: fix valuator copy/paste error in the DeviceStateNotify event
+    
+    Fixes 219c54b8a3337456ce5270ded6a67bcde53553d5
+    
+    (cherry picked from commit 133e0d651c5d12bf01999d6289e84e224ba77adc)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1717>
+
+commit 408432fbd0f51d2404bfcfc60f20de8bac1f6178
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Sun Jun 26 00:01:54 2022 +0300
+
+    glamor: make use of GL_EXT_texture_format_BGRA8888
+    
+    For 24 and 32 bit depth pictures xserver uses PICT_x8r8g8b8 and PICT_a8r8g8b8 formats,
+    which must be backed with GL_BGRA format. It is present in OpenGL ES 2.0 only with
+    GL_EXT_texture_format_BGRA8888 extension. We require such extension in glamor_init,
+    so, why not to make use of it?
+    Fixes #1208
+    Fixes #1354
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit 24cd5f34f8edcc6621ed9c0f2b1a3df08de7488d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1546>
+
+commit 03bbf4b1214b4e9aad153a5969c32264234fe4da
+Author: Alexey <fatton2011@yandex.ru>
+Date:   Fri Jun 24 15:12:54 2022 +0000
+
+    Fixed mirrored glyphs on big-endian machines
+    
+    (cherry picked from commit 4cf89222701d73d46c098be9fcc8d9eb6d96f885)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1605>
+
+commit b08cb8141b544788d8607fa31e69c089acdb4fa4
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed Jul 31 15:11:27 2024 +0200
+
+    Xnest: cursor: fix potentially uninitialized memory
+    
+    It's safer to zero-out the cursor-private memory on allocation,
+    instead of relying on being cleared initialized somewhere later.
+    
+    Fixes: 3f3ff971ec - Replace X-allocation functions with their C89 counterparts
+    Backport-Of: https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1652
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1653>
+
+commit 68129d7369f30e1448f587598d3e2c015329ae38
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Jul 23 17:11:55 2024 +0200
+
+    build: Drop libxcvt requirement from SDK_REQUIRED_MODULES
+    
+    The SDK doed not need libxcvt, only Xorg and Xwayland do.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1721
+    Fixes: a4ab57cb7 - build: Add dependency on libxcvt
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1618>
+
+commit 8407181c7dfe14086d99697af0b86120320ab73e
+Author: José Expósito <jexposit@redhat.com>
+Date:   Fri Jan 19 13:05:51 2024 +0100
+
+    ephyr: Fix incompatible pointer type build error
+    
+    Fix a compilation error on 32 bits architectures with gcc 14:
+    
+      ephyr_glamor_xv.c: In function ‘ephyr_glamor_xv_init’:
+      ephyr_glamor_xv.c:154:31: error: assignment to ‘SetPortAttributeFuncPtr’ {aka ‘int (*)(struct _KdScreenInfo *, long unsigned int,  int,  void *)’} from incompatible pointer type ‘int (*)(KdScreenInfo *, Atom,  INT32,  void *)’ {aka ‘int (*)(struct _KdScreenInfo *, long unsigned int,  long int,  void *)’} [-Wincompatible-pointer-types]
+        154 |     adaptor->SetPortAttribute = ephyr_glamor_xv_set_port_attribute;
+            |                               ^
+      ephyr_glamor_xv.c:155:31: error: assignment to ‘GetPortAttributeFuncPtr’ {aka ‘int (*)(struct _KdScreenInfo *, long unsigned int,  int *, void *)’} from incompatible pointer type ‘int (*)(KdScreenInfo *, Atom,  INT32 *, void *)’ {aka ‘int (*)(struct _KdScreenInfo *, long unsigned int,  long int *, void *)’} [-Wincompatible-pointer-types]
+        155 |     adaptor->GetPortAttribute = ephyr_glamor_xv_get_port_attribute;
+            |                               ^
+    
+    Build error logs:
+    https://koji.fedoraproject.org/koji/taskinfo?taskID=111964273
+    
+    Signed-off-by: José Expósito <jexposit@redhat.com>
+    (cherry picked from commit e89edec497bac581ca9b614fb00c25365580f045)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1532>
+
 commit be2767845d6ed3c6dbd25a151051294d0908a995
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Fri Apr 12 13:09:23 2024 -0400
