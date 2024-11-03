@@ -675,7 +675,8 @@ static void
 DeliverStateNotifyEvent(DeviceIntPtr dev, WindowPtr win)
 {
     int evcount = 1;
-    deviceStateNotify *ev, *sev;
+    deviceStateNotify sev[6 + (MAX_VALUATORS + 2)/3];
+    deviceStateNotify *ev;
     deviceKeyStateNotify *kev;
     deviceButtonStateNotify *bev;
 
@@ -714,7 +715,7 @@ DeliverStateNotifyEvent(DeviceIntPtr dev, WindowPtr win)
         }
     }
 
-    sev = ev = xallocarray(evcount, sizeof(xEvent));
+    ev = sev;
     FixDeviceStateNotify(dev, ev, NULL, NULL, NULL, first);
 
     if (b != NULL) {
@@ -770,7 +771,6 @@ DeliverStateNotifyEvent(DeviceIntPtr dev, WindowPtr win)
 
     DeliverEventsToWindow(dev, win, (xEvent *) sev, evcount,
                           DeviceStateNotifyMask, NullGrab);
-    free(sev);
 }
 
 void
@@ -784,8 +784,9 @@ DeviceFocusEvent(DeviceIntPtr dev, int type, int mode, int detail,
 
     mouse = IsFloating(dev) ? dev : GetMaster(dev, MASTER_POINTER);
 
-    /* XI 2 event */
-    btlen = (mouse->button) ? bits_to_bytes(mouse->button->numButtons) : 0;
+    /* XI 2 event contains the logical button map - maps are CARD8
+     * so we need 256 bits for the possibly maximum mapping */
+    btlen = (mouse->button) ? bits_to_bytes(256) : 0;
     btlen = bytes_to_int32(btlen);
     len = sizeof(xXIFocusInEvent) + btlen * 4;
 
