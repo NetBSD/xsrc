@@ -144,7 +144,7 @@ ProcXIQueryPointer(ClientPtr client)
     if (pDev->button)
     {
         int i, down;
-        rep.buttons_len = bytes_to_int32(bits_to_bytes(pDev->button->numButtons));
+        rep.buttons_len = bytes_to_int32(bits_to_bytes(256)); /* button map up to 255 */
         rep.length += rep.buttons_len;
         buttons_size = rep.buttons_len * 4;
         buttons = calloc(1, buttons_size);

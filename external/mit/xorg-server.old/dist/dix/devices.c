@@ -432,13 +432,17 @@ DisableDevice(DeviceIntPtr dev, BOOL sendevent)
 {
     DeviceIntPtr *prev, other;
     BOOL enabled;
+    BOOL dev_in_devices_list = FALSE;
     int flags[MAXDEVICES] = {0};
 
-    for (prev = &inputInfo.devices;
-	 *prev && (*prev != dev);
-	 prev = &(*prev)->next)
-	;
-    if (*prev != dev)
+    for (other = inputInfo.devices; other; other = other->next) {
+        if (other == dev) {
+            dev_in_devices_list = TRUE;
+            break;
+        }
+    }
+
+    if (!dev_in_devices_list)
 	return FALSE;
 
     /* float attached devices */
@@ -473,6 +477,19 @@ DisableDevice(DeviceIntPtr dev, BOOL sendevent)
                 return FALSE;
             }
         }
+
+        for (other = inputInfo.off_devices; other; other = other->next) {
+	    /*
+	     * XXXMRG, from newer GetMaster().  The GetMaster() with new
+	     * MASTER_ATTACHED avoids paired devices, and with this call
+	     * being !IsMaster() first, dev->u.master is the only answer
+	     * it can give.
+	     */
+            if (!IsMaster(other) && other->u.master == dev) {
+                AttachDevice(NULL, other, NULL);
+                flags[other->id] |= XISlaveDetached;
+            }
+        }
     }
 
     (void)(*dev->deviceProc)(dev, DEVICE_OFF);
@@ -490,6 +507,9 @@ DisableDevice(DeviceIntPtr dev, BOOL sendevent)
 
     LeaveWindow(dev);
     SetFocusOut(dev);
+
+    for (prev = &inputInfo.devices;
+         *prev && (*prev != dev); prev = &(*prev)->next);
 
     *prev = dev->next;
     dev->next = inputInfo.off_devices;
@@ -992,6 +1012,11 @@ CloseDownDevices(void)
     for (dev = inputInfo.devices; dev; dev = dev->next)
     {
         if (!IsMaster(dev) && dev->u.master)
+            dev->u.master = NULL;
+    }
+
+    for (dev = inputInfo.off_devices; dev; dev = dev->next) {
+	if (!IsMaster(dev) && dev->u.master)
             dev->u.master = NULL;
     }
 

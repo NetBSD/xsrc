@@ -49,6 +49,7 @@
 #include "indirect_dispatch.h"
 #include "indirect_table.h"
 #include "indirect_util.h"
+#include "xace.h"
 
 static int
 validGlxScreen(ClientPtr client, int screen, __GLXscreen **pGlxScreen, int *err)
@@ -1341,6 +1342,13 @@ DoCreatePbuffer(ClientPtr client, int screenNum, XID fbconfigId,
     pPixmap = (*pGlxScreen->pScreen->CreatePixmap) (pGlxScreen->pScreen,
 						    width, height, config->rgbBits, 0);
     __glXleaveServer(GL_FALSE);
+
+    err = XaceHook(XACE_RESOURCE_ACCESS, client, glxDrawableId, RT_PIXMAP,
+                   pPixmap, RT_NONE, NULL, DixCreateAccess);
+    if (err != Success) {
+        (*pGlxScreen->pScreen->DestroyPixmap) (pPixmap);
+        return err;
+    }
 
     /* Assign the pixmap the same id as the pbuffer and add it as a
      * resource so it and the DRI2 drawable will be reclaimed when the
