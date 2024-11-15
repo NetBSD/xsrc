@@ -1,5 +1,6 @@
 /* include/X11/Xcursor/Xcursor.h.  Generated from Xcursor.h.in by configure.  */
 /*
+ * Copyright © 2024 Thomas E. Dickey
  * Copyright © 2002 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -77,7 +78,7 @@ typedef XcursorUInt	XcursorPixel;
 
 #define XCURSOR_LIB_MAJOR 1
 #define XCURSOR_LIB_MINOR 2
-#define XCURSOR_LIB_REVISION 2
+#define XCURSOR_LIB_REVISION 3
 #define XCURSOR_LIB_VERSION	((XCURSOR_LIB_MAJOR * 10000) + \
 				 (XCURSOR_LIB_MINOR * 100) + \
 				 (XCURSOR_LIB_REVISION))
@@ -483,6 +484,12 @@ XcursorSetDefaultSize (Display *dpy, int size);
 
 int
 XcursorGetDefaultSize (Display *dpy);
+
+XcursorBool
+XcursorSetResizable (Display *dpy, XcursorBool flag);
+
+XcursorBool
+XcursorGetResizable (Display *dpy);
 
 XcursorBool
 XcursorSetTheme (Display *dpy, const char *theme);
