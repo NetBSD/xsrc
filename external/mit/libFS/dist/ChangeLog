@@ -1,3 +1,140 @@
+commit a21531705199c69f25dd67234449c8c6404f9af6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 1 16:57:55 2024 -0700
+
+    libFS 1.0.10
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da752ff83971df2648ddd0293f802f41bafa16d1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 14:27:51 2024 -0800
+
+    unifdef SUNSYSV
+    
+    This wasn't actually defined on Solaris, so I don't know what this was for.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a8a4c727d27fc83f55c8d2a3a8a41721e2843cae
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:59:21 2024 -0800
+
+    unifdef ISC
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 35b7b4157770c2b32b957d725efd26fa03849423
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:58:02 2024 -0800
+
+    unifdef NCD
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 213ad6310a875cf3c4927b37d4001dc4733de239
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:56:50 2024 -0800
+
+    Use autoconf-set HAVE_STDINT_H instead of platform-specific ifdefs
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9d9202d04dbc4d45561a4c62386f8de0bd31be18
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:54:39 2024 -0800
+
+    unifdef dirty
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 10820586db1bc1817d437c207b6c43cdf36a7bbe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:51:38 2024 -0800
+
+    Simplify remaining OPEN_MAX logic in FSlibos.h
+    
+    Since the FS_OPEN_MAX value is only used for calculating a hardcoded
+    array size, we can't really use a sysconf call to find it, so stop
+    pretending that's a valid answer that we'll just ignore later.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0378e3cc9a0e036b0c1fb53341c9ab5db3e1342c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:47:22 2024 -0800
+
+    Remove ifdefs for non-Solaris SVR4 systems
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7aa6c8f669939335b97673bc065e702b5c7788f7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:43:51 2024 -0800
+
+    unifdef __OSF1__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4450727e9880c651ce37e70a838f945c0350f5d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:42:54 2024 -0800
+
+    unifdef __QNX__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 541765ebcf8f5b63d72809c382cffdefd05a551b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 11:41:26 2024 -0800
+
+    unifdef __UNIXOS2__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5a6aa67bee5d2e7fe7c244647f878d2965a98544
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 4 10:44:45 2023 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:39: warning: The macro `AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:39: You should run autoupdate.
+    aclocal.m4:3640: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:39: the top level
+    
+    libtoolize: Consider adding 'AC_CONFIG_MACRO_DIRS([m4])' to configure.ac,
+    libtoolize: and rerunning libtoolize and aclocal.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0966b8df3ac6c7961ef63315335cf2f59c8fc0a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 09:17:56 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d106d10ec08bd5618dc088282f2b42a3c39ed380
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 13:13:21 2023 -0800
+
+    configure: raise minimum autoconf requirement to 2.70
+    
+    Needed for builds on NetBSD to work correctly, since it depends on
+    AC_USE_SYSTEM_EXTENSIONS defining _OPENBSD_SOURCE to expose the
+    prototype for reallocarray() in the system headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 7e8120c0574ab1910f63474ff6be8de0ddc4ccac
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Aug 26 15:23:32 2022 -0700
@@ -856,7 +993,7 @@ Date:   Fri Jan 28 19:41:37 2011 -0500
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
 
 commit 5895de6dedcb8603b6a415d3486395c29501868c
-Author: Cristian Rodríguez  <cristian.rodriguez@opensuse.org>
+Author: Cristian Rodríguez <cristian.rodriguez@opensuse.org>
 Date:   Tue Dec 14 15:07:34 2010 -0500
 
     Export only public API symbols
@@ -1252,7 +1389,7 @@ Date:   Sun Jul 3 07:00:55 2005 +0000
         <X11/fonts/foo.h>.
 
 commit 6847a3b405dd98a1aa7804e97e6b2ce13bbf8bd7
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jun 22 22:46:31 2005 +0000
 
     Apply these patches from Theo van Klaveren:
@@ -1274,7 +1411,7 @@ Date:   Thu Jun 9 15:52:02 2005 +0000
     Copy Xtrans.h to exports/include/X11/Xtrans only
 
 commit 6c0b06eddcffce31814cb103142f5cda2df9da91
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed May 25 22:12:21 2005 +0000
 
     - Use XTRANS_CONNECTION_FLAGS macro in lib/FS/configure.ac
@@ -1282,7 +1419,7 @@ Date:   Wed May 25 22:12:21 2005 +0000
     - instead add a new file fs_transport.c that include Xtrans/X11/transport.c
 
 commit 3a9234d968568f2009376cdb219ea47b90572c68
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed May 25 21:47:56 2005 +0000
 
     - Add FSlib to symlink.sh

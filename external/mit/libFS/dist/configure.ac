@@ -21,22 +21,23 @@
 #
 
 # Initialize Autoconf
-AC_PREREQ([2.60])
-AC_INIT([libFS], [1.0.9],
+AC_PREREQ([2.70])
+AC_INIT([libFS], [1.0.10],
         [https://gitlab.freedesktop.org/xorg/lib/libfs/-/issues], [libFS])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
 # Must be called before any macros that run the compiler (like
-# AC_PROG_LIBTOOL) to avoid autoconf errors.
+# LT_INIT) to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize libtool
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Require X.Org macros 1.8 or later
 m4_ifndef([XORG_MACROS_VERSION],

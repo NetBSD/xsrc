@@ -59,7 +59,7 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef WIN32
 
-# if defined(__SCO__) || defined(__UNIXWARE__)
+# ifdef HAVE_STDINT_H
 #  include <stdint.h>	/* For SIZE_MAX */
 # endif
 
@@ -84,49 +84,29 @@ in this Software without prior written authorization from The Open Group.
 #   endif
 #  endif
 #  ifndef OPEN_MAX
-#   ifdef SVR4
-#    define OPEN_MAX 256
-#   else
-#    include <sys/param.h>
-#    ifndef OPEN_MAX
-#     ifdef __OSF1__
-#      define OPEN_MAX 256
-#     else
-#      ifdef NOFILE
-#       define OPEN_MAX NOFILE
-#      else
-#       if !defined(__UNIXOS2__) && !defined(__QNX__)
-#        ifdef __GNU__
-#         define OPEN_MAX (sysconf(_SC_OPEN_MAX))
-#        else /* !__GNU__ */
-#         define OPEN_MAX NOFILES_MAX
-#        endif /* __GNU__ */
-#       else /* !__UNIXOS2__ && !__QNX__ */
-#        define OPEN_MAX 256
-#       endif /* __UNIXOS2__ */
-#      endif
+#   include <sys/param.h>
+#   ifndef OPEN_MAX
+#    ifdef NOFILE
+#     define OPEN_MAX NOFILE
+#    else
+#     ifdef NOFILES_MAX
+#      define OPEN_MAX NOFILES_MAX
 #     endif
 #    endif
 #   endif
 #  endif
 
-#  ifdef __GNU__
+#  ifndef OPEN_MAX
 #   define FS_OPEN_MAX 256
-#  else /*!__GNU__*/
+#  else /* !OPEN_MAX */
 #   if OPEN_MAX > 256
 #    define FS_OPEN_MAX 256
 #   else
 #    define FS_OPEN_MAX OPEN_MAX
 #   endif
-#  endif /*__GNU__*/
+#  endif /* OPEN_MAX */
 
 # endif /* FS_OPEN_MAX */
-
-/* Utek leaves kernel macros around in include files (bleah) */
-
-# ifdef dirty
-#  undef dirty
-# endif
 
 # define NMSKBITS 32
 # define MSKCNT ((FS_OPEN_MAX + NMSKBITS - 1) / NMSKBITS)

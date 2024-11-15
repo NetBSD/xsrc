@@ -55,17 +55,10 @@ in this Software without prior written authorization from The Open Group.
 #include	"FSlibint.h"
 #include	<stdio.h>
 #include	"X11/Xpoll.h"
-#ifdef NCD
-#include	<fcntl.h>
-#endif
 #ifdef WIN32
 #define ECHECK(err) (WSAGetLastError() == err)
 #else
-#ifdef ISC
-#define ECHECK(err) ((errno == err) || errno == EAGAIN || errno == EWOULDBLOCK)
-#else
 #define ECHECK(err) (errno == err)
-#endif
 #endif
 
 /*

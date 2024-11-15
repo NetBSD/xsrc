@@ -87,11 +87,7 @@ static const char * _SysErrorMsg ( int n );
 #define ECHECK(err) (WSAGetLastError() == err)
 #define ESET(val) WSASetLastError(val)
 #else
-#ifdef ISC
-#define ECHECK(err) ((errno == err) || ETEST())
-#else
 #define ECHECK(err) (errno == err)
-#endif
 #define ESET(val) errno = val
 #endif
 
@@ -155,11 +151,6 @@ _FSFlush(register FSServer *svr)
 	    bufindex += write_stat;
 	} else if (ETEST()) {
 	    _FSWaitForWritable(svr);
-#ifdef SUNSYSV
-	} else if (ECHECK(0)) {
-	    _FSWaitForWritable(svr);
-#endif
-
 #ifdef EMSGSIZE
 	} else if (ECHECK(EMSGSIZE)) {
 	    if (todo > 1)
@@ -243,9 +234,6 @@ _FSRead(
     register long	 size)
 {
     register long bytes_read;
-#if defined(SVR4) && defined(i386)
-    int	num_failed_reads = 0;
-#endif
 
     if (size == 0)
 	return;
@@ -261,27 +249,11 @@ _FSRead(
 	if (bytes_read > 0) {
 	    size -= bytes_read;
 	    data += bytes_read;
-#if defined(SVR4) && defined(i386)
-	    num_failed_reads = 0;
-#endif
 	}
 	else if (ETEST()) {
 	    _FSWaitForReadable(svr);
-#if defined(SVR4) && defined(i386)
-	    num_failed_reads++;
-	    if (num_failed_reads > 1) {
-		ESET(EPIPE);
-		(*_FSIOErrorFunction) (svr);
-	    }
-#endif
 	    ESET(0);
 	}
-#ifdef SUNSYSV
-	else if (ECHECK(0)) {
-	    _FSWaitForReadable(svr);
-	}
-#endif
-
 	else if (bytes_read == 0) {
 	    /* Read failed because of end of file! */
 	    ESET(EPIPE);
@@ -290,10 +262,6 @@ _FSRead(
 	    /* If it's a system call interrupt, it's not an error. */
 	    if (!ECHECK(EINTR))
 		(*_FSIOErrorFunction) (svr);
-#if defined(SVR4) && defined(i386)
-	    else
-		num_failed_reads = 0;
-#endif
 	}
     }
 }
@@ -347,12 +315,6 @@ _FSReadPad(
 	    _FSWaitForReadable(svr);
 	    ESET(0);
 	}
-#ifdef SUNSYSV
-	else if (ECHECK(0)) {
-	    _FSWaitForReadable(svr);
-	}
-#endif
-
 	else if (bytes_read == 0) {
 	    /* Read failed because of end of file! */
 	    ESET(EPIPE);
@@ -438,11 +400,6 @@ _FSSend(
 	    todo = total;
 	} else if (ETEST()) {
 		_FSWaitForWritable(svr);
-#ifdef SUNSYSV
-	} else if (ECHECK(0)) {
-	    _FSWaitForWritable(svr);
-#endif
-
 #ifdef EMSGSIZE
 	} else if (ECHECK(EMSGSIZE)) {
 	    if (todo > 1)
