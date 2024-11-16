@@ -38,7 +38,7 @@
 #define PACKAGE_NAME "bdftopcf"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "bdftopcf 1.1.1"
+#define PACKAGE_STRING "bdftopcf 1.1.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bdftopcf"
@@ -47,7 +47,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.1"
+#define PACKAGE_VERSION "1.1.2"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -56,12 +56,12 @@
 #define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
+#define PACKAGE_VERSION_PATCHLEVEL 2
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
