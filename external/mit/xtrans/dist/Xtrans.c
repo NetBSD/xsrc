@@ -150,7 +150,6 @@ TRANS(SelectTransport) (const char *protocol)
 #ifndef HAVE_STRCASECMP
     char 	protobuf[PROTOBUFSIZE];
 #endif
-    int		i;
 
     prmsg (3,"SelectTransport(%s)\n", protocol);
 
@@ -163,14 +162,14 @@ TRANS(SelectTransport) (const char *protocol)
     strncpy (protobuf, protocol, PROTOBUFSIZE - 1);
     protobuf[PROTOBUFSIZE-1] = '\0';
 
-    for (i = 0; i < PROTOBUFSIZE && protobuf[i] != '\0'; i++)
+    for (unsigned int i = 0; i < PROTOBUFSIZE && protobuf[i] != '\0'; i++)
 	if (isupper ((unsigned char)protobuf[i]))
 	    protobuf[i] = tolower ((unsigned char)protobuf[i]);
 #endif
 
     /* Look at all of the configured protocols */
 
-    for (i = 0; i < NUMTRANS; i++)
+    for (unsigned int i = 0; i < NUMTRANS; i++)
     {
 #ifndef HAVE_STRCASECMP
 	if (!strcmp (protobuf, Xtransports[i].transport->TransName))
@@ -204,8 +203,9 @@ TRANS(ParseAddress) (const char *address,
 
     char	*mybuf, *tmpptr = NULL;
     const char	*_protocol = NULL;
-    char	*_host, *_port;
+    const char	*_host, *_port;
     char	hostnamebuf[256];
+    char	*_host_buf;
     int		_host_len;
 
     prmsg (3,"ParseAddress(%s)\n", address);
@@ -243,9 +243,10 @@ TRANS(ParseAddress) (const char *address,
     _protocol = mybuf;
 
 
-   if ( ((mybuf = strchr (mybuf,'/')) == NULL) &&
-      ((mybuf = strrchr (tmpptr,':')) == NULL) )
-   {
+    if ((mybuf == NULL) ||
+        ( ((mybuf = strchr (mybuf, '/')) == NULL) &&
+          ((mybuf = strrchr (tmpptr, ':')) == NULL) ) )
+    {
 	/* address is in a bad format */
 	*protocol = NULL;
 	*host = NULL;
@@ -293,7 +294,7 @@ TRANS(ParseAddress) (const char *address,
 
     /* Get the host part */
 
-    _host = mybuf;
+    _host = _host_buf = mybuf;
 
     if ((mybuf = strrchr (mybuf,':')) == NULL)
     {
@@ -316,10 +317,10 @@ TRANS(ParseAddress) (const char *address,
     /* hostname in IPv6 [numeric_addr]:0 form? */
     else if ( (_host_len > 3) &&
       ((strcmp(_protocol, "tcp") == 0) || (strcmp(_protocol, "inet6") == 0))
-      && (*_host == '[') && (*(_host + _host_len - 1) == ']') ) {
+      && (_host_buf[0] == '[') && (_host_buf[_host_len - 1] == ']') ) {
 	struct sockaddr_in6 sin6;
 
-	*(_host + _host_len - 1) = '\0';
+	_host_buf[_host_len - 1] = '\0';
 
 	/* Verify address is valid IPv6 numeric form */
 	if (inet_pton(AF_INET6, _host + 1, &sin6) == 1) {
@@ -328,7 +329,7 @@ TRANS(ParseAddress) (const char *address,
 	    _protocol = "inet6";
 	} else {
 	    /* It's not, restore it just in case some other code can use it. */
-	    *(_host + _host_len - 1) = ']';
+	    _host_buf[_host_len - 1] = ']';
 	}
     }
 #endif
@@ -499,18 +500,19 @@ TRANS(Reopen) (int type, int trans_id, int fd, const char *port)
     XtransConnInfo	ciptr = NULL;
     Xtransport		*thistrans = NULL;
     char		*save_port;
-    int			i;
 
     prmsg (2,"Reopen(%d,%d,%s)\n", trans_id, fd, port);
 
     /* Determine the transport type */
 
-    for (i = 0; i < NUMTRANS; i++)
+    for (unsigned int i = 0; i < NUMTRANS; i++)
+    {
 	if (Xtransports[i].transport_id == trans_id)
 	{
 	    thistrans = Xtransports[i].transport;
 	    break;
 	}
+    }
 
     if (thistrans == NULL)
     {
@@ -602,9 +604,8 @@ TRANS(GetReopenInfo) (XtransConnInfo ciptr,
 		      int *trans_id, int *fd, char **port)
 
 {
-    int i;
-
-    for (i = 0; i < NUMTRANS; i++)
+    for (unsigned int i = 0; i < NUMTRANS; i++)
+    {
 	if (Xtransports[i].transport == ciptr->transptr)
 	{
 	    *trans_id = Xtransports[i].transport_id;
@@ -615,6 +616,7 @@ TRANS(GetReopenInfo) (XtransConnInfo ciptr,
 	    else
 		return 1;
 	}
+    }
 
     return 0;
 }
@@ -1020,13 +1022,12 @@ complete_network_count (void)
 {
     int count = 0;
     int found_local = 0;
-    int i;
 
     /*
      * For a complete network, we only need one LOCALCONN transport to work
      */
 
-    for (i = 0; i < NUMTRANS; i++)
+    for (unsigned int i = 0; i < NUMTRANS; i++)
     {
 	if (Xtransports[i].transport->flags & TRANS_ALIAS
    	 || Xtransports[i].transport->flags & TRANS_NOLISTEN)
@@ -1059,7 +1060,7 @@ receive_listening_fds(const char* port, XtransConnInfo* temp_ciptrs,
         return -1;
     }
 
-    for (i = 0; i < systemd_listen_fds && *count_ret < NUMTRANS; i++)
+    for (i = 0; i < systemd_listen_fds && *count_ret < (int)NUMTRANS; i++)
     {
         struct sockaddr_storage a;
         int ti;
@@ -1126,8 +1127,8 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 
 {
     char		buffer[256]; /* ??? What size ?? */
-    XtransConnInfo	ciptr, temp_ciptrs[NUMTRANS];
-    int			status, i, j;
+    XtransConnInfo	ciptr, temp_ciptrs[NUMTRANS] = { NULL };
+    int			status, j;
 
 #if defined(IPv6) && defined(AF_INET6)
     int		ipv6_succ = 0;
@@ -1151,7 +1152,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
     if (receive_listening_fds(port, temp_ciptrs, count_ret) < 0)
 	return -1;
 
-    for (i = 0; i < NUMTRANS; i++)
+    for (unsigned int i = 0; i < NUMTRANS; i++)
     {
 	Xtransport *trans = Xtransports[i].transport;
 	unsigned int flags = 0;
@@ -1199,7 +1200,8 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 		"MakeAllCOTSServerListeners: server already running\n");
 
 		for (j = 0; j < *count_ret; j++)
-		    TRANS(Close) (temp_ciptrs[j]);
+		    if (temp_ciptrs[j] != NULL)
+			TRANS(Close) (temp_ciptrs[j]);
 
 		*count_ret = 0;
 		*ciptrs_ret = NULL;
@@ -1243,7 +1245,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 	    return -1;
 	}
 
-	for (i = 0; i < *count_ret; i++)
+	for (int i = 0; i < *count_ret; i++)
 	{
 	    (*ciptrs_ret)[i] = temp_ciptrs[i];
 	}
@@ -1348,7 +1350,7 @@ int TRANS(GetHostname) (char *buf, int maxlen)
     uname (&name);
     len = strlen (name.nodename);
     if (len >= maxlen) len = maxlen - 1;
-    strncpy (buf, name.nodename, len);
+    memcpy (buf, name.nodename, len);
     buf[len] = '\0';
 #else
     buf[0] = '\0';
