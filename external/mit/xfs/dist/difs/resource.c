@@ -131,9 +131,9 @@ InitClientResources(ClientPtr client)
 	lastResourceType = RT_LASTPREDEF;
 	TypeMask = RC_LASTPREDEF - 1;
 	if (DeleteFuncs)
-	    fsfree(DeleteFuncs);
-	DeleteFuncs = (DeleteType *) fsalloc((lastResourceType + 1) *
-					     sizeof(DeleteType));
+	    FSfree(DeleteFuncs);
+	DeleteFuncs = (DeleteType *) FSallocarray((lastResourceType + 1),
+                                                  sizeof(DeleteType));
 	if (!DeleteFuncs)
 	    return FALSE;
 	DeleteFuncs[RT_NONE & TypeMask] = NoneDeleteFunc;
@@ -141,7 +141,7 @@ InitClientResources(ClientPtr client)
 	DeleteFuncs[RT_AUTHCONT & TypeMask] = (DeleteType)DeleteAuthCont;
     }
     clientTable[i = client->index].resources =
-	(ResourcePtr *) fsalloc(INITBUCKETS * sizeof(ResourcePtr));
+	(ResourcePtr *) FSallocarray(INITBUCKETS, sizeof(ResourcePtr));
     if (!clientTable[i].resources)
 	return FALSE;
     clientTable[i].buckets = INITBUCKETS;
@@ -270,7 +270,7 @@ AddResource(
 	    (rrec->hashsize < MAXHASHSIZE))
 	rebuild_table(cid);
     head = &rrec->resources[hash(cid, id)];
-    res = (ResourcePtr) fsalloc(sizeof(ResourceRec));
+    res = (ResourcePtr) FSalloc(sizeof(ResourceRec));
     if (!res) {
 	(*DeleteFuncs[type & TypeMask]) (value, id);
 	return FALSE;
@@ -306,7 +306,7 @@ rebuild_table(int client)
     tails = (ResourcePtr **) ALLOCATE_LOCAL(j * sizeof(ResourcePtr *));
     if (!tails)
 	return;
-    resources = (ResourcePtr *) fsalloc(j * sizeof(ResourcePtr));
+    resources = (ResourcePtr *) FSallocarray(j, sizeof(ResourcePtr));
     if (!resources) {
 	DEALLOCATE_LOCAL(tails);
 	return;
@@ -330,7 +330,7 @@ rebuild_table(int client)
     }
     DEALLOCATE_LOCAL(tails);
     clientTable[client].buckets *= 2;
-    fsfree(clientTable[client].resources);
+    FSfree(clientTable[client].resources);
     clientTable[client].resources = resources;
 }
 
@@ -360,7 +360,7 @@ FreeResource(
 		elements = --*eltptr;
 		if (rtype != skipDeleteFuncType)
 		    (*DeleteFuncs[rtype & TypeMask]) (res->value, res->id);
-		fsfree(res);
+		FSfree(res);
 		if (*eltptr != elements)
 		    prev = head;/* prev may no longer be valid */
 		gotOne = TRUE;
@@ -410,10 +410,10 @@ FreeClientResources(ClientPtr client)
 
 	    *head = this->next;
 	    (*DeleteFuncs[rtype & TypeMask]) (this->value, this->id);
-	    fsfree(this);
+	    FSfree(this);
 	}
     }
-    fsfree(clientTable[client->index].resources);
+    FSfree(clientTable[client->index].resources);
     clientTable[client->index].buckets = 0;
 }
 

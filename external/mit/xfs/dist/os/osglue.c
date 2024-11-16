@@ -160,7 +160,7 @@ ListCatalogues(const char *pattern, int patlen, int maxnames,
     if (maxnames) {
 	if (pattern_match(pattern, patlen, catalogue_name)) {
 	    size = strlen(catalogue_name);
-	    catlist = (char *) fsalloc(size + 1);
+	    catlist = (char *) FSalloc(size + 1);
 	    if (!catlist)
 		goto bail;
 	    *catlist = size;
@@ -215,7 +215,7 @@ SetAlternateServers(char *list)
 	t++;
     }
 
-    a = alts = (AlternateServerPtr) FScalloc(sizeof(AlternateServerRec) * num);
+    a = alts = (AlternateServerPtr) FScalloc(num, sizeof(AlternateServerRec));
     if (!alts)
 	return FSBadAlloc;
 
@@ -223,7 +223,7 @@ SetAlternateServers(char *list)
     a->namelen = 0;
     while (*t) {
 	if (*t == ',') {
-	    a->name = (char *) fsalloc(a->namelen);
+	    a->name = (char *) FSalloc(a->namelen);
 	    if (!a->name) {
 		goto unwind;
 	    }
@@ -238,7 +238,7 @@ SetAlternateServers(char *list)
 	    t++;
 	}
     }
-    a->name = (char *) fsalloc(a->namelen);
+    a->name = (char *) FSalloc(a->namelen);
     if (!a->name) {
 	goto unwind;
     }
@@ -246,18 +246,18 @@ SetAlternateServers(char *list)
     a->subset = FALSE;		/* XXX */
 
     for (i = 0; i < num_alts; i++) {
-	fsfree((char *) alt_servers[i].name);
+	FSfree((char *) alt_servers[i].name);
     }
-    fsfree((char *) alt_servers);
+    FSfree((char *) alt_servers);
     num_alts = num;
     alt_servers = alts;
     return FSSuccess;
 
   unwind:
     for (i = 0; i < num; i++) {
-	fsfree(alts[i].name);
+	FSfree(alts[i].name);
     }
-    fsfree(alts);
+    FSfree(alts);
     return FSBadAlloc;
 }
 

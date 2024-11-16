@@ -101,7 +101,7 @@ MakeAtom(const char *string, unsigned int len, Bool makeit)
     if (makeit) {
 	register NodePtr nd;
 
-	nd = (NodePtr) fsalloc(sizeof(NodeRec));
+	nd = (NodePtr) FSalloc(sizeof(NodeRec));
 	if (!nd)
 	    return BAD_RESOURCE;
 #if FSA_LAST_PREDEFINED > 0
@@ -110,9 +110,9 @@ MakeAtom(const char *string, unsigned int len, Bool makeit)
 	} else
 #endif
 	{
-	    nd->string = (char *) fsalloc(len + 1);
+	    nd->string = (char *) FSalloc(len + 1);
 	    if (!nd->string) {
-		fsfree(nd);
+		FSfree(nd);
 		return BAD_RESOURCE;
 	    }
 	    strncpy(nd->string, string, len);
@@ -121,12 +121,12 @@ MakeAtom(const char *string, unsigned int len, Bool makeit)
 	if ((lastAtom + 1) >= tableLength) {
 	    NodePtr    *table;
 
-	    table = (NodePtr *) fsrealloc(nodeTable,
-					tableLength * (2 * sizeof(NodePtr)));
+	    table = (NodePtr *) FSreallocarray(nodeTable, tableLength,
+                                               (2 * sizeof(NodePtr)));
 	    if (!table) {
 		if (nd->string != string)
-		    fsfree(nd->string);
-		fsfree(nd);
+		    FSfree(nd->string);
+		FSfree(nd);
 		return BAD_RESOURCE;
 	    }
 	    tableLength <<= 1;
@@ -174,8 +174,8 @@ free_atom(NodePtr patom)
     if (patom->right)
 	free_atom(patom->right);
     if (patom->a > FSA_LAST_PREDEFINED)
-	fsfree(patom->string);
-    fsfree(patom);
+	FSfree(patom->string);
+    FSfree(patom);
 }
 
 static void
@@ -185,7 +185,7 @@ free_all_atoms(void)
 	return;
     free_atom(atomRoot);
     atomRoot = (NodePtr) NULL;
-    fsfree(nodeTable);
+    FSfree(nodeTable);
     nodeTable = (NodePtr *) NULL;
     lastAtom = None;
 }
@@ -195,7 +195,7 @@ InitAtoms(void)
 {
     free_all_atoms();
     tableLength = InitialTableSize;
-    nodeTable = (NodePtr *) fsalloc(InitialTableSize * sizeof(NodePtr));
+    nodeTable = (NodePtr *) FSallocarray(InitialTableSize, sizeof(NodePtr));
     if (!nodeTable)
 	atom_error();
     nodeTable[None] = (NodePtr) NULL;

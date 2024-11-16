@@ -91,15 +91,27 @@ DetachStdio (void)
      * Set up the standard file descriptors.
      */
     nullfd = open ("/dev/null", O_RDWR);
+    if (nullfd == -1) {
+	FatalError("opening /dev/null failed: %s\n", strerror(errno));
+    }
     if (nullfd != 0) {
-	dup2(nullfd, 0);
+	if (dup2(nullfd, 0) == -1) {
+	    FatalError("dup2 of /dev/null to fd 0 failed: %s\n",
+		       strerror(errno));
+	}
 	close(nullfd);
     }
-    dup2 (0, 1);
+    if (dup2 (0, 1) == -1) {
+	FatalError("dup2 of /dev/null to fd 1 failed: %s\n",
+		   strerror(errno));
+    }
 
 #ifdef USE_SYSLOG
     if (UseSyslog) {
-	dup2 (0, 2);
+	if (dup2 (0, 2) == -1) {
+	    FatalError("dup2 of /dev/null to fd 2 failed: %s\n",
+		       strerror(errno));
+	}
 	return;
     }
 #endif

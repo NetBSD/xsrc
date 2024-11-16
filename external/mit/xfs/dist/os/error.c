@@ -170,12 +170,13 @@ ErrorF(const char * f, ...)
 #ifdef USE_SYSLOG
     if (UseSyslog) {
 	vsyslog(LOG_WARNING, f, args);
-	return;
     }
-#else
-    fprintf(stderr, "%s error: ", progname);
-    vfprintf(stderr, f, args);
+    else
 #endif
+    {
+	fprintf(stderr, "%s error: ", progname);
+	vfprintf(stderr, f, args);
+    }
     va_end(args);
 }
 
@@ -187,12 +188,13 @@ FatalError(const char * f, ...)
 #ifdef USE_SYSLOG
     if (UseSyslog) {
 	vsyslog(LOG_ERR, f, args);
-	return;
     }
-#else
-    fprintf(stderr, "%s fatal error: ", progname);
-    vfprintf(stderr, f, args);
+    else
 #endif
+    {
+	fprintf(stderr, "%s fatal error: ", progname);
+	vfprintf(stderr, f, args);
+    }
     va_end(args);
     abort_server();
     /* NOTREACHED */

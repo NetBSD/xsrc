@@ -291,20 +291,20 @@ ProcEstablishConnection(ClientPtr client)
     if (auth_index > 0)
     {
 	AuthContextPtr authp;
-	authp = (AuthContextPtr) fsalloc(sizeof(AuthContextRec));
+	authp = (AuthContextPtr) FSalloc(sizeof(AuthContextRec));
 	if (!authp) {
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
 	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
 	}
 	authp->authname =
-	    (char *) fsalloc(client_auth[auth_index - 1].namelen + 1);
+	    (char *) FSalloc(client_auth[auth_index - 1].namelen + 1);
 	authp->authdata =
-	    (char *) fsalloc(client_auth[auth_index - 1].datalen + 1);
+	    (char *) FSalloc(client_auth[auth_index - 1].datalen + 1);
 	if (!authp->authname || !authp->authdata) {
-	    fsfree((char *) authp->authname);
-	    fsfree((char *) authp->authdata);
-	    fsfree((char *) authp);
+	    FSfree((char *) authp->authname);
+	    FSfree((char *) authp->authdata);
+	    FSfree((char *) authp);
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
 	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
@@ -318,9 +318,9 @@ ProcEstablishConnection(ClientPtr client)
 	   by FreeClientResources when the connection closes.  */
 	if (!AddResource(client->index, 0, RT_AUTHCONT,(pointer) authp)) 
 	{
-	    fsfree((char *) authp->authname);
-	    fsfree((char *) authp->authdata);
-	    fsfree((char *) authp);
+	    FSfree((char *) authp->authname);
+	    FSfree((char *) authp->authdata);
+	    FSfree((char *) authp);
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
 	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
@@ -494,7 +494,7 @@ ProcListCatalogues(ClientPtr client)
 
     WriteReplyToClient(client, SIZEOF(fsListCataloguesReply), &rep);
     (void) WriteToClient(client, len, (char *) catalogues);
-    fsfree((char *) catalogues);
+    FSfree((char *) catalogues);
     return client->noClientException;
 }
 
@@ -517,7 +517,7 @@ ProcSetCatalogues(ClientPtr client)
 	err = ValidateCatalogues(&num, (char *)stuff + SIZEOF(fsSetCataloguesReq));
 	if (err == FSSuccess) {
 	    len = (stuff->length << 2) - SIZEOF(fsSetCataloguesReq);
-	    new_cat = (char *) fsalloc(len);
+	    new_cat = (char *) FSalloc(len);
 	    if (!new_cat)
 		return FSBadAlloc;
 	    memcpy(new_cat, (char *)stuff + SIZEOF(fsSetCataloguesReq), len);
@@ -527,7 +527,7 @@ ProcSetCatalogues(ClientPtr client)
 	}
     }
     if (client->catalogues)
-	fsfree((char *) client->catalogues);
+	FSfree((char *) client->catalogues);
     client->catalogues = new_cat;
     client->num_catalogues = num;
     return client->noClientException;
@@ -641,7 +641,7 @@ ProcCreateAC(ClientPtr client)
 	    DEALLOCATE_LOCAL(acp);
 	return err;
     }
-    authp = (AuthContextPtr) fsalloc(sizeof(AuthContextRec));
+    authp = (AuthContextPtr) FSalloc(sizeof(AuthContextRec));
     if (!authp) {
 	goto alloc_failure;
     }
@@ -649,12 +649,12 @@ ProcCreateAC(ClientPtr client)
     authp->authdata = NULL;
     if (index > 0)
     {
-	authp->authname = (char *) fsalloc(acp[index - 1].namelen + 1);
-	authp->authdata = (char *) fsalloc(acp[index - 1].datalen + 1);
+	authp->authname = (char *) FSalloc(acp[index - 1].namelen + 1);
+	authp->authdata = (char *) FSalloc(acp[index - 1].datalen + 1);
 	if (!authp->authname || !authp->authdata) {
-	    fsfree((char *) authp->authname);
-	    fsfree((char *) authp->authdata);
-	    fsfree((char *) authp);
+	    FSfree((char *) authp->authname);
+	    FSfree((char *) authp->authdata);
+	    FSfree((char *) authp);
 	    goto alloc_failure;
 	}
 	memcpy(authp->authname, acp[index - 1].name, acp[index - 1].namelen);
@@ -696,10 +696,10 @@ DeleteAuthCont (pointer value, FSID id)
     AuthContextPtr  authp = (AuthContextPtr) value;
 
     if (authp->authname)
-	fsfree (authp->authname);
+	FSfree (authp->authname);
     if (authp->authdata)
-	fsfree (authp->authdata);
-    fsfree (authp);
+	FSfree (authp->authdata);
+    FSfree (authp);
     return 1;
 }
 
@@ -757,12 +757,12 @@ ProcSetResolution(ClientPtr client)
 	return FSBadLength;
     }
     new_res = (fsResolution *)
-	fsalloc(SIZEOF(fsResolution) * stuff->num_resolutions);
+	FSallocarray(stuff->num_resolutions, SIZEOF(fsResolution));
     if (!new_res) {
 	SendErrToClient(client, FSBadAlloc, NULL);
 	return FSBadAlloc;
     }
-    fsfree((char *) client->resolutions);
+    FSfree((char *) client->resolutions);
     memcpy(new_res, (char *)stuff + SIZEOF(fsSetResolutionReq),
 	  (stuff->num_resolutions * SIZEOF(fsResolution)));
     client->resolutions = new_res;
@@ -917,7 +917,7 @@ ProcQueryXInfo(ClientPtr client)
 	SwapPropInfo(prop_info);
     (void) WriteToClient(client, lendata, (char *) prop_info);
 
-    fsfree((char *) prop_info);
+    FSfree((char *) prop_info);
     return client->noClientException;
 }
 
@@ -1045,7 +1045,7 @@ DoCloseDownClient(ClientPtr client)
 
 	if (currentClient == client)
 	    currentClient = serverClient;
-	fsfree(client);
+	FSfree(client);
 
 #ifdef DEBUG
 	fprintf(stderr, "Shut down client\n");
@@ -1075,11 +1075,8 @@ InitProcVectors(void)
     for (i = 0; i < NUM_PROC_VECTORS; i++) {
 	if (!ProcVector[i]) {
 	    ProcVector[i] = SwappedProcVector[i] = ProcBadRequest;
-	    ReplySwapVector[i] = (ReplySwapFunc)NotImplemented;
+	    ReplySwapVector[i] = ReplySwapNotImplemented;
 	}
-    }
-    for (i = FSLASTEvent; i < NUM_EVENT_VECTORS; i++) {
-	EventSwapVector[i] = (EventSwapFunc)NotImplemented;
     }
 }
 
@@ -1120,21 +1117,21 @@ NextAvailableClient(pointer ospriv)
     if (i == MaxClients)
 	return NullClient;
 
-    clients[i] = client = (ClientPtr) fsalloc(sizeof(ClientRec));
+    clients[i] = client = (ClientPtr) FSalloc(sizeof(ClientRec));
     if (!client)
 	return NullClient;
 
     InitClient(client, i, ospriv);
 
     if (!InitClientResources(client)) {
-	fsfree(client);
+	FSfree(client);
 	return NullClient;
     }
     data.reqType = 1;
     data.length = (sizeof(fsFakeReq) + SIZEOF(fsConnClientPrefix)) >> 2;
     if (!InsertFakeRequest(client, (char *) &data, sizeof(fsFakeReq))) {
 	FreeClientResources(client);
-	fsfree(client);
+	FSfree(client);
 	return NullClient;
     }
     if (i == currentMaxClients)

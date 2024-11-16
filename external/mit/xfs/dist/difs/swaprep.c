@@ -53,6 +53,7 @@ in this Software without prior written authorization from The Open Group.
 
 #include	<X11/fonts/FSproto.h>
 #include	"clientstr.h"
+#include	"difs.h"
 
 static void SwapConnSetupAccept(fsConnSetupAccept *pConnSetup, fsConnSetupAccept *pConnSetupT);
 
@@ -504,4 +505,13 @@ void
 SwapExtents(fsXCharInfo *extents, int num)
 {
     SwapShorts((short *)extents, num * (SIZEOF(fsXCharInfo) / 2));
+}
+
+void _X_COLD
+ReplySwapNotImplemented(_X_UNUSED ClientPtr client, _X_UNUSED int size,
+                        _X_UNUSED void *data)
+{
+    /* Getting here can become the next xfs exploit... so don't exit */
+    ErrorF("reply swapping not implemented for reply type %d\n",
+           ((fsReq *)(client)->requestBuffer)->reqType);
 }

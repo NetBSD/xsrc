@@ -57,5 +57,4 @@ void
 OsInit(void)
 {
     LastReapTime = GetTimeInMillis();
-    OsInitAllocator ();
 }

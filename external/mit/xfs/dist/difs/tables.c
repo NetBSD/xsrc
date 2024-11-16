@@ -123,32 +123,20 @@ SwappedProcFunc SwappedProcVector[NUM_PROC_VECTORS] =
     NULL
 };
 
-EventSwapFunc EventSwapVector[NUM_EVENT_VECTORS] =
-{
-    SErrorEvent,
-    (EventSwapFunc)NotImplemented,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
 ReplySwapFunc ReplySwapVector[NUM_PROC_VECTORS] =
 {
-    (ReplySwapFunc)NotImplemented,		/* NoOp */
+    ReplySwapNotImplemented,	/* NoOp */
     SListExtensionsReply,
     SQueryExtensionReply,	/* SQueryExtensionReply */
     SListCataloguesReply,
-    (ReplySwapFunc)NotImplemented,		/* SetCatalogues */
+    ReplySwapNotImplemented,	/* SetCatalogues */
     SGenericReply,		/* GetCatalogues */
-    (ReplySwapFunc)NotImplemented,		/* SetEventMask */
+    ReplySwapNotImplemented,	/* SetEventMask */
     SGetEventMaskReply,
     SCreateACReply,
-    (ReplySwapFunc)NotImplemented,		/* FreeAC */
-    (ReplySwapFunc)NotImplemented,		/* SetAuthorization - 10 */
-    (ReplySwapFunc)NotImplemented,		/* SetResolution */
+    ReplySwapNotImplemented,	/* FreeAC */
+    ReplySwapNotImplemented,	/* SetAuthorization - 10 */
+    ReplySwapNotImplemented,	/* SetResolution */
     SGetResolutionReply,
     SListFontsReply,
     SListFontsWithXInfoReply,
@@ -158,7 +146,7 @@ ReplySwapFunc ReplySwapVector[NUM_PROC_VECTORS] =
     SQueryXExtentsReply,
     SQueryXBitmapsReply,
     SQueryXBitmapsReply,	/* 20 */
-    (ReplySwapFunc)NotImplemented,		/* Close */
-    (ReplySwapFunc)NotImplemented,
-    (ReplySwapFunc)NotImplemented
+    ReplySwapNotImplemented,	/* Close */
+    ReplySwapNotImplemented,
+    ReplySwapNotImplemented
 };

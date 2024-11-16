@@ -1,3 +1,290 @@
+commit 13a2d7bc6c8a67b1f58e285f63e0147924fc6fff
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 27 13:15:57 2024 -0700
+
+    xfs 1.2.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d42a23256008b5e1394e0d9936e50dd051d56a94
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 20 15:02:38 2024 -0700
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    While files opened by xfs should never be more than 2gb in size,
+    they may be stored on filesystems with large inodes or dates past 2038.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/9>
+
+commit 4a1b2330ff2589c3c56159f3113710950d41b39b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 16:20:09 2024 -0700
+
+    WriteToClient: handle allocation failure
+    
+    os/io.c: In function ‘write_to_client_internal’:
+    os/io.c:562:5: warning: use of possibly-NULL ‘buf’ where non-null expected
+     [CWE-690] [-Wanalyzer-possible-null-argument]
+      562 |     memmove( (char *) oco->buf + oco->count, buf, count);
+          |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 36e461f8b3cfc7133801ec95ca31a363819ed91a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:53:41 2024 -0700
+
+    SetFontCatalogue: handle allocation failure
+    
+    difs/fonts.c: In function ‘SetFontCatalogue’:
+    difs/fonts.c:766:14: warning: dereference of possibly-NULL ‘p’ [CWE-690]
+     [-Wanalyzer-possible-null-dereference]
+      766 |         *p++ = len = end - str;
+          |         ~~~~~^~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit b4461cb5b2627709ba8a7be3ba7c608bbf482c46
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:48:33 2024 -0700
+
+    QueryBitmaps: Avoid memory leak in error path
+    
+    difs/fontinfo.c: In function ‘QueryBitmaps’:
+    difs/fontinfo.c:430:8: warning: leak of ‘fixed_range’ [CWE-401] [-Wanalyzer-malloc-leak]
+      430 |     if (!c)
+          |        ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 08e3bca7a5c0a4d9fdd288599955706076470de4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:46:18 2024 -0700
+
+    QueryExtents: Avoid memory leak in error path
+    
+    difs/fontinfo.c: In function ‘QueryExtents’:
+    difs/fontinfo.c:331:8: warning: leak of ‘fixed_range’ [CWE-401]
+     [-Wanalyzer-malloc-leak]
+      331 |     if (!c)
+          |        ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit b880645f6e517a707e2bcc747c5385a786ff06b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:23:48 2024 -0700
+
+    Add alloc_size & malloc attributes to allocation functions
+    
+    All functions get alloc_size, but only fresh allocators get the
+    malloc attribute - it doesn't support realloc style functions.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 73696aa2fdd35f4f7c0f822cb3e75efb4f7fcde5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:16:55 2024 -0700
+
+    Mark FatalError as _X_NORETURN
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 0847b07e89839b430d7eabee8965a4f0c9680256
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 15:16:43 2024 -0700
+
+    print error messages if syslog support is built but disabled
+    
+    Also ensure we always call va_end() before returning
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 776bcc9e459630c60a4a7f3fdf992589518acb5c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 14:31:37 2024 -0700
+
+    Get rid of fsalloc/fsrealloc/fsfree wrapper macros
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 20703d1690257deb8c1c6f6dcc779ba615ef488f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 14:23:31 2024 -0700
+
+    Add FSreallocarray for array reallocation with overflow check
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 7713e7ca39c37c15e92c77d04586bf4d587899c8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 14:05:08 2024 -0700
+
+    Replace obsolete bzero call with standard memset call
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 64e61297c8ddd8761538b1ca5091b6b40ba7f1c4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 14:03:56 2024 -0700
+
+    Replace alloc+bzero pairs with FScalloc calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 5651efe6f3657fde95a0f8db1d821a3dd38ac117
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 13:56:10 2024 -0700
+
+    Make FScalloc take two args like standard calloc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit e2ca402b81b4aff3ea14f07f18f730ceb2b17530
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 13:52:33 2024 -0700
+
+    Add FSallocarray for array allocation with overflow check
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 42e57d4a0bb43afcc9ed0c2f81a4201d9f28b515
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 13:00:34 2024 -0700
+
+    Avoid memory leak if -ls specified multiple times on command line
+    
+    Reported by gcc 13.2 -fanalyze:
+    os/utils.c:237:15: warning: leak of ‘OldListen’ [CWE-401]
+     [-Wanalyzer-malloc-leak]
+      237 |     OldListen = (OldListenRec *) malloc (
+          |     ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      238 |         OldListenCount * sizeof (OldListenRec));
+          |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 8b69f5872ee7cff2b21eee05457ab4cb2ed34a98
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 12:48:16 2024 -0700
+
+    Remove no-op OsInitAllocator()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit e6ac911fdff233507f1eff950886c5d23a1e8ff5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 12:24:57 2024 -0700
+
+    DetachStdio: check that open & dup2 functions succeed
+    
+    This was originally an attempt to fix -Wanalyzer-fd-use-without-check
+    warnings from gcc 13.2 with -fanalyzer, but it still gives false positives
+    reported to gcc in https://gcc.gnu.org/bugzilla/show_bug.cgi?id=113329
+    and https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114880 .
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 3bbb10cf0fde28647edf996c7b92d89f299fdb76
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 11:28:00 2024 -0700
+
+    Remove unused EventSwap functions & dispatch vector
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 923b774950e10ba13cf2757393ef20ac794c60fb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 11:16:57 2024 -0700
+
+    Remove unused empty NoopDDA() function
+    
+    Was previously there just to work around broken linkers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit 9a7c831cb1be7c124eff9299d8046a57ac31bf4c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 28 11:13:28 2024 -0700
+
+    Clear up -Wcast-function-type warnings from NotImplemented()
+    
+    difs/dispatch.c: In function ‘InitProcVectors’:
+    difs/dispatch.c:1078:34: warning: cast between incompatible function types
+     from ‘int (*)(void)’ to ‘void (*)(struct _Client *, int,  void *)’
+     [-Wcast-function-type]
+     1078 |             ReplySwapVector[i] = (ReplySwapFunc)NotImplemented;
+          |                                  ^
+    difs/dispatch.c:1082:30: warning: cast between incompatible function types
+     from ‘int (*)(void)’ to ‘void (*)(fsError *, fsError *)’
+     [-Wcast-function-type]
+     1082 |         EventSwapVector[i] = (EventSwapFunc)NotImplemented;
+          |                              ^
+    
+    (plus 10 more repeated warnings for difs/tables.c)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfs/-/merge_requests/7>
+
+commit c8119b28ca20332d39153cdd1a297d62ed7d12cb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 13:56:16 2024 -0800
+
+    unifdef SUNSSYV
+    
+    This isn't defined on Solaris, so I don't know what this was for
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c337a18e92147f6980703ea35937e819261b192d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 17 13:54:00 2024 -0800
+
+    unifdef QNX4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee86195796a21699f39f3832160df9258486f7cc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 15:48:08 2023 -0700
+
+    gitlab CI: Update to latest CI templates & Debian stable release
+    
+    Current template fails to rebuild the CI container with the current
+    Debian stable release (a new release since the last update)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b382e8460c1eae466d5cbda8d177e91730adbf9a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 08:58:49 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 6e84cb7dcdccdc8059aca0bfe52837b6624a3a96
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Jul 10 15:24:00 2022 -0700
@@ -1705,7 +1992,7 @@ Date:   Fri Oct 13 17:51:32 2006 -0400
     Bump to 1.0.3
 
 commit d68ce54e725aa332c0c74e1aa2e7e59b079fb5fe
-Author: Kristian Høgsberg  <krh@redhat.com>
+Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Mon Sep 25 18:01:48 2006 -0400
 
     Substitute config dir into man page.
@@ -1852,26 +2139,26 @@ Date:   Fri Jul 29 21:22:34 2005 +0000
     - Update modular Xorg version
 
 commit 9a118fcc0ce0e202d31fcf579daf0dc03fc2f6bb
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 22:43:18 2005 +0000
 
     Thu Jul 28 18:29:06 2005 Søren Sandmann <sandmann@redhat.com>
     Fix double free when there no valid paths.
 
 commit 9c9f67e12450035b7997c2c3bb3700ea51d8b3d2
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 22:28:21 2005 +0000
 
     Add flags to make xfs actually load fonts
 
 commit fc670eef6a29564aeddcb2e8f6b6a3fdb791b7f5
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 28 20:46:54 2005 +0000
 
     Create and install a config file Fix xfs DEFAULT_CONFIG_FILE
 
 commit b7901095f14ec2ea00f1cbeb57952957e9f0d5aa
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 27 22:48:39 2005 +0000
 
     Add -D_XOPEN_SOURCE on Linux
@@ -1903,19 +2190,19 @@ Date:   Sat Jul 16 20:52:25 2005 +0000
         4496504)
 
 commit f638b9c31aab9b90b8b9b4dbea79f8a588037498
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 22:40:15 2005 +0000
 
     Add _BSD_SOURCE to lots of applications - patch from Stefan Dirsch
 
 commit 61c45e7ae8cdcead33392c0a2affc63a00b284c3
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 12 18:49:12 2005 +0000
 
     Add include files to sources, so it will distcheck
 
 commit 2ac8a668c645746430031f7f2776e98dc0cf0b98
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 12 18:45:48 2005 +0000
 
     - lib/lbxutil/lbxutil.pc.in: link to lbxutil, not Xfixes

@@ -296,7 +296,7 @@ SetConfigValues(void)
 		   num, font_catalogue);
     }
     InitErrors();
-    fsfree((char *) font_catalogue);
+    FSfree((char *) font_catalogue);
     font_catalogue = NULL;
 }
 
@@ -311,7 +311,7 @@ ReadConfigFile(const char *filename)
     int         i;
     char       *data;
 
-    data = (char *) fsalloc(CONFIG_MAX_FILESIZE);
+    data = (char *) FSalloc(CONFIG_MAX_FILESIZE);
     if (!data) {
 	ErrorF(CONFIG_ERR_MEMORY, filename);
 	return FSBadAlloc;
@@ -338,12 +338,12 @@ ReadConfigFile(const char *filename)
 	}
     }
     if (fp == NULL) {
-	fsfree(data);
+	FSfree(data);
 	return FSBadName;
     }
     ret = fread(data, sizeof(char), CONFIG_MAX_FILESIZE, fp);
     if (ret <= 0) {
-	fsfree(data);
+	FSfree(data);
 	(void) fclose(fp);
 	ErrorF(CONFIG_ERR_READ, filename);
 	return FSBadName;
@@ -357,7 +357,7 @@ ReadConfigFile(const char *filename)
     strip_comments(data);
     ret = parse_config(data);
 
-    fsfree(data);
+    FSfree(data);
 
     return ret;
 }
@@ -527,8 +527,8 @@ config_set_catalogue(
 
     if (!strcmp(parm->parm_name, "catalogue")) {
 	/* stash it for later */
-	fsfree((char *) font_catalogue);	/* dump any previous one */
-	b = font_catalogue = (char *) fsalloc(strlen(val) + 1);
+	FSfree((char *) font_catalogue);	/* dump any previous one */
+	b = font_catalogue = (char *) FSalloc(strlen(val) + 1);
 	if (!font_catalogue)
 	    FatalError("insufficient memory for font catalogue\n");
 	while (*val) {		/* remove all the gunk */

@@ -107,8 +107,8 @@ SetDefaultResolutions(char *str)
 	return FSBadResolution;
     }
     numr = (numr + 1) / 2;
-    nr = new = (FontResolutionPtr) fsalloc(sizeof(FontResolutionRec)
-					   * numr);
+    nr = new = (FontResolutionPtr) FSallocarray(numr,
+                                                sizeof(FontResolutionRec));
     if (!new)
 	return FSBadAlloc;
     s = str;
@@ -130,7 +130,7 @@ SetDefaultResolutions(char *str)
 	    continue;
 	}
 	if (!isdigit(*s)) {
-	    fsfree((char *) new);
+	    FSfree((char *) new);
 	    return FSBadResolution;
 	}
 	n = *s - '0';
@@ -144,7 +144,7 @@ SetDefaultResolutions(char *str)
     nr->point_size = default_point_size;
 
     if (default_resolutions) {
-	fsfree((char *) default_resolutions);
+	FSfree((char *) default_resolutions);
     }
     default_resolutions = new;
     num_resolutions = numr;
@@ -217,11 +217,6 @@ strncmpnocase(
     }
     /* SUPPRESS 112 */
     return (n ? (((int) *ap) - ((int) *bp)) : 0);
-}
-
-void
-NoopDDA(void)
-{
 }
 
 /* block & wakeup handlers */
@@ -303,8 +298,8 @@ RegisterBlockAndWakeupHandlers(
     BlockHandlerPtr new;
 
     if (numHandlers >= sizeHandlers) {
-	new = (BlockHandlerPtr) fsrealloc(handlers, (numHandlers + 1) *
-					  sizeof(BlockHandlerRec));
+	new = (BlockHandlerPtr) FSreallocarray(handlers, (numHandlers + 1),
+                                               sizeof(BlockHandlerRec));
 	if (!new)
 	    return FALSE;
 	handlers = new;
@@ -344,7 +339,7 @@ RemoveBlockAndWakeupHandlers(
 void
 InitBlockAndWakeupHandlers(void)
 {
-    fsfree(handlers);
+    FSfree(handlers);
     handlers = (BlockHandlerPtr) 0;
     numHandlers = 0;
     sizeHandlers = 0;
@@ -381,7 +376,7 @@ ProcessWorkQueue(void)
 		p->next = n;
 	    else
 		workQueue = n;
-	    fsfree(q);
+	    FSfree(q);
 	} else {
 	    n = q->next;	/* don't fetch until after func called */
 	    p = q;
@@ -402,7 +397,7 @@ QueueWorkProc(
 {
     WorkQueuePtr q;
 
-    q = (WorkQueuePtr) fsalloc(sizeof *q);
+    q = (WorkQueuePtr) FSalloc(sizeof *q);
     if (!q)
 	return FALSE;
     q->function = function;
@@ -439,7 +434,7 @@ ClientSleep(
 {
     SleepQueuePtr q;
 
-    q = (SleepQueuePtr) fsalloc(sizeof *q);
+    q = (SleepQueuePtr) FSalloc(sizeof *q);
     if (!q)
 	return FALSE;
 
@@ -474,7 +469,7 @@ ClientWakeup(ClientPtr client)
     while ((q = *prev) != (SleepQueuePtr) 0) {
 	if (q->client == client) {
 	    *prev = q->next;
-	    fsfree(q);
+	    FSfree(q);
 	    if (client->clientGone == CLIENT_GONE)
 		CloseDownClient(client);
 	    else
@@ -499,30 +494,25 @@ ClientIsAsleep(ClientPtr client)
 pointer
 Xalloc(unsigned long m)
 {
-    return fsalloc(m);
+    return FSalloc(m);
 }
 
 pointer
 Xrealloc(pointer n, unsigned long m)
 {
-    return fsrealloc(n, m);
+    return FSrealloc(n, m);
 }
 
 void
 Xfree(unsigned long *n)
 {
-    fsfree(n);
+    FSfree(n);
 }
 
 pointer
 Xcalloc(unsigned long n)
 {
-    pointer ret;
-
-    ret = fsalloc(n);
-    if (ret && n)
-	bzero(ret, n);
-    return ret;
+    return FScalloc(1, n);
 }
 
 int

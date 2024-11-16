@@ -57,7 +57,6 @@ extern pointer Xrealloc (pointer n, unsigned long m);
 extern void BlockHandler (OSTimePtr pTimeout, pointer pReadmask);
 extern void ClientWakeup (ClientPtr client);
 extern void InitBlockAndWakeupHandlers (void);
-extern void NoopDDA (void);
 extern void ProcessWorkQueue (void);
 extern void RemoveBlockAndWakeupHandlers (FontBlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
 extern void SetDefaultPointSize (int ps);

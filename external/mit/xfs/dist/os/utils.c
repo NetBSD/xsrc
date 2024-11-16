@@ -198,12 +198,6 @@ usage(const char *errmsg)
     exit(1);
 }
 
-void
-OsInitAllocator (void)
-{
-    return;
-}
-
 
 /*
  * The '-ls' option is used for cloning the font server.
@@ -225,6 +219,10 @@ ProcessLSoption (char *str)
     char number[20];
     int count = 0;
     int len, i;
+
+    if ((OldListenCount != 0) || (OldListen != NULL)) {
+        FatalError("-ls may only be specified once\n");
+    }
 
     while (*ptr != '\0')
     {
@@ -376,18 +374,31 @@ FSalloc (unsigned long amount)
     return 0;
 }
 
+/* FSallocarray: Array allocation with overflow check */
+
+pointer
+FSallocarray (unsigned long num, unsigned long size)
+{
+    if (num != 0 && size != 0) {
+        if (size > (SIZE_MAX / num)) {
+            return NULL;
+        }
+    }
+    return FSalloc(num * size);
+}
+
 /*****************
  * FScalloc
  *****************/
 
 pointer
-FScalloc (unsigned long amount)
+FScalloc (unsigned long num, unsigned long size)
 {
     pointer ret;
 
-    ret = FSalloc (amount);
+    ret = FSallocarray(num, size);
     if (ret)
-	bzero ((char *) ret, (int) amount);
+	memset (ret, 0, num * size);
     return ret;
 }
 
@@ -415,6 +426,20 @@ FSrealloc (pointer ptr, unsigned long amount)
 	FatalError("out of memory\n");
     return 0;
 }
+
+/* FSreallocarray: Array reallocation with overflow check */
+
+pointer
+FSreallocarray (pointer ptr, unsigned long num, unsigned long size)
+{
+    if (num != 0 && size != 0) {
+        if (size > (SIZE_MAX / num)) {
+            return NULL;
+        }
+    }
+    return FSrealloc(ptr, num * size);
+}
+
                     
 /*****************
  *  FSfree
@@ -448,7 +473,6 @@ SetUserId(void)
 	    if (setgid(pwent->pw_gid)) {
 		FatalError("fatal: couldn't set groupid to xfs user's group\n");
 	    }
-#ifndef QNX4
 #ifndef __CYGWIN__
 	    if (setgroups(0, NULL)) {
 		FatalError("fatal: couldn't drop supplementary groups\n");
@@ -457,7 +481,6 @@ SetUserId(void)
 	    if (initgroups(user, pwent->pw_gid)) {
 		FatalError("fatal: couldn't init supplementary groups\n");
 	    }
-#endif /* QNX4 */
 	    if (setuid(pwent->pw_uid)) {
 		FatalError("fatal: couldn't set userid to %s user\n", user);
 	    }

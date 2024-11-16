@@ -325,9 +325,9 @@ MakeNewConnections(void)
 
 	_FontTransSetOption(new_trans_conn, TRANS_NONBLOCKING, 1);
 
-	oc = (OsCommPtr) fsalloc(sizeof(OsCommRec));
+	oc = (OsCommPtr) FSalloc(sizeof(OsCommRec));
 	if (!oc) {
-	    fsfree(oc);
+	    FSfree(oc);
 	    error_conn_max(new_trans_conn);
 	    _FontTransClose(new_trans_conn);
 	    continue;
@@ -431,7 +431,7 @@ close_fd(OsCommPtr oc)
     if (!XFD_ANYSET(&ClientsWriteBlocked))
 	AnyClientsWriteBlocked = FALSE;
     FD_CLR(fd, &OutputPending);
-    fsfree(oc);
+    FSfree(oc);
 }
 
 void

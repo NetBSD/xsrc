@@ -23,8 +23,8 @@ dnl Process this file with autoconf to create configure.
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xfs],
-        [1.2.1],
-        [https://gitlab.freedesktop.org/xorg/app/xfs/issues],
+        [1.2.2],
+        [https://gitlab.freedesktop.org/xorg/app/xfs/-/issues],
         [xfs])
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
 # Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
@@ -45,6 +45,9 @@ XORG_WITH_XMLTO(0.0.20)
 XORG_WITH_FOP
 XORG_CHECK_SGML_DOCTOOLS(1.5)
 XORG_WITH_LINT
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 AC_CHECK_HEADERS([stdint.h])
 
@@ -128,9 +131,9 @@ fi
 AC_CHECK_FUNCS([daemon])
 
 # Checks for pkg-config packages
-#  - xproto >= 7.0.17 required for _X_NORETURN in <X11/Xfuncproto.h>
+#  - xproto >= 7.0.25 required for _X_COLD in <X11/Xfuncproto.h>
 #  - xfont >= 2.0.1 for new server API
-PKG_CHECK_MODULES(XFS, xproto >= 7.0.17 xfont2 >= 2.0.1 xtrans)
+PKG_CHECK_MODULES(XFS, xproto >= 7.0.25 xfont2 >= 2.0.1 xtrans)
 
 case "$host_os" in
   cygwin*|mingw*)

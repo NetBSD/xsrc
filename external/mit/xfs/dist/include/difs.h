@@ -33,12 +33,10 @@
 typedef int (*InitialFunc)(ClientPtr);
 typedef int (*ProcFunc)(ClientPtr);
 typedef int (*SwappedProcFunc)(ClientPtr);
-typedef void (*EventSwapFunc)(fsError *, fsError *);
 typedef void (*ReplySwapFunc)(ClientPtr, int, void *);
 
 extern InitialFunc InitialVector[3];
 extern ReplySwapFunc ReplySwapVector[NUM_PROC_VECTORS];
-extern EventSwapFunc EventSwapVector[NUM_EVENT_VECTORS];
 
 /* FIXME: this is derived from fontstruct.h; should integrate it */
 
@@ -77,7 +75,7 @@ extern int convert_props ( FontInfoPtr pinfo, fsPropInfo **props );
 extern int QueryExtents ( ClientPtr client, ClientFontPtr cfp, int item_size, int nranges, Bool range_flag, pointer range_data );
 extern int QueryBitmaps ( ClientPtr client, ClientFontPtr cfp, int item_size, fsBitmapFormat format, int nranges, Bool range_flag, pointer range_data );
 
-/* difs/main.c */
-extern int NotImplemented(void);
+/* difs/swaprep.c */
+extern void _X_COLD ReplySwapNotImplemented(ClientPtr, int, void *);
 
 #endif

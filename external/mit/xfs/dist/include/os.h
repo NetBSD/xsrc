@@ -57,6 +57,26 @@ typedef struct _auth *AuthPtr;
 #include "client.h"
 #include "misc.h"
 
+#if __has_attribute(alloc_size)
+#define XFS_ATTRIBUTE_ALLOC_SIZE(ARGS) __attribute__ ((alloc_size ARGS))
+#else
+#define XFS_ATTRIBUTE_ALLOC_SIZE(ARGS)
+#endif
+
+#if __has_attribute(malloc)
+# if defined(__clang__) || (defined(__GNUC__) && __GNUC__ < 11)
+/* Clang or older gcc do not support the optional deallocator argument */
+#  define XFS_ATTRIBUTE_MALLOC(ARGS) __attribute__((malloc))
+# else
+#  define XFS_ATTRIBUTE_MALLOC(ARGS) __attribute__((malloc ARGS))
+# endif
+#else
+# define XFS_ATTRIBUTE_MALLOC(ARGS)
+#endif
+
+#define XFS_ALLOCATOR(DEALLOC, SIZE) \
+    XFS_ATTRIBUTE_MALLOC(DEALLOC) XFS_ATTRIBUTE_ALLOC_SIZE(SIZE)
+
 typedef pointer FID;
 
 #define ALLOCATE_LOCAL_FALLBACK(_size) FSalloc((unsigned long)_size)
@@ -65,10 +85,6 @@ typedef pointer FID;
 #include "X11/Xalloca.h"
 
 #define	MAX_REQUEST_SIZE	8192
-
-#define	fsalloc(size)		FSalloc((unsigned long)size)
-#define	fsrealloc(ptr, size)	FSrealloc((pointer)ptr, (unsigned long)size)
-#define	fsfree(ptr)		FSfree((pointer)ptr)
 
 extern int  ListenPort;
 extern Bool UseSyslog;
@@ -101,7 +117,8 @@ extern void	InitErrors(void);
 extern void	CloseErrors(void);
 extern void	NoticeF(const char *f, ...) _X_ATTRIBUTE_PRINTF(1, 2);
 extern void	ErrorF(const char * f, ...) _X_ATTRIBUTE_PRINTF(1, 2);
-extern void	FatalError(const char* f, ...) _X_ATTRIBUTE_PRINTF(1, 2);
+extern void	FatalError(const char* f, ...) _X_ATTRIBUTE_PRINTF(1, 2)
+    _X_NORETURN;
 
 /* os/io.c */
 extern	Bool	InsertFakeRequest(ClientPtr client, char *data, int count);
@@ -131,11 +148,17 @@ extern	void	GiveUp (int n);
 extern	void	ServerCacheFlush (int n);
 extern	void	ServerReconfig (int n);
 extern	unsigned int GetTimeInMillis (void);
-extern	pointer	FSalloc(unsigned long);
-extern	pointer	FScalloc (unsigned long amount);
-extern	pointer	FSrealloc(pointer, unsigned long);
 extern	void	FSfree(pointer);
-extern	void	OsInitAllocator (void);
+extern	pointer	FSalloc(unsigned long)
+    XFS_ATTRIBUTE_ALLOC_SIZE((1)) XFS_ATTRIBUTE_MALLOC((FSfree));
+extern	pointer	FSallocarray(unsigned long, unsigned long)
+    XFS_ATTRIBUTE_ALLOC_SIZE((1,2)) XFS_ATTRIBUTE_MALLOC((FSfree));
+extern	pointer	FScalloc (unsigned long, unsigned long)
+     XFS_ATTRIBUTE_ALLOC_SIZE((1,2)) XFS_ATTRIBUTE_MALLOC((FSfree));
+extern	pointer	FSrealloc(pointer, unsigned long)
+    XFS_ATTRIBUTE_ALLOC_SIZE((2));
+extern	pointer FSreallocarray (pointer, unsigned long, unsigned long)
+    XFS_ATTRIBUTE_ALLOC_SIZE((2,3));
 extern	void	ProcessCmdLine (int argc, char **argv);
 extern	void	ProcessLSoption (char *str);
 extern	void	SetUserId(void);
