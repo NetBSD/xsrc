@@ -23,7 +23,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xkbprint], [1.0.6],
+AC_INIT([xkbprint], [1.0.7],
         [https://gitlab.freedesktop.org/xorg/app/xkbprint/-/issues], [xkbprint])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -39,7 +39,11 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
+# Checks for library functions.
 AC_CHECK_FUNCS([asprintf])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XKBPRINT, [xkbfile x11 xproto >= 7.0.17])

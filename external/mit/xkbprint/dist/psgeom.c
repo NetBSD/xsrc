@@ -42,9 +42,6 @@
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
 
-#if defined(sgi)
-#include <malloc.h>
-#endif
 
 #include <stdlib.h>
 
@@ -131,16 +128,16 @@ static int nInternalFonts = (sizeof(internalFonts) / sizeof(PSFontDef));
 static void
 ListInternalFonts(FILE *out, int first, int indent)
 {
-    register int i, n, nThisLine;
+    register int i, nThisLine;
 
-    for (n = 0; n < first; n++) {
+    for (int n = 0; n < first; n++) {
         putc(' ', out);
     }
 
     for (nThisLine = i = 0; i < nInternalFonts; i++) {
         if (nThisLine == 4) {
             fprintf(out, ",\n");
-            for (n = 0; n < indent; n++) {
+            for (int n = 0; n < indent; n++) {
                 putc(' ', out);
             }
             nThisLine = 0;
@@ -160,10 +157,9 @@ static Bool
 PSIncludeFont(FILE *out, const char *font)
 {
     const char **pstr;
-    register int i;
 
     pstr = NULL;
-    for (i = 0; (i < nInternalFonts) && (pstr == NULL); i++) {
+    for (int i = 0; (i < nInternalFonts) && (pstr == NULL); i++) {
         if (uStringEqual(internalFonts[i].name, font))
             pstr = internalFonts[i].def;
     }
@@ -262,7 +258,7 @@ PSGRestore(FILE *out, PSState *state)
 static void
 PSShapeDef(FILE *out, PSState *state, XkbShapePtr shape)
 {
-    int o, p;
+    int o;
     XkbOutlinePtr ol;
 
     {
@@ -331,7 +327,7 @@ PSShapeDef(FILE *out, PSState *state, XkbShapePtr shape)
             if (ol->corner_radius < 1) {
                 fprintf(out, "	%3d %3d moveto\n", pt->x, pt->y);
                 pt++;
-                for (p = 1; p < ol->num_points; p++, pt++) {
+                for (int p = 1; p < ol->num_points; p++, pt++) {
                     fprintf(out, "	%3d %3d lineto\n", pt->x, pt->y);
                 }
                 if ((pt->x != ol->points[0].x) || (pt->y != ol->points[0].y))
@@ -352,7 +348,7 @@ PSShapeDef(FILE *out, PSState *state, XkbShapePtr shape)
                 fprintf(out, "	/TY exch def /TX exch def pop pop newpath\n");
                 fprintf(out, "	%% Now draw the shape\n");
                 fprintf(out, "	TX TY moveto\n");
-                for (p = 1; p < ol->num_points; p++) {
+                for (int p = 1; p < ol->num_points; p++) {
                     if (p < (ol->num_points - 1))
                         last = &pt[p + 1];
                     else
@@ -398,9 +394,10 @@ typedef struct {
 static void
 ClearFontStuff(FontStuff *stuff)
 {
-    if (stuff && stuff->foundry)
+    if (stuff) {
         free(stuff->foundry);
-    bzero(stuff, sizeof(FontStuff));
+        bzero(stuff, sizeof(FontStuff));
+    }
     return;
 }
 
@@ -605,8 +602,6 @@ PSSetFont(FILE *out, PSState *state, int font, int size, int pts)
 static void
 PSProlog(FILE *out, PSState *state)
 {
-    register int i;
-
     if (!state->args->wantEPS) {
         fprintf(out,
                 "%%!PS-Adobe-2.0\n"
@@ -699,7 +694,7 @@ PSProlog(FILE *out, PSState *state)
     if (state->args->wantColor) {
         XkbGeometryPtr geom = state->geom;
 
-        for (i = 0; i < geom->num_colors; i++) {
+        for (int i = 0; i < geom->num_colors; i++) {
             PSColorDef(out, state, &geom->colors[i]);
         }
         if (state->black < 0) {
@@ -717,7 +712,7 @@ PSProlog(FILE *out, PSState *state)
             PSColorDef(out, state, color);
         }
     }
-    for (i = 0; i < state->geom->num_shapes; i++) {
+    for (int i = 0; i < state->geom->num_shapes; i++) {
         PSShapeDef(out, state, &state->geom->shapes[i]);
     }
     if (state->args->label == LABEL_SYMBOLS) {
@@ -1630,7 +1625,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
     int kc;
     KeySym sym, *syms, topSyms[NLABELS];
     int level, group;
-    int eG, nG, gI, l, g;
+    int eG, nG, gI;
 
     bzero(top, sizeof(KeyTop));
     kc = XkbFindKeycodeByName(xkb, name, True);
@@ -1644,7 +1639,8 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
     eG = group;
     nG = XkbKeyNumGroups(xkb, kc);
     gI = XkbKeyGroupInfo(xkb, kc);
-    if ((state->args->wantDiffs) && (eG >= XkbKeyNumGroups(xkb, kc)))
+    if ((state->args != NULL) && (state->args->wantDiffs) &&
+        (eG >= XkbKeyNumGroups(xkb, kc)))
         return False;           /* XXX was a return with no value */
     if (nG == 0) {
         return False;
@@ -1667,10 +1663,10 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             break;
         }
     }
-    for (g = 0; g < state->args->nLabelGroups; g++) {
+    for (int g = 0; g < state->args->nLabelGroups; g++) {
         if ((eG + g) >= nG)
             continue;
-        for (l = 0; l < 2; l++) {
+        for (int l = 0; l < 2; l++) {
             int font, sz;
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
@@ -1780,7 +1776,7 @@ static void
 PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
            XkbBoundsPtr bounds, int kc, int btm)
 {
-    int w, h, i;
+    int w, h;
     int row_y[3];
     int col_x[3];
     int row_h[3];
@@ -1874,7 +1870,7 @@ PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
         case 0:
             return;
         }
-    for (i = 0; i < NLABELS; i++) {
+    for (int i = 0; i < NLABELS; i++) {
         if (present[i]) {
             int size;
 
@@ -2006,8 +2002,6 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
     for (r = 0, row = section->rows; r < section->num_rows; r++, row++) {
         int k, kc = 0;
         XkbKeyPtr key;
-        XkbShapePtr shape;
-        XkbBoundsRec bounds;
 
         if (state->args->label == LABEL_NONE)
             break;
@@ -2023,6 +2017,8 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             char *name, *name2, buf[30], buf2[30];
             int x, y;
             KeyTop top;
+            XkbShapePtr shape;
+            XkbBoundsRec bounds;
 
             shape = XkbKeyShape(xkb->geom, key);
             XkbComputeShapeTop(shape, &bounds);
@@ -2103,20 +2099,26 @@ GeometryToPostScript(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     XkbDrawablePtr first, draw;
     PSState state;
     Bool dfltBorder;
-    int i;
 
     if ((!pResult) || (!pResult->xkb) || (!pResult->xkb->geom))
         return False;
-    state.xkb = pResult->xkb;
-    state.dpy = pResult->xkb->dpy;
-    state.geom = pResult->xkb->geom;
-    state.color = state.black = state.white = -1;
-    state.font = -1;
-    state.nPages = 0;
-    state.totalKB = 1;
-    state.kbPerPage = 1;
-    state.x1 = state.y1 = state.x2 = state.y2 = 0;
-    state.args = args;
+    state = (PSState) {
+        .xkb = pResult->xkb,
+        .dpy = pResult->xkb->dpy,
+        .geom = pResult->xkb->geom,
+        .color = -1,
+        .black = -1,
+        .white = -1,
+        .font = -1,
+        .nPages = 0,
+        .totalKB = 1,
+        .kbPerPage = 1,
+        .x1 = 0,
+        .y1 = 0,
+        .x2 = 0,
+        .y2 = 0,
+        .args = args
+    };
 
     if ((args->label == LABEL_SYMBOLS) && (pResult->xkb->ctrls)) {
         if (args->nTotalGroups == 0)
@@ -2150,7 +2152,7 @@ GeometryToPostScript(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
             XFree(name);
         }
     }
-    for (i = 0; i < state.totalKB; i++) {
+    for (int i = 0; i < state.totalKB; i++) {
         PSPageSetup(out, &state, dfltBorder);
         for (draw = first; draw != NULL; draw = draw->next) {
             if (draw->type == XkbDW_Section)

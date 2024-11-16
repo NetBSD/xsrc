@@ -1,3 +1,100 @@
+commit 8ea4c3e22a2ff79d373f8a364309c5a4a0c01ced
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 11:04:07 2024 -0700
+
+    xkbprint 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3ce73201e3d808e5e4f6c20e22d6e6e86e3b81e8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 28 16:53:26 2024 -0700
+
+    Use C99 struct initializers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkbprint/-/merge_requests/6>
+
+commit 4868f37f09843432b261371875b2f433f2a1f7fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 28 16:38:24 2024 -0700
+
+    Variable scope reductions
+    
+    Some recommended by cppcheck, others found by manual inspection
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkbprint/-/merge_requests/6>
+
+commit 823cecf574645cd26ed43b18c9c68a06dc25f95a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 28 16:20:59 2024 -0700
+
+    FindKeysymsByName: avoid NULL pointer dereference
+    
+    Clears warning from cppcheck:
+    
+    psgeom.c:1645:15: warning: Either the condition 'state->args!=0L' is
+     redundant or there is possible null pointer dereference: state->args.
+     [nullPointerRedundantCheck]
+        if ((state->args->wantDiffs) && (eG >= XkbKeyNumGroups(xkb, kc)))
+                  ^
+    psgeom.c:1635:21: note: Assuming that condition 'state->args!=0L' is not
+     redundant
+        if (state->args != NULL) {
+                        ^
+    psgeom.c:1645:15: note: Null pointer dereference
+        if ((state->args->wantDiffs) && (eG >= XkbKeyNumGroups(xkb, kc)))
+                  ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkbprint/-/merge_requests/6>
+
+commit ed190ca257c808b5d76babf01a5dd57c7d749c9d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 28 16:18:02 2024 -0700
+
+    ClearFontStuff: avoid NULL pointer dereference
+    
+    Clears warning from cppcheck:
+    
+    psgeom.c:400:5: warning: Either the condition 'stuff' is redundant or there
+     is possible null pointer dereference: stuff. [nullPointerRedundantCheck]
+        bzero(stuff, sizeof(FontStuff));
+        ^
+    psgeom.c:398:9: note: Assuming that condition 'stuff' is not redundant
+        if (stuff && stuff->foundry)
+            ^
+    psgeom.c:400:5: note: Null pointer dereference
+        bzero(stuff, sizeof(FontStuff));
+        ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkbprint/-/merge_requests/6>
+
+commit 75a78342999f5c98ba5e0d154a1c506497daac5d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 28 16:13:11 2024 -0700
+
+    configure: Use AC_SYS_LARGEFILE to enable large file support
+    
+    While keymap files or generated output should never be more than 2gb in
+    size, they may be stored on filesystems with inodes or timestamps outside
+    of the 32-bit range.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkbprint/-/merge_requests/6>
+
+commit 1a4c0388e5a8c938544e0e6c5ccdb92a51de1b84
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 11 12:31:51 2023 -0800
+
+    unifdef -Usgi
+    
+    SGI's End of Support Life for Irix was December 2013
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 7500b59a3ce665fa53c476fe26a01db96dc994be
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Oct 15 10:26:33 2022 -0700
@@ -833,7 +930,7 @@ Date:   Wed Jul 20 19:31:57 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit c4b22b69df1162dab5db3691053ac0b6fb4c4503
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 20:42:02 2005 +0000
 
     Build system for xkbprint
