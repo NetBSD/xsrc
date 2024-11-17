@@ -141,7 +141,7 @@ am_libXt_la_OBJECTS = ActionHook.lo Alloc.lo ArgList.lo Callback.lo \
 	RectObj.lo ResConfig.lo Resources.lo Selection.lo SetSens.lo \
 	SetValues.lo SetWMCW.lo Shell.lo TMaction.lo TMgrab.lo \
 	TMkey.lo TMparse.lo TMprint.lo TMstate.lo Threads.lo \
-	VarCreate.lo VarGet.lo Varargs.lo Vendor.lo sharedlib.lo
+	VarCreate.lo VarGet.lo Varargs.lo Vendor.lo
 nodist_libXt_la_OBJECTS = StringDefs.lo
 libXt_la_OBJECTS = $(am_libXt_la_OBJECTS) $(nodist_libXt_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -192,8 +192,7 @@ am__depfiles_remade = ./$(DEPDIR)/ActionHook.Plo ./$(DEPDIR)/Alloc.Plo \
 	./$(DEPDIR)/TMparse.Plo ./$(DEPDIR)/TMprint.Plo \
 	./$(DEPDIR)/TMstate.Plo ./$(DEPDIR)/Threads.Plo \
 	./$(DEPDIR)/VarCreate.Plo ./$(DEPDIR)/VarGet.Plo \
-	./$(DEPDIR)/Varargs.Plo ./$(DEPDIR)/Vendor.Plo \
-	./$(DEPDIR)/sharedlib.Plo
+	./$(DEPDIR)/Varargs.Plo ./$(DEPDIR)/Vendor.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -472,8 +471,7 @@ libXt_la_SOURCES = \
 	VarCreate.c \
 	VarGet.c \
 	Varargs.c \
-	Vendor.c \
-	sharedlib.c
+	Vendor.c
 
 DISTCLEANFILES = StringDefs.c
 libXt_la_LIBADD = @XT_LIBS@
@@ -625,7 +623,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VarGet.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Varargs.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Vendor.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sharedlib.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -847,7 +844,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/VarGet.Plo
 	-rm -f ./$(DEPDIR)/Varargs.Plo
 	-rm -f ./$(DEPDIR)/Vendor.Plo
-	-rm -f ./$(DEPDIR)/sharedlib.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -947,7 +943,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/VarGet.Plo
 	-rm -f ./$(DEPDIR)/Varargs.Plo
 	-rm -f ./$(DEPDIR)/Vendor.Plo
-	-rm -f ./$(DEPDIR)/sharedlib.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
