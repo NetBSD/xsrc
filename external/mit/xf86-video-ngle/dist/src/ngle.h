@@ -63,7 +63,7 @@ typedef struct {
 	xf86CursorInfoPtr	CursorInfoRec;
 	OptionInfoPtr		Options;
 	ExaDriverPtr		pExa;
-	uint32_t		gid, buf, fbacc;
+	uint32_t		gid, buf, fbacc, creg;
 	int 			offset, hwmode, offsetd;
 #define HW_FB	0
 #define HW_FILL	1
@@ -76,6 +76,7 @@ typedef struct {
 
 Bool NGLESetupCursor(ScreenPtr);
 Bool NGLEInitAccel(ScreenPtr);
+Bool SummitSetupCursor(ScreenPtr);
 Bool SummitInitAccel(ScreenPtr);
 
 static inline void

@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.9 2024/12/10 10:13:19 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.10 2025/01/22 12:55:06 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -118,7 +118,7 @@ typedef enum {
 } NGLEOpts;
 
 static const OptionInfoRec NGLEOptions[] = {
-	{ OPTION_HW_CURSOR, "HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
+	{ OPTION_HW_CURSOR, "HWcursor",	OPTV_BOOLEAN,	{0}, TRUE },
 	{ OPTION_DEVICE,    "Device",   OPTV_ANYSTR,    {0}, FALSE },
 	{ -1, NULL, OPTV_NONE, {0}, FALSE}
 };
@@ -601,7 +601,10 @@ NGLEScreenInit(SCREEN_INIT_ARGS_DECL)
 	miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
 	/* check for hardware cursor support */
-	NGLESetupCursor(pScreen);
+	if (fPtr->gid == STI_DD_SUMMIT) {
+		SummitSetupCursor(pScreen);
+	} else
+		NGLESetupCursor(pScreen);
 	
 	/* colormap */
 	if (!miCreateDefColormap(pScreen))
