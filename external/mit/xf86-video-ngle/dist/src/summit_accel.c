@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: summit_accel.c,v 1.4 2025/01/15 08:21:06 macallan Exp $ */
+/* $NetBSD: summit_accel.c,v 1.5 2025/01/24 07:51:24 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/summitreg.h>
@@ -140,8 +140,13 @@ SummitPrepareCopy
 	fPtr->offsetd = y;
 	SUMMIT_WRITE_MODE(dm);
 
-	SummitWaitFifo(fPtr, 6);		
-	NGLEWrite4(fPtr, VISFX_IBO, alu);
+	SummitWaitFifo(fPtr, 6);
+	if (alu == GXcopy) {
+		NGLEWrite4(fPtr, VISFX_FOE, 0);
+	} else {
+		NGLEWrite4(fPtr, VISFX_FOE, FOE_BLEND_ROP);
+		NGLEWrite4(fPtr, VISFX_IBO, alu);
+	}
 	NGLEWrite4(fPtr, VISFX_PLANE_MASK, planemask);
 	LEAVE;
 	return TRUE;
@@ -168,7 +173,6 @@ SummitCopy
 	NGLEWrite4(fPtr, VISFX_COPY_WH, (wi << 16) | he);
 	NGLEWrite4(fPtr, VISFX_COPY_DST, (xd << 16) | (yd + fPtr->offsetd));
 
-	exaMarkSync(pDstPixmap->drawable.pScreen);
 	LEAVE;
 }
 
@@ -202,8 +206,13 @@ SummitPrepareSolid(
 	SUMMIT_READ_MODE(rm);
 	SUMMIT_WRITE_MODE(wm);
 	fPtr->offset = y;
-	SummitWaitFifo(fPtr, 6);		
-	NGLEWrite4(fPtr, VISFX_IBO, alu);
+	SummitWaitFifo(fPtr, 8);		
+	if (alu == GXcopy) {
+		NGLEWrite4(fPtr, VISFX_FOE, 0);
+	} else {
+		NGLEWrite4(fPtr, VISFX_FOE, FOE_BLEND_ROP);
+		NGLEWrite4(fPtr, VISFX_IBO, alu);
+	}
 	NGLEWrite4(fPtr, VISFX_FG_COLOUR, fg);
 	NGLEWrite4(fPtr, VISFX_PLANE_MASK, planemask);
 	LEAVE;
@@ -230,7 +239,6 @@ SummitSolid(
 	NGLEWrite4(fPtr, VISFX_START, (x1 << 16) | y1);
 	NGLEWrite4(fPtr, VISFX_SIZE, (wi << 16) | he);
 
-	exaMarkSync(pPixmap->drawable.pScreen);
 	LEAVE;
 }
 
@@ -253,7 +261,7 @@ SummitUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 	}
 	SUMMIT_WRITE_MODE(mode);
 	NGLEWrite4(fPtr, VISFX_PLANE_MASK, 0xffffffff);
-	NGLEWrite4(fPtr, VISFX_IBO, GXcopy);
+	NGLEWrite4(fPtr, VISFX_FOE, 0);
 	
 	while (h--) {
 		SummitWaitFifo(fPtr, w + 1);
@@ -279,13 +287,14 @@ SummitDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 	uint32_t mode = OTC01 | BIN8F | BUFFL;
 
 	ENTER;
-
 	y += (ofs >> 13);
 	if (y >= fPtr->fbi.fbi_height) {
 		mode = OTC01 | BIN8F | BUFBL;
 		y -= fPtr->fbi.fbi_height;
 	}
 	SUMMIT_READ_MODE(mode);
+	SummitWait(fPtr);
+	NGLEWrite4(fPtr, VISFX_RPH, VISFX_RPH_LTR);
 	SummitWait(fPtr);
 
 	src = fPtr->fbmem;
@@ -306,18 +315,20 @@ SummitPrepareAccess(PixmapPtr pPixmap, int index)
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	NGLEPtr fPtr = NGLEPTR(pScrn);
 	int	ofs =  exaGetPixmapOffset(pPixmap);
+	int	y;
 
 	ENTER;
-	/*
-	 * XXX
-	 * since we abuse the back buffer as off-screen storage we can't
-	 * safely allow direct access to it - this will make X use
-	 * {Up|Down}load{To|From}Screen() instead
-	 */
-	if (ofs > 0) return FALSE;
-
-	SUMMIT_READ_MODE(OTC01 | BIN8F | BUFFL);
-	SUMMIT_WRITE_MODE(OTC01 | BIN8F | BUFFL);
+	if (ofs == 0) {
+		/* accessing the visible framebuffer */
+		SUMMIT_READ_MODE(OTC01 | BIN8F | BUFFL);
+		SUMMIT_WRITE_MODE(OTC01 | BIN8F | BUFFL);
+	} else {
+		SUMMIT_READ_MODE(OTC01 | BIN8F | BUFBL);
+		SUMMIT_WRITE_MODE(OTC01 | BIN8F | BUFBL);
+		y = ofs >> 13;
+		y -= fPtr->fbi.fbi_height;
+		pPixmap->devPrivate.ptr = fPtr->fbmem + (y << 13);
+	}
 	NGLEWrite4(fPtr, VISFX_FOE, 0);
 	//NGLEWrite4(fPtr, VISFX_CONTROL, 0x200);
 	SummitWait(fPtr);
@@ -332,7 +343,6 @@ SummitFinishAccess(PixmapPtr pPixmap, int index)
 	NGLEPtr fPtr = NGLEPTR(pScrn);
 
 	ENTER;
-	NGLEWrite4(fPtr, VISFX_FOE, FOE_BLEND_ROP);
 	//NGLEWrite4(fPtr, VISFX_CONTROL, 0);
 	LEAVE;
 }
