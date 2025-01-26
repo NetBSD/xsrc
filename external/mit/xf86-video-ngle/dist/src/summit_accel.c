@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: summit_accel.c,v 1.5 2025/01/24 07:51:24 macallan Exp $ */
+/* $NetBSD: summit_accel.c,v 1.6 2025/01/26 05:38:38 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/summitreg.h>
@@ -55,20 +55,21 @@
 		fPtr->write_mode = (m); \
 	}
 
-static void
+static inline void
 SummitWait(NGLEPtr fPtr)
 {
-	int reg;
+	int reg, count = 0;;
 
 	ENTER;
 	do {
 		reg = NGLERead4(fPtr, VISFX_STATUS);
+		count++;
 	} while ((reg & 0x01000000) != 0);
 	if (reg != 0) {
 		xf86Msg(X_ERROR, "%s status %08x\n", __func__, reg);
 		xf86Msg(X_ERROR, "fault %08x\n", NGLERead4(fPtr, 0x641040));
 	}
-	LEAVE;
+	DBGMSG(X_ERROR, "%s: %d\n", __func__, count);
 }
 	
 static void
@@ -76,17 +77,18 @@ SummitWaitMarker(ScreenPtr pScreen, int Marker)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	NGLEPtr fPtr = NGLEPTR(pScrn);
-	int reg;
+	int reg, count = 0;
 
 	ENTER;
 	do {
 		reg = NGLERead4(fPtr, VISFX_STATUS);
+		count++;
 	} while ((reg & 0x01000000) != 0);
 	if (reg != 0) {
 		xf86Msg(X_ERROR, "%s status %08x\n", __func__, reg);
 		xf86Msg(X_ERROR, "fault %08x\n", NGLERead4(fPtr, 0x641040));
 	}
-	LEAVE;
+	DBGMSG(X_ERROR, "%s: %d\n", __func__, count);
 }
 
 static void
@@ -140,7 +142,7 @@ SummitPrepareCopy
 	fPtr->offsetd = y;
 	SUMMIT_WRITE_MODE(dm);
 
-	SummitWaitFifo(fPtr, 6);
+	SummitWaitFifo(fPtr, 8);
 	if (alu == GXcopy) {
 		NGLEWrite4(fPtr, VISFX_FOE, 0);
 	} else {
@@ -206,7 +208,7 @@ SummitPrepareSolid(
 	SUMMIT_READ_MODE(rm);
 	SUMMIT_WRITE_MODE(wm);
 	fPtr->offset = y;
-	SummitWaitFifo(fPtr, 8);		
+	SummitWaitFifo(fPtr, 10);		
 	if (alu == GXcopy) {
 		NGLEWrite4(fPtr, VISFX_FOE, 0);
 	} else {
@@ -264,6 +266,11 @@ SummitUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 	NGLEWrite4(fPtr, VISFX_FOE, 0);
 	
 	while (h--) {
+		/*
+		 * it *should* be impossible to overrun the FIFO using BINC
+		 * writes, but overruns are annoying if they do happen so be
+		 * overly cautious and make sure there is at least some room
+		 */
 		SummitWaitFifo(fPtr, w + 1);
 		NGLEWrite4(fPtr, VISFX_VRAM_WRITE_DEST, (y << 16) | x);
 		line = (uint32_t *)src;
