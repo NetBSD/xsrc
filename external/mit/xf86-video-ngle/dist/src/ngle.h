@@ -63,6 +63,7 @@ typedef struct {
 	xf86CursorInfoPtr	CursorInfoRec;
 	OptionInfoPtr		Options;
 	ExaDriverPtr		pExa;
+	GlyphsProcPtr		glyphs;
 	uint32_t		gid, buf, fbacc, creg;
 	int 			offset, hwmode, offsetd;
 #define HW_FB	0

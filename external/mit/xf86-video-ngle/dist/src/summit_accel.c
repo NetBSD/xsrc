@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: summit_accel.c,v 1.7 2025/02/18 12:17:20 macallan Exp $ */
+/* $NetBSD: summit_accel.c,v 1.8 2025/02/20 18:53:48 christos Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/summitreg.h>
@@ -484,8 +484,10 @@ SummitGlyphs (CARD8	op,
 
 	SummitWaitFifo(fPtr, 4);
 	NGLEWrite4(fPtr, VISFX_FOE, FOE_BLEND_ROP);
+#ifdef notyet
 	NGLEWrite4(fPtr, VISFX_IBO,
 	    IBO_ADD | SRC(IBO_SRC) | DST(IBO_ONE_MINUS_SRC));
+#endif
 
 	while (nlist--)     {
 		x += list->xOff;

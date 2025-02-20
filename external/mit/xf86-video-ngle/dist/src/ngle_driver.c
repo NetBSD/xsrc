@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.10 2025/01/22 12:55:06 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.11 2025/02/20 18:53:48 christos Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -228,12 +228,12 @@ ngle_mmap(size_t len, off_t off, int fd, int ro)
 		mapaddr = (pointer) mmap(NULL, len,
 					 PROT_READ, MAP_SHARED,
 					 fd, off);
-		xf86Msg(X_ERROR, "mapping %08x read only\n", off);
+		xf86Msg(X_ERROR, "mapping %08tx read only\n", off);
 	} else {
 		mapaddr = (pointer) mmap(NULL, len,
 					 PROT_READ | PROT_WRITE, MAP_SHARED,
 					 fd, off);
-		xf86Msg(X_ERROR, "mapping %08x read/write\n", off);
+		xf86Msg(X_ERROR, "mapping %08tx read/write\n", off);
 	}
 	if (mapaddr == (pointer) -1) {
 		mapaddr = NULL;
@@ -686,7 +686,7 @@ NGLESwitchMode(SWITCH_MODE_ARGS_DECL)
 }
 
 static int
-NGLEValidMode(SCRN_ARG_TYPE, DisplayModePtr mode, Bool verbose, int flags)
+NGLEValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
 
 	return MODE_OK;
