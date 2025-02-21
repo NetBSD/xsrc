@@ -70,7 +70,9 @@ typedef struct {
 #define HW_FILL	1
 #define HW_BLIT	2
 #define HW_BINC	3
-	uint32_t read_mode, write_mode;
+	uint32_t		read_mode, write_mode;
+	int			need_sync;
+	GlyphsProcPtr		glyphs;
 } NGLERec, *NGLEPtr;
 
 #define NGLEPTR(p) ((NGLEPtr)((p)->driverPrivate))
