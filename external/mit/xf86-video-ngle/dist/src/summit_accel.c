@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: summit_accel.c,v 1.8 2025/02/20 18:53:48 christos Exp $ */
+/* $NetBSD: summit_accel.c,v 1.9 2025/02/25 13:21:24 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/summitreg.h>
@@ -391,16 +391,24 @@ SummitDrawGlyph8(NGLEPtr fPtr, int32_t fg, PixmapPtr mask, int p,
 {
 	uint8_t *gdata = mask->devPrivate.ptr;
 	uint32_t msk;
-	int i, j;
+	int i, j, needs_coords;
 
 	gdata += xm;
 	gdata += (p * ym);
 	for (i = 0; i < h; i++) {
 		SummitWaitFifo(fPtr, w * 2);
-		NGLEWrite4(fPtr, VISFX_VRAM_WRITE_DEST, 
-		    ((yd + i) << 16) | xd);
+		needs_coords = 1;
 		for (j = 0; j < w; j++) {
 			msk = gdata[j];
+			if (msk == 0) {
+				needs_coords = 1;
+				continue;
+			}
+			if (needs_coords) {
+				NGLEWrite4(fPtr, VISFX_VRAM_WRITE_DEST, 
+				    ((yd + i) << 16) | (xd + j));
+				needs_coords = 0;
+			}
 			msk = (msk << 24) | fg;
 			NGLEWrite4(fPtr,
 			    VISFX_VRAM_WRITE_DATA_INCRX, msk);	
@@ -415,18 +423,26 @@ SummitDrawGlyph32(NGLEPtr fPtr, uint32_t fg, PixmapPtr mask, int p,
 {
 	uint32_t *gdata = mask->devPrivate.ptr;
 	uint32_t msk;
-	int i, j;
+	int i, j, needs_coords;
 
 	gdata += xm;
 	gdata += (p * ym);
 
 	for (i = 0; i < h; i++) {
 		SummitWaitFifo(fPtr, w * 2);
-		NGLEWrite4(fPtr, VISFX_VRAM_WRITE_DEST, 
-		    ((yd + i) << 16) | xd);
+		needs_coords = 1;
 		for (j = 0; j < w; j++) {
-			msk = gdata[j];
-			msk = (msk & 0xff000000) | fg;
+			msk = gdata[j] & 0xff000000;
+			if (msk == 0) {
+				needs_coords = 1;
+				continue;
+			}
+			if (needs_coords) {
+				NGLEWrite4(fPtr, VISFX_VRAM_WRITE_DEST, 
+				    ((yd + i) << 16) | (xd + j));
+				needs_coords = 0;
+			}
+			msk |= fg;
 			NGLEWrite4(fPtr,
 			    VISFX_VRAM_WRITE_DATA_INCRX, msk);	
 		}
@@ -452,7 +468,8 @@ SummitGlyphs (CARD8	op,
 	PixmapPtr	mask, dst;
 	GlyphPtr	glyph;
 	int		xDst = list->xOff, yDst = list->yOff;
-	int		x = 0, y = 0, i, n, ofs, p, j, wi, he;
+	int		x = 0, y = 0, i, n, ofs, p, j, wi, he, xs, ys;
+	int		dw, dh;
 	uint32_t fg = 0xffffffff, msk;
 
 	if (op != PictOpOver) goto fallback;
@@ -462,6 +479,8 @@ SummitGlyphs (CARD8	op,
 	dst = SummitGetDrawablePixmap(pDst->pDrawable);
 	ofs = exaGetPixmapOffset(dst);
 	ofs = ofs >> 13;
+	dw = pDst->pDrawable->width;
+	dh = pDst->pDrawable->height;
 
 	if (pDst->pDrawable->type == DRAWABLE_WINDOW) {
 		x += pDst->pDrawable->x;
@@ -484,10 +503,8 @@ SummitGlyphs (CARD8	op,
 
 	SummitWaitFifo(fPtr, 4);
 	NGLEWrite4(fPtr, VISFX_FOE, FOE_BLEND_ROP);
-#ifdef notyet
 	NGLEWrite4(fPtr, VISFX_IBO,
 	    IBO_ADD | SRC(IBO_SRC) | DST(IBO_ONE_MINUS_SRC));
-#endif
 
 	while (nlist--)     {
 		x += list->xOff;
@@ -553,10 +570,40 @@ SummitGlyphs (CARD8	op,
 					 * only need to clip to the destination
 					 * pixmap's boundaries
 					 */
-					yd += (ofs - fPtr->fbi.fbi_height);
 
 					fbGetDrawablePixmap(pPicture->pDrawable,
 					    mask, wi, he);
+
+					xs = 0;
+					ys = 0;
+					wi = glyph->info.width;
+					he = glyph->info.height;
+
+					if (xd < 0) {
+						xs -= xd;
+						wi += xd;
+						xd = 0;
+					}
+
+					if (yd < 0) {
+						ys -= yd;
+						he += yd;
+						yd = 0;
+					}
+
+					if ((xd + wi) > dw) {
+						wi -= (xd + wi - dw);
+					}
+
+					if ((yd + he) > dh) {
+						he -= (yd + he - dh);
+					}
+
+					if ((he <= 0) || (wi <= 0))
+						goto skip;
+
+					yd += (ofs - fPtr->fbi.fbi_height);
+
 					exaPrepareAccess(pPicture->pDrawable,
 					    EXA_PREPARE_SRC);
 					p = exaGetPixmapPitch(mask);
@@ -564,17 +611,15 @@ SummitGlyphs (CARD8	op,
 					if (pPicture->format == PICT_a8) {
 						SummitDrawGlyph8(fPtr,
 						    fg, mask, p,
-						    0, 0,
+						    xs, ys,
 						    xd, yd, 
-						    glyph->info.width,
-						    glyph->info.height);
+						    wi, he);
 					} else {
 						SummitDrawGlyph32(fPtr,
 						    fg, mask, p,
-						    0, 0,
+						    xs, ys,
 						    xd, yd, 
-						    glyph->info.width,
-						    glyph->info.height);
+						    wi, he);
 					}
 					exaFinishAccess(pPicture->pDrawable,
 					    EXA_PREPARE_SRC);
