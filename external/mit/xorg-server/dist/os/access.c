@@ -1425,13 +1425,15 @@ RemoveHost(ClientPtr client, int family, unsigned length,       /* of bytes in p
     case FamilyChaos:
     case FamilyServerInterpreted:
         if ((len = CheckAddr(family, pAddr, length)) < 0) {
-            client->errorValue = length;
+            if (client)
+                client->errorValue = length;
             return BadValue;
         }
         break;
     case FamilyLocal:
     default:
-        client->errorValue = family;
+        if (client)
+            client->errorValue = family;
         return BadValue;
     }
     for (prev = &validhosts;
@@ -1860,7 +1862,7 @@ siHostnameAddrMatch(int family, void *addr, int len,
         char hostname[SI_HOSTNAME_MAXLEN];
         int f, hostaddrlen;
         void *hostaddr;
-        const char **addrlist;
+        char **addrlist;
 
         if (siAddrLen >= sizeof(hostname))
             return FALSE;
@@ -1885,7 +1887,9 @@ siHostnameAddrMatch(int family, void *addr, int len,
                 if ((f == family) && (len == hostaddrlen) &&
                     (memcmp(addr, hostaddr, len) == 0)) {
                     res = TRUE;
+#ifdef h_addr
                     break;
+#endif
                 }
             }
         }

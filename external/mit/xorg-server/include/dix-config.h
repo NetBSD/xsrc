@@ -171,6 +171,9 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
+/* Define to 1 if the system has the type 'socklen_t'. */
+#define HAVE_SOCKLEN_T 1
+
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
 
@@ -343,7 +346,7 @@
 #define XINERAMA 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 14)
+#define XORG_VERSION_CURRENT ((10000000) + ((21) * 100000) + ((1) * 1000) + 16)
 
 /* Build Xv Extension */
 #define XvExtension 1
