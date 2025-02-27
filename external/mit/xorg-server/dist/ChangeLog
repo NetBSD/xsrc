@@ -1,3 +1,963 @@
+commit b7f84e6d509c004a7abb514af75b94cb907d451b
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Feb 25 15:38:07 2025 +0100
+
+    xserver 21.1.16
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit a2c0f84c1cd0c92918f08f83f562c2e324cd4cbb
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jan 20 17:10:31 2025 +0100
+
+    sync: Apply changes last in SyncChangeAlarmAttributes()
+    
+    SyncChangeAlarmAttributes() would apply the various changes while
+    checking for errors.
+    
+    If one of the changes triggers an error, the changes for the trigger,
+    counter or delta value would remain, possibly leading to inconsistent
+    changes.
+    
+    Postpone the actual changes until we're sure nothing else can go wrong.
+    
+    Related to CVE-2025-26601, ZDI-CAN-25870
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit c285798984c6bb99e454a33772cde23d394d3dcd)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 043a4e959b8590ff37b72cd3440328ec3e39699f
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jan 20 17:06:07 2025 +0100
+
+    sync: Do not fail SyncAddTriggerToSyncObject()
+    
+    We do not want to return a failure at the very last step in
+    SyncInitTrigger() after having all changes applied.
+    
+    SyncAddTriggerToSyncObject() must not fail on memory allocation, if the
+    allocation of the SyncTriggerList fails, trigger a FatalError() instead.
+    
+    Related to CVE-2025-26601, ZDI-CAN-25870
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 8cbc90c8817306af75a60f494ec9dbb1061e50db)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 330b4068212c02548b53d19c0078ddc75c36a724
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jan 20 16:54:30 2025 +0100
+
+    sync: Check values before applying changes
+    
+    In SyncInitTrigger(), we would set the CheckTrigger function before
+    validating the counter value.
+    
+    As a result, if the counter value overflowed, we would leave the
+    function SyncInitTrigger() with the CheckTrigger applied but without
+    updating the trigger object.
+    
+    To avoid that issue, move the portion of code checking for the trigger
+    check value before updating the CheckTrigger function.
+    
+    Related to CVE-2025-26601, ZDI-CAN-25870
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit f52cea2f93a0c891494eb3334894442a92368030)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit e708ad021753d603580d314c48b93d3adf459c5f
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jan 20 16:52:01 2025 +0100
+
+    sync: Do not let sync objects uninitialized
+    
+    When changing an alarm, the change mask values are evaluated one after
+    the other, changing the trigger values as requested and eventually,
+    SyncInitTrigger() is called.
+    
+    SyncInitTrigger() will evaluate the XSyncCACounter first and may free
+    the existing sync object.
+    
+    Other changes are then evaluated and may trigger an error and an early
+    return, not adding the new sync object.
+    
+    This can be used to cause a use after free when the alarm eventually
+    triggers.
+    
+    To avoid the issue, delete the existing sync object as late as possible
+    only once we are sure that no further error will cause an early exit.
+    
+    CVE-2025-26601, ZDI-CAN-25870
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 16a1242d0ffc7f45ed3c595ee7564b5c04287e0b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 826cef825fe49a275deb28e85b8c714b697f5efa
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Dec 16 16:18:04 2024 +0100
+
+    dix: Dequeue pending events on frozen device on removal
+    
+    When a device is removed while still frozen, the events queued for that
+    device remain while the device itself is freed.
+    
+    As a result, replaying the events will cause a use after free.
+    
+    To avoid the issue, make sure to dequeue and free any pending events on
+    a frozen device when removed.
+    
+    CVE-2025-26600, ZDI-CAN-25871
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 6e0f332ba4c8b8c9a9945dc9d7989bfe06f80e14)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit d09125fbb3b997ed77b7f008f8bd30328ba69fbb
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jan 13 16:09:43 2025 +0100
+
+    composite: initialize border clip even when pixmap alloc fails
+    
+    If it fails to allocate the pixmap, the function compAllocPixmap() would
+    return early and leave the borderClip region uninitialized, which may
+    lead to the use of uninitialized value as reported by valgrind:
+    
+     Conditional jump or move depends on uninitialised value(s)
+        at 0x4F9B33: compClipNotify (compwindow.c:317)
+        by 0x484FC9: miComputeClips (mivaltree.c:476)
+        by 0x48559A: miValidateTree (mivaltree.c:679)
+        by 0x4F0685: MapWindow (window.c:2693)
+        by 0x4A344A: ProcMapWindow (dispatch.c:922)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+      Uninitialised value was created by a heap allocation
+        at 0x4841866: malloc (vg_replace_malloc.c:446)
+        by 0x4F47BC: compRedirectWindow (compalloc.c:171)
+        by 0x4FA8AD: compCreateWindow (compwindow.c:592)
+        by 0x4EBB89: CreateWindow (window.c:925)
+        by 0x4A2E6E: ProcCreateWindow (dispatch.c:768)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+    
+     Conditional jump or move depends on uninitialised value(s)
+        at 0x48EEDBC: pixman_region_translate (pixman-region.c:2233)
+        by 0x4F9255: RegionTranslate (regionstr.h:312)
+        by 0x4F9B7E: compClipNotify (compwindow.c:319)
+        by 0x484FC9: miComputeClips (mivaltree.c:476)
+        by 0x48559A: miValidateTree (mivaltree.c:679)
+        by 0x4F0685: MapWindow (window.c:2693)
+        by 0x4A344A: ProcMapWindow (dispatch.c:922)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+      Uninitialised value was created by a heap allocation
+        at 0x4841866: malloc (vg_replace_malloc.c:446)
+        by 0x4F47BC: compRedirectWindow (compalloc.c:171)
+        by 0x4FA8AD: compCreateWindow (compwindow.c:592)
+        by 0x4EBB89: CreateWindow (window.c:925)
+        by 0x4A2E6E: ProcCreateWindow (dispatch.c:768)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+    
+     Conditional jump or move depends on uninitialised value(s)
+        at 0x48EEE33: UnknownInlinedFun (pixman-region.c:2241)
+        by 0x48EEE33: pixman_region_translate (pixman-region.c:2225)
+        by 0x4F9255: RegionTranslate (regionstr.h:312)
+        by 0x4F9B7E: compClipNotify (compwindow.c:319)
+        by 0x484FC9: miComputeClips (mivaltree.c:476)
+        by 0x48559A: miValidateTree (mivaltree.c:679)
+        by 0x4F0685: MapWindow (window.c:2693)
+        by 0x4A344A: ProcMapWindow (dispatch.c:922)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+      Uninitialised value was created by a heap allocation
+        at 0x4841866: malloc (vg_replace_malloc.c:446)
+        by 0x4F47BC: compRedirectWindow (compalloc.c:171)
+        by 0x4FA8AD: compCreateWindow (compwindow.c:592)
+        by 0x4EBB89: CreateWindow (window.c:925)
+        by 0x4A2E6E: ProcCreateWindow (dispatch.c:768)
+        by 0x4A25B5: Dispatch (dispatch.c:560)
+        by 0x4B082A: dix_main (main.c:282)
+        by 0x429233: main (stubmain.c:34)
+    
+    Fix compAllocPixmap() to initialize the border clip even if the creation
+    of the backing pixmap has failed, to avoid depending later on
+    uninitialized border clip values.
+    
+    Related to CVE-2025-26599, ZDI-CAN-25851
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit b07192a8bedb90b039dc0f70ae69daf047ff9598)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 7169628a1715f8203665f9805c714ed111907914
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Dec 17 15:19:45 2024 +0100
+
+    composite: Handle failure to redirect in compRedirectWindow()
+    
+    The function compCheckRedirect() may fail if it cannot allocate the
+    backing pixmap.
+    
+    In that case, compRedirectWindow() will return a BadAlloc error.
+    
+    However that failure code path will shortcut the validation of the
+    window tree marked just before, which leaves the validate data partly
+    initialized.
+    
+    That causes a use of uninitialized pointer later.
+    
+    The fix is to not shortcut the call to compHandleMarkedWindows() even in
+    the case of compCheckRedirect() returning an error.
+    
+    CVE-2025-26599, ZDI-CAN-25851
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit c1ff84bef2569b4ba4be59323cf575d1798ba9be)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 32decb1efb89341881de8266f3dd1c3356981bfd
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Dec 16 11:25:11 2024 +0100
+
+    Xi: Fix barrier device search
+    
+    The function GetBarrierDevice() would search for the pointer device
+    based on its device id and return the matching value, or supposedly NULL
+    if no match was found.
+    
+    Unfortunately, as written, it would return the last element of the list
+    if no matching device id was found which can lead to out of bounds
+    memory access.
+    
+    Fix the search function to return NULL if not matching device is found,
+    and adjust the callers to handle the case where the device cannot be
+    found.
+    
+    CVE-2025-26598, ZDI-CAN-25740
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit bba9df1a9d57234c76c0b93f88dacb143d01bca2)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 8cb23fac62e05d7340e320b2db0dd3e8538d1fba
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Thu Nov 28 14:09:04 2024 +0100
+
+    xkb: Fix buffer overflow in XkbChangeTypesOfKey()
+    
+    If XkbChangeTypesOfKey() is called with nGroups == 0, it will resize the
+    key syms to 0 but leave the key actions unchanged.
+    
+    If later, the same function is called with a non-zero value for nGroups,
+    this will cause a buffer overflow because the key actions are of the wrong
+    size.
+    
+    To avoid the issue, make sure to resize both the key syms and key actions
+    when nGroups is 0.
+    
+    CVE-2025-26597, ZDI-CAN-25683
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 0e4ed94952b255c04fe910f6a1d9c852878dcd64)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit b4293650b50efe7832cf9eac71217ad8d6341e02
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Thu Nov 28 11:49:34 2024 +0100
+
+    xkb: Fix computation of XkbSizeKeySyms
+    
+    The computation of the length in XkbSizeKeySyms() differs from what is
+    actually written in XkbWriteKeySyms(), leading to a heap overflow.
+    
+    Fix the calculation in XkbSizeKeySyms() to match what kbWriteKeySyms()
+    does.
+    
+    CVE-2025-26596, ZDI-CAN-25543
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 80d69f01423fc065c950e1ff4e8ddf9f675df773)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit ea526ccb20d222196494b2adf9da52dab68a8997
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 27 14:41:45 2024 +0100
+
+    xkb: Fix buffer overflow in XkbVModMaskText()
+    
+    The code in XkbVModMaskText() allocates a fixed sized buffer on the
+    stack and copies the virtual mod name.
+    
+    There's actually two issues in the code that can lead to a buffer
+    overflow.
+    
+    First, the bound check mixes pointers and integers using misplaced
+    parenthesis, defeating the bound check.
+    
+    But even though, if the check fails, the data is still copied, so the
+    stack overflow will occur regardless.
+    
+    Change the logic to skip the copy entirely if the bound check fails.
+    
+    CVE-2025-26595, ZDI-CAN-25545
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 11fcda8753e994e15eb915d28cf487660ec8e722)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 5f0c4e0bf254c8b4552da276d01b1b80881b4e26
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 4 15:49:43 2024 +1000
+
+    dix: keep a ref to the rootCursor
+    
+    CreateCursor returns a cursor with refcount 1 - that refcount is used by
+    the resource system, any caller needs to call RefCursor to get their own
+    reference. That happens correctly for normal cursors but for our
+    rootCursor we keep a variable to the cursor despite not having a ref for
+    ourselves.
+    
+    Fix this by reffing/unreffing the rootCursor to ensure our pointer is
+    valid.
+    
+    Related to CVE-2025-26594, ZDI-CAN-25544
+    
+    Reviewed-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit b0a09ba6020147961acc62d9c73d807b4cccd9f7)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 9e5ac777d0dfa9d4d78dd68558869489117c3f2c
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 27 11:27:05 2024 +0100
+
+    Cursor: Refuse to free the root cursor
+    
+    If a cursor reference count drops to 0, the cursor is freed.
+    
+    The root cursor however is referenced with a specific global variable,
+    and when the root cursor is freed, the global variable may still point
+    to freed memory.
+    
+    Make sure to prevent the rootCursor from being explicitly freed by a
+    client.
+    
+    CVE-2025-26594, ZDI-CAN-25544
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    v2: Explicitly forbid XFreeCursor() on the root cursor (Peter Hutterer
+    <peter.hutterer@who-t.net>)
+    v3: Return BadCursor instead of BadValue (Michel Dänzer
+    <michel@daenzer.net>)
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Suggested-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 01642f263f12becf803b19be4db95a4a83f94acc)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 32887f6ca479be268b7c867b924f80d3fd1611db
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Feb 25 18:47:05 2025 +0100
+
+    test: Fix xsync test
+    
+    The xsync test is relying on the values being changed even in the case
+    of a BadMatch value.
+    
+    Typically, it updates the delta but does not update the test type
+    comparison, so when passing a negative value, it generates a BadMatch.
+    
+    That's actually not correct, and that will fail with the new fixes that
+    check the validity of the values prior to apply the changes.
+    
+    Fix the test by updating the test type as needed.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 05e54fefafbcec11d847b9f8127bcd4820a20625)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1830>
+
+commit 0c6a7750f2ac9158ace8161f94f7e3bd4c9f5263
+Author: Doug Brown <doug@schmorgal.com>
+Date:   Mon Jul 15 19:44:23 2024 -0700
+
+    dri2: Protect against dri2ClientPrivate assertion failures
+    
+    If DRI2ScreenInit hasn't been called yet, DRI2Authenticate and
+    DRI2CreateDrawable2 cause the X server to crash. This has been observed
+    to happen on multiple modern Linux distros in various conditions,
+    including QEMU and VMware VMs. Make these functions more robust in order
+    to prevent the crash.
+    
+    This patch was originally provided by Bernhard Übelacker and expanded
+    upon by Mark Wagner.
+    
+    Signed-off-by: Doug Brown <doug@schmorgal.com>
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1053
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1534
+    (cherry picked from commit a0834009cfb10b8982a1f2b47b8ed00de254c2c3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1824>
+
+commit a651eefc9e525072d99413c1aeabd01858c50819
+Author: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date:   Fri Jan 3 14:41:59 2025 -0500
+
+    autotools: enable static use of Nettle for SHA1
+    
+    Debian builds xserver 21 using autotools.
+    
+    When debian builds xserver-xorg for constrained environments like the
+    installer, it wants to build against the static library of libnettle
+    for SHA1, see debian/patches/03_static-nettle.diff in the debian
+    repository at
+    https://salsa.debian.org/xorg-team/xserver/xorg-server.git
+    
+    This modification of configure.ac makes it possible to build static
+    nettle when needed, while preserving the build to use nettle with a
+    dynamic library when passing a different configuration option.
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1756>
+
+commit e183b62e42f49fa297b5667a82199c7e76fc0a81
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Jan 15 09:40:34 2025 +0100
+
+    os/connection: Make sure partial is initialized
+    
+    Following the change in Xtrans 1.5 that allows for partial connections
+    to succeed, we need to make sure partial is properly initialized at
+    first, otherwise we rely on an uninitialized variable.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Suggested-by: Twaik Yont <twaikyont@gmail.com>
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1783
+    (cherry picked from commit 080fb49eff4de7ec3a29214994d1403e4d877f6a)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 6115eb1f65dc5198da01042e70d571d85286c31c
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Fri Jan 10 15:02:54 2025 +0100
+
+    xkb: Always use MAP_LENGTH keymap size
+    
+    Generating the modifier modmap, the helper function generate_modkeymap()
+    would check the entire range up to the MAP_LENGTH.
+    
+    However, the given keymap might have less keycodes than MAP_LENGTH, in
+    which case we would go beyond the size of the modmap, as reported by
+    ASAN:
+    
+    ==ERROR: AddressSanitizer: heap-buffer-overflow
+    READ of size 1 at 0x5110001c225b thread T0
+        #0 0x5e7369393873 in generate_modkeymap ../dix/inpututils.c:309
+        #1 0x5e736930dcce in ProcGetModifierMapping ../dix/devices.c:1794
+        #2 0x5e7369336489 in Dispatch ../dix/dispatch.c:550
+        #3 0x5e736934407d in dix_main ../dix/main.c:275
+        #5 0x7e46d47b2ecb in __libc_start_main
+        #6 0x5e73691be324 in _start (xserver/build/hw/xwayland/Xwayland)
+    
+    Address is located 0 bytes after 219-byte region
+    allocated by thread T0 here:
+        #0 0x7e46d4cfc542 in realloc
+        #1 0x5e73695aa90e in _XkbCopyClientMap ../xkb/xkbUtils.c:1142
+        #2 0x5e73695aa90e in XkbCopyKeymap ../xkb/xkbUtils.c:1966
+        #3 0x5e73695b1b2f in XkbDeviceApplyKeymap ../xkb/xkbUtils.c:2023
+        #4 0x5e73691c6c18 in keyboard_handle_keymap ../hw/xwayland/xwayland-input.c:1194
+    
+    As MAP_LENGTH is used in various code paths where the max keycode might
+    not be easily available, best is to always use MAP_LENGTH to allocate the
+    keymaps so that the code never run past the buffer size.
+    
+    If the max key code is smaller than the MAP_LENGTH limit, fill-in the gap
+    with zeros.
+    
+    That also simplifies the code slightly as we do not constantly need to
+    reallocate the keymap to adjust to the max key code size.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1780
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 92bcebfd7e248f695503c0a6e7bee80be4c96834)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 309ec5a4a71aa189bcf1eb4263d0d34375051856
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Oct 24 15:51:53 2024 -0700
+
+    modesetting: avoid memory leak when ms_present_check_unflip() returns FALSE
+    
+    Found by Oracle Parfait 13.3 static analyzer:
+       Memory leak [memory-leak]:
+          Memory leak of pointer event allocated with calloc(1, 16)
+            at line 470 of hw/xfree86/drivers/modesetting/present.c in
+            function 'ms_present_unflip'.
+              event allocated at line 431 with calloc(1, 16)
+              event leaks when ms_present_check_unflip(...) == 0 at line 438
+                  and i >= config->num_crtc at line 445
+    
+    Fixes: 13c7d53df ("modesetting: Implement page flipping support for Present.")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit bf63d9b34ef3a24427f884f66a387119dd5cdb8c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit fbb636bf6b9f8017cf4f905210d15b86a257dad9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 17:33:24 2024 -0700
+
+    dix: limit checks to MAX_VALUATORS when generating Xi events
+    
+    Previously, it was looping through sizeof(ev->valuators.mask) * 8
+    valuators, where valuators.mask is defined as an array of
+    (MAX_VALUATORS + 7) / 8 entries.  Since MAX_VALUATORS is defined as 36,
+    this made it actually loop through 40 entries.  The last 4 bits in this
+    array should never be set, so we should never access memory outside the
+    bounds of the arrays defined to be exactly MAX_VALUATORS in length, but
+    we can make the static analyzer happier and not waste time checking bits
+    that should never be set.
+    
+    Found by Oracle Parfait 13.3 static analyzer:
+    
+       Read outside array bounds [read-outside-array-bounds]:
+          In array dereference of ev->valuators.data[i] with index i
+          Array size is 36 elements (of 8 bytes each), index >= 0 and index <= 39
+            at line 741 of dix/eventconvert.c in function 'eventToDeviceEvent'.
+    
+       Read outside array bounds [read-outside-array-bounds]:
+          In array dereference of ev->valuators.data[i] with index i
+          Array size is 36 elements (of 8 bytes each), index >= 0 and index <= 39
+            at line 808 of dix/eventconvert.c in function 'eventToRawEvent'.
+    
+       Read outside array bounds [read-outside-array-bounds]:
+          In array dereference of ev->valuators.data_raw[i] with index i
+          Array size is 36 elements (of 8 bytes each), index >= 0 and index <= 39
+            at line 809 of dix/eventconvert.c in function 'eventToRawEvent'.
+    
+    Fixes: b2ba77bac ("dix: add EventToXI2 and GetXI2Type.")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit b65eea43dd18cdf6d389b7f82ee55ae764c3bf31)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit abfd0215946c23c36a4b1c689ea6b8b7d277e991
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 17:01:03 2024 -0700
+
+    dix: fix button offset when generating DeviceButtonStateNotify events
+    
+    Found by Oracle Parfait 13.3 static analyzer:
+       Buffer Overflow in STD C function [buffer-overflow-call-stdc]:
+          Buffer overflow in call to memcpy. Buffer &bev->buttons[4] of
+           size 24 is written at an offset of 28
+          Array size is 28 bytes, index is 32
+            at line 743 of dix/enterleave.c in function
+             'DeliverStateNotifyEvent'.
+    
+    Fixes: a85f0d6b9 ("Xi: fix use of button->down - bitflags instead of int arrays.")
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 4b073d65bb5e1f4accb7ed280c8926134582b7ab)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 5406ddd003c95e2fcbb0411a7afff4daaa9b59f9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 16:38:55 2024 -0700
+
+    render: avoid NULL pointer dereference if PictureFindVisual returns NULL
+    
+    Found by Oracle Parfait 13.3:
+       Null pointer dereference [null-pointer-deref]:
+          Read from null pointer pVisual
+            at line 257 of dix/colormap.c in function 'CreateColormap'.
+              Null pointer introduced at line 412 of render/picture.c in
+               function 'PictureFindVisual'.
+              Constant 'NULL' passed into function CreateColormap, argument
+               pVisual, from call at line 431 in function
+               'PictureInitIndexedFormat'.
+              Function PictureFindVisual may return constant 'NULL' at
+               line 412, called at line 429.
+    
+    Fixes: d4a101d4e ("Integration of DAMAGE-XFIXES branch to trunk")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7af077dd2f939b76e7d6ba84250368b6649fb777)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit cec3e55ec96a660a1884fc99784efb4536e557bb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 16:12:13 2024 -0700
+
+    Xi: avoid NULL pointer dereference if GetXTestDevice returns NULL
+    
+    The comments in that function say "This only happens if master is a
+    slave device. don't do that" but static analysis doesn't respect that.
+    
+    Found by Oracle Parfait 13.3:
+       Null pointer dereference [null-pointer-deref]:
+          Read from null pointer XTestptr
+            at line 274 of Xi/xichangehierarchy.c in function 'remove_master'.
+              Null pointer introduced at line 691 of Xext/xtest.c in function
+               'GetXTestDevice'.
+              Function GetXTestDevice may return constant 'NULL' at line 691,
+               called at line 273 of Xi/xichangehierarchy.c in function
+               'remove_master'.
+       Null pointer dereference [null-pointer-deref]:
+          Read from null pointer XTestkeybd
+            at line 279 of Xi/xichangehierarchy.c in function 'remove_master'.
+              Null pointer introduced at line 691 of Xext/xtest.c in function
+               'GetXTestDevice'.
+              Function GetXTestDevice may return constant 'NULL' at line 691,
+               called at line 278 of Xi/xichangehierarchy.c in function
+               'remove_master'.
+    
+    Fixes: 0814f511d ("input: store the master device's ID in the devPrivate for XTest devices.")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit d10589cc09c68ad09bebd3a4155c44d1b8f2614b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 23b3b7199c69d0052830c2b219ba06cb26950f51
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 12 15:55:06 2024 -0700
+
+    xfree86: avoid memory leak on realloc failure
+    
+    Found by Oracle Parfait 13.3 static analyzer:
+       Memory leak [memory-leak]:
+          Memory leak of pointer optname allocated with asprintf(&optname,
+          "\"%s\"", p->name)
+            at line 326 of hw/xfree86/common/xf86Configure.c in function
+            'configureDeviceSection'.
+              optname allocated at line 309 with asprintf(&optname, "\"%s\"",
+              p->name)
+    
+    Fixes: code inherited from XFree86
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit fa711c486a2c2c958c71d7bd8ac0efe552558717)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit cbc2c654e4099e4d8a35e625e010fd73e7a75521
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Sep 9 16:21:46 2024 -0700
+
+    os: NextDPMSTimeout: mark intentional fallthroughs in switch
+    
+    The comment at the top of the function tells humans the fallthroughs
+    are intentional, but gcc doesn't parse that.
+    
+    Clears 3 -Wimplicit-fallthrough warnings from gcc 14.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit b306df5a6060beea82b5157c3603593527b220b0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit e38c23e5b81693a1b23ed91e4ecdead08615ab25
+Author: Tj <tj.iam.tj@proton.me>
+Date:   Fri Jul 19 19:50:56 2024 +0200
+
+    xfree86: fbdevhw: fix pci detection on recent Linux
+    
+    Linux kernel v6.9 has changed the symlink to point to the parent device. This
+    breaks fbdev_open() detection logic. Change it to use the subsystem symlink
+    instead which will remain stable.
+    
+    Kernel v6.8:
+    
+    [    14.067] (II) fbdev_open() sysfs_path=/sys/class/graphics/fb0
+    [    14.067] (II) fbdev_open() buf=../../devices/platform/vesa-framebuffer.0/graphics/fb0
+    
+    Kernel v6.9:
+    
+    [    15.609] (II) fbdev_open() sysfs_path=/sys/class/graphics/fb0
+    [    15.609] (II) fbdev_open() buf=../../devices/pci0000:00/0000:00:01.0/vesa-framebuffer.0/graphics/fb0
+    
+    Originally found in automated Debian ISO QA testing [0] and confirmed in Linux [1].
+    
+    Tested on kernels v6.9.7 and v6.8.12
+    
+    [0] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1075713
+    [1] https://lore.kernel.org/lkml/lLyvPFC_APGHNfyGNHRpQy5izBikkaTPOpHooZIT3fFAoJPquSI31ZMueA99XTdr8ysir3X7O7IMdc6za-0m79vr_claeparHhoRouVgHOI=@proton.me/
+    
+    Fixes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1714
+    Signed-off-by: Tj <tj.iam.tj@proton.me>
+    Reviewed-by: Thomas Zimmermann <tzimmermann@suse.de>
+    Reviewed-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    (cherry picked from commit 728b54528d37ffa27b07c9b181c5ed8d2d359379)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit ac48573a9bc943572621aa4d0254f32fca58f7d4
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Sep 23 09:27:21 2024 +0200
+
+    os: Fix NULL pointer dereference
+    
+    RemoveHost() can be called from DisableLocalHost() with a NULL client,
+    but doesn't actually check whether the given client pointer is valid on
+    error and assigns the error value unconditionally, leading to a possible
+    NULL pointer dereference and a crash of the Xserver.
+    
+    To avoid the issue, simply check whether the client pointer is not NULL
+    prior to assign the errorValue.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1752
+    See-also: https://bugzilla.redhat.com/2313799
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 57a446c0f98693bd2e0263e91213344d870f4e03)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit f241e4f884be062f947f5dab35465549b8bffdf8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 30 11:11:54 2024 +1000
+
+    Xi: when removing a master search for a disabled paired device
+    
+    If either the master pointer or keyboard was disabled, the respective
+    GetMaster() call returns NULL, causing a segfault later accessing the
+    deviceid.
+    
+    Fix this by looking in the off_devices list for any master
+    device of the type we're looking for. Master devices lose the pairing
+    when disabled (on enabling a keyboard we simply pair with the first
+    available unpaired pointer).
+    
+    And for readability, split the device we get from the protocol request
+    into a new "dev" variable instead of re-using ptr.
+    
+    Fixes #1611
+    
+    (cherry picked from commit e7c876ab0b0daa546a23d4ef82537fdf8fd88e04)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit de2e2e8d45eaffd8b961d22ba91d45ed4ffb9ea0
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 30 10:44:58 2024 +1000
+
+    dix: don't push the XKB state to a non-existing master keyboard
+    
+    If our master keyboard is disabled, GetMaster() returns NULL and
+    we segfault in XkbPushLockedStateToSlaves().
+    
+    Fixes 45fb3a934dc0db51584aba37c2f9d73deff9191d
+    Fixes #1611
+    
+    (cherry picked from commit 9b983fecf999b9f50946973f2379a5ce00491cad)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 743f66d6a29d439aac7b9ef2816009f311d58aec
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jul 29 11:54:15 2024 +0200
+
+    glamor: Fix possible double-free
+    
+    If glamor_link_glsl_prog() fails, we may jump to the failed code path
+    which frees the variable vs_prog_string and fs_prog_string.
+    
+    But those variables were already freed just before, so in that case we
+    end up freeing the memory twice.
+    
+    Simply move the free at the end of the success code path so we are sure
+    to free the values only once, either in the successful of failed code
+    paths.
+    
+    Fixes: 2906ee5e4 - glamor: Fix leak in glamor_build_program()
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 34ea020344ef5f2ea8ffce78c7e1abd6436b21ec)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit 3bda7d119a289bc7706123b0544bb6ff792986ad
+Author: Patrik Jakobsson <patrik.r.jakobsson@gmail.com>
+Date:   Wed Jun 9 20:58:59 2021 +0200
+
+    modesetting: Fix dirty updates for sw rotation
+    
+    Rotation is broken for all drm drivers not providing hardware rotation
+    support. Drivers that give direct access to vram and not needing dirty
+    updates still work but only by accident. The problem is caused by
+    modesetting not sending the correct fb_id to drmModeDirtyFB() and
+    passing the damage rects in the rotated state and not as the crtc
+    expects them. This patch takes care of both problems.
+    
+    Signed-off-by: Patrik Jakobsson <pjakobsson@suse.de>
+    (cherry picked from commit db9e9d45e8ba73510f11eb9e534c176102f6623e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1767>
+
+commit b5f1b211b4bbbf4049b422b0e08e02efaaf7a26a
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Tue Dec 17 12:39:36 2024 -0500
+
+    xserver 21.1.15
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1753>
+
+commit 203e0667d21953737537d1991ec76b768fe588ae
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Dec 16 22:38:24 2024 -0500
+
+    hw/xfree86: Fix -Wincompatible-pointer-types sbus compile failure
+    
+    ```
+    ../hw/xfree86/common/xf86sbusBus.c: In function ‘xf86SbusConfigureNewDev’:
+    ../hw/xfree86/common/xf86sbusBus.c:751:21: error: passing argument 1 of ‘XNFasprintf’ from incompatible pointer type [-Wincompatible-pointer-types]
+      751 |         XNFasprintf(&GDev->busID, "SBUS:%s", promPath);
+          |                     ^~~~~~~~~~~~
+          |                     |
+          |                     const char **
+    ```
+    
+    Apply the same fix as in commit e1e01d2e3 ("xfree86/common: Warning
+    fixes. Mostly const string handling.")
+    
+    (cherry picked from commit bdacb100bf6a551bc9045f7f0048cbb99eb3db5a)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1752>
+
+commit 1958e0f25b6b46940625b407a5e15b39fa648b26
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Dec 16 22:38:03 2024 -0500
+
+    hw/xfree86: Fix -Wmissing-prototypes warnings
+    
+    None of these functions are used elsewhere in the Xserver nor in any of
+    the xf86-video-sun* DDXs.
+    
+    (cherry picked from commit 00a96cd82a7be08f421dcbe3aa628fdbc7c8d856)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1752>
+
+commit c3144adcbc01d4f9f4d1e42323fc51be689bee17
+Author: Eric Curtin <ecurtin@redhat.com>
+Date:   Fri Dec 16 11:10:12 2022 +0000
+
+    config: add a quirk for Apple Silicon appledrm
+    
+    Xorg server does not correctly select the DCP for the display without a
+    quirk on Apple Silicon.
+    
+    Signed-off-by: Eric Curtin <ecurtin@redhat.com>
+    Suggested-by: Hector Martin <marcan@marcan.st>
+    (cherry picked from commit 39934a656a44722d16a80bf4db411c53e2d67b38)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1746>
+
+commit 1a836cd47be8177cb3ab3ac2bc90e926c24c0cac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 30 10:34:14 2024 -0700
+
+    dix-config.h: add HAVE_SOCKLEN_T definition
+    
+    Needed to build with IPv6 disabled using gcc 14 on some platforms to avoid:
+    
+    In file included from /usr/X11/include/X11/Xtrans/transport.c:67,
+                     from xstrans.c:17:
+    /usr/X11/include/X11/Xtrans/Xtranssock.c: In function ‘_XSERVTransSocketOpen’:
+    /usr/X11/include/X11/Xtrans/Xtranssock.c:467:28: error: passing argument 5
+     of ‘getsockopt’ from incompatible pointer type [-Wincompatible-pointer-types]
+      467 |             (char *) &val, &len) == 0 && val < 64 * 1024)
+          |                            ^~~~
+          |                            |
+          |                            size_t * {aka long unsigned int *}
+    
+    (Backport to xserver-21.1-branch of commit a1b5aa5a7f12adc43720a5ae11e6c.
+     Backport adds autoconf equivalent to meson change from master branch.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1737>
+
+commit 18c9cd6ab799cf8bd7fb90b4965455bece0046c3
+Author: Joaquim Monteiro <joaquim.monteiro@protonmail.com>
+Date:   Sun Jun 23 21:23:47 2024 +0100
+
+    os: Fix siHostnameAddrMatch in the case where h_addr isn't defined
+    
+    When IPv6 support isn't enabled, and h_addr isn't defined,
+    there is no for loop, so the break statement is invalid.
+    
+    Signed-off-by: Joaquim Monteiro <joaquim.monteiro@protonmail.com>
+    (cherry picked from commit a6a993f9508ff0bd6f19695b2dfaef170c652525)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1737>
+
+commit e8302b707d6fddf8e27daa0b3ef70fd3efec823c
+Author: Joaquim Monteiro <joaquim.monteiro@protonmail.com>
+Date:   Sun Jun 23 21:17:25 2024 +0100
+
+    os: Fix assignment with incompatible pointer type
+    
+    struct hostent->h_addr_list is of type char**, not const char**.
+    GCC considers this an error when in C99 mode or later.
+    
+    Signed-off-by: Joaquim Monteiro <joaquim.monteiro@protonmail.com>
+    (cherry picked from commit 0ddcd8785199c08d9bded3c767a3b1227c670999)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1737>
+
 commit b25ad9b8f0ebcc3ebe09ce9991410c60f3a8b2ce
 Author: José Expósito <jexposit@redhat.com>
 Date:   Tue Oct 29 14:40:34 2024 +0100
