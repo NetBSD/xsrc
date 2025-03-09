@@ -1,3 +1,178 @@
+commit cf05ba4a10c90da2c63805a5375e983b174e28b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 8 16:07:43 2025 -0800
+
+    xtrans 1.6.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c8c291390f4befb7d813d7fce6caeb6607561903
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 20 09:54:21 2025 -0800
+
+    is_numeric: Add defined(X11_t) to checks
+    
+    Fixes builds of XTS which still builds X11 client side code (unlike
+    libX11 which relies on xcb instead of xtrans now for X11 connections).
+    
+    Fixes: 0f15306 ("is_numeric: Add TRANS_SERVER to required ifdefs")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/28>
+
+commit 633ac2f03369eb93b70958c783722cfe3e93aacc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 18 12:00:41 2025 -0800
+
+    Convert one more IPv6 ifdef to HAVE_GETADDRINFO
+    
+    If getaddrinfo returned multiple addresses, try another when first fails,
+    even if we're only using IPv4.
+    
+    Fixes: 0241531 ("if getaddrinfo() is available, use it, even if IPv6 support is disabled")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/28>
+
+commit 2c4a122ca0512936d4306ef449f6b7b2566d6785
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 18 11:50:59 2025 -0800
+
+    if sockaddr_storage is available, use it, even if IPv6 support is disabled
+    
+    Support for using sockaddr_storage was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for sockaddr_storage is ubiquitous and can simplify our code paths,
+    so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/28>
+
+commit deb755c0ad4575a7542e2abcba986a003fddb198
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 18 11:07:30 2025 -0800
+
+    if inet_ntop() is available, use it, even if IPv6 support is disabled
+    
+    Support for using inet_ntop() was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for inet_ntop() is ubiquitous and OS'es have marked inet_ntoa()
+    as deprecated, so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/28>
+
+commit 02415310dd4997b4a7943814381c0b52d91eb8de
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 11 13:06:06 2025 -0800
+
+    if getaddrinfo() is available, use it, even if IPv6 support is disabled
+    
+    Support for using getaddrinfo() was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for getaddrinfo() is ubiquitous and OS'es have marked gethostbyname()
+    as deprecated, so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/27>
+
+commit 7aa12b634fadf2c414080f1ba3d373430cf2d8f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 11 12:24:03 2025 -0800
+
+    Simplify ifdefs for IPv6 support
+    
+    Instead of checking for AF_INET6 at every ifdef, just check once per file
+    and report that IPv6 support is not available, instead of silently not
+    building support for it that configure said we were going to build.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/27>
+
+commit e58ae2d27f7baee28319faa02b77cdc344e2f0ca
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 16 16:37:06 2024 -0800
+
+    SocketOpenCOTSServer: handle -Wconditional-uninitialized warning
+    
+    Clears warning from clang 13:
+    
+    .../include/X11/Xtrans/Xtranssock.c:670:14: warning: variable 'ciptr'
+     may be uninitialized when used here [-Wconditional-uninitialized]
+            setsockopt (ciptr->fd, SOL_SOCKET, SO_REUSEADDR,
+                        ^~~~~
+    .../include/X11/Xtrans/Xtranssock.c:624:25: note: initialize the
+     variable 'ciptr' to silence this warning
+        XtransConnInfo      ciptr;
+                                 ^
+                                  = NULL
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/26>
+
+commit 3fc4f55eb36c02fab3a5b04610d91c481d6a5aec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 16 15:08:20 2024 -0800
+
+    SocketOpenCOTSClientBase: handle -Wconditional-uninitialized warning
+    
+    Clears warning from clang 13:
+    
+    .../include/X11/Xtrans/Xtranssock.c:602:12: warning: variable 'ciptr'
+     may be uninitialized when used here [-Wconditional-uninitialized]
+        return ciptr;
+               ^~~~~
+    .../include/X11/Xtrans/Xtranssock.c:575:25: note: initialize the
+     variable 'ciptr' to silence this warning
+        XtransConnInfo      ciptr;
+                                 ^
+                                  = NULL
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/26>
+
+commit dc71da9eb353f2e41af96923f292c621aeddd37f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 16 14:46:29 2024 -0800
+
+    Clear -Wmissing-variable-declarations from clang 13
+    
+    Silences 7 warnings of the form:
+    
+    .../include/X11/Xtrans/Xtranslcl.c:1347:12: warning: no previous extern
+     declaration for non-static variable '_FSTransLocalFuncs'
+     [-Wmissing-variable-declarations]
+    Xtransport      TRANS(LocalFuncs) = {
+                    ^
+    .../include/X11/Xtrans/Xtranslcl.c:1347:1: note: declare 'static' if the
+     variable is not intended to be used outside of this translation unit
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/26>
+
+commit 1dda77bb6ac9f473513a80e8ce5b32c4bde3448a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 16 14:23:25 2024 -0800
+
+    Quiet -Wformat-pedantic warnings from clang 13 for non-void-* args to %p
+    
+    Clears 23 warnings of the form:
+    .../include/X11/Xtrans/Xtrans.c:129:36: warning: format specifies type
+     'void *' but the argument has type 'XtransConnInfo'
+     (aka 'struct _XtransConnInfo *') [-Wformat-pedantic]
+        prmsg (3,"FreeConnInfo(%p)\n", ciptr);
+                               ~~      ^~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/26>
+
+commit e69d45306f38367ce3a0a5fa126beeb4e6370585
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 9 09:17:22 2024 -0800
+
+    accept const pointers for buf argument to TRANS(Write)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/25>
+
 commit 0dc46e7ed5bdd876467f9dbb314ba6b8094e541b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Nov 9 09:04:34 2024 -0800
