@@ -100,7 +100,7 @@ nouveau_dri2_create_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, unsigned int a
 		nvpix = nouveau_pixmap(ppix);
 		if (!nvpix || !nvpix->bo ||
 		    nouveau_bo_name_get(nvpix->bo, &nvbuf->base.name)) {
-			pScreen->DestroyPixmap(nvbuf->ppix);
+			dixDestroyPixmap(nvbuf->ppix, 0);
 			free(nvbuf);
 			return NULL;
 		}
@@ -126,7 +126,7 @@ nouveau_dri2_destroy_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, DRI2BufferPtr
 		return;
 
 	if (nvbuf->ppix)
-	    pScreen->DestroyPixmap(nvbuf->ppix);
+	    dixDestroyPixmap(nvbuf->ppix, 0);
 	free(nvbuf);
 }
 
@@ -274,12 +274,12 @@ update_front(DrawablePtr draw, DRI2BufferPtr front)
 		r = nouveau_bo_name_get(pixmap_bo, &front->name);
 
 	if (r) {
-		(*draw->pScreen->DestroyPixmap)(pixmap);
+		dixDestroyPixmap(pixmap, 0);
 		return FALSE;
 	}
 
 	if (nvbuf->ppix)
-		(*draw->pScreen->DestroyPixmap)(nvbuf->ppix);
+		dixDestroyPixmap(nvbuf->ppix, 0);
 
 	front->pitch = pixmap->devKind;
 	front->cpp = pixmap->drawable.bitsPerPixel / 8;
@@ -301,7 +301,7 @@ can_exchange(DrawablePtr draw, PixmapPtr dst_pix, PixmapPtr src_pix)
 
 	for (i = 0; i < xf86_config->num_crtc; i++) {
 		xf86CrtcPtr crtc = xf86_config->crtc[i];
-		if (drmmode_crtc_on(crtc)) {
+		if (xf86_crtc_on(crtc)) {
 			if (crtc->rotatedData)
 				return FALSE;
 
@@ -494,7 +494,7 @@ dri2_page_flip(DrawablePtr draw, PixmapPtr back, void *priv,
 		int head = drmmode_crtc(config->crtc[i]);
 		void *token;
 
-		if (!drmmode_crtc_on(config->crtc[i]))
+		if (!xf86_crtc_on(config->crtc[i]))
 			continue;
 
 		flipdata->flip_count++;
@@ -599,8 +599,8 @@ nouveau_wait_vblank(DrawablePtr draw, int type, CARD64 msc,
 	int head;
 
 	/* Select crtc which shows the largest part of the drawable */
-	crtc = nouveau_pick_best_crtc(scrn, FALSE,
-                                  draw->x, draw->y, draw->width, draw->height);
+	crtc = nouveau_pick_best_crtc(scrn,
+				      draw->x, draw->y, draw->width, draw->height);
 
 	if (!crtc) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
@@ -677,8 +677,8 @@ nouveau_dri2_finish_swap(DrawablePtr draw, unsigned int frame,
 	REGION_TRANSLATE(0, &reg, draw->x, draw->y);
 
 	/* Main crtc for this drawable shall finally deliver pageflip event. */
-	ref_crtc = nouveau_pick_best_crtc(scrn, FALSE, draw->x, draw->y,
-                                      draw->width, draw->height);
+	ref_crtc = nouveau_pick_best_crtc(scrn, draw->x, draw->y,
+					  draw->width, draw->height);
 
 	/* Update frontbuffer pixmap and name: Could have changed due to
 	 * window (un)redirection as part of compositing.
@@ -1110,7 +1110,7 @@ static PixmapPtr nouveau_dri3_pixmap_from_fd(ScreenPtr screen, int fd, CARD16 wi
 	return pixmap;
 
 free_pixmap:
-	screen->DestroyPixmap(pixmap);
+	dixDestroyPixmap(pixmap, 0);
 	return NULL;
 }
 

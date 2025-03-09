@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-nouveau],
-        [1.0.17],
+        [1.0.18],
         [https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/issues/],
         [xf86-video-nouveau])
 
@@ -37,7 +37,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -80,7 +80,7 @@ PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.60])
 PKG_CHECK_MODULES(LIBDRM_NOUVEAU, [libdrm_nouveau >= 2.4.25])
 
 # Obtain compiler/linker options for the driver dependencies
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.8] xproto fontsproto $REQUIRED_MODULES)
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.18] xproto fontsproto $REQUIRED_MODULES)
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
 		  HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
 		  HAVE_XEXTPROTO_71="no")
@@ -117,12 +117,6 @@ AC_CHECK_DECL(xf86CursorResetCursor,
               [Have xf86CursorResetCursor API])], [],
               [#include <xorg-server.h>
                #include <xf86Cursor.h>])
-
-AC_CHECK_DECL(xorg_list_init,
-              [AC_DEFINE(HAVE_XORG_LIST, 1, [Have xorg_list API])], [],
-              [#include <X11/Xdefs.h>
-               #include "xorg-server.h"
-               #include "list.h"])
 
 AC_CONFIG_FILES([
 	Makefile
