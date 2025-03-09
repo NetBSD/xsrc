@@ -78,7 +78,7 @@ static void send_unwilling (struct sockaddr *from, int fromlen, ARRAY8Ptr authen
 static void send_willing (struct sockaddr *from, int fromlen, ARRAY8Ptr authenticationName, ARRAY8Ptr status, int fd);
 
 int	chooserFd = -1;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 int	chooserFd6 = -1;
 # endif
 
@@ -96,7 +96,7 @@ DestroyWellKnownSockets (void)
 	FD_CLR(chooserFd, &WellKnownSocketsMask);
 	chooserFd = -1;
     }
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     if (chooserFd6 != -1)
     {
 	close (chooserFd6);
@@ -124,7 +124,7 @@ int
 AnyWellKnownSockets (void)
 {
     return
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
       chooserFd6 != -1 ||
 # endif
       chooserFd != -1 || FD_ANYSET(&WellKnownSocketsMask);
@@ -142,7 +142,7 @@ sendForward (
 # ifdef AF_INET
     struct sockaddr_in	    in_addr;
 # endif
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     struct sockaddr_in6	    in6_addr;
 # endif
     struct sockaddr	    *addr;
@@ -165,7 +165,7 @@ sendForward (
 	addrlen = sizeof (struct sockaddr_in);
 	break;
 # endif
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     case FamilyInternet6:
 	addr = (struct sockaddr *) &in6_addr;
 	bzero ((char *) &in6_addr, sizeof (in6_addr));
@@ -225,8 +225,10 @@ all_query_respond (
     int		family;
     int		length;
     const char	*addrstring;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     char	addrbuf[INET6_ADDRSTRLEN] = "";
+# elif defined(HAVE_INET_NTOP)
+    char	addrbuf[INET_ADDRSTRLEN] = "";
 # endif
 
     family = ConvertAddr((XdmcpNetaddr) from, &length, (char **)&(addr.data));
@@ -236,13 +238,16 @@ all_query_respond (
     }
     addr.length = length;	/* convert int to short */
     if (debugLevel > 0) {
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_INET_NTOP
 	void *ipaddr;
 	int af_type;
+#  ifdef IPv6
 	if (family == FamilyInternet6) {
 	    ipaddr = & ((struct sockaddr_in6 *) from)->sin6_addr;
 	    af_type = AF_INET6;
-	} else {
+	} else
+#  endif
+	{
 	    ipaddr = & ((struct sockaddr_in *) from)->sin_addr;
 	    af_type = AF_INET;
 	}
@@ -329,7 +334,7 @@ void
 ProcessRequestSocket (int fd)
 {
     XdmcpHeader		header;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_STRUCT_SOCKADDR_STORAGE
     struct sockaddr_storage	addr;
 # else
     struct sockaddr	addr;
@@ -397,7 +402,7 @@ WaitForSomething (void)
 		ProcessChooserSocket (chooserFd);
 		FD_CLR(chooserFd, &reads);
 	    }
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    if (chooserFd6 >= 0 && FD_ISSET (chooserFd6, &reads))
 	    {
 		ProcessChooserSocket (chooserFd6);
@@ -488,8 +493,10 @@ NetworkAddressToName(
     switch (connectionType)
     {
     case FamilyInternet:
-# if defined(IPv6) && defined(AF_INET6)
+# if defined(HAVE_GETADDRINFO) && defined(HAVE_INET_NTOP)
+#  ifdef IPv6
     case FamilyInternet6:
+#  endif
 	{
 	    CARD8		*data;
 	    struct hostent	*hostent;
@@ -500,9 +507,11 @@ NetworkAddressToName(
 	    struct addrinfo	 hints, *ai = NULL, *nai;
 	    int 		 type;
 
+#  ifdef IPv6
 	    if (connectionType == FamilyInternet6)
 		type = AF_INET6;
 	    else
+#  endif
 		type = AF_INET;
 
 	    data = connectionAddress->data;
@@ -512,6 +521,11 @@ NetworkAddressToName(
 		if (sourceAddress) {
 		    bzero(&hints, sizeof(hints));
 		    hints.ai_flags = AI_CANONNAME;
+#  ifdef IPv6
+		    hints.ai_family = AF_UNSPEC;
+#  else
+		    hints.ai_family = AF_INET;
+#  endif
 		    if (getaddrinfo(hostent->h_name, NULL, &hints, &ai) == 0) {
 			hostname = ai->ai_canonname;
 			for (nai = ai->ai_next; nai!=NULL; nai=nai->ai_next) {
@@ -587,9 +601,11 @@ NetworkAddressToName(
 			data = (CARD8 *)
 			  &((struct sockaddr_in *)originalAddress)->
 			  sin_addr;
+#  ifdef IPv6
 		    } else {
 			data = (CARD8 *)
 			  &((struct sockaddr_in6 *)originalAddress)->sin6_addr;
+#  endif
 		    }
 		}
 		if (inet_ntop(type, data, name, INET6_ADDRSTRLEN) == NULL) {
@@ -604,7 +620,7 @@ NetworkAddressToName(
 		freeaddrinfo(ai);
 	    return name;
 	}
-# else /* IPv6 */
+# else /* !HAVE_GETADDRINFO */
 	{
 	    CARD8		*data;
 	    struct hostent	*hostent;
@@ -679,7 +695,7 @@ NetworkAddressToName(
 	    }
 	    return name;
 	}
-# endif /* IPv6 */
+# endif /* HAVE_GETADDRINFO */
     default:
 	return NULL;
     }
@@ -749,7 +765,7 @@ forward_respond (
 		}
 		break;
 # endif
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    case AF_INET6:
 		{
 		    struct sockaddr_in6	in6_addr;
@@ -1363,12 +1379,12 @@ NetworkAddressToHostname (
     switch (connectionType)
     {
     case FamilyInternet:
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     case FamilyInternet6:
 # endif
 	{
 	    struct hostent	*hostent = NULL;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    char dotted[INET6_ADDRSTRLEN];
 # else
 	    char dotted[20];
@@ -1376,7 +1392,7 @@ NetworkAddressToHostname (
 	    const char *local_name = "";
 	    int af_type;
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    if (connectionType == FamilyInternet6)
 		af_type = AF_INET6;
 	    else
@@ -1388,7 +1404,7 @@ NetworkAddressToHostname (
 
 	    if (hostent) {
 		/* check for DNS spoofing */
-# if defined(IPv6) && defined(AF_INET6)
+# if defined(HAVE_GETADDRINFO) && defined(HAVE_INET_NTOP)
 		struct addrinfo	*ai = NULL, *nai;
 		if (getaddrinfo(hostent->h_name, NULL, NULL, &ai) == 0) {
 		    for (nai = ai; nai != NULL; nai = nai->ai_next) {
@@ -1397,12 +1413,16 @@ NetworkAddressToHostname (
 			    (connectionAddress->length == sizeof(struct in_addr)) &&
 			    (memcmp(connectionAddress->data,
 				    &((struct sockaddr_in *)nai->ai_addr)->sin_addr,
-				    connectionAddress->length) == 0)) ||
-			  ((nai->ai_family == AF_INET6) &&
-			    (connectionAddress->length == sizeof(struct in6_addr)) &&
-			    (memcmp(connectionAddress->data,
-				    &((struct sockaddr_in6 *)nai->ai_addr)->sin6_addr,
-				    connectionAddress->length) == 0))))
+				    connectionAddress->length) == 0))
+#  ifdef IPv6
+			  || ((nai->ai_family == AF_INET6) &&
+                              (connectionAddress->length ==
+                               sizeof(struct in6_addr)) &&
+                              (memcmp(connectionAddress->data,
+                                      &((struct sockaddr_in6 *)nai->ai_addr)->sin6_addr,
+                                      connectionAddress->length) == 0))
+#  endif
+                                ))
 			    break;
 		    }
 		    if (nai == NULL) {
@@ -1419,7 +1439,7 @@ NetworkAddressToHostname (
 		} else {
 		    hostent = NULL;
 		}
-# else
+# else /* !HAVE_GETADDRINFO */
 		char *s = strdup(hostent->h_name); /* fscking non-reentrancy of getXXX() */
 		if ((hostent = gethostbyname(s))) {
 			if (memcmp((char*)connectionAddress->data, hostent->h_addr,
@@ -1436,7 +1456,7 @@ NetworkAddressToHostname (
 
 	    if (!hostent) {
 		/* can't get name, so use emergency fallback */
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_INET_NTOP
 		inet_ntop(af_type, connectionAddress->data,
 			  dotted, sizeof(dotted));
 # else

@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xdm], [1.1.16],
+AC_INIT([xdm], [1.1.17],
         [https://gitlab.freedesktop.org/xorg/app/xdm/-/issues], [xdm])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -104,6 +104,14 @@ AC_SEARCH_LIBS(crypt, crypt)
 
 # Function dl() comes from the C library or -ldl
 AC_SEARCH_LIBS([dlopen], [dl])
+
+# Find needed libraries for TCP sockets (pre-pended in $LIBS)
+XTRANS_CONNECTION_FLAGS
+
+# Sets $SECURE_RPC to "yes" or "no" using libraries found above from $LIBS
+XTRANS_SECURE_RPC_FLAGS
+AM_CONDITIONAL(HAS_SECURE_RPC, test x$SECURE_RPC = xyes)
+
 #------------------------------------------------------------------------------
 
 # Checks for header files.
@@ -116,21 +124,19 @@ AC_CHECK_DECL(key_setnet,
 #include <rpc/key_prot.h>
 ])
 
+AC_CHECK_TYPES([struct sockaddr_storage], [], [], [
+AC_INCLUDES_DEFAULT
+#include <sys/socket.h>
+])
+
 # Check for system library functions
 # Required system libraries have been searched for and are listed in $LIBS
 AC_FUNC_FORK
 xdm_save_LIBS="$LIBS"
 LIBS="$LIBS $XDM_LIBS"
 AC_CHECK_FUNCS([daemon sigaction openlog asprintf setproctitle setusercontext \
-                mkstemp getifaddrs getspnam arc4random])
+                mkstemp getifaddrs getspnam arc4random getaddrinfo inet_ntop])
 LIBS="$xdm_save_LIBS"
-
-# Find needed libraries for TCP sockets (pre-pended in $LIBS)
-XTRANS_CONNECTION_FLAGS
-
-# Sets $SECURE_RPC to "yes" or "no" using libraries found above from $LIBS
-XTRANS_SECURE_RPC_FLAGS
-AM_CONDITIONAL(HAS_SECURE_RPC, test x$SECURE_RPC = xyes)
 
 # Check for pluggable authentication modules (PAM) support
 AC_ARG_WITH(pam, AS_HELP_STRING([--with-pam],

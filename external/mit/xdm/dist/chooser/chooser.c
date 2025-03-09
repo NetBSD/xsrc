@@ -105,6 +105,10 @@ in this Software without prior written authorization from The Open Group.
 #include    <netdb.h>
 #include    <X11/keysym.h>
 
+#if defined(IPv6) && !defined(AF_INET6)
+#error "Cannot build IPv6 support without AF_INET6"
+#endif
+
 static int FromHex (char *s, char *d, int len);
 static int oldline;
 
@@ -163,7 +167,7 @@ typedef struct _hostName {
 static HostName    *hostNamedb;
 
 static int  socketFD;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
 static int  socket6FD;
 #endif
 
@@ -184,7 +188,7 @@ PingHosts (XtPointer closure, XtIntervalId *id)
 
     for (hosts = hostAddrdb; hosts; hosts = hosts->next)
     {
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
 	if ( ((struct sockaddr *) hosts->addr)->sa_family == AF_INET6 )
 	    sfd = socket6FD;
 	else
@@ -247,7 +251,7 @@ AddHostname (ARRAY8Ptr hostname, ARRAY8Ptr status, struct sockaddr *addr, int wi
 	hostAddr.length = 4;
 	connectionType = FamilyInternet;
 	break;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
     case AF_INET6:
 	hostAddr.data = (CARD8 *) &((struct sockaddr_in6 *) addr)->sin6_addr;
 	hostAddr.length = 16;
@@ -283,7 +287,7 @@ AddHostname (ARRAY8Ptr hostname, ARRAY8Ptr status, struct sockaddr *addr, int wi
 	    switch (addr->sa_family)
 	    {
 	    case AF_INET:
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
 	    case AF_INET6:
 #endif
 		{
@@ -378,7 +382,7 @@ ReceivePacket (XtPointer closure, int *source, XtInputId *id)
     ARRAY8	    hostname = {0, NULL};
     ARRAY8	    status = {0, NULL};
     int		    saveHostname = 0;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE
     struct sockaddr_storage addr;
 #else
     struct sockaddr addr;
@@ -474,9 +478,6 @@ RegisterHostaddr (struct sockaddr *addr, int len, xdmOpCode type)
 static void
 RegisterHostname (char *name)
 {
-#if !defined(IPv6) || !defined(AF_INET6)
-    struct hostent	*hostent;
-#endif
     struct sockaddr_in	in_addr;
     struct ifconf	ifc;
     register struct ifreq *ifr;
@@ -544,24 +545,35 @@ RegisterHostname (char *name)
 	    RegisterHostaddr ((struct sockaddr *)&in_addr, sizeof (in_addr),
 				QUERY);
 	}
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef HAVE_GETADDRINFO
 	else {
 	    char sport[8];
 	    struct addrinfo *ai, *nai, hints;
 	    bzero(&hints,sizeof(hints));
+#  ifdef IPv6
+	    hints.ai_family = AF_UNSPEC;
+#  else
+	    hints.ai_family = AF_INET;
+#  endif
 	    hints.ai_socktype = SOCK_DGRAM;
 	    snprintf(sport, sizeof(sport), "%d", XDM_UDP_PORT);
 	    if (getaddrinfo(name, sport, &hints, &ai) == 0) {
 		for (nai = ai ; nai != NULL ; nai = nai->ai_next) {
-		    if ((nai->ai_family == AF_INET) ||
-		        (nai->ai_family == AF_INET6)) {
+		    if ((nai->ai_family == AF_INET)
+#ifdef IPv6
+                        || (nai->ai_family == AF_INET6)
+#endif
+                        ) {
 			if (((nai->ai_family == AF_INET) &&
 			  IN_MULTICAST(((struct sockaddr_in *) nai->ai_addr)
 			    ->sin_addr.s_addr))
+#ifdef IPv6
 			  || ((nai->ai_family == AF_INET6) &&
 			    IN6_IS_ADDR_MULTICAST(
 				&((struct sockaddr_in6 *) nai->ai_addr)
-				  ->sin6_addr)))
+				  ->sin6_addr))
+#endif
+                            )
 			{
 			    RegisterHostaddr(nai->ai_addr, nai->ai_addrlen,
 			      BROADCAST_QUERY);
@@ -574,12 +586,14 @@ RegisterHostname (char *name)
 		freeaddrinfo(ai);
 	    }
 	}
-#else
+#else /* !HAVE_GETADDRINFO */
 	/* Per RFC 1123, check first for IP address in dotted-decimal form */
 	else if ((in_addr.sin_addr.s_addr = inet_addr(name)) != -1)
 	    in_addr.sin_family = AF_INET;
 	else
 	{
+	    struct hostent	*hostent;
+
 	    hostent = gethostbyname (name);
 	    if (!hostent)
 		return;
@@ -594,7 +608,7 @@ RegisterHostname (char *name)
 # endif
 	RegisterHostaddr ((struct sockaddr *)&in_addr, sizeof (in_addr),
 			  QUERY);
-#endif /* IPv6 */
+#endif /* HAVE_GETADDRINFO */
     }
 }
 
@@ -624,7 +638,7 @@ InitXDMCP (char **argv)
     XdmcpWriteARRAYofARRAY8 (&directBuffer, &AuthenticationNames);
     if ((socketFD = socket (AF_INET, SOCK_DGRAM, 0)) < 0)
 	return 0;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
     socket6FD = socket (AF_INET6, SOCK_DGRAM, 0);
 #endif
 #ifdef SO_BROADCAST
@@ -635,7 +649,7 @@ InitXDMCP (char **argv)
 
     XtAddInput (socketFD, (XtPointer) XtInputReadMask, ReceivePacket,
 		(XtPointer) &socketFD);
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
     if (socket6FD != -1)
     XtAddInput (socket6FD, (XtPointer) XtInputReadMask, ReceivePacket,
 		(XtPointer) &socket6FD);
@@ -656,7 +670,7 @@ Choose (HostName *h)
     if (app_resources.xdmAddress)
     {
 	struct sockaddr_in  in_addr;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
 	struct sockaddr_in6 in6_addr;
 #endif
 	struct sockaddr	*addr = NULL;
@@ -680,7 +694,7 @@ Choose (HostName *h)
 	    addr = (struct sockaddr *) &in_addr;
 	    len = sizeof (in_addr);
 	    break;
-#if defined(IPv6) && defined(AF_INET6)
+#ifdef IPv6
 	case AF_INET6:
 	    bzero(&in6_addr, sizeof(in6_addr));
 # ifdef SIN6_LEN

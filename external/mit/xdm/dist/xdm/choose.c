@@ -198,7 +198,7 @@ FormatChooserArgument (char *buf, int len)
     netfamily = NetaddrFamily((XdmcpNetaddr)addr_buf);
     switch (netfamily) {
     case AF_INET:
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     case AF_INET6:
 # endif
 	{
@@ -206,7 +206,7 @@ FormatChooserArgument (char *buf, int len)
 	    int portlen;
 	    ARRAY8Ptr localAddress = getLocalAddress ();
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    if (localAddress->length == 16)
 		netfamily = AF_INET6;
 	    else
@@ -375,7 +375,7 @@ AddChooserHost (
     {
 	*argp = parseArgs (*argp, "BROADCAST");
     }
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     else if ( (addr->length == 16) &&
       (inet_ntop(AF_INET6, addr->data, hostbuf, sizeof(hostbuf))))
     {

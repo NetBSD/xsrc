@@ -68,8 +68,12 @@ in this Software without prior written authorization from the copyright holder.
 
 # include   <netdb.h>
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 #  include        <arpa/inet.h>
+# endif
+
+# if defined(IPv6) && !defined(AF_INET6)
+#  error "Cannot build IPv6 support without AF_INET6"
 # endif
 
 # define ALIAS_CHARACTER	    '%'
@@ -129,10 +133,17 @@ getLocalAddress (void)
 
     if (!haveLocalAddress)
     {
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	struct addrinfo *ai;
+	struct addrinfo hints = {
+#  ifdef IPv6
+	    .ai_family = AF_UNSPEC
+#  else
+	    .ai_family = AF_INET
+#  endif
+	};
 
-	if (getaddrinfo(localHostname(), NULL, NULL, &ai) != 0) {
+	if (getaddrinfo(localHostname(), NULL, &hints, &ai) != 0) {
 	    if (XdmcpAllocARRAY8 (&localAddress, 4)) {
 		localAddress.data[0] = 127;
 		localAddress.data[1] = 0;
@@ -148,6 +159,7 @@ getLocalAddress (void)
 			   sizeof(struct in_addr));
 		    haveLocalAddress = 1;
 		}
+#  ifdef IPv6
 	    } else if (ai->ai_addr->sa_family == AF_INET6) {
 		if (XdmcpAllocARRAY8 (&localAddress, sizeof(struct in6_addr)))
 		{
@@ -156,10 +168,11 @@ getLocalAddress (void)
 			   sizeof(struct in6_addr));
 		    haveLocalAddress = 1;
 		}
+#  endif
 	    }
 	    freeaddrinfo(ai);
 	}
-# else
+# else /* !HAVE_GETADDRINFO */
 	struct hostent	*hostent;
 
 	hostent = gethostbyname (localHostname());
@@ -350,10 +363,17 @@ tryagain:
     {
 	void *addr=NULL;
 	size_t addr_length=0;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	struct addrinfo *ai = NULL;
+	struct addrinfo hints = {
+#  ifdef IPv6
+	    .ai_family = AF_UNSPEC
+#  else
+	    .ai_family = AF_INET
+#  endif
+	};
 # else
-	struct hostent  *hostent = gethostbyname (hostOrAlias);
+	struct hostent	*hostent;
 # endif
 	char *hops = strrchr(hostOrAlias, '/');
 
@@ -364,17 +384,20 @@ tryagain:
 		h->hopCount = 1;
 	}
 
-# if defined(IPv6) && defined(AF_INET6)
-	if (getaddrinfo(hostOrAlias, NULL, NULL, &ai) == 0) {
+# ifdef HAVE_GETADDRINFO
+	if (getaddrinfo(hostOrAlias, NULL, &hints, &ai) == 0) {
 	    if (ai->ai_addr->sa_family == AF_INET) {
 		addr = &((struct sockaddr_in *)ai->ai_addr)->sin_addr;
 		addr_length = sizeof(struct in_addr);
+#  ifdef IPv6
 	    } else if (ai->ai_addr->sa_family == AF_INET6) {
 		addr = &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
 		addr_length = sizeof(struct in6_addr);
+#  endif
 	    }
 	}
-# else
+# else /* !HAVE_GETADDRINFO */
+	hostent = gethostbyname (hostOrAlias);
 	if (hostent) {
 	    addr = hostent->h_addr;
 	    addr_length = hostent->h_length;
@@ -387,7 +410,7 @@ tryagain:
 	    Debug ("No such host %s\n", hostOrAlias);
 	    LogError ("Access file \"%s\", host \"%s\" not found\n", accessFile, hostOrAlias);
 	    free (h);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	    if (ai)
 		freeaddrinfo(ai);
 # endif
@@ -397,14 +420,14 @@ tryagain:
 	{
 	    LogOutOfMem ("ReadHostEntry\n");
 	    free (h);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	    if (ai)
 		freeaddrinfo(ai);
 # endif
 	    return NULL;
 	}
 	memcpy(h->entry.hostAddress.data, addr, addr_length);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	if (ai)
 	    freeaddrinfo(ai);
 # endif
@@ -483,20 +506,29 @@ tryagain:
 	    size_t addr_length = 0;
 	    int addrtype = 0;
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	    struct addrinfo *ai = NULL;
+	    struct addrinfo hints = {
+#  ifdef IPv6
+		.ai_family = AF_UNSPEC
+#  else
+		.ai_family = AF_INET
+#  endif
+	    };
 
-	    if (getaddrinfo(displayOrAlias, NULL, NULL, &ai) == 0) {
+	    if (getaddrinfo(displayOrAlias, NULL, &hints, &ai) == 0) {
 		addrtype = ai->ai_addr->sa_family;
 		if (addrtype == AF_INET) {
 		    addr = &((struct sockaddr_in *)ai->ai_addr)->sin_addr;
 		    addr_length = sizeof(struct in_addr);
+#  ifdef IPv6
 		} else if (addrtype == AF_INET6) {
 		    addr = &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
 		    addr_length = sizeof(struct in6_addr);
+#  endif
 		}
 	    }
-# else
+# else /* !HAVE_GETADDRINFO */
 	    struct hostent  *hostent;
 
 	    if ((hostent = gethostbyname (displayOrAlias)) != NULL)
@@ -511,7 +543,7 @@ tryagain:
 	    {
 		LogError ("Access file %s, display %s unknown\n", accessFile, displayOrAlias);
 		free (d);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 		if (ai)
 		    freeaddrinfo(ai);
 # endif
@@ -522,14 +554,14 @@ tryagain:
 	    if (!XdmcpAllocARRAY8 (&display->clientAddress, addr_length))
 	    {
 		free (d);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 		if (ai)
 		    freeaddrinfo(ai);
 # endif
 		return NULL;
 	    }
 	    memcpy(display->clientAddress.data, addr, addr_length);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_GETADDRINFO
 	    if (ai)
 		freeaddrinfo(ai);
 # endif
@@ -545,7 +577,7 @@ tryagain:
 		display->connectionType = FamilyInternet;
 		break;
 # endif
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    case AF_INET6:
 		display->connectionType = FamilyInternet6;
 		break;
@@ -968,7 +1000,7 @@ void ForEachListenAddr (
     }
     if (!listenFound) {
 	(*listenfunction) (NULL, closure);
-# if defined(IPv6) && defined(AF_INET6) && defined(XDM_DEFAULT_MCAST_ADDR6)
+# if defined(IPv6) && defined(XDM_DEFAULT_MCAST_ADDR6)
 	{   /* Join default IPv6 Multicast Group */
 
 	    static ARRAY8	defaultMcastAddress;

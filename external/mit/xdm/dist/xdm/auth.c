@@ -791,7 +791,7 @@ DefineSelf(int fd, FILE *file, Xauth *auth)
 	    Debug ("Skipping localhost address\n");
 	    continue;
 	}
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	if(family == FamilyInternet6) {
 	    if (IN6_IS_ADDR_LOOPBACK(((struct in6_addr *)addr))) {
 		Debug ("Skipping IPv6 localhost address\n");
@@ -924,7 +924,7 @@ DefineSelf (int fd, FILE *file, Xauth *auth)
 	    Debug ("Skipping localhost address\n");
 	    continue;
 	}
-#  if defined(IPv6) && defined(AF_INET6)
+#  ifdef IPv6
 	if (family == FamilyInternet6) {
 	    if (IN6_IS_ADDR_LOOPBACK(((struct in6_addr *)addr))) {
 		Debug ("Skipping IPv6 localhost address\n");
@@ -1026,7 +1026,7 @@ writeLocalAuth (FILE *file, Xauth *auth, char *name)
     Debug ("writeLocalAuth: %s %.*s\n", name, auth->name_length, auth->name);
     setAuthNumber (auth, name);
 #ifdef TCPCONN
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     fd = socket (AF_INET6, SOCK_STREAM, 0);
     if (fd < 0)
 # endif
