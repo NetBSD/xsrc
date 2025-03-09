@@ -92,7 +92,7 @@ static FSServer *svr;
 
 static char *program_name;
 
-static void usage (const char *msg) _X_NORETURN _X_COLD;
+static void usage (const char *msg, int exitval) _X_NORETURN _X_COLD;
 static void get_list ( const char *pattern );
 static int compare ( const void *f1, const void *f2 );
 static void show_fonts ( void );
@@ -108,11 +108,11 @@ missing_arg (const char *option)
     char msg[32];
 
     snprintf(msg, sizeof(msg), "%s requires an argument", option);
-    usage(msg);
+    usage(msg, 1);
 }
 
 static void
-usage(const char *msg)
+usage(const char *msg, int exitval)
 {
     if (msg)
 	fprintf(stderr, "%s: %s\n", program_name, msg);
@@ -126,35 +126,46 @@ usage(const char *msg)
 	    "    -w width                 maximum width for multiple columns\n"
 	    "    -n columns               number of columns if multi column\n"
 	    "    -server servername       font server to contact\n"
+	    "    -help                    print this message and exit\n"
 	    "    -version                 print command version and exit\n"
 	    "\n");
-    exit(1);
+    exit(exitval);
 }
 
 int
 main(int argc, char *argv[])
 {
-    int         argcnt = 0,
-                i;
-    char       *servername = NULL;
+    int         argcnt = 0;
+    const char *servername = NULL;
 
     program_name = argv[0];
 
-    for (i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 	if (strncmp(argv[i], "-s", 2) == 0) {
 	    if (++i >= argc)
 		missing_arg("-server");
 	    servername = argv[i];
 	}
-	else if (strcmp(argv[i], "-version") == 0) {
-	    printf("%s\n", PACKAGE_STRING);
-	    exit(0);
+	else {
+	    const char *arg = argv[i];
+	    /* accept single or double dash for -help & -version */
+	    if (arg[0] == '-' && arg[1] == '-') {
+		arg++;
+	    }
+
+	    if (strcmp(arg, "-help") == 0) {
+		usage(NULL, 0);
+	    }
+	    else if (strcmp(arg, "-version") == 0) {
+		printf("%s\n", PACKAGE_STRING);
+		exit(0);
+	    }
 	}
     }
 
     if ((svr = FSOpenServer(servername)) == NULL) {
 	if (FSServerName(servername) == NULL) {
-	    usage("no font server defined");
+	    usage("no font server defined", 1);
 	}
 	fprintf(stderr, "%s:  unable to open server \"%s\"\n",
 		program_name, FSServerName(servername));
@@ -163,8 +174,10 @@ main(int argc, char *argv[])
     /* Handle command line arguments, open display */
     for (argv++, argc--; argc; argv++, argc--) {
 	if (argv[0][0] == '-') {
+	    int i;
+
 	    if (argcnt > 0)
-		usage(NULL);
+		usage(NULL, 1);
 	    for (i = 1; argv[0][i]; i++)
 		switch (argv[0][i]) {
 		case 'l':
@@ -209,10 +222,10 @@ main(int argc, char *argv[])
 		default:
 		    fprintf(stderr, "%s: unrecognized option '%s'\n",
 			    program_name, argv[0]);
-		    usage(NULL);
+		    usage(NULL, 1);
 		}
 	    if (i == 1)
-		usage(NULL);
+		usage(NULL, 1);
 	} else {
 	    argcnt++;
 	    get_list(argv[0]);
@@ -229,8 +242,7 @@ next:	;
 static void
 get_list(const char *pattern)
 {
-    int         available = nnames + 1,
-                i;
+    int         available = nnames + 1;
     char      **fonts;
     FSXFontInfoHeader **info;
     FSPropInfo **props;
@@ -249,7 +261,7 @@ get_list(const char *pattern)
 	    break;
 
 	if (long_list >= L_MEDIUM) {
-	    for (i = 0; i < available; i++) {
+	    for (int i = 0; i < available; i++) {
 		FSFree((char *) fonts[i]);
 		FSFree((char *) info[i]);
 		FSFree((char *) props[i]);
@@ -286,7 +298,7 @@ get_list(const char *pattern)
 	    exit(-1);
 	}
     }
-    for (i = 0; i < available; i++) {
+    for (int i = 0; i < available; i++) {
 	font_list[font_cnt].name = fonts[i];
 
 	if (long_list >= L_MEDIUM) {
@@ -314,8 +326,6 @@ compare(const void *f1, const void *f2)
 static void
 show_fonts(void)
 {
-    unsigned int i;
-
     if (font_cnt == 0)
 	return;
 
@@ -325,7 +335,7 @@ show_fonts(void)
 
     if (long_list > L_MEDIUM) {
 	print_font_header();
-	for (i = 0; i < font_cnt; i++) {
+	for (unsigned int i = 0; i < font_cnt; i++) {
 	    show_font_header(&font_list[i]);
 	    show_font_props(&font_list[i]);
 	}
@@ -334,21 +344,18 @@ show_fonts(void)
     if (long_list == L_MEDIUM) {
 	print_font_header();
 
-	for (i = 0; i < font_cnt; i++) {
+	for (unsigned int i = 0; i < font_cnt; i++) {
 	    show_font_header(&font_list[i]);
 	}
 
 	return;
     }
     if ((columns == 0 && isatty(1)) || columns > 1) {
-	unsigned int width,
-	            max_width = 0,
-	            lines_per_column,
-	            j,
-	            index;
+	unsigned int max_width = 0,
+	             lines_per_column;
 
-	for (i = 0; i < font_cnt; i++) {
-	    width = (unsigned int) strlen(font_list[i].name);
+	for (unsigned int i = 0; i < font_cnt; i++) {
+	    unsigned int width = (unsigned int) strlen(font_list[i].name);
 	    if (width > max_width)
 		max_width = width;
 	}
@@ -376,9 +383,9 @@ show_fonts(void)
 	    columns = font_cnt;
 	lines_per_column = (font_cnt + columns - 1) / columns;
 
-	for (i = 0; i < lines_per_column; i++) {
-	    for (j = 0; j < columns; j++) {
-		index = j * lines_per_column + i;
+	for (unsigned int i = 0; i < lines_per_column; i++) {
+	    for (unsigned int j = 0; j < columns; j++) {
+		unsigned int index = j * lines_per_column + i;
 		if (index >= font_cnt)
 		    break;
 		if (j + 1 == columns)
@@ -393,7 +400,7 @@ show_fonts(void)
 	return;
     }
 single_column:
-    for (i = 0; i < font_cnt; i++)
+    for (unsigned int i = 0; i < font_cnt; i++)
 	printf("%s\n", font_list[i].name);
 }
 
@@ -503,14 +510,12 @@ copy_number(char **pp1, char **pp2, char **ep1, char **ep2, int n1, int n2,
 static void
 show_font_props(FontList *list)
 {
-    unsigned int  i;
-    FSPropInfo *pi = list->pi;
-    FSPropOffset *po = list->po;
-    unsigned char *pd = list->pd;
-    unsigned int  num_props;
+    const FSPropInfo *pi = list->pi;
+    const FSPropOffset *po = list->po;
+    const unsigned char *pd = list->pd;
+    unsigned int  num_props = pi->num_offsets;
 
-    num_props = pi->num_offsets;
-    for (i = 0; i < num_props; i++, po++) {
+    for (unsigned int i = 0; i < num_props; i++, po++) {
 	fwrite(pd + po->name.position, 1, po->name.length, stdout);
 	putc('\t', stdout);
 	switch (po->type) {
