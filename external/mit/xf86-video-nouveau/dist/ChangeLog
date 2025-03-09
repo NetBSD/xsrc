@@ -1,3 +1,266 @@
+commit 8bf766606f1502fa481f1103ff704cc9dd13c337
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Nov 7 13:15:35 2024 -0500
+
+    xf86-video-nouveau 1.0.18
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/13>
+
+commit a261e93f09d2f2c3b429de2b1cecce1ec015b962
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 10:53:37 2021 +0200
+
+    nouveau: Implement nouveau_pick_best_crtc using rr_crtc_covering_box
+    
+    Both functions have the same implementation.
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit aa3962ee7b25818b35371cc8e78dd6591b941990
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 09:54:54 2021 +0200
+
+    nouveau: use modesetting randr_crtc_covering_drawable implementation
+    
+    ... for nouveau_present_crtc.
+    
+    Instead of returning NULL crtc or disable primarty crtc as fallback
+    randr_crtc_covering_drawable can find and return crtc that belongs to
+    secondary outputs. This prevents usage of 1Hz fake_crtc when lid is
+    closed and only secondary output is enabled.
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit 80360ea8cfebf5ad718f27f82b14761a140c10a1
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 09:43:26 2021 +0200
+
+    nouveau: Use randr_crtc_covering_drawable used in modesetting
+    
+    Use implementation from modesetting driver that is fixing issue:
+    https://gitlab.freedesktop.org/xorg/xserver/-/issues/1028
+    
+    Instead of returning NULL crtc or disable primarty crtc as fallback
+    randr_crtc_covering_drawable can find and return crtc that belongs to
+    secondary outputs. This prevents usage of 1Hz fake_crtc when lid is
+    closed and only secondary output is enabled.
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit 0d1c1a0828c31b50620301a03c5df56f0cbfd29c
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 10:20:02 2021 +0200
+
+    nouveau: Remove consider_disabled from nouveau_pick_best_crtc
+    
+    ... as it is never used.
+    
+    Also this is not required anymore as xserver patch fixed that in
+    xorg-server in 5c5c1b779 ("present: Add Present extension").
+      - in case of lack of crtc xserver is using fake_crtc with render 1Hz
+        frequency
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit 7d09948c13c606bfc317f7e1e2616563af9dfe70
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 09:21:56 2021 +0200
+
+    nouveau: fixup driver for new X server ABI
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit f2508a881cc4a6500e9ef27c656df631e0d56be3
+Author: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+Date:   Tue Jun 22 09:34:30 2021 +0200
+
+    nouveau: Rename functions that has origin from modesetting
+    
+    ... to have the same name and implementation.
+    
+    I have renamed drmmode_crtc_on, nouveau_box_intersect, nouveau_box_area
+    to be named the same as in modesetting driver. It will be easier to make
+    that code common in the future when required.
+    
+    Signed-off-by: Łukasz Spintzyk <lukasz.spintzyk@synaptics.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/2>
+
+commit 98c96445beb6661b681a217316e52ff6fdca8a74
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue Oct 1 17:36:01 2024 +0200
+
+    use dixDestroyPixmap() instead of direct driver call
+    
+    Direct calls to ScreenRec->DestroyPixmap() blocks cleaning up the wrapping
+    jungle, so use the proper dix function instead.
+    
+    See: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1754
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/11>
+
+commit 14eec1945fa16144178ea94bdf68c756fb1028aa
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 8 16:18:19 2024 +0200
+
+    use XNFcallocarray() instead of xnfcalloc macro
+    
+    xnfcalloc is just an alias for XNFcallocarray() that doesn't seem to serve
+    any practical purpose, so it can go away once all drivers stopped using it.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/7>
+
+commit 4e4ab90a48e0a2a7325b4f5d08feb611745e9d3b
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 8 12:58:02 2024 +0200
+
+    use XNFalloc() instead of xnfalloc
+    
+    xnfalloc is just an alias for XNFalloc() that doesn't seem to serve
+    any practical purpose, so it can go away once all drivers stopped using it.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/7>
+
+commit 0cb36acb07b57263e8e446ebf2d7505686337eff
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 22 22:57:49 2024 +0200
+
+    drop compat with ancient ABI_VIDEODRV_VERSION < 20
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/8>
+
+commit 25ae4a6129e03e3661744c8eb4200b30309e0ca2
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 22 22:56:34 2024 +0200
+
+    drop obsolete check for HAS_DIXREGISTERPRIVATEKEY
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/8>
+
+commit d7db32eecc302668b11b9dd2d84f79d270ae5eea
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue May 14 14:31:33 2024 +0200
+
+    drop compat for ancient server versions
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/8>
+
+commit 7d29f5c439770cc8bc26f8c3ecff5e803d3e5d71
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue May 14 14:30:35 2024 +0200
+
+    drop check for xorg_list_init()
+    
+    Since we're relying on at least xserver version 1.8 and it's present
+    there, no need for extra checks and workarounds.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/8>
+
+commit 4063c70c1a99be46a29951fd3a958617d0003364
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue May 14 14:26:58 2024 +0200
+
+    bump minimal xorg version to 1.18
+    
+    1.18 was released a decade ago, so it seems reasonable stop supporting
+    older ones.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/8>
+
+commit 32188de9c66291778dea4d6c701540e874d9027a
+Author: Sérgio M. Basto <sergio@serjux.com>
+Date:   Thu Oct 10 00:53:55 2024 +0100
+
+    Fix implicit declaration of wfbScreenInit
+    
+    ```
+    nv_driver.c:1443:9: warning: implicit declaration of function ‘wfbScreenInit’; did you mean ‘fbScreenInit’? [-Wimplicit-function-declaration]
+       ret = wfbScreenInit(pScreen, FBStart, pScrn->virtualX,
+             ^~~~~~~~~~~~~
+             fbScreenInit
+    ```
+    
+    Fixes: 794a277 ("nv50: use libwfb for pixmap access when driver pixmaps enabled")
+    Signed-off-by: Sérgio M. Basto <sergio@serjux.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nouveau/-/merge_requests/12>
+
+commit 827f1e2d2b336ea7d65cf1c8117dd9c34e876e7d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Oct 5 17:10:21 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9f733098b3c9f65bf5896f248cdf4c3b69ace4e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 29cc528a1f270f8aac49c2f0dedcb03590613cb3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 13:38:53 2022 -0800
+
+    gitlab CI: add a basic build test
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fbd3133bef9de5ba8c2e1d12835a7ac17bd67a72
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 15 15:14:35 2010 -0800
+
+    Update Sun license notices to current X.Org standard form
+    
+    As noted in
+    https://lists.freedesktop.org/archives/xorg-devel/2009-November/003670.html
+    Sun relicensed all its contributions to X.Org to use the standard X.Org
+    form of the MIT license, to reduce the number of MIT license variants in
+    X.Org projects.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cdd503430bc5456724b3102a376bd26ede48862f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 22 13:34:51 2022 -0800
+
+    Build xz tarballs instead of bzip2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3ee7cbca8f9144a3bb5be7f71ce70558f548d268
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Mon Apr 26 19:38:57 2021 -0400
+
+    remove sarea.h usage
+    
+    This header hasn't been used in ages, and is apparently no longer
+    shipped in some places. Just stop relying on it entirely.
+    
+    Reported-by: Lyude Paul <lyude@redhat.com>
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit e80e73ced69b15662103d0fd6837db4ce6c6eb5b
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 13 09:20:15 2020 +1000
+
+    nouveau: fixup driver for new X server ABI
+
 commit c39897466573aabd6a3b4e63e8e5fb42ac5971f8
 Author: Ilia Mirkin <imirkin@alum.mit.edu>
 Date:   Sat Jan 23 12:24:42 2021 -0500

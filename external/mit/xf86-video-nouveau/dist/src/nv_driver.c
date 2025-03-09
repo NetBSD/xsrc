@@ -37,11 +37,6 @@
 #include "nouveau_present.h"
 #include "nouveau_sync.h"
 
-#if !HAVE_XORG_LIST
-#define xorg_list_is_empty              list_is_empty
-#define xorg_list_for_each_entry        list_for_each_entry
-#endif
-
 /*
  * Forward definitions for the functions that make up the driver.
  */
@@ -241,10 +236,8 @@ NVDriverFunc(ScrnInfoPtr scrn, xorgDriverFuncOp op, void *data)
 	    flag = (CARD32 *)data;
 	    (*flag) = 0;
 	    return TRUE;
-#if XORG_VERSION_CURRENT > XORG_VERSION_NUMERIC(1,15,99,0,0)
 	case SUPPORTS_SERVER_FDS:
 	    return TRUE;
-#endif
 	default:
 	    return FALSE;
     }
@@ -277,7 +270,7 @@ NVInitScrn(ScrnInfoPtr pScrn, struct xf86_platform_device *platform_dev,
 	pPriv = xf86GetEntityPrivate(entity_num,
 				     NVEntityIndex);
 	if (!pPriv->ptr) {
-		pPriv->ptr = xnfcalloc(sizeof(NVEntRec), 1);
+		pPriv->ptr = XNFcallocarray(sizeof(NVEntRec), 1);
 		pNVEnt = pPriv->ptr;
 		pNVEnt->platform_dev = platform_dev;
 	}
@@ -309,15 +302,9 @@ NVOpenNouveauDevice(struct pci_device *pci_dev,
 	else
 #endif
 	{
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,901,0)
 		XNFasprintf(&busid, "pci:%04x:%02x:%02x.%d",
 			    pci_dev->domain, pci_dev->bus,
 			    pci_dev->dev, pci_dev->func);
-#else
-		busid = XNFprintf("pci:%04x:%02x:%02x.%d",
-				  pci_dev->domain, pci_dev->bus,
-				  pci_dev->dev, pci_dev->func);
-#endif
 	}
 
 #if defined(ODEV_ATTRIB_FD)
@@ -559,16 +546,12 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 {
 	RegionRec pixregion;
 
-	PixmapRegionInit(&pixregion, dirty->slave_dst);
+	PixmapRegionInit(&pixregion, dirty->secondary_dst);
 
-	DamageRegionAppend(&dirty->slave_dst->drawable, &pixregion);
-#ifdef HAS_DIRTYTRACKING_ROTATION
+	DamageRegionAppend(&dirty->secondary_dst->drawable, &pixregion);
 	PixmapSyncDirtyHelper(dirty);
-#else
-	PixmapSyncDirtyHelper(dirty, &pixregion);
-#endif
 
-	DamageRegionProcessPending(&dirty->slave_dst->drawable);
+	DamageRegionProcessPending(&dirty->secondary_dst->drawable);
 	RegionUninit(&pixregion);
 }
 
@@ -880,7 +863,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
 
 	/* Allocate the NVRec driverPrivate */
-	if (!(pScrn->driverPrivate = xnfcalloc(1, sizeof(NVRec))))
+	if (!(pScrn->driverPrivate = XNFcallocarray(1, sizeof(NVRec))))
 		return FALSE;
 	pNv = NVPTR(pScrn);
 

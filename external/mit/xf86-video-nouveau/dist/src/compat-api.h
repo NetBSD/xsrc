@@ -28,44 +28,6 @@
 #ifndef COMPAT_API_H
 #define COMPAT_API_H
 
-#ifndef GLYPH_HAS_GLYPH_PICTURE_ACCESSOR
-#define GetGlyphPicture(g, s) GlyphPicture((g))[(s)->myNum]
-#define SetGlyphPicture(g, s, p) GlyphPicture((g))[(s)->myNum] = p
-#endif
-
-#ifndef XF86_HAS_SCRN_CONV
-#define xf86ScreenToScrn(s) xf86Screens[(s)->myNum]
-#define xf86ScrnToScreen(s) screenInfo.screens[(s)->scrnIndex]
-#endif
-
-#ifndef XF86_SCRN_INTERFACE
-
-#define SCRN_ARG_TYPE int
-#define SCRN_INFO_PTR(arg1) ScrnInfoPtr pScrn = xf86Screens[(arg1)]
-
-#define SCREEN_ARG_TYPE int
-#define SCREEN_PTR(arg1) ScreenPtr pScreen = screenInfo.screens[(arg1)]
-
-#define SCREEN_INIT_ARGS_DECL int index, ScreenPtr pScreen, int argc, char **argv
-
-#define BLOCKHANDLER_ARGS_DECL int arg, pointer blockData, pointer pTimeout, pointer pReadmask
-#define BLOCKHANDLER_ARGS arg, blockData, pTimeout, pReadmask
-
-#define CLOSE_SCREEN_ARGS_DECL int scrnIndex, ScreenPtr pScreen
-#define CLOSE_SCREEN_ARGS scrnIndex, pScreen
-
-#define ADJUST_FRAME_ARGS_DECL int arg, int x, int y, int flags
-
-#define SWITCH_MODE_ARGS_DECL int arg, DisplayModePtr mode, int flags
-
-#define FREE_SCREEN_ARGS_DECL int arg, int flags
-#define FREE_SCREEN_ARGS(x) (x)->scrnIndex, 0
-
-#define VT_FUNC_ARGS_DECL int arg, int flags
-#define VT_FUNC_ARGS(flags) pScrn->scrnIndex, (flags)
-
-#define XF86_ENABLEDISABLEFB_ARG(x) ((x)->scrnIndex)
-#else
 #define SCRN_ARG_TYPE ScrnInfoPtr
 #define SCRN_INFO_PTR(arg1) ScrnInfoPtr pScrn = (arg1)
 
@@ -102,4 +64,9 @@
 
 #endif
 
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2)
+#define secondary_dst slave_dst
+#define secondary_list slave_list
+#define secondary_head slave_head
+#define is_output_secondary is_output_slave
 #endif
