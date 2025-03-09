@@ -1,8 +1,8 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.228 2023/01/26 00:54:10 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.234 2025/01/03 01:01:56 tom Exp $ */
 
 /*
- * Copyright 1997-2023,2024 by Thomas E. Dickey
+ * Copyright 1997-2024,2025 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -89,12 +89,9 @@
 #define HAVE_MKDTEMP 1		/* AC_CHECK_FUNCS(mkdtemp) */
 /* #undef HAVE_NCURSES_CURSES_H */	/* AC_CHECK_HEADERS(ncurses/curses.h) */
 /* #undef HAVE_NCURSES_TERM_H */	/* AC_CHECK_HEADERS(ncurses/term.h) */
-/* #undef HAVE_PATHS_H */		/* AC_CHECK_HEADERS(paths.h) */
 #define HAVE_PATHS_H 1		/* CF_LASTLOG */
-/* #undef HAVE_PCRE2POSIX_H */	/* AC_CHECK_HEADERS(pcre2posix.h) */
 /* #undef HAVE_PCRE2POSIX_H */	/* CF_WITH_PCRE2 */
 /* #undef HAVE_PCRE2REGCOMP */	/* CF_WITH_PCRE2 */
-/* #undef HAVE_PCREPOSIX_H */		/* AC_CHECK_HEADERS(pcreposix.h) */
 /* #undef HAVE_PCREPOSIX_H */		/* CF_WITH_PCRE */
 #define HAVE_POSIX_OPENPT 1	/* CF_FUNC_GRANTPT */
 #define HAVE_POSIX_SAVED_IDS 1	/* CF_POSIX_SAVED_IDS */
@@ -165,6 +162,7 @@
 /* #undef OPT_AIX_COLORS */		/* CF_ARG_DISABLE(16-color) */
 /* #undef OPT_BLINK_CURS */		/* CF_ARG_DISABLE(blink-cursor) */
 /* #undef OPT_BLINK_TEXT */		/* CF_ARG_DISABLE(blink-text) */
+#define OPT_BLOCK_SELECT 0		/* CF_ARG_ENABLE(block-select) */
 /* #undef OPT_BOX_CHARS */		/* CF_ARG_DISABLE(boxchars) */
 #define OPT_BROKEN_OSC 0		/* CF_ARG_ENABLE(broken-osc) */
 /* #undef OPT_BROKEN_ST */		/* CF_ARG_DISABLE(broken-st) */

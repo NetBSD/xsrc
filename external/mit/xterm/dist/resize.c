@@ -1,7 +1,7 @@
-/* $XTermId: resize.c,v 1.150 2023/03/31 23:09:38 tom Exp $ */
+/* $XTermId: resize.c,v 1.153 2024/12/01 20:21:19 tom Exp $ */
 
 /*
- * Copyright 2003-2022,2023 by Thomas E. Dickey
+ * Copyright 2003-2023,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -92,11 +92,7 @@
 int ignore_unused;
 #endif
 
-#ifdef __MVS__
-#define ESCAPE(string) "\047" string
-#else
 #define ESCAPE(string) "\033" string
-#endif
 
 #define	EMULATIONS	2
 #define	SUN		1
@@ -150,18 +146,18 @@ static const char *const getsize[EMULATIONS] =
 #if defined(USE_STRUCT_WINSIZE)
 static const char *const getwsize[EMULATIONS] =
 {				/* size in pixels */
-    0,
+    NULL,
     ESCAPE("[14t"),
 };
 #endif /* USE_STRUCT_WINSIZE */
 static const char *const restore[EMULATIONS] =
 {
     ESCAPE("8"),
-    0,
+    NULL,
 };
 static const char *const setsize[EMULATIONS] =
 {
-    0,
+    NULL,
     ESCAPE("[8;%s;%st"),
 };
 
@@ -190,7 +186,7 @@ static FILE *ttyfp;
 #if defined(USE_STRUCT_WINSIZE)
 static const char *wsize[EMULATIONS] =
 {
-    0,
+    NULL,
     ESCAPE("[4;%hd;%hdt"),
 };
 #endif /* USE_STRUCT_WINSIZE */
@@ -467,7 +463,7 @@ main(int argc, char **argv ENVP_ARG)
     }
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
-    if (x_getenv("TERM") == 0) {
+    if (x_getenv("TERM") == NULL) {
 	if (SHELL_BOURNE == shell_type) {
 	    setname = "TERM=" DFT_TERMTYPE ";\nexport TERM;\n";
 	} else {
@@ -521,7 +517,7 @@ main(int argc, char **argv ENVP_ARG)
 				   strlen(argv[0]) +
 				   strlen(argv[1]) +
 				   1);
-	if (tmpbuf == 0) {
+	if (tmpbuf == NULL) {
 	    fprintf(stderr, "%s: Cannot query size\n", myname);
 	    onintr(0);
 	} else {
