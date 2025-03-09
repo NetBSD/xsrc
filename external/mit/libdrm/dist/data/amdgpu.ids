@@ -51,6 +51,9 @@
 15BF,	CB,	AMD Radeon 760M
 15BF,	CD,	AMD Radeon 760M
 15BF,	CF,	AMD Radeon 780M
+15BF,	D0,	AMD Radeon 780M
+15BF,	D1,	AMD Radeon 780M
+15BF,	D2,	AMD Radeon 760M
 15BF,	D3,	AMD Radeon 780M
 15BF,	D4,	AMD Radeon 780M
 15BF,	D5,	AMD Radeon 760M
@@ -60,15 +63,19 @@
 15BF,	D9,	AMD Radeon 780M
 15BF,	DA,	AMD Radeon 780M
 15BF,	DB,	AMD Radeon 760M
+15BF,	DC,	AMD Radeon 780M
 15BF,	DD,	AMD Radeon 780M
 15BF,	DE,	AMD Radeon 740M
+15BF,	DF,	AMD Radeon 760M
 15BF,	F0,	AMD Radeon 760M
 15C8,	C1,	AMD Radeon 740M
 15C8,	C2,	AMD Radeon 740M
 15C8,	C3,	AMD Radeon 740M
 15C8,	C4,	AMD Radeon 740M
 15C8,	D1,	AMD Radeon 740M
+15C8,	D2,	AMD Radeon 740M
 15C8,	D3,	AMD Radeon 740M
+15C8,	D4,	AMD Radeon 740M
 15D8,	00,	AMD Radeon RX Vega 8 Graphics WS
 15D8,	91,	AMD Radeon Vega 3 Graphics
 15D8,	91,	AMD Ryzen Embedded R1606G with Radeon Vega Gfx
@@ -459,11 +466,14 @@
 743F,	D3,	AMD Radeon RX 6550M
 743F,	D7,	AMD Radeon RX 6400
 7448,	00,	AMD Radeon Pro W7900
+744A,	00,	AMD Radeon Pro W7900 Dual Slot
 744C,	C8,	AMD Radeon RX 7900 XTX
 744C,	CC,	AMD Radeon RX 7900 XT
 744C,	CE,	AMD Radeon RX 7900 GRE
 744C,	CF,	AMD Radeon RX 7900M
 745E,	CC,	AMD Radeon Pro W7800
+7460,	00,	AMD Radeon Pro V710
+7461,	00,	AMD Radeon Pro V710
 7470,	00,	AMD Radeon Pro W7700
 747E,	C8,	AMD Radeon RX 7800 XT
 747E,	FF,	AMD Radeon RX 7700 XT
@@ -477,6 +487,7 @@
 7489,	00,	AMD Radeon Pro W7500
 74A0,	00,	AMD Instinct MI300A
 74A1,	00,	AMD Instinct MI300X
+74B5,	00,	AMD Instinct MI300X VF
 9830,	00,	AMD Radeon HD 8400 / R3 Series
 9831,	00,	AMD Radeon HD 8400E
 9832,	00,	AMD Radeon HD 8330

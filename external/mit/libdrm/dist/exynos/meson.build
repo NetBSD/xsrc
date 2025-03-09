@@ -26,7 +26,7 @@ libdrm_exynos = library(
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
   dependencies : [dep_threads],
-  version : '1.0.0',
+  version : '1.@0@.0'.format(patch_ver),
   install : true,
 )
 
