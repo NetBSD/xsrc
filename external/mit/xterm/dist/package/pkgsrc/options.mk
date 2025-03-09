@@ -1,4 +1,4 @@
-# $NetBSD: options.mk,v 1.1.1.1 2021/02/11 12:19:55 mrg Exp $
+# $NetBSD: options.mk,v 1.1.1.2 2025/03/09 23:17:11 mrg Exp $
 
 PKG_OPTIONS_VAR=		PKG_OPTIONS.xterm
 PKG_SUPPORTED_OPTIONS=		debug pcre freetype luit xpm xterm-toolbar
@@ -32,7 +32,7 @@ CONFIGURE_ENV+=		ac_cv_lib_pcreposix_pcreposix_regcomp=yes
 .endif
 
 .if !empty(PKG_OPTIONS:Mluit)
-DEPENDS+=	luit-[0-9]*:../../x11/luit
+DEPENDS+=		luit-[0-9]*:../../x11/luit
 CONFIGURE_ARGS+=	--enable-luit --enable-mini-luit
 .else
 CONFIGURE_ARGS+=	--disable-luit --disable-mini-luit

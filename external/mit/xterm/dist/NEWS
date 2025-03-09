@@ -1,19 +1,17 @@
 The NEWS file was generated from xterm.log.html, which serves as the changelog
 for xterm.
 --------------------------------------------------------------------------------
-                            Patch #392 - 2024/05/22
+                            Patch #397 - 2025/01/05
 
-     * improve  input decoding for non-Latin1 character sets by preserving
-       the sense of GL/GR.
-     * add  resource  preferLatin1  to simplify UPSS configuration (Gentoo
-       #932154).
-     * build-fix  for --disable-boxchars; patch #390 reuses that feature's
-       code  to draw the part of the DEC Technical character set which has
-       no Unicode equivalent.
-     * modify #include of pty.h to work with musl (report by Khem Raj).
-     * improve    definitions    used    in    clock_gettime    logic   in
-       graphics_sixel.c, as well as updating comments (patch by Ben Wong).
-     * amend allowC1Printable changes from patch #391, restoring a special
-       case  which  caused C1 characters to be ignored (report/testcase by
-       Dmytro Bagrii).
+     * add  resource  printRawChars to allow bypassing check in patch #389
+       which  omits  Unicode non-characters from printing (request by Adam
+       Saponara).
+     * add visible-effect for SUB, per DEC 070 page 5-132.
+     * correct a limit-check in private mode 1045.
+     * add  optional feature for block-selection, bound to meta-button-one
+       (patch by Adam Saponara).
+     * if  started  as a VT52, identify the terminal as a real VT52 rather
+       than VT52 emulated by VT100.
+     * amend change to VT52 cursor-addressing per DEC 070 (mintty #1299).
+     * correct ctlseqs.ms suffix for XTTITLEPOS
 

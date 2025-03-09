@@ -1,4 +1,4 @@
-/* $XTermId: trace.h,v 1.95 2024/05/15 23:51:40 tom Exp $ */
+/* $XTermId: trace.h,v 1.97 2024/12/01 19:54:13 tom Exp $ */
 
 /*
  * Copyright 1997-2022,2024 by Thomas E. Dickey
@@ -92,9 +92,9 @@ extern	void	TraceArgv(const char * /* tag */, char ** /* argv */);
 
 extern	const	char *trace_who;
 #undef  TRACE_CHILD
-#define TRACE_CHILD int tracing_child = (trace_who = "child") != 0; (void) tracing_child
+#define TRACE_CHILD int tracing_child = (trace_who = "child") != NULL; (void) tracing_child
 
-extern	void	TraceEvent(const char *, XEvent *, String *, Cardinal *);
+extern	void	TraceEvent(const char *, XEvent *, String *, const Cardinal *);
 #undef  TRACE_EVENT
 #define	TRACE_EVENT(t,e,s,n) TraceEvent(t, (XEvent *)e, s, n)
 

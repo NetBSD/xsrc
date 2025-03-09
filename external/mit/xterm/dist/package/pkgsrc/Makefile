@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.1.1.7 2024/07/04 09:08:11 mrg Exp $
+# $NetBSD: Makefile,v 1.1.1.8 2025/03/09 23:17:11 mrg Exp $
 
-DISTNAME=	xterm-392
-PKGREVISION=	1
+DISTNAME=	xterm-397
 CATEGORIES=	x11
-MASTER_SITES=	ftp://ftp.invisible-island.net/xterm/
+MASTER_SITES=	https://invisible-island.net/archives/xterm/
 EXTRACT_SUFX=	.tgz
 
 MAINTAINER=	pkgsrc-users@NetBSD.org
@@ -21,11 +20,11 @@ CONFIGURE_ARGS+=	--enable-256-color
 CONFIGURE_ARGS+=	--enable-paste64
 CONFIGURE_ARGS+=	--enable-readline-mouse
 
-CONFIGURE_ARGS.standard=# empty
-CONFIGURE_ARGS.3d=	--with-Xaw3d
-CONFIGURE_ARGS.xpm=	--with-Xaw3d
-CONFIGURE_ARGS.neXtaw=	--with-neXtaw
-CONFIGURE_ARGS+=	${${CONFIGURE_ARGS.${XAW_TYPE}}:L}
+CONFIGURE_ARGS.standard=	# empty
+CONFIGURE_ARGS.3d=		--with-Xaw3d
+CONFIGURE_ARGS.xpm=		--with-Xaw3d
+CONFIGURE_ARGS.neXtaw=		--with-neXtaw
+CONFIGURE_ARGS+=		${${CONFIGURE_ARGS.${XAW_TYPE}}:L}
 
 INSTALLATION_DIRS=	share/applications
 

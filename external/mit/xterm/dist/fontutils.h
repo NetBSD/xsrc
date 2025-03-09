@@ -1,4 +1,4 @@
-/* $XTermId: fontutils.h,v 1.145 2024/05/17 19:55:52 tom Exp $ */
+/* $XTermId: fontutils.h,v 1.150 2024/12/01 19:48:57 tom Exp $ */
 
 /*
  * Copyright 1998-2022,2024 by Thomas E. Dickey
@@ -45,7 +45,7 @@ extern XTermFonts * getNormalFont (TScreen * /* screen */, int /* which */);
 extern const VTFontNames * defaultVTFontNames(XtermWidget /* xw */);
 extern const VTFontNames * xtermFontName (const char */* normal */);
 extern const char * whichFontEnum (VTFontEnum /* value */);
-extern const char * whichFontList (XtermWidget /* xw */, VTFontList * /* value */);
+extern const char * whichFontList (XtermWidget /* xw */, const VTFontList * /* value */);
 extern const char * whichFontList2(XtermWidget /* xw */, char ** /* value */);
 extern int lookupRelativeFontSize (XtermWidget /* xw */, int /* old */, int /* relative */);
 extern int xtermGetFont (const char * /* param */);
@@ -78,7 +78,7 @@ extern void xtermUpdateFontInfo (XtermWidget /* xw */, Bool /* doresize */);
 #define GetItalicFont(screen, which) 0
 #endif
 
-#define FirstItemOf(vector) ((vector) ? (vector)[0] : 0)
+#define FirstItemOf(vector) ((vector) ? (vector)[0] : NULL)
 #define CurrentXftFont(xw)  ((xw)->work.fonts.xft.list_n[0])
 #define DefaultFontN(xw)    ((xw)->work.fonts.x11.list_n[0])
 #define DefaultFontB(xw)    ((xw)->work.fonts.x11.list_b[0])
@@ -90,12 +90,12 @@ extern char *xtermSpecialFont (XTermDraw * /* params */);
 #endif
 
 #define FontLacksMetrics(font) \
-	((font)->fs != 0 \
-	 && ((font)->fs->per_char == 0))
+	((font)->fs != NULL \
+	 && ((font)->fs->per_char == NULL))
 
 #define FontIsIncomplete(font) \
-	((font)->fs != 0 \
-	 && (font)->fs->per_char != 0 \
+	((font)->fs != NULL \
+	 && (font)->fs->per_char != NULL \
 	 && !(font)->fs->all_chars_exist)
 
 #if OPT_BOX_CHARS
@@ -120,9 +120,11 @@ extern char *xtermSpecialFont (XTermDraw * /* params */);
 
 #define IsXtermMissingChar(screen, ch, font) \
 	 (CheckedKnownMissing(font, ch) \
-	  ? ((font)->known_missing[(Char)(ch)] > 1) \
-	  : ((FontIsIncomplete(font) && xtermMissingChar(ch, font)) \
-	   || ForceBoxChars(screen, ch)))
+	  ? ( (font)->known_missing[(Char)(ch)] > 1) \
+	  : ( ( ( FontIsIncomplete(font) \
+	         || ( (ch) < MaxUChar && !IsLatin1(ch) ) ) \
+	       && xtermMissingChar(ch, font) ) \
+	     || ForceBoxChars(screen, ch) ) )
 #else
 #define IsXtermMissingChar(screen, ch, font) False
 #endif
@@ -130,6 +132,14 @@ extern char *xtermSpecialFont (XTermDraw * /* params */);
 extern void xtermDrawBoxChar (XTermDraw * /* params */, unsigned /* ch */, GC /* gc */, int /* x */, int /* y */, int /* cols */, Bool /* xftords */);
 
 #if OPT_BOX_CHARS || OPT_REPORT_FONTS
+#define XTermFontsRef(fontList, which) \
+	(((which) != fNorm && \
+	  ((fontList)[(which)].fs == NULL || \
+	   (fontList)[(which)].fs->per_char == NULL) && \
+	  ((fontList)[fNorm].fs != NULL && \
+	  (fontList)[fNorm].fs->per_char != NULL)) \
+	 ? &((fontList)[fNorm]) \
+	 : &((fontList)[(which)]))
 extern Bool xtermMissingChar (unsigned /* ch */, XTermFonts */* font */);
 #endif
 
@@ -151,7 +161,7 @@ extern void xtermSaveVTFonts (XtermWidget /* xw */);
 extern Boolean maybeXftCache(XtermWidget /* xw */, XftFont * /* font */);
 extern Bool xtermXftMissing (XtermWidget /* xw */, XTermXftFonts * /* fontData */, int /* fontNum */, XftFont * /* font */, unsigned /* wc */);
 extern XTermXftFonts *getMyXftFont (XtermWidget /* xw */, int /* which */, int /* fontnum */);
-extern const char * whichXftFonts(XtermWidget /* xw */, XTermXftFonts * /* data */);
+extern const char * whichXftFonts(XtermWidget /* xw */, const XTermXftFonts * /* data */);
 extern int findXftGlyph (XtermWidget /* xw */, XTermXftFonts * /* fontData */, unsigned /* wc */);
 extern XftFont *getXftFont (XtermWidget /* xw */, VTFontEnum /* which */, int /* fontnum */);
 extern void closeCachedXft (TScreen * /* screen */, XftFont * /* font */);
