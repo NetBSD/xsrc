@@ -6,13 +6,19 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the 'getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the 'inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `ws2_32' library (-lws2_32). */
+/* Define to 1 if you have the 'ws2_32' library (-lws2_32). */
 #undef HAVE_LIBWS2_32
 
-/* Define to 1 if the system has the type `socklen_t'. */
+/* Define to 1 if the system has the type 'socklen_t'. */
 #undef HAVE_SOCKLEN_T
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -24,7 +30,7 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
+/* Define to 1 if you have the 'strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
 /* Define to 1 if you have the <strings.h> header file. */
@@ -33,8 +39,11 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strlcpy' function. */
+/* Define to 1 if you have the 'strlcpy' function. */
 #undef HAVE_STRLCPY
+
+/* Define to 1 if the system has the type 'struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -45,7 +54,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `uuid_create' function. */
+/* Define to 1 if you have the 'uuid_create' function. */
 #undef HAVE_UUID_CREATE
 
 /* Support IPv6 for TCP connections */
@@ -87,7 +96,7 @@
 /* Patch version of this package */
 #undef PACKAGE_VERSION_PATCHLEVEL
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
