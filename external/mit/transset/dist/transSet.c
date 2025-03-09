@@ -134,7 +134,7 @@ main (int argc, char **argv)
     char *windowname = NULL;
 
     int options_index = 0;
-    static struct option long_options[] = {
+    static const struct option long_options[] = {
         {"toggle", 0, NULL, 't'},
         {"help", 0, NULL, 'h'},
         {"point", 0, NULL, 'p'},
@@ -226,7 +226,7 @@ main (int argc, char **argv)
         /* don't wait for click */
         if (flag_verbose)
             printf ("Selecting window by click\n");
-        target_win = Get_Window_Under_Cursor (dpy);
+        target_win = Get_Window_Under_Cursor (dpy, True);
         break;
 
     case SELECT_METHOD_WINDOW_ID:
@@ -286,7 +286,7 @@ main (int argc, char **argv)
 
     default:
         /* grab mouse and return window that is next clicked */
-        target_win = Select_Window (dpy);
+        target_win = Select_Window (dpy, True);
         break;
     }
 

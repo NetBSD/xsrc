@@ -1,9 +1,9 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([transset], [1.0.3],
+AC_INIT([transset], [1.0.4],
 	[https://gitlab.freedesktop.org/xorg/app/transset/-/issues], [transset])
-RELEASE_DATE="2022-12-03"
+RELEASE_DATE="2024-12-04"
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 

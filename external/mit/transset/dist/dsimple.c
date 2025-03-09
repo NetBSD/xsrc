@@ -40,6 +40,7 @@
  * Written by Mark Lillibridge.   Last updated 7/1/87
  */
 
+#include "clientwin.h"
 #include "dsimple.h"
 
 /*
@@ -99,7 +100,7 @@ Get_Display_Name (int *pargc, char **argv)
  *               Does not require dpy or screen defined on entry.
  */
 static Display *
-Open_Display (char *display_name)
+Open_Display (const char *display_name)
 {
     Display *d;
 
@@ -157,7 +158,7 @@ Fatal_Error (const char *msg, ...)
  */
 
 Window
-Select_Window (Display *disp)
+Select_Window (Display *disp, int descend)
 {
     int status;
     Cursor cursor;
@@ -198,6 +199,11 @@ Select_Window (Display *disp)
 
     XUngrabPointer (disp, CurrentTime); /* Done with pointer */
 
+    if (!descend || (target_win == root))
+        return(target_win);
+
+    target_win = Find_Client(dpy, root, target_win);
+
     return (target_win);
 }
 
@@ -207,7 +213,7 @@ Select_Window (Display *disp)
  */
 
 Window
-Get_Window_Under_Cursor (Display *disp)
+Get_Window_Under_Cursor (Display *disp, int descend)
 {
     int status;
     Cursor cursor;
@@ -233,6 +239,11 @@ Get_Window_Under_Cursor (Display *disp)
                    &cx, &cy, &mask);
 
     XUngrabPointer (disp, CurrentTime);      /* Done with pointer */
+
+    if (!descend || (target_win == root))
+        return(target_win);
+
+    target_win = Find_Client(dpy, root, target_win);
 
     return (target_win);
 }
@@ -303,7 +314,7 @@ Window_With_Name_Regex_Recurse (Display *disp, Window top,
 
 /* prepare the reg-exp for use with above function */
 Window
-Window_With_Name_Regex (Display *disp, Window top, char *name)
+Window_With_Name_Regex (Display *disp, Window top, const char *name)
 {
     int err_no = 0;
     regex_t *regexp_name;
