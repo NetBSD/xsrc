@@ -20,7 +20,8 @@ bundle_id_prefix=BUNDLE_ID_PREFIX
 xauth=XAUTH
 bindir=__bindir__
 libexecdir=__libexecdir__
-mk_cookie=MK_COOKIE
+# XXX using $mk_cookie here expands bad.
+# mk_cookie=MK_COOKIE
 has_cookie_maker=HAS_COOKIE_MAKER
 
 unset SESSION_MANAGER
@@ -265,8 +266,8 @@ if [ "$enable_xauth" = 1 ] ; then
     hostname="$(uname -n)"
 
     authdisplay=${display:-:0}
-    if [ -n "$has_cookie_maker" ] && [ -n "$mk_cookie" ] ; then
-        mcookie=$($mk_cookie)
+    if [ -n "$has_cookie_maker" ] && [ -n 'MK_COOKIE' ] ; then
+        mcookie=`MK_COOKIE`
     else
         if [ -r /dev/urandom ]; then
             mcookie=$(dd if=dev/urandom bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\")
