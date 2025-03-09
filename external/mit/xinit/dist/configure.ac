@@ -22,10 +22,11 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xinit], [1.4.2],
+AC_INIT([xinit], [1.4.3],
         [https://gitlab.freedesktop.org/xorg/app/xinit/-/issues], [xinit])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
+AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-xz])
@@ -125,8 +126,11 @@ AC_SUBST([launchagentxserver])
 AM_CONDITIONAL(LAUNCHD, [test "x$LAUNCHD" = "xyes"])
 AM_CONDITIONAL(LAUNCHAGENT_XSERVER, [test "x$launchagentxserver" != "xno"])
 
+# Checks for library functions.
+AC_CHECK_FUNCS([asprintf])
+
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XINIT, x11 xproto >= 7.0.17)
+PKG_CHECK_MODULES(XINIT, x11 xproto >= 7.0.22)
 
 case $host_os in
     *bsd*)
