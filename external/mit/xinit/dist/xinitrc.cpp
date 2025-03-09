@@ -1,27 +1,33 @@
 XCOMM!SHELL_CMD
-XHASH $NetBSD: xinitrc.cpp,v 1.22 2022/05/29 12:40:36 nia Exp $
+XHASH $NetBSD: xinitrc.cpp,v 1.23 2025/03/09 08:09:32 mrg Exp $
+
+xrdb=XRDB
+xinitdir=XINITDIR
+xclock=XCLOCK
+xterm=XTERM
+uxterm=UXTERM
+twm=TWM
+xmodmap=XMODMAP
+ctwm=CTWM
+xsetroot=XSETROOT
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
-sysresources=XINITDIR/.Xresources
-sysmodmap=XINITDIR/.Xmodmap
+sysresources=$xinitdir/.Xresources
+sysmodmap=$xinitdir/.Xmodmap
 
 XCOMM merge in defaults and keymaps
 
 if [ -f $sysresources ]; then
-#ifdef __APPLE__
     if [ -x /usr/bin/cpp ] ; then
-        XRDB -merge $sysresources
+        $xrdb -merge $sysresources
     else
-        XRDB -nocpp -merge $sysresources
+        $xrdb -nocpp -merge $sysresources
     fi
-#else
-    XRDB -merge $sysresources
-#endif
 fi
 
 if [ -f $sysmodmap ]; then
-    XMODMAP $sysmodmap
+    $xmodmap $sysmodmap
 fi
 
 fontsize=$(/usr/X11R7/libexec/ctwm_font_size)
@@ -30,17 +36,13 @@ if ! [ -n "$fontsize" ]; then
 fi
 
 if [ -f "$userresources" ]; then
-#ifdef __APPLE__
     if [ -x /usr/bin/cpp ] ; then
-        XRDB -merge "$userresources"
+        $xrdb -merge "$userresources"
     else
-        XRDB -nocpp -merge "$userresources"
+        $xrdb -nocpp -merge "$userresources"
     fi
-#else
-    XRDB -merge "$userresources"
-#endif
 else
-    XRDB -merge - <<EOF
+    $xrdb -merge - <<EOF
 XHASH ifdef COLOR
 *customization: -color
 XHASH endif
@@ -101,21 +103,21 @@ fi
 fi
 
 if [ -f "$usermodmap" ]; then
-    XMODMAP "$usermodmap"
+    $xmodmap "$usermodmap"
 fi
 
 XCOMM start some nice programs
 
-if [ -d XINITDIR/xinitrc.d ] ; then
-	for f in XINITDIR/xinitrc.d/?*.sh ; do
+if [ -d $xinitdir/xinitrc.d ] ; then
+	for f in "$xinitdir/xinitrc.d"/?*.sh ; do
 		[ -x "$f" ] && . "$f"
 	done
 	unset f
 fi
 
-XSETROOT -cursor_name left_ptr
-XSETROOT -solid 'rgb:00/22/44'
-XCLOCK -digital -strftime '%a %Y-%m-%d %H:%M' \
+$xsetroot -cursor_name left_ptr
+$xsetroot -solid 'rgb:00/22/44'
+$xclock -digital -strftime '%a %Y-%m-%d %H:%M' \
 	-face "spleen:pixelsize=$fontsize" -g +0+0 &
-UXTERM &
-exec CTWM -W
+$uxterm &
+exec $ctwm -W
