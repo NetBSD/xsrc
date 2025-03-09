@@ -12,50 +12,58 @@ XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM
 
+xinitdir=XINITDIR
+xterm=XTERM
+xserver=XSERVER
+xinit=XINIT
+bundle_id_prefix=BUNDLE_ID_PREFIX
+xauth=XAUTH
+bindir=__bindir__
+libexecdir=__libexecdir__
+mk_cookie=MK_COOKIE
+has_cookie_maker=HAS_COOKIE_MAKER
+
 unset SESSION_MANAGER
 
-#ifdef __APPLE__
+if [ "$(uname -s)" = "Darwin" ] ; then
 
-XCOMM Check for /usr/bin/X11 and BINDIR in the path, if not add them.
-XCOMM This allows startx to be placed in a place like /usr/bin or /usr/local/bin
-XCOMM and people may use X without changing their PATH.
-XCOMM Note that we put our own bin directory at the front of the path, and
-XCOMM the standard system path at the back, since if you are using the Xorg
-XCOMM server there's a pretty good chance you want to bias the Xorg clients
-XCOMM over the old system's clients.
+    XCOMM Check for /usr/bin/X11 and BINDIR in the path, if not add them.
+    XCOMM This allows startx to be placed in a place like /usr/bin or /usr/local/bin
+    XCOMM and people may use X without changing their PATH.
+    XCOMM Note that we put our own bin directory at the front of the path, and
+    XCOMM the standard system path at the back, since if you are using the Xorg
+    XCOMM server there's a pretty good chance you want to bias the Xorg clients
+    XCOMM over the old system's clients.
 
-XCOMM First our compiled path
-bindir=__bindir__
-
-case $PATH in
-    *:$bindir | *:$bindir:* | $bindir:*) ;;
-    *) PATH=$bindir:$PATH ;;
-esac
-
-XCOMM Now the "old" compiled path
-oldbindir=/usr/X11R6/bin
-
-if [ -d "$oldbindir" ] ; then
     case $PATH in
-        *:$oldbindir | *:$oldbindir:* | $oldbindir:*) ;;
-        *) PATH=$PATH:$oldbindir ;;
+        *:$bindir | *:$bindir:* | $bindir:*) ;;
+        *) PATH=$bindir:$PATH ;;
     esac
-fi
 
-XCOMM Bourne shell does not automatically export modified environment variables
-XCOMM so export the new PATH just in case the user changes the shell
-export PATH
-#endif
+    XCOMM Now the "old" compiled path
+    oldbindir=/usr/X11R6/bin
+
+    if [ -d "$oldbindir" ] ; then
+        case $PATH in
+            *:$oldbindir | *:$oldbindir:* | $oldbindir:*) ;;
+            *) PATH=$PATH:$oldbindir ;;
+        esac
+    fi
+
+    XCOMM Bourne shell does not automatically export modified environment variables
+    XCOMM so export the new PATH just in case the user changes the shell
+    export PATH
+fi
 
 userclientrc=$HOME/.xinitrc
 [ -f "${XINITRC}" ] && userclientrc="${XINITRC}"
 sysclientrc=XINITDIR/xinitrc
 
 userserverrc=$HOME/.xserverrc
-[ -f "${XSERVERRC}" ] && userclientrc="${XSERVERRC}"
-sysserverrc=XINITDIR/xserverrc
-defaultclient=XTERM
-defaultserver=XSERVER
+[ -f "${XSERVERRC}" ] && userserverrc="${XSERVERRC}"
+sysserverrc=$xinitdir/xserverrc
+defaultclient=$xterm
+defaultserver=$xserver
 defaultclientargs=""
 defaultserverargs=""
 defaultdisplay=""
@@ -63,73 +71,74 @@ clientargs=""
 serverargs=""
 vtarg=""
 
-#ifdef __APPLE__
 
-if [ "x$X11_PREFS_DOMAIN" = x ] ; then
-    export X11_PREFS_DOMAIN=BUNDLE_ID_PREFIX".X11"
-fi
+if [ "$(uname -s)" = "Darwin" ] ; then
 
-XCOMM Initialize defaults (this will cut down on "safe" error messages)
-if ! defaults read $X11_PREFS_DOMAIN cache_fonts > /dev/null 2>&1 ; then
-    defaults write $X11_PREFS_DOMAIN cache_fonts -bool true
-fi
-
-if ! defaults read $X11_PREFS_DOMAIN no_auth > /dev/null 2>&1 ; then
-    defaults write $X11_PREFS_DOMAIN no_auth -bool false
-fi
-
-if ! defaults read $X11_PREFS_DOMAIN nolisten_tcp > /dev/null 2>&1 ; then
-    defaults write $X11_PREFS_DOMAIN nolisten_tcp -bool true
-fi
-
-if ! defaults read $X11_PREFS_DOMAIN enable_iglx > /dev/null 2>&1 ; then
-    defaults write $X11_PREFS_DOMAIN enable_iglx -bool false
-fi
-
-XCOMM First, start caching fonts
-if [ x`defaults read $X11_PREFS_DOMAIN cache_fonts` = x1 ] ; then
-    if [ -x $bindir/font_cache ] ; then
-        $bindir/font_cache
-    elif [ -x $bindir/font_cache.sh ] ; then
-        $bindir/font_cache.sh
-    elif [ -x $bindir/fc-cache ] ; then
-        $bindir/fc-cache
+    if [ "$X11_PREFS_DOMAIN" = "" ] ; then
+        export X11_PREFS_DOMAIN=$bundle_id_prefix".X11"
     fi
-fi
 
-if [ -x __libexecdir__/privileged_startx ] ; then
+    XCOMM Initialize defaults (this will cut down on "safe" error messages)
+    if ! defaults read $X11_PREFS_DOMAIN cache_fonts > /dev/null 2>&1 ; then
+        defaults write $X11_PREFS_DOMAIN cache_fonts -bool true
+    fi
+
+    if ! defaults read $X11_PREFS_DOMAIN no_auth > /dev/null 2>&1 ; then
+        defaults write $X11_PREFS_DOMAIN no_auth -bool false
+    fi
+
+    if ! defaults read $X11_PREFS_DOMAIN nolisten_tcp > /dev/null 2>&1 ; then
+        defaults write $X11_PREFS_DOMAIN nolisten_tcp -bool true
+    fi
+
+    if ! defaults read $X11_PREFS_DOMAIN enable_iglx > /dev/null 2>&1 ; then
+        defaults write $X11_PREFS_DOMAIN enable_iglx -bool false
+    fi
+
+    XCOMM First, start caching fonts
+    if [ "$(defaults read $X11_PREFS_DOMAIN cache_fonts)" = 1 ] ; then
+        if [ -x $bindir/font_cache ] ; then
+            $bindir/font_cache
+        elif [ -x $bindir/font_cache.sh ] ; then
+            $bindir/font_cache.sh
+        elif [ -x $bindir/fc-cache ] ; then
+            $bindir/fc-cache
+        fi
+    fi
+
+    if [ -x $libexecdir/privileged_startx ] ; then
 	XCOMM Don't push this into the background because it can cause
 	XCOMM a race to create /tmp/.X11-unix
-	__libexecdir__/privileged_startx
-fi
+	$libexecdir/privileged_startx
+    fi
 
-if [ x`defaults read $X11_PREFS_DOMAIN no_auth` = x0 ] ; then
+    if [ "$(defaults read $X11_PREFS_DOMAIN no_auth)" = 0 ] ; then
+        enable_xauth=1
+    else
+        enable_xauth=0
+    fi
+
+    if [ "$(defaults read $X11_PREFS_DOMAIN nolisten_tcp)" = 1 ] ; then
+        defaultserverargs="$defaultserverargs -nolisten tcp"
+    else
+        defaultserverargs="$defaultserverargs -listen tcp"
+    fi
+
+    if [ "$(defaults read $X11_PREFS_DOMAIN enable_iglx)" = 1 ] ; then
+        defaultserverargs="$defaultserverargs +iglx +extension GLX"
+    else
+        defaultserverargs="$defaultserverargs -iglx"
+    fi
+
+    XCOMM The second check is the real one.  The first is to hopefully avoid
+    XCOMM needless syslog spamming.
+    if defaults read $X11_PREFS_DOMAIN 2> /dev/null | grep -q 'dpi' && defaults read $X11_PREFS_DOMAIN dpi > /dev/null 2>&1 ; then
+        defaultserverargs="$defaultserverargs -dpi $(defaults read $X11_PREFS_DOMAIN dpi)"
+    fi
+
+else
     enable_xauth=1
-else
-    enable_xauth=0
 fi
-
-if [ x`defaults read $X11_PREFS_DOMAIN nolisten_tcp` = x1 ] ; then
-    defaultserverargs="$defaultserverargs -nolisten tcp"
-else
-    defaultserverargs="$defaultserverargs -listen tcp"
-fi
-
-if [ x`defaults read $X11_PREFS_DOMAIN enable_iglx` = x1 ] ; then
-    defaultserverargs="$defaultserverargs +iglx +extension GLX"
-else
-    defaultserverargs="$defaultserverargs -iglx"
-fi
-
-XCOMM The second check is the real one.  The first is to hopefully avoid
-XCOMM needless syslog spamming.
-if defaults read $X11_PREFS_DOMAIN 2> /dev/null | grep -q 'dpi' && defaults read $X11_PREFS_DOMAIN dpi > /dev/null 2>&1 ; then
-    defaultserverargs="$defaultserverargs -dpi `defaults read $X11_PREFS_DOMAIN dpi`"
-fi
-
-#else
-enable_xauth=1
-#endif
 
 XCOMM Automatically determine an unused $DISPLAY
 d=0
@@ -141,18 +150,18 @@ defaultdisplay=":$d"
 unset d
 
 whoseargs="client"
-while [ x"$1" != x ]; do
+while [ "$1" != "" ]; do
     case "$1" in
     XCOMM '' required to prevent cpp from treating "/*" as a C comment.
     /''*|\./''*)
 	if [ "$whoseargs" = "client" ]; then
-	    if [ x"$client" = x ] && [ x"$clientargs" = x ]; then
+	    if [ "$client" = "" ] && [ "$clientargs" = "" ]; then
 		client="$1"
 	    else
 		clientargs="$clientargs $1"
 	    fi
 	else
-	    if [ x"$server" = x ] && [ x"$serverargs" = x ]; then
+	    if [ "$server" = "" ] && [ "$serverargs" = "" ]; then
 		server="$1"
 	    else
 		serverargs="$serverargs $1"
@@ -167,7 +176,7 @@ while [ x"$1" != x ]; do
 	    clientargs="$clientargs $1"
 	else
 	    XCOMM display must be the FIRST server argument
-	    if [ x"$serverargs" = x ] && @@
+	    if [ "$serverargs" = "" ] && @@
 		 expr "$1" : ':[0-9][0-9]*$' > /dev/null 2>&1; then
 		display="$1"
 	    else
@@ -180,11 +189,11 @@ while [ x"$1" != x ]; do
 done
 
 XCOMM process client arguments
-if [ x"$client" = x ]; then
+if [ "$client" = "" ]; then
     client=$defaultclient
 
     XCOMM For compatibility reasons, only use startxrc if there were no client command line arguments
-    if [ x"$clientargs" = x ]; then
+    if [ "$clientargs" = "" ]; then
         if [ -f "$userclientrc" ]; then
             client=$userclientrc
         elif [ -f "$sysclientrc" ]; then
@@ -194,15 +203,15 @@ if [ x"$client" = x ]; then
 fi
 
 XCOMM if no client arguments, use defaults
-if [ x"$clientargs" = x ]; then
+if [ "$clientargs" = "" ]; then
     clientargs=$defaultclientargs
 fi
 
 XCOMM process server arguments
-if [ x"$server" = x ]; then
+if [ "$server" = "" ]; then
     server=$defaultserver
 
-#ifdef __linux__
+if [ "$(uname -s)" = "Linux" ] ; then
     XCOMM When starting the defaultserver start X on the current tty to avoid
     XCOMM the startx session being seen as inactive:
     XCOMM "https://bugzilla.redhat.com/show_bug.cgi?id=806491"
@@ -211,10 +220,10 @@ if [ x"$server" = x ]; then
         tty_num=${tty#/dev/tty}
         vtarg="vt$tty_num -keeptty"
     fi
-#endif
+fi
 
     XCOMM For compatibility reasons, only use xserverrc if there were no server command line arguments
-    if [ x"$serverargs" = x -a x"$display" = x ]; then
+    if [ "$serverargs" = "" ] && [ "$display" = "" ]; then
 	if [ -f "$userserverrc" ]; then
 	    server=$userserverrc
 	elif [ -f "$sysserverrc" ]; then
@@ -224,7 +233,7 @@ if [ x"$server" = x ]; then
 fi
 
 XCOMM if no server arguments, use defaults
-if [ x"$serverargs" = x ]; then
+if [ "$serverargs" = "" ]; then
     serverargs=$defaultserverargs
 fi
 
@@ -240,12 +249,12 @@ if [ "$have_vtarg" = "no" ]; then
 fi
 
 XCOMM if no display, use default
-if [ x"$display" = x ]; then
+if [ "$display" = "" ]; then
     display=$defaultdisplay
 fi
 
-if [ x"$enable_xauth" = x1 ] ; then
-    if [ x"$XAUTHORITY" = x ]; then
+if [ "$enable_xauth" = 1 ] ; then
+    if [ "$XAUTHORITY" = "" ]; then
         XAUTHORITY=$HOME/.Xauthority
         export XAUTHORITY
     fi
@@ -253,19 +262,19 @@ if [ x"$enable_xauth" = x1 ] ; then
     removelist=
 
     XCOMM set up default Xauth info for this machine
-    hostname=`uname -n`
+    hostname="$(uname -n)"
 
     authdisplay=${display:-:0}
-#if defined(HAS_COOKIE_MAKER) && defined(MK_COOKIE)
-    mcookie=`MK_COOKIE`
-#else
-    if [ -r /dev/urandom ]; then
-        mcookie=`dd if=/dev/urandom bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\"`
+    if [ -n "$has_cookie_maker" ] && [ -n "$mk_cookie" ] ; then
+        mcookie=$($mk_cookie)
     else
-        mcookie=`dd if=/dev/random bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\"`
+        if [ -r /dev/urandom ]; then
+            mcookie=$(dd if=dev/urandom bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\")
+        else
+            mcookie=$(dd if=/dev/random bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\")
+        fi
     fi
-#endif
-    if test x"$mcookie" = x; then
+    if [ "$mcookie" = "" ]; then
         echo "Couldn't create cookie"
         exit 1
     fi
@@ -277,61 +286,65 @@ if [ x"$enable_xauth" = x1 ] ; then
     xauth -q -f "$xserverauthfile" << EOF
 add :$dummy . $mcookie
 EOF
-#if defined(__APPLE__) || defined(__CYGWIN__)
-    xserverauthfilequoted=$(echo ${xserverauthfile} | sed "s/'/'\\\\''/g")
-    serverargs=${serverargs}" -auth '"${xserverauthfilequoted}"'"
-#else
-    serverargs=${serverargs}" -auth "${xserverauthfile}
-#endif
+
+    case "$(uname -s)" in
+    CYGWIN*|Darwin)
+        xserverauthfilequoted=$(echo ${xserverauthfile} | sed "s/'/'\\\\''/g")
+        serverargs=${serverargs}" -auth '"${xserverauthfilequoted}"'"
+        ;;
+    *)
+        serverargs=${serverargs}" -auth "${xserverauthfile}
+        ;;
+    esac
 
     XCOMM now add the same credentials to the client authority file
     XCOMM if '$displayname' already exists do not overwrite it as another
     XCOMM server may need it. Add them to the '$xserverauthfile' instead.
     for displayname in $authdisplay $hostname$authdisplay; do
-        authcookie=`XAUTH list "$displayname" @@
-        | sed -n "s/.*$displayname[[:space:]*].*[[:space:]*]//p"` 2>/dev/null;
+        authcookie=$(xauth list "$displayname" @@
+        | sed -n 's/.*'"$displayname"'[[:space:]*].*[[:space:]*]//p' 2>/dev/null);
         if [ "z${authcookie}" = "z" ] ; then
-            XAUTH -q << EOF 
+            $xauth -q << EOF
 add $displayname . $mcookie
 EOF
         removelist="$displayname $removelist"
         else
             dummy=$(($dummy+1));
-            XAUTH -q -f "$xserverauthfile" << EOF
+            $xauth -q -f "$xserverauthfile" << EOF
 add :$dummy . $authcookie
 EOF
         fi
     done
 fi
 
-#if defined(__APPLE__) || defined(__CYGWIN__)
-eval XINIT \"$client\" $clientargs -- \"$server\" $display $serverargs
-#else
-XINIT "$client" $clientargs -- "$server" $display $serverargs
-#endif
+case "$(uname -s)" in
+CYGWIN_NT*|Darwin)
+    eval $xinit \"$client\" $clientargs -- \"$server\" $display $serverargs
+    ;;
+*)
+    $xinit "$client" $clientargs -- "$server" $display $serverargs
+    ;;
+esac
 retval=$?
 
-if [ x"$enable_xauth" = x1 ] ; then
-    if [ x"$removelist" != x ]; then
-        XAUTH remove $removelist
+if [ "$enable_xauth" = 1 ] ; then
+    if [ "$removelist" != "" ]; then
+        $xauth remove $removelist
     fi
-    if [ x"$xserverauthfile" != x ]; then
+    if [ "$xserverauthfile" != "" ]; then
         rm -f "$xserverauthfile"
     fi
 fi
 
-/*
- * various machines need special cleaning up
- */
-#ifdef __linux__
-if command -v deallocvt > /dev/null 2>&1; then
-    deallocvt
+XCOMM various machines need special cleaning up
+if [ "$(uname -s)" = "Linux" ]; then
+    if command -v deallocvt > /dev/null 2>&1; then
+        deallocvt
+    fi
 fi
-#endif
 
-#if defined(sun)
-kbd_mode -a
-#endif
+if [ "$(uname -s)" = "SunOS" ]; then
+    kbd_mode -a
+fi
 
 exit $retval
-

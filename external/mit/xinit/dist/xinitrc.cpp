@@ -1,55 +1,54 @@
 XCOMM!SHELL_CMD
 
+xrdb=XRDB
+xinitdir=XINITDIR
+xclock=XCLOCK
+xterm=XTERM
+twm=TWM
+xmodmap=XMODMAP
+
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
-sysresources=XINITDIR/.Xresources
-sysmodmap=XINITDIR/.Xmodmap
+sysresources=$xinitdir/.Xresources
+sysmodmap=$xinitdir/.Xmodmap
 
 XCOMM merge in defaults and keymaps
 
 if [ -f $sysresources ]; then
-#ifdef __APPLE__
     if [ -x /usr/bin/cpp ] ; then
-        XRDB -merge $sysresources
+        $xrdb -merge $sysresources
     else
-        XRDB -nocpp -merge $sysresources
+        $xrdb -nocpp -merge $sysresources
     fi
-#else
-    XRDB -merge $sysresources
-#endif
 fi
 
 if [ -f $sysmodmap ]; then
-    XMODMAP $sysmodmap
+    $xmodmap $sysmodmap
 fi
 
 if [ -f "$userresources" ]; then
-#ifdef __APPLE__
     if [ -x /usr/bin/cpp ] ; then
-        XRDB -merge "$userresources"
+        $xrdb -merge "$userresources"
     else
-        XRDB -nocpp -merge "$userresources"
+        $xrdb -nocpp -merge "$userresources"
     fi
-#else
-    XRDB -merge "$userresources"
-#endif
 fi
 
 if [ -f "$usermodmap" ]; then
-    XMODMAP "$usermodmap"
+    $xmodmap "$usermodmap"
 fi
 
 XCOMM start some nice programs
 
-if [ -d XINITDIR/xinitrc.d ] ; then
-	for f in XINITDIR/xinitrc.d/?*.sh ; do
+if [ -d $xinitdir/xinitrc.d ] ; then
+	for f in "$xinitdir/xinitrc.d"/?*.sh ; do
 		[ -x "$f" ] && . "$f"
 	done
 	unset f
 fi
 
-TWM &
-XCLOCK -geometry 50x50-1+1 &
-XTERM -geometry 80x50+494+51 &
-XTERM -geometry 80x20+494-0 &
-exec XTERM -geometry 80x66+0+0 -name login
+$twm &
+$xclock -geometry 50x50-1+1 &
+$xterm -geometry 80x50+494+51 &
+$xterm -geometry 80x20+494-0 &
+exec $xterm -geometry 80x66+0+0 -name login
