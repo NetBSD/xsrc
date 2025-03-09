@@ -1,7 +1,7 @@
-/* $XTermId: Tekproc.c,v 1.249 2022/10/06 19:41:47 tom Exp $ */
+/* $XTermId: Tekproc.c,v 1.254 2024/12/01 20:21:19 tom Exp $ */
 
 /*
- * Copyright 2001-2021,2022 by Thomas E. Dickey
+ * Copyright 2001-2022,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -181,8 +181,8 @@ static jmp_buf Tekjump;
 static TekLink *TekRecord;
 static XSegment *Tline;
 
-static Const int *curstate = Talptable;
-static Const int *Tparsestate = Talptable;
+static const int *curstate = Talptable;
+static const int *Tparsestate = Talptable;
 
 static char defaultTranslations[] = "\
                 ~Meta<KeyPress>: insert-seven-bit() \n\
@@ -258,11 +258,7 @@ static Dimension defOne = 1;
 #define GIN_TERM_CR	1
 #define GIN_TERM_EOT	2
 
-#ifdef VMS
-#define DFT_FONT_SMALL "FIXED"
-#else
 #define DFT_FONT_SMALL "6x10"
-#endif
 
 static XtResource resources[] =
 {
@@ -362,7 +358,7 @@ TekInit(void)
     Dimension menu_high;
 
     if (!Tfailed
-	&& tekWidget == 0) {
+	&& tekWidget == NULL) {
 	Cardinal nargs = 0;
 	Arg myArgs[3];
 	Boolean iconic = 0;
@@ -417,7 +413,7 @@ TekInit(void)
 static int
 TekPtyData(void)
 {
-    if (Tpushb == 0 && !Tfailed) {
+    if (Tpushb == NULL && !Tfailed) {
 	if ((Tpushb = TypeMallocN(Char, 10)) == NULL
 	    || (Tline = TypeMallocN(XSegment, MAX_VTX)) == NULL) {
 	    xtermWarning("Not enough core for Tek mode\n");
@@ -772,7 +768,7 @@ Tekparse(TekWidget tw)
 		IChar c2;
 		size_t len = 0;
 		while ((c2 = input()) != ANSI_BEL) {
-		    if (!isprint((int) (c2 & 0x7f))
+		    if (!isprint(CharOf(c2 & 0x7f))
 			|| len + 2 >= (int) sizeof(buf2))
 			break;
 		    buf2[len++] = (Char) c2;
@@ -806,7 +802,7 @@ Tinput(TekWidget tw)
     if (tekRefreshList) {
 	if (rcnt-- > 0)
 	    return (IChar) (*rptr++);
-	if ((tek = tekRefreshList->next) != 0) {
+	if ((tek = tekRefreshList->next) != NULL) {
 	    tekRefreshList = tek;
 	    rptr = tek->data;
 	    rcnt = tek->count - 1;
@@ -822,11 +818,7 @@ Tinput(TekWidget tw)
 
 	if (nplot > 0)		/* flush line */
 	    TekFlush(tw);
-#ifdef VMS
-	Tselect_mask = pty_mask;	/* force a read */
-#else /* VMS */
 	XFD_COPYSET(&pty_mask, &Tselect_mask);
-#endif /* VMS */
 	for (;;) {
 #ifdef CRAY
 	    struct timeval crocktimeout;
@@ -844,38 +836,21 @@ Tinput(TekWidget tw)
 		Ttoggled = False;
 	    }
 	    if (xtermAppPending() & XtIMXEvent) {
-#ifdef VMS
-		Tselect_mask = X_mask;
-#else /* VMS */
 		XFD_COPYSET(&X_mask, &Tselect_mask);
-#endif /* VMS */
 	    } else {
 		XFlush(XtDisplay(tw));
-#ifdef VMS
-		Tselect_mask = Select_mask;
-
-#else /* VMS */
 		XFD_COPYSET(&Select_mask, &Tselect_mask);
 		if (Select(max_plus1, &Tselect_mask, NULL, NULL, NULL) < 0) {
 		    if (errno != EINTR)
 			SysError(ERROR_TSELECT);
 		    continue;
 		}
-#endif /* VMS */
 	    }
-#ifdef VMS
-	    if (Tselect_mask & X_mask) {
-		xevents(tw->vt);
-		if (VTbuffer->update != update)
-		    goto again;
-	    }
-#else /* VMS */
 	    if (FD_ISSET(ConnectionNumber(XtDisplay(tw)), &Tselect_mask)) {
 		xevents(tw->vt);
 		if (VTbuffer->update != update)
 		    goto again;
 	    }
-#endif /* VMS */
 	}
 	if (!Ttoggled && curstate == Talptable) {
 	    TCursorToggle(tw, TOGGLE);
@@ -885,7 +860,7 @@ Tinput(TekWidget tw)
     tek = TekRecord;
     if (tek->count >= TEK_LINK_BLOCK_SIZE
 	|| tek->fontsize != tekscr->cur.fontsize) {
-	if ((TekRecord = tek->next = CastMalloc(TekLink)) == 0) {
+	if ((TekRecord = tek->next = CastMalloc(TekLink)) == NULL) {
 	    Panic("Tinput: malloc error (%d)\n", errno);
 	} else {
 	    tek = tek->next;
@@ -973,7 +948,7 @@ static void
 TekResize(Widget w)
 {
     TekWidget tw = getTekWidget(w);
-    if (tw != 0) {
+    if (tw != NULL) {
 
 	TRACE(("TekResize " TRACE_L "\n"));
 	TekClear(tw);
@@ -991,7 +966,7 @@ TekExpose(Widget w,
 	  Region region GCC_UNUSED)
 {
     TekWidget tw = getTekWidget(w);
-    if (tw != 0) {
+    if (tw != NULL) {
 	TekScreen *tekscr = TekScreenOf(tw);
 
 	TRACE(("TekExpose " TRACE_L "\n"));
@@ -1027,7 +1002,7 @@ TekExpose(Widget w,
 void
 TekRefresh(TekWidget tw)
 {
-    if (tw != 0) {
+    if (tw != NULL) {
 	TScreen *screen = TScreenOf(tw->vt);
 	TekScreen *tekscr = TekScreenOf(tw);
 	static Cursor wait_cursor = None;
@@ -1334,11 +1309,7 @@ TekEnq(TekWidget tw,
 	cplot[len++] = '\r';
     if (tekscr->gin_terminator == GIN_TERM_EOT)
 	cplot[len++] = '\004';
-#ifdef VMS
-    tt_write(cplot + adj, (size_t) (len - adj));
-#else /* VMS */
     v_write(screen->respond, cplot + adj, (size_t) (len - adj));
-#endif /* VMS */
 }
 
 void
@@ -1346,14 +1317,14 @@ TekRun(void)
 {
     XtermWidget xw = term;
 
-    assert(xw != 0);
-    if (tekWidget == 0) {
+    assert(xw != NULL);
+    if (tekWidget == NULL) {
 	TekInit();
     }
-    if (tekWidget != 0) {
+    if (tekWidget != NULL) {
 	TRACE(("TekRun ...\n"));
 
-	if (!TEK4014_SHOWN(xw)) {
+	if (!TEK4014_SHOWN(xw) && !resource.notMapped) {
 	    set_tek_visibility(True);
 	}
 	update_vttekmode();
@@ -1700,7 +1671,7 @@ TekRealize(Widget gw,
     TekBackground(tw, vtscr);
 
     tekscr->margin = MARGIN1;	/* Margin 1             */
-    tekscr->TekGIN = False;	/* GIN off              */
+    tekscr->TekGIN = NULL;	/* GIN off              */
 
     XDefineCursor(XtDisplay(tw), TWindow(tekscr), tekscr->arrow);
 
@@ -1785,7 +1756,7 @@ TekGetFontSize(const char *param)
 void
 TekSetFontSize(TekWidget tw, Bool fromMenu, int newitem)
 {
-    if (tw != 0) {
+    if (tw != NULL) {
 	TekScreen *tekscr = TekScreenOf(tw);
 	int oldsize = tekscr->cur.fontsize;
 	int newsize = MI2FS(newitem);
@@ -1939,11 +1910,11 @@ TCursorToggle(TekWidget tw, int toggle)		/* TOGGLE or CLEAR */
     int c, x, y;
     unsigned cellwidth, cellheight;
 
-    if (tw == 0)
+    if (tw == NULL)
 	return;
-    if ((tekscr = TekScreenOf(tw)) == 0)
+    if ((tekscr = TekScreenOf(tw)) == NULL)
 	return;
-    if ((xw = tw->vt) == 0)
+    if ((xw = tw->vt) == NULL)
 	return;
     if (!TEK4014_SHOWN(xw))
 	return;
@@ -1995,7 +1966,7 @@ TCursorToggle(TekWidget tw, int toggle)		/* TOGGLE or CLEAR */
 void
 TekSimulatePageButton(TekWidget tw, Bool reset)
 {
-    if (tw != 0) {
+    if (tw != NULL) {
 	TekScreen *tekscr = TekScreenOf(tw);
 
 	if (reset) {
@@ -2014,7 +1985,7 @@ void
 TekCopy(TekWidget tw)
 {
 #ifdef ALLOWLOGGING
-    if (tw != 0) {
+    if (tw != NULL) {
 	TekScreen *tekscr = TekScreenOf(tw);
 	TScreen *screen = TScreenOf(tw->vt);
 
@@ -2028,12 +1999,10 @@ TekCopy(TekWidget tw)
 	    Bell(tw->vt, XkbBI_MinorError, 0);
 	    return;
 	}
-#ifndef VMS
 	if (access(".", W_OK) < 0) {	/* can't write in directory */
 	    Bell(tw->vt, XkbBI_MinorError, 0);
 	    return;
 	}
-#endif
 
 	tekcopyfd = open_userfile(screen->uid, screen->gid, buf, False);
 	if (tekcopyfd >= 0) {
@@ -2065,7 +2034,7 @@ HandleGINInput(Widget w,
 {
     TekWidget tw = getTekWidget(w);
 
-    if (tw != 0) {
+    if (tw != NULL) {
 	TekScreen *tekscr = TekScreenOf(tw);
 
 	if (tekscr->TekGIN && *nparamsp == 1) {
@@ -2098,10 +2067,10 @@ getTekWidget(Widget w)
 {
     TekWidget tw;
 
-    if (w == 0) {
+    if (w == NULL) {
 	tw = (TekWidget) CURRENT_EMU();
 	if (!IsTekWidget(tw)) {
-	    tw = 0;
+	    tw = NULL;
 	}
     } else if (IsTekWidget(w)) {
 	tw = (TekWidget) w;

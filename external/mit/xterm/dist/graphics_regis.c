@@ -1,8 +1,8 @@
-/* $XTermId: graphics_regis.c,v 1.149 2023/10/08 23:11:35 tom Exp $ */
+/* $XTermId: graphics_regis.c,v 1.153 2024/12/01 20:21:19 tom Exp $ */
 
 /*
+ * Copyright 2014-2023,2024 by Thomas E. Dickey
  * Copyright 2014-2022,2023 by Ross Combs
- * Copyright 2014-2022,2023 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -1377,6 +1377,9 @@ plotCubicSpline(int n, int x[], int y[], int skip_first_last)
 #endif
 
     assert(n > 2);		/* need at least 4 points P[0]..P[n] */
+#ifdef __CPPCHECK__
+    memset(m, 0, sizeof(m));	/* work around false-positive */
+#endif
 
 #ifdef DEBUG_SPLINE_POINTS
     {
@@ -1948,7 +1951,7 @@ find_best_xft_font_size(XtermWidget xw,
 	    XftPattern *match;
 	    XftResult status;
 
-	    if ((pat = XftNameParse(fontname))) {
+	    if ((pat = XftNameParse(fontname)) != NULL) {
 #ifdef DEBUG_FONT_SIZE_SEARCH
 		TRACE(("trying targeth=%g\n", targeth / 10.0));
 #endif
@@ -1961,7 +1964,7 @@ find_best_xft_font_size(XtermWidget xw,
 				NULL);
 		if ((match = XftFontMatch(display,
 					  XScreenNumberOfScreen(screen),
-					  pat, &status))) {
+					  pat, &status)) != NULL) {
 		    font = XftFontOpenPattern(display, match);
 		    maybeXftCache(xw, font);
 		}
@@ -3856,7 +3859,7 @@ load_regis_raw_extent(char const *extent, int *relx, int *rely,
     char const *ypart;
 
     xpart = extent;
-    if ((ypart = strchr(extent, ','))) {
+    if ((ypart = strchr(extent, ',')) != NULL) {
 	ypart++;
     } else {
 	ypart = "";
@@ -4169,9 +4172,6 @@ load_regis_write_control(RegisParseState *state,
 	    if (!regis_num_to_int(arg, &val) || val < 0 || val >= 1) {
 		TRACE(("DATA_ERROR: interpreting out of range value as 0 FIXME\n"));
 		break;
-	    }
-	    if (val == 1) {
-		TRACE(("ERROR: blink display method not supported FIXME\n"));
 	    }
 	}
 	break;

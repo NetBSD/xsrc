@@ -1,7 +1,7 @@
-/* $XTermId: trace.c,v 1.240 2023/10/14 16:52:49 tom Exp $ */
+/* $XTermId: trace.c,v 1.244 2024/12/01 20:23:01 tom Exp $ */
 
 /*
- * Copyright 1997-2022,2023 by Thomas E. Dickey
+ * Copyright 1997-2023,2024 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -81,10 +81,10 @@ TraceOpen(void)
 {
     static const char *trace_out;
 
-    if (trace_fp != 0
+    if (trace_fp != NULL
 	&& trace_who != trace_out) {
 	fclose(trace_fp);
-	trace_fp = 0;
+	trace_fp = NULL;
     }
     trace_out = trace_who;
 
@@ -118,7 +118,7 @@ TraceOpen(void)
 	    sprintf(name, "%s/Trace-%s.out", home, trace_who);
 #endif
 	    trace_fp = fopen(name, "w");
-	    if (trace_fp != 0) {
+	    if (trace_fp != NULL) {
 		fprintf(trace_fp, "%s\n", xtermVersion());
 		TraceIds(NULL, 0);
 	    }
@@ -157,13 +157,13 @@ TraceVA(const char *fmt, va_list ap)
 void
 TraceClose(void)
 {
-    if (trace_fp != 0) {
+    if (trace_fp != NULL) {
 	(void) fclose(trace_fp);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
 	(void) visibleChars(NULL, 0);
 	(void) visibleIChars(NULL, 0);
-	trace_fp = 0;
+	trace_fp = NULL;
     }
 }
 
@@ -184,7 +184,7 @@ TraceIds(const char *fname, int lnum)
 	  (unsigned) getuid(), (unsigned) getgid(),
 	  (unsigned) geteuid(), (unsigned) getegid());
 #endif
-    if (fname != 0) {
+    if (fname != NULL) {
 	Trace(" (%s@%d)\n", fname, lnum);
     } else {
 	time_t now = time((time_t *) 0);
@@ -196,7 +196,7 @@ void
 TraceTime(const char *fname, int lnum)
 {
     time_t now;
-    if (fname != 0) {
+    if (fname != NULL) {
 	Trace("datetime (%s@%d) ", fname, lnum);
     }
     now = time((time_t *) 0);
@@ -223,7 +223,7 @@ formatAscii(char *dst, unsigned value)
 	sprintf(dst, "\\t");
 	break;
     default:
-	if (E2A(value) < 32 || (E2A(value) >= 127 && E2A(value) < 160))
+	if (value < 32 || (value >= 127 && value < 160))
 	    sprintf(dst, "\\%03o", value & 0xff);
 	else
 	    sprintf(dst, "%c", CharOf(value));
@@ -289,6 +289,8 @@ visibleScsCode(DECNRCM_codes chrset)
 	MAP("Y", nrc_Italian);
 	MAP("A", nrc_ISO_Latin_1_Supp);
 	MAP("B", nrc_ISO_Latin_2_Supp);
+	MAP("I", nrc_JIS_Katakana);
+	MAP("J", nrc_JIS_Roman);
 	MAP("M", nrc_ISO_Latin_5_Supp);
 	MAP("L", nrc_ISO_Latin_Cyrillic);
 	MAP("`", nrc_Norwegian_Danish);
@@ -315,14 +317,14 @@ visibleChars(const Char *buf, size_t len)
     static char *result;
     static size_t used;
 
-    if (buf != 0) {
+    if (buf != NULL) {
 	size_t limit = ((len + 1) * 8) + 1;
 
 	if (limit > used) {
 	    used = limit;
 	    result = realloc(result, used);
 	}
-	if (result != 0) {
+	if (result != NULL) {
 	    char *dst = result;
 	    *dst = '\0';
 	    while (len--) {
@@ -365,14 +367,14 @@ visibleIChars(const IChar *buf, size_t len)
     static char *result;
     static size_t used;
 
-    if (buf != 0) {
+    if (buf != NULL) {
 	size_t limit = ((len + 1) * 12) + 1;
 
 	if (limit > used) {
 	    used = limit;
 	    result = realloc(result, used);
 	}
-	if (result != 0) {
+	if (result != NULL) {
 	    char *dst = result;
 	    *dst = '\0';
 	    while (len--) {
@@ -669,7 +671,7 @@ TraceScreen(XtermWidget xw, int whichBuf)
 	    LineData *ld = getLineData(screen, row);
 
 	    TRACE((" %3d:", row));
-	    if (ld != 0) {
+	    if (ld != NULL) {
 		int col;
 
 		for (col = 0; col < ld->lineSize; ++col) {
@@ -782,7 +784,7 @@ formatEventMask(char *target, unsigned source, Boolean buttons)
 }
 
 void
-TraceEvent(const char *tag, XEvent *ev, String *params, Cardinal *num_params)
+TraceEvent(const char *tag, XEvent *ev, String *params, const Cardinal *num_params)
 {
     char mask_buffer[160];
 
@@ -952,7 +954,7 @@ TraceEvent(const char *tag, XEvent *ev, String *params, Cardinal *num_params)
 	break;
     }
     TRACE(("\n"));
-    if (params != 0 && *num_params != 0) {
+    if (params != NULL && *num_params != 0) {
 	Cardinal n;
 	for (n = 0; n < *num_params; ++n) {
 	    TRACE(("  param[%d] = %s\n", n, params[n]));
@@ -1020,7 +1022,7 @@ TraceFocus(Widget w, XEvent *ev)
 	}
 	break;
     }
-    while (w != 0) {
+    while (w != NULL) {
 	TRACE(("w %p -> %#lx\n", (void *) w, XtWindow(w)));
 	w = XtParent(w);
     }
@@ -1319,10 +1321,10 @@ void
 TraceArgv(const char *tag, char **argv)
 {
     TRACE(("%s:\n", tag));
-    if (argv != 0) {
+    if (argv != NULL) {
 	int n = 0;
 
-	while (*argv != 0) {
+	while (*argv != NULL) {
 	    TRACE(("  %d:%s\n", n++, *argv++));
 	}
     }
@@ -1421,7 +1423,7 @@ TraceOptions(OptionHelp * options, XrmOptionDescRec * resources, Cardinal res_co
 #endif
 
     /* list all options[] not found in resources[] */
-    for (j = 0, first = True; options[j].opt != 0; j++) {
+    for (j = 0, first = True; options[j].opt != NULL; j++) {
 	found = False;
 	for (k = 0; k < res_count; k++) {
 	    if (same_option(&opt_array[j], &res_array[k])) {
@@ -1442,7 +1444,7 @@ TraceOptions(OptionHelp * options, XrmOptionDescRec * resources, Cardinal res_co
     /* list all resources[] not found in options[] */
     for (j = 0, first = True; j < res_count; j++) {
 	found = False;
-	for (k = 0; options[k].opt != 0; k++) {
+	for (k = 0; options[k].opt != NULL; k++) {
 	    if (same_option(&opt_array[k], &res_array[j])) {
 		found = True;
 		break;

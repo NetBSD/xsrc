@@ -1,4 +1,4 @@
-@comment $NetBSD: PLIST,v 1.1.1.1 2021/02/11 12:19:55 mrg Exp $
+@comment $NetBSD: PLIST,v 1.1.1.2 2025/03/09 23:17:11 mrg Exp $
 bin/koi8rxterm
 bin/resize
 bin/uxterm
@@ -15,11 +15,15 @@ man/man1/uxterm.1
 man/man1/xterm.1
 share/applications/uxterm.desktop
 share/applications/xterm.desktop
+share/pixmaps/filled-xterm_16x16.xpm
 share/pixmaps/filled-xterm_32x32.xpm
 share/pixmaps/filled-xterm_48x48.xpm
+share/pixmaps/mini.xterm_16x16.xpm
 share/pixmaps/mini.xterm_32x32.xpm
 share/pixmaps/mini.xterm_48x48.xpm
+share/pixmaps/xterm-color_16x16.xpm
 share/pixmaps/xterm-color_32x32.xpm
 share/pixmaps/xterm-color_48x48.xpm
+share/pixmaps/xterm_16x16.xpm
 share/pixmaps/xterm_32x32.xpm
 share/pixmaps/xterm_48x48.xpm
