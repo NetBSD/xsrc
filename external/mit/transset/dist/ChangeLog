@@ -1,3 +1,46 @@
+commit 56bee274eed3ebfbb8271bdb6ad67162e8ea4203
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 4 13:02:38 2024 -0800
+
+    transset 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 171063b53ebecbc860d3d5e2323c1b7067a6a207
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 11 11:54:33 2024 -0800
+
+    Mark some pointers const as suggested by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/transset/-/merge_requests/7>
+
+commit d9cb8fc3367bcf1225846e5458dbd3f8a8b7b405
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Aug 26 18:09:49 2024 -0700
+
+    Select correct client window in WM’s using virtual roots (#1)
+    
+    Based on xprop@e09956f244099ddd36b1a2cd5d7800d5fc7120c1
+    by Kim Woelders <kim@woelders.dk>
+    
+    Closes: #1 transset fails to pick correct window under GNOME
+    Originally filed at
+     https://bugs.launchpad.net/ubuntu/+source/x11-apps/+bug/1301472
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/transset/-/merge_requests/6>
+
+commit 5bf1c40de1cc197defea2ddc9255f92309dada16
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 25 08:56:19 2023 -0800
+
+    Remove "All rights reserved" from Oracle copyright notices
+    
+    Oracle no longer includes this term in our copyright & license notices.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit a962ae522f28ca644ad0b757eae660cd2e504922
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Dec 3 11:54:51 2022 -0800

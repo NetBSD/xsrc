@@ -60,8 +60,8 @@ void Usage (void) _X_NORETURN;
  * Send bugs, etc. to chariot@athena.mit.edu.
  */
 
-Window Select_Window (Display *);
-Window Get_Window_Under_Cursor (Display *); /*added by Daniel Forchheimer for transset-df*/
+Window Select_Window (Display *, int descend);
+Window Get_Window_Under_Cursor (Display *, int descend); /*added by Daniel Forchheimer for transset-df*/
 Window Window_With_Name (Display *, Window, char *);
-Window Window_With_Name_Regex (Display *, Window, char *); /*added by Daniel Forchheimer for transset-df*/
+Window Window_With_Name_Regex (Display *, Window, const char *); /*added by Daniel Forchheimer for transset-df*/
 void Fatal_Error (const char *, ...) _X_NORETURN _X_ATTRIBUTE_PRINTF(1,2);
