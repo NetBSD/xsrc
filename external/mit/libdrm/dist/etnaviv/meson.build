@@ -33,7 +33,7 @@ libdrm_etnaviv = library(
   c_args : libdrm_c_args,
   gnu_symbol_visibility : 'hidden',
   dependencies : [dep_threads, dep_rt, dep_atomic_ops],
-  version : '1.0.0',
+  version : '1.@0@.0'.format(patch_ver),
   install : true,
 )
 
