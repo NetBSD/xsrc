@@ -1,3 +1,67 @@
+commit 1d2e1e7ac5524e44a5de00c463b307794a58ebd7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 4 11:56:02 2024 -0800
+
+    fslsfonts 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 080aacac912a4eb67a5ba044286c4c34075d50d4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 9 13:16:37 2024 -0800
+
+    Variable scope reductions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fslsfonts/-/merge_requests/10>
+
+commit 9a5aa0fee95c399149a8d61efba9fb50a36d9cea
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 9 13:02:37 2024 -0800
+
+    Mark pointers const as suggested by cppcheck
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fslsfonts/-/merge_requests/10>
+
+commit 3d5c32487ecd2e1e72fc4176f8180466260da6cc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 9 11:56:27 2023 -0800
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f48acd133b8deb7e035edc323e75df7a1c118975
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 8 11:33:18 2023 -0800
+
+    Add -help option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c66a587f301a4e35b9de68bc6d7419247f0e062
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 6 13:13:21 2023 -0800
+
+    configure: raise minimum autoconf requirement to 2.70
+    
+    Needed for builds on NetBSD to work correctly, since it depends on
+    AC_USE_SYSTEM_EXTENSIONS defining _OPENBSD_SOURCE to expose the
+    prototype for reallocarray() in the system headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5a8a115aa49d06e29a32d1fc5466308b00e9095a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 13:36:39 2022 -0700
+
+    man page: emphasize this program is for querying xfs
+    
+    Try to answer the question "How is this different from xlsfonts?"
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 15c6839c0c23869a92e94109ec7310627720e841
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Sep 10 09:46:21 2022 -0700
@@ -574,7 +638,7 @@ Date:   Wed Jul 20 19:31:48 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 492cae010ee83167c662df163f37dec2ef5b8b8b
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 16:17:30 2005 +0000
 
     Build system for fslsfonts
