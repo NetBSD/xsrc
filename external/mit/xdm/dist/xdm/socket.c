@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2025, Oracle and/or its affiliates.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -81,7 +81,7 @@ CreateWellKnownSockets (void)
     if (request_port == 0)
 	return;
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     chooserFd = socket (AF_INET6, SOCK_STREAM, 0);
     if (chooserFd == -1)
 # endif
@@ -103,7 +103,7 @@ GetChooserAddr (
     char	*addr,
     int		*lenp)
 {
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_STRUCT_SOCKADDR_STORAGE
     struct sockaddr_storage in_addr;
 # else
     struct sockaddr_in	in_addr;
@@ -118,7 +118,7 @@ GetChooserAddr (
 	return -1;
     if (len > sizeof in_addr)
         return -1;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     if (((struct sockaddr *)&in_addr)->sa_family == AF_INET6)
 	Debug ("Chooser socket port: %d (IPv6)\n",
 	  ntohs(((struct sockaddr_in6 *) &in_addr)->sin6_port));
@@ -140,19 +140,24 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 {
     int fd;
     const char *addrstring = "unknown";
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     char addrbuf[INET6_ADDRSTRLEN];
+# elif defined(HAVE_INET_NTOP)
+    char addrbuf[INET_ADDRSTRLEN] = "";
 # endif
 
     if (request_port == 0)
 	    return -1;
 
     if (debugLevel > 0) {
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef HAVE_INET_NTOP
 	void *ipaddr;
+#  ifdef IPv6
 	if (sock_addr->sa_family == AF_INET6) {
 	    ipaddr = & ((struct sockaddr_in6 *) sock_addr)->sin6_addr;
-	} else {
+	} else
+#  endif
+	{
 	    ipaddr = & ((struct sockaddr_in *) sock_addr)->sin_addr;
 	}
 	addrstring =
@@ -248,7 +253,7 @@ FindInList(struct socklist *list, ARRAY8Ptr addr)
 		addrdata = (char *)
 		  &(((struct sockaddr_in *)s->addr)->sin_addr.s_addr);
 		break;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	    case AF_INET6:
 		addrdata = (char *)
 		  &(((struct sockaddr_in6 *)s->addr)->sin6_addr.s6_addr);
@@ -298,7 +303,7 @@ CreateSocklistEntry(ARRAY8Ptr addr)
 	sin->sin_port = htons ((short) request_port);
 	memcpy(&sin->sin_addr, addr->data, addr->length);
     }
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     else if (addr->length == 16) /* IPv6 */
     {
 	struct sockaddr_in6 *sin6;
@@ -339,7 +344,7 @@ UpdateListener(ARRAY8Ptr addr, void **closure)
     if (addr == NULL || addr->length == 0) {
 	ARRAY8 tmpaddr;
 	struct in_addr in;
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 	struct in6_addr in6 = in6addr_any;
 	tmpaddr.length = sizeof(in6);
 	tmpaddr.data = (CARD8Ptr) &in6;
@@ -390,6 +395,10 @@ ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
     {
         case AF_INET:
         {
+# ifdef HAVE_INET_NTOP
+	    char	addrbuf[INET_ADDRSTRLEN] = "";
+# endif
+	    const char *addrstring;
 	    struct ip_mreq mreq;
 	    memcpy(&mreq.imr_multiaddr,
 	      &((struct sockaddr_in *) g->addr)->sin_addr,
@@ -402,20 +411,26 @@ ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
 	    } else {
 		sockopt = IP_DROP_MEMBERSHIP;
 	    }
+# ifdef HAVE_INET_NTOP
+	    addrstring = inet_ntop(s->addr->sa_family,
+				   &((struct sockaddr_in *) g->addr)->sin_addr,
+				   addrbuf, sizeof(addrbuf));
+# else
+	    addrstring = inet_ntoa(((struct sockaddr_in *) g->addr)->sin_addr);
+# endif
 	    if (setsockopt(s->fd, IPPROTO_IP, sockopt,
 	      &mreq, sizeof(mreq)) < 0) {
 		LogError ("XDMCP socket multicast %s to %s failed, errno %d\n",
 		  (op == JOIN_MCAST_GROUP) ? "join" : "drop",
-		  inet_ntoa(((struct sockaddr_in *) g->addr)->sin_addr),
-		  errno);
+		  addrstring, errno);
 	    } else if (debugLevel > 0) {
 		Debug ("XDMCP socket multicast %s to %s succeeded\n",
 		  (op == JOIN_MCAST_GROUP) ? "join" : "drop",
-		  inet_ntoa(((struct sockaddr_in *) g->addr)->sin_addr));
+		  addrstring);
 	    }
 	    return;
 	}
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 #  ifndef IPV6_JOIN_GROUP
 #   define IPV6_JOIN_GROUP IPV6_ADD_MEMBERSHIP
 #  endif

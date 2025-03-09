@@ -41,7 +41,7 @@ from The Open Group.
 
 # include "dm_socket.h"
 
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
 #  include        <arpa/inet.h>
 # endif
 
@@ -69,7 +69,7 @@ char * NetaddrPort(XdmcpNetaddr netaddrp, int *lenp)
     case AF_INET:
 	*lenp = 2;
 	return (char *)&(((struct sockaddr_in *)netaddrp)->sin_port);
-# if defined(IPv6) && defined(AF_INET6)
+# ifdef IPv6
     case AF_INET6:
 	*lenp = 2;
 	return (char *)&(((struct sockaddr_in6 *)netaddrp)->sin6_port);
@@ -96,7 +96,7 @@ char * NetaddrAddress(XdmcpNetaddr netaddrp, int *lenp)
     case AF_INET:
         *lenp = sizeof (struct in_addr);
         return (char *) &(((struct sockaddr_in *)netaddrp)->sin_addr);
-#  if defined(IPv6) && defined(AF_INET6)
+#  ifdef IPv6
     case AF_INET6:
     {
 	struct in6_addr *a = &(((struct sockaddr_in6 *)netaddrp)->sin6_addr);
@@ -144,7 +144,7 @@ int ConvertAddr (XdmcpNetaddr saddr, int *len, char **addr)
       case AF_INET:
         retval = FamilyInternet;
 	break;
-#  if defined(IPv6) && defined(AF_INET6)
+#  ifdef IPv6
       case AF_INET6:
 	if (*len == sizeof(struct in_addr))
 	    retval = FamilyInternet;
@@ -210,7 +210,7 @@ PrintSockAddr (struct sockaddr *a, int len)
 		(p[0] << 8) + p[1], t[0], t[1], t[2], t[3]);
 	break;
 #  endif
-#  if defined(IPv6) && defined(AF_INET6)
+#  ifdef IPv6
     case AF_INET6:
     {
 	char astr[INET6_ADDRSTRLEN] = "";

@@ -1,3 +1,66 @@
+commit ba65fe63adb9071e825df80b1c84985e048ed463
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 8 17:09:58 2025 -0800
+
+    xdm 1.1.17
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7cc981a7f42ba4db46baafff740e189008202815
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 18 13:38:19 2025 -0800
+
+    if inet_ntop() is available, use it, even if IPv6 support is disabled
+    
+    Support for using inet_ntop() was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for inet_ntop() is ubiquitous and OS'es have marked inet_ntoa()
+    as deprecated, so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xdm/-/merge_requests/25>
+
+commit 5dc368a3969fbda18a4c9a37d3b47253ea331994
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 18 13:09:12 2025 -0800
+
+    if sockaddr_storage is available, use it, even if IPv6 support is disabled
+    
+    Support for using sockaddr_storage was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for sockaddr_storage is ubiquitous and works just as well with IPv4,
+    so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xdm/-/merge_requests/25>
+
+commit 5eb1648021bd52322bcb47163117e19b6022ae0a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 12 12:28:43 2025 -0800
+
+    if getaddrinfo() is available, use it, even if IPv6 support is disabled
+    
+    Support for using getaddrinfo() was originally added to support IPv6,
+    and only used if IPv6 support was enabled.  Two decades later, support
+    for getaddrinfo() is ubiquitous and OS'es have marked gethostbyname()
+    as deprecated, so use the modern interface whenever we can now.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xdm/-/merge_requests/24>
+
+commit 026a10afdbbc3fe9199ede6260fc08897291e3eb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 12 11:17:53 2025 -0800
+
+    Simplify ifdefs for IPv6 support
+    
+    Instead of checking for AF_INET6 at every ifdef, just check once for it
+    and report that IPv6 support is not available, instead of silently not
+    building support for it that configure said we were going to build.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xdm/-/merge_requests/24>
+
 commit 55cb37f064fc32998a035e78d41f3aa852270642
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Apr 4 17:00:32 2024 -0700

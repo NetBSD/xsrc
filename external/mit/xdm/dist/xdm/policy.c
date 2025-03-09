@@ -192,7 +192,7 @@ SelectConnectionTypeIndex (
 	  case FamilyLocal:
 # if defined(TCPCONN)
 	  case FamilyInternet:
-#  if defined(IPv6) && defined(AF_INET6)
+#  ifdef IPv6
 	  case FamilyInternet6:
 #  endif /* IPv6 */
 # endif /* TCPCONN */
