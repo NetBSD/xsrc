@@ -13,7 +13,7 @@ void drmmode_screen_init(ScreenPtr pScreen);
 void drmmode_screen_fini(ScreenPtr pScreen);
 
 int  drmmode_crtc(xf86CrtcPtr crtc);
-Bool drmmode_crtc_on(xf86CrtcPtr crtc);
+Bool xf86_crtc_on(xf86CrtcPtr crtc);
 int  drmmode_head(xf86CrtcPtr crtc);
 void drmmode_swap(ScrnInfoPtr, uint32_t, uint32_t *);
 
@@ -45,8 +45,9 @@ void NVTakedownVideo(ScrnInfoPtr);
 void NVSetPortDefaults (ScrnInfoPtr pScrn, NVPortPrivPtr pPriv);
 void NVXVComputeBicubicFilter(struct nouveau_bo *, unsigned, unsigned);
 unsigned int nv_window_belongs_to_crtc(ScrnInfoPtr, int, int, int, int);
-xf86CrtcPtr nouveau_pick_best_crtc(ScrnInfoPtr pScrn, Bool consider_disabled,
+xf86CrtcPtr nouveau_pick_best_crtc(ScrnInfoPtr pScrn,
                                    int x, int y, int w, int h);
+RRCrtcPtr randr_crtc_covering_drawable(DrawablePtr pDraw);
 
 /* in nouveau_exa.c */
 Bool nouveau_exa_init(ScreenPtr pScreen);
@@ -228,6 +229,16 @@ extern void exaMoveInPixmap(PixmapPtr pPixmap);
 #endif
 
 extern Bool wfbPictureInit(ScreenPtr, PictFormatPtr, int);
+
+extern Bool wfbScreenInit(ScreenPtr pScreen,
+              void *pbits,
+              int xsize,
+              int ysize,
+              int dpix,
+              int dpiy,
+              int width,
+              int bpp,
+              SetupWrapProcPtr setupWrap, FinishWrapProcPtr finishWrap);
 
 #endif /* __NV_PROTO_H__ */
 
