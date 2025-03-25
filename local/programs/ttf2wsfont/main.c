@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2020/06/08 15:01:59 rin Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2025/03/25 03:15:32 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -59,6 +59,8 @@ push_size(int letter)
 	printf("%d x %d\n", face->glyph->bitmap.width, face->glyph->bitmap.rows);
 	printf("offset: %d %d\n", face->glyph->bitmap_left, face->glyph->bitmap_top);
 	new_advance = (int)(face->glyph->advance.x >> 6);
+	if (face->glyph->bitmap.width >= new_advance)
+		new_advance = face->glyph->bitmap.width + 1;
 	printf("advance: %d\n", new_advance);
 	new_above = face->glyph->bitmap_top;
 	new_below = face->glyph->bitmap.rows - face->glyph->bitmap_top;
@@ -104,6 +106,9 @@ main(int argc, char *argv[])
 
 	push_size('W');
 	push_size('g');
+	push_size(']');
+	push_size('[');
+	push_size('^');
 	push_size(192);
 	printf("above: %d below: %d advance: %d\n", above, below, advance);
 	width = advance;
