@@ -54,8 +54,10 @@
 
 #include "pm3_regs.h"
 #include "glint_regs.h"
+#ifndef PM23_ONLY
 #include "IBM.h"
 #include "TI.h"
+#endif
 #include "glint.h"
 
 #ifdef XFreeXDGA
@@ -146,13 +148,15 @@ static SymTabRec GLINTVGAChipsets[] = {
 
 static PciChipsets GLINTVGAPciChipsets[] = {
     { PCI_VENDOR_TI_CHIP_PERMEDIA2,	 PCI_VENDOR_TI_CHIP_PERMEDIA2,	    RES_SHARED_VGA },
-    { PCI_VENDOR_TI_CHIP_PERMEDIA,	 PCI_VENDOR_TI_CHIP_PERMEDIA,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA4, PCI_VENDOR_3DLABS_CHIP_PERMEDIA4, RES_SHARED_VGA },
-    { PCI_VENDOR_3DLABS_CHIP_R4, PCI_VENDOR_3DLABS_CHIP_R4, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA3, PCI_VENDOR_3DLABS_CHIP_PERMEDIA3, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V, PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA2,	 PCI_VENDOR_3DLABS_CHIP_PERMEDIA2,  RES_SHARED_VGA },
+#ifndef PM23_ONLY
+    { PCI_VENDOR_3DLABS_CHIP_R4, PCI_VENDOR_3DLABS_CHIP_R4, RES_SHARED_VGA },
+    { PCI_VENDOR_TI_CHIP_PERMEDIA,	 PCI_VENDOR_TI_CHIP_PERMEDIA,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA,	 PCI_VENDOR_3DLABS_CHIP_PERMEDIA,   NULL },
+#endif
     { -1,				 -1,				    RES_UNDEFINED }
 };
 
@@ -175,20 +179,26 @@ static SymTabRec GLINTChipsets[] = {
 };
 
 static PciChipsets GLINTPciChipsets[] = {
+#ifndef PM23_ONLY
     { PCI_VENDOR_3DLABS_CHIP_GAMMA,	 PCI_VENDOR_3DLABS_CHIP_GAMMA,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_GAMMA2,	 PCI_VENDOR_3DLABS_CHIP_GAMMA2,	    NULL },
+#endif
     { PCI_VENDOR_TI_CHIP_PERMEDIA2,	 PCI_VENDOR_TI_CHIP_PERMEDIA2,	    RES_SHARED_VGA },
+#ifndef PM23_ONLY
     { PCI_VENDOR_TI_CHIP_PERMEDIA,	 PCI_VENDOR_TI_CHIP_PERMEDIA,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_R4, PCI_VENDOR_3DLABS_CHIP_R4, RES_SHARED_VGA },
+#endif
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA4, PCI_VENDOR_3DLABS_CHIP_PERMEDIA4, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA3, PCI_VENDOR_3DLABS_CHIP_PERMEDIA3, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V, PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V, RES_SHARED_VGA },
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA2,	 PCI_VENDOR_3DLABS_CHIP_PERMEDIA2,  RES_SHARED_VGA },
+#ifndef PM23_ONLY
     { PCI_VENDOR_3DLABS_CHIP_PERMEDIA,	 PCI_VENDOR_3DLABS_CHIP_PERMEDIA,   NULL },
     { PCI_VENDOR_3DLABS_CHIP_300SX,	 PCI_VENDOR_3DLABS_CHIP_300SX,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_500TX,	 PCI_VENDOR_3DLABS_CHIP_500TX,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_MX,	 PCI_VENDOR_3DLABS_CHIP_MX,	    NULL },
     { PCI_VENDOR_3DLABS_CHIP_DELTA,	 PCI_VENDOR_3DLABS_CHIP_DELTA,	    NULL },
+#endif
     { -1,				 -1,				    RES_UNDEFINED }
 };
 
@@ -221,6 +231,7 @@ static const OptionInfoRec GLINTOptions[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
+#ifndef PM23_ONLY
 static RamDacSupportedInfoRec IBMRamdacs[] = {
     { IBM526DB_RAMDAC },
     { IBM526_RAMDAC },
@@ -233,6 +244,7 @@ static RamDacSupportedInfoRec TIRamdacs[] = {
     { TI3026_RAMDAC },
     { -1 }
 };
+#endif
 
 static MODULESETUPPROTO(glintSetup);
 
@@ -274,6 +286,7 @@ static char bppand[4] = { 0x03, /* 8bpp */
 			  0x00, /* 24bpp */
 			  0x00  /* 32bpp */};
 
+#ifndef PM23_ONLY
 static int partprod500TX[] = {
 	-1,
 	PARTPROD(0,0,1), PARTPROD(0,0,2), PARTPROD(0,1,2), PARTPROD(0,0,3),
@@ -309,6 +322,7 @@ static int partprod500TX[] = {
 		     -1,              -1,              -1,              -1,
 		     -1,              -1,              -1, PARTPROD(0,7,7),
 		      0};
+#endif
 
 int partprodPermedia[] = {
 	-1,
@@ -717,6 +731,7 @@ GetAccelPitchValues(ScrnInfoPtr pScrn)
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	linep = &partprodPermedia[0];
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_3DLABS_CHIP_500TX:
     case PCI_VENDOR_3DLABS_CHIP_300SX:
     case PCI_VENDOR_3DLABS_CHIP_MX:
@@ -740,6 +755,7 @@ GetAccelPitchValues(ScrnInfoPtr pScrn)
 	    break;
 	}
 	break;
+#endif
     }
 
     for (i = 0; linep[i] != 0; i++) {
@@ -758,6 +774,8 @@ GetAccelPitchValues(ScrnInfoPtr pScrn)
 
     return linePitches;
 }
+
+#ifndef PM23_ONLY
 
 static void
 GLINTProbeTIramdac(ScrnInfoPtr pScrn)
@@ -812,6 +830,7 @@ GLINTProbeIBMramdac(ScrnInfoPtr pScrn)
     pGlint->RamDac = IBMramdacProbe(pScrn, IBMRamdacs);
     GLINTUnmapMem(pScrn);
 }
+#endif
 
 /* Mandatory */
 static Bool
@@ -1137,7 +1156,9 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     pGlint->DoubleBuffer = FALSE;
+#ifndef PM23_ONLY
     pGlint->RamDac = NULL;
+#endif
     pGlint->STATE = FALSE;
     /*
      * Set the Chipset and ChipRev, allowing config file entries to
@@ -1530,10 +1551,11 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "VideoRAM: %ld kByte\n",
 		   pGlint->FbMapSize / 1024);
 
+#ifndef PM23_ONLY
     /* The ramdac module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "ramdac"))
 	return FALSE;
-
+#endif
     /* Let's check what type of DAC we have and reject if necessary */
     switch (pGlint->Chipset) {
 	case PCI_VENDOR_TI_CHIP_PERMEDIA2:
@@ -1542,6 +1564,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    maxheight = 2048;
 	    maxwidth = 2048;
 	    pGlint->RefClock = 14318;
+#ifndef PM23_ONLY
 	    pGlint->RamDacRec = RamDacCreateInfoRec();
 	    pGlint->RamDacRec->ReadDAC = Permedia2InIndReg;
 	    pGlint->RamDacRec->WriteDAC = Permedia2OutIndReg;
@@ -1553,12 +1576,14 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		RamDacDestroyInfoRec(pGlint->RamDacRec);
 		return FALSE;
 	    }
+#endif
 	    break;
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V:
 	    pGlint->FIFOSize = 256;
 	    maxheight = 2048;
 	    maxwidth = 2048;
 	    pGlint->RefClock = 14318;
+#ifndef PM23_ONLY
 	    pGlint->RamDacRec = RamDacCreateInfoRec();
 	    pGlint->RamDacRec->ReadDAC = Permedia2vInIndReg;
 	    pGlint->RamDacRec->WriteDAC = Permedia2vOutIndReg;
@@ -1570,6 +1595,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		RamDacDestroyInfoRec(pGlint->RamDacRec);
 		return FALSE;
 	    }
+#endif
 	    break;
 	case PCI_VENDOR_3DLABS_CHIP_R4:
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA4:
@@ -1583,6 +1609,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    maxheight = 4096;
 	    maxwidth = 4096;
 	    pGlint->RefClock = 14318;
+#ifndef PM23_ONLY
 	    pGlint->RamDacRec = RamDacCreateInfoRec();
 	    pGlint->RamDacRec->ReadDAC = Permedia2vInIndReg;
 	    pGlint->RamDacRec->WriteDAC = Permedia2vOutIndReg;
@@ -1594,7 +1621,9 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		RamDacDestroyInfoRec(pGlint->RamDacRec);
 		return FALSE;
 	    }
+#endif
 	    break;
+#ifndef PM23_ONLY
 	case PCI_VENDOR_TI_CHIP_PERMEDIA:
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	    pGlint->FIFOSize = 31;
@@ -1795,8 +1824,10 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    	if (!pGlint->RamDac)
 		    return FALSE;
 	    break;
+#endif
     }
 
+#ifndef PM23_ONLY
     if ( pGlint->RamDac &&
 	 (pGlint->RamDac->RamDacType != (IBM640_RAMDAC)) &&
 	 (pScrn->depth == 30) )
@@ -1805,6 +1836,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 			"Depth 30 not supported for this chip\n");
 	return FALSE;
     }
+#endif
 
     if (pGlint->FIFOSize)
     	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "FIFO Size is %d DWORDS\n",
@@ -2075,6 +2107,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     xf86PruneDriverModes(pScrn);
 
     /* Only allow a single mode for MX and TX chipsets */
+#ifndef PM23_ONLY
     if ((pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_500TX) ||
         (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_300SX) ||
         (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_MX) ||
@@ -2100,6 +2133,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    } while (i == -1);
 	}
     }
+#endif
 
     /* Check Virtual resolution */
     if (pScrn->virtualX > maxwidth) {
@@ -2130,6 +2164,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	pGlint->bppalign = bppand[(pScrn->bitsPerPixel>>3)-1];
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_3DLABS_CHIP_500TX:
     case PCI_VENDOR_3DLABS_CHIP_MX:
     case PCI_VENDOR_3DLABS_CHIP_300SX:
@@ -2153,6 +2188,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    break;
 	}
 	break;
+#endif
     }
 
     if ( ((pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA) ||
@@ -2451,14 +2487,18 @@ GLINTSave(ScrnInfoPtr pScrn)
     GLINTPtr pGlint;
     GLINTRegPtr glintReg;
     GLINTRegPtr glintReg2;
+#ifndef PM23_ONLY
     RamDacHWRecPtr pRAMDAC;
     RamDacRegRecPtr RAMDACreg;
+#endif
 
     pGlint = GLINTPTR(pScrn);
-    pRAMDAC = RAMDACHWPTR(pScrn);
     glintReg = &pGlint->SavedReg[0];
     glintReg2 = &pGlint->SavedReg[1];
+#ifndef PM23_ONLY
+    pRAMDAC = RAMDACHWPTR(pScrn);
     RAMDACreg = &pRAMDAC->SavedReg;
+#endif
     TRACE_ENTER("GLINTSave");
 
     switch (pGlint->Chipset)
@@ -2475,6 +2515,7 @@ GLINTSave(ScrnInfoPtr pScrn)
     case PCI_VENDOR_3DLABS_CHIP_R4:
 	Permedia3Save(pScrn, glintReg);
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_TI_CHIP_PERMEDIA:
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	PermediaSave(pScrn, glintReg);
@@ -2520,6 +2561,7 @@ GLINTSave(ScrnInfoPtr pScrn)
 	    break;
 	}
 	break;
+#endif
     }
     TRACE_EXIT("GLINTSave");
 }
@@ -2536,8 +2578,10 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
     int ret = -1;
     GLINTPtr pGlint = GLINTPTR(pScrn);
+#ifndef PM23_ONLY
     RamDacHWRecPtr pRAMDAC = RAMDACHWPTR(pScrn);
     RamDacRegRecPtr RAMDACreg;
+#endif
     GLINTRegPtr glintReg = &pGlint->ModeReg[0];
     GLINTRegPtr glintReg2 = &pGlint->ModeReg[1];
 
@@ -2556,6 +2600,7 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     case PCI_VENDOR_3DLABS_CHIP_R4:
 	ret = Permedia3Init(pScrn, mode, glintReg);
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_TI_CHIP_PERMEDIA:
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	ret = PermediaInit(pScrn, mode);
@@ -2594,6 +2639,7 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    break;
 	}
 	break;
+#endif
     }
 
     if (!ret)
@@ -2601,7 +2647,9 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     glintReg = &pGlint->ModeReg[0];
     glintReg2 = &pGlint->ModeReg[1];
+#ifndef PM23_ONLY
     RAMDACreg = &pRAMDAC->ModeReg;
+#endif
 
     pGlint->STATE = FALSE;
 
@@ -2618,6 +2666,7 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     case PCI_VENDOR_3DLABS_CHIP_R4:
 	Permedia3Restore(pScrn, glintReg);
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_TI_CHIP_PERMEDIA:
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	PermediaRestore(pScrn, glintReg);
@@ -2663,6 +2712,7 @@ GLINTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    break;
 	}
 	break;
+#endif
     }
 
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
@@ -2682,14 +2732,18 @@ GLINTRestore(ScrnInfoPtr pScrn)
     GLINTPtr pGlint;
     GLINTRegPtr glintReg;
     GLINTRegPtr glintReg2;
+#ifndef PM23_ONLY
     RamDacHWRecPtr pRAMDAC;
     RamDacRegRecPtr RAMDACreg;
+#endif
 
     pGlint = GLINTPTR(pScrn);
-    pRAMDAC = RAMDACHWPTR(pScrn);
     glintReg = &pGlint->SavedReg[0];
     glintReg2 = &pGlint->SavedReg[1];
+#ifndef PM23_ONLY
+    pRAMDAC = RAMDACHWPTR(pScrn);
     RAMDACreg = &pRAMDAC->SavedReg;
+#endif
 
     TRACE_ENTER("GLINTRestore");
 
@@ -2708,6 +2762,7 @@ GLINTRestore(ScrnInfoPtr pScrn)
     case PCI_VENDOR_3DLABS_CHIP_R4:
 	Permedia3Restore(pScrn, glintReg);
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_TI_CHIP_PERMEDIA:
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	PermediaRestore(pScrn, glintReg);
@@ -2753,6 +2808,7 @@ GLINTRestore(ScrnInfoPtr pScrn)
 	    break;
 	}
 	break;
+#endif
     }
 
     TRACE_EXIT("GLINTRestore");
@@ -2926,6 +2982,7 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	    Pm3InitEXA(pScreen);
 #endif
 	    break;
+#ifndef PM23_ONLY
 	case PCI_VENDOR_TI_CHIP_PERMEDIA:
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 	    PermediaAccelInit(pScreen);
@@ -2958,6 +3015,7 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	case PCI_VENDOR_3DLABS_CHIP_300SX:
 	    SXAccelInit(pScreen);
 	    break;
+#endif
         }
     }
 
@@ -2982,6 +3040,7 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	    ((pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA) && 
 	     (pGlint->MultiChip == PCI_CHIP_3DLABS_PERMEDIA3)) )
 	    Permedia2vHWCursorInit(pScreen);
+#ifndef PM23_ONLY
 	else
 	/* If we get here pGlint->Ramdac should have been set */
 	if ( ((pGlint->RamDac->RamDacType == (IBM526DB_RAMDAC)) ||
@@ -2992,6 +3051,7 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	if ( (pGlint->RamDac->RamDacType == (TI3030_RAMDAC)) ||
 	     (pGlint->RamDac->RamDacType == (TI3026_RAMDAC)) )
 	    		glintTIHWCursorInit(pScreen);
+#endif
     }
 
     /* Initialise default colourmap */
@@ -3025,7 +3085,9 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	    ((pScrn->overlayFlags & OVERLAY_8_32_PLANAR) 
 					? 0 : CMAP_PALETTED_TRUECOLOR)))
 	return FALSE;
-    } else {
+    }
+#ifndef PM23_ONLY
+     else {
 	if (pScrn->rgbBits == 10) {
     	if (!RamDacHandleColormaps(pScreen, 1024, pScrn->rgbBits, 
 	    CMAP_RELOAD_ON_MODE_SWITCH | CMAP_PALETTED_TRUECOLOR)) 
@@ -3038,7 +3100,7 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
 	return FALSE;
 	}
     }
-
+#endif
     if(pGlint->ShadowFB)
 	ShadowFBInit(pScreen, GLINTRefreshArea);
 
@@ -3198,6 +3260,7 @@ GLINTAdjustFrame(ADJUST_FRAME_ARGS_DECL)
     	base = (y * pScrn->displayWidth + x) >> pGlint->BppShift;
 	GLINT_SLOW_WRITE_REG(base, PMScreenBase);
 	break;
+#ifndef PM23_ONLY
     case PCI_VENDOR_3DLABS_CHIP_GAMMA:
     case PCI_VENDOR_3DLABS_CHIP_GAMMA2:
     case PCI_VENDOR_3DLABS_CHIP_DELTA:
@@ -3213,6 +3276,7 @@ GLINTAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 	    break;
 	}
 	break;
+#endif
     }
     TRACE_EXIT("GLINTAdjustFrame (normal)");
 }
@@ -3263,6 +3327,7 @@ GLINTEnterVT(VT_FUNC_ARGS_DECL)
 	case PCI_VENDOR_3DLABS_CHIP_R4:
 		Permedia3InitializeEngine(pScrn);
 		break;
+#ifndef PM23_ONLY
     	case PCI_VENDOR_TI_CHIP_PERMEDIA:
     	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
 		PermediaInitializeEngine(pScrn);
@@ -3274,7 +3339,7 @@ GLINTEnterVT(VT_FUNC_ARGS_DECL)
     	case PCI_VENDOR_3DLABS_CHIP_300SX:
 	   	SXInitializeEngine(pScrn);
 		break;
-    	case PCI_VENDOR_3DLABS_CHIP_GAMMA:
+  	case PCI_VENDOR_3DLABS_CHIP_GAMMA:
     	case PCI_VENDOR_3DLABS_CHIP_GAMMA2:
     	case PCI_VENDOR_3DLABS_CHIP_DELTA:
 		switch (pGlint->MultiChip) {
@@ -3295,6 +3360,7 @@ GLINTEnterVT(VT_FUNC_ARGS_DECL)
 		    break;
 		}
 		break;
+#endif
     	}
     }
 
@@ -3403,8 +3469,10 @@ GLINTFreeScreen(FREE_SCREEN_ARGS_DECL)
     if (xf86LoaderCheckSymbol("fbdevHWFreeRec"))
         fbdevHWFreeRec(pScrn);
 #endif /* !__NetBSD__ */
+#ifndef PM23_ONLY
     if (xf86LoaderCheckSymbol("RamDacFreeRec"))
 	RamDacFreeRec(pScrn);
+#endif
     GLINTFreeRec(pScrn);
     TRACE_EXIT("GLINTFreeScreen");
 }
@@ -3499,6 +3567,7 @@ GLINTSaveScreen(ScreenPtr pScreen, int mode)
 	    else	     temp &= 0xFFFFFFFE;
 	    GLINT_SLOW_WRITE_REG(temp, PMVideoControl);
 	    break;
+#ifndef PM23_ONLY
 	case PCI_VENDOR_3DLABS_CHIP_500TX:
 	case PCI_VENDOR_3DLABS_CHIP_300SX:
 	case PCI_VENDOR_3DLABS_CHIP_MX:
@@ -3518,6 +3587,7 @@ GLINTSaveScreen(ScreenPtr pScreen, int mode)
 	        break;
 	    }
 	    break;
+#endif
 	}
     }
 
@@ -3706,6 +3776,7 @@ Shiftbpp(ScrnInfoPtr pScrn, int value)
 	case PCI_VENDOR_3DLABS_CHIP_R4:
 	    logbytesperaccess = 4;
 	    break;
+#ifndef PM23_ONLY
 	case PCI_VENDOR_3DLABS_CHIP_300SX:
 	case PCI_VENDOR_3DLABS_CHIP_500TX:
 	case PCI_VENDOR_3DLABS_CHIP_MX:
@@ -3737,6 +3808,7 @@ Shiftbpp(ScrnInfoPtr pScrn, int value)
 	    	    logbytesperaccess = 4;
 	            break;
 	    }
+#endif
     }
 	
     switch (pScrn->bitsPerPixel) {

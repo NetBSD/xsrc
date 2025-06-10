@@ -86,7 +86,9 @@ typedef struct {
 #endif
     EntityInfoPtr	pEnt;
     GLINTEntPtr		entityPrivate;	
+#ifndef PM23_ONLY
     RamDacHelperRecPtr	RamDac;
+#endif
     int			Chipset;
     int                 ChipRev;
     int			HwBpp;
@@ -149,7 +151,9 @@ typedef struct {
     CARD32		BltScanDirection;
     CARD32		TexMapFormat;
     CARD32		PixelWidth;
+#ifndef PM23_ONLY
     RamDacRecPtr	RamDacRec;
+#endif
     xf86CursorInfoPtr	CursorInfoRec;
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
@@ -262,6 +266,7 @@ void Permedia3Sync(ScrnInfoPtr pScrn);
 void DualPermedia3Sync(ScrnInfoPtr pScrn);
 void Permedia3InitVideo(ScreenPtr pScreen);
 
+#ifndef PM23_ONLY
 void TXRestore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 void TXSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 Bool TXInit(ScrnInfoPtr pScrn, DisplayModePtr mode, GLINTRegPtr glintReg);
@@ -303,6 +308,7 @@ void GMX2000ReadAddress(ScrnInfoPtr pScrn, CARD32 index);
 void GMX2000WriteData(ScrnInfoPtr pScrn, unsigned char data);
 unsigned char GMX2000ReadData(ScrnInfoPtr pScrn);
 Bool glintTIHWCursorInit(ScreenPtr pScreen);
+#endif
 
 void Permedia2OutIndReg(ScrnInfoPtr pScrn,
 		     CARD32, unsigned char mask, unsigned char data);
