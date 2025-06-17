@@ -152,6 +152,19 @@ sunMouseProc(DeviceIntPtr device, int what)
 	    InitPointerDeviceStruct(pMouse, map, 3, btn_labels,
 		sunMouseCtrl, GetMotionHistorySize(),
 		2, axes_labels);
+
+	    /* X valuator */
+	    InitValuatorAxisStruct(device, 0, axes_labels[0],
+		NO_AXIS_LIMITS, NO_AXIS_LIMITS, 1, 0, 1, Relative);
+            device->valuator->axisVal[0] = screenInfo.screens[0]->width / 2;
+            device->last.valuators[0] = device->valuator->axisVal[0];
+
+	    /* Y valuator */
+	    InitValuatorAxisStruct(device, 1, axes_labels[1],
+		NO_AXIS_LIMITS, NO_AXIS_LIMITS, 1, 0, 1, Relative);
+            device->valuator->axisVal[1] = screenInfo.screens[0]->height / 2;
+            device->last.valuators[1] = device->valuator->axisVal[1];
+
 	    break;
 
 	case DEVICE_ON:
