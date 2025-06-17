@@ -1,4 +1,4 @@
-/* $NetBSD: x68kIo.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kIo.c,v 1.4 2025/06/17 15:53:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -84,10 +84,13 @@ static void x68kEnqueueEvents(void);
 void
 x68kSigIOHandler(int sig)
 {
-    int olderrno = errno;
+    int olderrno;
 
+    input_lock();
+    olderrno = errno;
     x68kEnqueueEvents();
     errno = olderrno;
+    input_unlock();
 }
 
 /*--------------------------------------------------------------------

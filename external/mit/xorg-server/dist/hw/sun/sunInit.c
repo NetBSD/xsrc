@@ -363,9 +363,13 @@ OpenFrameBuffer(
 static void
 SigIOHandler(int sig)
 {
-    int olderrno = errno;
+    int olderrno;
+
+    input_lock();
+    olderrno = errno;
     sunEnqueueEvents ();
     errno = olderrno;
+    input_unlock();
 }
 
 /*-

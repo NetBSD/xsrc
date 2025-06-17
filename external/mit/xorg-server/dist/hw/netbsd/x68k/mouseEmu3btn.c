@@ -574,14 +574,11 @@ static const struct button_state stateTab[NSTATES] = {
 static CARD32
 buttonTimer(MouseEmu3btnPtr pEmu3btn)
 {
-    sigset_t sigmask;
     int type, button, flag;
     ValuatorMask mask;
     const struct button_action *timeout_action;
 
-    (void)sigemptyset(&sigmask);
-    (void)sigaddset(&sigmask, SIGIO);
-    (void)sigprocmask(SIG_BLOCK, &sigmask, NULL);
+    input_lock();
 
     pEmu3btn->emulate3Pending = FALSE;
     timeout_action = &stateTab[pEmu3btn->emulateState].timeout;
@@ -596,7 +593,7 @@ buttonTimer(MouseEmu3btnPtr pEmu3btn)
             "Got unexpected buttonTimer in state %d\n", pEmu3btn->emulateState);
     }
 
-    (void)sigprocmask(SIG_UNBLOCK, &sigmask, NULL);
+    input_unlock();
     return 0;
 }
 

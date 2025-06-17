@@ -368,23 +368,7 @@ sunCrossScreen(ScreenPtr pScreen, int entering)
 static void
 sunWarpCursor(DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
 {
-#ifndef i386
-    sigset_t newsigmask;
-
-    (void) sigemptyset (&newsigmask);
-#ifdef SVR4
-    (void) sigaddset (&newsigmask, SIGPOLL);
-#else
-    (void) sigaddset (&newsigmask, SIGIO);
-#endif
-    (void) sigprocmask (SIG_BLOCK, &newsigmask, NULL);
+    input_lock();
     miPointerWarpCursor (pDev, pScreen, x, y);
-    (void) sigprocmask (SIG_UNBLOCK, &newsigmask, NULL);
-#else
-    int oldmask;
-
-    oldmask = sigblock (sigmask (SIGIO));
-    miPointerWarpCursor (pDev, pScreen, x, y);
-    sigsetmask (oldmask);
-#endif
+    input_unlock();
 }
