@@ -100,15 +100,18 @@ typedef struct {
 
 static void sunKbdEvents(int, int, void *);
 static void sunKbdWait(void);
-static void sunInitModMap(const KeySymsRec *, CARD8 *);
-static int sunKbdGetEvents(DeviceIntPtr);
-static void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void SwapLKeys(KeySymsRec *);
 static void SetLights(KeybdCtrl *, int);
+static void bell(int, int);
 static KeyCode LookupKeyCode(KeySym, XkbDescPtr, KeySymsPtr);
 static void pseudoKey(DeviceIntPtr, Bool, KeyCode);
 static void DoLEDs(DeviceIntPtr, KeybdCtrl *, sunKbdPrivPtr);
+static void sunKbdCtrl(DeviceIntPtr, KeybdCtrl *);
+static void sunInitKbdNames(XkbRMLVOSet *, sunKbdPrivPtr);
 static int getKbdType(int);
+static void sunInitModMap(const KeySymsRec *, CARD8 *);
+static int sunKbdGetEvents(DeviceIntPtr);
+static void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static int sunChangeKbdTranslation(int, Bool);
 
 DeviceIntPtr	sunKeyboardDevice = NULL;
