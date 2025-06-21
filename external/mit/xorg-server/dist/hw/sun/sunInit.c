@@ -358,7 +358,7 @@ sunNonBlockConsoleOff(
 
     i = fcntl(2, F_GETFL, 0);
     if (i >= 0)
-	(void) fcntl(2, F_SETFL, i & ~FNDELAY);
+	(void) fcntl(2, F_SETFL, i & ~O_NONBLOCK);
 }
 
 static char**
@@ -498,7 +498,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	}
 	i = fcntl(2, F_GETFL, 0);
 	if (i >= 0)
-	    i = fcntl(2, F_SETFL, i | FNDELAY);
+	    i = fcntl(2, F_SETFL, i | O_NONBLOCK);
 	if (i < 0) {
 	    ErrorF("fcntl\n");
 	    ErrorF("InitOutput: can't put stderr in non-block mode\n");
