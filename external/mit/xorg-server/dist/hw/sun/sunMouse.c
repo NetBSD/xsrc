@@ -75,6 +75,7 @@ Bool sunActiveZaphod = TRUE;
 DeviceIntPtr sunPointerDevice = NULL;
 
 static void sunMouseEvents(int, int, void *);
+static void sunMouseCtrl(DeviceIntPtr, PtrCtrl *);
 static int sunMouseGetEvents(DeviceIntPtr);
 static void sunMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 static Bool sunCursorOffScreen(ScreenPtr *, int *, int *);
