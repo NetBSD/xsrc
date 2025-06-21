@@ -278,13 +278,17 @@ sunBell(int percent, DeviceIntPtr device, void *ctrl, int unused)
 void
 DDXRingBell(int volume, int pitch, int duration)
 {
-    DeviceIntPtr pKeyboard;
+    DeviceIntPtr device;
+    DevicePtr pKeyboard;
     sunKbdPrivPtr pPriv;
 
-    pKeyboard = sunKeyboardDevice;
-    if (pKeyboard != NULL) {
-	pPriv = (sunKbdPrivPtr)pKeyboard->public.devicePrivate;
-	bell(pPriv->fd, duration * 1000);
+    device = sunKeyboardDevice;
+    if (device != NULL) {
+	pKeyboard = &device->public;
+	if (pKeyboard->on) {
+	    pPriv = pKeyboard->devicePrivate;
+	    bell(pPriv->fd, duration * 1000);
+	}
     }
 }
 
