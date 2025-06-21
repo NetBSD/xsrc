@@ -64,7 +64,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 Bool sunActiveZaphod = TRUE;
 DeviceIntPtr sunPointerDevice = NULL;
 
-static void sunMouseHandlerNotify(int, int, void *);
+static void sunMouseEvents(int, int, void *);
+static Firm_event *sunMouseGetEvents(int, Bool, int *, Bool *);
+static void sunMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 static Bool sunCursorOffScreen(ScreenPtr *, int *, int *);
 static void sunCrossScreen(ScreenPtr, int);
 static void sunWarpCursor(DeviceIntPtr, ScreenPtr, int, int);
@@ -76,8 +78,23 @@ miPointerScreenFuncRec sunPointerScreenFuncs = {
 };
 
 static void
-sunMouseHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+sunMouseEvents(int fd, int ready, void *data)
 {
+    int i, numEvents = 0;
+    Bool again = FALSE;
+    Firm_event *events;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+
+    input_lock();
+
+    do {
+	events = sunMouseGetEvents(fd, device->public.on, &numEvents, &again);
+	for (i = 0; i < numEvents; i++) {
+	    sunMouseEnqueueEvent(device, &events[i]);
+	}
+    } while (again);
+
+    input_unlock();
 }
 
 /*-
@@ -177,9 +194,14 @@ sunMouseProc(DeviceIntPtr device, int what)
 		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
-	    sunPtrPriv.bmask = 0;
-	    SetNotifyFd(sunPtrPriv.fd, sunMouseHandlerNotify,
-		X_NOTIFY_READ, NULL);
+
+	    if (fcntl(sunPtrPriv.fd, F_SETFL, O_NONBLOCK) == -1) {
+		ErrorF("Non-blocking mouse I/O failed");
+		return !Success;
+	    }
+	    SetNotifyFd(sunPtrPriv.fd, sunMouseEvents, X_NOTIFY_READ, device);
+
+	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
@@ -215,7 +237,7 @@ sunMouseProc(DeviceIntPtr device, int what)
  *-----------------------------------------------------------------------
  */
 
-Firm_event *
+static Firm_event *
 sunMouseGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
@@ -257,7 +279,7 @@ sunMouseGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
  *-----------------------------------------------------------------------
  */
 
-void
+static void
 sunMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     sunPtrPrivPtr	pPriv;	/* Private data for pointer */

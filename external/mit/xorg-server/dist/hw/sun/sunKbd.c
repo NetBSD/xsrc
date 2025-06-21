@@ -85,8 +85,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 		    (tv).tv_sec += 1; \
 		}
 
-static void sunKbdHandlerNotify(int, int, void *);
+static void sunKbdEvents(int, int, void *);
 static void sunInitModMap(const KeySymsRec *, CARD8 *);
+static Firm_event *sunKbdGetEvents(int, Bool, int *, Bool *);
+static void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void SwapLKeys(KeySymsRec *);
 static void SetLights(KeybdCtrl *, int);
 static KeyCode LookupKeyCode(KeySym, XkbDescPtr, KeySymsPtr);
@@ -96,8 +98,23 @@ static void DoLEDs(DeviceIntPtr, KeybdCtrl *, sunKbdPrivPtr);
 DeviceIntPtr	sunKeyboardDevice = NULL;
 
 static void
-sunKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+sunKbdEvents(int fd, int ready, void *data)
 {
+    int i, numEvents = 0;
+    Bool again = FALSE;
+    Firm_event *events;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+
+    input_lock();
+
+    do {
+	events = sunKbdGetEvents(fd, device->public.on, &numEvents, &again);
+	for (i = 0; i < numEvents; i++) {
+	    sunKbdEnqueueEvent(device, &events[i]);
+	}
+    } while (again);
+
+    input_unlock();
 }
 
 void
@@ -671,7 +688,13 @@ sunKbdProc(DeviceIntPtr device, int what)
 	 */
 	if (sunChangeKbdTranslation(pPriv->fd, TRUE) == -1)
 	    FatalError("Can't set keyboard translation\n");
-	SetNotifyFd(pPriv->fd, sunKbdHandlerNotify, X_NOTIFY_READ, NULL);
+
+	if (fcntl(pPriv->fd, F_SETFL, O_NONBLOCK) == -1) {
+	    ErrorF("Non-blocking kbd I/O failed");
+	    return !Success;
+        }
+	SetNotifyFd(pPriv->fd, sunKbdEvents, X_NOTIFY_READ, device);
+
 	pKeyboard->on = TRUE;
 	break;
 
@@ -786,7 +809,7 @@ sunInitModMap(
  *-----------------------------------------------------------------------
  */
 
-Firm_event *
+static Firm_event *
 sunKbdGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
@@ -819,7 +842,7 @@ sunKbdGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
  *-----------------------------------------------------------------------
  */
 
-void
+static void
 sunKbdEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     BYTE		keycode;

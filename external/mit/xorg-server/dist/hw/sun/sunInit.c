@@ -117,7 +117,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif /* } */
 
 static int OpenFrameBuffer(char *, int);
-static void SigIOHandler(int);
 static char** GetDeviceList(int, char **);
 static void getKbdType(void);
 
@@ -344,32 +343,6 @@ OpenFrameBuffer(
     if (!ret)
 	sunFbs[screen].fd = -1;
     return ret;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * SigIOHandler --
- *	Signal handler for SIGIO - input is available.
- *
- * Results:
- *	sunSigIO is set - ProcessInputEvents() will be called soon.
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
-/*ARGSUSED*/
-static void
-SigIOHandler(int sig)
-{
-    int olderrno;
-
-    input_lock();
-    olderrno = errno;
-    sunEnqueueEvents ();
-    errno = olderrno;
-    input_unlock();
 }
 
 /*-
@@ -674,28 +647,6 @@ InitInput(int argc, char **argv)
 	FatalError("Failed to init sun default input devices.\n");
 
     (void)mieqInit();
-#define SET_FLOW(fd) fcntl(fd, F_SETFL, FNDELAY | FASYNC)
-#ifdef SVR4
-    (void) OsSignal(SIGPOLL, SigIOHandler);
-#define WANT_SIGNALS(fd) ioctl(fd, I_SETSIG, S_INPUT | S_HIPRI)
-#else
-    (void) OsSignal(SIGIO, SigIOHandler);
-#define WANT_SIGNALS(fd) fcntl(fd, F_SETOWN, getpid())
-#endif
-    if (sunKbdPriv.fd >= 0) {
-	if (SET_FLOW(sunKbdPriv.fd) == -1 || WANT_SIGNALS(sunKbdPriv.fd) == -1) {
-	    (void) close (sunKbdPriv.fd);
-	    sunKbdPriv.fd = -1;
-	    FatalError("Async kbd I/O failed in InitInput");
-	}
-    }
-    if (sunPtrPriv.fd >= 0) {
-	if (SET_FLOW(sunPtrPriv.fd) == -1 || WANT_SIGNALS(sunPtrPriv.fd) == -1) {
-	    (void) close (sunPtrPriv.fd);
-	    sunPtrPriv.fd = -1;
-	    FatalError("Async mouse I/O failed in InitInput");
-	}
-    }
 }
 
 void

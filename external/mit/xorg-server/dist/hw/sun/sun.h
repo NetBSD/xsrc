@@ -335,9 +335,6 @@ extern void sunNonBlockConsoleOff(
 #endif
 );
 
-/* sunIo.c */
-extern void sunEnqueueEvents(void);
-
 /* sunGX.c */
 extern int sunGXInit(ScreenPtr, fbFd *);
 
@@ -355,14 +352,10 @@ extern Bool sunInitCommon(int, ScreenPtr, off_t,
 
 /* sunKbd.c */
 extern int sunChangeKbdTranslation(int, Bool);
-extern Firm_event* sunKbdGetEvents(int, Bool, int *, Bool *);
-extern void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern int sunKbdProc(DeviceIntPtr, int);
 extern void sunKbdWait(void);
 
 /* sunMouse.c */
-extern Firm_event* sunMouseGetEvents(int, Bool, int *, Bool *);
-extern void sunMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern int sunMouseProc(DeviceIntPtr, int);
 
 /* sunCfb.c */
