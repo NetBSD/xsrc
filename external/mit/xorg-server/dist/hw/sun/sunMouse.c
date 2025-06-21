@@ -68,13 +68,14 @@ typedef struct {
     int		fd;
     int		bmask;		/* last known button state */
     int		oformat;	/* saved value of VUIDGFORMAT */
+    Firm_event	evbuf[SUN_MAXEVENTS];	/* Buffer for Firm_events */
 } sunPtrPrivRec, *sunPtrPrivPtr;
 
 Bool sunActiveZaphod = TRUE;
 DeviceIntPtr sunPointerDevice = NULL;
 
 static void sunMouseEvents(int, int, void *);
-static Firm_event *sunMouseGetEvents(int, Bool, int *, Bool *);
+static int sunMouseGetEvents(DeviceIntPtr);
 static void sunMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 static Bool sunCursorOffScreen(ScreenPtr *, int *, int *);
 static void sunCrossScreen(ScreenPtr, int);
@@ -89,19 +90,19 @@ miPointerScreenFuncRec sunPointerScreenFuncs = {
 static void
 sunMouseEvents(int fd, int ready, void *data)
 {
-    int i, numEvents = 0;
-    Bool again = FALSE;
-    Firm_event *events;
+    int i, numEvents;
     DeviceIntPtr device = (DeviceIntPtr)data;
+    DevicePtr pMouse = &device->public;
+    sunPtrPrivPtr pPriv = pMouse->devicePrivate;
 
     input_lock();
 
     do {
-	events = sunMouseGetEvents(fd, device->public.on, &numEvents, &again);
+	numEvents = sunMouseGetEvents(device);
 	for (i = 0; i < numEvents; i++) {
-	    sunMouseEnqueueEvent(device, &events[i]);
+	    sunMouseEnqueueEvent(device, &pPriv->evbuf[i]);
 	}
-    } while (again);
+    } while (numEvents == SUN_MAXEVENTS);
 
     input_unlock();
 }
@@ -247,39 +248,34 @@ sunMouseProc(DeviceIntPtr device, int what)
  *	Return the events waiting in the wings for the given mouse.
  *
  * Results:
- *	A pointer to an array of Firm_events or (Firm_event *)0 if no events
- *	The number of events contained in the array.
- *	A boolean as to whether more events might be available.
+ *      Update Firm_event buffer in DeviceIntPtr if events are received.
+ *      Return the number of received Firm_events in the buffer.
  *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
 
-static Firm_event *
-sunMouseGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
+static int
+sunMouseGetEvents(DeviceIntPtr device)
 {
-    int	    	  nBytes;	    /* number of bytes of events available. */
-    static Firm_event	evBuf[SUN_MAXEVENTS];   /* Buffer for Firm_events */
+    DevicePtr pMouse = &device->public;
+    sunPtrPrivPtr pPriv = pMouse->devicePrivate;
+    int nBytes;		    /* number of bytes of events available. */
+    int NumEvents = 0;
 
-    if ((nBytes = read (fd, (char *)evBuf, sizeof(evBuf))) == -1) {
-	if (errno == EWOULDBLOCK) {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
-	} else {
-	    ErrorF("sunMouseGetEvents read\n");
-	    FatalError ("Could not read from mouse");
+    nBytes = read(pPriv->fd, pPriv->evbuf, sizeof(pPriv->evbuf));
+    if (nBytes == -1) {
+	if (errno != EWOULDBLOCK) {
+	    LogMessage(X_ERROR, "Unexpected error on reading mouse\n");
+	    FatalError("Could not read from mouse");
 	}
     } else {
-	if (on) {
-	    *pNumEvents = nBytes / sizeof (Firm_event);
-	    *pAgain = (nBytes == sizeof (evBuf));
-	} else {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
+	if (pMouse->on) {
+	    NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
 	}
     }
-    return evBuf;
+    return NumEvents;
 }
 
 

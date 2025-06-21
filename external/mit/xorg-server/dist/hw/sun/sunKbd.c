@@ -95,12 +95,13 @@ typedef struct {
     int		click;		/* kbd click save state */
     Leds	leds;		/* last known LED state */
     KeySymsRec  keysym;		/* working keysym */
+    Firm_event	evbuf[SUN_MAXEVENTS];	/* Buffer for Firm_events */
 } sunKbdPrivRec, *sunKbdPrivPtr;
 
 static void sunKbdEvents(int, int, void *);
 static void sunKbdWait(void);
 static void sunInitModMap(const KeySymsRec *, CARD8 *);
-static Firm_event *sunKbdGetEvents(int, Bool, int *, Bool *);
+static int sunKbdGetEvents(DeviceIntPtr);
 static void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void SwapLKeys(KeySymsRec *);
 static void SetLights(KeybdCtrl *, int);
@@ -115,19 +116,19 @@ DeviceIntPtr	sunKeyboardDevice = NULL;
 static void
 sunKbdEvents(int fd, int ready, void *data)
 {
-    int i, numEvents = 0;
-    Bool again = FALSE;
-    Firm_event *events;
+    int i, numEvents;
     DeviceIntPtr device = (DeviceIntPtr)data;
+    DevicePtr pKeyboard = &device->public;
+    sunKbdPrivPtr pPriv = pKeyboard->devicePrivate;
 
     input_lock();
 
     do {
-	events = sunKbdGetEvents(fd, device->public.on, &numEvents, &again);
+	numEvents = sunKbdGetEvents(device);
 	for (i = 0; i < numEvents; i++) {
-	    sunKbdEnqueueEvent(device, &events[i]);
+	    sunKbdEnqueueEvent(device, &pPriv->evbuf[i]);
 	}
-    } while (again);
+    } while (numEvents == SUN_MAXEVENTS);
 
     input_unlock();
 }
@@ -925,39 +926,34 @@ sunInitModMap(
  *	Return the events waiting in the wings for the given keyboard.
  *
  * Results:
- *	A pointer to an array of Firm_events or (Firm_event *)0 if no events
- *	The number of events contained in the array.
- *	A boolean as to whether more events might be available.
+ *	Update Firm_event buffer in DeviceIntPtr if events are received.
+ *	Return the number of received Firm_events in the buffer.
  *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
 
-static Firm_event *
-sunKbdGetEvents(int fd, Bool on, int *pNumEvents, Bool *pAgain)
+static int
+sunKbdGetEvents(DeviceIntPtr device)
 {
-    int	    	  nBytes;	    /* number of bytes of events available. */
-    static Firm_event	evBuf[SUN_MAXEVENTS];   /* Buffer for Firm_events */
+    DevicePtr pKeyboard = &device->public;
+    sunKbdPrivPtr pPriv = pKeyboard->devicePrivate;
+    int	nBytes;	 	   /* number of bytes of events available. */
+    int NumEvents = 0;
 
-    if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
-	if (errno == EWOULDBLOCK) {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
-	} else {
-	    ErrorF("Reading keyboard\n");
-	    FatalError ("Could not read the keyboard");
+    nBytes = read(pPriv->fd, pPriv->evbuf, sizeof(pPriv->evbuf));
+    if (nBytes == -1) {
+	if (errno != EWOULDBLOCK) {
+	    LogMessage(X_ERROR, "Unexpected error on reading keyboard\n");
+	    FatalError("Could not read the keyboard");
 	}
     } else {
-	if (on) {
-	    *pNumEvents = nBytes / sizeof (Firm_event);
-	    *pAgain = (nBytes == sizeof (evBuf));
-	} else {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
+	if (pKeyboard->on) {
+	    NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
 	}
     }
-    return evBuf;
+    return NumEvents;
 }
 
 /*-
