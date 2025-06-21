@@ -226,16 +226,6 @@ typedef struct {
 
 extern sunKbdPrivRec sunKbdPriv;
 
-/*
- * Data private to any sun pointer device.
- */
-typedef struct {
-    int		fd;
-    int		bmask;		/* last known button state */
-} sunPtrPrivRec, *sunPtrPrivPtr;
-
-extern sunPtrPrivRec sunPtrPriv;
-
 typedef struct {
     BYTE	key;
     CARD8	modifiers;

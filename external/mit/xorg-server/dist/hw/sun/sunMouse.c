@@ -61,6 +61,15 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "exevents.h"
 #include    "xserver-properties.h"
 
+/*
+ * Data private to any sun pointer device.
+ */
+typedef struct {
+    int		fd;
+    int		bmask;		/* last known button state */
+    int		oformat;	/* saved value of VUIDGFORMAT */
+} sunPtrPrivRec, *sunPtrPrivPtr;
+
 Bool sunActiveZaphod = TRUE;
 DeviceIntPtr sunPointerDevice = NULL;
 
@@ -143,21 +152,29 @@ sunMouseProc(DeviceIntPtr device, int what)
     DevicePtr	  pMouse = &device->public;
     sunPtrPrivPtr pPriv;
     int	    	  format;
-    static int	  oformat;
     BYTE    	  map[4];
     Atom btn_labels[3] = {0};
     Atom axes_labels[2] = { 0, 0 };
 
     switch (what) {
 	case DEVICE_INIT:
-	    if (pMouse != &sunPointerDevice->public) {
-		ErrorF ("Cannot open non-system mouse\n");
+	    pPriv = malloc(sizeof(*pPriv));
+	    if (pPriv == NULL) {
+		LogMessage(X_ERROR, "Cannot allocate private data for mouse\n");
 		return !Success;
 	    }
-	    if (sunPtrPriv.fd == -1)
+	    pPriv->fd = open("/dev/mouse", O_RDWR | O_NONBLOCK, 0);
+	    if (pPriv->fd < 0) {
+		LogMessage(X_ERROR, "Cannot open /dev/mouse, error %d\n",
+		    errno);
+		free(pPriv);
 		return !Success;
-	    pMouse->devicePrivate = (void *) &sunPtrPriv;
+	    }
+	    pPriv->bmask = 0;
+	    pPriv->oformat = 0;
+	    pMouse->devicePrivate = pPriv;
 	    pMouse->on = FALSE;
+	    
 	    map[1] = 1;
 	    map[2] = 2;
 	    map[3] = 3;
@@ -187,37 +204,35 @@ sunMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
-	    if (ioctl (pPriv->fd, VUIDGFORMAT, &oformat) == -1) {
-		ErrorF("sunMouseProc ioctl VUIDGFORMAT\n");
+	    if (ioctl(pPriv->fd, VUIDGFORMAT, &pPriv->oformat) == -1) {
+		LogMessage(X_ERROR, "sunMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
-	    if (ioctl (pPriv->fd, VUIDSFORMAT, &format) == -1) {
-		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &format) == -1) {
+		LogMessage(X_ERROR, "sunMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
 
-	    if (fcntl(pPriv->fd, F_SETFL, O_NONBLOCK) == -1) {
-		ErrorF("Non-blocking mouse I/O failed");
-		return !Success;
-	    }
 	    SetNotifyFd(pPriv->fd, sunMouseEvents, X_NOTIFY_READ, device);
 
 	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
-	case DEVICE_CLOSE:
-	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
-	    if (ioctl (pPriv->fd, VUIDSFORMAT, &oformat) == -1)
-		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
-	    pMouse->on = FALSE;
-	    break;
-
 	case DEVICE_OFF:
 	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
 	    RemoveNotifyFd(pPriv->fd);
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &pPriv->oformat) == -1)
+		LogMessage(X_ERROR, "sunMouseProc ioctl VUIDSFORMAT\n");
 	    pMouse->on = FALSE;
+	    break;
+
+	case DEVICE_CLOSE:
+	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
+	    close(pPriv->fd);
+	    free(pPriv);
+	    pMouse->devicePrivate = NULL;
 	    break;
 
 	case DEVICE_ABORT:

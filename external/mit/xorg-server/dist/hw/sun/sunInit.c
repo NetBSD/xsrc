@@ -145,11 +145,6 @@ sunKbdPrivRec sunKbdPriv = {
     (Leds)0,	/* leds */
 };
 
-sunPtrPrivRec sunPtrPriv = {
-    -1,		/* fd */
-    0		/* Current button state */
-};
-
 /*
  * The name member in the following table corresponds to the
  * FBTYPE_* macros defined in /usr/include/sun/fbio.h file
@@ -499,9 +494,6 @@ OsVendorInit(void)
 	sunKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
 	if (sunKbdPriv.fd < 0)
 	    FatalError ("Cannot open /dev/kbd, error %d\n", errno);
-	sunPtrPriv.fd = open ("/dev/mouse", O_RDWR, 0);
-	if (sunPtrPriv.fd < 0)
-	    FatalError ("Cannot open /dev/mouse, error %d\n", errno);
 	getKbdType ();
 	switch (sunKbdPriv.type) {
 	case KB_SUN2:
