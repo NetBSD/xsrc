@@ -141,6 +141,7 @@ int
 sunMouseProc(DeviceIntPtr device, int what)
 {
     DevicePtr	  pMouse = &device->public;
+    sunPtrPrivPtr pPriv;
     int	    	  format;
     static int	  oformat;
     BYTE    	  map[4];
@@ -185,35 +186,38 @@ sunMouseProc(DeviceIntPtr device, int what)
 	    break;
 
 	case DEVICE_ON:
-	    if (ioctl (sunPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
+	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
+	    if (ioctl (pPriv->fd, VUIDGFORMAT, &oformat) == -1) {
 		ErrorF("sunMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
-	    if (ioctl (sunPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
+	    if (ioctl (pPriv->fd, VUIDSFORMAT, &format) == -1) {
 		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
 
-	    if (fcntl(sunPtrPriv.fd, F_SETFL, O_NONBLOCK) == -1) {
+	    if (fcntl(pPriv->fd, F_SETFL, O_NONBLOCK) == -1) {
 		ErrorF("Non-blocking mouse I/O failed");
 		return !Success;
 	    }
-	    SetNotifyFd(sunPtrPriv.fd, sunMouseEvents, X_NOTIFY_READ, device);
+	    SetNotifyFd(pPriv->fd, sunMouseEvents, X_NOTIFY_READ, device);
 
 	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
 	case DEVICE_CLOSE:
-	    pMouse->on = FALSE;
-	    if (ioctl (sunPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
+	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
+	    if (ioctl (pPriv->fd, VUIDSFORMAT, &oformat) == -1)
 		ErrorF("sunMouseProc ioctl VUIDSFORMAT\n");
+	    pMouse->on = FALSE;
 	    break;
 
 	case DEVICE_OFF:
+	    pPriv = (sunPtrPrivPtr)pMouse->devicePrivate;
+	    RemoveNotifyFd(pPriv->fd);
 	    pMouse->on = FALSE;
-	    RemoveNotifyFd(sunPtrPriv.fd);
 	    break;
 
 	case DEVICE_ABORT:
