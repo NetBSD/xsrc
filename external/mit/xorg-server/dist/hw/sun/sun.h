@@ -213,19 +213,6 @@ extern int monitorResolution;
  */
 #define SUN_MAXEVENTS 	32
 
-/*
- * Data private to any sun keyboard.
- */
-typedef struct {
-    int		fd;
-    int		type;		/* Type of keyboard */
-    int		layout;		/* The layout of the keyboard */
-    int		click;		/* kbd click save state */
-    Leds	leds;		/* last known LED state */
-} sunKbdPrivRec, *sunKbdPrivPtr;
-
-extern sunKbdPrivRec sunKbdPriv;
-
 typedef struct {
     BYTE	key;
     CARD8	modifiers;
@@ -341,9 +328,7 @@ extern Bool sunInitCommon(int, ScreenPtr, off_t,
     int);
 
 /* sunKbd.c */
-extern int sunChangeKbdTranslation(int, Bool);
 extern int sunKbdProc(DeviceIntPtr, int);
-extern void sunKbdWait(void);
 
 /* sunMouse.c */
 extern int sunMouseProc(DeviceIntPtr, int);

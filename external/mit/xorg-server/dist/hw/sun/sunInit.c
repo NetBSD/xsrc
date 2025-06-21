@@ -118,7 +118,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static int OpenFrameBuffer(char *, int);
 static char** GetDeviceList(int, char **);
-static void getKbdType(void);
 
 #if SUNMAXDEPTH == 32
 static Bool sunCfbCreateGC(GCPtr);
@@ -136,14 +135,6 @@ Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;
 Bool sunCG4Frob = FALSE;
 Bool sunNoGX = FALSE;
-
-sunKbdPrivRec sunKbdPriv = {
-    -1,		/* fd */
-    -1,		/* type */
-    -1,		/* layout */
-    0,		/* click */
-    (Leds)0,	/* leds */
-};
 
 /*
  * The name member in the following table corresponds to the
@@ -408,54 +399,6 @@ GetDeviceList(int argc, char **argv)
     return deviceList;
 }
 
-static void
-getKbdType(void)
-{
-/*
- * The Sun 386i has system include files that preclude this pre SunOS 4.1
- * test for the presence of a type 4 keyboard however it really doesn't
- * matter since no 386i has ever been shipped with a type 3 keyboard.
- * SunOS 4.1 no longer needs this kludge.
- */
-#if !defined(i386) && !defined(KIOCGKEY)
-#define TYPE4KEYBOARDOVERRIDE
-#endif
-
-    int ii;
-
-    for (ii = 0; ii < 3; ii++) {
-	sunKbdWait();
-	(void) ioctl (sunKbdPriv.fd, KIOCTYPE, &sunKbdPriv.type);
-#ifdef TYPE4KEYBOARDOVERRIDE
-	/*
-	 * Magic. Look for a key which is non-existent on a real type
-	 * 3 keyboard but does exist on a type 4 keyboard.
-	 */
-	if (sunKbdPriv.type == KB_SUN3) {
-	    struct kiockeymap key;
-
-	    key.kio_tablemask = 0;
-	    key.kio_station = 118;
-	    if (ioctl(sunKbdPriv.fd, KIOCGKEY, &key) == -1) {
-		ErrorF( "ioctl KIOCGKEY\n" );
-		FatalError("Can't KIOCGKEY on fd %d\n", sunKbdPriv.fd);
-	    }
-	    if (key.kio_entry != HOLE)
-		sunKbdPriv.type = KB_SUN4;
-	}
-#endif
-	switch (sunKbdPriv.type) {
-	case KB_SUN2:
-	case KB_SUN3:
-	case KB_SUN4: return;
-	default:
-	    sunChangeKbdTranslation(sunKbdPriv.fd, FALSE);
-	    continue;
-	}
-    }
-    FatalError ("Unsupported keyboard type %d\n", sunKbdPriv.type);
-}
-
 void
 OsVendorInit(void)
 {
@@ -491,31 +434,6 @@ OsVendorInit(void)
 
 	free(lf);
 
-	sunKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
-	if (sunKbdPriv.fd < 0)
-	    FatalError ("Cannot open /dev/kbd, error %d\n", errno);
-	getKbdType ();
-	switch (sunKbdPriv.type) {
-	case KB_SUN2:
-	case KB_SUN3:
-	    LogMessage(X_INFO, "Sun type %d Keyboard\n", sunKbdPriv.type);
-	    break;
-	case KB_SUN4:
-#define LAYOUT_US5	33
-	    (void) ioctl (sunKbdPriv.fd, KIOCLAYOUT, &sunKbdPriv.layout);
-	    if (sunKbdPriv.layout < 0 ||
-		sunKbdPriv.layout > sunMaxLayout ||
-		sunType4KeyMaps[sunKbdPriv.layout] == NULL)
-		FatalError ("Unsupported keyboard type 4 layout %d\n",
-			    sunKbdPriv.layout);
-	    sunKeySyms[KB_SUN4].map = sunType4KeyMaps[sunKbdPriv.layout];
-	    LogMessage(X_INFO, "Sun type %d Keyboard, layout %d\n",
-		sunKbdPriv.layout >= LAYOUT_US5 ? 5 : 4, sunKbdPriv.layout);
-	    break;
-	default:
-	    LogMessage(X_INFO, "Unknown keyboard type\n");
-	    break;
-        }
 	inited = 1;
     }
 }
