@@ -952,9 +952,7 @@ sunKbdGetEvents(DeviceIntPtr device)
 	    FatalError("Could not read the keyboard");
 	}
     } else {
-	if (pKeyboard->on) {
-	    NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
-	}
+	NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
     }
     return NumEvents;
 }
