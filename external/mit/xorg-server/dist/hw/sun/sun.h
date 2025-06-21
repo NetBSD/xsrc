@@ -287,17 +287,12 @@ extern const int	sunMaxLayout;
 extern KeySym		*sunType4KeyMaps[];
 
 /* sunKbd.c */
-extern long		sunAutoRepeatInitiate;
-extern long		sunAutoRepeatDelay;
 extern DeviceIntPtr	sunKeyboardDevice;
 
 /* sunMouse.c */
 extern Bool		sunActiveZaphod;
 extern DeviceIntPtr	sunPointerDevice;
 extern miPointerScreenFuncRec sunPointerScreenFuncs;
-
-/* sunFbs.c */
-extern int		sunScreenIndex;
 
 /* sunCursor.c */
 extern Bool sunCursorInitialize(ScreenPtr);
