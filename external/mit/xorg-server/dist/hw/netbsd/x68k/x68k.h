@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.10 2025/06/22 22:31:22 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.11 2025/06/22 22:32:14 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -105,12 +105,6 @@ typedef struct _X68kFbProcRec {
 #endif
 #define X68K_FB_TYPES   2
 
-typedef struct _X68kKbdPriv {
-    int type;
-    int fd;
-    Leds leds;
-} X68kKbdPriv, *X68kKbdPrivPtr;
-
 /* keyboard types */
 #define X68K_KB_STANDARD 0      /* standard keyboard */
 #define X68K_KB_ASCII    1      /* ascii map keyboard */
@@ -129,6 +123,7 @@ X68kScreenRec *x68kGetScreenRec(int);
 X68kScreenRec *x68kGetScreenRecByType(int);
 X68kFbProcRec *x68kGetFbProcRec(int index);
 void x68kRegisterPixmapFormats(ScreenInfo *);
+int x68kGetKbdType(void);
 int x68kConfig(void);
 extern const char *configFilename;
 
@@ -149,7 +144,6 @@ extern DeviceIntPtr x68kPointerDevice;
 
 /* in x68kKbd.c */
 int x68kKbdProc(DeviceIntPtr, int);
-extern X68kKbdPriv x68kKbdPriv;
 extern DeviceIntPtr x68kKeyboardDevice;
 
 /* in x68kKeyMap.c */

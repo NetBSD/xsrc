@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.16 2025/06/22 22:30:33 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.17 2025/06/22 22:32:14 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -84,7 +84,12 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define MIN_KEYCODE     7       /* necessary to avoid the mouse buttons */
 #define MAX_KEYCODE     255     /* limited by the protocol */
 
-X68kKbdPriv x68kKbdPriv;
+typedef struct _X68kKbdPriv {
+    int type;
+    int fd;
+    Leds leds;
+} X68kKbdPriv, *X68kKbdPrivPtr;
+
 DeviceIntPtr x68kKeyboardDevice = NULL;
 
 static void x68kKbdEvents(int, int, void *);
@@ -145,11 +150,19 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
 
     switch (what) {
         case DEVICE_INIT:
-            pPriv = &x68kKbdPriv;
-            if ((pPriv->fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK)) == -1) {
-                ErrorF("Can't open keyboard device\n");
+            pPriv = malloc(sizeof(*pPriv));
+            if (pPriv == NULL) {
+                LogMessage(X_ERROR,
+                    "Cannot allocate private data for keyboard\n");
                 return !Success;
             }
+            pPriv->fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK);
+            if (pPriv->fd == -1) {
+                LogMessage(X_ERROR, "Can't open keyboard device\n");
+                return !Success;
+            }
+            pPriv->type = x68kGetKbdType();
+            pPriv->leds = 0;
             pKeyboard->devicePrivate = pPriv;
             pKeyboard->on = FALSE;
             x68kInitModMap(x68kKeySyms, x68kModMap);
@@ -180,11 +193,16 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
             pKeyboard->on = TRUE;
             break;
 
-        case DEVICE_CLOSE:
         case DEVICE_OFF:
             pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
             RemoveNotifyFd(pPriv->fd);
             pKeyboard->on = FALSE;
+            break;
+
+        case DEVICE_CLOSE:
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
+            close(pPriv->fd);
+            free(pPriv);
             break;
 
         case DEVICE_ABORT:

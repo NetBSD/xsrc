@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.7 2020/11/16 16:46:28 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.8 2025/06/22 22:32:14 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -36,6 +36,8 @@ static PixmapFormatRec defaultFormat = {
 };
 static X68kScreenRec x68kScreen[X68K_FB_TYPES];
 static X68kFbProcRec x68kFbProc[X68K_FB_TYPES];
+
+static int x68kKbdType = X68K_KB_STANDARD;
 
 /*-------------------------------------------------------------------------
  * function "x68kGetScreenRec"
@@ -98,6 +100,19 @@ x68kRegisterPixmapFormats(ScreenInfo *pScreenInfo)
 
     if (x68kFormat)
 	pScreenInfo->formats[pScreenInfo->numPixmapFormats++] = *x68kFormat;
+}
+
+/*-------------------------------------------------------------------------
+ * function "x68kGetKbdType"
+ *
+ *  purpose:  get keyboard map type specified in the config file
+ *  argument: none
+ *  returns:  (int) : keyboard type
+ *-----------------------------------------------------------------------*/
+int
+x68kGetKbdType(void)
+{
+    return x68kKbdType;
 }
 
 /*-------------------------------------------------------------------------
@@ -628,10 +643,10 @@ parseKeyboard(int argc, Token **argv)
     checkArguments(1, argtype, argc-1, argv);
     if (strcasecmp("standard", argv[1]->content.symbol) == 0) {
         x68kKeySyms = &jisKeySyms;
-        x68kKbdPriv.type = X68K_KB_STANDARD;
+        x68kKbdType = X68K_KB_STANDARD;
     } else if (strcasecmp("ascii", argv[1]->content.symbol) == 0) {
         x68kKeySyms = &asciiKeySyms;
-        x68kKbdPriv.type = X68K_KB_ASCII;
+        x68kKbdType = X68K_KB_ASCII;
     } else
         parseError(argv[1]->line, "unknown keyboard type `%s'",
                    argv[1]->content.symbol);
@@ -678,7 +693,7 @@ logConfig(void)
         x68kTypeStr[modeChosen->type], x68kClassStr[modeChosen->class],
         modeChosen->width, modeChosen->height, modeChosen->depth);
     LogMessage(X_CONFIG, "Keyboard: %s\n",
-        x68kKbdPriv.type == X68K_KB_ASCII ? "ascii" : "standard");
+        x68kKbdType == X68K_KB_ASCII ? "ascii" : "standard");
     LogMessage(X_CONFIG, "Mouse: %s\n", "standard");
 }
 
