@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.15 2025/06/22 22:29:23 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.16 2025/06/22 22:30:33 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -138,21 +138,23 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
             int what)			/* What to do to it */
 {
     DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv;
     CARD8 x68kModMap[MAP_LENGTH];
     int mode;
     XkbRMLVOSet rmlvo;
 
     switch (what) {
         case DEVICE_INIT:
-            pKeyboard->devicePrivate = (void *)&x68kKbdPriv;
-            if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK)) == -1 ) {
+            pPriv = &x68kKbdPriv;
+            if ((pPriv->fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK)) == -1) {
                 ErrorF("Can't open keyboard device\n");
                 return !Success;
             }
+            pKeyboard->devicePrivate = pPriv;
             pKeyboard->on = FALSE;
             x68kInitModMap(x68kKeySyms, x68kModMap);
 
-            x68kInitKbdNames(&rmlvo, pKeyboard->devicePrivate);
+            x68kInitKbdNames(&rmlvo, pPriv);
 #if 0 /* XXX How should we setup XKB maps for non PS/2 keyboard!? */
             InitKeyboardDeviceStruct(device, &rmlvo,
                                      x68kKbdBell, x68kKbdCtrl);
@@ -167,20 +169,21 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
             break;
 
         case DEVICE_ON:
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
             mode = 1;
-            if (ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1) {
-                ErrorF("Async keyboard I/O failed\n");
+            if (ioctl(pPriv->fd, KIOCSDIRECT, &mode) == -1) {
+                LogMessage(X_ERROR, "Failed to set keyboard direct mode\n");
                 return !Success;
             }
-	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
-            SetNotifyFd(x68kKbdPriv.fd, x68kKbdEvents,
-                X_NOTIFY_READ, device);
+	    x68kSetLeds(pPriv, (uint8_t)pPriv->leds);
+            SetNotifyFd(pPriv->fd, x68kKbdEvents, X_NOTIFY_READ, device);
             pKeyboard->on = TRUE;
             break;
 
         case DEVICE_CLOSE:
         case DEVICE_OFF:
-            RemoveNotifyFd(x68kKbdPriv.fd);
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
+            RemoveNotifyFd(pPriv->fd);
             pKeyboard->on = FALSE;
             break;
 

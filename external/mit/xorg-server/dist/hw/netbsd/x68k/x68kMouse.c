@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.15 2025/06/22 22:29:23 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.16 2025/06/22 22:30:33 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -148,6 +148,7 @@ int
 x68kMouseProc(DeviceIntPtr device, int what)
 {
     DevicePtr   pMouse = &device->public;
+    X68kMousePrivPtr pPriv;
     int		format;
     static int	oformat;
     BYTE	map[4];
@@ -159,11 +160,12 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
     switch (what) {
 	case DEVICE_INIT:
-            pMouse->devicePrivate = (void *) &x68kMousePriv;
-            if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK)) == -1 ) {
+            pPriv = &x68kMousePriv;
+            if ((pPriv->fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK)) == -1) {
                 ErrorF("Can't open mouse device\n");
                 return !Success;
             }
+            pMouse->devicePrivate = pPriv;
 	    pMouse->on = FALSE;
 	    map[1] = 1;
 	    map[2] = 2;
@@ -194,35 +196,37 @@ x68kMouseProc(DeviceIntPtr device, int what)
 	    emu3enable = TRUE;			/* XXX should be configurable */
 	    emu3timeout = EMU3B_DEF_TIMEOUT;	/* XXX should be configurable */
 	    if (emu3enable) {
-		pEmu3btn = &x68kMousePriv.emu3btn;
+		pEmu3btn = &pPriv->emu3btn;
 		Emulate3ButtonsEnable(pEmu3btn, device, emu3timeout);
 	    }
 
 	    break;
 
 	case DEVICE_ON:
-	    if (ioctl (x68kMousePriv.fd, VUIDGFORMAT, &oformat) == -1) {
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
+	    if (ioctl(pPriv->fd, VUIDGFORMAT, &oformat) == -1) {
 		ErrorF("x68kMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
-	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &format) == -1) {
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &format) == -1) {
 		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
-	    SetNotifyFd(x68kMousePriv.fd, x68kMouseEvents,
-		X_NOTIFY_READ, device);
-	    x68kMousePriv.bmask = 0;
+	    SetNotifyFd(pPriv->fd, x68kMouseEvents, X_NOTIFY_READ, device);
+	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
 	case DEVICE_OFF:
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
 	    pMouse->on = FALSE;
-	    RemoveNotifyFd(x68kMousePriv.fd);
+	    RemoveNotifyFd(pPriv->fd);
 	    break;
 
 	case DEVICE_CLOSE:
-	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &oformat) == -1)
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &oformat) == -1)
 		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 	    break;
 
