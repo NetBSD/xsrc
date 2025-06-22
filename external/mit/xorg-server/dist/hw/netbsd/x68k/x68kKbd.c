@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.18 2025/06/22 22:33:03 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.19 2025/06/22 22:33:49 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -391,11 +391,16 @@ x68kKbdBell(int volume, DeviceIntPtr device, void *ctrl, int unused)
 void
 DDXRingBell(int volume, int pitch, int duration)
 {
-    DeviceIntPtr	pKeyboard;
+    DeviceIntPtr device;
+    DevicePtr pKeyboard;
 
-    pKeyboard = x68kKeyboardDevice;
-    if (pKeyboard != NULL)
-	x68kKbdRingBell(pKeyboard, volume, duration);
+    device = x68kKeyboardDevice;
+    if (device != NULL) {
+	pKeyboard = &device->public;
+	if (pKeyboard->on) {
+	    x68kKbdRingBell(device, volume, duration);
+	}
+    }
 }
 
 /*-
