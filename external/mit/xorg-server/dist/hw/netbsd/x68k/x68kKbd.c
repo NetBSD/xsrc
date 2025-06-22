@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.14 2025/06/22 22:28:01 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.15 2025/06/22 22:29:23 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -87,17 +87,42 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 X68kKbdPriv x68kKbdPriv;
 DeviceIntPtr x68kKeyboardDevice = NULL;
 
-static void x68kKbdHandlerNotify(int, int, void *);
+static void x68kKbdEvents(int, int, void *);
 static void x68kInitModMap(KeySymsRec *, CARD8 *);
 static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
+static Firm_event *x68kKbdGetEvents(int, int *, Bool *);
+static void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, void *, int);
 static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
 static void x68kSetLeds(X68kKbdPrivPtr, uint8_t);
 
+/*------------------------------------------------------------------------
+ * x68kKbdEvents --
+ *	When registered polled keyboard input event handler is invoked,
+ *	read device events and enqueue them using the mi event queue.
+ * Results:
+ *	None.
+ *
+ *----------------------------------------------------------------------*/
 static void
-x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+x68kKbdEvents(int fd, int ready, void *data)
 {
+    int i, numEvents = 0;
+    Bool again = FALSE;
+    Firm_event *events;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+
+    input_lock();
+
+    do {
+	events = x68kKbdGetEvents(fd, &numEvents, &again);
+	for (i = 0; i < numEvents; i++) {
+	    x68kKbdEnqueueEvent(device, &events[i]);
+	}
+    } while (again);
+
+    input_unlock();
 }
 
 /*------------------------------------------------------------------------
@@ -120,7 +145,7 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
     switch (what) {
         case DEVICE_INIT:
             pKeyboard->devicePrivate = (void *)&x68kKbdPriv;
-            if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY)) == -1 ) {
+            if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK)) == -1 ) {
                 ErrorF("Can't open keyboard device\n");
                 return !Success;
             }
@@ -143,15 +168,13 @@ x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
 
         case DEVICE_ON:
             mode = 1;
-            if ( fcntl(x68kKbdPriv.fd, F_SETOWN, getpid()) == -1 ||
-                 fcntl(x68kKbdPriv.fd, F_SETFL, O_NONBLOCK|O_ASYNC) == -1 ||
-                 ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1 ) {
+            if (ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1) {
                 ErrorF("Async keyboard I/O failed\n");
                 return !Success;
             }
 	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
-            SetNotifyFd(x68kKbdPriv.fd, x68kKbdHandlerNotify,
-		X_NOTIFY_READ, NULL);
+            SetNotifyFd(x68kKbdPriv.fd, x68kKbdEvents,
+                X_NOTIFY_READ, device);
             pKeyboard->on = TRUE;
             break;
 
@@ -261,7 +284,7 @@ x68kInitKbdNames(XkbRMLVOSet *rmlvo, X68kKbdPrivPtr pKbd)
  *	None.
  *-----------------------------------------------------------------------
  */
-Firm_event *
+static Firm_event *
 x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 {
     int nBytes;		/* number of bytes of events available. */
@@ -288,7 +311,7 @@ x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
  *
  *-----------------------------------------------------------------------
  */
-void
+static void
 x68kKbdEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     BYTE		keycode;

@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.8 2021/03/22 14:10:06 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.9 2025/06/22 22:29:23 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -148,20 +148,13 @@ Bool x68kGraphOpen(X68kScreenRec *);
 Bool x68kGraphInit(ScreenPtr, int, char *[]);
 void x68kGraphClose(X68kScreenRec *);
 
-/* in x68kIo.c */
-void x68kSigIOHandler(int);
-
 /* in x68kMouse.c */
 int x68kMouseProc(DeviceIntPtr, int);
-Firm_event *x68kMouseGetEvents(int, int *, Bool *);
-void x68kMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern miPointerScreenFuncRec x68kPointerScreenFuncs;
 extern DeviceIntPtr x68kPointerDevice;
 
 /* in x68kKbd.c */
 int x68kKbdProc(DeviceIntPtr, int);
-Firm_event *x68kKbdGetEvents(int, int *, Bool *);
-void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern X68kKbdPriv x68kKbdPriv;
 extern DeviceIntPtr x68kKeyboardDevice;
 

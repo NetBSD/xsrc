@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.14 2025/06/22 22:28:01 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.15 2025/06/22 22:29:23 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -87,7 +87,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/Xatom.h>
 #include "xserver-properties.h"
 
-static void x68kMouseHandlerNotify(int, int, void *);
+static void x68kMouseEvents(int, int, void *);
+static Firm_event *x68kMouseGetEvents(int, int *, Bool *);
+static void x68kMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 static Bool x68kCursorOffScreen(ScreenPtr *, int *, int *);
 static void x68kCrossScreen(ScreenPtr, int);
 static void x68kWarpCursor(DeviceIntPtr, ScreenPtr, int, int);
@@ -103,9 +105,32 @@ DeviceIntPtr x68kPointerDevice = NULL;
 
 static X68kMousePriv x68kMousePriv;
 
+/*------------------------------------------------------------------------
+ * x68kMouseEvents --
+ *	When registered polled mouse input event handler is invoked,
+ *	read device events and enqueue them using the mi event queue.
+ * Results:
+ *	None.
+ *
+ *----------------------------------------------------------------------*/
 static void
-x68kMouseHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+x68kMouseEvents(int fd, int ready, void *data)
 {
+    int i, numEvents = 0;
+    Bool again = FALSE;
+    Firm_event *events;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+
+    input_lock();
+
+    do {
+	events = x68kMouseGetEvents(fd, &numEvents, &again);
+	for (i = 0; i < numEvents; i++) {
+	    x68kMouseEnqueueEvent(device, &events[i]);
+	}
+    } while (again);
+
+    input_unlock();
 }
 
 /*-
@@ -135,7 +160,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
     switch (what) {
 	case DEVICE_INIT:
             pMouse->devicePrivate = (void *) &x68kMousePriv;
-            if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY)) == -1 ) {
+            if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK)) == -1 ) {
                 ErrorF("Can't open mouse device\n");
                 return !Success;
             }
@@ -185,15 +210,9 @@ x68kMouseProc(DeviceIntPtr device, int what)
 		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
-            if ( fcntl(x68kMousePriv.fd, F_SETOWN, getpid()) == -1 ||
-                 fcntl(x68kMousePriv.fd, F_SETFL, O_NONBLOCK | O_ASYNC) == -1
-                 ) {
-                ErrorF("Async mouse I/O failed\n");
-                return !Success;
-            }
+	    SetNotifyFd(x68kMousePriv.fd, x68kMouseEvents,
+		X_NOTIFY_READ, device);
 	    x68kMousePriv.bmask = 0;
-	    SetNotifyFd(x68kMousePriv.fd, x68kMouseHandlerNotify,
-		X_NOTIFY_READ, NULL);
 	    pMouse->on = TRUE;
 	    break;
 
@@ -249,7 +268,7 @@ x68kMouseCtrl(DeviceIntPtr device, PtrCtrl* ctrl)
  *-----------------------------------------------------------------------
  */
 
-Firm_event *
+static Firm_event *
 x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 {
     int nBytes;               /* number of bytes of events available. */
@@ -285,7 +304,7 @@ x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
  *-----------------------------------------------------------------------
  */
 
-void
+static void
 x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     X68kMousePrivPtr	pPriv;	/* Private data for pointer */

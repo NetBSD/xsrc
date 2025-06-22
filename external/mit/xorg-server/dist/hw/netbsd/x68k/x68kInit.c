@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.12 2022/07/16 00:02:18 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.13 2025/06/22 22:29:23 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -170,9 +170,6 @@ InitInput(int argc, char *argv[])
 
     if ( !mieqInit() )
         FatalError("mieqInit failed\n");
-
-    /* setup SIGIO handler for asynchronous event handling */
-    (void)OsSignal(SIGIO, x68kSigIOHandler);
 }
 
 void
@@ -194,9 +191,6 @@ ddxGiveUp(enum ExitCode error)
     int i;
     X68kScreenRec *screen;
     X68kFbProcRec *fb;
-
-    /* give up SIGIO handling */
-    (void) OsSignal(SIGIO, SIG_IGN);
 
     /* close all frame buffers */
     for (i = 0; i < nscreens; i++) {
