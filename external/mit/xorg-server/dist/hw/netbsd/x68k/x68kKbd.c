@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.17 2025/06/22 22:32:14 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.18 2025/06/22 22:33:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -88,6 +88,7 @@ typedef struct _X68kKbdPriv {
     int type;
     int fd;
     Leds leds;
+    Firm_event evbuf[X68K_MAXEVENTS];
 } X68kKbdPriv, *X68kKbdPrivPtr;
 
 DeviceIntPtr x68kKeyboardDevice = NULL;
@@ -95,7 +96,7 @@ DeviceIntPtr x68kKeyboardDevice = NULL;
 static void x68kKbdEvents(int, int, void *);
 static void x68kInitModMap(KeySymsRec *, CARD8 *);
 static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
-static Firm_event *x68kKbdGetEvents(int, int *, Bool *);
+static int x68kKbdGetEvents(DeviceIntPtr);
 static void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, void *, int);
@@ -113,19 +114,19 @@ static void x68kSetLeds(X68kKbdPrivPtr, uint8_t);
 static void
 x68kKbdEvents(int fd, int ready, void *data)
 {
-    int i, numEvents = 0;
-    Bool again = FALSE;
-    Firm_event *events;
+    int i, numEvents;
     DeviceIntPtr device = (DeviceIntPtr)data;
+    DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv = pKeyboard->devicePrivate;
 
     input_lock();
 
     do {
-	events = x68kKbdGetEvents(fd, &numEvents, &again);
+	numEvents = x68kKbdGetEvents(device);
 	for (i = 0; i < numEvents; i++) {
-	    x68kKbdEnqueueEvent(device, &events[i]);
+	    x68kKbdEnqueueEvent(device, &pPriv->evbuf[i]);
 	}
-    } while (again);
+    } while (numEvents == X68K_MAXEVENTS);
 
     input_unlock();
 }
@@ -297,33 +298,31 @@ x68kInitKbdNames(XkbRMLVOSet *rmlvo, X68kKbdPrivPtr pKbd)
  *	Return the events waiting in the wings for the given keyboard.
  *
  * Results:
- *	A pointer to an array of Firm_events or (Firm_event *)0 if no events
- *	The number of events contained in the array.
- *	A boolean as to whether more events might be available.
+ *	Update Firm_event buffer in DeviceIntPtr if events are received.
+ *	Return the number of received Firm_events in the buffer.
  *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
-static Firm_event *
-x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
+static int
+x68kKbdGetEvents(DeviceIntPtr device)
 {
+    DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv = pKeyboard->devicePrivate;
     int nBytes;		/* number of bytes of events available. */
-    static Firm_event evBuf[X68K_MAXEVENTS];	/* Buffer for Firm_events */
+    int NumEvents = 0;
 
-    if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
-	if (errno == EWOULDBLOCK) {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
-	} else {
-	    ErrorF("Reading keyboard\n");
-	    FatalError ("Could not read the keyboard");
+    nBytes = read(pPriv->fd, pPriv->evbuf, sizeof(pPriv->evbuf));
+    if (nBytes == -1) {
+	if (errno != EWOULDBLOCK) {
+	    LogMessage(X_ERROR, "Unexpected error on reading keyboard\n");
+	    FatalError("Could not read the keyboard");
 	}
     } else {
-	*pNumEvents = nBytes / sizeof (Firm_event);
-	*pAgain = (nBytes == sizeof (evBuf));
+	NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
     }
-    return evBuf;
+    return NumEvents;
 }
 
 /*-
