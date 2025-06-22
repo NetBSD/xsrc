@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.13 2022/07/15 19:10:11 mrg Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.14 2025/06/22 22:28:01 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -109,10 +109,10 @@ x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
  *
  *----------------------------------------------------------------------*/
 int
-x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
-            int what)		/* What to do to it */
+x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
+            int what)			/* What to do to it */
 {
-    DevicePtr pKeyboard = &pDev->public;
+    DevicePtr pKeyboard = &device->public;
     CARD8 x68kModMap[MAP_LENGTH];
     int mode;
     XkbRMLVOSet rmlvo;
@@ -129,12 +129,12 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
 
             x68kInitKbdNames(&rmlvo, pKeyboard->devicePrivate);
 #if 0 /* XXX How should we setup XKB maps for non PS/2 keyboard!? */
-            InitKeyboardDeviceStruct(pDev, &rmlvo,
+            InitKeyboardDeviceStruct(device, &rmlvo,
                                      x68kKbdBell, x68kKbdCtrl);
 #else
-            InitKeyboardDeviceStruct(pDev, NULL,
+            InitKeyboardDeviceStruct(device, NULL,
                                      x68kKbdBell, x68kKbdCtrl);
-	    XkbApplyMappingChange(pDev, x68kKeySyms,
+	    XkbApplyMappingChange(device, x68kKeySyms,
 		x68kKeySyms->minKeyCode,
 		x68kKeySyms->maxKeyCode - x68kKeySyms->minKeyCode + 1,
 		x68kModMap, serverClient);
@@ -289,14 +289,14 @@ x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
  *-----------------------------------------------------------------------
  */
 void
-x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
+x68kKbdEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     BYTE		keycode;
     int			type;
 
     type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
     keycode = (fe->id & 0x7f) + MIN_KEYCODE;
-    QueueKeyboardEvents(pDev, type, keycode);
+    QueueKeyboardEvents(device, type, keycode);
 }
 
 /*-
@@ -315,10 +315,10 @@ x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
  */
 
 static void
-x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
+x68kKbdRingBell(DeviceIntPtr device, int volume, int duration)
 {
     int		    kbdCmd;	/* Command to give keyboard */
-    X68kKbdPrivPtr  pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
+    X68kKbdPrivPtr  pPriv = (X68kKbdPrivPtr)device->public.devicePrivate;
 
     if (volume == 0)
 	return;
@@ -335,14 +335,14 @@ x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
 }
 
 static void
-x68kKbdBell(int volume, DeviceIntPtr pDev, void *ctrl, int unused)
+x68kKbdBell(int volume, DeviceIntPtr device, void *ctrl, int unused)
 {
     KeybdCtrl*      kctrl = (KeybdCtrl*) ctrl;
 
     if (kctrl->bell == 0)
 	return;
 
-    x68kKbdRingBell(pDev, volume, kctrl->bell_duration);
+    x68kKbdRingBell(device, volume, kctrl->bell_duration);
 }
 
 void
@@ -377,9 +377,9 @@ DDXRingBell(int volume, int pitch, int duration)
 #define	XKB_LED_KANA_LOCK	0x01
 
 static void
-x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
+x68kKbdCtrl(DeviceIntPtr device, KeybdCtrl *ctrl)
 {
-    X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
+    X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)device->public.devicePrivate;
 
     if (pPriv->leds != ctrl->leds) {
         x68kSetLeds(pPriv, (uint8_t)ctrl->leds);

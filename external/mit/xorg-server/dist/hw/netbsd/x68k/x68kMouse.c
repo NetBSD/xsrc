@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.13 2025/06/17 15:55:03 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.14 2025/06/22 22:28:01 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -378,10 +378,10 @@ x68kCrossScreen(ScreenPtr pScreen, int entering)
 }
 
 static void
-x68kWarpCursor(DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
+x68kWarpCursor(DeviceIntPtr device, ScreenPtr pScreen, int x, int y)
 {
     input_lock();
-    miPointerWarpCursor (pDev, pScreen, x, y);
+    miPointerWarpCursor(device, pScreen, x, y);
     input_unlock();
 }
 
