@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.9 2025/06/22 22:29:23 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.10 2025/06/22 22:31:22 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -104,12 +104,6 @@ typedef struct _X68kFbProcRec {
 #define X68K_FB_CIRRUS  3       /* not yet */
 #endif
 #define X68K_FB_TYPES   2
-
-typedef struct _X68kMousePriv {
-    int fd;
-    int bmask;
-    MouseEmu3btn emu3btn;
-} X68kMousePriv, *X68kMousePrivPtr;
 
 typedef struct _X68kKbdPriv {
     int type;

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.16 2025/06/22 22:30:33 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.17 2025/06/22 22:31:22 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -95,6 +95,13 @@ static void x68kCrossScreen(ScreenPtr, int);
 static void x68kWarpCursor(DeviceIntPtr, ScreenPtr, int, int);
 static void x68kMouseCtrl(DeviceIntPtr, PtrCtrl*);
 
+typedef struct _X68kMousePriv {
+    int fd;
+    int bmask;
+    int oformat;
+    MouseEmu3btn emu3btn;
+} X68kMousePriv, *X68kMousePrivPtr;
+
 miPointerScreenFuncRec x68kPointerScreenFuncs = {
     x68kCursorOffScreen,
     x68kCrossScreen,
@@ -102,8 +109,6 @@ miPointerScreenFuncRec x68kPointerScreenFuncs = {
 };
 
 DeviceIntPtr x68kPointerDevice = NULL;
-
-static X68kMousePriv x68kMousePriv;
 
 /*------------------------------------------------------------------------
  * x68kMouseEvents --
@@ -150,7 +155,6 @@ x68kMouseProc(DeviceIntPtr device, int what)
     DevicePtr   pMouse = &device->public;
     X68kMousePrivPtr pPriv;
     int		format;
-    static int	oformat;
     BYTE	map[4];
     Atom btn_labels[3] = {0};
     Atom axes_labels[2] = { 0, 0 };
@@ -160,13 +164,22 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
     switch (what) {
 	case DEVICE_INIT:
-            pPriv = &x68kMousePriv;
-            if ((pPriv->fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK)) == -1) {
-                ErrorF("Can't open mouse device\n");
+            pPriv = malloc(sizeof(*pPriv));
+            if (pPriv == NULL) {
+                LogMessage(X_ERROR, "Cannot allocate private data for mouse\n");
                 return !Success;
             }
+            pPriv->fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK);
+            if (pPriv->fd == -1) {
+                LogMessage(X_ERROR, "Can't open mouse device\n");
+                return !Success;
+            }
+            pPriv->bmask = 0;
+            pPriv->oformat = 0;
+            memset(&pPriv->emu3btn, 0, sizeof(pPriv->emu3btn));
             pMouse->devicePrivate = pPriv;
 	    pMouse->on = FALSE;
+
 	    map[1] = 1;
 	    map[2] = 2;
 	    map[3] = 3;
@@ -204,30 +217,34 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
-	    if (ioctl(pPriv->fd, VUIDGFORMAT, &oformat) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDGFORMAT\n");
+	    if (ioctl(pPriv->fd, VUIDGFORMAT, &pPriv->oformat) == -1) {
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl(pPriv->fd, VUIDSFORMAT, &format) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
+
 	    SetNotifyFd(pPriv->fd, x68kMouseEvents, X_NOTIFY_READ, device);
+
 	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
 	case DEVICE_OFF:
 	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
-	    pMouse->on = FALSE;
 	    RemoveNotifyFd(pPriv->fd);
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &pPriv->oformat) == -1)
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDSFORMAT\n");
+	    pMouse->on = FALSE;
 	    break;
 
 	case DEVICE_CLOSE:
 	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
-	    if (ioctl(pPriv->fd, VUIDSFORMAT, &oformat) == -1)
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
+	    close(pPriv->fd);
+	    free(pPriv);
 	    break;
 
 	case DEVICE_ABORT:
