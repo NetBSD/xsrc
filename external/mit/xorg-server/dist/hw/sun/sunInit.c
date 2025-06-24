@@ -53,6 +53,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "extinit.h"
 #include    "xkbsrv.h"
 
+#include <X11/Xatom.h>
+
 /* default log file paths */
 #ifndef DEFAULT_LOGDIR
 #define DEFAULT_LOGDIR "/var/log"
@@ -120,6 +122,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 static int OpenFrameBuffer(char *, int);
 static char** GetDeviceList(int, char **);
 static void sunConfig(void);
+static void AddVTAtoms(CallbackListPtr *, void *, void *);
 
 #if SUNMAXDEPTH == 32
 static Bool sunCfbCreateGC(GCPtr);
@@ -480,6 +483,30 @@ sunConfig(void)
 
 /*-
  *-----------------------------------------------------------------------
+ * AddVTAtom --
+ *	Callback to register "XFree86_VT" Atom for xinit(1) to appease
+ *	"XFree86_VT property unexpectedly has 0 items instead of 1"
+ *	warning on startup.  Pulled from hw/xfree86/common/xf86Init.c.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+AddVTAtoms(CallbackListPtr *pcbl, void *data, void *screen)
+{
+#define VT_ATOM_NAME	"XFree86_VT"
+    int err, vtno = 0;
+    ScreenPtr pScreen = screen;
+    Atom VTAtom = MakeAtom(VT_ATOM_NAME, sizeof(VT_ATOM_NAME) - 1, TRUE);
+
+    err = dixChangeWindowProperty(serverClient, pScreen->root, VTAtom,
+	XA_INTEGER, 32, PropModeReplace, 1, &vtno, FALSE);
+
+    if (err != Success)
+        LogMessage(X_WARNING, "Failed to register VT properties\n");
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * InitOutput --
  *	Initialize screenInfo for all actually accessible framebuffers.
  *	The
@@ -502,6 +529,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
     static int	setup_on_exit = 0;
 
     sunConfig();
+
+    AddCallback(&RootWindowFinalizeCallback, AddVTAtoms, NULL);
 
     if (!monitorResolution)
 	monitorResolution = 90;
