@@ -51,6 +51,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "mi.h"
 #include    "fb.h"
 #include    "extinit.h"
+#include    "xkbsrv.h"
 
 /* default log file paths */
 #ifndef DEFAULT_LOGDIR
@@ -118,6 +119,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static int OpenFrameBuffer(char *, int);
 static char** GetDeviceList(int, char **);
+static void sunConfig(void);
 
 #if SUNMAXDEPTH == 32
 static Bool sunCfbCreateGC(GCPtr);
@@ -452,6 +454,32 @@ GlxExtensionInit(void)
 
 /*-
  *-----------------------------------------------------------------------
+ * sunConfig --
+ *	The Xsun server does not use a config file for customization.
+ *	On the other hand, the XFree86 DDX server initializes various
+ *	settings based on xorg.conf in hw/xfree86/common/xf86Config.c,
+ *	before calling InitInput().  The X.Org DIX appears to implicitly
+ *	expect such initialization to be performed by each DDX.
+ *	This function handles those implicit initialzations for Xsun.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+sunConfig(void)
+{
+    XkbRMLVOSet set;
+
+    /*
+     * This Xkb initialzation seems required before InitCoreDevices() for
+     * Core Keyboard, but InitCoreDevices() is called before InitInput().
+     */
+    XkbInitRules(&set, "base", "empty", "empty", NULL, NULL);
+    XkbSetRulesDflts(&set);
+    XkbFreeRMLVOSet(&set, FALSE);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * InitOutput --
  *	Initialize screenInfo for all actually accessible framebuffers.
  *	The
@@ -472,6 +500,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
     int		nonBlockConsole = 0;
     char	**devList;
     static int	setup_on_exit = 0;
+
+    sunConfig();
 
     if (!monitorResolution)
 	monitorResolution = 90;

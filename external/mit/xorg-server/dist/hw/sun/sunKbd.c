@@ -799,7 +799,6 @@ sunKbdProc(DeviceIntPtr device, int what)
 	InitKeyboardDeviceStruct(device, &rmlvo,
 				 sunBell, sunKbdCtrl);
 #else
-	XkbSetRulesDflts(&rmlvo);
 	InitKeyboardDeviceStruct(device, NULL,
 				 sunBell, sunKbdCtrl);
 	XkbApplyMappingChange(device, &pPriv->keysym,
