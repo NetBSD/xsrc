@@ -72,89 +72,6 @@ ProcessInputEvents(void)
     mieqProcessInputEvents ();
 }
 
-/*
- *-----------------------------------------------------------------------
- * sunEnqueueEvents
- *	When a SIGIO is received, read device hard events and
- *	enqueue them using the mi event queue
- */
-
-void
-sunEnqueueEvents(void)
-{
-    Firm_event	*ptrEvents,    	/* Current pointer event */
-		*kbdEvents;    	/* Current keyboard event */
-    int		numPtrEvents, 	/* Number of remaining pointer events */
-		numKbdEvents;   /* Number of remaining keyboard events */
-    int		nPE,   	    	/* Original number of pointer events */
-		nKE;   	    	/* Original number of keyboard events */
-    Bool	PtrAgain,	/* need to (re)read */
-		KbdAgain;	/* need to (re)read */
-    DeviceIntPtr	pPointer;
-    DeviceIntPtr	pKeyboard;
-    sunKbdPrivPtr       kbdPriv;
-    sunPtrPrivPtr       ptrPriv;
-
-    pPointer = sunPointerDevice;
-    pKeyboard = sunKeyboardDevice;
-    ptrPriv = (sunPtrPrivPtr) pPointer->public.devicePrivate;
-    kbdPriv = (sunKbdPrivPtr) pKeyboard->public.devicePrivate;
-    if (!pPointer->public.on || !pKeyboard->public.on)
-	return;
-
-    numPtrEvents = 0;
-    ptrEvents = NULL;
-    PtrAgain = TRUE;
-    numKbdEvents = 0;
-    kbdEvents = NULL;
-    KbdAgain = TRUE;
-
-    /*
-     * So long as one event from either device remains unprocess, we loop:
-     * Take the oldest remaining event and pass it to the proper module
-     * for processing. The DDXEvent will be sent to ProcessInput by the
-     * function called.
-     */
-    while (1) {
-	/*
-	 * Get events from both the pointer and the keyboard, storing the number
-	 * of events gotten in nPE and nKE and keeping the start of both arrays
-	 * in pE and kE
-	 */
-	if ((numPtrEvents == 0) && PtrAgain) {
-	    ptrEvents = sunMouseGetEvents (ptrPriv->fd, pPointer->public.on,
-					   &nPE, &PtrAgain);
-	    numPtrEvents = nPE;
-	}
-	if ((numKbdEvents == 0) && KbdAgain) {
-	    kbdEvents = sunKbdGetEvents (kbdPriv->fd, pKeyboard->public.on,
-					 &nKE, &KbdAgain);
-	    numKbdEvents = nKE;
-	}
-	if ((numPtrEvents == 0) && (numKbdEvents == 0))
-	    break;
-	if (numPtrEvents && numKbdEvents) {
-	    if (timercmp (&kbdEvents->time, &ptrEvents->time, <)) {
-		sunKbdEnqueueEvent (pKeyboard, kbdEvents);
-		numKbdEvents--;
-		kbdEvents++;
-	    } else {
-		sunMouseEnqueueEvent (pPointer, ptrEvents);
-		numPtrEvents--;
-		ptrEvents++;
-	    }
-	} else if (numKbdEvents) {
-	    sunKbdEnqueueEvent (pKeyboard, kbdEvents);
-	    numKbdEvents--;
-	    kbdEvents++;
-	} else {
-	    sunMouseEnqueueEvent (pPointer, ptrEvents);
-	    numPtrEvents--;
-	    ptrEvents++;
-	}
-    }
-}
-
 #if INPUTTHREAD
 /** This function is called in Xserver/os/inputthread.c when starting
     the input thread. */
@@ -171,11 +88,6 @@ ddxGiveUp(enum ExitCode error)
     int		i;
     ScreenPtr	pScreen;
 
-#ifdef SVR4
-    (void) OsSignal (SIGPOLL, SIG_IGN);
-#else
-    (void) OsSignal (SIGIO, SIG_IGN);
-#endif
 #if defined(SVR4) || defined(CSRG_BASED)
     sunNonBlockConsoleOff ();
 #else

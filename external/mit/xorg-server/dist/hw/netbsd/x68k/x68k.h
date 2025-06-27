@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.8 2021/03/22 14:10:06 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.8.2.1 2025/06/27 09:42:53 martin Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -105,18 +105,6 @@ typedef struct _X68kFbProcRec {
 #endif
 #define X68K_FB_TYPES   2
 
-typedef struct _X68kMousePriv {
-    int fd;
-    int bmask;
-    MouseEmu3btn emu3btn;
-} X68kMousePriv, *X68kMousePrivPtr;
-
-typedef struct _X68kKbdPriv {
-    int type;
-    int fd;
-    Leds leds;
-} X68kKbdPriv, *X68kKbdPrivPtr;
-
 /* keyboard types */
 #define X68K_KB_STANDARD 0      /* standard keyboard */
 #define X68K_KB_ASCII    1      /* ascii map keyboard */
@@ -135,6 +123,7 @@ X68kScreenRec *x68kGetScreenRec(int);
 X68kScreenRec *x68kGetScreenRecByType(int);
 X68kFbProcRec *x68kGetFbProcRec(int index);
 void x68kRegisterPixmapFormats(ScreenInfo *);
+int x68kGetKbdType(void);
 int x68kConfig(void);
 extern const char *configFilename;
 
@@ -148,21 +137,13 @@ Bool x68kGraphOpen(X68kScreenRec *);
 Bool x68kGraphInit(ScreenPtr, int, char *[]);
 void x68kGraphClose(X68kScreenRec *);
 
-/* in x68kIo.c */
-void x68kSigIOHandler(int);
-
 /* in x68kMouse.c */
 int x68kMouseProc(DeviceIntPtr, int);
-Firm_event *x68kMouseGetEvents(int, int *, Bool *);
-void x68kMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern miPointerScreenFuncRec x68kPointerScreenFuncs;
 extern DeviceIntPtr x68kPointerDevice;
 
 /* in x68kKbd.c */
 int x68kKbdProc(DeviceIntPtr, int);
-Firm_event *x68kKbdGetEvents(int, int *, Bool *);
-void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
-extern X68kKbdPriv x68kKbdPriv;
 extern DeviceIntPtr x68kKeyboardDevice;
 
 /* in x68kKeyMap.c */

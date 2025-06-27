@@ -51,6 +51,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "mi.h"
 #include    "fb.h"
 #include    "extinit.h"
+#include    "xkbsrv.h"
+
+#include <X11/Xatom.h>
 
 /* default log file paths */
 #ifndef DEFAULT_LOGDIR
@@ -117,9 +120,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif /* } */
 
 static int OpenFrameBuffer(char *, int);
-static void SigIOHandler(int);
 static char** GetDeviceList(int, char **);
-static void getKbdType(void);
+static void sunConfig(void);
+static void AddVTAtoms(CallbackListPtr *, void *, void *);
 
 #if SUNMAXDEPTH == 32
 static Bool sunCfbCreateGC(GCPtr);
@@ -137,19 +140,6 @@ Bool sunFlipPixels = FALSE;
 Bool sunFbInfo = FALSE;
 Bool sunCG4Frob = FALSE;
 Bool sunNoGX = FALSE;
-
-sunKbdPrivRec sunKbdPriv = {
-    -1,		/* fd */
-    -1,		/* type */
-    -1,		/* layout */
-    0,		/* click */
-    (Leds)0,	/* leds */
-};
-
-sunPtrPrivRec sunPtrPriv = {
-    -1,		/* fd */
-    0		/* Current button state */
-};
 
 /*
  * The name member in the following table corresponds to the
@@ -348,28 +338,6 @@ OpenFrameBuffer(
 
 /*-
  *-----------------------------------------------------------------------
- * SigIOHandler --
- *	Signal handler for SIGIO - input is available.
- *
- * Results:
- *	sunSigIO is set - ProcessInputEvents() will be called soon.
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
-/*ARGSUSED*/
-static void
-SigIOHandler(int sig)
-{
-    int olderrno = errno;
-    sunEnqueueEvents ();
-    errno = olderrno;
-}
-
-/*-
- *-----------------------------------------------------------------------
  * sunNonBlockConsoleOff --
  *	Turn non-blocking mode on the console off, so you don't get logged
  *	out when the server exits.
@@ -395,7 +363,7 @@ sunNonBlockConsoleOff(
 
     i = fcntl(2, F_GETFL, 0);
     if (i >= 0)
-	(void) fcntl(2, F_SETFL, i & ~FNDELAY);
+	(void) fcntl(2, F_SETFL, i & ~O_NONBLOCK);
 }
 
 static char**
@@ -436,54 +404,6 @@ GetDeviceList(int argc, char **argv)
     return deviceList;
 }
 
-static void
-getKbdType(void)
-{
-/*
- * The Sun 386i has system include files that preclude this pre SunOS 4.1
- * test for the presence of a type 4 keyboard however it really doesn't
- * matter since no 386i has ever been shipped with a type 3 keyboard.
- * SunOS 4.1 no longer needs this kludge.
- */
-#if !defined(i386) && !defined(KIOCGKEY)
-#define TYPE4KEYBOARDOVERRIDE
-#endif
-
-    int ii;
-
-    for (ii = 0; ii < 3; ii++) {
-	sunKbdWait();
-	(void) ioctl (sunKbdPriv.fd, KIOCTYPE, &sunKbdPriv.type);
-#ifdef TYPE4KEYBOARDOVERRIDE
-	/*
-	 * Magic. Look for a key which is non-existent on a real type
-	 * 3 keyboard but does exist on a type 4 keyboard.
-	 */
-	if (sunKbdPriv.type == KB_SUN3) {
-	    struct kiockeymap key;
-
-	    key.kio_tablemask = 0;
-	    key.kio_station = 118;
-	    if (ioctl(sunKbdPriv.fd, KIOCGKEY, &key) == -1) {
-		ErrorF( "ioctl KIOCGKEY\n" );
-		FatalError("Can't KIOCGKEY on fd %d\n", sunKbdPriv.fd);
-	    }
-	    if (key.kio_entry != HOLE)
-		sunKbdPriv.type = KB_SUN4;
-	}
-#endif
-	switch (sunKbdPriv.type) {
-	case KB_SUN2:
-	case KB_SUN3:
-	case KB_SUN4: return;
-	default:
-	    sunChangeKbdTranslation(sunKbdPriv.fd, FALSE);
-	    continue;
-	}
-    }
-    FatalError ("Unsupported keyboard type %d\n", sunKbdPriv.type);
-}
-
 void
 OsVendorInit(void)
 {
@@ -519,34 +439,6 @@ OsVendorInit(void)
 
 	free(lf);
 
-	sunKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
-	if (sunKbdPriv.fd < 0)
-	    FatalError ("Cannot open /dev/kbd, error %d\n", errno);
-	sunPtrPriv.fd = open ("/dev/mouse", O_RDWR, 0);
-	if (sunPtrPriv.fd < 0)
-	    FatalError ("Cannot open /dev/mouse, error %d\n", errno);
-	getKbdType ();
-	switch (sunKbdPriv.type) {
-	case KB_SUN2:
-	case KB_SUN3:
-	    LogMessage(X_INFO, "Sun type %d Keyboard\n", sunKbdPriv.type);
-	    break;
-	case KB_SUN4:
-#define LAYOUT_US5	33
-	    (void) ioctl (sunKbdPriv.fd, KIOCLAYOUT, &sunKbdPriv.layout);
-	    if (sunKbdPriv.layout < 0 ||
-		sunKbdPriv.layout > sunMaxLayout ||
-		sunType4KeyMaps[sunKbdPriv.layout] == NULL)
-		FatalError ("Unsupported keyboard type 4 layout %d\n",
-			    sunKbdPriv.layout);
-	    sunKeySyms[KB_SUN4].map = sunType4KeyMaps[sunKbdPriv.layout];
-	    LogMessage(X_INFO, "Sun type %d Keyboard, layout %d\n",
-		sunKbdPriv.layout >= LAYOUT_US5 ? 5 : 4, sunKbdPriv.layout);
-	    break;
-	default:
-	    LogMessage(X_INFO, "Unknown keyboard type\n");
-	    break;
-        }
 	inited = 1;
     }
 }
@@ -562,6 +454,56 @@ GlxExtensionInit(void)
 {
 }
 #endif
+
+/*-
+ *-----------------------------------------------------------------------
+ * sunConfig --
+ *	The Xsun server does not use a config file for customization.
+ *	On the other hand, the XFree86 DDX server initializes various
+ *	settings based on xorg.conf in hw/xfree86/common/xf86Config.c,
+ *	before calling InitInput().  The X.Org DIX appears to implicitly
+ *	expect such initialization to be performed by each DDX.
+ *	This function handles those implicit initialzations for Xsun.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+sunConfig(void)
+{
+    XkbRMLVOSet set;
+
+    /*
+     * This Xkb initialzation seems required before InitCoreDevices() for
+     * Core Keyboard, but InitCoreDevices() is called before InitInput().
+     */
+    XkbInitRules(&set, "base", "empty", "empty", NULL, NULL);
+    XkbSetRulesDflts(&set);
+    XkbFreeRMLVOSet(&set, FALSE);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * AddVTAtom --
+ *	Callback to register "XFree86_VT" Atom for xinit(1) to appease
+ *	"XFree86_VT property unexpectedly has 0 items instead of 1"
+ *	warning on startup.  Pulled from hw/xfree86/common/xf86Init.c.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+AddVTAtoms(CallbackListPtr *pcbl, void *data, void *screen)
+{
+#define VT_ATOM_NAME	"XFree86_VT"
+    int err, vtno = 0;
+    ScreenPtr pScreen = screen;
+    Atom VTAtom = MakeAtom(VT_ATOM_NAME, sizeof(VT_ATOM_NAME) - 1, TRUE);
+
+    err = dixChangeWindowProperty(serverClient, pScreen->root, VTAtom,
+	XA_INTEGER, 32, PropModeReplace, 1, &vtno, FALSE);
+
+    if (err != Success)
+        LogMessage(X_WARNING, "Failed to register VT properties\n");
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -585,6 +527,10 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
     int		nonBlockConsole = 0;
     char	**devList;
     static int	setup_on_exit = 0;
+
+    sunConfig();
+
+    AddCallback(&RootWindowFinalizeCallback, AddVTAtoms, NULL);
 
     if (!monitorResolution)
 	monitorResolution = 90;
@@ -611,7 +557,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	}
 	i = fcntl(2, F_GETFL, 0);
 	if (i >= 0)
-	    i = fcntl(2, F_SETFL, i | FNDELAY);
+	    i = fcntl(2, F_SETFL, i | O_NONBLOCK);
 	if (i < 0) {
 	    ErrorF("fcntl\n");
 	    ErrorF("InitOutput: can't put stderr in non-block mode\n");
@@ -670,28 +616,6 @@ InitInput(int argc, char **argv)
 	FatalError("Failed to init sun default input devices.\n");
 
     (void)mieqInit();
-#define SET_FLOW(fd) fcntl(fd, F_SETFL, FNDELAY | FASYNC)
-#ifdef SVR4
-    (void) OsSignal(SIGPOLL, SigIOHandler);
-#define WANT_SIGNALS(fd) ioctl(fd, I_SETSIG, S_INPUT | S_HIPRI)
-#else
-    (void) OsSignal(SIGIO, SigIOHandler);
-#define WANT_SIGNALS(fd) fcntl(fd, F_SETOWN, getpid())
-#endif
-    if (sunKbdPriv.fd >= 0) {
-	if (SET_FLOW(sunKbdPriv.fd) == -1 || WANT_SIGNALS(sunKbdPriv.fd) == -1) {
-	    (void) close (sunKbdPriv.fd);
-	    sunKbdPriv.fd = -1;
-	    FatalError("Async kbd I/O failed in InitInput");
-	}
-    }
-    if (sunPtrPriv.fd >= 0) {
-	if (SET_FLOW(sunPtrPriv.fd) == -1 || WANT_SIGNALS(sunPtrPriv.fd) == -1) {
-	    (void) close (sunPtrPriv.fd);
-	    sunPtrPriv.fd = -1;
-	    FatalError("Async mouse I/O failed in InitInput");
-	}
-    }
 }
 
 void

@@ -213,29 +213,6 @@ extern int monitorResolution;
  */
 #define SUN_MAXEVENTS 	32
 
-/*
- * Data private to any sun keyboard.
- */
-typedef struct {
-    int		fd;
-    int		type;		/* Type of keyboard */
-    int		layout;		/* The layout of the keyboard */
-    int		click;		/* kbd click save state */
-    Leds	leds;		/* last known LED state */
-} sunKbdPrivRec, *sunKbdPrivPtr;
-
-extern sunKbdPrivRec sunKbdPriv;
-
-/*
- * Data private to any sun pointer device.
- */
-typedef struct {
-    int		fd;
-    int		bmask;		/* last known button state */
-} sunPtrPrivRec, *sunPtrPrivPtr;
-
-extern sunPtrPrivRec sunPtrPriv;
-
 typedef struct {
     BYTE	key;
     CARD8	modifiers;
@@ -310,17 +287,12 @@ extern const int	sunMaxLayout;
 extern KeySym		*sunType4KeyMaps[];
 
 /* sunKbd.c */
-extern long		sunAutoRepeatInitiate;
-extern long		sunAutoRepeatDelay;
 extern DeviceIntPtr	sunKeyboardDevice;
 
 /* sunMouse.c */
 extern Bool		sunActiveZaphod;
 extern DeviceIntPtr	sunPointerDevice;
 extern miPointerScreenFuncRec sunPointerScreenFuncs;
-
-/* sunFbs.c */
-extern int		sunScreenIndex;
 
 /* sunCursor.c */
 extern Bool sunCursorInitialize(ScreenPtr);
@@ -334,9 +306,6 @@ extern void sunNonBlockConsoleOff(
     char* /* arg */
 #endif
 );
-
-/* sunIo.c */
-extern void sunEnqueueEvents(void);
 
 /* sunGX.c */
 extern int sunGXInit(ScreenPtr, fbFd *);
@@ -354,15 +323,9 @@ extern Bool sunInitCommon(int, ScreenPtr, off_t,
     int);
 
 /* sunKbd.c */
-extern int sunChangeKbdTranslation(int, Bool);
-extern Firm_event* sunKbdGetEvents(int, Bool, int *, Bool *);
-extern void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern int sunKbdProc(DeviceIntPtr, int);
-extern void sunKbdWait(void);
 
 /* sunMouse.c */
-extern Firm_event* sunMouseGetEvents(int, Bool, int *, Bool *);
-extern void sunMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern int sunMouseProc(DeviceIntPtr, int);
 
 /* sunCfb.c */

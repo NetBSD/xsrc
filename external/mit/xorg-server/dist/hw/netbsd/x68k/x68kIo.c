@@ -1,4 +1,4 @@
-/* $NetBSD: x68kIo.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kIo.c,v 1.3.2.1 2025/06/27 09:42:54 martin Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -71,25 +71,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "x68k.h"
 #include "mi.h"
 
-static void x68kEnqueueEvents(void);
-
-/*--------------------------------------------------------------------
- * function "x68kSigIOHandler"
- *
- *  purpose:  handles signals from input devices.
- *            enqueue inputs into mi event queue
- *  argument: (int)sig
- *  returns:  nothing
- *------------------------------------------------------------------*/
-void
-x68kSigIOHandler(int sig)
-{
-    int olderrno = errno;
-
-    x68kEnqueueEvents();
-    errno = olderrno;
-}
-
 /*--------------------------------------------------------------------
  * ProcessInputEvents --
  *	Retrieve all waiting input events and pass them to DIX in their
@@ -107,86 +88,6 @@ void
 ProcessInputEvents(void)
 {
     (void) mieqProcessInputEvents ();
-}
-
-/*--------------------------------------------------------------------
- * x68kEnqueueEvents
- *	When a SIGIO is received, read device hard events and
- *	enqueue them using the mi event queue
- */
-
-static void
-x68kEnqueueEvents(void)
-{
-    Firm_event	*ptrEvents,	/* Current pointer event */
-		*kbdEvents;	/* Current keyboard event */
-    int		numPtrEvents,	/* Number of remaining pointer events */
-		numKbdEvents;	/* Number of remaining keyboard events */
-    int		nPE,		/* Original number of pointer events */
-		nKE;		/* Original number of keyboard events */
-    Bool	PtrAgain,	/* need to (re)read */
-		KbdAgain;	/* need to (re)read */
-    DeviceIntPtr        pPointer;
-    DeviceIntPtr	pKeyboard;
-    X68kKbdPrivPtr      kbdPriv;
-    X68kMousePrivPtr    ptrPriv;
-
-    pPointer = x68kPointerDevice;
-    pKeyboard = x68kKeyboardDevice;
-    ptrPriv = (X68kMousePrivPtr) pPointer->public.devicePrivate;
-    kbdPriv = (X68kKbdPrivPtr) pKeyboard->public.devicePrivate;
-    if (!pPointer->public.on || !pKeyboard->public.on)
-	return;
-
-    numPtrEvents = 0;
-    PtrAgain = TRUE;
-    numKbdEvents = 0;
-    KbdAgain = TRUE;
-    ptrEvents = NULL;	/* XXX gcc */
-    kbdEvents = NULL;	/* XXX gcc */
-
-    /*
-     * So long as one event from either device remains unprocess, we loop:
-     * Take the oldest remaining event and pass it to the proper module
-     * for processing. The DDXEvent will be sent to ProcessInput by the
-     * function called.
-     */
-    while (1) {
-	/*
-	 * Get events from both the pointer and the keyboard, storing the number
-	 * of events gotten in nPE and nKE and keeping the start of both arrays
-	 * in pE and kE
-	 */
-	if ((numPtrEvents == 0) && PtrAgain) {
-	    ptrEvents = x68kMouseGetEvents (ptrPriv->fd, &nPE, &PtrAgain);
-	    numPtrEvents = nPE;
-	}
-	if ((numKbdEvents == 0) && KbdAgain) {
-	    kbdEvents = x68kKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
-	    numKbdEvents = nKE;
-	}
-	if ((numPtrEvents == 0) && (numKbdEvents == 0))
-	    break;
-	if (numPtrEvents && numKbdEvents) {
-	    if (timercmp (&kbdEvents->time, &ptrEvents->time, <)) {
-		x68kKbdEnqueueEvent (pKeyboard, kbdEvents);
-		numKbdEvents--;
-		kbdEvents++;
-	    } else {
-		x68kMouseEnqueueEvent (pPointer, ptrEvents);
-		numPtrEvents--;
-		ptrEvents++;
-	    }
-	} else if (numKbdEvents) {
-	    x68kKbdEnqueueEvent (pKeyboard, kbdEvents);
-	    numKbdEvents--;
-	    kbdEvents++;
-	} else {
-	    x68kMouseEnqueueEvent (pPointer, ptrEvents);
-	    numPtrEvents--;
-	    ptrEvents++;
-	}
-    }
 }
 
 /* EOF x68kIo.c */

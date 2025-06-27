@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.13 2022/07/15 19:10:11 mrg Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.13.2.1 2025/06/27 09:42:54 martin Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -84,20 +84,51 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define MIN_KEYCODE     7       /* necessary to avoid the mouse buttons */
 #define MAX_KEYCODE     255     /* limited by the protocol */
 
-X68kKbdPriv x68kKbdPriv;
+typedef struct _X68kKbdPriv {
+    int type;
+    int fd;
+    Leds leds;
+    Firm_event evbuf[X68K_MAXEVENTS];
+} X68kKbdPriv, *X68kKbdPrivPtr;
+
 DeviceIntPtr x68kKeyboardDevice = NULL;
 
-static void x68kKbdHandlerNotify(int, int, void *);
+static void x68kKbdEvents(int, int, void *);
 static void x68kInitModMap(KeySymsRec *, CARD8 *);
 static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
+static int x68kKbdGetEvents(DeviceIntPtr);
+static void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, void *, int);
 static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
 static void x68kSetLeds(X68kKbdPrivPtr, uint8_t);
 
+/*------------------------------------------------------------------------
+ * x68kKbdEvents --
+ *	When registered polled keyboard input event handler is invoked,
+ *	read device events and enqueue them using the mi event queue.
+ * Results:
+ *	None.
+ *
+ *----------------------------------------------------------------------*/
 static void
-x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+x68kKbdEvents(int fd, int ready, void *data)
 {
+    int i, numEvents;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+    DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv = pKeyboard->devicePrivate;
+
+    input_lock();
+
+    do {
+	numEvents = x68kKbdGetEvents(device);
+	for (i = 0; i < numEvents; i++) {
+	    x68kKbdEnqueueEvent(device, &pPriv->evbuf[i]);
+	}
+    } while (numEvents == X68K_MAXEVENTS);
+
+    input_unlock();
 }
 
 /*------------------------------------------------------------------------
@@ -109,32 +140,42 @@ x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
  *
  *----------------------------------------------------------------------*/
 int
-x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
-            int what)		/* What to do to it */
+x68kKbdProc(DeviceIntPtr device,	/* Keyboard to manipulate */
+            int what)			/* What to do to it */
 {
-    DevicePtr pKeyboard = &pDev->public;
+    DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv;
     CARD8 x68kModMap[MAP_LENGTH];
     int mode;
     XkbRMLVOSet rmlvo;
 
     switch (what) {
         case DEVICE_INIT:
-            pKeyboard->devicePrivate = (void *)&x68kKbdPriv;
-            if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY)) == -1 ) {
-                ErrorF("Can't open keyboard device\n");
+            pPriv = malloc(sizeof(*pPriv));
+            if (pPriv == NULL) {
+                LogMessage(X_ERROR,
+                    "Cannot allocate private data for keyboard\n");
                 return !Success;
             }
+            pPriv->fd = open("/dev/kbd", O_RDONLY | O_NONBLOCK);
+            if (pPriv->fd == -1) {
+                LogMessage(X_ERROR, "Can't open keyboard device\n");
+                return !Success;
+            }
+            pPriv->type = x68kGetKbdType();
+            pPriv->leds = 0;
+            pKeyboard->devicePrivate = pPriv;
             pKeyboard->on = FALSE;
             x68kInitModMap(x68kKeySyms, x68kModMap);
 
-            x68kInitKbdNames(&rmlvo, pKeyboard->devicePrivate);
+            x68kInitKbdNames(&rmlvo, pPriv);
 #if 0 /* XXX How should we setup XKB maps for non PS/2 keyboard!? */
-            InitKeyboardDeviceStruct(pDev, &rmlvo,
+            InitKeyboardDeviceStruct(device, &rmlvo,
                                      x68kKbdBell, x68kKbdCtrl);
 #else
-            InitKeyboardDeviceStruct(pDev, NULL,
+            InitKeyboardDeviceStruct(device, NULL,
                                      x68kKbdBell, x68kKbdCtrl);
-	    XkbApplyMappingChange(pDev, x68kKeySyms,
+	    XkbApplyMappingChange(device, x68kKeySyms,
 		x68kKeySyms->minKeyCode,
 		x68kKeySyms->maxKeyCode - x68kKeySyms->minKeyCode + 1,
 		x68kModMap, serverClient);
@@ -142,23 +183,27 @@ x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
             break;
 
         case DEVICE_ON:
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
             mode = 1;
-            if ( fcntl(x68kKbdPriv.fd, F_SETOWN, getpid()) == -1 ||
-                 fcntl(x68kKbdPriv.fd, F_SETFL, O_NONBLOCK|O_ASYNC) == -1 ||
-                 ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1 ) {
-                ErrorF("Async keyboard I/O failed\n");
+            if (ioctl(pPriv->fd, KIOCSDIRECT, &mode) == -1) {
+                LogMessage(X_ERROR, "Failed to set keyboard direct mode\n");
                 return !Success;
             }
-	    x68kSetLeds(&x68kKbdPriv, (uint8_t)x68kKbdPriv.leds);
-            SetNotifyFd(x68kKbdPriv.fd, x68kKbdHandlerNotify,
-		X_NOTIFY_READ, NULL);
+	    x68kSetLeds(pPriv, (uint8_t)pPriv->leds);
+            SetNotifyFd(pPriv->fd, x68kKbdEvents, X_NOTIFY_READ, device);
             pKeyboard->on = TRUE;
             break;
 
-        case DEVICE_CLOSE:
         case DEVICE_OFF:
-            RemoveNotifyFd(x68kKbdPriv.fd);
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
+            RemoveNotifyFd(pPriv->fd);
             pKeyboard->on = FALSE;
+            break;
+
+        case DEVICE_CLOSE:
+            pPriv = (X68kKbdPrivPtr)pKeyboard->devicePrivate;
+            close(pPriv->fd);
+            free(pPriv);
             break;
 
         case DEVICE_ABORT:
@@ -253,33 +298,31 @@ x68kInitKbdNames(XkbRMLVOSet *rmlvo, X68kKbdPrivPtr pKbd)
  *	Return the events waiting in the wings for the given keyboard.
  *
  * Results:
- *	A pointer to an array of Firm_events or (Firm_event *)0 if no events
- *	The number of events contained in the array.
- *	A boolean as to whether more events might be available.
+ *	Update Firm_event buffer in DeviceIntPtr if events are received.
+ *	Return the number of received Firm_events in the buffer.
  *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
-Firm_event *
-x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
+static int
+x68kKbdGetEvents(DeviceIntPtr device)
 {
+    DevicePtr pKeyboard = &device->public;
+    X68kKbdPrivPtr pPriv = pKeyboard->devicePrivate;
     int nBytes;		/* number of bytes of events available. */
-    static Firm_event evBuf[X68K_MAXEVENTS];	/* Buffer for Firm_events */
+    int NumEvents = 0;
 
-    if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
-	if (errno == EWOULDBLOCK) {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
-	} else {
-	    ErrorF("Reading keyboard\n");
-	    FatalError ("Could not read the keyboard");
+    nBytes = read(pPriv->fd, pPriv->evbuf, sizeof(pPriv->evbuf));
+    if (nBytes == -1) {
+	if (errno != EWOULDBLOCK) {
+	    LogMessage(X_ERROR, "Unexpected error on reading keyboard\n");
+	    FatalError("Could not read the keyboard");
 	}
     } else {
-	*pNumEvents = nBytes / sizeof (Firm_event);
-	*pAgain = (nBytes == sizeof (evBuf));
+	NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
     }
-    return evBuf;
+    return NumEvents;
 }
 
 /*-
@@ -288,15 +331,15 @@ x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
  *
  *-----------------------------------------------------------------------
  */
-void
-x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
+static void
+x68kKbdEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     BYTE		keycode;
     int			type;
 
     type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
     keycode = (fe->id & 0x7f) + MIN_KEYCODE;
-    QueueKeyboardEvents(pDev, type, keycode);
+    QueueKeyboardEvents(device, type, keycode);
 }
 
 /*-
@@ -315,10 +358,10 @@ x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
  */
 
 static void
-x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
+x68kKbdRingBell(DeviceIntPtr device, int volume, int duration)
 {
     int		    kbdCmd;	/* Command to give keyboard */
-    X68kKbdPrivPtr  pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
+    X68kKbdPrivPtr  pPriv = (X68kKbdPrivPtr)device->public.devicePrivate;
 
     if (volume == 0)
 	return;
@@ -335,24 +378,29 @@ x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
 }
 
 static void
-x68kKbdBell(int volume, DeviceIntPtr pDev, void *ctrl, int unused)
+x68kKbdBell(int volume, DeviceIntPtr device, void *ctrl, int unused)
 {
     KeybdCtrl*      kctrl = (KeybdCtrl*) ctrl;
 
     if (kctrl->bell == 0)
 	return;
 
-    x68kKbdRingBell(pDev, volume, kctrl->bell_duration);
+    x68kKbdRingBell(device, volume, kctrl->bell_duration);
 }
 
 void
 DDXRingBell(int volume, int pitch, int duration)
 {
-    DeviceIntPtr	pKeyboard;
+    DeviceIntPtr device;
+    DevicePtr pKeyboard;
 
-    pKeyboard = x68kKeyboardDevice;
-    if (pKeyboard != NULL)
-	x68kKbdRingBell(pKeyboard, volume, duration);
+    device = x68kKeyboardDevice;
+    if (device != NULL) {
+	pKeyboard = &device->public;
+	if (pKeyboard->on) {
+	    x68kKbdRingBell(device, volume, duration);
+	}
+    }
 }
 
 /*-
@@ -377,9 +425,9 @@ DDXRingBell(int volume, int pitch, int duration)
 #define	XKB_LED_KANA_LOCK	0x01
 
 static void
-x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
+x68kKbdCtrl(DeviceIntPtr device, KeybdCtrl *ctrl)
 {
-    X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
+    X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)device->public.devicePrivate;
 
     if (pPriv->leds != ctrl->leds) {
         x68kSetLeds(pPriv, (uint8_t)ctrl->leds);

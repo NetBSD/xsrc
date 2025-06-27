@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.11 2021/03/17 15:02:27 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.11.2.1 2025/06/27 09:42:54 martin Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -87,11 +87,21 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/Xatom.h>
 #include "xserver-properties.h"
 
-static void x68kMouseHandlerNotify(int, int, void *);
+static void x68kMouseEvents(int, int, void *);
+static int x68kMouseGetEvents(DeviceIntPtr);
+static void x68kMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
 static Bool x68kCursorOffScreen(ScreenPtr *, int *, int *);
 static void x68kCrossScreen(ScreenPtr, int);
 static void x68kWarpCursor(DeviceIntPtr, ScreenPtr, int, int);
 static void x68kMouseCtrl(DeviceIntPtr, PtrCtrl*);
+
+typedef struct _X68kMousePriv {
+    int fd;
+    int bmask;
+    int oformat;
+    MouseEmu3btn emu3btn;
+    Firm_event evbuf[X68K_MAXEVENTS];
+} X68kMousePriv, *X68kMousePrivPtr;
 
 miPointerScreenFuncRec x68kPointerScreenFuncs = {
     x68kCursorOffScreen,
@@ -101,11 +111,32 @@ miPointerScreenFuncRec x68kPointerScreenFuncs = {
 
 DeviceIntPtr x68kPointerDevice = NULL;
 
-static X68kMousePriv x68kMousePriv;
-
+/*------------------------------------------------------------------------
+ * x68kMouseEvents --
+ *	When registered polled mouse input event handler is invoked,
+ *	read device events and enqueue them using the mi event queue.
+ * Results:
+ *	None.
+ *
+ *----------------------------------------------------------------------*/
 static void
-x68kMouseHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+x68kMouseEvents(int fd, int ready, void *data)
 {
+    int i, numEvents;
+    DeviceIntPtr device = (DeviceIntPtr)data;
+    DevicePtr pMouse = &device->public;
+    X68kMousePrivPtr pPriv = pMouse->devicePrivate;
+
+    input_lock();
+
+    do {
+	numEvents = x68kMouseGetEvents(device);
+	for (i = 0; i < numEvents; i++) {
+	    x68kMouseEnqueueEvent(device, &pPriv->evbuf[i]);
+	}
+    } while (numEvents == X68K_MAXEVENTS);
+
+    input_unlock();
 }
 
 /*-
@@ -123,8 +154,8 @@ int
 x68kMouseProc(DeviceIntPtr device, int what)
 {
     DevicePtr   pMouse = &device->public;
+    X68kMousePrivPtr pPriv;
     int		format;
-    static int	oformat;
     BYTE	map[4];
     Atom btn_labels[3] = {0};
     Atom axes_labels[2] = { 0, 0 };
@@ -134,12 +165,22 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
     switch (what) {
 	case DEVICE_INIT:
-            pMouse->devicePrivate = (void *) &x68kMousePriv;
-            if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY)) == -1 ) {
-                ErrorF("Can't open mouse device\n");
+            pPriv = malloc(sizeof(*pPriv));
+            if (pPriv == NULL) {
+                LogMessage(X_ERROR, "Cannot allocate private data for mouse\n");
                 return !Success;
             }
+            pPriv->fd = open("/dev/mouse", O_RDONLY | O_NONBLOCK);
+            if (pPriv->fd == -1) {
+                LogMessage(X_ERROR, "Can't open mouse device\n");
+                return !Success;
+            }
+            pPriv->bmask = 0;
+            pPriv->oformat = 0;
+            memset(&pPriv->emu3btn, 0, sizeof(pPriv->emu3btn));
+            pMouse->devicePrivate = pPriv;
 	    pMouse->on = FALSE;
+
 	    map[1] = 1;
 	    map[2] = 2;
 	    map[3] = 3;
@@ -153,46 +194,58 @@ x68kMouseProc(DeviceIntPtr device, int what)
 		x68kMouseCtrl, GetMotionHistorySize(),
 		2, axes_labels);
 
+	    /* X valuator */
+	    InitValuatorAxisStruct(device, 0, axes_labels[0],
+		NO_AXIS_LIMITS, NO_AXIS_LIMITS, 1, 0, 1, Relative);
+	    device->valuator->axisVal[0] = screenInfo.screens[0]->width / 2;
+	    device->last.valuators[0] = device->valuator->axisVal[0];
+
+	    /* Y valuator */
+	    InitValuatorAxisStruct(device, 1, axes_labels[1],
+		NO_AXIS_LIMITS, NO_AXIS_LIMITS, 1, 0, 1, Relative);
+	    device->valuator->axisVal[1] = screenInfo.screens[0]->height / 2;
+	    device->last.valuators[1] = device->valuator->axisVal[1];
+
 	    /* Initialize emulation 3 buttons settings */
 	    emu3enable = TRUE;			/* XXX should be configurable */
 	    emu3timeout = EMU3B_DEF_TIMEOUT;	/* XXX should be configurable */
 	    if (emu3enable) {
-		pEmu3btn = &x68kMousePriv.emu3btn;
+		pEmu3btn = &pPriv->emu3btn;
 		Emulate3ButtonsEnable(pEmu3btn, device, emu3timeout);
 	    }
 
 	    break;
 
 	case DEVICE_ON:
-	    if (ioctl (x68kMousePriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDGFORMAT\n");
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
+	    if (ioctl(pPriv->fd, VUIDGFORMAT, &pPriv->oformat) == -1) {
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDGFORMAT\n");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
-	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &format) == -1) {
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &format) == -1) {
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDSFORMAT\n");
 		return !Success;
 	    }
-            if ( fcntl(x68kMousePriv.fd, F_SETOWN, getpid()) == -1 ||
-                 fcntl(x68kMousePriv.fd, F_SETFL, O_NONBLOCK | O_ASYNC) == -1
-                 ) {
-                ErrorF("Async mouse I/O failed\n");
-                return !Success;
-            }
-	    x68kMousePriv.bmask = 0;
-	    SetNotifyFd(x68kMousePriv.fd, x68kMouseHandlerNotify,
-		X_NOTIFY_READ, NULL);
+
+	    SetNotifyFd(pPriv->fd, x68kMouseEvents, X_NOTIFY_READ, device);
+
+	    pPriv->bmask = 0;
 	    pMouse->on = TRUE;
 	    break;
 
 	case DEVICE_OFF:
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
+	    RemoveNotifyFd(pPriv->fd);
+	    if (ioctl(pPriv->fd, VUIDSFORMAT, &pPriv->oformat) == -1)
+		LogMessage(X_ERROR, "x68kMouseProc ioctl VUIDSFORMAT\n");
 	    pMouse->on = FALSE;
-	    RemoveNotifyFd(x68kMousePriv.fd);
 	    break;
 
 	case DEVICE_CLOSE:
-	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &oformat) == -1)
-		ErrorF("x68kMouseProc ioctl VUIDSFORMAT\n");
+	    pPriv = (X68kMousePrivPtr)pMouse->devicePrivate;
+	    close(pPriv->fd);
+	    free(pPriv);
 	    break;
 
 	case DEVICE_ABORT:
@@ -228,34 +281,32 @@ x68kMouseCtrl(DeviceIntPtr device, PtrCtrl* ctrl)
  *	Return the events waiting in the wings for the given mouse.
  *
  * Results:
- *	A pointer to an array of Firm_events or (Firm_event *)0 if no events
- *	The number of events contained in the array.
- *	A boolean as to whether more events might be available.
+ *      Update Firm_event buffer in DeviceIntPtr if events are received.
+ *      Return the number of received Firm_events in the buffer.
  *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
 
-Firm_event *
-x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
+static int
+x68kMouseGetEvents(DeviceIntPtr device)
 {
+    DevicePtr pMouse = &device->public;
+    X68kMousePrivPtr pPriv = pMouse->devicePrivate;
     int nBytes;               /* number of bytes of events available. */
-    static Firm_event evBuf[X68K_MAXEVENTS];     /* Buffer for Firm_events */
+    int NumEvents = 0;
 
-    if ((nBytes = read (fd, (char *)evBuf, sizeof(evBuf))) == -1) {
-	if (errno == EWOULDBLOCK) {
-	    *pNumEvents = 0;
-	    *pAgain = FALSE;
-	} else {
-	    ErrorF("x68kMouseGetEvents read\n");
-	    FatalError ("Could not read from mouse");
+    nBytes = read(pPriv->fd, (char *)pPriv->evbuf, sizeof(pPriv->evbuf));
+    if (nBytes == -1) {
+	if (errno != EWOULDBLOCK) {
+	    LogMessage(X_ERROR, "Unexpected error on reading mouse\n");
+	    FatalError("Could not read from mouse");
 	}
     } else {
-	*pNumEvents = nBytes / sizeof (Firm_event);
-	*pAgain = (nBytes == sizeof (evBuf));
+	NumEvents = nBytes / sizeof(pPriv->evbuf[0]);
     }
-    return evBuf;
+    return NumEvents;
 }
 
 /*-
@@ -273,7 +324,7 @@ x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
  *-----------------------------------------------------------------------
  */
 
-void
+static void
 x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 {
     X68kMousePrivPtr	pPriv;	/* Private data for pointer */
@@ -366,15 +417,11 @@ x68kCrossScreen(ScreenPtr pScreen, int entering)
 }
 
 static void
-x68kWarpCursor(DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
+x68kWarpCursor(DeviceIntPtr device, ScreenPtr pScreen, int x, int y)
 {
-    sigset_t newsigmask;
-
-    (void) sigemptyset (&newsigmask);
-    (void) sigaddset (&newsigmask, SIGIO);
-    (void) sigprocmask (SIG_BLOCK, &newsigmask, (sigset_t *)NULL);
-    miPointerWarpCursor (pDev, pScreen, x, y);
-    (void) sigprocmask (SIG_UNBLOCK, &newsigmask, (sigset_t *)NULL);
+    input_lock();
+    miPointerWarpCursor(device, pScreen, x, y);
+    input_unlock();
 }
 
 /* EOF x68kMouse.c */

@@ -78,8 +78,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static Bool closeScreen(ScreenPtr pScreen);
 
-int sunScreenIndex;
-
 DevPrivateKeyRec sunScreenPrivateKeyRec;
 
 void *
