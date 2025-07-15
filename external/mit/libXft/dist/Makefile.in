@@ -408,7 +408,7 @@ SUBDIRS = man src
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xft.pc
 MAINTAINERCLEANFILES = ChangeLog INSTALL
-EXTRA_DIST = README.md
+EXTRA_DIST = README.md meson.build meson.options
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
