@@ -9,7 +9,7 @@ showfont \- font dumper for X font server
 .B \-fn
 .I pattern
 .SH DESCRIPTION
-.I Showfont
+.B Showfont
 displays data about a font that matches the given \fIpattern\fP.
 The information shown includes font information, font properties,
 character metrics, and character bitmaps.
@@ -77,14 +77,18 @@ Do not show the font properties.
 .B \-version
 Print the program version and exit.
 .SH "SEE ALSO"
-xfs(__appmansuffix__), fslsfonts(__appmansuffix__),
-fstobdf(__appmansuffix__), xlsfonts(__appmansuffix__), X(__miscmansuffix__).
+.BR xfs (__appmansuffix__),
+.BR fslsfonts (__appmansuffix__),
+.BR fstobdf (__appmansuffix__),
+.BR xlsfonts (__appmansuffix__),
+.BR X (__miscmansuffix__).
 .SH ENVIRONMENT
 .TP 8
 .B FONTSERVER
 the default X font server to contact.  The server name must
 be specified in one of the formats defined in the
 .I Font Server Names
-section of X(__miscmansuffix__).
+section of
+.BR X (__miscmansuffix__).
 .SH AUTHOR
 Dave Lemke, Network Computing Devices, Inc.

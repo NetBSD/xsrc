@@ -340,8 +340,8 @@ show_info(
     FSFree((char *) pd);
 }
 
-static void
-usage(const char *msg)
+ _X_NORETURN static void
+usage(const char *msg, int exitval)
 {
     if (msg)
 	fprintf(stderr, "%s: %s\n", ProgramName, msg);
@@ -351,7 +351,7 @@ usage(const char *msg)
 	    "       [-start first_char] [-end last_char] -fn fontname\n"
 	    "   or: %s -version\n",
 	    ProgramName, ProgramName);
-    exit(1);
+    exit(exitval);
 }
 
 int
@@ -371,7 +371,7 @@ main(int argc, char **argv)
 	    if (++i < argc)
 		servername = argv[i];
 	    else
-		usage("-server requires an argument");
+		usage("-server requires an argument", 1);
 	} else if (!strncmp(argv[i], "-ext", 4)) {
 	    extents_only = True;
 	} else if (!strncmp(argv[i], "-noprops", 7)) {
@@ -388,43 +388,47 @@ main(int argc, char **argv)
 	    if (++i < argc)
 		scan_pad = atoi(argv[i]);
 	    else
-		usage("-pad requires an argument");
+		usage("-pad requires an argument", 1);
 	} else if (!strncmp(argv[i], "-u", 2)) {
 	    if (++i < argc)
 		scan_unit = atoi(argv[i]);
 	    else
-		usage("-unit requires an argument");
+		usage("-unit requires an argument", 1);
 	} else if (!strncmp(argv[i], "-b", 2)) {
 	    if (++i < argc)
 		bitmap_pad = atoi(argv[i]);
 	    else
-		usage("-bitmap_pad requires an argument");
+		usage("-bitmap_pad requires an argument", 1);
 	} else if (!strncmp(argv[i], "-st", 3)) {
 	    if (++i < argc)
 		first_ch = atoi(argv[i]);
 	    else
-		usage("-start requires an argument");
+		usage("-start requires an argument", 1);
 	} else if (!strncmp(argv[i], "-e", 2)) {
 	    if (++i < argc)
 		end_ch = atoi(argv[i]);
 	    else
-		usage("-end requires an argument");
+		usage("-end requires an argument", 1);
 	} else if (!strncmp(argv[i], "-f", 2)) {
 	    if (++i < argc)
 		fontname = argv[i];
 	    else
-		usage("-fn requires an argument");
-	} else if (!strcmp(argv[i], "-version")) {
+		usage("-fn requires an argument", 1);
+	} else if (!strcmp(argv[i], "-version") ||
+		   !strcmp(argv[i], "--version")) {
 	    puts(PACKAGE_STRING);
 	    exit(0);
+	} else if (!strcmp(argv[i], "-help") ||
+		   !strcmp(argv[i], "--help")) {
+	    usage(NULL, 0);
 	} else {
 	    char msg[128];
 	    snprintf(msg, sizeof(msg), "unrecognized argument: %s", argv[i]);
-	    usage(msg);
+	    usage(msg, 1);
 	}
     }
     if (fontname == NULL)
-	usage("no fontname specified");
+	usage("no fontname specified", 1);
 
     if (first_ch != 0 && end_ch != ~0 && end_ch < first_ch) {
 	fprintf(stderr,

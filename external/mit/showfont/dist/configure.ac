@@ -23,7 +23,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([showfont], [1.0.6],
+AC_INIT([showfont], [1.0.7],
         [https://gitlab.freedesktop.org/xorg/app/showfont/-/issues], [showfont])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -38,7 +38,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(SHOWFONT, libfs)
+PKG_CHECK_MODULES(SHOWFONT, [libfs xproto >= 7.0.17])
 
 AC_CONFIG_FILES([
 	Makefile
