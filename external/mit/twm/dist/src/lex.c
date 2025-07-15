@@ -1,5 +1,5 @@
 
-#line 2 "lex.c"
+#line 3 "lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -529,12 +529,13 @@ in this Software without prior written authorization from The Open Group.
 
 /* #include <stdio.h> */ /* lex already includes stdio.h */
 #include "twm.h"
-#include "gram.h"
 #include "list.h"
 #include "parse.h"
 
 #ifdef FLEX_SCANNER
+#if (YY_FLEX_MINOR_VERSION == 5) && (YY_FLEX_SUBMINOR_VERSION < 20)
 int yylineno;
+#endif
 
 #undef YY_INPUT
 #define YY_INPUT(buf,result,size) ((result) = doinput((buf),(size)))
@@ -557,8 +558,8 @@ doinput(char *buf, int size)
 #define YY_NO_UNPUT
 #endif
 
-#line 560 "lex.c"
-#line 561 "lex.c"
+#line 562 "lex.c"
+#line 563 "lex.c"
 
 #define INITIAL 0
 
@@ -775,9 +776,9 @@ YY_DECL
 		}
 
 	{
-#line 101 "lex.l"
+#line 102 "lex.l"
 
-#line 780 "lex.c"
+#line 782 "lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -836,52 +837,52 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 102 "lex.l"
+#line 103 "lex.l"
 { return (LB); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 103 "lex.l"
+#line 104 "lex.l"
 { return (RB); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 104 "lex.l"
+#line 105 "lex.l"
 { return (LP); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 105 "lex.l"
+#line 106 "lex.l"
 { return (RP); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 106 "lex.l"
+#line 107 "lex.l"
 { return (EQUALS); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 107 "lex.l"
+#line 108 "lex.l"
 { return (COLON); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 108 "lex.l"
+#line 109 "lex.l"
 { return PLUS; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 109 "lex.l"
+#line 110 "lex.l"
 { return MINUS; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 110 "lex.l"
+#line 111 "lex.l"
 { return OR; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 112 "lex.l"
+#line 113 "lex.l"
 { int token = parse_keyword ((char *)yytext,
                                                              &yylval.num);
                                   if (token == ERRORTOKEN) {
@@ -895,23 +896,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 123 "lex.l"
+#line 124 "lex.l"
 { yylval.num = F_EXEC; return FSKEYWORD; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 124 "lex.l"
+#line 125 "lex.l"
 { yylval.num = F_CUT; return FSKEYWORD; }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 126 "lex.l"
+#line 127 "lex.l"
 { yylval.ptr = (char *)yytext; return STRING; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 127 "lex.l"
+#line 128 "lex.l"
 { (void)sscanf((char *)yytext, "%d", &yylval.num);
                                   return (NUMBER);
                                 }
@@ -919,18 +920,18 @@ YY_RULE_SETUP
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 130 "lex.l"
+#line 131 "lex.l"
 {;}
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 131 "lex.l"
+#line 132 "lex.l"
 {;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 132 "lex.l"
+#line 133 "lex.l"
 {
                                   parseWarning (
                                        "ignoring character \"%s\"",
@@ -940,10 +941,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 138 "lex.l"
+#line 139 "lex.l"
 ECHO;
 	YY_BREAK
-#line 946 "lex.c"
+#line 948 "lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1948,12 +1949,12 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 138 "lex.l"
+#line 139 "lex.l"
 
 
 #ifndef yywrap
 int
-yywrap()
+yywrap(void)
 {
     return (1);
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is generated automatically from the default
  * twm bindings file system.twmrc by the twm Makefile.
  */
