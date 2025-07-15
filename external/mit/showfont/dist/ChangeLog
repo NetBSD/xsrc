@@ -1,3 +1,98 @@
+commit d1bf4a021846ac288915c1bd14bb55e27ba8918c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 18 14:54:22 2025 -0700
+
+    showfont 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 331a9d7033001beb5e5b5d6c769b2fed7490830e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 29 16:59:53 2025 -0700
+
+    Improve man page formatting
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/showfont/-/merge_requests/10>
+
+commit b1f27a1adb92c6d8fcf3551bad238376976ffc15
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 2 10:36:00 2025 -0800
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build types
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/showfont/-/merge_requests/9>
+
+commit d83bf354d3c4a05be46d391cdd2da363ddbeabbc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 28 17:27:37 2025 -0800
+
+    Accept --help & --version as aliases to -help & -version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/showfont/-/merge_requests/8>
+
+commit 126ab9ab7fc2c5077eeb0772584fac9045bd2d16
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 8 12:30:43 2024 -0800
+
+    Mark usage() as noreturn
+    
+    Quiets clang warning:
+    
+    showfont.c:345:1: warning: function 'usage' could be declared with
+     attribute 'noreturn' [-Wmissing-noreturn]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/showfont/-/merge_requests/7>
+
+commit 50404d9f2744d0ba854121ec02ce069761c9b242
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 15:09:01 2023 -0700
+
+    gitlab CI: add libc-dev to required packages in build container
+    
+    Resolves configure failure:
+    configure:3823: checking whether the C compiler works
+    configure:3845: gcc    conftest.c  >&5
+    /usr/bin/ld: cannot find Scrt1.o: No such file or directory
+    /usr/bin/ld: cannot find crti.o: No such file or directory
+    collect2: error: ld returned 1 exit status
+    configure:3849: $? = 1
+    configure:3889: result: no
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a3be1f2f4980709691e60c245aeef0e45cbd478b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 13:53:39 2023 -0700
+
+    gitlab CI: add xz-utils to container for "make distcheck"
+    
+    Also update to latest ci-templates to support new Debian "stable" release
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b8db641a4de1f9ed21e24e30b2f10dc9ec7e1fe2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 9 18:02:16 2023 -0800
+
+    Add -help option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b77be679b32d3145b6133daa63cc14c37b8c62a8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 7e270443d201adf2977e52f74e1cde596a78ca38
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Aug 30 17:27:56 2022 -0700
@@ -552,7 +647,7 @@ Date:   Wed Jul 20 19:31:50 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit be7ea5c74651a911570e8c2d42c13f641c8c9f65
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jun 29 18:42:26 2005 +0000
 
     Add buildsystem for showfont
