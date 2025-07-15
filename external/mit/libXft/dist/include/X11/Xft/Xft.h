@@ -31,7 +31,7 @@
 /* #undef will be substituted by configure */
 #define XFT_MAJOR 2
 #define XFT_MINOR 3
-#define XFT_REVISION 8
+#define XFT_REVISION 9
 
 #define XFT_VERSION	((XFT_MAJOR * 10000) + (XFT_MINOR * 100) + (XFT_REVISION))
 #define XftVersion	XFT_VERSION
@@ -43,10 +43,6 @@
 #include <X11/extensions/Xrender.h>
 
 #include <X11/Xfuncproto.h>
-/* #include <X11/Xosdefs.h>*/
-#ifndef _X_SENTINEL
-# define _X_SENTINEL(x)
-#endif
 
 #ifndef _XFT_NO_COMPAT_
 #include <X11/Xft/XftCompat.h>
