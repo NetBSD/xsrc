@@ -24,7 +24,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <pixman-config.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -908,7 +908,7 @@ fast_composite_add_n_8_8 (pixman_implementation_t *imp,
 #define CREATE_BITMASK(n) (0x80000000 >> (n))
 #define UPDATE_BITMASK(n) ((n) >> 1)
 #else
-#define CREATE_BITMASK(n) (1 << (n))
+#define CREATE_BITMASK(n) (1U << (n))
 #define UPDATE_BITMASK(n) ((n) << 1)
 #endif
 
@@ -2800,7 +2800,7 @@ bits_image_fetch_separable_convolution_affine (pixman_image_t * image,
 			    repeat (repeat_mode, &rx, bits->width);
 			    repeat (repeat_mode, &ry, bits->height);
 
-			    row = (uint8_t *)bits->bits + bits->rowstride * 4 * ry;
+			    row = (uint8_t *)(bits->bits + bits->rowstride * ry);
 			    pixel = convert_pixel (row, rx) | mask;
 			}
 			else
@@ -2811,7 +2811,7 @@ bits_image_fetch_separable_convolution_affine (pixman_image_t * image,
 			    }
 			    else
 			    {
-				row = (uint8_t *)bits->bits + bits->rowstride * 4 * ry;
+				row = (uint8_t *)(bits->bits + bits->rowstride * ry);
 				pixel = convert_pixel (row, rx) | mask;
 			    }
 			}
@@ -2844,7 +2844,7 @@ bits_image_fetch_separable_convolution_affine (pixman_image_t * image,
     }
 }
 
-static const uint8_t zero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static const uint32_t zero[2] = { 0, 0 };
 
 static force_inline void
 bits_image_fetch_bilinear_affine (pixman_image_t * image,
@@ -2913,8 +2913,8 @@ bits_image_fetch_bilinear_affine (pixman_image_t * image,
 	    repeat (repeat_mode, &x2, width);
 	    repeat (repeat_mode, &y2, height);
 
-	    row1 = (uint8_t *)bits->bits + bits->rowstride * 4 * y1;
-	    row2 = (uint8_t *)bits->bits + bits->rowstride * 4 * y2;
+	    row1 = (uint8_t *)(bits->bits + bits->rowstride * y1);
+	    row2 = (uint8_t *)(bits->bits + bits->rowstride * y2);
 
 	    tl = convert_pixel (row1, x1) | mask;
 	    tr = convert_pixel (row1, x2) | mask;
@@ -2944,12 +2944,12 @@ bits_image_fetch_bilinear_affine (pixman_image_t * image,
 
 	    if (y2 == 0)
 	    {
-		row1 = zero;
+		row1 = (const uint8_t *)zero;
 		mask1 = 0;
 	    }
 	    else
 	    {
-		row1 = (uint8_t *)bits->bits + bits->rowstride * 4 * y1;
+		row1 = (uint8_t *)(bits->bits + bits->rowstride * y1);
 		row1 += bpp / 8 * x1;
 
 		mask1 = PIXMAN_FORMAT_A (format)? 0 : 0xff000000;
@@ -2957,12 +2957,12 @@ bits_image_fetch_bilinear_affine (pixman_image_t * image,
 
 	    if (y1 == height - 1)
 	    {
-		row2 = zero;
+		row2 = (const uint8_t *)zero;
 		mask2 = 0;
 	    }
 	    else
 	    {
-		row2 = (uint8_t *)bits->bits + bits->rowstride * 4 * y2;
+		row2 = (uint8_t *)(bits->bits + bits->rowstride * y2);
 		row2 += bpp / 8 * x1;
 
 		mask2 = PIXMAN_FORMAT_A (format)? 0 : 0xff000000;
@@ -3060,7 +3060,7 @@ bits_image_fetch_nearest_affine (pixman_image_t * image,
 		repeat (repeat_mode, &y0, height);
 	    }
 
-	    row = (uint8_t *)bits->bits + bits->rowstride * 4 * y0;
+	    row = (uint8_t *)(bits->bits + bits->rowstride * y0);
 
 	    buffer[i] = convert_pixel (row, x0) | mask;
 	}
@@ -3086,7 +3086,7 @@ convert_x8r8g8b8 (const uint8_t *row, int x)
 static force_inline uint32_t
 convert_a8 (const uint8_t *row, int x)
 {
-    return *(row + x) << 24;
+    return (uint32_t) *(row + x) << 24;
 }
 
 static force_inline uint32_t
