@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <pixman-config.h>
 #endif
 
 #include "pixman-private.h"
@@ -65,6 +65,24 @@ pixman_have_vmx (void)
     if (error != 0)
 	return FALSE;
 
+    return have_vmx;
+}
+
+#elif defined (__FreeBSD__)
+#include <machine/cpu.h>
+#include <sys/auxv.h>
+
+static pixman_bool_t
+pixman_have_vmx (void)
+{
+
+    unsigned long cpufeatures;
+    int have_vmx;
+
+    if (elf_aux_info(AT_HWCAP, &cpufeatures, sizeof(cpufeatures)))
+    return FALSE;
+
+    have_vmx = cpufeatures & PPC_FEATURE_HAS_ALTIVEC;
     return have_vmx;
 }
 

@@ -21,7 +21,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <pixman-config.h>
 #endif
 
 #include <stdlib.h>
@@ -567,7 +567,7 @@ _pixman_image_validate (pixman_image_t *image)
 
 PIXMAN_EXPORT pixman_bool_t
 pixman_image_set_clip_region32 (pixman_image_t *   image,
-                                pixman_region32_t *region)
+                                const pixman_region32_t *region)
 {
     image_common_t *common = (image_common_t *)image;
     pixman_bool_t result;
@@ -591,7 +591,7 @@ pixman_image_set_clip_region32 (pixman_image_t *   image,
 
 PIXMAN_EXPORT pixman_bool_t
 pixman_image_set_clip_region (pixman_image_t *   image,
-                              pixman_region16_t *region)
+                              const pixman_region16_t *region)
 {
     image_common_t *common = (image_common_t *)image;
     pixman_bool_t result;
@@ -599,6 +599,30 @@ pixman_image_set_clip_region (pixman_image_t *   image,
     if (region)
     {
 	if ((result = pixman_region32_copy_from_region16 (&common->clip_region, region)))
+	    image->common.have_clip_region = TRUE;
+    }
+    else
+    {
+	_pixman_image_reset_clip_region (image);
+
+	result = TRUE;
+    }
+
+    image_property_changed (image);
+
+    return result;
+}
+
+PIXMAN_EXPORT pixman_bool_t
+pixman_image_set_clip_region64f (pixman_image_t *   image,
+                                 const pixman_region64f_t *region)
+{
+    image_common_t *common = (image_common_t *)image;
+    pixman_bool_t result;
+
+    if (region)
+    {
+	if ((result = pixman_region32_copy_from_region64f (&common->clip_region, region)))
 	    image->common.have_clip_region = TRUE;
     }
     else
@@ -682,6 +706,41 @@ pixman_image_set_repeat (pixman_image_t *image,
     image->common.repeat = repeat;
 
     image_property_changed (image);
+}
+
+PIXMAN_EXPORT void
+pixman_image_set_dither (pixman_image_t *image,
+			 pixman_dither_t dither)
+{
+    if (image->type == BITS)
+    {
+	if (image->bits.dither == dither)
+	    return;
+
+	image->bits.dither = dither;
+
+	image_property_changed (image);
+    }
+}
+
+PIXMAN_EXPORT void
+pixman_image_set_dither_offset (pixman_image_t *image,
+				int             offset_x,
+				int             offset_y)
+{
+    if (image->type == BITS)
+    {
+	if (image->bits.dither_offset_x == offset_x &&
+	    image->bits.dither_offset_y == offset_y)
+	{
+	    return;
+	}
+
+	image->bits.dither_offset_x = offset_x;
+	image->bits.dither_offset_y = offset_y;
+
+	image_property_changed (image);
+    }
 }
 
 PIXMAN_EXPORT pixman_bool_t
@@ -925,7 +984,7 @@ _pixman_image_get_solid (pixman_implementation_t *imp,
 	else if (image->bits.format == PIXMAN_x8r8g8b8)
 	    result = image->bits.bits[0] | 0xff000000;
 	else if (image->bits.format == PIXMAN_a8)
-	    result = (*(uint8_t *)image->bits.bits) << 24;
+	    result = (uint32_t)(*(uint8_t *)image->bits.bits) << 24;
 	else
 	    goto otherwise;
     }

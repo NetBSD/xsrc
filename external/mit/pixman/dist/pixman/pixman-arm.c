@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <pixman-config.h>
 #endif
 
 #include "pixman-private.h"
@@ -30,11 +30,10 @@ typedef enum
     ARM_V7		= (1 << 0),
     ARM_V6		= (1 << 1),
     ARM_VFP		= (1 << 2),
-    ARM_NEON		= (1 << 3),
-    ARM_IWMMXT		= (1 << 4)
+    ARM_NEON		= (1 << 3)
 } arm_cpu_features_t;
 
-#if defined(USE_ARM_SIMD) || defined(USE_ARM_NEON) || defined(USE_ARM_IWMMXT)
+#if defined(USE_ARM_SIMD) || defined(USE_ARM_NEON)
 
 #if defined(_MSC_VER)
 
@@ -154,8 +153,6 @@ detect_cpu_features (void)
 		 */
 		if ((hwcap & 64) != 0)
 		    features |= ARM_VFP;
-		if ((hwcap & 512) != 0)
-		    features |= ARM_IWMMXT;
 		/* this flag is only present on kernel 2.6.29 */
 		if ((hwcap & 4096) != 0)
 		    features |= ARM_NEON;
@@ -172,6 +169,31 @@ detect_cpu_features (void)
 	}
 	close (fd);
     }
+
+    return features;
+}
+
+#elif defined (_3DS) /* 3DS homebrew (devkitARM) */
+
+static arm_cpu_features_t
+detect_cpu_features (void)
+{
+    arm_cpu_features_t features = 0;
+
+    features |= ARM_V6;
+
+    return features;
+}
+
+#elif defined (PSP2) || defined (__SWITCH__)
+/* Vita (VitaSDK) or Switch (devkitA64) homebrew */
+
+static arm_cpu_features_t
+detect_cpu_features (void)
+{
+    arm_cpu_features_t features = 0;
+
+    features |= ARM_NEON;
 
     return features;
 }
@@ -201,7 +223,7 @@ have_feature (arm_cpu_features_t feature)
     return (features & feature) == feature;
 }
 
-#endif /* USE_ARM_SIMD || USE_ARM_NEON || USE_ARM_IWMMXT */
+#endif /* USE_ARM_SIMD || USE_ARM_NEON */
 
 pixman_implementation_t *
 _pixman_arm_get_implementations (pixman_implementation_t *imp)
@@ -211,14 +233,15 @@ _pixman_arm_get_implementations (pixman_implementation_t *imp)
 	imp = _pixman_implementation_create_arm_simd (imp);
 #endif
 
-#ifdef USE_ARM_IWMMXT
-    if (!_pixman_disabled ("arm-iwmmxt") && have_feature (ARM_IWMMXT))
-	imp = _pixman_implementation_create_mmx (imp);
-#endif
-
 #ifdef USE_ARM_NEON
     if (!_pixman_disabled ("arm-neon") && have_feature (ARM_NEON))
 	imp = _pixman_implementation_create_arm_neon (imp);
+#endif
+
+#ifdef USE_ARM_A64_NEON
+    /* neon is a part of aarch64 */
+    if (!_pixman_disabled ("arm-neon"))
+        imp = _pixman_implementation_create_arm_neon (imp);
 #endif
 
     return imp;

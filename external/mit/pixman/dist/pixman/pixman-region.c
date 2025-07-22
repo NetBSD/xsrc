@@ -76,7 +76,7 @@
 #define PIXREGION_SIZE(reg) ((reg)->data ? (reg)->data->size : 0)
 #define PIXREGION_RECTS(reg) \
     ((reg)->data ? (box_type_t *)((reg)->data + 1) \
-     : &(reg)->extents)
+     : (box_type_t *)&(reg)->extents)
 #define PIXREGION_BOXPTR(reg) ((box_type_t *)((reg)->data + 1))
 #define PIXREGION_BOX(reg, i) (&PIXREGION_BOXPTR (reg)[i])
 #define PIXREGION_TOP(reg) PIXREGION_BOX (reg, (reg)->data->numRects)
@@ -292,7 +292,7 @@ alloc_data (size_t n)
     } while (0)
 
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_equal) (region_type_t *reg1, region_type_t *reg2)
+PREFIX (_equal) (const region_type_t *reg1, const region_type_t *reg2)
 {
     int i;
     box_type_t *rects1;
@@ -346,7 +346,11 @@ PREFIX (_print) (region_type_t *rgn)
     rects = PIXREGION_RECTS (rgn);
 
     fprintf (stderr, "num: %d size: %d\n", num, size);
-    fprintf (stderr, "extents: %d %d %d %d\n",
+    fprintf (stderr, "extents: "
+		     PRINT_SPECIFIER " "
+		     PRINT_SPECIFIER " "
+		     PRINT_SPECIFIER " "
+		     PRINT_SPECIFIER "\n",
              rgn->extents.x1,
 	     rgn->extents.y1,
 	     rgn->extents.x2,
@@ -354,7 +358,10 @@ PREFIX (_print) (region_type_t *rgn)
     
     for (i = 0; i < num; i++)
     {
-	fprintf (stderr, "%d %d %d %d \n",
+	fprintf (stderr, PRINT_SPECIFIER " "
+			 PRINT_SPECIFIER " "
+			 PRINT_SPECIFIER " "
+			 PRINT_SPECIFIER " \n",
 	         rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2);
     }
     
@@ -395,7 +402,30 @@ PREFIX (_init_rect) (region_type_t *	region,
 }
 
 PIXMAN_EXPORT void
-PREFIX (_init_with_extents) (region_type_t *region, box_type_t *extents)
+PREFIX (_init_rectf) (region_type_t *	region,
+                      double		x,
+		      double		y,
+		      double		width,
+		      double		height)
+{
+    region->extents.x1 = x;
+    region->extents.y1 = y;
+    region->extents.x2 = x + width;
+    region->extents.y2 = y + height;
+
+    if (!GOOD_RECT (&region->extents))
+    {
+        if (BAD_RECT (&region->extents))
+            _pixman_log_error (FUNC, "Invalid rectangle passed");
+        PREFIX (_init) (region);
+        return;
+    }
+
+    region->data = NULL;
+}
+
+PIXMAN_EXPORT void
+PREFIX (_init_with_extents) (region_type_t *region, const box_type_t *extents)
 {
     if (!GOOD_RECT (extents))
     {
@@ -417,13 +447,13 @@ PREFIX (_fini) (region_type_t *region)
 }
 
 PIXMAN_EXPORT int
-PREFIX (_n_rects) (region_type_t *region)
+PREFIX (_n_rects) (const region_type_t *region)
 {
     return PIXREGION_NUMRECTS (region);
 }
 
 PIXMAN_EXPORT box_type_t *
-PREFIX (_rectangles) (region_type_t *region,
+PREFIX (_rectangles) (const region_type_t *region,
                       int               *n_rects)
 {
     if (n_rects)
@@ -505,7 +535,7 @@ pixman_rect_alloc (region_type_t * region,
 }
 
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_copy) (region_type_t *dst, region_type_t *src)
+PREFIX (_copy) (region_type_t *dst, const region_type_t *src)
 {
     GOOD (dst);
     GOOD (src);
@@ -572,7 +602,7 @@ pixman_coalesce (region_type_t * region,      /* Region to coalesce		 */
     box_type_t *prev_box;       /* Current box in previous band	     */
     box_type_t *cur_box;        /* Current box in current band       */
     int numRects;               /* Number rectangles in both bands   */
-    int y2;                     /* Bottom of current band	     */
+    primitive_t y2;             /* Bottom of current band	     */
 
     /*
      * Figure out how many rectangles are in the band.
@@ -658,8 +688,8 @@ static inline pixman_bool_t
 pixman_region_append_non_o (region_type_t * region,
 			    box_type_t *    r,
 			    box_type_t *    r_end,
-			    int             y1,
-			    int             y2)
+			    primitive_t     y1,
+			    primitive_t     y2)
 {
     box_type_t *next_rect;
     int new_rects;
@@ -741,13 +771,13 @@ typedef pixman_bool_t (*overlap_proc_ptr) (region_type_t *region,
 					   box_type_t *   r1_end,
 					   box_type_t *   r2,
 					   box_type_t *   r2_end,
-					   int            y1,
-					   int            y2);
+					   primitive_t    y1,
+					   primitive_t    y2);
 
 static pixman_bool_t
 pixman_op (region_type_t *  new_reg,               /* Place to store result	    */
-	   region_type_t *  reg1,                  /* First region in operation     */
-	   region_type_t *  reg2,                  /* 2d region in operation        */
+	   const region_type_t *  reg1,                  /* First region in operation     */
+	   const region_type_t *  reg2,                  /* 2d region in operation        */
 	   overlap_proc_ptr overlap_func,          /* Function to call for over-
 						    * lapping bands		    */
 	   int              append_non1,           /* Append non-overlapping bands  
@@ -762,8 +792,8 @@ pixman_op (region_type_t *  new_reg,               /* Place to store result	    
     box_type_t *r2;                 /* Pointer into 2d region	     */
     box_type_t *r1_end;             /* End of 1st region	     */
     box_type_t *r2_end;             /* End of 2d region		     */
-    int ybot;                       /* Bottom of intersection	     */
-    int ytop;                       /* Top of intersection	     */
+    primitive_t ybot;               /* Bottom of intersection	     */
+    primitive_t ytop;               /* Top of intersection	     */
     region_data_type_t *old_data;   /* Old data for new_reg	     */
     int prev_band;                  /* Index of start of
 				     * previous band in new_reg       */
@@ -771,10 +801,10 @@ pixman_op (region_type_t *  new_reg,               /* Place to store result	    
 				     * band in new_reg		     */
     box_type_t * r1_band_end;       /* End of current band in r1     */
     box_type_t * r2_band_end;       /* End of current band in r2     */
-    int top;                        /* Top of non-overlapping band   */
-    int bot;                        /* Bottom of non-overlapping band*/
-    int r1y1;                       /* Temps for r1->y1 and r2->y1   */
-    int r2y1;
+    primitive_t top;                /* Top of non-overlapping band   */
+    primitive_t bot;                /* Bottom of non-overlapping band*/
+    primitive_t r1y1;               /* Temps for r1->y1 and r2->y1   */
+    primitive_t r2y1;
     int new_size;
     int numRects;
 
@@ -1110,11 +1140,11 @@ pixman_region_intersect_o (region_type_t *region,
                            box_type_t *   r1_end,
                            box_type_t *   r2,
                            box_type_t *   r2_end,
-                           int            y1,
-                           int            y2)
+                           primitive_t    y1,
+                           primitive_t    y2)
 {
-    int x1;
-    int x2;
+    primitive_t x1;
+    primitive_t x2;
     box_type_t *        next_rect;
 
     next_rect = PIXREGION_TOP (region);
@@ -1155,8 +1185,8 @@ pixman_region_intersect_o (region_type_t *region,
 
 PIXMAN_EXPORT pixman_bool_t
 PREFIX (_intersect) (region_type_t *     new_reg,
-                     region_type_t *        reg1,
-                     region_type_t *        reg2)
+                     const region_type_t *        reg1,
+                     const region_type_t *        reg2)
 {
     GOOD (reg1);
     GOOD (reg2);
@@ -1262,12 +1292,12 @@ pixman_region_union_o (region_type_t *region,
 		       box_type_t *   r1_end,
 		       box_type_t *   r2,
 		       box_type_t *   r2_end,
-		       int            y1,
-		       int            y2)
+		       primitive_t    y1,
+		       primitive_t    y2)
 {
     box_type_t *next_rect;
-    int x1;            /* left and right side of current union */
-    int x2;
+    primitive_t x1;    /* left and right side of current union */
+    primitive_t x2;
 
     critical_if_fail (y1 < y2);
     critical_if_fail (r1 != r1_end && r2 != r2_end);
@@ -1321,10 +1351,28 @@ pixman_region_union_o (region_type_t *region,
 
 PIXMAN_EXPORT pixman_bool_t
 PREFIX(_intersect_rect) (region_type_t *dest,
-			 region_type_t *source,
+			 const region_type_t *source,
 			 int x, int y,
 			 unsigned int width,
 			 unsigned int height)
+{
+    region_type_t region;
+
+    region.data = NULL;
+    region.extents.x1 = x;
+    region.extents.y1 = y;
+    region.extents.x2 = x + width;
+    region.extents.y2 = y + height;
+
+    return PREFIX(_intersect) (dest, source, &region);
+}
+
+PIXMAN_EXPORT pixman_bool_t
+PREFIX(_intersect_rectf) (region_type_t *dest,
+			  const region_type_t *source,
+			  double x, double y,
+			  double width,
+			  double height)
 {
     region_type_t region;
 
@@ -1342,7 +1390,7 @@ PREFIX(_intersect_rect) (region_type_t *dest,
  */
 PIXMAN_EXPORT pixman_bool_t
 PREFIX (_union_rect) (region_type_t *dest,
-                      region_type_t *source,
+                      const region_type_t *source,
                       int            x,
 		      int            y,
                       unsigned int   width,
@@ -1368,9 +1416,36 @@ PREFIX (_union_rect) (region_type_t *dest,
 }
 
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_union) (region_type_t *new_reg,
-                 region_type_t *reg1,
-                 region_type_t *reg2)
+PREFIX (_union_rectf) (region_type_t *dest,
+                       const region_type_t *source,
+                       double         x,
+		       double         y,
+                       double         width,
+		       double         height)
+{
+    region_type_t region;
+
+    region.extents.x1 = x;
+    region.extents.y1 = y;
+    region.extents.x2 = x + width;
+    region.extents.y2 = y + height;
+
+    if (!GOOD_RECT (&region.extents))
+    {
+        if (BAD_RECT (&region.extents))
+            _pixman_log_error (FUNC, "Invalid rectangle passed");
+	return PREFIX (_copy) (dest, source);
+    }
+
+    region.data = NULL;
+
+    return PREFIX (_union) (dest, source, &region);
+}
+
+PIXMAN_EXPORT pixman_bool_t
+PREFIX (_union) (region_type_t *      new_reg,
+                 const region_type_t *reg1,
+                 const region_type_t *reg2)
 {
     /* Return TRUE if some overlap
      * between reg1, reg2
@@ -1467,8 +1542,8 @@ quick_sort_rects (
     box_type_t rects[],
     int        numRects)
 {
-    int y1;
-    int x1;
+    primitive_t y1;
+    primitive_t x1;
     int i, j;
     box_type_t *r;
 
@@ -1833,11 +1908,11 @@ pixman_region_subtract_o (region_type_t * region,
 			  box_type_t *    r1_end,
 			  box_type_t *    r2,
 			  box_type_t *    r2_end,
-			  int             y1,
-			  int             y2)
+			  primitive_t     y1,
+			  primitive_t     y2)
 {
     box_type_t *        next_rect;
-    int x1;
+    primitive_t x1;
 
     x1 = r1->x1;
 
@@ -1954,9 +2029,9 @@ pixman_region_subtract_o (region_type_t * region,
  *-----------------------------------------------------------------------
  */
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_subtract) (region_type_t *reg_d,
-                    region_type_t *reg_m,
-                    region_type_t *reg_s)
+PREFIX (_subtract) (region_type_t *      reg_d,
+                    const region_type_t *reg_m,
+                    const region_type_t *reg_s)
 {
     GOOD (reg_m);
     GOOD (reg_s);
@@ -2019,9 +2094,9 @@ PREFIX (_subtract) (region_type_t *reg_d,
  *-----------------------------------------------------------------------
  */
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_inverse) (region_type_t *new_reg,  /* Destination region */
-		   region_type_t *reg1,     /* Region to invert */
-		   box_type_t *   inv_rect) /* Bounding box for inversion */
+PREFIX (_inverse) (region_type_t *      new_reg,  /* Destination region */
+		   const region_type_t *reg1,     /* Region to invert */
+		   const box_type_t *   inv_rect) /* Bounding box for inversion */
 {
     region_type_t inv_reg; /* Quick and dirty region made from the
 			    * bounding box */
@@ -2066,7 +2141,7 @@ PREFIX (_inverse) (region_type_t *new_reg,  /* Destination region */
  * Return @end if no such box exists.
  */
 static box_type_t *
-find_box_for_y (box_type_t *begin, box_type_t *end, int y)
+find_box_for_y (box_type_t *begin, box_type_t *end, primitive_t y)
 {
     box_type_t *mid;
 
@@ -2113,14 +2188,14 @@ find_box_for_y (box_type_t *begin, box_type_t *end, int y)
  *   that doesn't overlap the box at all and part_in is false)
  */
 PIXMAN_EXPORT pixman_region_overlap_t
-PREFIX (_contains_rectangle) (region_type_t *  region,
-			      box_type_t *     prect)
+PREFIX (_contains_rectangle) (const region_type_t *  region,
+			      const box_type_t *     prect)
 {
     box_type_t *     pbox;
     box_type_t *     pbox_end;
     int part_in, part_out;
     int numRects;
-    int x, y;
+    primitive_t x, y;
 
     GOOD (region);
 
@@ -2229,6 +2304,10 @@ PREFIX (_translate) (region_type_t *region, int x, int y)
     box_type_t * pbox;
 
     GOOD (region);
+
+    if (x == 0 && y == 0)
+        return;
+
     region->extents.x1 = x1 = region->extents.x1 + x;
     region->extents.y1 = y1 = region->extents.y1 + y;
     region->extents.x2 = x2 = region->extents.x2 + x;
@@ -2318,7 +2397,115 @@ PREFIX (_translate) (region_type_t *region, int x, int y)
 }
 
 PIXMAN_EXPORT void
-PREFIX (_reset) (region_type_t *region, box_type_t *box)
+PREFIX (_translatef) (region_type_t *region, double x, double y)
+{
+    double x1, x2, y1, y2;
+    int nbox;
+    box_type_t * pbox;
+
+    GOOD (region);
+
+    if (x == 0 && y == 0)
+        return;
+
+    region->extents.x1 = x1 = region->extents.x1 + x;
+    region->extents.y1 = y1 = region->extents.y1 + y;
+    region->extents.x2 = x2 = region->extents.x2 + x;
+    region->extents.y2 = y2 = region->extents.y2 + y;
+    
+    if ((((overflow_int_t)(x1 - PIXMAN_REGION_MIN)) | 
+	 ((overflow_int_t)(y1 - PIXMAN_REGION_MIN)) | 
+	 ((overflow_int_t)(PIXMAN_REGION_MAX - x2)) | 
+	 ((overflow_int_t)(PIXMAN_REGION_MAX - y2))) >= 0)
+    {
+        if (region->data && (nbox = region->data->numRects))
+        {
+            for (pbox = PIXREGION_BOXPTR (region); nbox--; pbox++)
+            {
+                pbox->x1 += x;
+                pbox->y1 += y;
+                pbox->x2 += x;
+                pbox->y2 += y;
+	    }
+	}
+        return;
+    }
+
+    if ((((overflow_int_t)(x2 - PIXMAN_REGION_MIN)) | 
+	 ((overflow_int_t)(y2 - PIXMAN_REGION_MIN)) | 
+	 ((overflow_int_t)(PIXMAN_REGION_MAX - x1)) | 
+	 ((overflow_int_t)(PIXMAN_REGION_MAX - y1))) <= 0)
+    {
+        region->extents.x2 = region->extents.x1;
+        region->extents.y2 = region->extents.y1;
+        FREE_DATA (region);
+        region->data = pixman_region_empty_data;
+        return;
+    }
+
+    if (x1 < PIXMAN_REGION_MIN)
+	region->extents.x1 = PIXMAN_REGION_MIN;
+    else if (x2 > PIXMAN_REGION_MAX)
+	region->extents.x2 = PIXMAN_REGION_MAX;
+
+    if (y1 < PIXMAN_REGION_MIN)
+	region->extents.y1 = PIXMAN_REGION_MIN;
+    else if (y2 > PIXMAN_REGION_MAX)
+	region->extents.y2 = PIXMAN_REGION_MAX;
+
+    if (region->data && (nbox = region->data->numRects))
+    {
+        box_type_t * pbox_out;
+
+        for (pbox_out = pbox = PIXREGION_BOXPTR (region); nbox--; pbox++)
+        {
+            pbox_out->x1 = x1 = pbox->x1 + x;
+            pbox_out->y1 = y1 = pbox->y1 + y;
+            pbox_out->x2 = x2 = pbox->x2 + x;
+            pbox_out->y2 = y2 = pbox->y2 + y;
+
+            if ((((overflow_int_t)(x2 - PIXMAN_REGION_MIN)) | 
+		 ((overflow_int_t)(y2 - PIXMAN_REGION_MIN)) |
+                 ((overflow_int_t)(PIXMAN_REGION_MAX - x1)) | 
+		 ((overflow_int_t)(PIXMAN_REGION_MAX - y1))) <= 0)
+            {
+                region->data->numRects--;
+                continue;
+	    }
+
+            if (x1 < PIXMAN_REGION_MIN)
+		pbox_out->x1 = PIXMAN_REGION_MIN;
+            else if (x2 > PIXMAN_REGION_MAX)
+		pbox_out->x2 = PIXMAN_REGION_MAX;
+
+            if (y1 < PIXMAN_REGION_MIN)
+		pbox_out->y1 = PIXMAN_REGION_MIN;
+            else if (y2 > PIXMAN_REGION_MAX)
+		pbox_out->y2 = PIXMAN_REGION_MAX;
+
+            pbox_out++;
+	}
+
+        if (pbox_out != pbox)
+        {
+            if (region->data->numRects == 1)
+            {
+                region->extents = *PIXREGION_BOXPTR (region);
+                FREE_DATA (region);
+                region->data = (region_data_type_t *)NULL;
+	    }
+            else
+	    {
+		pixman_set_extents (region);
+	    }
+	}
+    }
+
+    GOOD (region);
+}
+
+PIXMAN_EXPORT void
+PREFIX (_reset) (region_type_t *region, const box_type_t *box)
 {
     GOOD (region);
 
@@ -2343,7 +2530,7 @@ PREFIX (_clear) (region_type_t *region)
 
 /* box is "return" value */
 PIXMAN_EXPORT int
-PREFIX (_contains_point) (region_type_t * region,
+PREFIX (_contains_point) (const region_type_t * region,
                           int x, int y,
                           box_type_t * box)
 {
@@ -2387,7 +2574,59 @@ PREFIX (_contains_point) (region_type_t * region,
 }
 
 PIXMAN_EXPORT int
-PREFIX (_not_empty) (region_type_t * region)
+PREFIX (_contains_pointf) (const region_type_t * region,
+                           double x, double y,
+                           box_type_t * box)
+{
+    box_type_t *pbox, *pbox_end;
+    int numRects;
+
+    GOOD (region);
+    numRects = PIXREGION_NUMRECTS (region);
+
+    if (!numRects || !INBOX (&region->extents, x, y))
+	return(FALSE);
+
+    if (numRects == 1)
+    {
+        if (box)
+	    *box = region->extents;
+
+        return(TRUE);
+    }
+
+    pbox = PIXREGION_BOXPTR (region);
+    pbox_end = pbox + numRects;
+
+    pbox = find_box_for_y (pbox, pbox_end, y);
+
+    for (;pbox != pbox_end; pbox++)
+    {
+        if ((y < pbox->y1) || (x < pbox->x1))
+	    break;              /* missed it */
+
+        if (x >= pbox->x2)
+	    continue;           /* not there yet */
+
+        if (box)
+	    *box = *pbox;
+
+        return(TRUE);
+    }
+
+    return(FALSE);
+}
+
+PIXMAN_EXPORT int
+PREFIX (_empty) (const region_type_t * region)
+{
+    GOOD (region);
+
+    return(PIXREGION_NIL (region));
+}
+
+PIXMAN_EXPORT int
+PREFIX (_not_empty) (const region_type_t * region)
 {
     GOOD (region);
 
@@ -2395,11 +2634,11 @@ PREFIX (_not_empty) (region_type_t * region)
 }
 
 PIXMAN_EXPORT box_type_t *
-PREFIX (_extents) (region_type_t * region)
+PREFIX (_extents) (const region_type_t * region)
 {
     GOOD (region);
 
-    return(&region->extents);
+    return(box_type_t *)(&region->extents);
 }
 
 /*
@@ -2559,8 +2798,8 @@ static inline box_type_t *
 bitmap_addrect (region_type_t *reg,
                 box_type_t *r,
                 box_type_t **first_rect,
-                int rx1, int ry1,
-                int rx2, int ry2)
+                primitive_t rx1, primitive_t ry1,
+                primitive_t rx2, primitive_t ry2)
 {
     if ((rx1 < rx2) && (ry1 < ry2) &&
 	(!(reg->data->numRects &&
