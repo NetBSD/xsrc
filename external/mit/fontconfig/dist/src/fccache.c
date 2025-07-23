@@ -53,6 +53,15 @@
 #define O_BINARY 0
 #endif
 
+#ifndef timercmp
+/* This is not a required interface, so just provide it if missing */
+#define timercmp(tvp, uvp, cmp)						\
+	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
+	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
+	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
+#endif
+
+
 FcBool
 FcDirCacheCreateUUID (FcChar8  *dir,
 		      FcBool    force,
