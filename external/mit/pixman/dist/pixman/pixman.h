@@ -603,7 +603,7 @@ pixman_bool_t           pixman_region_equal              (const pixman_region16_
 							  const pixman_region16_t *region2);
 
 PIXMAN_API
-pixman_bool_t           pixman_region_selfcheck          (pixman_region16_t *region);
+pixman_bool_t           pixman_region_selfcheck          (const pixman_region16_t *region);
 
 PIXMAN_API
 void                    pixman_region_reset              (pixman_region16_t       *region,
@@ -747,7 +747,7 @@ pixman_bool_t           pixman_region32_equal              (const pixman_region3
 							    const pixman_region32_t *region2);
 
 PIXMAN_API
-pixman_bool_t           pixman_region32_selfcheck          (pixman_region32_t *region);
+pixman_bool_t           pixman_region32_selfcheck          (const pixman_region32_t *region);
 
 PIXMAN_API
 void                    pixman_region32_reset              (pixman_region32_t    *region,
@@ -925,7 +925,7 @@ pixman_bool_t           pixman_region64f_equal             (const pixman_region6
 							    const pixman_region64f_t *region2);
 
 PIXMAN_API
-pixman_bool_t           pixman_region64f_selfcheck         (pixman_region64f_t *region);
+pixman_bool_t           pixman_region64f_selfcheck         (const pixman_region64f_t *region);
 
 PIXMAN_API
 void                    pixman_region64f_reset             (pixman_region64f_t    *region,

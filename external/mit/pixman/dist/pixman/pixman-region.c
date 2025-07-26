@@ -2649,7 +2649,7 @@ PREFIX (_extents) (const region_type_t * region)
  */
 
 PIXMAN_EXPORT pixman_bool_t
-PREFIX (_selfcheck) (region_type_t *reg)
+PREFIX (_selfcheck) (const region_type_t *reg)
 {
     int i, numRects;
 
