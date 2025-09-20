@@ -143,8 +143,6 @@ XftGlyphRender (Display		*dpy,
     if ((size_t)nglyphs > SIZE_MAX / size)
 	goto bail1;
     needed = (size_t)nglyphs * size;
-    if (needed > UINT_MAX / 2)	// XXX: GCC
-	goto bail1;
     if (needed > sizeof (char_local))
     {
 	chars = malloc (needed);
