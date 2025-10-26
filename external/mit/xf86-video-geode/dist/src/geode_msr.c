@@ -104,6 +104,8 @@ GeodeReadMSR(unsigned long addr, unsigned long *lo, unsigned long *hi)
 
     *hi = args.data >> 32;
     *lo = args.data & 0xffffffff;
+#elif defined __NetBSD__
+    return -1;		/* fall back to assembly on NetBSD */
 #else
     unsigned int data[2];
     int fd = _msr_open();
@@ -151,6 +153,8 @@ GeodeWriteMSR(unsigned long addr, unsigned long lo, unsigned long hi)
     if (ioctl(fd, CPUCTL_WRMSR, &args) == -1)
         FatalError("Unable to write MSR at address 0x%06x: %s\n", addr,
             strerror(errno));
+#elif defined __NetBSD__
+    return -1;		/* fall back to assembly on NetBSD */
 #else
     unsigned int data[2];
     int fd = _msr_open();
