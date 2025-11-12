@@ -1,3 +1,1471 @@
+commit 065f02d946a798924a1d331769961b940cbf3224
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Oct 28 17:38:55 2025 +0100
+
+    xserver 21.1.20
+    
+    Quick release to fix the missing files in 21.1.19.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2090>
+
+commit 3362fec06a3720e6d255316961b023992d9a7a38
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Oct 28 16:25:33 2025 +0100
+
+    tests: Add missing files to Makefile build
+    
+    The script comes from a backport where only meson is used and therefore
+    the new files were omitted from the Makefile.
+    
+    As a result, these files are not included in the released tar file and
+    the build fails.
+    
+    Fixes: 95b899118 - meson: add glamor gles2 tests
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2089>
+
+commit a10c9018ff1e4136a5b727cded439cda4a834706
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Oct 28 13:39:12 2025 +0100
+
+    xserver 21.1.19
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2087>
+
+commit 3baad99f9c15028ed8c3e3d8408e5ec35db155aa
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Sep 10 16:30:29 2025 +0200
+
+    xkb: Prevent overflow in XkbSetCompatMap()
+    
+    The XkbCompatMap structure stores its "num_si" and "size_si" fields
+    using an unsigned short.
+    
+    However, the function _XkbSetCompatMap() will store the sum of the
+    input data "firstSI" and "nSI" in both XkbCompatMap's "num_si" and
+    "size_si" without first checking if the sum overflows the maximum
+    unsigned short value, leading to a possible overflow.
+    
+    To avoid the issue, check whether the sum does not exceed the maximum
+    unsigned short value, or return a "BadValue" error otherwise.
+    
+    CVE-2025-62231, ZDI-CAN-27560
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Michel Dänzer <mdaenzer@redhat.com>
+    (cherry picked from commit 475d9f49acd0e55bc0b089ed77f732ad18585470)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2087>
+
+commit 87fe2553937a99fd914ad0cde999376a3adc3839
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Sep 10 15:58:57 2025 +0200
+
+    xkb: Free the XKB resource when freeing XkbInterest
+    
+    XkbRemoveResourceClient() would free the XkbInterest data associated
+    with the device, but not the resource associated with it.
+    
+    As a result, when the client terminates, the resource delete function
+    gets called and accesses already freed memory:
+    
+     | Invalid read of size 8
+     |   at 0x5BC0C0: XkbRemoveResourceClient (xkbEvents.c:1047)
+     |   by 0x5B3391: XkbClientGone (xkb.c:7094)
+     |   by 0x4DF138: doFreeResource (resource.c:890)
+     |   by 0x4DFB50: FreeClientResources (resource.c:1156)
+     |   by 0x4A9A59: CloseDownClient (dispatch.c:3550)
+     |   by 0x5E0A53: ClientReady (connection.c:601)
+     |   by 0x5E4FEF: ospoll_wait (ospoll.c:657)
+     |   by 0x5DC834: WaitForSomething (WaitFor.c:206)
+     |   by 0x4A1BA5: Dispatch (dispatch.c:491)
+     |   by 0x4B0070: dix_main (main.c:277)
+     |   by 0x4285E7: main (stubmain.c:34)
+     | Address 0x1893e278 is 184 bytes inside a block of size 928 free'd
+     |   at 0x4842E43: free (vg_replace_malloc.c:989)
+     |   by 0x49C1A6: CloseDevice (devices.c:1067)
+     |   by 0x49C522: CloseOneDevice (devices.c:1193)
+     |   by 0x49C6E4: RemoveDevice (devices.c:1244)
+     |   by 0x5873D4: remove_master (xichangehierarchy.c:348)
+     |   by 0x587921: ProcXIChangeHierarchy (xichangehierarchy.c:504)
+     |   by 0x579BF1: ProcIDispatch (extinit.c:390)
+     |   by 0x4A1D85: Dispatch (dispatch.c:551)
+     |   by 0x4B0070: dix_main (main.c:277)
+     |   by 0x4285E7: main (stubmain.c:34)
+     | Block was alloc'd at
+     |   at 0x48473F3: calloc (vg_replace_malloc.c:1675)
+     |   by 0x49A118: AddInputDevice (devices.c:262)
+     |   by 0x4A0E58: AllocDevicePair (devices.c:2846)
+     |   by 0x5866EE: add_master (xichangehierarchy.c:153)
+     |   by 0x5878C2: ProcXIChangeHierarchy (xichangehierarchy.c:493)
+     |   by 0x579BF1: ProcIDispatch (extinit.c:390)
+     |   by 0x4A1D85: Dispatch (dispatch.c:551)
+     |   by 0x4B0070: dix_main (main.c:277)
+     |   by 0x4285E7: main (stubmain.c:34)
+    
+    To avoid that issue, make sure to free the resources when freeing the
+    device XkbInterest data.
+    
+    CVE-2025-62230, ZDI-CAN-27545
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Michel Dänzer <mdaenzer@redhat.com>
+    (cherry picked from commit 10c94238bdad17c11707e0bdaaa3a9cd54c504be)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2087>
+
+commit 865089ca70840c0f13a61df135f7b44a9782a175
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Sep 10 15:55:06 2025 +0200
+
+    xkb: Make the RT_XKBCLIENT resource private
+    
+    Currently, the resource in only available to the xkb.c source file.
+    
+    In preparation for the next commit, to be able to free the resources
+    from XkbRemoveResourceClient(), make that variable private instead.
+    
+    This is related to:
+    
+    CVE-2025-62230, ZDI-CAN-27545
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Reviewed-by: Michel Dänzer <mdaenzer@redhat.com>
+    (cherry picked from commit 99790a2c9205a52fbbec01f21a92c9b7f4ed1d8f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2087>
+
+commit 554dfabfbc23c3e74997e09c13f5424a60daf9ee
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Jul 2 09:46:22 2025 +0200
+
+    present: Fix use-after-free in present_create_notifies()
+    
+    Using the Present extension, if an error occurs while processing and
+    adding the notifications after presenting a pixmap, the function
+    present_create_notifies() will clean up and remove the notifications
+    it added.
+    
+    However, there are two different code paths that can lead to an error
+    creating the notify, one being before the notify is being added to the
+    list, and another one after the notify is added.
+    
+    When the error occurs before it's been added, it removes the elements up
+    to the last added element, instead of the actual number of elements
+    which were added.
+    
+    As a result, in case of error, as with an invalid window for example, it
+    leaves a dangling pointer to the last element, leading to a use after
+    free case later:
+    
+     |  Invalid write of size 8
+     |     at 0x5361D5: present_clear_window_notifies (present_notify.c:42)
+     |     by 0x534A56: present_destroy_window (present_screen.c:107)
+     |     by 0x41E441: xwl_destroy_window (xwayland-window.c:1959)
+     |     by 0x4F9EC9: compDestroyWindow (compwindow.c:622)
+     |     by 0x51EAC4: damageDestroyWindow (damage.c:1592)
+     |     by 0x4FDC29: DbeDestroyWindow (dbe.c:1291)
+     |     by 0x4EAC55: FreeWindowResources (window.c:1023)
+     |     by 0x4EAF59: DeleteWindow (window.c:1091)
+     |     by 0x4DE59A: doFreeResource (resource.c:890)
+     |     by 0x4DEFB2: FreeClientResources (resource.c:1156)
+     |     by 0x4A9AFB: CloseDownClient (dispatch.c:3567)
+     |     by 0x5DCC78: ClientReady (connection.c:603)
+     |   Address 0x16126200 is 16 bytes inside a block of size 2,048 free'd
+     |     at 0x4841E43: free (vg_replace_malloc.c:989)
+     |     by 0x5363DD: present_destroy_notifies (present_notify.c:111)
+     |     by 0x53638D: present_create_notifies (present_notify.c:100)
+     |     by 0x5368E9: proc_present_pixmap_common (present_request.c:164)
+     |     by 0x536A7D: proc_present_pixmap (present_request.c:189)
+     |     by 0x536FA9: proc_present_dispatch (present_request.c:337)
+     |     by 0x4A1E4E: Dispatch (dispatch.c:561)
+     |     by 0x4B00F1: dix_main (main.c:284)
+     |     by 0x42879D: main (stubmain.c:34)
+     |   Block was alloc'd at
+     |     at 0x48463F3: calloc (vg_replace_malloc.c:1675)
+     |     by 0x5362A1: present_create_notifies (present_notify.c:81)
+     |     by 0x5368E9: proc_present_pixmap_common (present_request.c:164)
+     |     by 0x536A7D: proc_present_pixmap (present_request.c:189)
+     |     by 0x536FA9: proc_present_dispatch (present_request.c:337)
+     |     by 0x4A1E4E: Dispatch (dispatch.c:561)
+     |     by 0x4B00F1: dix_main (main.c:284)
+     |     by 0x42879D: main (stubmain.c:34)
+    
+    To fix the issue, count and remove the actual number of notify elements
+    added in case of error.
+    
+    CVE-2025-62229, ZDI-CAN-27238
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 5a4286b13f631b66c20f5bc8db7b68211dcbd1d0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2087>
+
+commit 68c186bf735ce45438dc6236352dcd121e4e81e1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 12 14:04:53 2025 -0700
+
+    dix: avoid memory leak in ProcListProperties()
+    
+    Reported in #1817:
+    xwayland-24.1.6/redhat-linux-build/../dix/property.c:584:5:
+     warning[-Wanalyzer-malloc-leak]: leak of ‘pAtoms’
+    
+    Can happen if, and only if, XaceHookPropertyAccess() blocks access
+    to all properties, so that numProps ends up zero on the second loop.
+    
+    Fixes: 39f337fd4 ("dix: ProcListProperties: skip unneeded work if numProps is 0")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit ed92eae84d4a9e0985e1ac883089d4d68a679bb0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 78368d1b23d439470f2291102f3122b133802581
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 12 09:48:15 2025 -0700
+
+    dix: handle allocation failure in ChangeWindowDeviceCursor()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../dix/window.c:3495:9:
+     warning[-Wanalyzer-possible-null-dereference]:
+     dereference of possibly-NULL ‘pNewNode’
+    xwayland-24.1.6/redhat-linux-build/../dix/window.c:3494:20:
+     acquire_memory: this call could return NULL
+    
+    Fixes: 95e1a8805 ("Xi: Adding ChangeDeviceCursor request" in xorg 1.10.0)
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit c9fa8a8da161e1c37058a342ba5495ce627d0985)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 236e712ffbfdf36fd873e248949cf979478459cb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 11 18:26:55 2025 -0700
+
+    dix: assert that size of buffers to swap is a multiple of the swap size
+    
+    If we're swapping 4-byte integers or 2-byte integers, make sure the size
+    of the buffer doesn't have any bytes left over, since we won't correctly
+    handle those bytes.
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../dix/swaprep.c:99:22:
+     warning[-Wanalyzer-allocation-size]:
+     allocated buffer size is not a multiple of the pointee's size
+    
+    xwayland-24.1.6/redhat-linux-build/../dix/swaprep.c:146:22:
+     warning[-Wanalyzer-allocation-size]:
+     allocated buffer size is not a multiple of the pointee's size
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit cf49354b6060b71ae41febe67327278fbcb7c74a)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 4a562d37764bf96e02626fef8f63d19c9c380582
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 11 16:16:12 2025 -0700
+
+    dix: avoid null dereference if wOtherInputMasks() returns NULL
+    
+    The wOtherInputMasks(win) macro will return NULL if
+    win->optional is NULL.
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../dix/gestures.c:242:9:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘inputMasks’
+    xwayland-24.1.6/redhat-linux-build/../dix/touch.c:765:9:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘inputMasks’
+    xwayland-24.1.6/redhat-linux-build/../dix/touch.c:782:9:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘inputMasks’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 15496a5e3d5407a2b480d8c726b012455f7898bb)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 04321adc59165b5b0a92e061a58c4c64d2b17839
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 11 12:59:04 2025 -0700
+
+    dix: handle allocation failure in DeviceFocusEvent()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../dix/enterleave.c:786:5:
+     warning[-Wanalyzer-possible-null-dereference]:
+     dereference of possibly-NULL ‘xi2event’
+    
+    Fixes: 3f37923a7 ("Xi: send XI2 focus events." in Xorg 1.10.0)
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit dedceb52bcbba2431368b53acbbba490ac8ee485)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 757a0d03b4a5b56d61f23d8ffbf14b104c1d7e11
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 5 17:52:39 2025 -0700
+
+    Xi: handle allocation failure in add_master_func()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/xibarriers.c:729:5:
+     warning[-Wanalyzer-null-dereference]:
+     dereference of NULL ‘AllocBarrierDevice()’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 0ee603905387e00a2e3d83ead1de99ca61d641fb)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit d31e4534a600e77e3408d57032239fda4420fa2c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 5 17:37:48 2025 -0700
+
+    Xi: handle allocation failure in ProcXListInputDevices()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/listdev.c:171:5:
+     warning[-Wanalyzer-possible-null-dereference]:
+     dereference of possibly-NULL ‘dev’
+    xwayland-24.1.6/redhat-linux-build/../Xi/listdev.c:379:23:
+     acquire_memory: this call could return NULL
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 19c6195e711d9f9fabbde1bea7a6393c4a4c3cd3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit fd6d04089c62dfbf00969053fb307718fbea386f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 5 17:32:45 2025 -0700
+
+    Xi: handle allocation failure in ProcXGetDeviceDontPropagateList()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/getprop.c:163:25:
+     warning[-Wanalyzer-possible-null-dereference]:
+     dereference of possibly-NULL ‘buf’
+    xwayland-24.1.6/redhat-linux-build/../Xi/getprop.c:121:19:
+     acquire_memory: this call could return NULL
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7b18313e2a9d0409ac7465d2f313153013fdf5a3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 995fe28ebffb349e453a2586e48b441ac6d5c71c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 5 17:12:29 2025 -0700
+
+    Xi: set value for led_values in CopySwapKbdFeedback()
+    
+    (The existing setting of led_mask is probably wrong, but has been set
+     like this since X11R5 and going back as far as the first version in
+     the X Consortium source control archives.)
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/getfctl.c:108:9:
+     warning[-Wanalyzer-use-of-uninitialized-value]:
+     use of uninitialized value ‘*k2.led_values’
+    108|->         swapl(&k2->led_values);
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 90c8429d3509894f8834ead3b15f2e76657e57a6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit b171669dc0c94c07c87eae9e761ff2c520c3bab0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 5 15:38:35 2025 -0700
+
+    Xi: avoid null dereference if wOtherInputMasks() returns NULL
+    
+    The wOtherInputMasks(win) macro will return NULL if
+    win->optional is NULL.
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/exevents.c:1390:13:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/exevents.c:1404:13:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/exevents.c:2293:9:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/exevents.c:3244:22:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘inputMasks’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xi/exevents.c:3338:9:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7b7bcf92311db87a0292474dcf2ed9767f4a9abd)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit d29339ed3f1b3688ed012f3ae4666e35d1a986d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 17:38:32 2025 -0700
+
+    Xext/xtest: avoid null dereference in ProcXTestFakeInput()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:383:14: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘dev’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:348:9: release_memory: ‘dev’ is NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:383:14: danger: dereference of NULL ‘dev’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:395:14: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘dev’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:348:9: release_memory: ‘dev’ is NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:395:14: danger: dereference of NULL ‘dev’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:426:14: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘dev’
+    xwayland-24.1.6/redhat-linux-build/../Xext
+    /xtest.c:348:9: release_memory: ‘dev’ is NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:426:14: danger: dereference of NULL ‘dev’
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:440:9: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘dev’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:348:9: release_memory: ‘dev’ is NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/xtest.c:440:9: danger: dereference of NULL ‘dev’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 04ef51dae63dc9ef3d28f7d0b78b4504dbb01f66)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 0424d9e564d48961865ee1e7a29a2b1943c24fcb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 17:26:47 2025 -0700
+
+    Xext/xselinux: avoid memory leak in SELinuxAtomToSID()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xselinux_label.c:142:13: warning[-Wanalyzer-malloc-leak]: leak of ‘rec’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xselinux_label.c:133:1: enter_function: entry to ‘SELinuxAtomToSID’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xselinux_label.c:141:15: acquire_memory: allocated here
+    xwayland-24.1.6/redhat-linux-build/../Xext/xselinux_label.c:69:12: branch_true: following ‘true’ branch...
+    xwayland-24.1.6/redhat-linux-build/../Xext/xselinux_label.c:142:13: danger: ‘rec’ leaks here; was allocated at [(2)](sarif:/runs/0/results/0/codeFlows/0/threadFlows/0/locations/1)
+    #  140|       if (!rec) {
+    #  141|           rec = calloc(1, sizeof(SELinuxAtomRec));
+    #  142|->         if (!rec || !SELinuxArraySet(&arr_atoms, atom, rec))
+    #  143|               return BadAlloc;
+    #  144|       }
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 21cbc56c43af04a72ee2d77023194f436027eb4d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit b51c6a8e3da9a33186f7d0f25d503dffa80886b2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 17:19:05 2025 -0700
+
+    Xext/xselinux: add fast path to ProcSELinuxListSelections()
+    
+    If there's nothing to send, skip over a bunch of code to make a list
+    that won't be used, and hopefully make the code path clearer to both
+    humans and static analyzers, who raise errors as seen in #1817 of
+    dereferencing NULL pointers when count == 0.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit d34243606c8d7a01108827ad1ca3216bf81a119d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit a39d4c3a303cb6170123a77aa8696d98706c28be
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 17:10:20 2025 -0700
+
+    Xext/xres: avoid null dereference in ProcXResQueryClients()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/xres.c:233:13: warning[-Wanalyzer-possible-null-dereference]: dereference of possibly-NULL ‘current_clients’
+    xwayland-24.1.6/redhat-linux-build/../Xext/xres.c:228:23: acquire_memory: this call could return NULL
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 3da60c96a9c3ea26404313eb490e46847b04949c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 4f692b17f9b7d67c78321611d001400ac26c1b9a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 16:20:37 2025 -0700
+
+    Xext/vidmode: avoid null dereference if VidModeCreateMode() allocation fails
+    
+    Reported in #1817:
+    xwayland-24.1.6/redhat-linux-build/../Xext/vidmode.c:96:5: warning[-Wanalyzer-null-argument]: use of NULL ‘VidModeCreateMode()’ where non-null expected
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 5e62aaaf57b18136969699fd073e123edfb1aa70)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 976ef43f95a372c7485ee51a7b1e07e13fbf972a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 16:04:50 2025 -0700
+
+    Xext/sync: Avoid dereference of invalid pointer if malloc() failed
+    
+    Reported incorrectly in #1817 as:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2835:33: acquire_memory: allocated here
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2843:12: danger: ‘priv’ leaks here; was allocated at [(30)](sarif:/runs/0/results/5/codeFlows/0/threadFlows/0/locations/29)
+    
+    but the "leak" is really saving the pointer in an uninitalized pointer in
+    a structure that was already freed when the malloc of the SysCounterInfo
+    struct failed in SyncCreateSystemCounter(), because it returned the address
+    of the freed struct instead of NULL to indicate failure.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 6034ce11b6cd31d42df0f5781f70d3073d91f95b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 9bad510a45ca4997b371e9c3bfa9be10e3a0ff51
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 15:40:22 2025 -0700
+
+    Xext/sync: avoid null dereference in init_system_idle_counter()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2835:33: acquire_memory: this call could return NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2837:28: danger: ‘priv’ could be NULL: unchecked value from [(30)](sarif:/runs/0/results/4/codeFlows/0/threadFlows/0/locations/29)
+    # 2835|           IdleCounterPriv *priv = malloc(sizeof(IdleCounterPriv));
+    # 2836|
+    # 2837|->         priv->value_less = priv->value_greater = NULL;
+    # 2838|           priv->deviceid = deviceid;
+    # 2839|
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 304d21854d349b21dd8deb8a8f319637f17bd4a8)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 7097560cfb2386e16782c37c1cbae77aa9650c58
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 15:26:19 2025 -0700
+
+    Xext/sync: avoid null dereference if SysCounterGetPrivate() returns NULL
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2664:9: danger: dereference of NULL ‘SysCounterGetPrivate(pCounter)’
+    # 2662|           SyncCounter *counter = pCounter;
+    # 2663|           IdleCounterPriv *priv = SysCounterGetPrivate(counter);
+    # 2664|->         deviceid = priv->deviceid;
+    # 2665|       }
+    # 2666|       else
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2677:14: danger: dereference of NULL ‘SysCounterGetPrivate(pCounter)’
+    # 2675|       SyncCounter *counter = pCounter;
+    # 2676|       IdleCounterPriv *priv = SysCounterGetPrivate(counter);
+    # 2677|->     int64_t *less = priv->value_less;
+    # 2678|       int64_t *greater = priv->value_greater;
+    # 2679|       int64_t idle, old_idle;
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2767:14: danger: dereference of NULL ‘SysCounterGetPrivate(pCounter)’
+    # 2765|       SyncCounter *counter = pCounter;
+    # 2766|       IdleCounterPriv *priv = SysCounterGetPrivate(counter);
+    # 2767|->     int64_t *less = priv->value_less;
+    # 2768|       int64_t *greater = priv->value_greater;
+    # 2769|       int64_t idle;
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/sync.c:2800:14: danger: dereference of NULL ‘SysCounterGetPrivate(pCounter)’
+    # 2798|       SyncCounter *counter = pCounter;
+    # 2799|       IdleCounterPriv *priv = SysCounterGetPrivate(counter);
+    # 2800|->     int64_t *less = priv->value_less;
+    # 2801|       int64_t *greater = priv->value_greater;
+    # 2802|       Bool registered = (less || greater);
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 0211de37b340eccfc0bad6a3ea13b27810b11a30)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 29efdcd67e34ff0b3d3233c1824d000bd4f0c96c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 4 12:18:49 2025 -0700
+
+    Xext/shm: avoid null dereference in ShmInitScreenPriv()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/shm.c:213:23: acquire_memory: this call could return NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/shm.c:214:9: danger: ‘screen_priv’ could be NULL: unchecked value from [(19)](sarif:/runs/0/results/0/codeFlows/0/threadFlows/0/locations/18)
+    #  212|       if (!screen_priv) {
+    #  213|           screen_priv = calloc(1, sizeof(ShmScrPrivateRec));
+    #  214|->         screen_priv->CloseScreen = pScreen->CloseScreen;
+    #  215|           dixSetPrivate(&pScreen->devPrivates, shmScrPrivateKey, screen_priv);
+    #  216|           pScreen->CloseScreen = ShmCloseScreen;
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 87e53afd9c7f52a8fa3d1fed22db5380742cc7b7)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit f8fa439118ce5ae8c750912749f6eee64a1d27fb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 25 17:47:50 2025 -0700
+
+    xfree86: Fix -Wdiscarded-qualifiers warnings in SPARC Sbus probe code
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 5210495f7dc8ac98a71b48e11530edca5a2fa483)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 84193d2e1161bad9b079ebf7bd7986474c12e725
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 25 16:58:00 2025 -0700
+
+    xfree86: add missing headers to build sun_init.c on Solaris/SPARC
+    
+    Fixes: 0f715b4ca ("xfree86: os-support: move hidden Solaris-specific symbols out of public header")
+    Fixes: e2fa0d2ae ("fix including <sys/mman.h>")
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit c62cd2feaadaa49c385e277bb97fa7e3b48e3c4f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit f866b46b5640933902e7dba41362debee561f476
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 25 16:37:36 2025 -0700
+
+    xfree86: fix meson build on 64-bit Solaris/SPARC systems
+    
+    For cpu_family(), meson returns "sparc" for 32-bit sparc,
+    and "sparc64" for 64-bit sparc, regardless of the OS in use.
+    
+    For cpu(), meson returns values like "sun4v" on Solaris/SPARC,
+    and doesn't promise stability of the values, or portability across
+    OS'es, unlike cpu_family().
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 908f0a488d2fc35f0c4fa69e64492de3fb3cf89c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 7cd443c610e5186ff09f0038d0d615600bd9a1e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 21 10:48:00 2025 -0700
+
+    os: Use EVP APIs when building with OpenSSL 3
+    
+    Avoids deprecation warnings for old SHA1 APIs in OpenSSL 3.0 and later
+    
+    Closes: #1845
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 3ec5f6bcc3fec8c6f5cd3227b364d1f5ff26e85b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 9848e11d7cb990f9c07f331f23f74d5afc9cf518
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 20 16:45:59 2025 -0700
+
+    panoramix: avoid null dereference in PanoramiXConsolidate()
+    
+    Reported in #1817:
+    
+    Error: GCC_ANALYZER_WARNING (CWE-476): [#def5]
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:820:5: warning[-Wanalyzer-possible-null-dereference]: dereference of possibly-NULL ‘root’
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:819:12: acquire_memory: this call could return NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:820:5: danger: ‘root’ could be NULL: unchecked value from (1)
+    818|
+    819|       root = malloc(sizeof(PanoramiXRes));
+    820|->     root->type = XRT_WINDOW;
+    821|       defmap = malloc(sizeof(PanoramiXRes));
+    822|       defmap->type = XRT_COLORMAP;
+    Error: GCC_ANALYZER_WARNING (CWE-476): [#def6]
+    
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:822:5: warning[-Wanalyzer-possible-null-dereference]: dereference of possibly-NULL ‘defmap’
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:821:14: acquire_memory: this call could return NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:822:5: danger: ‘defmap’ could be NULL: unchecked value from (1)
+    820|       root->type = XRT_WINDOW;
+    821|       defmap = malloc(sizeof(PanoramiXRes));
+    822|->     defmap->type = XRT_COLORMAP;
+    823|       saver = malloc(sizeof(PanoramiXRes));
+    824|       saver->type = XRT_WINDOW;
+    
+    Error: GCC_ANALYZER_WARNING (CWE-476): [#def7]
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:824:5: warning[-Wanalyzer-possible-null-dereference]: dereference of possibly-NULL ‘saver’
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:823:13: acquire_memory: this call could return NULL
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:824:5: danger: ‘saver’ could be NULL: unchecked value from (1)
+    822|       defmap->type = XRT_COLORMAP;
+    823|       saver = malloc(sizeof(PanoramiXRes));
+    824|->     saver->type = XRT_WINDOW;
+    825|
+    826|       FOR_NSCREENS(i) {
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 23c103d41f35cc030b0c0e973f7f3bcb8d9902a0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit 63d6cbf24cb7cd34c399e003ac11746edc6f765e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 20 16:35:46 2025 -0700
+
+    panoramix: avoid null dereference in PanoramiXMaybeAddDepth()
+    
+    Reported in #1817:
+    
+    Error: GCC_ANALYZER_WARNING (CWE-476): [#def4]
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:748:5: warning[-Wanalyzer-possible-null-dereference]: dereference of possibly-NULL ‘PanoramiXDepths’
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:802:1: enter_function: entry to ‘PanoramiXConsolidate’
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:813:17: branch_true: following ‘true’ branch...
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:814:9: branch_true: ...to here
+    xwayland-24.1.6/redhat-linux-build/../Xext/panoramiX.c:814:9: call_function: calling ‘PanoramiXMaybeAddDepth’ from ‘PanoramiXConsolidate’
+    746|       PanoramiXDepths = reallocarray(PanoramiXDepths,
+    747|                                      PanoramiXNumDepths, sizeof(DepthRec));
+    748|->     PanoramiXDepths[j].depth = pDepth->depth;
+    749|       PanoramiXDepths[j].numVids = 0;
+    750|       PanoramiXDepths[j].vids = NULL;
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 537b56cccaf1759f9beef9396463b1f412614003)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit e052acfa3391a4563c084556aca22ecb7459b012
+Author: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
+Date:   Wed Sep 17 17:25:40 2025 +0300
+
+    dix: avoid null ptr deref at doListFontsWithInfo
+    
+    In the doListFontsWithInfo function in dixfonts.c, when a font alias is
+    encountered (err == FontNameAlias), the code saves the current state
+    and allocates memory for c->savedName.
+    
+    If the malloc(namelen + 1) call fails, c->savedName remains NULL,
+    but c->haveSaved is still set to TRUE. Later, when a font is
+    successfully resolved (err == Successful), the code uses c->savedName
+    without checking if it is NULL, so there is potential null ptr
+    dereference. XNFalloc will check result of malloc and stop
+    program execution if allocation was failed.
+    
+    Found by Linux Verification Center (linuxtesting.org) with SVACE.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1842
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit dd5c2595a42d3ff0c4f18d9b53d1f6c3fd934fd4)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit c49bf5f7fd44b1e5285c11f7522ff60367f67c48
+Author: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
+Date:   Wed Sep 17 17:29:49 2025 +0300
+
+    os: avoid potential out-of-bounds access at logVHdrMessageVerb
+    
+    The LogVHdrMessageVerb function may access an array out of bounds in a
+    specific edge case. Specifically, the line:
+    
+    newline = (buf[len - 1] == '\n');
+    
+    can result in accessing buf[-1] if len == 0, which is undefined behavior.
+    
+    Commit adds check to avoid access out of bounds at pointed line.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1841
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit 8d25a8914346824f820490ba7090175dea9428cd)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2077>
+
+commit b53d9fa4176679cd7b2a031c5e2d25cac5b9aa77
+Author: Icenowy Zheng <uwu@icenowy.me>
+Date:   Sat Dec 14 01:07:31 2024 +0800
+
+    glamor: Fix dual blend on GLES3
+    
+    The EXT_blend_func_extended extension on ESSL always requires explicit
+    request to allow two FS out variables because of limitations of the ESSL
+    language, which is mentioned as the No.6 issue of the extension's
+    specification.
+    
+    Fix this by adding the extension request.
+    
+    The original behavior on GLES3 is slightly against the specification of
+    GL_EXT_blend_func_extended extension, however Mesa and older version of
+    PowerVR closed drivers will just ignore this issue. Newest PowerVR
+    closed driver will bail out on this problem, so it deems a fix now.
+    
+    Fixes: ee107cd4911e ("glamor: support GLES3 shaders")
+    Signed-off-by: Icenowy Zheng <uwu@icenowy.me>
+    (cherry picked from commit eba15f1ba75bc041d54693ebc62a8b9957b8b033)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit b89a563882f234f6949a874770d3ca075d2d2fdc
+Author: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+Date:   Thu Jan 16 10:08:15 2025 +0100
+
+    glamor: reject configs using unsupported rgbBits size
+    
+    The supported color depths is a hardcoded list for now, so we
+    need to honor the value exposed there otherwise we'll get
+    inconsistencies between what glXGetFBConfigs and XListDepths
+    report to applications.
+    
+    Signed-off-by: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+    (cherry picked from commit 5397854877c1b17f21c16e43365e1c2e353dc8ba)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 339edca178f45c85924090550350a530a23e17c3
+Author: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+Date:   Wed Jan 15 18:34:27 2025 +0100
+
+    glamor: use gbm_format_for_depth instead of open-coding it
+    
+    This way glamor_back_pixmap_from_fd deals with the same depth
+    values as glamor_pixmap_from_fds.
+    
+    Signed-off-by: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+    (cherry picked from commit 83b13387ab8b28cbdfeb44f05e019a656214d722)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 4f6f1813b6a3f047cd2b8e610747300255aa5687
+Author: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+Date:   Wed Jan 15 18:32:46 2025 +0100
+
+    glamor: return the result of gbm_format_for_depth
+    
+    This way the caller knows if the conversion failed.
+    While at it, check for width/height at the same time.
+    
+    Signed-off-by: Pierre-Eric Pelloux-Prayer <pierre-eric.pelloux-prayer@amd.com>
+    (cherry picked from commit 87afcc7699f1d143ca91b6ed9bdbfafbbe0d77f7)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 33a9f47205f6e30538d785ea7f8c82377fe087d5
+Author: Michel Dänzer <michel@daenzer.net>
+Date:   Thu Apr 25 17:16:26 2024 +0200
+
+    xwayland/glamor: Handle depth 15 in gbm_format_for_depth
+    
+    Prevents Xwayland with glamor from logging
+    
+     unexpected depth: 15
+    
+    to stderr many times when running
+    
+     rendercheck -t blend -o clear
+    
+    (cherry picked from commit 08113b8923a83aa7018463e71b6e2db3661b8604)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit d4cf52524ddb72d31f646be62067e77288a91844
+Author: Balló György <ballogyor@gmail.com>
+Date:   Thu Oct 5 14:30:33 2023 +0200
+
+    glamor: Fallback to software rendering on GLSL link failure
+    
+    Instead of thowing fatal error on GLSL link failure, fall back to software
+    rendering. This allows using Glamor on systems with limited hardware resources
+    (such as i915).
+    
+    (cherry picked from commit 007e98b18665ec76c48e0923f10431175755386f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 3837159a3f6f3f8915c55e282ea545eed3f1dfdc
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Wed Nov 2 19:13:33 2022 +0300
+
+    Fix autotools build for Glamor GLX provider
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 0dfcd136682dba0c8777dd4cf865f1f44b9cdf17
+Author: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+Date:   Tue Jul 30 15:53:25 2024 -0400
+
+    glamor: xv: Rewrite UYVY shader to match NV12/I420 CSC
+    
+    This rewrites the shader so that we use the same (more flexible) CSC as
+    we have for I420 and NV12. This also fixes the reverse of odd/even which
+    caused chroma shift.
+    
+    Signed-off-by: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+    (cherry picked from commit 39c8a6f367154b1110a1e6845566a3388be4f90e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit b21b504c4ea25e7a316e2547981f8dbc03097dff
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Wed Jul 31 11:12:38 2024 +0300
+
+    glamor: xv: fix UYVY alignment
+    
+    UYVY videos should be aligned by 2 to avoid breakups in the shader
+    
+    Fixes: 832b392f7 - glamor: xv: enable UYVY acceleration
+    Suggested-by: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit eb26f3236804389f2006388936322dc8115d00e0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 378f14f9ce1982114b38eb7471626f1540cf8e10
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Thu Sep 21 16:45:08 2023 +0300
+
+    glamor: check BPP by render_format.
+    
+    Check actual BPP by render_format in upload_boxes, not by drawable BPP.
+    
+    It is required when we used different BPP formats for storing and
+    rendering (for example, in the case of UYVY).
+    
+    The problem of UYVY size lies inside method of glamor downloading boxes.
+    
+    When we set GLAMOR_CREATE_FORMAT_CBCR, it actually uses 16-bit GL and
+    Pixman formats, but before this change in glamor_download_boxes, that
+    function deduces GL and Pixman formats from BPP, which is wrong in this
+    case (will be deduced to 32).
+    
+    When GL and Pixman format BPP is identical to drawable BPP, this change
+    does nothing, but when it is different - it will prioritize Pixman
+    format, not the format deduced from BPP.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1730
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    (cherry picked from commit 75f56b79234bf428455fa0bef741a86fc5919889)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 48cb710f9f1358f3891680401d1a7f3782cb555b
+Author: Yuriy Vasilev <uuvasiliev@yandex.ru>
+Date:   Fri Sep 10 16:20:06 2021 +0300
+
+    glamor: xv: add rgb565
+    
+    This commit adds RGB565 format to XVideo with reuse of RGBA32 shader
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Yuriy Vasilev <uuvasiliev@yandex.ru>
+    (cherry picked from commit c170056111fe0b3c4956a34276b5683e24b8c63c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit b6d21a444e6d2b6681d28ea7d62089b645f4ec14
+Author: Yuriy Vasilev <uuvasiliev@yandex.ru>
+Date:   Thu Sep 9 18:14:02 2021 +0300
+
+    glamor: xv: add rgba32 format
+    
+    This commit adds RGBA32 format to XVideo along with shader for handling it.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Yuriy Vasilev <uuvasiliev@yandex.ru>
+    (cherry picked from commit 15412e78c83bf3d15bcd343ccc40afda072d3f9e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit e084b6e806217519ccb3d67edc5c5aa1f0591290
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Oct 19 15:03:35 2021 +0300
+
+    glamor: xv: enable UYVY acceleration
+    
+    This commit adds UYVY format in XVideo for Glamor
+    along with shader support.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit 832b392f70450f164800d65546ec9adf15d642a2)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 966f8aa40ec8b70f56d0d8fc24e1ed0c4a4ab30c
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Fri Oct 20 22:51:55 2023 +0300
+
+    glamor: xv: prepare to one-plane formats
+    
+    As a preparation to one-plane formats (for example, UYVY), second
+    texture definition is moved inside a format switch, and all allocations
+    now also done inside a texture switch.
+    No functional change.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit ffd7151b109b8c598cd346d34b5233558409a03a)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 20f8f90d53ddac0591a8544aab457f65171f0266
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Fri Oct 20 22:45:11 2023 +0300
+
+    glamor: xv: reuse ports and shaders when possible
+    
+    Xv currently calls glamor_xv_free_port_data at the end of every putImage.
+    This leads to shader recompilation for every frame, which is a huge performance loss.
+    This commit changes behaviour of glamor_xv_free_port_data, and its now is called only
+    if width, height or format is changed for xv port.
+    
+    Shader management also done in a port now, because if shaders will be
+    stored in core glamor and try to be reused, this can lead to a bug if we
+    try to play 2 videos with different formats simultaneously.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit 81ef43dd4ab22185ba63aaa271fdbb36dd39f0c9)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 111c1d033232c0effb7c5280e54f8e1baf80484e
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Oct 10 13:07:41 2023 +0300
+
+    glamor: xv: do not force a version on XV shaders
+    
+    There is a no need to force a low version for XV shaders, it will
+    work on higher version too.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit a8270fc5f0d5e934c266a8b243a35ebd83e2f08f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 062d39977094c89ef34168b78b9c9e9fc85483ff
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Oct 10 17:36:50 2023 +0300
+
+    glamor_egl: add support of GlxVendorLibrary option
+    
+    Same semantics as in glxdri2.c, and same purpose.
+    
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit a449bb4c5dbb569d151e0d714b0ef3eab4074b67)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 0a1ee643b26fd53074ec90c95a14c12c8f5166b3
+Author: Konstantin Pugin <ria.freelander@gmail.com>
+Date:   Thu Jul 21 00:49:13 2022 +0300
+
+    xorg: initialize glamor provider
+    
+    This allows Xorg to use Glamor GLX when Glamor is requested,
+    and eliminates usage of DRI2 in case of Glamor.
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Acked-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit a987fc7c360fa1c59efa0dde61316d84c171801b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit ed1ec1350269fb91c2c276680d614653a021ee98
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Aug 26 18:22:22 2020 -0400
+
+    glamor: Lift the GLX EGL backend from Xwayland
+    
+    This code is almost entirely ddx-agnostic already, and I'd like to use
+    it from the other EGL glamor consumers. Which, right now that's just
+    Xorg, but soon it'll be Xephyr too.
+    
+    (cherry picked from commit 58b88ba0b180ec8d05c85c80eef2d224fb0a6daf)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit a6145198bc1d4f535c3105f8352e420c7c59382f
+Author: Konstantin Pugin <ria.freelander@gmail.com>
+Date:   Thu Jul 21 00:46:07 2022 +0300
+
+    glamor: add glvnd_vendor private
+    
+    This commit adds an ability to store a glvnd vendor in Glamor
+    structures, which can be used for initialize some vendor-based values
+    without hooking into DDX internals. Also this adds setting this value
+    into Xorg and Xwayland
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Acked-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit 3caf7aa88d31450f116589d68ff66f78285f0e33)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 93abc39fcdcd620dcfc425f4bee55dcbdfd8c5c4
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Thu Sep 21 17:07:43 2023 +0300
+
+    glamor_egl: add info message about context API
+    
+    It is useful to know on what context we are running, and
+    we need to show it into xorg.log
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit c014f33b43047975cfa4cb0254c36e39669575ad)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 98ac366741ec2c88fe517642f5549eb5eecd638e
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Fri Sep 22 12:29:52 2023 +0300
+
+    xorg.conf.man: document new RenderingAPI option
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit 4fc1500f747eb53292311098772c32efad7f2fd6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 2f659415899296c784874489d85cffd3b3bb2e4b
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Thu Sep 21 18:06:14 2023 +0300
+
+    glamor_egl: add RenderingAPI option
+    
+    This allows to choose between Glamor on OpenGL and Glamor on OpenGL ES
+    via an option.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit a44a4b0d4de267eb66f4aa33c84a4e9288fb7c01)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit e4f79ed0addbeb2c8bc4afead319a8c21306323b
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Oct 31 19:52:07 2023 +0300
+
+    glamor_egl: add helper functions for contexts
+    
+    This is just a split big glamor_egl_init to 3 smaller functions.
+    No functional change.
+    
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit d5c2a4d3f55a873fe6ba0fc77a42f8d1510bcb3d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 40af9f2d1af27287bdd5f07892aa6fe34f61d9d4
+Author: Balló György <ballogyor@gmail.com>
+Date:   Wed Oct 11 16:01:13 2023 +0200
+
+    glamor: Don't require EXT_gpu_shader4 unconditionally
+    
+    It causes a shader compilation error on systems without EXT_gpu_shader4.
+    
+    Fixes: ee107cd4
+    (cherry picked from commit 910847f45265aa1b0177dc4be4d165dc71c01b69)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 7fda68174bc5be3332a9dd1922ec51a97350225b
+Author: Konstantin Pugin <ria.freelander@gmail.com>
+Date:   Sun Jul 24 16:03:51 2022 +0300
+
+    glamor: support GLES3 shaders
+    
+    Some hardware (preferably mobile) working on GLES3 way faster than
+    on desktop GL and supports more features. This commit will allow using
+    GLES3 if glamor is running over GL ES, and version 3 is supported.
+    
+    Changes are the following:
+    1. Add compatibility layer for 120/GLES2 shaders with defines in and out
+    2. Switch attribute and varying to in and out in almost all shaders
+       (aside gradient)
+    3. Add newGL-only frag_color variable, which defines as gl_FragColor on
+       old pipelines
+    4. Switch all shaders to use frag_color.
+    5. Previous commit is reverted, because now we have more than one GL ES
+    version, previous commit used to set version 100 for all ES shaders, which
+    is not true for ES 3
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    (cherry picked from commit ee107cd4911e692480ab2ff9c12e3c6958bdec4e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 97d5271487972cd88f2907687ec6e7854ad08109
+Author: Konstantin Pugin <ria.freelander@gmail.com>
+Date:   Sun Jul 10 17:08:44 2022 +0300
+
+    glamor: accelerate incomplete textures for GL ES
+    
+    If texture can be uploaded to GL using glTexImage2D normally, but
+    cannot be read back using glReadPixels, we still can accelerate it,
+    but we cannot create pixmap with FBO using this texture type. So,
+    add a flag to avoid such creations.
+    
+    This allow us to accelerate 8-bit glyph masks on GL ES 2.0, because those
+    masks are used only as textures, and in next stages are rendered on RGBA
+    surfaces normally, so, we do not need to call glReadPixels on them.
+    
+    This is needed for correctly working fonts on GL ES 2.0, due to inability
+    to use GL_RED and texture swizzle. We should use GL_ALPHA there, and
+    with this format we cannot have a complete framebuffer. But completed
+    framebuffer, according to testing, is not required for fonts anyway.
+    Also it fixes all 8-bit formats for GLES2.
+    
+    Fixes #1362
+    Fixes #1411
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Acked-by: Michel Dänzer <mdaenzer@redhat.com>
+    Acked-by: Martin Roukala <martin.roukala@mupuf.org>
+    (cherry picked from commit e573d4ca03756cd7ea37288a7ca7df003ad5c1f8)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 6086a0210da3530a60e583c121e63563b97e3eb7
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Jul 19 11:22:30 2022 +0300
+
+    glamor: add gl_PointSize for ES shaders
+    
+    GLES3.2 spec, page 126:
+    > The variable gl_PointSize is intended for a shader to write
+    > the size of the point to be rasterized. It is measured in pixels.
+    > If gl_PointSize is not written to, its value
+    > is undefined in subsequent pipe stages.
+    
+    If glamor shader is use points, we should define gl_PointSize for GLES.
+    On Desktop GL, it "just work" due to default gl_PointSize is 1.
+    
+    As @anholt requested, define this only for minimal amount of shaders
+    (point and glyphbit ones), to make sure than performance will not
+    affected
+    
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    (cherry picked from commit f273c960c15cf1eaaaccf9c00ed93f5ac75c9397)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 3078e4925754a3c9aba697008deba2f10aacbdb7
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Fri Dec 2 16:22:15 2022 +0300
+
+    glamor: fixes GL_INVALID_ENUM errors on ES if there is no quads
+    
+    If there is no quads to draw, then we have a possibility to call
+    glDrawElements with type as zero, which will generate
+    GL_INVALID_ENUM error. While this error is harmless, it is annoying.
+    
+    Signed-off-by: Konstantin <ria.freelander@gmail.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    (cherry picked from commit baaddf47d593b51d215d836a796b95a3cb14a220)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit feb860014df0b8b1a4b1f8921843fb1cd77eeafc
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Feb 9 13:48:30 2023 +1000
+
+    glamor: handle EXT_gpu_shader4 in dual source blend paths
+    
+    Fixes: a9552868697c ("glamor: add EXT_gpu_shader4 support")
+    Acked-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit 86598739ba285045bc03778d43e25bb0886627f3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit e52e256f1c1d5334827f60ee8538791bce92f943
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Tue Jun 28 12:28:39 2022 +0300
+
+    glamor: fix XVideo run with GLES
+    
+    For now, it sets .version=120, which prevents shader from compiling on ES.
+    We just force version of shaders to be always 100 on ES, because we use
+    only 120 shaders on ES anyway, and all shaders works.
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit dcba460af3eedb9d41986bd65f4502998b7a5a6c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit fc7012515308e860130e29bb55d070adaae3e87c
+Author: Vasily Khoruzhick <anarsoul@gmail.com>
+Date:   Fri May 27 18:00:56 2022 -0700
+
+    glamor: use dual source blend on GL 2.1 with ARB_ES2_compatibility
+    
+    ARB_blend_func_extended may be exposed even without GLSL 1.30.
+    In order to use it we need GLES2 shaders that are available if
+    ARB_ES2_compatibility is exposed.
+    
+    Signed-off-by: Vasily Khoruzhick <anarsoul@gmail.com>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit 05b8401eeb263e1395aa5ceeb8b5cdbeb0585db6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 4b1d4cc963e7af73abd7c116c12a91cbad9c51f2
+Author: Yuriy Vasilev <uuvasiliev@yandex.ru>
+Date:   Thu Sep 16 14:47:44 2021 +0300
+
+    glamor: fix CbCr format handling
+    
+    In GLES2, we cannot do GL_RED or GL_RG without GL_EXT_texture_rg.
+    So, add check for GL_EXT_texture_rg to make it working. Also add
+    a yuv2 pixman format into render.h to make Xv yuv rendering works.
+    
+    Signed-off-by: Yuriy Vasilev <uuvasiliev@yandex.ru>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit 65392d27d77fbdb66e874ba3e2d85dbcf46e4583)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit f94d80b3878897be22d28329a42f65ae13d30caf
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Sat Jun 25 17:51:15 2022 +0300
+
+    glamor: transpose gradients transparently
+    
+    glUniformMatrix3fv is used with argument transpose set to GL_TRUE.
+    According to the Khronos OpenGL ES 2.0 pages transpose must be GL_FALSE.
+    Actually we can just return transformed matrix from
+    _glamor_gradient_convert_trans_matrix (@anholt suggest),
+    so @uvas workaround is not required
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit a59531533fb8fd137d21e0578909d8e91c28dff6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 95b8991181b22031f67384403bc166c8749e7a16
+Author: Konstantin <ria.freelander@gmail.com>
+Date:   Sat Jun 25 21:58:08 2022 +0300
+
+    meson: add glamor gles2 tests
+    
+    Signed-off-by: Konstantin Pugin <ria.freelander@gmail.com>
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Emma Anholt <emma@anholt.net>
+    (cherry picked from commit ddcd4846d1fa8c408733f4435a52344d3eab850e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 8d3b4fa2456efcb4c677e750b9688fc4e005d6aa
+Author: Jeffy Chen <jeffy.chen@rock-chips.com>
+Date:   Fri Nov 8 15:44:41 2019 +0800
+
+    glamor: xv: Fix invalid accessing of plane attributes for NV12
+    
+    NV12 only has 2 planes.
+    
+    Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+    (cherry picked from commit 0076671e24670f1ddb151946e490497f171589f0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit bec42f6e0b7c4cb2844721f1b566921665bbdc78
+Author: Lucas Stach <dev@lynxeye.de>
+Date:   Sun Jul 10 19:35:43 2022 +0200
+
+    glamor_egl: properly get FDs from multiplanar GBM BOs
+    
+    Multiplanar GBM buffers can point to different objects from each plane.
+    Use the _for_plane API when possible to retrieve the correct prime FD
+    for each plane.
+    
+    Signed-off-by: Lucas Stach <l.stach@pengutronix.de>
+    Reviewed-by: Simon Ser <contact@emersion.fr>
+    Tested-by: Guido Günther <agx@sigxcpu.org>
+    (cherry picked from commit e5b09f7a2cc3bd64a6ea207c7c75d4f05b79cf44)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit b621926610129b94d3bfbc3a7e256c6f7799d73f
+Author: Lucas Stach <dev@lynxeye.de>
+Date:   Thu Jul 28 22:52:15 2022 +0200
+
+    glamor_egl: handle fd export failure in glamor_egl_fds_from_pixmap
+    
+    Check the fd for validity before giving a success return code.
+    
+    Signed-off-by: Lucas Stach <l.stach@pengutronix.de>
+    Reviewed-by: Simon Ser <contact@emersion.fr>
+    Tested-by: Guido Günther <agx@sigxcpu.org>
+    (cherry picked from commit 95944e2b990dacde81892406c8a0e2cc2afa7b3e)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1636>
+
+commit 8b5ed211d5d3cea845b41fdff4b8dfcb183ee921
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Thu Jun 26 10:38:01 2025 +0200
+
+    .gitlab-ci: Use meson instead of ninja for running the tests
+    
+    Using ninja spawns a very high number of concurrent tests (even with
+    the option '-j').
+    
+    The CI runs two Xservers, one Xephyr instance running inside an Xvfb
+    instance.
+    
+    As a result, running the tests may exhaust the CI server resources and
+    eventually the CI fails.
+    
+    meson, however, doesn't seem to suffer the same issue, and the number of
+    Xserver spawned for the CI tests remains limited.
+    
+    The master branch already uses meson (after commit ce2f24c51 which uses a
+    meson-build script instead).
+    
+    Switch to meson instead of ninja for running the tests.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2040>
+
 commit 2403cd5352b2a60d045b7f53c3c30002eb877f57
 Author: Olivier Fourdan <ofourdan@redhat.com>
 Date:   Wed Jun 18 17:55:42 2025 +0200
