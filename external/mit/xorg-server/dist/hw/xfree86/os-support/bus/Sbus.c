@@ -401,7 +401,7 @@ sparcPromAssignNodes(void)
         int fbNum, devId;
         static struct {
             int devId;
-            char *prefix;
+            const char *prefix;
         } procFbPrefixes[] = {
             {SBUS_DEVICE_BW2, "BWtwo"},
             {SBUS_DEVICE_CG14, "CGfourteen"},
