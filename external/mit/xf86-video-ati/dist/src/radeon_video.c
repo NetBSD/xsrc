@@ -491,6 +491,8 @@ static XF86AttributeRec Attributes[NUM_DEC_ATTRIBUTES+1] =
 
 /* Note: GUIDs are bogus... - but nothing uses them anyway */
 
+/* XXXMRG - xorg-server 21.1.20 defines this differently. */
+#undef FOURCC_RGBA32
 #define FOURCC_RGBA32   0x41424752
 
 #define XVIMAGE_RGBA32(byte_order)   \

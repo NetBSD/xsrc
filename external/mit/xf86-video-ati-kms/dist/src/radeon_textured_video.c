@@ -758,6 +758,8 @@ RADEONQueryBestSize(
 #define FOURCC_RGB24    0x00000000
 #define FOURCC_RGBT16   0x54424752
 #define FOURCC_RGB16    0x32424752
+/* XXXMRG - xorg-server 21.1.20 defines this differently. */
+#undef FOURCC_RGBA32
 #define FOURCC_RGBA32   0x41424752
 
 static int

@@ -89,7 +89,9 @@
 
 /* Borrowed from Trident */
 
+#ifndef FOURCC_RGB565
 #define FOURCC_RGB565 0x36315652
+#endif
 #define XVIMAGE_RGB565 \
    { \
         FOURCC_RGB565, \
