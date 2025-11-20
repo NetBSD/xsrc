@@ -36,7 +36,9 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #define FOURCC_XVMC (('C' << 24) + ('M' << 16) + ('V' << 8) + 'X')
+#ifndef FOURCC_RGB565
 #define FOURCC_RGB565 ((16 << 24) + ('B' << 16) + ('G' << 8) + 'R')
+#endif
 #define FOURCC_RGB888 ((24 << 24) + ('B' << 16) + ('G' << 8) + 'R')
 
 /*
