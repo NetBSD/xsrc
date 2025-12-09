@@ -24,6 +24,10 @@
 
  ********************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xos.h>
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -145,9 +149,13 @@ ClearCompatInfo(CompatInfo * info, XkbDescPtr xkb)
     }
     ClearIndicatorMapInfo(xkb->dpy, &info->ledDflt);
     info->nInterps = 0;
-    info->interps = (SymInterpInfo *) ClearCommonInfo(&info->interps->defs);
+    if (info->interps) {
+        info->interps = (SymInterpInfo *) ClearCommonInfo(&info->interps->defs);
+    }
     bzero(&info->groupCompat[0], XkbNumKbdGroups * sizeof(GroupCompatInfo));
-    info->leds = (LEDInfo *) ClearCommonInfo(&info->leds->defs);
+    if (info->leds) {
+        info->leds = (LEDInfo *) ClearCommonInfo(&info->leds->defs);
+    }
     /* 3/30/94 (ef) -- XXX! Should free action info here */
     ClearVModInfo(&info->vmods, xkb);
     return;
@@ -161,9 +169,9 @@ NextInterp(CompatInfo * info)
     si = calloc(1, sizeof(SymInterpInfo));
     if (si)
     {
-        info->interps =
-            (SymInterpInfo *) AddCommonInfo(&info->interps->defs,
-                                            (CommonInfo *) si);
+        info->interps = (SymInterpInfo *)
+            AddCommonInfo((info->interps ? &info->interps->defs : NULL),
+                          (CommonInfo *) si);
         info->nInterps++;
     }
     return si;
@@ -299,6 +307,8 @@ ResolveStateAndPredicate(const ExprDef *expr,
     {
         char *pred_txt =
             XkbAtomText(NULL, expr->value.action.name, XkbMessage);
+        if (!pred_txt || !expr->value.action.args)
+            goto leave;
         if (uStrCaseCmp(pred_txt, "noneof") == 0)
             *pred_rtrn = XkbSI_NoneOf;
         else if (uStrCaseCmp(pred_txt, "anyofornone") == 0)
@@ -311,7 +321,8 @@ ResolveStateAndPredicate(const ExprDef *expr,
             *pred_rtrn = XkbSI_Exactly;
         else
         {
-            ERROR("Illegal modifier predicate \"%s\"\n", pred_txt);
+leave:      ERROR("Illegal modifier predicate \"%s\"\n",
+                  (pred_txt ? pred_txt : "(none)"));
             ACTION("Ignored\n");
             return False;
         }
