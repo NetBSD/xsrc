@@ -1,3 +1,94 @@
+commit 312a25c65c8a918fea2cc77abd0db07ec0fc421c
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Nov 24 16:42:01 2025 +0100
+
+    xserver 21.1.21
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2108>
+
+commit 75d6e5d20b2f732db336ca7f8904db05f10aeed9
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 19 16:24:19 2025 +0100
+
+    Revert "glamor: add glvnd_vendor private"
+    
+    This reverts commit a6145198bc1d4f535c3105f8352e420c7c59382f.
+    
+    We no longer need to store the glvnd vendor, so we can also drop that
+    change.
+    
+    See-also: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1848
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2104>
+
+commit 399177dc8cfab3409bf3bbeddbc2affddc2c370e
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 19 16:24:11 2025 +0100
+
+    Revert "glamor: Lift the GLX EGL backend from Xwayland"
+    
+    This reverts commit ed1ec1350269fb91c2c276680d614653a021ee98.
+    This reverts commit 3837159a3f6f3f8915c55e282ea545eed3f1dfdc.
+    
+    We no longer use GLX provider for glamor, so we can remove that code.
+    
+    See-also: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1848
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2104>
+
+commit d9ea493a6020f26ae52b35393fbbbb33e5a1351d
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 19 16:24:02 2025 +0100
+
+    Revert "xorg: initialize glamor provider"
+    
+    This reverts commit 0a1ee643b26fd53074ec90c95a14c12c8f5166b3.
+    
+    This is causing a number of regressions on existing setups:
+    
+     * Reverse PRIME with the NVIDIA proprietary driver, where software
+       rendering is used instead of the NVIDIA GLX library with hardware
+       acceleration
+     * Performance issues with AMDGPU
+     * Rendering with 10-bit output with AMDGPU
+    
+    Revert the change that is causing these regressions in the stable branch.
+    
+    Closes: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1848
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2104>
+
+commit ff37280fd93fc74bada33c7a5683897d47565a75
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 19 16:23:53 2025 +0100
+
+    Revert "glamor_egl: add support of GlxVendorLibrary option"
+    
+    This reverts commit 062d39977094c89ef34168b78b9c9e9fc85483ff.
+    
+    There is an issue with this code in GLAMOR EGL and using this option in
+    the "xorg.conf" would lead to a segmentation fault in the Xserver.
+    
+    Instead of fixing the code for that option in GLAMOR EGL, let's revert
+    the commit in the stable branch, since we are to revert support for
+    glamor GLX, this options will no longer be needed.
+    
+    See-also: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1848
+    See-also: https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2096
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2104>
+
+commit 0b079e12b2cec8025656a75b0422ba2ddc7653d4
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Nov 19 16:23:46 2025 +0100
+
+    Revert "glamor: reject configs using unsupported rgbBits size"
+    
+    This reverts commit b89a563882f234f6949a874770d3ca075d2d2fdc.
+    
+    This is a fix for a code path that we are about to remove with the next
+    few reverts, so start by reverting this change.
+    
+    See-also: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1848
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2104>
+
 commit 065f02d946a798924a1d331769961b940cbf3224
 Author: Olivier Fourdan <ofourdan@redhat.com>
 Date:   Tue Oct 28 17:38:55 2025 +0100
