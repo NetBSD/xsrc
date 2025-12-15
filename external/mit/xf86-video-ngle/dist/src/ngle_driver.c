@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.11 2025/02/20 18:53:48 christos Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.12 2025/12/15 08:50:10 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -36,6 +36,7 @@
 #endif
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
+#include <dev/ic/nglereg.h>
 
 #include <fcntl.h>
 #include <errno.h>

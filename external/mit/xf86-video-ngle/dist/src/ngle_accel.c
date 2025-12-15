@@ -21,11 +21,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ngle_accel.c,v 1.7 2025/03/05 07:22:24 macallan Exp $ */
+/* $NetBSD: ngle_accel.c,v 1.8 2025/12/15 08:50:10 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
-
+#include <dev/ic/nglereg.h>
 
 #include "ngle.h"
 
@@ -124,7 +124,7 @@ NGLEPrepareCopy_HCRX
 	fPtr->offset = srcoff / srcpitch;
 	NGLEWaitMarker(pDstPixmap->drawable.pScreen, 0);
 	NGLEWrite4(fPtr, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
+	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
 	NGLEWrite4(fPtr, NGLE_REG_14,
 	    IBOvals(RopSrc, 0, BitmapExtent32, 0, DataDynamic, MaskOtc, 0, 0));
 	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
@@ -284,7 +284,7 @@ NGLEPrepareAccess_HCRX(PixmapPtr pPixmap, int index)
 
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
 	NGLEWrite4(fPtr, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
+	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
 	NGLEWrite4(fPtr, NGLE_REG_14, 0x83000300);
 	NGLEWrite4(fPtr, NGLE_REG_13, 0xffffffff);
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
