@@ -38,6 +38,7 @@
 #include	<X11/Xos.h>
 #include	<X11/Xfuncproto.h>
 #include	<X11/Xfuncs.h>
+#include	<X11/Xlib.h>
 
 #include <stddef.h>
 
