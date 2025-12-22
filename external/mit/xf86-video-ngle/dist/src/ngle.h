@@ -77,6 +77,7 @@ typedef struct {
 #define NGLEPTR(p) ((NGLEPtr)((p)->driverPrivate))
 
 Bool NGLESetupCursor(ScreenPtr);
+Bool HCRXSetupCursor(ScreenPtr);
 Bool NGLEInitAccel(ScreenPtr);
 Bool SummitSetupCursor(ScreenPtr);
 Bool SummitInitAccel(ScreenPtr);

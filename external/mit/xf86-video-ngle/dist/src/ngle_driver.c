@@ -1,4 +1,4 @@
-/* $NetBSD: ngle_driver.c,v 1.12 2025/12/15 08:50:10 macallan Exp $ */
+/* $NetBSD: ngle_driver.c,v 1.13 2025/12/22 13:07:11 macallan Exp $ */
 /*
  * Copyright (c) 2024 Michael Lorenz
  * All rights reserved.
@@ -604,6 +604,8 @@ NGLEScreenInit(SCREEN_INIT_ARGS_DECL)
 	/* check for hardware cursor support */
 	if (fPtr->gid == STI_DD_SUMMIT) {
 		SummitSetupCursor(pScreen);
+	} else if (fPtr->gid == STI_DD_HCRX) {
+		HCRXSetupCursor(pScreen);
 	} else
 		NGLESetupCursor(pScreen);
 	
