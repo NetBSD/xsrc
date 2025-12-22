@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ngle_accel.c,v 1.8 2025/12/15 08:50:10 macallan Exp $ */
+/* $NetBSD: ngle_accel.c,v 1.9 2025/12/22 13:05:45 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
@@ -50,9 +50,9 @@ NGLEWaitMarker(ScreenPtr pScreen, int Marker)
 
 	ENTER;
 	do {
-		stat = NGLERead1(fPtr, NGLE_REG_15b0);
+		stat = NGLERead1(fPtr, NGLE_BUSY);
 		if (stat == 0)
-			stat = NGLERead1(fPtr, NGLE_REG_15b0);
+			stat = NGLERead1(fPtr, NGLE_BUSY);
 	} while (stat != 0);
 	LEAVE;
 }
@@ -64,7 +64,7 @@ NGLEWaitFifo(NGLEPtr fPtr, int slots)
 
 	ENTER;
 	do {
-		reg = NGLERead4(fPtr, NGLE_REG_34);
+		reg = NGLERead4(fPtr, NGLE_FIFO);
 	} while (reg < slots);
 	LEAVE;
 }
@@ -90,11 +90,11 @@ NGLEPrepareCopy_EG
 	DBGMSG(X_ERROR, "%s %d %d\n", __func__, srcoff, srcpitch);
 	fPtr->offset = srcoff >> 11;
 	NGLEWaitMarker(pDstPixmap->drawable.pScreen, 0);
-	NGLEWrite4(fPtr, NGLE_REG_10,
+	NGLEWrite4(fPtr, NGLE_BAboth,
 	    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
-	NGLEWrite4(fPtr, NGLE_REG_14,
+	NGLEWrite4(fPtr, NGLE_IBO,
 	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
-	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, planemask);
 
 	fPtr->hwmode = HW_BLIT;
 
@@ -123,11 +123,11 @@ NGLEPrepareCopy_HCRX
 	DBGMSG(X_ERROR, "%s %d %d\n", __func__, srcoff, srcpitch);
 	fPtr->offset = srcoff / srcpitch;
 	NGLEWaitMarker(pDstPixmap->drawable.pScreen, 0);
-	NGLEWrite4(fPtr, NGLE_REG_10,
+	NGLEWrite4(fPtr, NGLE_BAboth,
 	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
-	NGLEWrite4(fPtr, NGLE_REG_14,
+	NGLEWrite4(fPtr, NGLE_IBO,
 	    IBOvals(RopSrc, 0, BitmapExtent32, 0, DataDynamic, MaskOtc, 0, 0));
-	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, planemask);
 
 	fPtr->hwmode = HW_BLIT;
 
@@ -154,9 +154,9 @@ NGLECopy
 
 	ENTER;
 	NGLEWaitFifo(fPtr, 3);
-	NGLEWrite4(fPtr, NGLE_REG_24, (xs << 16) | (ys + fPtr->offset));
-	NGLEWrite4(fPtr, NGLE_REG_7, (wi << 16) | he);
-	NGLEWrite4(fPtr, NGLE_REG_25, (xd << 16) | (yd + (dstoff / dstpitch)));
+	NGLEWrite4(fPtr, NGLE_SRC_XY, (xs << 16) | (ys + fPtr->offset));
+	NGLEWrite4(fPtr, NGLE_SIZE, (wi << 16) | he);
+	NGLEWrite4(fPtr, NGLE_BLT_DST_START, (xd << 16) | (yd + (dstoff / dstpitch)));
 
 	exaMarkSync(pDstPixmap->drawable.pScreen);
 	LEAVE;
@@ -182,14 +182,14 @@ NGLEPrepareSolid_EG(
 	ENTER;
 	NGLEWaitFifo(fPtr, 4);
 	/* plane mask */
-	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, planemask);
 	/* bitmap op */
-	NGLEWrite4(fPtr, NGLE_REG_14, 
+	NGLEWrite4(fPtr, NGLE_IBO, 
 	    IBOvals(alu, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 1, 0));
 	/* dst bitmap access */
-	NGLEWrite4(fPtr, NGLE_REG_11,
+	NGLEWrite4(fPtr, NGLE_DBA,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
-    	NGLEWrite4(fPtr, NGLE_REG_35, fg);
+    	NGLEWrite4(fPtr, NGLE_FG, fg);
 	fPtr->hwmode = HW_FILL;
 
 	LEAVE;
@@ -209,14 +209,14 @@ NGLEPrepareSolid_HCRX(
 	ENTER;
 	NGLEWaitFifo(fPtr, 4);
 	/* plane mask */
-	NGLEWrite4(fPtr, NGLE_REG_13, planemask);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, planemask);
 	/* bitmap op */
-	NGLEWrite4(fPtr, NGLE_REG_14, 
+	NGLEWrite4(fPtr, NGLE_IBO, 
 	    IBOvals(alu, 0, BitmapExtent32, 1, DataDynamic, MaskOtc, 1, 0));
 	/* dst bitmap access */
-	NGLEWrite4(fPtr, NGLE_REG_11,
+	NGLEWrite4(fPtr, NGLE_DBA,
 	    BA(FractDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0F8, 0));
-    	NGLEWrite4(fPtr, NGLE_REG_35, fg);
+    	NGLEWrite4(fPtr, NGLE_FG, fg);
 	fPtr->hwmode = HW_FILL;
 
 	LEAVE;
@@ -245,11 +245,11 @@ NGLESolid(
 
 	NGLEWaitFifo(fPtr, 3);
 	/* transfer data */
-	NGLEWrite4(fPtr, NGLE_REG_8, 0xffffffff);
+	NGLEWrite4(fPtr, NGLE_TRANSFER_DATA, 0xffffffff);
 	/* dst XY */
-	NGLEWrite4(fPtr, NGLE_REG_6, (x1 << 16) | y1);
+	NGLEWrite4(fPtr, NGLE_DST_XY, (x1 << 16) | y1);
 	/* len XY start */
-	NGLEWrite4(fPtr, NGLE_REG_9, (w << 16) | h);
+	NGLEWrite4(fPtr, NGLE_RECT_SIZE_START, (w << 16) | h);
 
 	exaMarkSync(pPixmap->drawable.pScreen);
 	LEAVE;
@@ -264,12 +264,12 @@ NGLEPrepareAccess_EG(PixmapPtr pPixmap, int index)
 	if (fPtr->hwmode == HW_FB) return TRUE;
 
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
-	NGLEWrite4(fPtr, NGLE_REG_10,
+	NGLEWrite4(fPtr, NGLE_BAboth,
 	    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
-	NGLEWrite4(fPtr, NGLE_REG_14, 0x83000300);
-	NGLEWrite4(fPtr, NGLE_REG_13, 0xff);
+	NGLEWrite4(fPtr, NGLE_IBO, 0x83000300);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, 0xff);
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
-	NGLEWrite1(fPtr, NGLE_REG_16b1, 1);
+	NGLEWrite1(fPtr, NGLE_CONTROL_FB, 1);
 	fPtr->hwmode = HW_FB;
 	return TRUE;
 }
@@ -283,12 +283,12 @@ NGLEPrepareAccess_HCRX(PixmapPtr pPixmap, int index)
 	if (fPtr->hwmode == HW_FB) return TRUE;
 
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
-	NGLEWrite4(fPtr, NGLE_REG_10,
+	NGLEWrite4(fPtr, NGLE_BAboth,
 	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
-	NGLEWrite4(fPtr, NGLE_REG_14, 0x83000300);
-	NGLEWrite4(fPtr, NGLE_REG_13, 0xffffffff);
+	NGLEWrite4(fPtr, NGLE_IBO, 0x83000300);
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, 0xffffffff);
 	NGLEWaitMarker(pPixmap->drawable.pScreen, 0);
-	NGLEWrite1(fPtr, NGLE_REG_16b1, 1);
+	NGLEWrite1(fPtr, NGLE_CONTROL_FB, 1);
 	fPtr->hwmode = HW_FB;
 	return TRUE;
 }
