@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ngle_accel.c,v 1.9 2025/12/22 13:05:45 macallan Exp $ */
+/* $NetBSD: ngle_accel.c,v 1.10 2025/12/29 07:38:28 macallan Exp $ */
 
 #include <sys/types.h>
 #include <dev/ic/stireg.h>
@@ -292,6 +292,50 @@ NGLEPrepareAccess_HCRX(PixmapPtr pPixmap, int index)
 	fPtr->hwmode = HW_FB;
 	return TRUE;
 }
+
+static Bool
+NGLEUploadToScreen24(PixmapPtr pDst, int x, int y, int w, int h,
+    char *src, int src_pitch)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+	NGLEPtr fPtr = NGLEPTR(pScrn);
+	int	ofs =  exaGetPixmapOffset(pDst);
+	int i;
+	uint32_t *line, dst;
+
+	ENTER;
+	NGLEWaitMarker(pDst->drawable.pScreen, 0);
+	NGLEWrite4(fPtr, NGLE_DBA,
+	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
+	NGLEWrite4(fPtr, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent32, 0, DataDynamic, MaskOtc, 0, 0));
+	NGLEWrite4(fPtr, NGLE_PLANEMASK, 0xffffffff);
+
+	dst = (x << 2) + (y << 13);
+
+	
+	while (h--) {
+		/*
+		 * it *should* be impossible to overrun the FIFO using BINC
+		 * writes, but overruns are annoying if they do happen so be
+		 * overly cautious and make sure there is at least some room
+		 */
+		NGLEWaitFifo(fPtr, 15);
+		NGLEWrite4(fPtr, NGLE_BINC_DST, dst);
+		line = (uint32_t *)src;
+
+		for (i = 0; i < w; i++)
+			NGLEWrite4(fPtr, NGLE_BINC_DATA_R, line[i]);
+		src += src_pitch;
+		dst += 8192;
+		y++;
+	}
+
+	LEAVE;
+
+	return TRUE;
+}
+
 Bool
 NGLEInitAccel(ScreenPtr pScreen)
 {
@@ -339,6 +383,7 @@ NGLEInitAccel(ScreenPtr pScreen)
 			pExa->PrepareCopy = NGLEPrepareCopy_HCRX;
 			pExa->PrepareSolid = NGLEPrepareSolid_HCRX;
 			pExa->PrepareAccess = NGLEPrepareAccess_HCRX;
+			pExa->UploadToScreen = NGLEUploadToScreen24;
 			break;
 		default:
 			xf86Msg(X_ERROR,
