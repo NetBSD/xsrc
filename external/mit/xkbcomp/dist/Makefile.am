@@ -1,6 +1,6 @@
-# 
+#
 #  Copyright 2005  Red Hat, Inc.
-# 
+#
 #  Permission to use, copy, modify, distribute, and sell this software and its
 #  documentation for any purpose is hereby granted without fee, provided that
 #  the above copyright notice appear in all copies and that both that
@@ -10,7 +10,7 @@
 #  specific, written prior permission.  Red Hat makes no
 #  representations about the suitability of this software for any purpose.  It
 #  is provided "as is" without express or implied warranty.
-# 
+#
 #  RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 #  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
 #  EVENT SHALL RED HAT BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -26,7 +26,9 @@ AM_CPPFLAGS = -DDFLT_XKB_CONFIG_ROOT='"$(XKBCONFIGROOT)"'
 AM_CFLAGS = $(XKBCOMP_CFLAGS) $(CWARNFLAGS)
 xkbcomp_LDADD = $(XKBCOMP_LIBS)
 
+# NOTE: xkbparse.y is put first in order to follow meson’s order
 xkbcomp_SOURCES = \
+        xkbparse.y \
         action.c \
         action.h \
         alias.c \
@@ -55,7 +57,6 @@ xkbcomp_SOURCES = \
         vmod.h \
         xkbcomp.c \
         xkbcomp.h \
-        xkbparse.y \
         xkbpath.c \
         xkbpath.h \
         xkbscan.c
@@ -74,3 +75,5 @@ ChangeLog:
 	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog INSTALL
+
+EXTRA_DIST = README meson.build meson.options

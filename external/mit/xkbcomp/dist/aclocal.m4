@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.15.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.18.1 -*- Autoconf -*-
 
-# Copyright (C) 1996-2017 Free Software Foundation, Inc.
+# Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -14,14 +14,14 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.69],,
-[m4_warning([this file was generated for autoconf 2.69.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.72],,
+[m4_warning([this file was generated for autoconf 2.72.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
 
-# pkg.m4 - Macros to locate and utilise pkg-config.   -*- Autoconf -*-
-# serial 11 (pkg-config-0.29.1)
+# pkg.m4 - Macros to locate and use pkg-config.   -*- Autoconf -*-
+# serial 12 (pkg-config-0.29.2)
 
 dnl Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
 dnl Copyright © 2012-2015 Dan Nicholson <dbn.lists@gmail.com>
@@ -63,13 +63,13 @@ dnl
 dnl See the "Since" comment for each macro you use to see what version
 dnl of the macros you require.
 m4_defun([PKG_PREREQ],
-[m4_define([PKG_MACROS_VERSION], [0.29.1])
+[m4_define([PKG_MACROS_VERSION], [0.29.2])
 m4_if(m4_version_compare(PKG_MACROS_VERSION, [$1]), -1,
     [m4_fatal([pkg.m4 version $1 or higher is required but ]PKG_MACROS_VERSION[ found])])
 ])dnl PKG_PREREQ
 
-dnl PKG_PROG_PKG_CONFIG([MIN-VERSION])
-dnl ----------------------------------
+dnl PKG_PROG_PKG_CONFIG([MIN-VERSION], [ACTION-IF-NOT-FOUND])
+dnl ---------------------------------------------------------
 dnl Since: 0.16
 dnl
 dnl Search for the pkg-config tool and set the PKG_CONFIG variable to
@@ -77,6 +77,12 @@ dnl first found in the path. Checks that the version of pkg-config found
 dnl is at least MIN-VERSION. If MIN-VERSION is not specified, 0.9.0 is
 dnl used since that's the first version where most current features of
 dnl pkg-config existed.
+dnl
+dnl If pkg-config is not found or older than specified, it will result
+dnl in an empty PKG_CONFIG variable. To avoid widespread issues with
+dnl scripts not checking it, ACTION-IF-NOT-FOUND defaults to aborting.
+dnl You can specify [PKG_CONFIG=false] as an action instead, which would
+dnl result in pkg-config tests failing, but no bogus error messages.
 AC_DEFUN([PKG_PROG_PKG_CONFIG],
 [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
 m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
@@ -97,6 +103,9 @@ if test -n "$PKG_CONFIG"; then
 		AC_MSG_RESULT([no])
 		PKG_CONFIG=""
 	fi
+fi
+if test -z "$PKG_CONFIG"; then
+	m4_default([$2], [AC_MSG_ERROR([pkg-config not found])])
 fi[]dnl
 ])dnl PKG_PROG_PKG_CONFIG
 
@@ -108,7 +117,7 @@ dnl Check to see whether a particular set of modules exists. Similar to
 dnl PKG_CHECK_MODULES(), but does not set variables or print errors.
 dnl
 dnl Please remember that m4 expands AC_REQUIRE([PKG_PROG_PKG_CONFIG])
-dnl only at the first occurence in configure.ac, so if the first place
+dnl only at the first occurrence in configure.ac, so if the first place
 dnl it's called might be skipped (such as if it is within an "if", you
 dnl have to call PKG_CHECK_EXISTS manually
 AC_DEFUN([PKG_CHECK_EXISTS],
@@ -164,7 +173,7 @@ AC_ARG_VAR([$1][_CFLAGS], [C compiler flags for $1, overriding pkg-config])dnl
 AC_ARG_VAR([$1][_LIBS], [linker flags for $1, overriding pkg-config])dnl
 
 pkg_failed=no
-AC_MSG_CHECKING([for $1])
+AC_MSG_CHECKING([for $2])
 
 _PKG_CONFIG([$1][_CFLAGS], [cflags], [$2])
 _PKG_CONFIG([$1][_LIBS], [libs], [$2])
@@ -174,17 +183,17 @@ and $1[]_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.])
 
 if test $pkg_failed = yes; then
-   	AC_MSG_RESULT([no])
+        AC_MSG_RESULT([no])
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
-        else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
+        else
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
         fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
+        # Put the nasty error message in config.log where it belongs
+        echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
 
-	m4_default([$4], [AC_MSG_ERROR(
+        m4_default([$4], [AC_MSG_ERROR(
 [Package requirements ($2) were not met:
 
 $$1_PKG_ERRORS
@@ -195,8 +204,8 @@ installed software in a non-standard prefix.
 _PKG_TEXT])[]dnl
         ])
 elif test $pkg_failed = untried; then
-     	AC_MSG_RESULT([no])
-	m4_default([$4], [AC_MSG_FAILURE(
+        AC_MSG_RESULT([no])
+        m4_default([$4], [AC_MSG_FAILURE(
 [The pkg-config script could not be found or is too old.  Make sure it
 is in your PATH or set the PKG_CONFIG environment variable to the full
 path to pkg-config.
@@ -206,10 +215,10 @@ _PKG_TEXT
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
         ])
 else
-	$1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
-	$1[]_LIBS=$pkg_cv_[]$1[]_LIBS
+        $1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
+        $1[]_LIBS=$pkg_cv_[]$1[]_LIBS
         AC_MSG_RESULT([yes])
-	$3
+        $3
 fi[]dnl
 ])dnl PKG_CHECK_MODULES
 
@@ -366,7 +375,7 @@ AS_IF([test "$AS_TR_SH([with_]m4_tolower([$1]))" = "yes"],
 
 dnl xorg-macros.m4.  Generated from xorg-macros.m4.in xorgversion.m4 by configure.
 dnl
-dnl Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, 2023, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -403,7 +412,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.19.0])
+m4_define([vers_have], [1.20.2])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -423,7 +432,7 @@ m4_undefine([maj_needed])
 # such as man pages and config files
 AC_DEFUN([XORG_PROG_RAWCPP],[
 AC_REQUIRE([AC_PROG_CPP])
-AC_PATH_PROGS(RAWCPP, [cpp], [${CPP}],
+AC_PATH_TOOL(RAWCPP, [cpp], [${CPP}],
    [$PATH:/bin:/usr/bin:/usr/lib:/usr/libexec:/usr/ccs/lib:/usr/ccs/lbin:/lib])
 
 # Check for flag to avoid builtin definitions - assumes unix is predefined,
@@ -449,10 +458,10 @@ rm -f conftest.$ac_ext
 
 AC_MSG_CHECKING([if $RAWCPP requires -traditional])
 AC_LANG_CONFTEST([AC_LANG_SOURCE([[Does cpp preserve   "whitespace"?]])])
-if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
-	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   "'` -eq 1 ; then
 		TRADITIONALCPPFLAGS="-traditional"
 		RAWCPPFLAGS="${RAWCPPFLAGS} -traditional"
 		AC_MSG_RESULT([yes])
@@ -480,6 +489,17 @@ AC_DEFUN([XORG_MANPAGE_SECTIONS],[
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_SED])
 
+case $host_os in
+    solaris*)
+        # Solaris 2.0 - 11.3 use SysV man page section numbers, so we
+        # check for a man page file found in later versions that use
+        # traditional section numbers instead
+        AC_CHECK_FILE([/usr/share/man/man7/attributes.7],
+                [SYSV_MAN_SECTIONS=false], [SYSV_MAN_SECTIONS=true])
+        ;;
+    *) SYSV_MAN_SECTIONS=false ;;
+esac
+
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
 fi
@@ -495,9 +515,9 @@ if test x$LIB_MAN_DIR = x    ; then
 fi
 
 if test x$FILE_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	FILE_MAN_SUFFIX=4  ;;
-	*)		FILE_MAN_SUFFIX=5  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				FILE_MAN_SUFFIX=4  ;;
+	*)				FILE_MAN_SUFFIX=5  ;;
     esac
 fi
 if test x$FILE_MAN_DIR = x    ; then
@@ -505,9 +525,9 @@ if test x$FILE_MAN_DIR = x    ; then
 fi
 
 if test x$MISC_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	MISC_MAN_SUFFIX=5  ;;
-	*)		MISC_MAN_SUFFIX=7  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				MISC_MAN_SUFFIX=5  ;;
+	*)				MISC_MAN_SUFFIX=7  ;;
     esac
 fi
 if test x$MISC_MAN_DIR = x    ; then
@@ -515,9 +535,9 @@ if test x$MISC_MAN_DIR = x    ; then
 fi
 
 if test x$DRIVER_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	DRIVER_MAN_SUFFIX=7  ;;
-	*)		DRIVER_MAN_SUFFIX=4  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				DRIVER_MAN_SUFFIX=7  ;;
+	*)				DRIVER_MAN_SUFFIX=4  ;;
     esac
 fi
 if test x$DRIVER_MAN_DIR = x    ; then
@@ -525,9 +545,9 @@ if test x$DRIVER_MAN_DIR = x    ; then
 fi
 
 if test x$ADMIN_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	ADMIN_MAN_SUFFIX=1m ;;
-	*)		ADMIN_MAN_SUFFIX=8  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				ADMIN_MAN_SUFFIX=1m ;;
+	*)				ADMIN_MAN_SUFFIX=8  ;;
     esac
 fi
 if test x$ADMIN_MAN_DIR = x    ; then
@@ -722,7 +742,7 @@ AC_SUBST(MAKE_HTML)
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-xmlto option, it allows maximum flexibilty in making decisions
+# the --with-xmlto option, it allows maximum flexibility in making decisions
 # as whether or not to use the xmlto package. When DEFAULT is not specified,
 # --with-xmlto assumes 'auto'.
 #
@@ -788,13 +808,24 @@ m4_ifval([$1],
 fi])
 
 # Test for the ability of xmlto to generate a text target
+#
+# NOTE: xmlto 0.0.27 or higher return a non-zero return code in the
+# following test for empty XML docbook files.
+# For compatibility reasons use the following empty XML docbook file and if
+# it fails try it again with a non-empty XML file.
 have_xmlto_text=no
 cat > conftest.xml << "EOF"
 EOF
 AS_IF([test "$have_xmlto" = yes],
       [AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
              [have_xmlto_text=yes],
-             [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])
+             [# Try it again with a non-empty XML file.
+              cat > conftest.xml << "EOF"
+<x></x>
+EOF
+              AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
+                    [have_xmlto_text=yes],
+                    [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])])
 rm -f conftest.xml
 AM_CONDITIONAL([HAVE_XMLTO_TEXT], [test $have_xmlto_text = yes])
 AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
@@ -925,7 +956,7 @@ AM_CONDITIONAL([HAVE_PERL], [test "$have_perl" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-asciidoc option, it allows maximum flexibilty in making decisions
+# the --with-asciidoc option, it allows maximum flexibility in making decisions
 # as whether or not to use the asciidoc package. When DEFAULT is not specified,
 # --with-asciidoc assumes 'auto'.
 #
@@ -995,7 +1026,7 @@ AM_CONDITIONAL([HAVE_ASCIIDOC], [test "$have_asciidoc" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-doxygen option, it allows maximum flexibilty in making decisions
+# the --with-doxygen option, it allows maximum flexibility in making decisions
 # as whether or not to use the doxygen package. When DEFAULT is not specified,
 # --with-doxygen assumes 'auto'.
 #
@@ -1079,7 +1110,7 @@ AM_CONDITIONAL([HAVE_DOXYGEN], [test "$have_doxygen" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-groff option, it allows maximum flexibilty in making decisions
+# the --with-groff option, it allows maximum flexibility in making decisions
 # as whether or not to use the groff package. When DEFAULT is not specified,
 # --with-groff assumes 'auto'.
 #
@@ -1187,7 +1218,7 @@ AM_CONDITIONAL([HAVE_GROFF_HTML], [test "$have_groff_html" = yes])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-fop option, it allows maximum flexibilty in making decisions
+# the --with-fop option, it allows maximum flexibility in making decisions
 # as whether or not to use the fop package. When DEFAULT is not specified,
 # --with-fop assumes 'auto'.
 #
@@ -1281,7 +1312,7 @@ AC_SUBST([M4], [$ac_cv_path_M4])
 # Documentation tools are not always available on all platforms and sometimes
 # not at the appropriate level. This macro enables a module to test for the
 # presence of the tool and obtain it's path in separate variables. Coupled with
-# the --with-ps2pdf option, it allows maximum flexibilty in making decisions
+# the --with-ps2pdf option, it allows maximum flexibility in making decisions
 # as whether or not to use the ps2pdf package. When DEFAULT is not specified,
 # --with-ps2pdf assumes 'auto'.
 #
@@ -1336,7 +1367,7 @@ AM_CONDITIONAL([HAVE_PS2PDF], [test "$have_ps2pdf" = yes])
 # not at the appropriate level. This macro enables a builder to skip all
 # documentation targets except traditional man pages.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -1369,7 +1400,7 @@ AC_MSG_RESULT([$build_docs])
 #
 # This macro enables a builder to skip all developer documentation.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -1402,7 +1433,7 @@ AC_MSG_RESULT([$build_devel_docs])
 #
 # This macro enables a builder to skip all functional specification targets.
 # Combined with the specific tool checking macros XORG_WITH_*, it provides
-# maximum flexibilty in controlling documentation building.
+# maximum flexibility in controlling documentation building.
 # Refer to:
 # XORG_WITH_XMLTO         --with-xmlto
 # XORG_WITH_ASCIIDOC      --with-asciidoc
@@ -1718,30 +1749,20 @@ AC_SUBST([XORG_MALLOC_DEBUG_ENV],[$malloc_debug_env])
 # Defines {MALLOC,XMALLOC,XTMALLOC}_ZERO_CFLAGS appropriately if
 # malloc(0) returns NULL.  Packages should add one of these cflags to
 # their AM_CFLAGS (or other appropriate *_CFLAGS) to use them.
+#
+# No longer actually tests since there is no guarantee applications will
+# run with the same malloc implementation we tested against, and the cost
+# of always ensuring the size passed to malloc is non-zero is minimal now.
+# Still allows builders to override when they have complete control over
+# which malloc implementation will be used.
 AC_DEFUN([XORG_CHECK_MALLOC_ZERO],[
 AC_ARG_ENABLE(malloc0returnsnull,
 	AS_HELP_STRING([--enable-malloc0returnsnull],
-		       [malloc(0) returns NULL (default: auto)]),
+		       [assume malloc(0) can return NULL (default: yes)]),
 	[MALLOC_ZERO_RETURNS_NULL=$enableval],
-	[MALLOC_ZERO_RETURNS_NULL=auto])
+	[MALLOC_ZERO_RETURNS_NULL=yes])
 
-AC_MSG_CHECKING([whether malloc(0) returns NULL])
-if test "x$MALLOC_ZERO_RETURNS_NULL" = xauto; then
-AC_CACHE_VAL([xorg_cv_malloc0_returns_null],
-	[AC_RUN_IFELSE([AC_LANG_PROGRAM([
-#include <stdlib.h>
-],[
-    char *m0, *r0, *c0, *p;
-    m0 = malloc(0);
-    p = malloc(10);
-    r0 = realloc(p,0);
-    c0 = calloc(0,10);
-    exit((m0 == 0 || r0 == 0 || c0 == 0) ? 0 : 1);
-])],
-		[xorg_cv_malloc0_returns_null=yes],
-		[xorg_cv_malloc0_returns_null=no])])
-MALLOC_ZERO_RETURNS_NULL=$xorg_cv_malloc0_returns_null
-fi
+AC_MSG_CHECKING([whether to act as if malloc(0) can return NULL])
 AC_MSG_RESULT([$MALLOC_ZERO_RETURNS_NULL])
 
 if test "x$MALLOC_ZERO_RETURNS_NULL" = xyes; then
@@ -1877,7 +1898,11 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 AC_DEFUN([XORG_COMPILER_BRAND], [
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 	],
 	[C++], [
 		AC_REQUIRE([AC_PROG_CXX])
@@ -1893,7 +1918,7 @@ AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 # Minimum version: 1.16.0
 #
 # Test if the compiler works when passed the given flag as a command line argument.
-# If it succeeds, the flag is appeneded to the given variable.  If not, it tries the
+# If it succeeds, the flag is appended to the given variable.  If not, it tries the
 # next flag in the list until there are no more options.
 #
 # Note that this does not guarantee that the compiler supports the flag as some
@@ -1909,7 +1934,11 @@ AC_LANG_COMPILER_REQUIRE
 
 AC_LANG_CASE(
 	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
+		dnl autoconf-2.70 folded AC_PROG_CC_C99 into AC_PROG_CC
+		dnl and complains that AC_PROG_CC_C99 is obsolete
+		m4_version_prereq([2.70],
+			[AC_REQUIRE([AC_PROG_CC])],
+			[AC_REQUIRE([AC_PROG_CC_C99])])
 		define([PREFIX], [C])
 		define([CACHE_PREFIX], [cc])
 		define([COMPILER], [$CC])
@@ -2030,7 +2059,6 @@ AC_LANG_CASE(
 		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wnested-externs])
 		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wbad-function-cast])
 		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wold-style-definition], [-fd])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wdeclaration-after-statement])
 	]
 )
 
@@ -2050,7 +2078,7 @@ XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wlogical-op])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-align])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-qual])
 
-# Turn some warnings into errors, so we don't accidently get successful builds
+# Turn some warnings into errors, so we don't accidentally get successful builds
 # when there are problems that should be fixed.
 
 if test "x$SELECTIVE_WERROR" = "xyes" ; then
@@ -2159,23 +2187,35 @@ AC_SUBST([BASE_]PREFIX[FLAGS])
 AC_LANG_CASE([C], AC_SUBST([CWARNFLAGS]))
 ]) # XORG_STRICT_OPTION
 
-# XORG_DEFAULT_OPTIONS
-# --------------------
-# Minimum version: 1.3.0
+# XORG_DEFAULT_NOCODE_OPTIONS
+# ---------------------------
+# Minimum version: 1.20.0
 #
-# Defines default options for X.Org modules.
+# Defines default options for X.Org modules which don't compile code,
+# such as fonts, bitmaps, cursors, and docs.
 #
-AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_DEFUN([XORG_DEFAULT_NOCODE_OPTIONS], [
 AC_REQUIRE([AC_PROG_INSTALL])
-XORG_COMPILER_FLAGS
-XORG_CWARNFLAGS
-XORG_STRICT_OPTION
 XORG_RELEASE_VERSION
 XORG_CHANGELOG
 XORG_INSTALL
 XORG_MANPAGE_SECTIONS
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
     [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+]) # XORG_DEFAULT_NOCODE_OPTIONS
+
+# XORG_DEFAULT_OPTIONS
+# --------------------
+# Minimum version: 1.3.0
+#
+# Defines default options for X.Org modules which compile code.
+#
+AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_REQUIRE([AC_PROG_INSTALL])
+XORG_COMPILER_FLAGS
+XORG_CWARNFLAGS
+XORG_STRICT_OPTION
+XORG_DEFAULT_NOCODE_OPTIONS
 ]) # XORG_DEFAULT_OPTIONS
 
 # XORG_INSTALL()
@@ -2190,8 +2230,9 @@ AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 macros_datadir=`$PKG_CONFIG --print-errors --variable=pkgdatadir xorg-macros`
 INSTALL_CMD="(cp -f "$macros_datadir/INSTALL" \$(top_srcdir)/.INSTALL.tmp && \
 mv \$(top_srcdir)/.INSTALL.tmp \$(top_srcdir)/INSTALL) \
-|| (rm -f \$(top_srcdir)/.INSTALL.tmp; touch \$(top_srcdir)/INSTALL; \
-echo 'util-macros \"pkgdatadir\" from xorg-macros.pc not found: installing possibly empty INSTALL.' >&2)"
+|| (rm -f \$(top_srcdir)/.INSTALL.tmp; test -e \$(top_srcdir)/INSTALL || ( \
+touch \$(top_srcdir)/INSTALL; \
+echo 'failed to copy INSTALL from util-macros: installing empty INSTALL.' >&2))"
 AC_SUBST([INSTALL_CMD])
 ]) # XORG_INSTALL
 dnl Copyright 2005 Red Hat, Inc
@@ -2252,14 +2293,15 @@ AC_DEFUN([XORG_RELEASE_VERSION],[
 #
 #
 AC_DEFUN([XORG_CHANGELOG], [
-CHANGELOG_CMD="(GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp && \
+CHANGELOG_CMD="((GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp) 2>/dev/null && \
 mv \$(top_srcdir)/.changelog.tmp \$(top_srcdir)/ChangeLog) \
-|| (rm -f \$(top_srcdir)/.changelog.tmp; touch \$(top_srcdir)/ChangeLog; \
-echo 'git directory not found: installing possibly empty changelog.' >&2)"
+|| (rm -f \$(top_srcdir)/.changelog.tmp; test -e \$(top_srcdir)/ChangeLog || ( \
+touch \$(top_srcdir)/ChangeLog; \
+echo 'git failed to create ChangeLog: installing empty ChangeLog.' >&2))"
 AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
-# Copyright (C) 2002-2017 Free Software Foundation, Inc.
+# Copyright (C) 2002-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2271,10 +2313,10 @@ AC_SUBST([CHANGELOG_CMD])
 # generated from the m4 files accompanying Automake X.Y.
 # (This private macro should not be called outside this file.)
 AC_DEFUN([AM_AUTOMAKE_VERSION],
-[am__api_version='1.15'
+[am__api_version='1.18'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.15.1], [],
+m4_if([$1], [1.18.1], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -2290,14 +2332,14 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.15.1])dnl
+[AM_AUTOMAKE_VERSION([1.18.1])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2349,7 +2391,7 @@ am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
-# Copyright (C) 1997-2017 Free Software Foundation, Inc.
+# Copyright (C) 1997-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2380,7 +2422,7 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.]])
 fi])])
 
-# Copyright (C) 1999-2017 Free Software Foundation, Inc.
+# Copyright (C) 1999-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2512,7 +2554,7 @@ AC_CACHE_CHECK([dependency style of $depcc],
       # icc doesn't choke on unknown options, it will just issue warnings
       # or remarks (even with -Werror).  So we grep stderr for any message
       # that says an option was ignored or not supported.
-      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      # When given -MP, icc 7.0 and 7.1 complain thus:
       #   icc: Command line warning: ignoring option '-M'; no argument required
       # The diagnosis changed in icc 8.0:
       #   icc: Command line remark: option '-MP' not supported
@@ -2571,12 +2613,11 @@ _AM_SUBST_NOTMAKE([am__nodep])dnl
 
 # Generate code to set up dependency tracking.              -*- Autoconf -*-
 
-# Copyright (C) 1999-2017 Free Software Foundation, Inc.
+# Copyright (C) 1999-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
-
 
 # _AM_OUTPUT_DEPENDENCY_COMMANDS
 # ------------------------------
@@ -2585,49 +2626,43 @@ AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
   # Older Autoconf quotes --file arguments for eval, but not when files
   # are listed without --file.  Let's play safe and only enable the eval
   # if we detect the quoting.
-  case $CONFIG_FILES in
-  *\'*) eval set x "$CONFIG_FILES" ;;
-  *)   set x $CONFIG_FILES ;;
-  esac
+  # TODO: see whether this extra hack can be removed once we start
+  # requiring Autoconf 2.70 or later.
+  AS_CASE([$CONFIG_FILES],
+          [*\'*], [eval set x "$CONFIG_FILES"],
+          [*], [set x $CONFIG_FILES])
   shift
-  for mf
+  # Used to flag and report bootstrapping failures.
+  am_rc=0
+  for am_mf
   do
     # Strip MF so we end up with the name of the file.
-    mf=`echo "$mf" | sed -e 's/:.*$//'`
-    # Check whether this is an Automake generated Makefile or not.
-    # We used to match only the files named 'Makefile.in', but
-    # some people rename them; so instead we look at the file content.
-    # Grep'ing the first line is not enough: some people post-process
-    # each Makefile.in and add a new line on top of each file to say so.
-    # Grep'ing the whole file is not good either: AIX grep has a line
+    am_mf=`AS_ECHO(["$am_mf"]) | sed -e 's/:.*$//'`
+    # Check whether this is an Automake generated Makefile which includes
+    # dependency-tracking related rules and includes.
+    # Grep'ing the whole file directly is not great: AIX grep has a line
     # limit of 2048, but all sed's we know have understand at least 4000.
-    if sed -n 's,^#.*generated by automake.*,X,p' "$mf" | grep X >/dev/null 2>&1; then
-      dirpart=`AS_DIRNAME("$mf")`
-    else
-      continue
-    fi
-    # Extract the definition of DEPDIR, am__include, and am__quote
-    # from the Makefile without running 'make'.
-    DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
-    test -z "$DEPDIR" && continue
-    am__include=`sed -n 's/^am__include = //p' < "$mf"`
-    test -z "$am__include" && continue
-    am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
-    # Find all dependency output files, they are included files with
-    # $(DEPDIR) in their names.  We invoke sed twice because it is the
-    # simplest approach to changing $(DEPDIR) to its actual value in the
-    # expansion.
-    for file in `sed -n "
-      s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
-      # Make sure the directory exists.
-      test -f "$dirpart/$file" && continue
-      fdir=`AS_DIRNAME(["$file"])`
-      AS_MKDIR_P([$dirpart/$fdir])
-      # echo "creating $dirpart/$file"
-      echo '# dummy' > "$dirpart/$file"
-    done
+    sed -n 's,^am--depfiles:.*,X,p' "$am_mf" | grep X >/dev/null 2>&1 \
+      || continue
+    am_dirpart=`AS_DIRNAME(["$am_mf"])`
+    am_filepart=`AS_BASENAME(["$am_mf"])`
+    AM_RUN_LOG([cd "$am_dirpart" \
+      && sed -e '/# am--include-marker/d' "$am_filepart" \
+        | $MAKE -f - am--depfiles]) || am_rc=$?
   done
+  if test $am_rc -ne 0; then
+    AC_MSG_FAILURE([Something went wrong bootstrapping makefile fragments
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE="gmake" (or whatever is
+    necessary).  You can also try re-running configure with the
+    '--disable-dependency-tracking' option to at least be able to build
+    the package (albeit without support for automatic dependency tracking).])
+  fi
+  AS_UNSET([am_dirpart])
+  AS_UNSET([am_filepart])
+  AS_UNSET([am_mf])
+  AS_UNSET([am_rc])
+  rm -f conftest-deps.mk
 }
 ])# _AM_OUTPUT_DEPENDENCY_COMMANDS
 
@@ -2636,18 +2671,17 @@ AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
 # -----------------------------
 # This macro should only be invoked once -- use via AC_REQUIRE.
 #
-# This code is only required when automatic dependency tracking
-# is enabled.  FIXME.  This creates each '.P' file that we will
-# need in order to bootstrap the dependency handling code.
+# This code is only required when automatic dependency tracking is enabled.
+# This creates each '.Po' and '.Plo' makefile fragment that we'll need in
+# order to bootstrap the dependency handling code.
 AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
 [AC_CONFIG_COMMANDS([depfiles],
      [test x"$AMDEP_TRUE" != x"" || _AM_OUTPUT_DEPENDENCY_COMMANDS],
-     [AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"])
-])
+     [AMDEP_TRUE="$AMDEP_TRUE" MAKE="${MAKE-make}"])])
 
 # Do all the work for Automake.                             -*- Autoconf -*-
 
-# Copyright (C) 1996-2017 Free Software Foundation, Inc.
+# Copyright (C) 1996-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2675,6 +2709,10 @@ m4_defn([AC_PROG_CC])
 # release and drop the old call support.
 AC_DEFUN([AM_INIT_AUTOMAKE],
 [AC_PREREQ([2.65])dnl
+m4_ifdef([_$0_ALREADY_INIT],
+  [m4_fatal([$0 expanded multiple times
+]m4_defn([_$0_ALREADY_INIT]))],
+  [m4_define([_$0_ALREADY_INIT], m4_expansion_stack)])dnl
 dnl Autoconf wants to disallow AM_ names.  We explicitly allow
 dnl the ones we care about.
 m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
@@ -2711,7 +2749,7 @@ m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
 [_AM_SET_OPTIONS([$1])dnl
 dnl Diagnose old-style AC_INIT with new-style AM_AUTOMAKE_INIT.
 m4_if(
-  m4_ifdef([AC_PACKAGE_NAME], [ok]):m4_ifdef([AC_PACKAGE_VERSION], [ok]),
+  m4_ifset([AC_PACKAGE_NAME], [ok]):m4_ifset([AC_PACKAGE_VERSION], [ok]),
   [ok:ok],,
   [m4_fatal([AC_INIT should be called with package and version arguments])])dnl
  AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
@@ -2734,8 +2772,8 @@ AC_REQUIRE([AM_PROG_INSTALL_STRIP])dnl
 AC_REQUIRE([AC_PROG_MKDIR_P])dnl
 # For better backward compatibility.  To be removed once Automake 1.9.x
 # dies out for good.  For more background, see:
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
 AC_SUBST([mkdir_p], ['$(MKDIR_P)'])
 # We need awk for the "check" target (and possibly the TAP driver).  The
 # system "awk" is bad on some platforms.
@@ -2743,8 +2781,9 @@ AC_REQUIRE([AC_PROG_AWK])dnl
 AC_REQUIRE([AC_PROG_MAKE_SET])dnl
 AC_REQUIRE([AM_SET_LEADING_DOT])dnl
 _AM_IF_OPTION([tar-ustar], [_AM_PROG_TAR([ustar])],
-	      [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
-			     [_AM_PROG_TAR([v7])])])
+  [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
+    [_AM_IF_OPTION([tar-v7], [_AM_PROG_TAR([v7])],
+      [_AM_PROG_TAR([ustar])])])])
 _AM_IF_OPTION([no-dependencies],,
 [AC_PROVIDE_IFELSE([AC_PROG_CC],
 		  [_AM_DEPENDENCIES([CC])],
@@ -2763,7 +2802,21 @@ AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
 		  [m4_define([AC_PROG_OBJCXX],
 			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
 ])
-AC_REQUIRE([AM_SILENT_RULES])dnl
+# Variables for tags utilities; see am/tags.am
+if test -z "$CTAGS"; then
+  CTAGS=ctags
+fi
+AC_SUBST([CTAGS])
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
+if test -z "$CSCOPE"; then
+  CSCOPE=cscope
+fi
+AC_SUBST([CSCOPE])
+
+AC_REQUIRE([_AM_SILENT_RULES])dnl
 dnl The testsuite driver may need to know about EXEEXT, so add the
 dnl 'am__EXEEXT' conditional if _AM_COMPILER_EXEEXT was seen.  This
 dnl macro is hooked onto _AC_COMPILER_EXEEXT early, see below.
@@ -2771,47 +2824,9 @@ AC_CONFIG_COMMANDS_PRE(dnl
 [m4_provide_if([_AM_COMPILER_EXEEXT],
   [AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])])])dnl
 
-# POSIX will say in a future version that running "rm -f" with no argument
-# is OK; and we want to be able to make that assumption in our Makefile
-# recipes.  So use an aggressive probe to check that the usage we want is
-# actually supported "in the wild" to an acceptable degree.
-# See automake bug#10828.
-# To make any issue more visible, cause the running configure to be aborted
-# by default if the 'rm' program in use doesn't match our expectations; the
-# user can still override this though.
-if rm -f && rm -fr && rm -rf; then : OK; else
-  cat >&2 <<'END'
-Oops!
+AC_REQUIRE([_AM_PROG_RM_F])
+AC_REQUIRE([_AM_PROG_XARGS_N])
 
-Your 'rm' program seems unable to run without file operands specified
-on the command line, even when the '-f' option is present.  This is contrary
-to the behaviour of most rm programs out there, and not conforming with
-the upcoming POSIX standard: <http://austingroupbugs.net/view.php?id=542>
-
-Please tell bug-automake@gnu.org about your system, including the value
-of your $PATH and any error possibly output before this message.  This
-can help us improve future automake versions.
-
-END
-  if test x"$ACCEPT_INFERIOR_RM_PROGRAM" = x"yes"; then
-    echo 'Configuration will proceed anyway, since you have set the' >&2
-    echo 'ACCEPT_INFERIOR_RM_PROGRAM variable to "yes"' >&2
-    echo >&2
-  else
-    cat >&2 <<'END'
-Aborting the configuration process, to ensure you take notice of the issue.
-
-You can download and install GNU coreutils to get an 'rm' implementation
-that behaves properly: <http://www.gnu.org/software/coreutils/>.
-
-If you want to complete the configuration process using your problematic
-'rm' anyway, export the environment variable ACCEPT_INFERIOR_RM_PROGRAM
-to "yes", and re-run configure.
-
-END
-    AC_MSG_ERROR([Your 'rm' program is bad, sorry.])
-  fi
-fi
 dnl The trailing newline in this macro's definition is deliberate, for
 dnl backward compatibility and to allow trailing 'dnl'-style comments
 dnl after the AM_INIT_AUTOMAKE invocation. See automake bug#16841.
@@ -2844,7 +2859,7 @@ for _am_header in $config_headers :; do
 done
 echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_count])
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2865,7 +2880,7 @@ if test x"${install_sh+set}" != xset; then
 fi
 AC_SUBST([install_sh])])
 
-# Copyright (C) 2003-2017 Free Software Foundation, Inc.
+# Copyright (C) 2003-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2886,7 +2901,7 @@ AC_SUBST([am__leading_dot])])
 
 # Check to see how 'make' treats includes.	            -*- Autoconf -*-
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2894,49 +2909,42 @@ AC_SUBST([am__leading_dot])])
 
 # AM_MAKE_INCLUDE()
 # -----------------
-# Check to see how make treats includes.
+# Check whether make has an 'include' directive that can support all
+# the idioms we need for our automatic dependency tracking code.
 AC_DEFUN([AM_MAKE_INCLUDE],
-[am_make=${MAKE-make}
-cat > confinc << 'END'
+[AC_MSG_CHECKING([whether ${MAKE-make} supports the include directive])
+cat > confinc.mk << 'END'
 am__doit:
-	@echo this is the am__doit target
+	@echo this is the am__doit target >confinc.out
 .PHONY: am__doit
 END
-# If we don't find an include directive, just comment out the code.
-AC_MSG_CHECKING([for style of include used by $am_make])
 am__include="#"
 am__quote=
-_am_result=none
-# First try GNU make style include.
-echo "include confinc" > confmf
-# Ignore all kinds of additional output from 'make'.
-case `$am_make -s -f confmf 2> /dev/null` in #(
-*the\ am__doit\ target*)
-  am__include=include
-  am__quote=
-  _am_result=GNU
-  ;;
-esac
-# Now try BSD make style include.
-if test "$am__include" = "#"; then
-   echo '.include "confinc"' > confmf
-   case `$am_make -s -f confmf 2> /dev/null` in #(
-   *the\ am__doit\ target*)
-     am__include=.include
-     am__quote="\""
-     _am_result=BSD
-     ;;
-   esac
-fi
-AC_SUBST([am__include])
-AC_SUBST([am__quote])
-AC_MSG_RESULT([$_am_result])
-rm -f confinc confmf
-])
+# BSD make does it like this.
+echo '.include "confinc.mk" # ignored' > confmf.BSD
+# Other make implementations (GNU, Solaris 10, AIX) do it like this.
+echo 'include confinc.mk # ignored' > confmf.GNU
+_am_result=no
+for s in GNU BSD; do
+  AM_RUN_LOG([${MAKE-make} -f confmf.$s && cat confinc.out])
+  AS_CASE([$?:`cat confinc.out 2>/dev/null`],
+      ['0:this is the am__doit target'],
+      [AS_CASE([$s],
+          [BSD], [am__include='.include' am__quote='"'],
+          [am__include='include' am__quote=''])])
+  if test "$am__include" != "#"; then
+    _am_result="yes ($s style)"
+    break
+  fi
+done
+rm -f confinc.* confmf.*
+AC_MSG_RESULT([${_am_result}])
+AC_SUBST([am__include])])
+AC_SUBST([am__quote])])
 
 # Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
 
-# Copyright (C) 1997-2017 Free Software Foundation, Inc.
+# Copyright (C) 1997-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -2957,12 +2965,7 @@ AC_DEFUN([AM_MISSING_HAS_RUN],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([missing])dnl
 if test x"${MISSING+set}" != xset; then
-  case $am_aux_dir in
-  *\ * | *\	*)
-    MISSING="\${SHELL} \"$am_aux_dir/missing\"" ;;
-  *)
-    MISSING="\${SHELL} $am_aux_dir/missing" ;;
-  esac
+  MISSING="\${SHELL} '$am_aux_dir/missing'"
 fi
 # Use eval to expand $SHELL
 if eval "$MISSING --is-lightweight"; then
@@ -2975,7 +2978,7 @@ fi
 
 # Helper functions for option handling.                     -*- Autoconf -*-
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3004,7 +3007,7 @@ AC_DEFUN([_AM_SET_OPTIONS],
 AC_DEFUN([_AM_IF_OPTION],
 [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
 
-# Copyright (C) 1999-2017 Free Software Foundation, Inc.
+# Copyright (C) 1999-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3036,7 +3039,10 @@ AC_CACHE_CHECK(
       break
     fi
   done
-  rm -f core conftest*
+  # aligned with autoconf, so not including core; see bug#72225.
+  rm -f -r a.out a.exe b.out conftest.$ac_ext conftest.$ac_objext \
+    conftest.dSYM conftest1.$ac_ext conftest1.$ac_objext conftest1.dSYM \
+    conftest2.$ac_ext conftest2.$ac_objext conftest2.dSYM
   unset am_i])
 if test "$am_cv_prog_cc_c_o" != yes; then
    # Losing compiler, so override with the script.
@@ -3051,7 +3057,23 @@ AC_LANG_POP([C])])
 # For backward compatibility.
 AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# Copyright (C) 2022-2025 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# _AM_PROG_RM_F
+# ---------------
+# Check whether 'rm -f' without any arguments works.
+# https://bugs.gnu.org/10828
+AC_DEFUN([_AM_PROG_RM_F],
+[am__rm_f_notfound=
+AS_IF([(rm -f && rm -fr && rm -rf) 2>/dev/null], [], [am__rm_f_notfound='""'])
+AC_SUBST(am__rm_f_notfound)
+])
+
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3070,26 +3092,181 @@ AC_DEFUN([AM_RUN_LOG],
 
 # Check to make sure that the build environment is sane.    -*- Autoconf -*-
 
-# Copyright (C) 1996-2017 Free Software Foundation, Inc.
+# Copyright (C) 1996-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
+# _AM_SLEEP_FRACTIONAL_SECONDS
+# ----------------------------
+AC_DEFUN([_AM_SLEEP_FRACTIONAL_SECONDS], [dnl
+AC_CACHE_CHECK([whether sleep supports fractional seconds],
+               am_cv_sleep_fractional_seconds, [dnl
+AS_IF([sleep 0.001 2>/dev/null], [am_cv_sleep_fractional_seconds=yes],
+                                 [am_cv_sleep_fractional_seconds=no])
+])])
+
+# _AM_FILESYSTEM_TIMESTAMP_RESOLUTION
+# -----------------------------------
+# Determine the filesystem's resolution for file modification
+# timestamps.  The coarsest we know of is FAT, with a resolution
+# of only two seconds, even with the most recent "exFAT" extensions.
+# The finest (e.g. ext4 with large inodes, XFS, ZFS) is one
+# nanosecond, matching clock_gettime.  However, it is probably not
+# possible to delay execution of a shell script for less than one
+# millisecond, due to process creation overhead and scheduling
+# granularity, so we don't check for anything finer than that. (See below.)
+AC_DEFUN([_AM_FILESYSTEM_TIMESTAMP_RESOLUTION], [dnl
+AC_REQUIRE([_AM_SLEEP_FRACTIONAL_SECONDS])
+AC_CACHE_CHECK([filesystem timestamp resolution],
+               am_cv_filesystem_timestamp_resolution, [dnl
+# Default to the worst case.
+am_cv_filesystem_timestamp_resolution=2
+
+# Only try to go finer than 1 sec if sleep can do it.
+# Don't try 1 sec, because if 0.01 sec and 0.1 sec don't work,
+# - 1 sec is not much of a win compared to 2 sec, and
+# - it takes 2 seconds to perform the test whether 1 sec works.
+# 
+# Instead, just use the default 2s on platforms that have 1s resolution,
+# accept the extra 1s delay when using $sleep in the Automake tests, in
+# exchange for not incurring the 2s delay for running the test for all
+# packages.
+#
+am_try_resolutions=
+if test "$am_cv_sleep_fractional_seconds" = yes; then
+  # Even a millisecond often causes a bunch of false positives,
+  # so just try a hundredth of a second. The time saved between .001 and
+  # .01 is not terribly consequential.
+  am_try_resolutions="0.01 0.1 $am_try_resolutions"
+fi
+
+# In order to catch current-generation FAT out, we must *modify* files
+# that already exist; the *creation* timestamp is finer.  Use names
+# that make ls -t sort them differently when they have equal
+# timestamps than when they have distinct timestamps, keeping
+# in mind that ls -t prints the *newest* file first.
+rm -f conftest.ts?
+: > conftest.ts1
+: > conftest.ts2
+: > conftest.ts3
+
+# Make sure ls -t actually works.  Do 'set' in a subshell so we don't
+# clobber the current shell's arguments. (Outer-level square brackets
+# are removed by m4; they're present so that m4 does not expand
+# <dollar><star>; be careful, easy to get confused.)
+if (
+     set X `[ls -t conftest.ts[12]]` &&
+     {
+       test "$[]*" != "X conftest.ts1 conftest.ts2" ||
+       test "$[]*" != "X conftest.ts2 conftest.ts1";
+     }
+); then :; else
+  # If neither matched, then we have a broken ls.  This can happen
+  # if, for instance, CONFIG_SHELL is bash and it inherits a
+  # broken ls alias from the environment.  This has actually
+  # happened.  Such a system could not be considered "sane".
+  _AS_ECHO_UNQUOTED(
+    ["Bad output from ls -t: \"`[ls -t conftest.ts[12]]`\""],
+    [AS_MESSAGE_LOG_FD])
+  AC_MSG_FAILURE([ls -t produces unexpected output.
+Make sure there is not a broken ls alias in your environment.])
+fi
+
+for am_try_res in $am_try_resolutions; do
+  # Any one fine-grained sleep might happen to cross the boundary
+  # between two values of a coarser actual resolution, but if we do
+  # two fine-grained sleeps in a row, at least one of them will fall
+  # entirely within a coarse interval.
+  echo alpha > conftest.ts1
+  sleep $am_try_res
+  echo beta > conftest.ts2
+  sleep $am_try_res
+  echo gamma > conftest.ts3
+
+  # We assume that 'ls -t' will make use of high-resolution
+  # timestamps if the operating system supports them at all.
+  if (set X `ls -t conftest.ts?` &&
+      test "$[]2" = conftest.ts3 &&
+      test "$[]3" = conftest.ts2 &&
+      test "$[]4" = conftest.ts1); then
+    #
+    # Ok, ls -t worked. If we're at a resolution of 1 second, we're done,
+    # because we don't need to test make.
+    make_ok=true
+    if test $am_try_res != 1; then
+      # But if we've succeeded so far with a subsecond resolution, we
+      # have one more thing to check: make. It can happen that
+      # everything else supports the subsecond mtimes, but make doesn't;
+      # notably on macOS, which ships make 3.81 from 2006 (the last one
+      # released under GPLv2). https://bugs.gnu.org/68808
+      # 
+      # We test $MAKE if it is defined in the environment, else "make".
+      # It might get overridden later, but our hope is that in practice
+      # it does not matter: it is the system "make" which is (by far)
+      # the most likely to be broken, whereas if the user overrides it,
+      # probably they did so with a better, or at least not worse, make.
+      # https://lists.gnu.org/archive/html/automake/2024-06/msg00051.html
+      #
+      # Create a Makefile (real tab character here):
+      rm -f conftest.mk
+      echo 'conftest.ts1: conftest.ts2' >conftest.mk
+      echo '	touch conftest.ts2' >>conftest.mk
+      #
+      # Now, running
+      #   touch conftest.ts1; touch conftest.ts2; make
+      # should touch ts1 because ts2 is newer. This could happen by luck,
+      # but most often, it will fail if make's support is insufficient. So
+      # test for several consecutive successes.
+      #
+      # (We reuse conftest.ts[12] because we still want to modify existing
+      # files, not create new ones, per above.)
+      n=0
+      make=${MAKE-make}
+      until test $n -eq 3; do
+        echo one > conftest.ts1
+        sleep $am_try_res
+        echo two > conftest.ts2 # ts2 should now be newer than ts1
+        if $make -f conftest.mk | grep 'up to date' >/dev/null; then
+          make_ok=false
+          break # out of $n loop
+        fi
+        n=`expr $n + 1`
+      done
+    fi
+    #
+    if $make_ok; then
+      # Everything we know to check worked out, so call this resolution good.
+      am_cv_filesystem_timestamp_resolution=$am_try_res
+      break # out of $am_try_res loop
+    fi
+    # Otherwise, we'll go on to check the next resolution.
+  fi
+done
+rm -f conftest.ts?
+# (end _am_filesystem_timestamp_resolution)
+])])
+
 # AM_SANITY_CHECK
 # ---------------
 AC_DEFUN([AM_SANITY_CHECK],
-[AC_MSG_CHECKING([whether build environment is sane])
+[AC_REQUIRE([_AM_FILESYSTEM_TIMESTAMP_RESOLUTION])
+# This check should not be cached, as it may vary across builds of
+# different projects.
+AC_MSG_CHECKING([whether build environment is sane])
 # Reject unsafe characters in $srcdir or the absolute working directory
 # name.  Accept space and tab only in the latter.
 am_lf='
 '
 case `pwd` in
   *[[\\\"\#\$\&\'\`$am_lf]]*)
+    AC_MSG_RESULT([no])
     AC_MSG_ERROR([unsafe absolute working directory name]);;
 esac
 case $srcdir in
   *[[\\\"\#\$\&\'\`$am_lf\ \	]]*)
+    AC_MSG_RESULT([no])
     AC_MSG_ERROR([unsafe srcdir value: '$srcdir']);;
 esac
 
@@ -3098,49 +3275,40 @@ esac
 # symlink; some systems play weird games with the mod time of symlinks
 # (eg FreeBSD returns the mod time of the symlink's containing
 # directory).
-if (
-   am_has_slept=no
-   for am_try in 1 2; do
-     echo "timestamp, slept: $am_has_slept" > conftest.file
-     set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
-     if test "$[*]" = "X"; then
-	# -L didn't work.
-	set X `ls -t "$srcdir/configure" conftest.file`
-     fi
-     if test "$[*]" != "X $srcdir/configure conftest.file" \
-	&& test "$[*]" != "X conftest.file $srcdir/configure"; then
+am_build_env_is_sane=no
+am_has_slept=no
+rm -f conftest.file
+for am_try in 1 2; do
+  echo "timestamp, slept: $am_has_slept" > conftest.file
+  if (
+    set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
+    if test "$[]*" = "X"; then
+      # -L didn't work.
+      set X `ls -t "$srcdir/configure" conftest.file`
+    fi
+    test "$[]2" = conftest.file
+  ); then
+    am_build_env_is_sane=yes
+    break
+  fi
+  # Just in case.
+  sleep "$am_cv_filesystem_timestamp_resolution"
+  am_has_slept=yes
+done
 
-	# If neither matched, then we have a broken ls.  This can happen
-	# if, for instance, CONFIG_SHELL is bash and it inherits a
-	# broken ls alias from the environment.  This has actually
-	# happened.  Such a system could not be considered "sane".
-	AC_MSG_ERROR([ls -t appears to fail.  Make sure there is not a broken
-  alias in your environment])
-     fi
-     if test "$[2]" = conftest.file || test $am_try -eq 2; then
-       break
-     fi
-     # Just in case.
-     sleep 1
-     am_has_slept=yes
-   done
-   test "$[2]" = conftest.file
-   )
-then
-   # Ok.
-   :
-else
-   AC_MSG_ERROR([newly created file is older than distributed files!
+AC_MSG_RESULT([$am_build_env_is_sane])
+if test "$am_build_env_is_sane" = no; then
+  AC_MSG_ERROR([newly created file is older than distributed files!
 Check your system clock])
 fi
-AC_MSG_RESULT([yes])
+
 # If we didn't sleep, we still need to ensure time stamps of config.status and
 # generated files are strictly newer.
 am_sleep_pid=
-if grep 'slept: no' conftest.file >/dev/null 2>&1; then
-  ( sleep 1 ) &
+AS_IF([test -e conftest.file || grep 'slept: no' conftest.file >/dev/null 2>&1],, [dnl
+  ( sleep "$am_cv_filesystem_timestamp_resolution" ) &
   am_sleep_pid=$!
-fi
+])
 AC_CONFIG_COMMANDS_PRE(
   [AC_MSG_CHECKING([that generated files are newer than configure])
    if test -n "$am_sleep_pid"; then
@@ -3151,18 +3319,18 @@ AC_CONFIG_COMMANDS_PRE(
 rm -f conftest.file
 ])
 
-# Copyright (C) 2009-2017 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# AM_SILENT_RULES([DEFAULT])
-# --------------------------
-# Enable less verbose build rules; with the default set to DEFAULT
-# ("yes" being less verbose, "no" or empty being verbose).
-AC_DEFUN([AM_SILENT_RULES],
-[AC_ARG_ENABLE([silent-rules], [dnl
+# _AM_SILENT_RULES
+# ----------------
+# Enable less verbose build rules support.
+AC_DEFUN([_AM_SILENT_RULES],
+[AM_DEFAULT_VERBOSITY=1
+AC_ARG_ENABLE([silent-rules], [dnl
 AS_HELP_STRING(
   [--enable-silent-rules],
   [less verbose build output (undo: "make V=1")])
@@ -3170,11 +3338,6 @@ AS_HELP_STRING(
   [--disable-silent-rules],
   [verbose build output (undo: "make V=0")])dnl
 ])
-case $enable_silent_rules in @%:@ (((
-  yes) AM_DEFAULT_VERBOSITY=0;;
-   no) AM_DEFAULT_VERBOSITY=1;;
-    *) AM_DEFAULT_VERBOSITY=m4_if([$1], [yes], [0], [1]);;
-esac
 dnl
 dnl A few 'make' implementations (e.g., NonStop OS and NextStep)
 dnl do not support nested variable expansions.
@@ -3193,14 +3356,6 @@ am__doit:
 else
   am_cv_make_support_nested_variables=no
 fi])
-if test $am_cv_make_support_nested_variables = yes; then
-  dnl Using '$V' instead of '$(V)' breaks IRIX make.
-  AM_V='$(V)'
-  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
-else
-  AM_V=$AM_DEFAULT_VERBOSITY
-  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
-fi
 AC_SUBST([AM_V])dnl
 AM_SUBST_NOTMAKE([AM_V])dnl
 AC_SUBST([AM_DEFAULT_V])dnl
@@ -3209,9 +3364,37 @@ AC_SUBST([AM_DEFAULT_VERBOSITY])dnl
 AM_BACKSLASH='\'
 AC_SUBST([AM_BACKSLASH])dnl
 _AM_SUBST_NOTMAKE([AM_BACKSLASH])dnl
+dnl Delay evaluation of AM_DEFAULT_VERBOSITY to the end to allow multiple calls
+dnl to AM_SILENT_RULES to change the default value.
+AC_CONFIG_COMMANDS_PRE([dnl
+case $enable_silent_rules in @%:@ (((
+  yes) AM_DEFAULT_VERBOSITY=0;;
+   no) AM_DEFAULT_VERBOSITY=1;;
+esac
+if test $am_cv_make_support_nested_variables = yes; then
+  dnl Using '$V' instead of '$(V)' breaks IRIX make.
+  AM_V='$(V)'
+  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
+else
+  AM_V=$AM_DEFAULT_VERBOSITY
+  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
+fi
+])dnl
 ])
 
-# Copyright (C) 2001-2017 Free Software Foundation, Inc.
+# AM_SILENT_RULES([DEFAULT])
+# --------------------------
+# Set the default verbosity level to DEFAULT ("yes" being less verbose, "no" or
+# empty being verbose).
+AC_DEFUN([AM_SILENT_RULES],
+[AC_REQUIRE([_AM_SILENT_RULES])
+AM_DEFAULT_VERBOSITY=m4_if([$1], [yes], [0], [1])m4_newline
+dnl We intentionally force a newline after the assignment, since a) nothing
+dnl good can come of more text following, and b) that was the behavior
+dnl before 1.17. See https://bugs.gnu.org/72267.
+])
+
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3239,7 +3422,7 @@ fi
 INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
 
-# Copyright (C) 2006-2017 Free Software Foundation, Inc.
+# Copyright (C) 2006-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3258,7 +3441,7 @@ AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
 
 # Check how to create a tarball.                            -*- Autoconf -*-
 
-# Copyright (C) 2004-2017 Free Software Foundation, Inc.
+# Copyright (C) 2004-2025 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -3304,15 +3487,19 @@ m4_if([$1], [v7],
       am_uid=`id -u || echo unknown`
       am_gid=`id -g || echo unknown`
       AC_MSG_CHECKING([whether UID '$am_uid' is supported by ustar format])
-      if test $am_uid -le $am_max_uid; then
-         AC_MSG_RESULT([yes])
+      if test x$am_uid = xunknown; then
+        AC_MSG_WARN([ancient id detected; assuming current UID is ok, but dist-ustar might not work])
+      elif test $am_uid -le $am_max_uid; then
+        AC_MSG_RESULT([yes])
       else
-         AC_MSG_RESULT([no])
-         _am_tools=none
+        AC_MSG_RESULT([no])
+        _am_tools=none
       fi
       AC_MSG_CHECKING([whether GID '$am_gid' is supported by ustar format])
-      if test $am_gid -le $am_max_gid; then
-         AC_MSG_RESULT([yes])
+      if test x$gm_gid = xunknown; then
+        AC_MSG_WARN([ancient id detected; assuming current GID is ok, but dist-ustar might not work])
+      elif test $am_gid -le $am_max_gid; then
+        AC_MSG_RESULT([yes])
       else
         AC_MSG_RESULT([no])
         _am_tools=none
@@ -3388,4 +3575,24 @@ m4_if([$1], [v7],
 AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
+
+# Copyright (C) 2022-2025 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# _AM_PROG_XARGS_N
+# ----------------
+# Check whether 'xargs -n' works.  It should work everywhere, so the fallback
+# is not optimized at all as we never expect to use it.
+AC_DEFUN([_AM_PROG_XARGS_N],
+[AC_CACHE_CHECK([xargs -n works], am_cv_xargs_n_works, [dnl
+AS_IF([test "`echo 1 2 3 | xargs -n2 echo`" = "1 2
+3"], [am_cv_xargs_n_works=yes], [am_cv_xargs_n_works=no])])
+AS_IF([test "$am_cv_xargs_n_works" = yes], [am__xargs_n='xargs -n'], [dnl
+  am__xargs_n='am__xargs_n () { shift; sed "s/ /\\n/g" | while read am__xargs_n_arg; do "$@" "$am__xargs_n_arg"; done; }'
+])dnl
+AC_SUBST(am__xargs_n)
+])
 
