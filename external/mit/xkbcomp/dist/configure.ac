@@ -21,14 +21,19 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
-AC_PREREQ([2.60])
-AC_INIT([xkbcomp], [1.4.5],
-        [https://gitlab.freedesktop.org/xorg/app/xkbcomp/issues], [xkbcomp])
+AC_PREREQ([2.70])
+AC_INIT([xkbcomp], [1.5.0],
+        [https://gitlab.freedesktop.org/xorg/app/xkbcomp/-/issues], [xkbcomp])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
+# Set common system defines for POSIX extensions, such as _GNU_SOURCE
+# Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
+# to avoid autoconf errors.
+AC_USE_SYSTEM_EXTENSIONS
+
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-xz])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -45,10 +50,15 @@ if test ! -f "$srcdir/xkbparse.c"; then
    fi
 fi
 
-AC_CHECK_FUNCS([strdup strcasecmp])
+AC_CHECK_FUNCS([asprintf reallocarray recallocarray])
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XKBCOMP, [x11 xkbfile xproto >= 7.0.17])
+XKBCOMP_EXTRA_DEPS='x11 xkbfile'
+AC_SUBST(XKBCOMP_EXTRA_DEPS)
+PKG_CHECK_MODULES(XKBCOMP, [$XKBCOMP_EXTRA_DEPS xproto >= 7.0.17])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_SYS_LARGEFILE
 
 AC_ARG_WITH([xkb_config_root],
     [AS_HELP_STRING([--with-xkb-config-root=<paths>],
