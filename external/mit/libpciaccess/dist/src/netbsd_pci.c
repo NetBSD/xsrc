@@ -21,6 +21,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
