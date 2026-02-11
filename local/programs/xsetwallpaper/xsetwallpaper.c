@@ -1,4 +1,4 @@
-/* $NetBSD: xsetwallpaper.c,v 1.4 2022/02/11 14:43:27 wiz Exp $ */
+/* $NetBSD: xsetwallpaper.c,v 1.5 2026/02/11 00:09:12 uwe Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsetwallpaper.c,v 1.4 2022/02/11 14:43:27 wiz Exp $");
+__RCSID("$NetBSD: xsetwallpaper.c,v 1.5 2026/02/11 00:09:12 uwe Exp $");
 
 #include <sys/endian.h>
 
@@ -95,22 +95,6 @@ main(int argc, char *argv[])
 	data = stbi_load(argv[0], &imagew, &imageh, &imagebpp, 4);
 	if (data == NULL)
 		errx(EXIT_FAILURE, "failed to load %s", argv[0]);
-
-	/* swap red and blue */
-	for (i = 0; i < imagew * imageh * 4; i += 4) {
-		uint8_t p;
-		p = data[i + 0];
-		data[i + 0] = data[i + 2];
-		data[i + 2] = p;
-	}
-
-#if _BYTE_ORDER == _BIG_ENDIAN
-	for (i = 0; i < imagew * imageh * 4; i += 4) {
-		uint32_t *p = (uint32_t *)&data[i];
-		*p = bswap32(*p);
-	}
-#endif
-
 #ifdef DEBUG
 	printf("%s: %dx%d %dbpp\n", argv[0], imagew, imageh, imagebpp * 8);
 #endif
@@ -125,6 +109,30 @@ main(int argc, char *argv[])
 	default_depth = DefaultDepth(display, screen);
 	colormap = DefaultColormap(display, 0);
 	byte_order = ImageByteOrder(display);
+
+	/*
+	 * stbi loads 4-component image as red, green, blue, alpha -
+	 * i.e. little-endian ABGR.  We need to provide it to the
+	 * server in ARGB in ImageByteOrder(3).
+	 */
+	enum { R, G, B, A };
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+#	define host_byte_order MSBFirst
+#else
+#	define host_byte_order LSBFirst
+#endif
+	uint32_t *data32 = (uint32_t *)data;
+	for (i = 0; i < imagew * imageh; ++i) {
+		uint32_t pixel =
+			  data[i*4 + A] << 24
+			| data[i*4 + R] << 16
+			| data[i*4 + G] <<  8
+			| data[i*4 + B];
+		if (byte_order != host_byte_order)
+			pixel = bswap32(pixel);
+		data32[i] = pixel;
+	}
 
 	/* get root window geometry */
 	if (!XGetGeometry(display, XDefaultRootWindow(display), &window,
