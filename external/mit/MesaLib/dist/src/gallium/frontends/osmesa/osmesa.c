@@ -134,7 +134,11 @@ osmesa_st_get_param(struct st_manager *smapi, enum st_manager_param param)
 static struct st_manager *stmgr = NULL;
 static struct st_api *stapi = NULL;
 
+#if defined(HAVE_NOATEXIT)
+static void __attribute__((__destructor__))
+#else
 static void
+#endif
 destroy_st_manager(void)
 {
    if (stmgr) {
@@ -151,8 +155,10 @@ destroy_st_manager(void)
 static void
 create_st_manager(void)
 {
+#if !defined(HAVE_NOATEXIT)
    if (atexit(destroy_st_manager) != 0)
       return;
+#endif
 
    stmgr = CALLOC_STRUCT(st_manager);
    if (stmgr) {

@@ -172,7 +172,11 @@ drm_shim_override_file(const char *contents, const char *path_format, ...)
    override->contents = strdup(contents);
 }
 
+#if defined(HAVE_NOATEXIT)
+static void __attribute__((__destructor__))
+#else
 static void
+#endif
 destroy_shim(void)
 {
    _mesa_set_destroy(opendir_set, NULL);
@@ -245,7 +249,9 @@ init_shim(void)
 
    drm_shim_device_init();
 
+#if !defined(HAVE_NOATEXIT)
    atexit(destroy_shim);
+#endif
 }
 
 /* Override libdrm's reading of various sysfs files for device enumeration. */

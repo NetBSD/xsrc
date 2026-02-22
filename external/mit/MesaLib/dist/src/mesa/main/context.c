@@ -256,7 +256,11 @@ _mesa_initialize_visual( struct gl_config *vis,
  * Calls all the various one-time-fini functions in Mesa
  */
 
+#if defined(HAVE_NOATEXIT)
+static void __attribute__((__destructor__))
+#else
 static void
+#endif
 one_time_fini(void)
 {
    glsl_type_singleton_decref();
@@ -289,7 +293,9 @@ one_time_init(void)
       _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
    }
 
+#if !defined(HAVE_NOATEXIT)
    atexit(one_time_fini);
+#endif
 
 #if defined(DEBUG)
    if (MESA_VERBOSE != 0) {
