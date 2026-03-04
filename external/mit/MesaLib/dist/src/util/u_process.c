@@ -53,9 +53,15 @@
 
 static char *path = NULL;
 
-static void __freeProgramPath()
+#if defined(HAVE_NOATEXIT)
+static void __attribute__((__destructor__))
+#else
+static void
+#endif
+__freeProgramPath()
 {
-   free(path);
+   if (path)
+     free(path);
    path = NULL;
 }
 
@@ -73,7 +79,9 @@ __getProgramName()
        */
       if (!path) {
          path = realpath("/proc/self/exe", NULL);
+#if !defined(HAVE_NOATEXIT)
          atexit(__freeProgramPath);
+#endif
       }
 
       if (path && strncmp(path, program_invocation_name, strlen(path)) == 0) {

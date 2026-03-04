@@ -213,7 +213,11 @@ set_extension(struct gl_extensions *ext, int i, GLboolean state)
  * This string is allocated early during the first context creation by
  * _mesa_one_time_init_extension_overrides.
  */
+#if defined(HAVE_NOATEXIT)
 static void __attribute__((__destructor__))
+#else
+static void
+#endif
 free_unknown_extensions_strings(void)
 {
    free(unrecognized_extensions.env);
@@ -304,6 +308,9 @@ _mesa_one_time_init_extension_overrides(void)
       free(env);
    } else {
       unrecognized_extensions.env = env;
+#if !defined(HAVE_NOATEXIT)
+      atexit(free_unknown_extensions_strings);
+#endif
    }
 }
 

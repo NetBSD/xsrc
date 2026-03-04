@@ -104,15 +104,21 @@ struct _egl_global _eglGlobal =
    .debugTypesEnabled = _EGL_DEBUG_BIT_CRITICAL | _EGL_DEBUG_BIT_ERROR,
 };
 
+#if defined(HAVE_NOATEXIT)
 static EGLBoolean registered = EGL_FALSE;
 
 static void __attribute__((__destructor__))
+#else
+static void
+#endif
 _eglAtExit(void)
 {
    EGLint i;
 
+#if defined(HAVE_NOATEXIT)
    if (!registered)
       return;
+#endif
 
    for (i = _eglGlobal.NumAtExitCalls - 1; i >= 0; i--)
       _eglGlobal.AtExitCalls[i]();
@@ -123,11 +129,20 @@ void
 _eglAddAtExitCall(void (*func)(void))
 {
    if (func) {
+#if !defined(HAVE_NOATEXIT)
       static EGLBoolean registered = EGL_FALSE;
+#endif
 
       mtx_lock(_eglGlobal.Mutex);
 
+#if defined(HAVE_NOATEXIT)
       registered = EGL_TRUE;
+#else
+      if (!registered) {
+         atexit(_eglAtExit);
+         registered = EGL_TRUE;
+      }
+#endif
 
       assert(_eglGlobal.NumAtExitCalls < ARRAY_SIZE(_eglGlobal.AtExitCalls));
       _eglGlobal.AtExitCalls[_eglGlobal.NumAtExitCalls++] = func;

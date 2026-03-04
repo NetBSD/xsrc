@@ -58,7 +58,6 @@ static once_flag atexit_once_flag = ONCE_FLAG_INIT;
 static struct list_head queue_list;
 static mtx_t exit_mutex = _MTX_INITIALIZER_NP;
 
-#define HAVE_NOATEXIT
 #if defined(HAVE_NOATEXIT)
 static int global_init_called = 0;
 
