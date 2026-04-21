@@ -33,11 +33,6 @@
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
 
-/*
- * The code related to FOR_MSW has been added by
- * HeDu (hedu@cul-ipn.uni-kiel.de) 4/94
- */
-
 /* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
 #ifdef HAVE_CONFIG_H
@@ -221,7 +216,9 @@ xpmParseColors(
 
     if (!data->format) {		/* XPM 2 or 3 */
 	for (a = 0, color = colorTable; a < ncolors; a++, color++) {
-	    xpmNextString(data);	/* skip the line */
+	    ErrorStatus = xpmNextString(data);         /* skip the line */
+	    if (ErrorStatus != XpmSuccess)
+		goto error;
 
 	    /*
 	     * read pixel value
@@ -319,7 +316,9 @@ xpmParseColors(
 	/* get to the beginning of the first string */
 	data->Bos = '"';
 	data->Eos = '\0';
-	xpmNextString(data);
+	ErrorStatus = xpmNextString(data);
+	if (ErrorStatus != XpmSuccess)
+	    goto error;
 	data->Eos = '"';
 	for (a = 0, color = colorTable; a < ncolors; a++, color++) {
 
@@ -359,7 +358,9 @@ xpmParseColors(
 	    /*
 	     * read color values
 	     */
-	    xpmNextString(data);	/* get to the next string */
+	    ErrorStatus = xpmNextString(data);	/* get to the next string */
+	    if (ErrorStatus != XpmSuccess)
+		goto error;
 	    *curbuf = '\0';		/* init curbuf */
 	    while ((l = xpmNextWord(data, buf, BUFSIZ))) {
 		if (*curbuf != '\0') {
@@ -383,8 +384,11 @@ xpmParseColors(
 	    memcpy(s, curbuf, len);
 	    color->c_color = s;
 	    *curbuf = '\0';		/* reset curbuf */
-	    if (a < ncolors - 1)	/* can we trust ncolors -> leave data's bounds */
-		xpmNextString(data);	/* get to the next string */
+	    if (a < ncolors - 1) {	/* can we trust ncolors -> leave data's bounds */
+		ErrorStatus = xpmNextString(data);	/* get to the next string */
+		if (ErrorStatus != XpmSuccess)
+		    goto error;
+	    }
 	}
     }
     *colorTablePtr = colorTable;
@@ -419,17 +423,8 @@ ParsePixels(
     if ((height > 0 && width >= UINT_MAX / height) ||
 	width * height >= UINT_MAX / sizeof(unsigned int))
 	return XpmNoMemory;
-#ifndef FOR_MSW
-    iptr2 = (unsigned int *) XpmMalloc(sizeof(unsigned int) * width * height);
-#else
 
-    /*
-     * special treatment to trick DOS malloc(size_t) where size_t is 16 bit!!
-     * XpmMalloc is defined to longMalloc(long) and checks the 16 bit boundary
-     */
-    iptr2 = (unsigned int *)
-	XpmMalloc((long) sizeof(unsigned int) * (long) width * (long) height);
-#endif
+    iptr2 = (unsigned int *) XpmMalloc(sizeof(unsigned int) * width * height);
     if (!iptr2)
 	return (XpmNoMemory);
 
