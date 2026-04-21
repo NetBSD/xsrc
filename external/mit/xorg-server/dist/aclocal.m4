@@ -419,7 +419,7 @@ AC_DEFUN([XORG_FONTSUBDIR],[
 AC_DEFUN([XORG_FONTDIR],[XORG_FONTSUBDIR([FONTDIR], [fontdir], [$1])])
 
 # pkg.m4 - Macros to locate and use pkg-config.   -*- Autoconf -*-
-# serial 12 (pkg-config-0.29.2)
+# serial 13 (pkgconf)
 
 dnl Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
 dnl Copyright © 2012-2015 Dan Nicholson <dbn.lists@gmail.com>
@@ -435,9 +435,7 @@ dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 dnl General Public License for more details.
 dnl
 dnl You should have received a copy of the GNU General Public License
-dnl along with this program; if not, write to the Free Software
-dnl Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-dnl 02111-1307, USA.
+dnl along with this program; if not, see <https://www.gnu.org/licenses/>.
 dnl
 dnl As a special exception to the GNU General Public License, if you
 dnl distribute this file as part of a program that contains a
@@ -2700,7 +2698,7 @@ AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
 dnl
-dnl Copyright (c) 2005, Oracle and/or its affiliates.
+dnl Copyright (c) 2005, 2025, Oracle and/or its affiliates.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -2734,10 +2732,12 @@ AC_DEFUN([XTRANS_TCP_FLAGS],[
  fi
 
  # Needs to come after above checks for libsocket & libnsl for SVR4 systems
+ AC_CHECK_FUNCS([getaddrinfo inet_ntop])
+
  AC_ARG_ENABLE(ipv6,
 	AS_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),
 	[IPV6CONN=$enableval],
-	[AC_CHECK_FUNC(getaddrinfo,[IPV6CONN=yes],[IPV6CONN=no])])
+	[IPV6CONN=$ac_cv_func_getaddrinfo])
  AC_MSG_CHECKING([if IPv6 support should be built])
  if test "$IPV6CONN" = "yes"; then
 	AC_DEFINE(IPv6,1,[Support IPv6 for TCP connections])
@@ -2754,9 +2754,11 @@ AC_DEFUN([XTRANS_TCP_FLAGS],[
  ])
 
  # POSIX.1g changed the type of pointer passed to getsockname/getpeername/etc.
- AC_CHECK_TYPES([socklen_t], [], [], [
+ # and added a type defined to be large enough to hold any sockaddr format.
+ AC_CHECK_TYPES([socklen_t, struct sockaddr_storage], [], [], [
 AC_INCLUDES_DEFAULT
-#include <sys/socket.h>])
+#include <sys/socket.h>
+ ])
 
  # XPG4v2/UNIX95 added msg_control - check to see if we need to define
  # _XOPEN_SOURCE to get it (such as on Solaris)
