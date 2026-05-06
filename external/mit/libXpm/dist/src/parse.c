@@ -220,7 +220,9 @@ xpmParseColors(
 
     if (!data->format) {		/* XPM 2 or 3 */
 	for (a = 0, color = colorTable; a < ncolors; a++, color++) {
-	    xpmNextString(data);	/* skip the line */
+	    ErrorStatus = xpmNextString(data);         /* skip the line */
+	    if (ErrorStatus != XpmSuccess)
+		goto error;
 
 	    /*
 	     * read pixel value
@@ -312,7 +314,9 @@ xpmParseColors(
 	/* get to the beginning of the first string */
 	data->Bos = '"';
 	data->Eos = '\0';
-	xpmNextString(data);
+	ErrorStatus = xpmNextString(data);
+	if (ErrorStatus != XpmSuccess)
+	    goto error;
 	data->Eos = '"';
 	for (a = 0, color = colorTable; a < ncolors; a++, color++) {
 
@@ -353,7 +357,9 @@ xpmParseColors(
 	    /*
 	     * read color values
 	     */
-	    xpmNextString(data);	/* get to the next string */
+	    ErrorStatus = xpmNextString(data);	/* get to the next string */
+	    if (ErrorStatus != XpmSuccess)
+		goto error;
 	    *curbuf = '\0';		/* init curbuf */
 	    while ((l = xpmNextWord(data, buf, BUFSIZ))) {
 		if (*curbuf != '\0')
@@ -370,12 +376,19 @@ xpmParseColors(
 	    memcpy(s, curbuf, len);
 	    color->c_color = s;
 	    *curbuf = '\0';		/* reset curbuf */
-	    if (a < ncolors - 1)	/* can we trust ncolors -> leave data's bounds */
-		xpmNextString(data);	/* get to the next string */
+	    if (a < ncolors - 1) {	/* can we trust ncolors -> leave data's bounds */
+		ErrorStatus = xpmNextString(data);	/* get to the next string */
+		if (ErrorStatus != XpmSuccess)
+		    goto error;
+	    }
 	}
     }
     *colorTablePtr = colorTable;
     return (XpmSuccess);
+
+error:
+    xpmFreeColorTable(colorTable, ncolors);
+    return ErrorStatus;
 }
 
 static int
