@@ -1,3 +1,1014 @@
+commit 38efdcada1609139cb6673e1a4d0ebc8a96306f0
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Apr 14 14:30:30 2026 +0200
+
+    xserver 21.1.22
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit e8674488a678387699629a0b558256cc04049ea8
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Mar 2 14:09:57 2026 +0100
+
+    xkb: Add more _XkbCheckRequestBounds()
+    
+    Similar to the recent fixes, add more _XkbCheckRequestBounds() to the
+    functions that loop over the request data, i.e.:
+    
+     * CheckKeySyms()
+     * CheckKeyActions()
+     * CheckKeyBehaviors()
+     * CheckVirtualMods()
+     * CheckKeyExplicit()
+     * CheckVirtualModMap()
+     * _XkbSetMapChecks()
+    
+    All these are static functions so we can add the client to the parameters
+    without breaking any API.
+    
+    See also:
+    CVE-2026-34003, ZDI-CAN-28736, CVE-2026-34002, ZDI-CAN-28737
+    
+    v2: Check for "nSyms != 0" in CheckKeySyms() to avoid false positives.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit d38c563fab5c4a554e0939da39e4d1dadef7cbae)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit 905194d1fa3009c5c7f94ec0392424cd44e6a6d9
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Feb 23 15:52:49 2026 +0100
+
+    xkb: Add additional bound checking in CheckKeyTypes()
+    
+    The function CheckKeyTypes() will loop over the client's request but
+    won't perform any additional bound checking to ensure that the data
+    read remains within the request bounds.
+    
+    As a result, a specifically crafted request may cause CheckKeyTypes() to
+    read past the request data, as reported by valgrind:
+    
+      == Invalid read of size 2
+      ==    at 0x5A3D1D: CheckKeyTypes (xkb.c:1694)
+      ==    by 0x5A6A9C: _XkbSetMapChecks (xkb.c:2515)
+      ==    by 0x5A759E: ProcXkbSetMap (xkb.c:2736)
+      ==    by 0x5BF832: SProcXkbSetMap (xkbSwap.c:245)
+      ==    by 0x5C05ED: SProcXkbDispatch (xkbSwap.c:501)
+      ==    by 0x4A20DF: Dispatch (dispatch.c:551)
+      ==    by 0x4B03B4: dix_main (main.c:277)
+      ==    by 0x428941: main (stubmain.c:34)
+      ==  Address is 30 bytes after a block of size 28,672 in arena "client"
+      ==
+      == Invalid read of size 2
+      ==    at 0x5A3AB6: CheckKeyTypes (xkb.c:1669)
+      ==    by 0x5A6A9C: _XkbSetMapChecks (xkb.c:2515)
+      ==    by 0x5A759E: ProcXkbSetMap (xkb.c:2736)
+      ==    by 0x5BF832: SProcXkbSetMap (xkbSwap.c:245)
+      ==    by 0x5C05ED: SProcXkbDispatch (xkbSwap.c:501)
+      ==    by 0x4A20DF: Dispatch (dispatch.c:551)
+      ==    by 0x4B03B4: dix_main (main.c:277)
+      ==    by 0x428941: main (stubmain.c:34)
+      ==  Address is 2 bytes after a block of size 28,672 alloc'd
+      ==    at 0x4848897: realloc (vg_replace_malloc.c:1804)
+      ==    by 0x5E357A: ReadRequestFromClient (io.c:336)
+      ==    by 0x4A1FAB: Dispatch (dispatch.c:519)
+      ==    by 0x4B03B4: dix_main (main.c:277)
+      ==    by 0x428941: main (stubmain.c:34)
+      ==
+      == Invalid write of size 2
+      ==    at 0x5A3AD7: CheckKeyTypes (xkb.c:1669)
+      ==    by 0x5A6A9C: _XkbSetMapChecks (xkb.c:2515)
+      ==    by 0x5A759E: ProcXkbSetMap (xkb.c:2736)
+      ==    by 0x5BF832: SProcXkbSetMap (xkbSwap.c:245)
+      ==    by 0x5C05ED: SProcXkbDispatch (xkbSwap.c:501)
+      ==    by 0x4A20DF: Dispatch (dispatch.c:551)
+      ==    by 0x4B03B4: dix_main (main.c:277)
+      ==    by 0x428941: main (stubmain.c:34)
+      ==  Address is 2 bytes after a block of size 28,672 alloc'd
+      ==    at 0x4848897: realloc (vg_replace_malloc.c:1804)
+      ==    by 0x5E357A: ReadRequestFromClient (io.c:336)
+      ==    by 0x4A1FAB: Dispatch (dispatch.c:519)
+      ==    by 0x4B03B4: dix_main (main.c:277)
+      ==    by 0x428941: main (stubmain.c:34)
+      ==
+    
+    To avoid that issue, add additional bounds checking within the loops by
+    calling _XkbCheckRequestBounds() and report an error if we are to read
+    past the client's request.
+    
+    CVE-2026-34003, ZDI-CAN-28736
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with TrendAI Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit b85b00dd7b9eee05e3c12e7ad1fce4fc6671507b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit 5328a544ba6c32ecdd1758283ee69058dec100f8
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Feb 18 17:02:09 2026 +0100
+
+    xkb: Fix out-of-bounds read in CheckModifierMap()
+    
+    As reported by valgrind:
+    
+      == Conditional jump or move depends on uninitialised value(s)
+      ==    at 0x547E5B: CheckModifierMap (xkb.c:1972)
+      ==    by 0x54A086: _XkbSetMapChecks (xkb.c:2574)
+      ==    by 0x54A845: ProcXkbSetMap (xkb.c:2741)
+      ==    by 0x556EF4: ProcXkbDispatch (xkb.c:7048)
+      ==    by 0x454A8C: Dispatch (dispatch.c:553)
+      ==    by 0x462CEB: dix_main (main.c:274)
+      ==    by 0x405EA7: main (stubmain.c:34)
+      ==  Uninitialised value was created by a heap allocation
+      ==    at 0x4840B26: malloc (vg_replace_malloc.c:447)
+      ==    by 0x592D5A: AllocateInputBuffer (io.c:981)
+      ==    by 0x591F77: InsertFakeRequest (io.c:516)
+      ==    by 0x45CA27: NextAvailableClient (dispatch.c:3629)
+      ==    by 0x58FA81: AllocNewConnection (connection.c:628)
+      ==    by 0x58FC70: EstablishNewConnections (connection.c:692)
+      ==    by 0x58FFAA: HandleNotifyFd (connection.c:809)
+      ==    by 0x593F42: ospoll_wait (ospoll.c:660)
+      ==    by 0x58B9B6: WaitForSomething (WaitFor.c:208)
+      ==    by 0x4548AC: Dispatch (dispatch.c:493)
+      ==    by 0x462CEB: dix_main (main.c:274)
+      ==    by 0x405EA7: main (stubmain.c:34)
+    
+    The issue is that the loop in CheckModifierMap() reads from wire without
+    verifying that the data is within the request bounds.
+    
+    The req->totalModMapKeys value could exceed the actual data provided,
+    causing reads of uninitialized memory.
+    
+    To fix that issue, we add a bounds check using _XkbCheckRequestBounds,
+    but for that, we need to also pass a ClientPtr parameter, which is not
+    a problem since CheckModifierMap() is a private, static function.
+    
+    CVE-2026-34002, ZDI-CAN-28737
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with Trend Micro Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit f056ce1cc96ed9261052c31524162c78e458f98c)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit 70aad8867abdb03d8fd4fcc7405a7ee7c4666539
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Feb 18 16:23:23 2026 +0100
+
+    miext/sync: Fix use-after-free in miSyncTriggerFence()
+    
+    As reported by valgrind:
+    
+      == Invalid read of size 8
+      ==    at 0x568C14: miSyncTriggerFence (misync.c:140)
+      ==    by 0x540688: ProcSyncTriggerFence (sync.c:1957)
+      ==    by 0x540CCC: ProcSyncDispatch (sync.c:2152)
+      ==    by 0x4A28C5: Dispatch (dispatch.c:553)
+      ==    by 0x4B0B24: dix_main (main.c:274)
+      ==    by 0x42915E: main (stubmain.c:34)
+      ==  Address 0x17e35488 is 8 bytes inside a block of size 16 free'd
+      ==    at 0x4843E43: free (vg_replace_malloc.c:990)
+      ==    by 0x53D683: SyncDeleteTriggerFromSyncObject (sync.c:169)
+      ==    by 0x53F14D: FreeAwait (sync.c:1208)
+      ==    by 0x4DFB06: doFreeResource (resource.c:888)
+      ==    by 0x4DFC59: FreeResource (resource.c:918)
+      ==    by 0x53E349: SyncAwaitTriggerFired (sync.c:701)
+      ==    by 0x568C52: miSyncTriggerFence (misync.c:142)
+      ==    by 0x540688: ProcSyncTriggerFence (sync.c:1957)
+      ==    by 0x540CCC: ProcSyncDispatch (sync.c:2152)
+      ==    by 0x4A28C5: Dispatch (dispatch.c:553)
+      ==    by 0x4B0B24: dix_main (main.c:274)
+      ==    by 0x42915E: main (stubmain.c:34)
+      ==  Block was alloc'd at
+      ==    at 0x4840B26: malloc (vg_replace_malloc.c:447)
+      ==    by 0x5E50E1: XNFalloc (utils.c:1129)
+      ==    by 0x53D772: SyncAddTriggerToSyncObject (sync.c:206)
+      ==    by 0x53DCA8: SyncInitTrigger (sync.c:414)
+      ==    by 0x5409C7: ProcSyncAwaitFence (sync.c:2089)
+      ==    by 0x540D04: ProcSyncDispatch (sync.c:2160)
+      ==    by 0x4A28C5: Dispatch (dispatch.c:553)
+      ==    by 0x4B0B24: dix_main (main.c:274)
+      ==    by 0x42915E: main (stubmain.c:34)
+    
+    When walking the list of fences to trigger, miSyncTriggerFence() may
+    call TriggerFence() for the current trigger, which end up calling the
+    function SyncAwaitTriggerFired().
+    
+    SyncAwaitTriggerFired() frees the entire await resource, which removes
+    all triggers from that await - including pNext which may be another
+    trigger from the same await attached to the same fence.
+    
+    On the next iteration, ptl = pNext points to freed memory...
+    
+    To avoid the issue, we need to restart the iteration from the beginning
+    of the list each time a trigger fires, since the callback can modify the
+    list.
+    
+    CVE-2026-34001, ZDI-CAN-28706
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with TrendAI Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit f19ab94ba9c891d801231654267556dc7f32b5e0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit a48d67f38753de551cd177e471b545bd8b9b1b64
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Feb 18 16:03:11 2026 +0100
+
+    xkb: Fix bounds check in _CheckSetGeom()
+    
+    As reported by valgrind:
+    
+      == Conditional jump or move depends on uninitialised value(s)
+      ==    at 0x5CBE66: SrvXkbAddGeomKeyAlias (XKBGAlloc.c:585)
+      ==    by 0x5AC7D5: _CheckSetGeom (xkb.c:5607)
+      ==    by 0x5AC952: _XkbSetGeometry (xkb.c:5643)
+      ==    by 0x5ACB58: ProcXkbSetGeometry (xkb.c:5684)
+      ==    by 0x5B0DAC: ProcXkbDispatch (xkb.c:7070)
+      ==    by 0x4A28C5: Dispatch (dispatch.c:553)
+      ==    by 0x4B0B24: dix_main (main.c:274)
+      ==    by 0x42915E: main (stubmain.c:34)
+      ==  Uninitialised value was created by a heap allocation
+      ==    at 0x4840B26: malloc (vg_replace_malloc.c:447)
+      ==    by 0x5E13B0: AllocateInputBuffer (io.c:981)
+      ==    by 0x5E05CD: InsertFakeRequest (io.c:516)
+      ==    by 0x4AA860: NextAvailableClient (dispatch.c:3629)
+      ==    by 0x5DE0D7: AllocNewConnection (connection.c:628)
+      ==    by 0x5DE2C6: EstablishNewConnections (connection.c:692)
+      ==    by 0x5DE600: HandleNotifyFd (connection.c:809)
+      ==    by 0x5E2598: ospoll_wait (ospoll.c:660)
+      ==    by 0x5DA00C: WaitForSomething (WaitFor.c:208)
+      ==    by 0x4A26E5: Dispatch (dispatch.c:493)
+      ==    by 0x4B0B24: dix_main (main.c:274)
+      ==    by 0x42915E: main (stubmain.c:34)
+    
+    Each key alias entry contains two key names (the alias and the real key
+    name), each of size XkbKeyNameLength.
+    
+    The current bounds check only validates the first name, allowing
+    XkbAddGeomKeyAlias to potentially read uninitialized memory when
+    accessing the second name at &wire[XkbKeyNameLength].
+    
+    To fix this, change the value to check to use 2 * XkbKeyNameLength to
+    validate the bounds.
+    
+    CVE-2026-34000, ZDI-CAN-28679
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with TrendAI Zero Day Initiative
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 81b6a34f90b28c32ad499a78a4f391b7c06daea2)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit 432cb931cf1f40cbc992916fcff716db864da1af
+Author: Peter Harris <pharris2@rocketsoftware.com>
+Date:   Thu Jan 15 15:54:09 2026 -0500
+
+    xkb: fix buffer re-use in _XkbSetCompatMap
+    
+    If the "compat" buffer has previously been truncated, there will be
+    unused space in the buffer. The code uses this space, but does not
+    update the number of valid entries in the buffer.
+    
+    In the best case, this leads to the new compat entries being ignored. In the
+    worst case, if there are any "skipped" compat entries, the number of
+    valid entries will be corrupted, potentially leading to a buffer read
+    overrun when processing a future request.
+    
+    Set the number of used "compat" entries when re-using previously
+    allocated space in the buffer.
+    
+    CVE-2026-33999, ZDI-CAN-28593
+    
+    This vulnerability was discovered by:
+    Jan-Niklas Sohn working with TrendAI Zero Day Initiative
+    
+    Signed-off-by: Peter Harris <pharris2@rocketsoftware.com>
+    Acked-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit b024ae1749ee58c6fbf863b9a1f5dc440fee2e1b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2178>
+
+commit fd9f9f747e1d766dea8f1a806c333d723879854a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Mar 3 13:12:12 2026 -0800
+
+    os: fix sha1 build error with Nettle 4.0
+    
+    Nettle 2.6 (released in 2013) split the sha.h header into sha1.h & sha2.h,
+    but left the sha.h header for compatibility until the recent Nettle 4.0
+    release finally removed it.
+    
+    Nettle 4.0 also dropped the length argument from the sha1_digest function.
+    
+    Closes: #1871
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 5ebf0a9dd72eaeca4713685f024ec7cab0a66961
+Author: Pierre Le Marre <dev@wismill.eu>
+Date:   Thu Oct 16 07:06:38 2025 +0200
+
+    xkb: Fix serialization of key type without level names
+    
+    Before this commit the count of key type level names was wrongly set
+    in `XkbGetNames`: for key type without names, it was set to the level
+    count, while it should be 0:
+    - `XkbComputeGetNamesReplySize()` does not account key type without
+      level names;
+    - `XkbSendNames()` does not write any level entry for key types without
+      level names.
+    
+    This causes a mismatch offset while parsing the response and its
+    processing would ultimately fail.
+    
+    Fixed by setting the correct level name count: 0 if there is no level
+    name, else the number of levels.
+    
+    (cherry picked from commit c49cbc176a65892fb1109fee5c6e8316a771f5e6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit bdc7eb8f07f2c7457de2e07ae6983e6879f21b10
+Author: Pierre Le Marre <dev@wismill.eu>
+Date:   Wed Oct 15 23:53:24 2025 +0200
+
+    xkb: Fix key type without level names in XkbCopyKeymap
+    
+    A key type that has no level names is legit. Before this commit,
+    `XkbCopyKeymap` would make such level inconsistent by setting its
+    number of levels to 0 while keeping its map entries. It suffices
+    to clear the names array.
+    
+    Fixed by copying the level count from the source type.
+    
+    WARNING: this will trigger an error in `XkbGetNames`, which worked
+    before this commit only by chance. This is fixed in the next commit.
+    
+    (cherry picked from commit 12605989af6e71651c1fbb125277a953259ab7b7)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit d2f1d74f6c92a4572d03bbe7b0c734f09666197b
+Author: Alexander Melnyk <inboxnumberzero@zoho.com>
+Date:   Mon Dec 29 18:43:04 2025 +0200
+
+    xkb: Fix locked/latched indicator desync across multiple keyboards
+    
+    When a group indicator (or a latched indicator of any kind) is defined,
+    e.g.:
+      indicator "Scroll Lock" { groups = Group2; }
+    the logical and physical indicator state may desync across multiple
+    connected keyboards.
+    
+    This is caused by XkbPushLockedStateToSlaves only pushing locked_mods to
+    the slave devices. Pushing locked_group (as well as latched groups/mods)
+    along with locked_mods resolves the issue.
+    
+    The issue is not observed with API calls because a different code path
+    is taken (avoiding XkbPushLockedStateToSlaves altogether).
+    
+    Signed-off-by: Alexander Melnyk <inboxnumberzero@zoho.com>
+    (cherry picked from commit 36a7fdd3152a0763636fb33a018517d831f64ee6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 37977717867f911985f87946dac5e89309b7c53b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 2 12:16:56 2025 -0800
+
+    glamor: avoid double free in glamor_make_pixmap_exportable()
+    
+    Reported by gcc 15.1:
+    
+    ../glamor/glamor_egl.c:320:9:
+     warning: double-‘free’ of ‘modifiers’ [CWE-415] [-Wanalyzer-double-free]
+    [...]
+               │  732 |│        free(*modifiers);
+               │      |│        ~~~~~~~~~~~~~~~~
+               │      |│        |
+               │      |└───────>(25) ...to here
+               │      |         (26) first ‘free’ here
+    [...]
+        │  320 |         free(modifiers);
+        │      |         ~~~~~~~~~~~~~~~
+        │      |         |
+        │      |         (28) ⚠️  second ‘free’ here; first ‘free’ was at (26)
+    
+    Fixes: cef12efc1 ("glamor: Implement GetSupportedModifiers")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 3e9baa20f39b0502efdaf48c2ca7e2f58d1e3120)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit b94cdc40b244f4c4d34b460511deae71891d9c9d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 2 11:23:37 2025 -0800
+
+    glamor: avoid null dereference in glamor_composite_clipped_region()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_render.c:1577:21:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 6a4ec30af49bcbf61cf8ebc3a8f5541abac9024d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 0ead657433437a25127ce1cf5342863fe5daaaf5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Oct 28 18:16:00 2025 -0700
+
+    glamor: avoid null dereference in glamor_dash_setup()
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_dash.c:152:10:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit c6522229b86f9087347b17280b6e5f19345baf9a)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit e9d45963862b95a00d18fc27a89377e7dc4b3c92
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 26 15:39:47 2025 -0700
+
+    glamor: handle allocation failures in glamor_largepixmap.c
+    
+    Reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_largepixmap.c:130:17:
+     warning[-Wanalyzer-possible-null-dereference]:
+      dereference of possibly-NULL ‘clipped_regions’
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_largepixmap.c:235:13:
+     warning[-Wanalyzer-possible-null-dereference]:
+      dereference of possibly-NULL ‘result_regions’
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_largepixmap.c:365:9:
+     warning[-Wanalyzer-possible-null-dereference]:
+      dereference of possibly-NULL ‘clipped_regions’
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_largepixmap.c:1175:9:
+     warning[-Wanalyzer-possible-null-dereference]:
+      dereference of possibly-NULL ‘source_pixmap_priv’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 84cf20e6ddacbfc62637f156a92d673574c43604)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 733eab332c8a6ec16cfc45cceeccddd66378c130
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 26 12:56:13 2025 -0700
+
+    glamor: silence false positive in glamor_validate_gc()
+    
+    We know that if gc->tileIsPixel is false, then gc->tile.pixmap must be
+    a valid pixmap, but gcc's static analyzer doesn't and needs to be told.
+    
+    Silences false positive reported in #1817:
+    
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor_core.c:205:19:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘0’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit a79bdc495eaabd770cec03badd74c3b023877ba1)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit b00201506a9d973b45efc6f7b74bb6628b9e2b8f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 16:27:34 2025 -0700
+
+    glamor: handle allocation failure in glamor_create_pixmap()
+    
+    Reported by gcc 15.1:
+    
+    ../glamor/glamor.c: In function ‘glamor_create_pixmap’:
+    ../glamor/glamor.c:233:23: warning: potential null pointer dereference
+     [-Wnull-dereference]
+      233 |     pixmap_priv->type = GLAMOR_TEXTURE_ONLY;
+          |     ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+    ../glamor/glamor.c:228:26: warning: potential null pointer dereference
+     [-Wnull-dereference]
+      228 |     pixmap_priv->is_cbcr = (GLAMOR_CREATE_FORMAT_CBCR & usage) == GLAMOR_CREATE_FORMAT_CBCR;
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit cc647f23679ae2beb7b971aa7d1203375c25bb55)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 91af36ed506b67c6f76ff325e5a47d46dc68b625
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 15:33:40 2025 -0700
+
+    glamor: handle potential NULL return from GetPictureScreenIfSet()
+    
+    Unlike GetPictureScreen(), GetPictureScreenIfSet() checks if the
+    private key is registered, and returns NULL if it is not.
+    
+    Reported in #1817:
+    xwayland-24.1.6/redhat-linux-build/../glamor/glamor.c:926:5:
+     warning[-Wanalyzer-null-dereference]: dereference of NULL ‘ps’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 69b48423bd66f04bac8a633004ebc8e6e691756f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 13cb37f179e44b81dacb7a04a8ee59c27efa2bce
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 20 10:58:39 2025 -0700
+
+    meson: don't build xselinux if xace is disabled
+    
+    xselinux requires xace to build
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7b15321b3b0e40244af1488f4ee1cd4453a78bc8)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 7a6c6bf9eee1afd8421df0faba444e58e4fc53c8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Aug 19 18:52:16 2025 -0700
+
+    dix: Fix builds with meson -Dxace=false -Dwerror=true
+    
+    CI meson-disable-options builds were failing with:
+    ../dix/events.c: In function ‘CoreEnterLeaveEvent’:
+    ../dix/events.c:4723:19: error: unused variable ‘client’
+     [-Werror=unused-variable]
+     4723 |         ClientPtr client = grab ? rClient(grab) : wClient(pWin);
+          |                   ^~~~~~
+    ../dix/events.c: In function ‘CoreFocusEvent’:
+    ../dix/events.c:4834:19: error: unused variable ‘client’
+     [-Werror=unused-variable]
+     4834 |         ClientPtr client = wClient(pWin);
+          |                   ^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 6611caf828af4833d59cd41f8c64a910f1edcac9)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit d6d9beada9ff4a176b56e10cc6302460b39279e8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Aug 10 09:43:33 2025 -0700
+
+    xf86bigfont: fix -Wimplicit-function-declaration error
+    
+    Build breaks with gcc 14 & later when xf86bigfont is enabled:
+    
+    ../Xext/xf86bigfont.c: In function ‘XFree86BigfontExtensionInit’:
+    ../Xext/xf86bigfont.c:709:28: error: implicit declaration of function
+     ‘xfont2_allocate_font_private_index’;
+     did you mean ‘AllocateFontPrivateIndex’? [-Wimplicit-function-declaration]
+      709 |         FontShmdescIndex = xfont2_allocate_font_private_index();
+          |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          |                            AllocateFontPrivateIndex
+    
+    Fixes: 05a793f5b ("dix: Switch to the libXfont2 API (v2)")
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 0617f6075b6a867c90912ccaf9de2200d06a5419)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 032715f27360fb1e2ff3172946323e9418bfed8e
+Author: Twaik Yont <9674930+twaik@users.noreply.github.com>
+Date:   Thu Apr 10 17:55:58 2025 +0300
+
+    os: use close-on-exec for X server socket to prevent fd leaks
+    
+    In most typical Linux X servers (like Xvfb, Xephyr, or Xwayland), no child process outlives the server, so this issue rarely arises. However, in embedded X servers (based on Xvfb or Kdrive) or in custom Xorg modules, the server might launch a long-running command with regular fork+exec calls. If the X server crashes or exits while that command is still running (for example, it spawns a tombstone generator or any process that hangs or turns to zombie), the file descriptor associated with the abstract socket can remain open in the child process. This leads to the kernel refusing to allow another X server to bind the same socket until the child process terminates (because there is no explicit way to unlink abstract socket, unlike Unix socket). By marking the file descriptor as close-on-exec, we ensure it is automatically closed in child processes, preserving the ability of a new X server process to bind the socket immediately.
+    
+    Signed-off-by: Twaik Yont <9674930+twaik@users.noreply.github.com>
+    (cherry picked from commit 5568b0f83f388a295f42d49411ced17387043794)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 33eee35e0cd6aca82ff65e2bd41e2f7826380096
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 19 17:10:43 2025 -0800
+
+    os: make FormatInt64() handle LONG_MIN correctly
+    
+    When compiling with gcc 15.2.0 using -O3 -m64 on Solaris SPARC & x64,
+    we'd get a test failure of:
+    
+    Assertion failed: strcmp(logmsg, expected) == 0,
+     file ../test/signal-logging.c, line 339, function logging_format
+    
+    because 'num *= 1' produced a value that was out of the range of the
+    int64_t it was being stored in.  (Compiling with -O2 worked fine with
+    the same compiler/configuration/platform though.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7f68b588657ea14050971efa86682e55e2c7e21b)
+    (cherry picked from commit 3eac9393d734a1aa8342179f98e30569da70db95)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 447fec7d5e65d7551831c6717e6679f72d33d4a0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 14 17:06:28 2026 -0700
+
+    os: include <assert.h> in ospoll.c
+    
+    Fixes build failure in mingw-cross-build:
+    
+    ../os/ospoll.c: In function ‘ospoll_destroy’:
+    ../os/ospoll.c:266:9: error: implicit declaration of function ‘assert’
+     [-Werror=implicit-function-declaration]
+      266 |         assert (ospoll->num == 0);
+          |         ^~~~~~
+    ../os/ospoll.c:59:1: note: ‘assert’ is defined in header ‘<assert.h>’;
+     did you forget to ‘#include <assert.h>’?
+       58 | #include "xserver_poll.h"
+      +++ |+#include <assert.h>
+       59 | #define POLL            1
+    ../os/ospoll.c:266:9: warning: nested extern declaration of ‘assert’
+     [-Wnested-externs]
+      266 |         assert (ospoll->num == 0);
+          |         ^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit 7f8570bfa16bd41e4536385b46742cc316546529)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit cc3a8739eb3295436a515f9b3de4cef306eac123
+Author: Benjamin Valentin <benjamin.valentin@ml-pa.com>
+Date:   Mon Dec 27 14:53:22 2021 +0100
+
+    xf86: check return value of XF86_CRTC_CONFIG_PTR in xf86CompatOutput()
+    
+    If privates[xf86CrtcConfigPrivateIndex].ptr is NULL, this will cause
+    a segfault.
+    
+    Possible fix for !1241
+    
+    Signed-off-by: Benjamin Valentin <benjamin.valentin@ml-pa.com>
+    (cherry picked from commit 907c501926775fdbc9a8bfcfd3d64ac3d5502775)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit fe14f010892e910182b11bb284c98317a9afcebe
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sun Dec 5 21:59:12 2021 +0100
+
+    Better fix for xf86CompatOut() when there are no privates
+    
+    XF86_CRTC_CONFIG_PTR() will derefence privates[-1] in this case.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    (cherry picked from commit 75d70612888f18339703315549db781a22c0cb23)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit ce300ed2bc408fcccc0fb38010ab490114613ba6
+Author: hongao <hongao@uniontech.com>
+Date:   Wed May 15 14:35:23 2024 +0800
+
+    randr: clear primary screen's primaryOutput when the output is deleted
+    
+    This fix use after free when a pluggable gpu screen (such as displaylink)
+    was set as primary screen and unpluged.
+    
+    gdb backtrace:
+     #0 OssigHandler (signo=11, sip=0x7fff2e0a50f0, unused=0x7fff2e0a4fc0) at ../../../../os/osinit.c:138
+     #1 <signal handler called>
+     #2 rrGetscreenResources (client=0x3195160, query=0) at ../../../../randr/rrscreen.c:577
+     #3 0x0000000000562bae in ProcRRGetscreenResourcesCurrent (client=0x3195160) at ../../../../randr/rrscreen.c:652
+     #4 OxOOOOB0000054de63 in ProcRRDispatch (client=0x3195160) at ../../../../randr/randr.c:717
+     #5 0x00000000004322c6 in Dispatch () at ../../../../dix/dispatch.c:485
+     #6 0x0900900990443139 in dix_main (argc=12, argv=0x7fff2e0a5f78, envp=0x7fff2e0a5fe0) at ../../../../dix/main.c:276
+     #7 0X0000000000421d9a in main (argc=12, argv=0x7fff2e0a5f78, envp=0x7fff2e0a5fe0) at ../../../../dix/stubmain.c:34
+    
+    Signed-off-by: hongao <hongao@uniontech.com>
+    (cherry picked from commit 1443fd34ea37e8c7cedfac446e4a34205c5fbbb0)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit dd924b160c9b434ff7687d1e1d2a9058cdefb6b8
+Author: quantenzitrone <general@dev.quantenzitrone.eu>
+Date:   Mon Nov 10 00:08:14 2025 +0100
+
+    COPYING: add author to HPND-sell-MIT-disclaimer-xserver
+    
+    the license notice comes from these files:
+    - dix/registry.c
+    - Xext/xselinuxint.h
+    - Xext/xselinux_label.c
+    - Xext/xselinux_hooks.c
+    - Xext/xselinux_ext.c
+    - Xext/xselinux.h
+    - Xext/xacestr.h
+    - Xext/xace.h
+    - Xext/xace.c
+    
+    while this is not like the standard `Copyright (C)` lines I think it
+    still belongs to the license, even if just to make it more clearly
+    separate from the MIT license above
+    
+    (cherry picked from commit fff00233394131a48f075d052cb8239ab875c8d6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 3069f64d691db5396706c1ec1182bd8db52ffb22
+Author: quantenzitrone <general@dev.quantenzitrone.eu>
+Date:   Sun Nov 9 21:52:49 2025 +0100
+
+    COPYING: add missing paragraph to SGI-B-2.0
+    
+    all files that this license applies to include the last paragraph:
+    - glx/xfont.c
+    - glx/unpack.h
+    - glx/singlesize.h
+    - glx/singlesize.c
+    - glx/singlepixswap.c
+    - glx/singlepix.c
+    - glx/single2swap.c
+    - glx/single2.c
+    - glx/rensize.c
+    - glx/renderpixswap.c
+    - glx/renderpix.c
+    - glx/render2swap.c
+    - glx/render2.c
+    - glx/glxutil.h
+    - glx/glxdrawable.h
+    - glx/glxserver.h
+    - glx/glxcontext.h
+    - glx/glxscreens.h
+    - glx/glxscreens.c
+    - glx/glxcmdsswap.c
+    - glx/glxext.h
+    - glx/glxcmds.c
+    - glx/glxext.c
+    
+    the paragraph was likely accidentally missed when the license changed
+    from SGI-B-1.0 to SGI-B-2.0 in https://gitlab.freedesktop.org/xorg/xserver/-/commit/ed9aecf8517bf74e943e3e5dd3ee407524e8f122
+    
+    (cherry picked from commit 6105e5b1338314aca400ff78452ec029c78604e7)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 9ee6ae7292e7f6e3fd04fdc61dab5ed127cbbce3
+Author: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+Date:   Wed Dec 17 11:15:27 2025 +0300
+
+    dix: avoid null ptr deref at doListFontsAndAliases
+    
+    In the `doListFontsAndAliases` function in dixfonts.c, when a font alias
+    is encountered (`err == FontNameAlias`) as a result of
+    `list_next_font_or_alias` call, the code allocates memory for
+    `resolved` variable (`resolvedlen + 1` bytes) for storing target font
+    name. In this case, if the `malloc(resolvedlen + 1)` call fails,
+    `resolved` remains NULL.
+    
+    Later, when check (`else if (err == FontNameAlias)`) is TRUE, the code
+    uses `memcpy` to copy nullable `resolved` into `tmp_pattern` without
+    checking if `resolved` is NULL, so there is a potential null ptr
+    dereference.
+    
+    This commit replaces `malloc` with `XNFalloc` for allocating memory for
+    `resolved`. `XNFalloc` will internally check result of `malloc` and stop
+    program execution if allocation was failed, preventing potential NULL
+    dereferencing.
+    
+    Found by Linux Verification Center (linuxtesting.org) with SVACE.
+    
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit 0237462d326c78868c83b6eda35a9d35725f3b33)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 123f50acb34ef8d7482b5c61d9a149d285991ca6
+Author: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+Date:   Thu Feb 5 16:07:43 2026 +0300
+
+    render: fix multiple mem leaks on err paths
+    
+    Free nested allocations when initialization fails.
+    Several code paths returned early on error without releasing
+    memory owned by embedded structures, leading to leaks.
+    
+    Found by Linux Verification Center (linuxtesting.org) with SVACE.
+    
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit 809402414e4b84ad5c084221c7b4da9bd2c5d55d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit ff10e6d0444b0b52c5aeab40eddba5ea0e1b96f1
+Author: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+Date:   Wed Dec 17 11:52:16 2025 +0300
+
+    os: avoid closing null fd at Fopen
+    
+    In `Fopen` function variable `iop` may store NULL as a result of `fopen`
+    call. In this case, if later privileges couldn't be restored (`seteuid`
+    call fails), further `fclose(iop)` call will cause runtime error.
+    
+    This commit adds check `iop` for NULL before calling `fclose` to prevent
+    potential NULL pointer dereference.
+    
+    Found by Linux Verification Center (linuxtesting.org) with SVACE.
+    
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit f83807647e171def9244a7f1d8d9af8e8e79f847)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit c0146196405099058d40aa7dad555db60868200c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 7 15:57:53 2025 -0800
+
+    dix: set errorValue correctly when XID lookup fails in ChangeGCXIDs()
+    
+    dixLookupResourceByType always overwrites the pointer passed in as the
+    first arg, so we shouldn't use the union it's in after that to get the
+    requested XID value to put in the errorValue.
+    
+    Closes: #1857
+    Fixes: 2d7eb4a19 ("Pre-validate ChangeGC XIDs.")
+    Reported-by: Mouse <mouse@Rodents-Montreal.ORG>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit ac42c39145849588544ad10812e5a8ae76bf1114)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit ec4e918d85fdc79fe7375e5100775d11f3260648
+Author: Takashi Yano <takashi.yano@nifty.ne.jp>
+Date:   Sat Aug 9 20:22:56 2025 +0900
+
+    Fix mach64 driver crash
+    
+    Due to lack of iopl(3), mach64 driver crashes when ior(BUS_CNTL) is
+    called. Since BUS_CNTL is out of the range 0x0000-0x03ff, ioperm(0,
+    1024, 1) is not sufficient and the ior() causes access violation.
+    This patch reintroduce iopl(3) call in the function hwEnableIO().
+    
+    Addresses: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1110521
+    Fixes: a0f738a67327 ("Fixed ioperm calls in hwEnableIO")
+    Signed-off-by: Takashi Yano <takashi.yano@nifty.ne.jp>
+    (cherry picked from commit 3b39aebf984bf2d5a32fd2372d658dd1abef05d2)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 3b92ab189beb0af127c3a260503ade81c7159a5f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Aug 10 11:20:01 2025 -0700
+
+    xfree86: Fix builds with gcc -Wpedantic
+    
+    ../hw/xfree86/loader/loadmod.c:85:33: warning: ISO C forbids empty
+     initializer braces before C23 [-Wpedantic]
+       85 | static int ModuleDuplicated[] = { };
+          |                                 ^
+    ../hw/xfree86/loader/loadmod.c:85:12: error: zero or negative size array
+     ‘ModuleDuplicated’
+       85 | static int ModuleDuplicated[] = { };
+          |            ^~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit d03c84b57f1455b20518781026777b938194b2a4)
+    (cherry picked from commit 3e0f37c95c92829e338a910379440ba9b4f4170d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2146>
+
+commit 65f4ce96cc85e213c5ca74a6fffb048934247005
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Wed Mar 25 23:44:49 2026 -0700
+
+    xquartz: Bump copyrights in Info.plist to 2026
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit fbff1312ce74326596eb4c4d585f7218ecfa2ad4)
+
+commit ef781045eef654189976059b4dad2fbf2f31bc20
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sat Mar 21 18:03:07 2026 -0700
+
+    rootless: Protect alpha channel for Render operations
+    
+    The Render extension operates on PictFormats rather than GC, so it
+    bypasses the rootless layer's GC-based alpha protection
+    (ROOTLESS_PROTECT_ALPHA).  Depth-24 windows use PICT_x8r8g8b8 where
+    the 'x' tells pixman the high byte is padding it may freely zero.
+    The macOS compositor needs this byte to be 0xFF (opaque).
+    
+    Before each Render operation that targets a rootless window,
+    temporarily upgrade the destination Picture's format from
+    PICT_x8r8g8b8 to PICT_a8r8g8b8.  This tells pixman that the alpha
+    channel is significant and must not be optimized away.  The format
+    is restored after the operation completes.
+    
+    This parallels how ROOTLESS_PROTECT_ALPHA handles GC operations (by
+    masking alpha out of the planemask) and how ROOTLESS_SAFEALPHA
+    handles PaintWindow (by forcing alpha in solid fills).  The
+    save/restore approach is analogous to rootlessGC.c's GC_SAVE /
+    GC_RESTORE pattern.
+    
+    Fixes [2/2]: https://github.com/XQuartz/XQuartz/issues/31
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit d2e83a266c65437902f4a5c85043fa835b5c6013)
+
+commit d7279b8e4f7317acfa168f8dec61eb205646bd53
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sat Mar 21 18:02:54 2026 -0700
+
+    rootless: Add Trapezoids, Triangles, and CompositeRects wrapping
+    
+    The Render extension's Trapezoids and Triangles operations
+    (fbTrapezoids, fbTriangles) render directly via pixman through
+    fbShapes without going through ps->Composite, so RootlessComposite
+    never fires for these operations.  This means RootlessStartDrawing
+    is not called and the macOS compositor is not notified of changed
+    pixels.
+    
+    Add RootlessTrapezoids and RootlessTriangles wrappers following the
+    same pattern as RootlessComposite: call RootlessStartDrawing before
+    the operation, then compute the bounding box via miTrapezoidBounds or
+    miTriangleBounds and call RootlessDamageBox after.  The default
+    miTriStrip and miTriFan implementations decompose their input into
+    triangles and dispatch through ps->Triangles, so the RootlessTriangles
+    wrapper covers TriStrip and TriFan as well.
+    
+    Also add a RootlessCompositeRects wrapper as defense-in-depth.  The
+    current miCompositeRects implementation already has partial rootless
+    coverage: PictOpSrc/PictOpClear go through the GC layer, and other
+    ops route through CompositePicture -> RootlessComposite.  Wrapping at
+    the PictureScreen level ensures robustness regardless of the underlying
+    implementation.
+    
+    Fixes [1/2]: https://github.com/XQuartz/XQuartz/issues/31
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit 40b762cf6d4c861ece9a07855d8005e4280e8086)
+
+commit 09eb9aa351a67b24de59cf0cdf33b8c61210d91e
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sat Mar 21 17:09:30 2026 -0700
+
+    rootless: Fix Glyphs damage bounding box to correctly compute union
+    
+    RootlessGlyphs used max() for box.x1 and box.y1 when accumulating the
+    bounding box across glyphs in a list.  Computing the union of bounding
+    boxes requires min() for the lower coordinate corner and max for the
+    higher coordinate corner.
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit e8936920ee392086f3af42d86f533bafe589fdb2)
+
+commit d5aefa60ce8992ab13e08d07aefc995afc592bee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 22 12:10:39 2025 -0800
+
+    Makefile.am: add SECURITY.md to EXTRA_DIST
+    
+    Include it in the tarballs generated by automake
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2106>
+
+commit d7c83b8881bfbead333060e16aba97f107d2ff2a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 18 17:08:39 2025 -0800
+
+    Create a SECURITY.md file
+    
+    Provide information on where to report or learn of security bugs,
+    and what we do or do not consider to be a security bug.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit a5047d4a6576630d0e15b8f145a44ff6ebe55369)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2106>
+
 commit 312a25c65c8a918fea2cc77abd0db07ec0fc421c
 Author: Olivier Fourdan <ofourdan@redhat.com>
 Date:   Mon Nov 24 16:42:01 2025 +0100
