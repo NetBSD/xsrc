@@ -1,15 +1,15 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the `closefrom' function. */
+/* Define to 1 if you have the 'closefrom' function. */
 #undef HAVE_CLOSEFROM
 
-/* Define to 1 if you have the `close_range' function. */
+/* Define to 1 if you have the 'close_range' function. */
 #undef HAVE_CLOSE_RANGE
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you have the `g_pattern_spec_match_string' function. */
+/* Define to 1 if you have the 'g_pattern_spec_match_string' function. */
 #undef HAVE_G_PATTERN_SPEC_MATCH_STRING
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -30,7 +30,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strlcat' function. */
+/* Define to 1 if you have the 'strlcat' function. */
 #undef HAVE_STRLCAT
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
@@ -84,7 +84,7 @@
 /* Define to 1 to automatically look for files with .Z & .gz extensions */
 #undef STAT_ZFILE
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
