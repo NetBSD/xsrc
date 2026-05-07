@@ -471,6 +471,11 @@ OpenKeyboard(InputInfoPtr pInfo)
                printWsType("LK201", pInfo->name);
                break;
 #endif
+#ifdef WSKBD_TYPE_LK401
+           case WSKBD_TYPE_LK401:
+               printWsType("LK401", pInfo->name);
+               break;
+#endif
 #ifdef WSKBD_TYPE_MAPLE
            case WSKBD_TYPE_MAPLE:
                printWsType("Maple", pInfo->name);
