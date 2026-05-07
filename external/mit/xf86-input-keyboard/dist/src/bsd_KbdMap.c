@@ -986,7 +986,7 @@ static CARD8 wsLk201Map[] = {
 	/* 24 */ KEY_NOTUSED,
 	/* 25 */ KEY_NOTUSED,
 	/* 26 */ KEY_NOTUSED,
-	/* 27 */ KEY_F11,
+	/* 27 */ KEY_Escape,	/* F11 */
 	/* 28 */ KEY_F12,
 	/* 29 */ KEY_F13,
 	/* 30 */ KEY_F14,
@@ -1061,10 +1061,10 @@ static CARD8 wsLk201Map[] = {
 	/* 99 */ KEY_NOTUSED,
 	/* 100 */ KEY_NOTUSED,
 	/* 101 */ KEY_NOTUSED,
-	/* 102 */ KEY_Delete,
+	/* 102 */ KEY_BackSpace,
 	/* 103 */ KEY_Enter,
 	/* 104 */ KEY_Tab,
-	/* 105 */ KEY_Escape, /* tilde */
+	/* 105 */ KEY_Tilde, /* tilde */
 	/* 106 */ KEY_1,
 	/* 107 */ KEY_Q,
 	/* 108 */ KEY_A,
