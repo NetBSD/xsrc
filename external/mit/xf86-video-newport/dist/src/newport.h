@@ -57,10 +57,18 @@
 # define TRACE(str)
 #endif
 
+typedef enum {
+	XmapTimingUnset = 0,
+	XmapTimingFast = 1,
+	XmapTimingSlow = 2,
+	XmapTimingVerySlow = 3,
+} XmapTimingType;
+
 typedef struct {
 	unsigned busID;
 	int bitplanes; 
-	Bool NoAccel;
+	XmapTimingType XmapTiming;	/* which xmap9 timing to use */
+	Bool NoAccel;			/* TRUE = disable acceleration */
 	/* revision numbers of the various pieces of silicon */
 	unsigned int board_rev, cmap_rev, rex3_rev, xmap9_rev, bt445_rev;
 	/* shadow copies of frequently used registers */
@@ -152,7 +160,9 @@ unsigned short NewportVc2Get(NewportRegsPtr, unsigned char vc2Ireg);
 void NewportVc2Set(NewportRegsPtr pNewportRegs, unsigned char vc2Ireg, unsigned short val);
 void NewportWait(NewportRegsPtr pNewportRegs);
 void NewportBfwait(NewportRegsPtr pNewportRegs);
-void NewportXmap9SetModeRegister(NewportRegsPtr pNewportRegs, CARD8 address, CARD32 mode);
+void NewportXmap9WriteRegister(NewportRegsPtr pNewportRegs, unsigned dcbaddr, unsigned dcbreg, CARD8 value);
+CARD8 NewportXmap9ReadRegister(NewportRegsPtr pNewportRegs, unsigned dcbaddr, unsigned dcbreg);
+void NewportXmap9SetModeRegister(NewportPtr pNewport, CARD8 address, CARD32 mode);
 CARD32 NewportXmap9GetModeRegister(NewportRegsPtr pNewportRegs, unsigned chip, CARD8 address);
 void NewportBackupRex3( ScrnInfoPtr pScrn);
 void NewportRestoreRex3( ScrnInfoPtr pScrn);

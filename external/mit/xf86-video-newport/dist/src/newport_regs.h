@@ -412,10 +412,14 @@ struct Newport_regs {
 		   (setup << DCB_CSSETUP_SHIFT)|    \
 		   (width << DCB_CSWIDTH_SHIFT))
 
-#define W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (1, 2, 3)
+/* Normal read/write for single byte register write */
+#define W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 0)
+#define R_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 3)
+
+/* 32 bit mode registers based on pixel clock */
+#define WFAST_DCB_XMAP9_PROTOCOL   DCB_CYCLES (2, 1, 0)
 #define WSLOW_DCB_XMAP9_PROTOCOL   DCB_CYCLES (5, 5, 0)
 #define WAYSLOW_DCB_XMAP9_PROTOCOL DCB_CYCLES (12, 12, 0)
-#define R_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 3)
 
 /* xmap9 mode register layout */
 #define XM9_MREG_BUF_SEL	(1 << 0)
@@ -423,8 +427,9 @@ struct Newport_regs {
 #define XM9_MREG_GAMMA_BYPASS	(1 << 2)
 #define XM9_MREG_MSB_CMAP	(31 << 3)
 #define XM9_MREG_PIX_MODE_MASK	(3 << 8)
+#define XM9_MREG_PIX_MODE_CI	(0 << 8)
 #define XM9_MREG_PIX_MODE_RGB0	(1 << 8)
-#define XM9_MREG_PIX_MODE_RGB1	(1 << 9)
+#define XM9_MREG_PIX_MODE_RGB1	(2 << 8)
 #define XM9_MREG_PIX_MODE_RGB2	(3 << 8)
 #define XM9_MREG_PIX_SIZE_MASK	(3 << 10)
 #define XM9_MREG_PIX_SIZE_8BPP	(1 << 10)

@@ -18,7 +18,7 @@
 
   1.  Supported Hardware
 
-  This is an unaccelerated driver for the SGI newport cards (a.k.a. XL)
+  This is an XAA accelerated driver for the SGI newport cards (a.k.a. XL)
   as found in the SGI Indy and Indigo2. Both the 8bit and 24bit versions
   are tested and working.
 
@@ -30,15 +30,22 @@
 
   o  Hardware cursor support to reduce flicker
 
+  o  Acceleration of XAA operations for both XL8 and XL24 cards
+
 
   3.  Notes
 
 
   o  X -configure does not generate a xorg.conf file.
 
-  o  There's only a 1280x1024 mode.
+  o  There's support for both 1024x768 and 1280x1024 modes, but with
+     some caveats/bugs around timing.
 
+  o  Operating in 8 bit mode will use an 8 bit PseudoColor configuration
+     with private colour maps, rather than the hardware 24 -> 8 bit colour
+     dithering support.
 
+  o  The XAA Acceleration support is slightly different for XL8 versus XL24.
 
   4.  Configuration
 
@@ -62,7 +69,13 @@
 
   o  BusID - set this to "1" on the Indigo2 XL
 
+  o  NoAccel - disable Acceleration Options
 
+  o  XmapTiming - Set the XMAP9 Mode Timing - 1 for Fast, 2 for Slow,
+     3 for Very Slow.  Since the driver currently doesn't parse all of
+     the monitor information, you may need to set the Timing to 2
+     (ie Slow) for 1024x760 60Hz operation.  Very Slow is likely for
+     NTSC/PAL timings which we currently don't have a way to configure.
 
   5.  Authors
 

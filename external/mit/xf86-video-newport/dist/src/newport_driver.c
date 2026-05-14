@@ -166,7 +166,8 @@ typedef enum {
 	OPTION_BITPLANES,
 	OPTION_BUS_ID,
 	OPTION_HWCURSOR,
-	OPTION_NOACCEL
+	OPTION_NOACCEL,
+	OPTION_XMAP_TIMING,
 } NewportOpts;
 
 /* Supported options */
@@ -175,6 +176,7 @@ static const OptionInfoRec NewportOptions [] = {
 	{ OPTION_BUS_ID, "BusID", OPTV_INTEGER, {0}, FALSE },
 	{ OPTION_HWCURSOR, "HWCursor", OPTV_BOOLEAN, {0}, FALSE },
 	{ OPTION_NOACCEL, "NoAccel", OPTV_BOOLEAN, {0}, FALSE },
+	{ OPTION_XMAP_TIMING, "XmapTiming", OPTV_INTEGER, {0}, FALSE },
 	{ -1, NULL, OPTV_NONE, {0}, FALSE }
 };
 
@@ -500,6 +502,55 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 Bool
 NewportXAAScreenInit(ScreenPtr pScreen);
 
+/*
+ * Parse the xmap timing option if it exists.
+ *
+ * Return true if it's valid, false if it's invalid.
+ * If it's not present then return true; this is to signal
+ * if the caller should quit the driver setup path.
+ */
+static Bool
+NewportOptionXmapConfig(ScrnInfoPtr pScrn, NewportPtr pNewport)
+{
+	int t;
+
+	/* Initialise / parse the Xmap timing type */
+	pNewport->XmapTiming = XmapTimingUnset;
+
+	if (xf86GetOptValInteger(pNewport->Options, OPTION_XMAP_TIMING, &t)) {
+		switch (t) {
+		case XmapTimingFast:
+			xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+			    "No XmapTiming set to FAST\n");
+			pNewport->XmapTiming = t;
+			break;
+		case XmapTimingSlow:
+			xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+			    "No XmapTiming set to SLOW\n");
+			pNewport->XmapTiming = t;
+			break;
+		case XmapTimingVerySlow:
+			xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+			    "No XmapTiming set to VERYSLOW\n");
+			pNewport->XmapTiming = t;
+			break;
+		default:
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			    "XmapTiming value (%d) is not valid!\n", t);
+			return FALSE;
+		}
+	}
+
+	/* Default to "fast" for now, preserve existing behaviour */
+	if (pNewport->XmapTiming == XmapTimingUnset) {
+		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		    "No XmapTiming provided; defaulting to FAST\n");
+		pNewport->XmapTiming = XmapTimingFast;
+	}
+
+	return TRUE;
+}
+
 
 static Bool 
 NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
@@ -574,6 +625,11 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	xf86SetBackingStore(pScreen);
 
 	xf86SetBlackWhitePixels(pScreen);
+
+	/* Parse the xmap config */
+	if (! NewportOptionXmapConfig(pScrn, pNewport))
+		return FALSE;
+
 #ifdef NEWPORT_ACCEL
 	pNewport->NoAccel = FALSE;
 	if (xf86ReturnOptValBool(pNewport->Options, OPTION_NOACCEL, FALSE)) 
@@ -731,12 +787,54 @@ NewportAvailableOptions(int chipid, int busid)
 	return NewportOptions;
 }
 
+/*
+ * Setup all 32 mode/DID entries in the xmap9 tables with the
+ * same mode.
+ */
+static void
+NewportSetXmapModeTable(NewportPtr pNewport, uint32_t mode)
+{
+	NewportRegsPtr pNewportRegs = pNewport->pNewportRegs;
+	int i;
+
+	for (i = 0; i < 32; i++) {
+		NewportBfwait(pNewport->pNewportRegs);
+		NewportXmap9SetModeRegister(pNewport, i, mode);
+	}
+
+	/* select the set up mode register */
+	NewportBfwait(pNewport->pNewportRegs);
+	NewportXmap9WriteRegister(pNewportRegs, DCB_XMAP_ALL,
+	    XM9_CRS_MODE_REG_INDEX, 0);
+}
+
+/*
+ * Setup the XMAP9 for the given requested operating mode.
+ *
+ * For now it's a no-op, but eventually it should explicitly configure
+ * 8 or 24 bit mode depending upon the requested config and supported
+ * hardware.
+ */
+static void
+NewportHwSetupXmapMode(NewportPtr pNewport)
+{
+#if 0
+		/* TODO: refactor this out; program them separately to not mess with odd/even dithering! */
+		NewportBfwait(pNewport->pNewportRegs);
+
+		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL |
+		    W_DCB_XMAP9_PROTOCOL | XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+		pNewportRegs->set.dcbdata0.bytes.b3 &=
+		    ~(XM9_8_BITPLANES | XM9_PUPMODE);
+#endif
+}
 
 /* This sets up the actual mode on the Newport */
 static Bool 
 NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
 	int width, height;
+	int i;
 	NewportPtr pNewport = NEWPORTPTR(pScrn);
 	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
 
@@ -763,33 +861,39 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 				NPORT_DMODE1_CCEQ | 
 				NPORT_DMODE1_CCGT | 
 				NPORT_DMODE1_LOSRC;
+
+	/* Configure the XMAP mode */
+	NewportHwSetupXmapMode(pNewport);
+
 	if( pNewport->Bpp == 1) { /* 8bpp */
+		/*
+		 * Configure 8 bit draw depth, 8 bit host pixel packing.
+		 * Note that RGB mode isn't enabled here because
+		 * the CI mode is being used.
+		 */
 		pNewport->drawmode1 |=  NPORT_DMODE1_DD8 | 
 					NPORT_DMODE1_HD8 | 
 					NPORT_DMODE1_RWPCKD;
+
+		/*
+		 * Setup the mode table for 8 bit colour indexed table,
+		 * not an RGB mode; it will use CMAP CI table 0.
+		 */
+		NewportSetXmapModeTable(pNewport,
+		    XM9_MREG_PIX_SIZE_8BPP | XM9_MREG_PIX_MODE_CI |
+		    XM9_MREG_GAMMA_BYPASS);
+
 	} else { /* 24bpp */
 		CARD32 mode = 0L;
-		LOCO col;
-		int i;
 
 		/* tell the xmap9s that we are using 24bpp */
-		NewportBfwait(pNewport->pNewportRegs);
-		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | 
-		    W_DCB_XMAP9_PROTOCOL | XM9_CRS_CONFIG | NPORT_DMODE_W1 );
-		pNewportRegs->set.dcbdata0.bytes.b3 &= 
-		    ~(XM9_8_BITPLANES | XM9_PUPMODE);
-		NewportBfwait(pNewport->pNewportRegs);
-		/* set up the mode register for 24bpp */
-		mode = XM9_MREG_PIX_SIZE_24BPP | XM9_MREG_PIX_MODE_RGB2
-				| XM9_MREG_GAMMA_BYPASS;
-		for (i = 0; i < 32; i++)
-			NewportXmap9SetModeRegister( pNewportRegs , i, mode);
 
-		/* select the set up mode register */
-		NewportBfwait(pNewport->pNewportRegs);
-		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
-				XM9_CRS_MODE_REG_INDEX | NPORT_DMODE_W1 );
-		pNewportRegs->set.dcbdata0.bytes.b3 = 0;
+		/*
+		 * Setup the mode table for RGB 888 (24 bit), use the
+		 * RGB2 CMAP table.
+		 */
+		NewportSetXmapModeTable(pNewport, XM9_MREG_PIX_SIZE_24BPP
+		    | XM9_MREG_PIX_MODE_RGB2 | XM9_MREG_GAMMA_BYPASS);
 
 		pNewport->drawmode1 |= 
 					/* set drawdepth to 24 bit */
@@ -802,19 +906,29 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		 * After setting up XMAP9 we have to reinitialize the CMAP for
 		 * whatever reason (the docs say nothing about it). 
 		 */
-
-
 		for (i = 0; i < 256; i++) {
+			LOCO col;
+
 			col.red = col.green = col.blue = i;
 			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i, col);
 		}
-		for (i = 0; i < 256; i++) {
-			col.red = col.green = col.blue = i;
-			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 0x1f00,
-			    col);
-		}
-
 	}
+
+	/*
+	 * Always setup an RGB2 ramp regardless of 8 or 24 bit operation.
+	 *
+	 * This table will be needed if eventually support is added for
+	 * RGB8 operation (whether XL8 or XL24) rather than 8 bit indexed
+	 * colour tables.
+	 */
+	for (i = 0; i < 256; i++) {
+		LOCO col;
+
+		col.red = col.green = col.blue = i;
+		NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 0x1f00,
+		    col);
+	}
+
 	/* blank the framebuffer */
 	NewportWait(pNewportRegs);
 	pNewportRegs->set.drawmode0 = (NPORT_DMODE0_DRAW |
@@ -905,6 +1019,7 @@ static Bool NewportProbeCardInfo(ScrnInfoPtr pScrn)
 	unsigned int tmp,cmap_rev;
 	NewportPtr pNewport = NEWPORTPTR(pScrn);
 	NewportRegsPtr pNewportRegs = pNewport->pNewportRegs;
+	CARD8 val;
 
 	NewportWait(pNewportRegs); 
 	pNewportRegs->set.dcbmode = (DCB_CMAP0 | NCMAP_PROTOCOL |
@@ -915,10 +1030,8 @@ static Bool NewportProbeCardInfo(ScrnInfoPtr pScrn)
 	cmap_rev = tmp & 7;
 	pNewport->cmap_rev = (char)('A'+(cmap_rev ? (cmap_rev+1):0));
 	pNewport->rex3_rev = (char)('A'+(pNewportRegs->cset.ustat & 7));
-
-	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
-					XM9_CRS_REVISION | NPORT_DMODE_W1);
-	pNewport->xmap9_rev = (char)('A'+(pNewportRegs->set.dcbdata0.bytes.b3 & 7));
+	val = NewportXmap9ReadRegister(pNewportRegs, DCB_XMAP0, XM9_CRS_REVISION);
+	pNewport->xmap9_rev = (char)('A'+(val & 7));
 	
 	/* XXX: read possible modes from VC2 here */
 	return TRUE;

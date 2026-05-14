@@ -115,6 +115,21 @@ NewportWaitGFIFO(NewportPtr pNewport, unsigned int uEntries)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Wait until 'uEntries' are available in the GFIFO.
+ *
+ * This tracks how many entries are in the fifo via the
+ * fifoleft value, and will avoid reading the FIFO itself
+ * if it estimates enough entries are left in the FIFO.
+ * Once the estimate runs out, it will update the
+ * number of FIFO entries available.
+ *
+ * TODO: add some counters here; it'd be nice to know
+ * how often the prediction works, how often we ran out
+ * and needed to read the GFIFO register, how often we
+ * had to spin waiting.
+ */
 static void
 NewportWaitGFIFO(NewportPtr pNewport, unsigned int uEntries)
 {
@@ -149,7 +164,14 @@ NewportWaitGFIFO(NewportPtr pNewport, unsigned int uEntries)
 	    pNewport->fifoleft -= uEntries;
 	    return;
         }
-	
+
+	/*
+	 * This is a CPU busy loop which is not the most efficient
+	 * use of CPU, especially if the X server is multi-threaded.
+	 *
+	 * TODO: attempt to keep counters here; it'd be nice to know
+	 * how often this is being hit.
+	 */
 	for (x = 0, i = 0; i < NEWPORT_DELAY; i++)
 	{
 	    x += i;
@@ -217,6 +239,15 @@ NewportUpdateClipping(NewportPtr pNewport)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Map the XAA colours to the HOSTRW format.
+ *
+ * The HOSTRW format for RGBA-32 is ABGR, A being MSB and
+ * R being LSB.
+ *
+ * See the REX3 specification, Section 3.10 (Framebuffer PIO and DMA.)
+ */
 static unsigned int
 NewportColor2HOSTRW(unsigned int color)
 {
@@ -236,24 +267,40 @@ NewportColor2HOSTRW(unsigned int color)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Map the 24 bit RGB colour into the required framebuffer pixel
+ * layout for 24 bit pixels.
+ *
+ * The pixel format is in the REX3 specification Section 3.9
+ * (framebuffer formats.) It's an interleaved pixel format,
+ * starting at the MSB (bit 23), going BRG(0), BRG(1), BRG(2) ..
+ * BRG(7).
+ */
 static unsigned int
-NewportColor2Planes24(unsigned int color)
+NewportColor2Planes24RGB(unsigned int color)
 {
     unsigned int res;
     unsigned int i;
     unsigned int mr, mg, mb;
     unsigned int sr, sg, sb;
-    
+
+    res = 0;
+#if 0
+
  /*
   XAA color is 0,R,G,B
  */
- 
-    res = 0;
-#if 0    
+
     mr = 0x800000;
     mg = 0x008000;
     mb = 0x000080;
-#endif    
+#endif
+
+    /*
+     * The XAA format is now BGR, to match the hardware mapping.
+     * However the raw pixel format is not this.
+     */
     mr = 0x000080;
     mg = 0x008000;
     mb = 0x800000;
@@ -281,8 +328,14 @@ NewportColor2Planes24(unsigned int color)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Map the 8 bit colour index to the underlying framebuffer pixel layout.
+ *
+ * For Psuedocolour pixels, this is a 1:1 mapping of bits 7:0.
+ */
 static unsigned int
-NewportColor2Planes8(unsigned int color)
+NewportColor2Planes8CI(unsigned int color)
 {
     return color;
 }
@@ -305,6 +358,13 @@ NewportUpdateCOLORI(NewportPtr pNewport, unsigned long colori)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the DRAWMODE0 register.
+ *
+ * TODO: does this register stall the pipeline?  The REX3 documentation
+ * is unclear.
+ */
 static void
 NewportUpdateDRAWMODE0(NewportPtr pNewport, unsigned long drawmode0)
 {
@@ -320,6 +380,14 @@ NewportUpdateDRAWMODE0(NewportPtr pNewport, unsigned long drawmode0)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the DRAWMODE1 register.
+ *
+ * This register stalls the pipeline until clear when written to.
+ *
+ * TODO: should update GFIFO depth when this is written to!
+ */
 static void
 NewportUpdateDRAWMODE1(NewportPtr pNewport, unsigned long drawmode1)
 {
@@ -334,6 +402,14 @@ NewportUpdateDRAWMODE1(NewportPtr pNewport, unsigned long drawmode1)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the COLORVRAM register.
+ *
+ * This register stalls the pipeline until clear when written to.
+ *
+ * TODO: should update GFIFO depth when this is written to!
+ */
 static void
 NewportUpdateCOLORVRAM(NewportPtr pNewport, unsigned long colorvram)
 {
@@ -348,6 +424,14 @@ NewportUpdateCOLORVRAM(NewportPtr pNewport, unsigned long colorvram)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the COLORBACK register.
+ *
+ * This register stalls the pipeline until clear when written to.
+ *
+ * TODO: should update GFIFO depth when this is written to!
+ */
 static void
 NewportUpdateCOLORBACK(NewportPtr pNewport, unsigned long colorback)
 {
@@ -362,6 +446,14 @@ NewportUpdateCOLORBACK(NewportPtr pNewport, unsigned long colorback)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the WRMASK register.
+ *
+ * This register stalls the pipeline until clear when written to.
+ *
+ * TODO: should update GFIFO depth when this is written to!
+ */
 static void
 NewportUpdateWRMASK(NewportPtr pNewport, unsigned long wrmask)
 {
@@ -376,6 +468,14 @@ NewportUpdateWRMASK(NewportPtr pNewport, unsigned long wrmask)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Update the XYMOVE register.
+ *
+ * This register stalls the pipeline until clear when written to.
+ *
+ * TODO: should update GFIFO depth when this is written to!
+ */
 static void
 NewportUpdateXYMOVE(NewportPtr pNewport, unsigned long xymove)
 {
@@ -558,6 +658,10 @@ NewportXAASubsequentSolidFillRect(ScrnInfoPtr pScrn,
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Setup for a Solid Line draw
+ */
 static void
 NewportXAASetupForSolidLine(ScrnInfoPtr pScrn,
                             int Color,
@@ -587,6 +691,18 @@ NewportXAASetupForSolidLine(ScrnInfoPtr pScrn,
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * Draw a solid line
+ *
+ * TODO: surely the XAA server is feeding us a list of lines
+ * to write, rather than a constant setup/line/setup/line etc.
+ * See xaa/xaaLine.c for more info.
+ *
+ * Apparently if POLYSEGMENT is defined then we get a flag
+ * that says whether to draw the last pixel or not, but it's
+ * not really a "this is the last line to batch".
+ */
 static void
 NewportXAASubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
                                       int x1,
@@ -599,7 +715,11 @@ NewportXAASubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
     NewportPtr pNewport;
     pNewport = NEWPORTPTR(pScrn);
     pNewportRegs = NEWPORTREGSPTR(pScrn);
-    
+
+    /*
+     * TODO: if this doesn't stall the pipeline then it makes sense
+     * that we can keep changing drawmode0 on each line draw.
+     */
     NewportUpdateDRAWMODE0(pNewport, 
                            pNewport->setup_drawmode0
 			   | ((flags & OMIT_LAST) ? NPORT_DMODE0_SKLST : 0)
@@ -1149,6 +1269,13 @@ NewportXAADisableClipping(ScrnInfoPtr pScrn)
 /*******************************************************************************
 
 *******************************************************************************/
+
+/*
+ * TODO: it would be good to keep some counters on how large
+ * the average/min/max fill is and how many points are passed
+ * in; that'd give us a good idea as to whether these would
+ * benefit by being turned into DMA and save some CPU resources.
+ */
 static void
 NewportPolyPoint(DrawablePtr pDraw,
                  GCPtr pGC,
@@ -1496,11 +1623,12 @@ NewportRenderTexture1to1(NewportPtr pNewport, int srcx, int srcy, int w, int h)
     
     p = pNewport->pTexture + srcx + (srcy * pNewport->uTextureWidth);
     add = pNewport->uTextureWidth - w + srcx;
+
     while (h--) 
     {
 	for (d = w; d; d--)
 	{
-	    /*NewportWaitGFIFO(pNewport, 1);*/
+	    NewportWaitGFIFO(pNewport, 1);
 	    /* hopefully we cannot write faster than XL24 can blend */
 	    pNewportRegs->go.hostrw0 = *p++;
 	}
@@ -1539,6 +1667,8 @@ NewportRenderTextureScale(NewportPtr pNewport, int srcx, int srcy, int w, int h)
 	    p = (curx + 0x7FFF) >> 16;
 	    if (p >= pNewport->uTextureWidth)
 		p = pNewport->uTextureWidth-1;
+	    /* TODO: does this need a FIFO check? */
+	    NewportWaitGFIFO(pNewport, 1);
 	    pNewportRegs->go.hostrw0 = pLine[p];		
 	    curx += dx;
 	}
@@ -1560,11 +1690,13 @@ NewportRenderTextureRepeat(NewportPtr pNewport, int srcx, int srcy, int w, int h
     srcx %= pNewport->uTextureWidth;
     srcy %= pNewport->uTextureHeight;
     
+
     while (h--)
     {	
 	pLine = pNewport->pTexture + pNewport->uTextureWidth * srcy;
 	for (d = w; d; d--)
 	{
+	    NewportWaitGFIFO(pNewport, 1);
 	    pNewportRegs->go.hostrw0 = pLine[srcx];
 	    srcx++;
 	    if (srcx >= pNewport->uTextureWidth)
@@ -1694,6 +1826,10 @@ NewportXAAScreenInit(ScreenPtr pScreen)
 	pXAAInfoRec->SetupForCPUToScreenColorExpandFill	= NewportXAASetupForCPUToScreenColorExpandFill;
 	pXAAInfoRec->SubsequentCPUToScreenColorExpandFill = NewportXAASubsequentCPUToScreenColorExpandFill;
 	pXAAInfoRec->ColorExpandRange = 4;
+	/*
+	 * TODO: is this OK? There's no FIFO check here, is it possible
+	 * that we'd fill the GFIFO and bus error?
+	 */
 	pXAAInfoRec->ColorExpandBase = (unsigned char *)&(pNewportRegs->go.zpattern);
 
 
@@ -1722,6 +1858,10 @@ NewportXAAScreenInit(ScreenPtr pScreen)
 	pXAAInfoRec->SetupForImageWrite = NewportXAASetupForImageWrite;
 	pXAAInfoRec->SubsequentImageWriteRect = NewportXAASubsequentImageWriteRect;
 	pXAAInfoRec->ImageWriteRange = 4;
+	/*
+	 * TODO: is this OK? There's no FIFO check here, is it possible
+	 * that we'd fill the GFIFO and bus error?
+	 */
 	pXAAInfoRec->ImageWriteBase =  (unsigned char *)&(pNewportRegs->go.hostrw0);
 
 	/* read pixmap */
@@ -1750,6 +1890,17 @@ NewportXAAScreenInit(ScreenPtr pScreen)
 
 	pXAAInfoRec->ValidatePolyArc = NewportValidatePolyArc;
 	pXAAInfoRec->PolyArcMask = GCFunction | GCLineWidth;
+
+	/*
+	 * TODO: Revisit this once the rest of the driver is converted to
+	 * properly separate the newport device type / bitplane count versus
+	 * the screen depth.
+	 *
+	 * We're not doing alpha blending on 8bpp screens because
+	 * they're psuedo colour screens, but we CAN do alpha blending
+	 * on an XL8 that's being fed RGB-24 and RGBA-32 pixel data
+	 * via HOSTRW.
+	 */
 #ifdef RENDER
 	if (pScrn->bitsPerPixel > 8) 
 	{
@@ -1769,11 +1920,38 @@ NewportXAAScreenInit(ScreenPtr pScreen)
 	    pNewport->pTexture = (unsigned int *)xnfalloc(pNewport->uTextureSize = 16*16*sizeof(unsigned int));
 	}
 #endif	
-	
-	pNewport->Color2Planes = NewportColor2Planes24;
+
+	/*
+	 * Configure acceleration based on the screen config and the
+	 * Newport bitplane config.
+	 *
+	 * The WRMASK register (which this routine is populating) is
+	 * based on the raw framebuffer pixel data being written,
+	 * /not/ specifically the HOSTRW format being written.
+	 * The HOSTRW format can include whether the pixel values
+	 * are packed or not; whereas this field is the raw field
+	 * in the table.
+	 *
+	 * See REX3 specification section 3.3 (Clipping and Masking)
+	 * and 3.9 (Framebuffer formats) for more information.
+	 *
+	 * TODO: this needs to be revisited when configuring other
+	 * framebuffer pixel layouts, eg 24 bit colour writes
+	 * into HOSTRW, but a RGB-332 framebuffer.
+	 *
+	 * In this instance, we'd choose a function based on
+	 * pixel config (eg RGB888, RGB444, RGB332, CI) and
+	 * eventually also the double buffering target plane.
+	 */
+	pNewport->Color2Planes = NewportColor2Planes24RGB;
+	/*
+	 * TODO: this is looking at the screen bpp, it should be changed
+	 * to look at the DRAWDEPTH/PLANES/RWPACKED field and choose
+	 * appropriately.
+	 */
 	if (pScrn->bitsPerPixel == 8)
 	{
-	    pNewport->Color2Planes = NewportColor2Planes8;
+	    pNewport->Color2Planes = NewportColor2Planes8CI;
 	}
 
 	if (!XAAInit(pScreen, pXAAInfoRec))
