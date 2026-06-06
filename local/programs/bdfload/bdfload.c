@@ -1,4 +1,4 @@
-/*	$NetBSD: bdfload.c,v 1.23 2024/03/12 09:42:55 macallan Exp $	*/
+/*	$NetBSD: bdfload.c,v 1.24 2026/06/06 17:58:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -104,6 +104,7 @@ int dump = 0;
 int header = 0;
 int force = 0;
 int scale = 0;
+int dub = 0;
 int smoothe = 0;
 char commentbuf[2048] = "";
 int commentptr = 0;
@@ -503,7 +504,7 @@ interpret(FILE *foo)
 		f.stride = stride * 2;
 		outbuf = calloc(1, f.numchars * charsize * 4);
 		if (outbuf == NULL) err(EXIT_FAILURE, 
-		    "failed to allocete memory for scale buffer\n");
+		    "failed to allocate memory for scale buffer\n");
 		f.data = outbuf;
 		inbuf = &buffer[first * charsize];
 		for (i = 0; i < f.numchars; i++) {
@@ -513,8 +514,31 @@ interpret(FILE *foo)
 			inbuf += charsize;
 			outbuf += charsize * 2;
 		}
-		
-	} else {
+	} else if (dub) {
+		uint8_t *outbuf;
+		uint8_t *inbuf;
+		int i, j;
+
+		if (stride != 1) err(EXIT_FAILURE,
+		    "scaling works only on fonts up to 8 pixels wide\n");
+		f.fontwidth = width;
+		f.fontheight = height * 2;
+		f.stride = stride;
+		outbuf = calloc(1, f.numchars * charsize * 2);
+		if (outbuf == NULL) err(EXIT_FAILURE, 
+		    "failed to allocate memory for scale buffer\n");
+		f.data = outbuf;
+		inbuf = &buffer[first * charsize];
+		for (i = 0; i < f.numchars; i++) {
+			for (j = 0; j < height; j++) {
+				outbuf[2 * j] = inbuf[j];
+				outbuf[2 * j + 1] = inbuf[j];
+			}
+			inbuf += charsize;
+			outbuf += charsize * 2;
+		}
+
+	} else{
 		f.fontwidth = width /*(width + 3) & ~3*/;
 		f.fontheight = height;
 		f.stride = stride;
@@ -541,7 +565,7 @@ interpret(FILE *foo)
 __dead void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-vdhf2s] [-e encoding] [-N name] "
+	fprintf(stderr, "Usage: %s [-vdhf2st] [-e encoding] [-N name] "
 	    "[-o ofile.wsf] font.bdf\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -553,7 +577,7 @@ main(int argc, char *argv[])
 	const char *encname = NULL;
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:N:vdhf2s")) != -1) {
+	while ((c = getopt(argc, argv, "e:o:N:vdhf2st")) != -1) {
 		switch (c) {
 
 		/* font encoding */
@@ -586,6 +610,9 @@ main(int argc, char *argv[])
 			break;
 		case '2':
 			scale = 1;
+			break;
+		case 't':
+			dub = 1;
 			break;
 		case 's':
 			smoothe = 1;
