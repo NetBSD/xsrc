@@ -74,7 +74,7 @@ amdgpu_create_userqueue(amdgpu_device_handle dev,
 	userq.in.wptr_va = wptr_va;
 	userq.in.rptr_va = rptr_va;
 
-	userq.in.mqd = (uint64_t)mqd_in;
+	userq.in.mqd = (uint64_t)(uintptr_t)mqd_in;
 	userq.in.mqd_size = mqd_size;
 	userq.in.flags = flags;
 
