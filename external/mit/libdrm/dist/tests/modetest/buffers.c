@@ -114,7 +114,8 @@ struct bo *
 bo_create(int fd, unsigned int format,
 	  unsigned int width, unsigned int height,
 	  unsigned int handles[4], unsigned int pitches[4],
-	  unsigned int offsets[4], enum util_fill_pattern pattern)
+	  unsigned int offsets[4], enum util_fill_pattern pattern,
+	  unsigned long seed)
 {
 	unsigned int virtual_height, xsub, ysub;
 	struct bo *bo;
@@ -386,7 +387,7 @@ bo_create(int fd, unsigned int format,
 		break;
 	}
 
-	util_fill_pattern(format, pattern, planes, width, height, pitches[0]);
+	util_fill_pattern(format, pattern, planes, width, height, pitches[0], seed);
 	bo_unmap(bo);
 
 	return bo;
