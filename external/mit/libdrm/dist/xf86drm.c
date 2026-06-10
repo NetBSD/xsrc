@@ -42,6 +42,7 @@
 #include <stddef.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <libgen.h>
 #include <limits.h>
 #include <signal.h>
 #include <time.h>
@@ -351,9 +352,10 @@ drmGetFormatModifierNameFromNvidia(uint64_t modifier)
      * testing against TEGRA_TILE */
     if ((modifier & 0x10) == 0x10) {
         char *mod_nvidia;
-        asprintf(&mod_nvidia, "BLOCK_LINEAR_2D,HEIGHT=%"PRIu64",KIND=%"PRIu64","
+        if (asprintf(&mod_nvidia, "BLOCK_LINEAR_2D,HEIGHT=%"PRIu64",KIND=%"PRIu64","
                  "GEN=%"PRIu64",SECTOR=%"PRIu64",COMPRESSION=%"PRIu64"", height,
-                 kind, gen, sector, compression);
+                 kind, gen, sector, compression) < 0)
+            mod_nvidia = NULL;
         return mod_nvidia;
     }
 
@@ -545,7 +547,8 @@ drmGetFormatModifierNameFromAmlogic(uint64_t modifier)
     else
         opts_str = "0";
 
-    asprintf(&mod_amlogic, "FBC,LAYOUT=%s,OPTIONS=%s", layout_str, opts_str);
+    if (asprintf(&mod_amlogic, "FBC,LAYOUT=%s,OPTIONS=%s", layout_str, opts_str) < 0)
+        mod_amlogic = NULL;
     return mod_amlogic;
 }
 
@@ -609,7 +612,8 @@ drmGetFormatModifierNameFromVivante(uint64_t modifier)
 	break;
     }
 
-    asprintf(&mod_vivante, "%s%s%s", color_tiling, tile_status, compression);
+    if (asprintf(&mod_vivante, "%s%s%s", color_tiling, tile_status, compression) < 0)
+        mod_vivante = NULL;
     return mod_vivante;
 }
 
@@ -982,6 +986,11 @@ static int drmOpenMinor(int minor, int create, int type)
  *
  * \return 1 if the DRM driver is loaded, 0 otherwise.
  *
+ * \deprecated
+ * This function doesn't work when a device goes away (as is often the case
+ * with simpledrm). drmGetDevices2 should be used instead to enumerate DRM
+ * devices.
+ *
  * \internal
  * Determine the presence of the kernel driver by attempting to open the 0
  * minor and get version information.  For backward compatibility with older
@@ -1347,11 +1356,11 @@ static void drmCopyVersion(drmVersionPtr d, const drm_version_t *s)
     d->version_minor      = s->version_minor;
     d->version_patchlevel = s->version_patchlevel;
     d->name_len           = s->name_len;
-    d->name               = strdup(s->name);
+    d->name               = s->name ? strdup(s->name) : NULL;
     d->date_len           = s->date_len;
-    d->date               = strdup(s->date);
+    d->date               = s->date ? strdup(s->date) : NULL;
     d->desc_len           = s->desc_len;
-    d->desc               = strdup(s->desc);
+    d->desc               = s->desc ? strdup(s->desc) : NULL;
 }
 
 
@@ -3591,6 +3600,7 @@ static int get_subsystem_type(const char *device_path)
         { "/spi", DRM_BUS_PLATFORM },
         { "/host1x", DRM_BUS_HOST1X },
         { "/virtio", DRM_BUS_VIRTIO },
+        { "/faux", DRM_BUS_FAUX },
     };
 
     strncpy(path, device_path, PATH_MAX);
@@ -3918,6 +3928,9 @@ drm_public int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b)
 
     case DRM_BUS_HOST1X:
         return memcmp(a->businfo.host1x, b->businfo.host1x, sizeof(drmHost1xBusInfo)) == 0;
+
+    case DRM_BUS_FAUX:
+        return memcmp(a->businfo.faux, b->businfo.faux, sizeof(drmFauxBusInfo)) == 0;
 
     default:
         break;
@@ -4623,6 +4636,62 @@ free_device:
     return ret;
 }
 
+static int drmParseFauxBusInfo(int maj, int min, char *fullname)
+{
+#ifdef __linux__
+    char path[PATH_MAX + 1] = "";
+    char real_path[PATH_MAX + 1] = "";
+    char *name;
+
+    snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device", maj, min);
+
+    if (!realpath(path, real_path))
+        return -errno;
+
+    name = basename(real_path);
+    if (!name)
+        return -ENOENT;
+
+    strncpy(fullname, name, DRM_FAUX_DEVICE_NAME_LEN - 1);
+    fullname[DRM_FAUX_DEVICE_NAME_LEN - 1] = '\0';
+
+    return 0;
+#else
+#warning "Missing implementation of drmParseFauxBusInfo"
+    return -EINVAL;
+#endif
+}
+
+static int drmProcessFauxDevice(drmDevicePtr *device,
+                                const char *node, int node_type,
+                                int maj, int min, bool fetch_deviceinfo,
+                                uint32_t flags)
+{
+    drmDevicePtr dev;
+    char *ptr;
+    int ret;
+
+    dev = drmDeviceAlloc(node_type, node, sizeof(drmFauxBusInfo), 0, &ptr);
+    if (!dev)
+        return -ENOMEM;
+
+    dev->bustype = DRM_BUS_FAUX;
+
+    dev->businfo.faux = (drmFauxBusInfoPtr)ptr;
+
+    ret = drmParseFauxBusInfo(maj, min, dev->businfo.faux->name);
+    if (ret < 0)
+        goto free_device;
+
+    *device = dev;
+
+    return 0;
+
+free_device:
+    free(dev);
+    return ret;
+}
+
 static int
 process_device(drmDevicePtr *device, const char *d_name,
                int req_subsystem_type,
@@ -4675,6 +4744,9 @@ process_device(drmDevicePtr *device, const char *d_name,
     case DRM_BUS_HOST1X:
         return drmProcessHost1xDevice(device, node, node_type, maj, min,
                                       fetch_deviceinfo, flags);
+    case DRM_BUS_FAUX:
+        return drmProcessFauxDevice(device, node, node_type, maj, min,
+                                    fetch_deviceinfo, flags);
     default:
         return -1;
    }
