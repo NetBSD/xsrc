@@ -1,3 +1,312 @@
+commit 65d790bd208ec380b196eb98f144abb0b32e334d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Jul 8 11:21:12 2026 +1000
+
+    xserver 21.1.24
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2254>
+
+commit f3df3c9a52b4f480cbcff45cc6569c19de6bfede
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Sun May 31 19:37:01 2026 +1000
+
+    glamor: reject fonts with per-glyph metrics exceeding maxbounds
+    
+    glamor_font_get() computes the atlas slot size from the font's declared
+    maxbounds, but copies each glyph's bitmap using the per-glyph metrics
+    (GLYPHHEIGHTPIXELS/GLYPHWIDTHBYTES macros). When a malicious PCF font
+    has per-glyph metrics exceeding maxbounds, the memcpy writes past the
+    heap-allocated atlas buffer. Negative per-glyph metrics are even worse:
+    the loop counter wraps to ~4 billion iterations (via unsigned cast) or
+    memcpy's size parameter wraps to SIZE_MAX.
+    
+    The PCF parser in libXfont2 does not recompute maxbounds from per-glyph
+    data (only the BDF parser does), so the file's declared maxbounds values
+    are trusted as-is.
+    
+    Reject fonts where any per-glyph metric is negative or exceeds the
+    atlas slot size, falling back to software rendering which uses per-glyph
+    metrics directly without an atlas.
+    
+    This vulnerability was discovered by:
+    Anonymous working with Trend Micro Zero Day Initiative
+    
+    CVE-2026-55999/ZDI-CAN-30498
+    
+    Assisted-by: Claude:claude-opus-4-6
+    (cherry picked from commit fbf7bac22e2c6bd627fb042742a23318263edae1)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2252>
+
+commit 0f1f4bcbfb1f23b800dfe386782d3a0f05b6756f
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Jun 1 20:44:34 2026 +1000
+
+    fb/mi/glamor: reject glyphs with negative dimensions
+    
+    GLYPHWIDTHPIXELS and GLYPHHEIGHTPIXELS compute glyph dimensions from
+    signed INT16 fields. A crafted PCF font can produce negative results
+    (e.g. rightSideBearing < leftSideBearing).
+    
+    All callees have a while (height--) loop which will end up in OOB writes
+    for negative height values.
+    
+    In the case of a negative height, some callees cast to size_t or end up
+    with negative strides.
+    
+    The same pattern exists in fbPoloyGlyphBit, miPolyGlyphBlt and
+    glamor_poly_glyph_blt_gl, so let's fix all of them in one go.
+    
+    Assisted-by: Claude:claude-opus-4-6
+    (cherry picked from commit e31efd3e106e53bfc29d499ff0a34b0d20013f2d)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2252>
+
+commit d6d96084f305a142eb3db7f720d7edd21e4c98b4
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Sun May 31 19:37:02 2026 +1000
+
+    glx: free old context tag before allocating new one in CommonMakeCurrent
+    
+    oldTag in CommonMakeCurrent() is a pointer to cl->contextTags[...].
+    CommonMakeCurrent() may realloc(cl->contextTags) and thus move the
+    memory, leaving oldTag as dangling pointer.
+    
+    If we then GlxFreeContextTag(oldTag) we end up writing into freed
+    memory.
+    
+    Fix this by freeing oldTag before CommonMakeNewCurrent().
+    
+    This vulnerability was discovered by:
+    Anonymous working with Trend Micro Zero Day Initiative
+    
+    CVE-2026-56000/ZDI-CAN-30561
+    
+    Fixes: 4781f2a5a8c2 ("GLX: Free the tag of the old context later")
+    Assisted-by: Claude:claude-opus-4-6
+    (cherry picked from commit 2779affbdb4354e894f490e56f962527d6125043)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2252>
+
+commit d6fff22bc8b464dbadf3bc1fb858bd5a91c86849
+Author: Doğukan Korkmaztürk <dkorkmazturk@nvidia.com>
+Date:   Tue Nov 22 13:43:16 2022 -0500
+
+    GLX: Free the tag of the old context later
+    
+    In CommonMakeCurrent() function, the tag of the old context is freed
+    before the new context is made current. This is problematic because if
+    the CommonMakeNewCurrent() function fails, the tag of the old context
+    ends up being removed, even though it is still active. This causes
+    subsequent glXMakeCurrent() or glXMakeContextCurrent() requests to
+    generate a GLXBadContextTag error.
+    
+    This change moves the function call that frees the old tag to a location
+    where the result of CommonMakeNewCurrent() call is known and it is safe
+    to free it.
+    
+    Signed-off-by: Doğukan Korkmaztürk <dkorkmazturk@nvidia.com>
+    (cherry picked from commit 4781f2a5a8c2c2b000374e2d87982a6701d5a6b3)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2252>
+
+commit ab2766f3473efdc9d13234553d21b0dc4dd780d8
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Jun 23 14:10:44 2026 +0200
+
+    Xi: Check window attribute is valid in XIChangeCursor
+    
+    The XInput2 request XIChangeCursor() does not specify whether the window
+    attribute can be NULL, nor does the code in ProcXIChangeCursor().
+    
+    As a result, if the window is NULL, the xserver ends up dereferencing a
+    NULL pointer and segfaults.
+    
+    To avoid the issue, check the actual value passed for the window and
+    return a BadWindow error if the window was not specified.
+    
+    Please note that particular error is however not documented in the XI2
+    protocol definition [1], yet that seems to be the only sane course of
+    action, reading the definition of XIChangeCursor(), a valid window is
+    to be expected.
+    
+    [1] https://xorg.freedesktop.org/archive/current/doc/inputproto/XI2proto.txt
+    
+    (cherry picked from commit 7aac5d4dc6bc934b7cae40afdfd98261a8e80427)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit c0839d9cbf85261cea20cda2f7d6c8a732e16eb6
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Wed Jun 17 16:50:34 2026 +0200
+
+    dix: Silence a compiler warning in doListFontsWithInfo()
+    
+    Static analyzer reports:
+    
+    | dix/dixfonts.c:936:17: uninit_use_in_call: Using uninitialized value "name" when calling "memcpy".
+    |   934|                   free(c->savedName);
+    |   935|                   c->savedName = XNFalloc(namelen + 1);
+    |   936|->                 memcpy(c->savedName, name, namelen + 1);
+    |   937|                   aliascount = 20;
+    |   938|               }
+    
+    To silence the warning, we cannot just set "name" to NULL, as this could
+    potentially cause a NULL pointer in memcpy(), we also need to check if
+    the value was set. If not, just bail out with a BadFontNAme error.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit 5d011bf3da81595bef25ca89458249c1037a4f51)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit bf25faf5c1b825f14642f81129b28e04a024356d
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Tue Apr 28 11:06:27 2026 +0200
+
+    dix: Silent static analyzer warning
+    
+     | dix/dixfonts.c:849:5: var_decl: Declaring variable "namelen" without initializer.
+     | dix/dixfonts.c:932:17: uninit_use: Using uninitialized value "namelen".
+     |    930|                   c->savedNumFonts = numFonts;
+     |    931|                   free(c->savedName);
+     |    932|->                 c->savedName = XNFalloc(namelen + 1);
+     |    933|                   memcpy(c->savedName
+    
+    (cherry picked from commit f959f1e51f369ac26b6ba5953a3b022407e85b11)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit 6c6a2dfd295f836a502410ff40b5855b133c7ffd
+Author: Olivier Fourdan <ofourdan@redhat.com>
+Date:   Mon Jun 15 14:00:19 2026 +0200
+
+    dix: Silence a compiler warning in doListFontsAndAliases()
+    
+    Compiler complains that "resolvedlen" might be uninitialized:
+    
+    | dix/dixfonts.c:559:5: var_decl: Declaring variable "resolvedlen" without initializer.
+    | dix/dixfonts.c:674:17: uninit_use: Using uninitialized value "resolvedlen".
+    |    672|                    * is complete.
+    |    673|                    */
+    |    674|->                 if (resolvedlen > XLFDMAXFONTNAMELEN) {
+    |    675|                       err = BadFontName;
+    |    676|                       goto ContBadFontName;
+    
+    Most likely a false positive, while immediately after the (newly added)
+    test, there was a memcpy() using "resolvedlen" and the compiler did not
+    choke on that before.
+    
+    Either way, initializing "resolvedlen" to 0 is a small price to pay to
+    silence the compiler warning and keep us on the safe side.
+    
+    Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+    (cherry picked from commit e710e570b1709d100072a8ab7d05c2aefaf41a1b)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit f2f7b8293c1f3594b31301159c7ddf4570ea9a7f
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jun 2 13:08:37 2026 +1000
+
+    glamor: fix an error path cleanup
+    
+    The GL_OUT_OF_MEMORY error path returns NULL without freeing the
+    allocated `bits` buffer or deleting the GL texture.
+    
+    Assisted-by: Claude:claude-opus-4-6
+    (cherry picked from commit 174aac67c99cb7ac26acb6613831c6db0ebd549f)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit c285ed7dc6e429e7747f76c208f9a373261421f8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Jun 1 21:01:58 2026 +1000
+
+    glx: fix duplicate tagInfo->vendor = NULL assignment
+    
+    Assisted-by: Claude:claude-opus-4-6
+    (cherry picked from commit 66c4a2a6af70112295a5e163fe75a78d29bd3137)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit a29a7c1ec5b488b4069ef976e8096cb997074e49
+Author: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+Date:   Mon May 25 12:46:28 2026 +0300
+
+    xkb: preserve buffer on realloc failure
+    
+    _Concat() stored the realloc() result directly in its input pointer, so
+    an allocation failure could drop the only reference to the original
+    buffer when callers assigned the return value back to their destination
+    pointer.
+    
+    Keep the old pointer until realloc() succeeds, avoiding the leak
+    reported by static analysis.
+    
+    Found by Linux Verification Center (linuxtesting.org) with SVACE.
+    
+    Signed-off-by: Mikhail Dmitrichenko <m.dmitrichenko222@gmail.com>
+    (cherry picked from commit d6c462f59927b3702a54e0e8ea2a5de7639294e6)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit 8a6e5f0fcdf196bd5ba2059816069806d523b665
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Apr 17 10:13:51 2026 +1000
+
+    dix/colormap: fix out-of-bounds read in FindColorInRootCmap
+    
+    The for loop here always iterates size times but the client controls the
+    starting offset. When the starting pixel is non-zero (e.g., pixel=10 in
+    a size=256 colormap), the loop reads from pentFirst[10] through
+    pentFirst[265], reading 10 entries past the end of the array.
+    
+    Fix this by wrapping around once we reach size, same as FindColor()
+    already does.
+    
+    Assisted-by: Claude:claude-claude-opus-4-6
+    (cherry picked from commit b4f2807a40fb0b149f475f3e459a3a38fd114096)
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/2247>
+
+commit b0be3a9e5a6f96709157f0d58c03557e53ab9a58
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Wed Jul 1 08:55:33 2026 -0700
+
+    xquartz/GL: advertise GLX_ARB_create_context and _profile
+    
+    XQuartz never called __glXEnableExtension for GLX_ARB_create_context or its
+    profile / robustness companions, so clients could not use
+    glXCreateContextAttribsARB to ask for a specific OpenGL version or profile.
+    
+    Enable the three extensions in __glXAquaScreenProbe between the
+    InitExtensionEnableBits call and __glXScreenInit so the extension string
+    picks them up.  The direct-rendering path (XQuartz's AppleDRI mode) does
+    not go through __glXAquaScreenCreateContext -- createcontext.c routes
+    direct requests to __glXdirectContextCreate, and the actual context is
+    built on the client side.  The server-side createContext hook stays
+    capped at GL 1.4 for indirect clients by validate_GL_version and does not
+    need changes.
+    
+    This is needed for OpenGL core profile support.
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit 609e7d9421f5fcb51e6071a0f189cc725a6c5714)
+
+commit 834b406744483ed07f54a35f4036462c76c79545
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Wed Jul 1 08:54:29 2026 -0700
+
+    xquartz/GL: silence OpenGL deprecation warnings
+    
+    OpenGL.framework and CGL are annotated OPENGL_DEPRECATED(_, 10.14) in the SDK,
+    but that can be silenced with -DGL_SILENCE_DEPRECATION.
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+    (cherry picked from commit 31060c9506b41a6082a25c3368c9dede08fc5a89)
+
 commit 8570e9fcec845f68f0c90caa51fd7a24764ea220
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Tue Jun 2 10:02:58 2026 +1000
