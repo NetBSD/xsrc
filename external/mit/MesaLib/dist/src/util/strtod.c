@@ -41,7 +41,7 @@ void
 _mesa_locale_init(void)
 {
 #if defined(_GNU_SOURCE) && defined(HAVE_STRTOD_L)
-   loc = newlocale(LC_CTYPE_MASK, "C", NULL);
+   loc = newlocale(LC_NUMERIC_MASK, "C", NULL);
 #endif
 }
 
