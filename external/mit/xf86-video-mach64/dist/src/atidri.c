@@ -126,75 +126,6 @@ static void ATIDRISwapContext( ScreenPtr pScreen,
    }
 }
 
-#ifdef USE_XAA
-static void ATIDRITransitionTo2d(ScreenPtr pScreen)
-{
-   ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
-   ATIPtr pATI = ATIPTR(pScreenInfo);
-
-   if (pATI->backArea) {
-      xf86FreeOffscreenArea(pATI->backArea);
-      pATI->backArea = NULL;
-   }
-   if (pATI->depthTexArea) {
-      xf86FreeOffscreenArea(pATI->depthTexArea);
-      pATI->depthTexArea = NULL;
-   }
-   pATI->have3DWindows = FALSE;
-}
-
-static void ATIDRITransitionTo3d(ScreenPtr pScreen)
-{
-   ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
-   ATIPtr pATI = ATIPTR(pScreenInfo);
-   FBAreaPtr fbArea;
-   int width, height;
-
-   xf86PurgeUnlockedOffscreenAreas(pScreen);
-
-   xf86QueryLargestOffscreenArea(pScreen, &width, &height, 0, 0, 0);
-
-   xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
-	      "Largest offscreen area available: %d x %d\n",
-	      width, height);
-
-   fbArea = xf86AllocateOffscreenArea(pScreen, pScreenInfo->displayWidth,
-				      height - pATI->depthTexLines - 
-				      pATI->backLines,
-				      pScreenInfo->displayWidth, NULL, NULL, NULL);
-
-   if (!fbArea)
-      xf86DrvMsg(pScreen->myNum, X_ERROR, "Unable to reserve placeholder "
-		 "offscreen area, you might experience screen corruption\n");
-
-   if (!pATI->backArea) {
-      pATI->backArea = 
-	 xf86AllocateOffscreenArea(pScreen, pScreenInfo->displayWidth,
-				   pATI->backLines,
-				   pScreenInfo->displayWidth,
-				   NULL, NULL, NULL);
-   }
-   if (!pATI->backArea)
-      xf86DrvMsg(pScreen->myNum, X_ERROR, "Unable to reserve offscreen area "
-		 "for back buffer, you might experience screen corruption\n");
-
-   if (!pATI->depthTexArea) {
-      pATI->depthTexArea = 
-	 xf86AllocateOffscreenArea(pScreen, pScreenInfo->displayWidth,
-				   pATI->depthTexLines,
-				   pScreenInfo->displayWidth,
-				   NULL, NULL, NULL);
-   }
-   if (!pATI->depthTexArea)
-      xf86DrvMsg(pScreen->myNum, X_ERROR, "Unable to reserve offscreen area "
-		 "for depth buffer and textures, you might experience screen corruption\n");
-
-   if (fbArea)
-      xf86FreeOffscreenArea(fbArea);
-
-   pATI->have3DWindows = TRUE;
-}
-#endif /* USE_XAA */
 
 #ifdef USE_EXA
 static void ATIDRITransitionTo2d_EXA(ScreenPtr pScreen)
@@ -203,11 +134,11 @@ static void ATIDRITransitionTo2d_EXA(ScreenPtr pScreen)
    ATIPtr pATI = ATIPTR(pScreenInfo);
    ATIDRIServerInfoPtr pATIDRIServer = pATI->pDRIServerInfo;
 
-   exaEnableDisableFBAccess(SCREEN_ARG(pScreen), FALSE);
+   exaEnableDisableFBAccess(pScreen, FALSE);
 
    pATI->pExa->offScreenBase = pATIDRIServer->backOffset;
 
-   exaEnableDisableFBAccess(SCREEN_ARG(pScreen), TRUE);
+   exaEnableDisableFBAccess(pScreen, TRUE);
 
    pATI->have3DWindows = FALSE;
 }
@@ -218,12 +149,12 @@ static void ATIDRITransitionTo3d_EXA(ScreenPtr pScreen)
    ATIPtr pATI = ATIPTR(pScreenInfo);
    ATIDRIServerInfoPtr pATIDRIServer = pATI->pDRIServerInfo;
 
-   exaEnableDisableFBAccess(SCREEN_ARG(pScreen), FALSE);
+   exaEnableDisableFBAccess(pScreen, FALSE);
 
    pATI->pExa->offScreenBase = pATIDRIServer->textureOffset +
 			       pATIDRIServer->textureSize;
 
-   exaEnableDisableFBAccess(SCREEN_ARG(pScreen), TRUE);
+   exaEnableDisableFBAccess(pScreen, TRUE);
 
    pATI->have3DWindows = TRUE;
 }
@@ -232,59 +163,6 @@ static void ATIDRITransitionTo3d_EXA(ScreenPtr pScreen)
 /* Initialize the state of the back and depth buffers. */
 static void ATIDRIInitBuffers( WindowPtr pWin, RegionPtr prgn, CARD32 indx )
 {
-#ifdef USE_XAA
-   ScreenPtr   pScreen = pWin->drawable.pScreen;
-   ScrnInfoPtr pScreenInfo   = xf86ScreenToScrn(pScreen);
-   ATIPtr pATI = ATIPTR(pScreenInfo);
-   ATIDRIServerInfoPtr pATIDRIServer = pATI->pDRIServerInfo;
-   XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
-   BoxPtr      pbox, pboxSave;
-   int         nbox, nboxSave;
-   int         depth;
-
-   depth = 0x0000ffff;
-
-   if (!pXAAInfo)
-      return;
-
-   if (!pXAAInfo->SetupForSolidFill)
-      return;
-   
-   /* FIXME: Only initialize the back and depth buffers for contexts
-      that request them */
-
-   /* FIXME: Use drm clear? (see Radeon driver) */
-
-   pboxSave = pbox = REGION_RECTS(prgn);
-   nboxSave = nbox = REGION_NUM_RECTS(prgn);
-
-   (*pXAAInfo->SetupForSolidFill)(pScreenInfo, 0, GXcopy, (CARD32)(-1));
-   for (; nbox; nbox--, pbox++) {
-      (*pXAAInfo->SubsequentSolidFillRect)(pScreenInfo,
-					      pbox->x1 + pATIDRIServer->fbX,
-					      pbox->y1 + pATIDRIServer->fbY,
-					      pbox->x2 - pbox->x1,
-					      pbox->y2 - pbox->y1);
-      (*pXAAInfo->SubsequentSolidFillRect)(pScreenInfo,
-					      pbox->x1 + pATIDRIServer->backX,
-					      pbox->y1 + pATIDRIServer->backY,
-					      pbox->x2 - pbox->x1,
-					      pbox->y2 - pbox->y1);
-   }
-
-   pbox = pboxSave;
-   nbox = nboxSave;
-
-   (*pXAAInfo->SetupForSolidFill)(pScreenInfo, depth, GXcopy, (CARD32)(-1));
-   for (; nbox; nbox--, pbox++)
-      (*pXAAInfo->SubsequentSolidFillRect)(pScreenInfo,
-					      pbox->x1 + pATIDRIServer->depthX,
-					      pbox->y1 + pATIDRIServer->depthY,
-					      pbox->x2 - pbox->x1,
-					      pbox->y2 - pbox->y1);
-
-   ATIDRIMarkSyncInt(pScreenInfo);
-#endif
 }
 
 /* Copy the back and depth buffers when the X server moves a window.
@@ -299,172 +177,6 @@ static void ATIDRIInitBuffers( WindowPtr pWin, RegionPtr prgn, CARD32 indx )
 static void ATIDRIMoveBuffers( WindowPtr pWin, DDXPointRec ptOldOrg,
 			       RegionPtr prgnSrc, CARD32 indx )
 {
-#ifdef USE_XAA
-    ScreenPtr pScreen = pWin->drawable.pScreen;
-    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
-    ATIPtr pATI = ATIPTR(pScreenInfo);
-    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
-
-    int backOffsetPitch =  (((pATI->pDRIServerInfo->backPitch/8) << 22) |
-					   (pATI->pDRIServerInfo->backOffset >> 3));
-#if 0
-    int depthOffsetPitch = (((pATI->pDRIServerInfo->depthPitch/8) << 22) |
-					   (pATI->pDRIServerInfo->depthOffset >> 3));
-#endif
-    BoxPtr        pboxTmp, pboxNext, pboxBase;
-    DDXPointPtr   pptTmp;
-    int           xdir, ydir;
-
-    int           screenwidth = pScreenInfo->virtualX;
-    int           screenheight = pScreenInfo->virtualY;
-
-    BoxPtr        pbox     = REGION_RECTS(prgnSrc);
-    int           nbox     = REGION_NUM_RECTS(prgnSrc);
-
-    BoxPtr        pboxNew1 = NULL;
-    BoxPtr        pboxNew2 = NULL;
-    DDXPointPtr   pptNew1  = NULL;
-    DDXPointPtr   pptNew2  = NULL;
-    DDXPointPtr   pptSrc   = &ptOldOrg;
-
-    int           dx       = pWin->drawable.x - ptOldOrg.x;
-    int           dy       = pWin->drawable.y - ptOldOrg.y;
-
-   if (!pXAAInfo)
-      return;
-
-   if (!pXAAInfo->SetupForScreenToScreenCopy)
-      return;
-
-    /* FIXME: Only move the back and depth buffers for contexts
-     * that request them.
-     */
-
-    /* If the copy will overlap in Y, reverse the order */
-    if (dy > 0) {
-	ydir = -1;
-
-	if (nbox > 1) {
-	    /* Keep ordering in each band, reverse order of bands */
-	    pboxNew1 = (BoxPtr)malloc(sizeof(BoxRec)*nbox);
-	    if (!pboxNew1) return;
-	    pptNew1 = (DDXPointPtr)malloc(sizeof(DDXPointRec)*nbox);
-	    if (!pptNew1) {
-		free(pboxNew1);
-		return;
-	    }
-	    pboxBase = pboxNext = pbox+nbox-1;
-	    while (pboxBase >= pbox) {
-		while ((pboxNext >= pbox) && (pboxBase->y1 == pboxNext->y1))
-		    pboxNext--;
-		pboxTmp = pboxNext+1;
-		pptTmp  = pptSrc + (pboxTmp - pbox);
-		while (pboxTmp <= pboxBase) {
-		    *pboxNew1++ = *pboxTmp++;
-		    *pptNew1++  = *pptTmp++;
-		}
-		pboxBase = pboxNext;
-	    }
-	    pboxNew1 -= nbox;
-	    pbox      = pboxNew1;
-	    pptNew1  -= nbox;
-	    pptSrc    = pptNew1;
-	}
-    } else {
-	/* No changes required */
-	ydir = 1;
-    }
-
-    /* If the regions will overlap in X, reverse the order */
-    if (dx > 0) {
-	xdir = -1;
-
-	if (nbox > 1) {
-	    /* reverse order of rects in each band */
-	    pboxNew2 = (BoxPtr)malloc(sizeof(BoxRec)*nbox);
-	    pptNew2  = (DDXPointPtr)malloc(sizeof(DDXPointRec)*nbox);
-	    if (!pboxNew2 || !pptNew2) {
-		free(pptNew2);
-		free(pboxNew2);
-		free(pptNew1);
-		free(pboxNew1);
-		return;
-	    }
-	    pboxBase = pboxNext = pbox;
-	    while (pboxBase < pbox+nbox) {
-		while ((pboxNext < pbox+nbox)
-		       && (pboxNext->y1 == pboxBase->y1))
-		    pboxNext++;
-		pboxTmp = pboxNext;
-		pptTmp  = pptSrc + (pboxTmp - pbox);
-		while (pboxTmp != pboxBase) {
-		    *pboxNew2++ = *--pboxTmp;
-		    *pptNew2++  = *--pptTmp;
-		}
-		pboxBase = pboxNext;
-	    }
-	    pboxNew2 -= nbox;
-	    pbox      = pboxNew2;
-	    pptNew2  -= nbox;
-	    pptSrc    = pptNew2;
-	}
-    } else {
-	/* No changes are needed */
-	xdir = 1;
-    }
-
-    (*pXAAInfo->SetupForScreenToScreenCopy)(pScreenInfo, xdir, ydir, GXcopy,
-					       (CARD32)(-1), -1);
-
-    for (; nbox-- ; pbox++) {
-	int xa    = pbox->x1;
-	int ya    = pbox->y1;
-	int destx = xa + dx;
-	int desty = ya + dy;
-	int w     = pbox->x2 - xa + 1;
-	int h     = pbox->y2 - ya + 1;
-
-	if (destx < 0)                xa -= destx, w += destx, destx = 0;
-	if (desty < 0)                ya -= desty, h += desty, desty = 0;
-	if (destx + w > screenwidth)  w = screenwidth  - destx;
-	if (desty + h > screenheight) h = screenheight - desty;
-
-	if (w <= 0) continue;
-	if (h <= 0) continue;
-
-	ATIMach64WaitForFIFO(pATI, 2);
-	outf(SRC_OFF_PITCH, backOffsetPitch);
-	outf(DST_OFF_PITCH, backOffsetPitch);
-
-	(*pXAAInfo->SubsequentScreenToScreenCopy)(pScreenInfo,
-						     xa, ya,
-						     destx, desty,
-						     w, h);
-#if 0
-	/* FIXME: Move depth buffers? */
-	ATIMach64WaitForFIFO(pATI, 2);
-	outf(SRC_OFF_PITCH, depthOffsetPitch);
-	outf(DST_OFF_PITCH, depthOffsetPitch);
-
-	if (pATI->depthMoves)
-	    ATIScreenToScreenCopyDepth(pScreenInfo,
-					  xa, ya,
-					  destx, desty,
-					  w, h);
-#endif
-    }
-
-    ATIMach64WaitForFIFO(pATI, 2);
-    outf(SRC_OFF_PITCH, pATI->NewHW.dst_off_pitch);
-    outf(DST_OFF_PITCH, pATI->NewHW.src_off_pitch);
-
-    free(pptNew2);
-    free(pboxNew2);
-    free(pptNew1);
-    free(pboxNew1);
-
-    ATIDRIMarkSyncInt(pScreenInfo);
-#endif
 }
 
 /* Compute log base 2 of val. */
@@ -538,7 +250,7 @@ static Bool ATIDRISetAgpMode( ScreenPtr pScreen )
 
    mode &= ~AGP_MODE_MASK;
    switch ( pATIDRIServer->agpMode ) {
-   case 2:          mode |= AGP_MODE_2X;
+   case 2:          mode |= AGP_MODE_2X;	/* FALLTHROUGH */
    case 1: default: mode |= AGP_MODE_1X;
    }
 
@@ -1029,12 +741,11 @@ Bool ATIDRIScreenInit( ScreenPtr pScreen )
    if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
       pDRIInfo->busIdString = DRICreatePCIBusID(pATI->PCIInfo);
    } else {
-      pDRIInfo->busIdString = malloc( 64 );
-      sprintf( pDRIInfo->busIdString,
-	       "PCI:%d:%d:%d",
-	       PCI_DEV_BUS(pATI->PCIInfo),
-	       PCI_DEV_DEV(pATI->PCIInfo),
-	       PCI_DEV_FUNC(pATI->PCIInfo) );
+      XNFasprintf(&pDRIInfo->busIdString,
+                  "PCI:%d:%d:%d",
+                  PCI_DEV_BUS(pATI->PCIInfo),
+                  PCI_DEV_DEV(pATI->PCIInfo),
+                  PCI_DEV_FUNC(pATI->PCIInfo) );
    }
    pDRIInfo->ddxDriverMajorVersion = MACH64_VERSION_MAJOR;
    pDRIInfo->ddxDriverMinorVersion = MACH64_VERSION_MINOR;
@@ -1064,7 +775,7 @@ Bool ATIDRIScreenInit( ScreenPtr pScreen )
 	       (unsigned)(sizeof(XF86DRISAREARec) + sizeof(ATISAREAPrivRec)) );
    pDRIInfo->SAREASize = SAREA_MAX;
 
-   pATIDRI = (ATIDRIPtr) xnfcalloc( sizeof(ATIDRIRec), 1 );
+   pATIDRI = (ATIDRIPtr) XNFcallocarray( sizeof(ATIDRIRec), 1 );
    if ( !pATIDRI ) {
       DRIDestroyInfoRec( pATI->pDRIInfo );
       pATI->pDRIInfo = NULL;
@@ -1073,7 +784,7 @@ Bool ATIDRIScreenInit( ScreenPtr pScreen )
       return FALSE;
    }
    pATIDRIServer = (ATIDRIServerInfoPtr)
-      xnfcalloc( sizeof(ATIDRIServerInfoRec), 1 );
+      XNFcallocarray( sizeof(ATIDRIServerInfoRec), 1 );
    if ( !pATIDRIServer ) {
       free( pATIDRI );
       DRIDestroyInfoRec( pATI->pDRIInfo );
@@ -1094,12 +805,6 @@ Bool ATIDRIScreenInit( ScreenPtr pScreen )
    pDRIInfo->SwapContext	= ATIDRISwapContext;
    pDRIInfo->InitBuffers	= ATIDRIInitBuffers;
    pDRIInfo->MoveBuffers	= ATIDRIMoveBuffers;
-#ifdef USE_XAA
-   if (!pATI->useEXA) {
-      pDRIInfo->TransitionTo2d  = ATIDRITransitionTo2d;
-      pDRIInfo->TransitionTo3d  = ATIDRITransitionTo3d;
-   }
-#endif /* USE_XAA */
 #ifdef USE_EXA
    if (pATI->useEXA) {
       pDRIInfo->TransitionTo2d  = ATIDRITransitionTo2d_EXA;

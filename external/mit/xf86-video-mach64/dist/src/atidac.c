@@ -153,7 +153,6 @@ ATIDACPreInit
     ATIHWPtr    pATIHW
 )
 {
-    int Index, Index2;
     CARD8 maxColour = (1 << pATI->rgbBits) - 1;
 
     pATIHW->dac_read = pATIHW->dac_write = 0x00U;
@@ -163,9 +162,9 @@ ATIDACPreInit
      * Set colour lookup table.  The first entry has already been zeroed out.
      */
     if (pATI->depth > 8)
-        for (Index = 1;  Index < (NumberOf(pATIHW->lut) / 3);  Index++)
+        for (int Index = 1;  Index < (NumberOf(pATIHW->lut) / 3);  Index++)
         {
-            Index2 = Index * 3;
+            int Index2 = Index * 3;
             pATIHW->lut[Index2 + 0] =
                 pATIHW->lut[Index2 + 1] =
                 pATIHW->lut[Index2 + 2] = Index;
@@ -178,9 +177,9 @@ ATIDACPreInit
          * modes, this doesn't remain effective for very long...
          */
         pATIHW->lut[3] = pATIHW->lut[4] = pATIHW->lut[5] = 0xFFU;
-        for (Index = 2;  Index < (NumberOf(pATIHW->lut) / 3);  Index++)
+        for (int Index = 2;  Index < (NumberOf(pATIHW->lut) / 3);  Index++)
         {
-            Index2 = Index * 3;
+            int Index2 = Index * 3;
             pATIHW->lut[Index2 + 0] = maxColour;
             pATIHW->lut[Index2 + 1] = 0x00U;
             pATIHW->lut[Index2 + 2] = maxColour;
@@ -201,8 +200,6 @@ ATIDACSave
     ATIHWPtr pATIHW
 )
 {
-    int Index;
-
 #ifdef AVOID_CPIO
 
     pATIHW->dac_read = in8(M64_DAC_READ);
@@ -217,7 +214,7 @@ ATIDACSave
     DACDelay;
     out8(M64_DAC_READ, 0x00U);
     DACDelay;
-    for (Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
+    for (int Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
     {
         pATIHW->lut[Index] = in8(M64_DAC_DATA);
         DACDelay;
@@ -244,7 +241,7 @@ ATIDACSave
     DACDelay;
     outb(pATI->CPIO_DAC_READ, 0x00U);
     DACDelay;
-    for (Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
+    for (int Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
     {
         pATIHW->lut[Index] = inb(pATI->CPIO_DAC_DATA);
         DACDelay;
@@ -271,8 +268,6 @@ ATIDACSet
     ATIHWPtr pATIHW
 )
 {
-    int Index;
-
 #ifdef AVOID_CPIO
 
     /* Load DAC's colour lookup table */
@@ -280,7 +275,7 @@ ATIDACSet
     DACDelay;
     out8(M64_DAC_WRITE, 0x00U);
     DACDelay;
-    for (Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
+    for (int Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
     {
         out8(M64_DAC_DATA, pATIHW->lut[Index]);
         DACDelay;
@@ -302,7 +297,7 @@ ATIDACSet
     DACDelay;
     outb(pATI->CPIO_DAC_WRITE, 0x00U);
     DACDelay;
-    for (Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
+    for (int Index = 0;  Index < NumberOf(pATIHW->lut);  Index++)
     {
         outb(pATI->CPIO_DAC_DATA, pATIHW->lut[Index]);
         DACDelay;
@@ -375,7 +370,6 @@ ATILoadPalette
 {
     ATIPtr pATI = ATIPTR(pScreenInfo);
     CARD8  *LUTEntry;
-    int    i, j, Index;
 
     if (((pVisual->class | DynamicClass) == DirectColor) &&
         ((1 << pVisual->nplanes) > (SizeOf(pATI->NewHW.lut) / 3)))
@@ -404,8 +398,10 @@ ATILoadPalette
         if (minShift > blueShift)
             minShift = blueShift;
 
-        for (i = 0;  i < nColours;  i++)
+        for (int i = 0;  i < nColours;  i++)
         {
+            int    j, Index;
+
             if((Index = Indices[i]) < 0)
                 continue;
 
@@ -432,10 +428,10 @@ ATILoadPalette
         if (pScreenInfo->vtSema || pATI->currentMode)
         {
             /* Rewrite LUT entries that could have been changed */
-            i = 1 << minShift;
+            int i = 1 << minShift;
             LUTEntry = pATI->NewHW.lut;
 
-            for (Index = 0;
+            for (int Index = 0;
                  Index < (SizeOf(pATI->NewHW.lut) / 3);
                  Index += i, LUTEntry += i * 3)
                 if (fChanged[Index])
@@ -444,9 +440,9 @@ ATILoadPalette
     }
     else
     {
-        for (i = 0;  i < nColours;  i++)
+        for (int i = 0;  i < nColours;  i++)
         {
-            Index = Indices[i];
+            int Index = Indices[i];
             if ((Index < 0) || (Index >= (SizeOf(pATI->NewHW.lut) / 3)))
                 continue;
 

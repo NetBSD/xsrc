@@ -85,11 +85,10 @@ ATIAdjustPreInit
  * window.
  */
 void
-ATIAdjustFrame(ADJUST_FRAME_ARGS_DECL)
+ATIAdjustFrame(ScrnInfoPtr pScreenInfo, int x, int y)
 {
-    SCRN_INFO_PTR(arg);
     ATIPtr      pATI = ATIPTR(pScreenInfo);
-    int         Base, xy;
+    int         Base;
 
     /*
      * Assume the caller has already done its homework in ensuring the physical
@@ -111,7 +110,7 @@ ATIAdjustFrame(ADJUST_FRAME_ARGS_DECL)
          * Not in DGA.  This reverse-calculates pScreenInfo->frame[XY][01] so
          * that the cursor does not move on mode switches.
          */
-        xy = (Base << 3) / pATI->AdjustDepth;
+        int xy = (Base << 3) / pATI->AdjustDepth;
         pScreenInfo->frameX0 = xy % pATI->displayWidth;
         pScreenInfo->frameY0 = xy / pATI->displayWidth;
         pScreenInfo->frameX1 =

@@ -60,7 +60,7 @@ ATIModifyExtReg
     if (CurrentValue == NewValue)
         return;
 
-        ATIPutExtReg(Index, NewValue);
+    ATIPutExtReg(Index, NewValue);
 }
 
 #endif /* AVOID_CPIO */

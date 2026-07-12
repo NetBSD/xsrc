@@ -181,9 +181,7 @@ ATIClockCalculate
     DisplayModePtr pMode
 )
 {
-    int N, M, D;
-    int ClockSelect, N1, MinimumGap;
-    int Frequency, Multiple;            /* Used as temporaries */
+    int ClockSelect;
 
     /* Set default values */
     pATIHW->FeedbackDivider = pATIHW->ReferenceDivider = pATIHW->PostDivider = 0;
@@ -198,16 +196,19 @@ ATIClockCalculate
 
     {
         /* Generate clock programme word, using units of kHz */
-        MinimumGap = ((unsigned int)(-1)) >> 1;
+        int MinimumGap = ((unsigned int)(-1)) >> 1;
+        int Frequency, Multiple;            /* Used as temporaries */
 
         /* Loop through reference dividers */
-        for (M = pATI->ClockDescriptor.MinM;
+        for (int M = pATI->ClockDescriptor.MinM;
              M <= pATI->ClockDescriptor.MaxM;
              M++)
         {
             /* Loop through post-dividers */
-            for (D = 0;  D < pATI->ClockDescriptor.NumD;  D++)
+            for (int D = 0;  D < pATI->ClockDescriptor.NumD;  D++)
             {
+                int N, N1;
+
                 if (!pATI->ClockDescriptor.PostDividers[D])
                     continue;
 

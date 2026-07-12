@@ -74,16 +74,6 @@
 #ifdef USE_EXA
 extern CARD8 ATIMach64ALU[];
 
-extern void
-ATIMach64ValidateClip
-(
-    ATIPtr pATI,
-    int sc_left,
-    int sc_right,
-    int sc_top,
-    int sc_bottom
-);
-
 #if 0
 #define MACH64_TRACE(x)				\
 do {						\
@@ -420,8 +410,6 @@ Mach64SetupMemEXA(ScreenPtr pScreen)
     int cpp = (pScreenInfo->bitsPerPixel + 7) / 8;
     /* front and back buffer */
     int bufferSize = pScreenInfo->virtualY * pScreenInfo->displayWidth * cpp;
-    /* always 16-bit z-buffer */
-    int depthSize  = pScreenInfo->virtualY * pScreenInfo->displayWidth * 2;
 
     ExaDriverPtr pExa = pATI->pExa;
 
@@ -438,6 +426,9 @@ Mach64SetupMemEXA(ScreenPtr pScreen)
 	int textureSize = 0;
 	int pixmapCache = 0;
 	int next = 0;
+
+	/* always 16-bit z-buffer */
+	int depthSize  = pScreenInfo->virtualY * pScreenInfo->displayWidth * 2;
 
 	/* front buffer */
 	pATIDRIServer->frontOffset = 0;

@@ -29,17 +29,23 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the 'strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the 'strlcpy' function. */
+#undef HAVE_STRLCPY
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the 'timingsafe_memcmp' function. */
+#undef HAVE_TIMINGSAFE_MEMCMP
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the <xaa.h> header file. */
-#undef HAVE_XAA_H
 
 /* xextproto 7.1 available */
 #undef HAVE_XEXTPROTO_71
@@ -77,7 +83,7 @@
 /* Patch version of this package */
 #undef PACKAGE_VERSION_PATCHLEVEL
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -87,9 +93,6 @@
 
 /* Build support for Exa */
 #undef USE_EXA
-
-/* Build support for XAA */
-#undef USE_XAA
 
 /* Version number of package */
 #undef VERSION

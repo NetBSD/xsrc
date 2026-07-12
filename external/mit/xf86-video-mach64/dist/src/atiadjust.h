@@ -26,6 +26,6 @@
 #include "atipriv.h"
 
 extern void ATIAdjustPreInit(ATIPtr);
-extern void ATIAdjustFrame(ADJUST_FRAME_ARGS_DECL);
+extern void ATIAdjustFrame(ScrnInfoPtr pScrn, int x, int y);
 
 #endif /* ___ATIADJUST_H___ */

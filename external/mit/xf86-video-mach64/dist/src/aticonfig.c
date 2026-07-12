@@ -262,7 +262,7 @@ ATIProcessOptions
     ATIPtr      pATI
 )
 {
-    OptionInfoPtr PublicOption = xnfalloc(ATIPublicOptionSize);
+    OptionInfoPtr PublicOption = XNFalloc(ATIPublicOptionSize);
     OptionInfoRec PrivateOption[] =
     {
         {                       /* ON:  Let BIOS change display(s) */
@@ -403,10 +403,9 @@ ATIProcessOptions
 	xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
                 "TV Out not supported for this chip.\n");
     } else {
-	ATITVStandard std;
 	pATI->OptionTvOut = TvOut;
 	pATI->OptionTvStd = ATI_TV_STD_INVALID;
-	for (std = 0; std < ATI_TV_STDS_MAX_VALID; std++) {
+	for (ATITVStandard std = 0; std < ATI_TV_STDS_MAX_VALID; std++) {
 	    if (std != ATI_TV_STD_RESERVED1 && std != ATI_TV_STD_RESERVED2) {
 		if (strncasecmp(TvStd, ATITVStandardNames[std], ATI_TV_STDS_NAME_MAXLEN)==0) {
 		    pATI->OptionTvStd = std;
@@ -482,20 +481,11 @@ ATIProcessOptions
     {
         MessageType from = X_DEFAULT;
 #if defined(USE_EXA)
-#if defined(USE_XAA)
-        if (AccelMethod != NULL)
-        {
-            from = X_CONFIG;
-            if (xf86NameCmp(AccelMethod, "EXA") == 0)
-                pATI->useEXA = TRUE;
-        }
-#else /* USE_XAA */
         pATI->useEXA = TRUE;
-#endif /* !USE_XAA */
 #endif /* USE_EXA */
         xf86DrvMsg(pScreenInfo->scrnIndex, from,
             "Using %s acceleration architecture\n",
-            pATI->useEXA ? "EXA" : "XAA");
+            pATI->useEXA ? "EXA" : "no");
 
 #if defined(USE_EXA)
         if (pATI->useEXA && pATI->Chip >= ATI_CHIP_264GTPRO)

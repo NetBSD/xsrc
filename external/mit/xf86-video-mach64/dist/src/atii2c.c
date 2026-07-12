@@ -226,13 +226,12 @@ ATII2CPutByte
     I2CBusPtr pI2CBus = pI2CDev->pI2CBus;
     ATII2CPtr pATII2C = pI2CBus->DriverPrivate.ptr;
     ATIPtr    pATI    = pATII2C->pATI;
-    int       i;
     Bool      Result;
 
     ATII2CSDADirOn;             /* Set data line direction to out-bound */
 
     /* Send data byte */
-    for (i = 0;  i < 8;  i++)
+    for (int i = 0;  i < 8;  i++)
     {
         ATII2CSDABitSet(Data & 0x80U);
         ATII2CSCLBitOn;
@@ -315,11 +314,11 @@ ATICreateI2CBusRec
 (
     int    iScreen,
     ATIPtr pATI,
-    char   *BusName
+    const char *BusName
 )
 {
     I2CBusPtr pI2CBus;
-    ATII2CPtr pATII2C = xnfcalloc(1, SizeOf(ATII2CRec));
+    ATII2CPtr pATII2C = XNFcallocarray(1, SizeOf(ATII2CRec));
 
     if (!(pI2CBus = xf86CreateI2CBusRec()))
     {
@@ -381,15 +380,14 @@ ATII2CFreeScreen
     int iScreen
 )
 {
-    I2CBusPtr pI2CBus, *ppI2CBus;
-    ATII2CPtr pATII2C;
+    I2CBusPtr *ppI2CBus;
     int nI2CBus;
 
     nI2CBus = xf86I2CGetScreenBuses(iScreen, &ppI2CBus);
     while (--nI2CBus >= 0)
     {
-        pI2CBus = ppI2CBus[nI2CBus];
-        pATII2C = pI2CBus->DriverPrivate.ptr;
+        I2CBusPtr pI2CBus = ppI2CBus[nI2CBus];
+        ATII2CPtr pATII2C = pI2CBus->DriverPrivate.ptr;
 
         xf86DestroyI2CBusRec(pI2CBus, TRUE, TRUE);
         free(pATII2C);

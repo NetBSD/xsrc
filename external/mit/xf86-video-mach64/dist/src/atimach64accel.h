@@ -24,10 +24,6 @@
 #define ___ATIMACH64ACCEL_H___ 1
 
 #include "atipriv.h"
-
-#ifdef HAVE_XAA_H
-#include "xaa.h"
-#endif
 #include "exa.h"
 
 #define ATIMach64MaxX  4095
@@ -35,9 +31,6 @@
 
 #ifdef USE_EXA
 extern Bool ATIMach64ExaInit(ScreenPtr);
-#endif
-#ifdef USE_XAA
-extern Bool ATIMach64AccelInit(ScreenPtr);
 #endif
 extern void ATIMach64Sync(ScrnInfoPtr);
 

@@ -62,9 +62,7 @@ ATICopyVGAMemory
     pointer  *to
 )
 {
-    unsigned int iBank;
-
-    for (iBank = 0;  iBank < pATIHW->nBank;  iBank++)
+    for (unsigned int iBank = 0;  iBank < pATIHW->nBank;  iBank++)
     {
         (*pATIHW->SetBank)(pATI, iBank);
         (void)memcpy(*to, *from, 0x00010000U);
@@ -88,7 +86,6 @@ ATISwap
 )
 {
     pointer save, *from, *to;
-    unsigned int iPlane = 0, PlaneMask = 1;
     CARD8 seq2, seq4, gra1, gra3, gra4, gra5, gra6, gra8;
 
     /*
@@ -188,6 +185,8 @@ ATISwap
     }
     else
     {
+        unsigned int iPlane = 0, PlaneMask = 1;
+
         gra4 = GetReg(GRAX, 0x04U);
 
         /* Setup planar mode memory */
@@ -1009,9 +1008,9 @@ ATIModeSet
                      Index++)
                     PutReg(CRTX(pATI->CPIO_VGABase), Index,
                         pATIHW->shadow_vga[Index]);
-                /* Fall through */
 
 #endif /* AVOID_CPIO */
+                /* Fall through */
 
             case ATI_CRTC_MACH64:
                 outr(CRTC_H_TOTAL_DISP, pATIHW->shadow_h_total_disp);

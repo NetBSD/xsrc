@@ -248,20 +248,6 @@ ATIMach64PreInit
         pATIHW->src_cntl = SRC_LINE_X_DIR;
 
         /* Initialise scissor, allowing for offscreen areas */
-#ifdef USE_XAA
-        if (!pATI->useEXA)
-        {
-            int width, height, total;
-
-            pATIHW->sc_right = (pATI->displayWidth * pATI->XModifier) - 1;
-            width = pATI->displayWidth * pATI->bitsPerPixel;
-            total = pScreenInfo->videoRam * (1024 * 8);
-            height = (total + width - 1) / width;
-            if (height > ATIMach64MaxY + 1)
-                height = ATIMach64MaxY + 1;
-            pATIHW->sc_bottom = height - 1;
-        }
-#endif /* USE_XAA */
 
 #ifdef USE_EXA
         if (pATI->useEXA)

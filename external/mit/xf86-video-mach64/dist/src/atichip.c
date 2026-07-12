@@ -57,6 +57,7 @@ ATIMach64ChipID
     {
         case OldChipID('G', 'X'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'X'):
             switch (pATI->ChipRev)
             {
@@ -84,12 +85,14 @@ ATIMach64ChipID
 
         case OldChipID('C', 'X'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('C', 'X'):
             pATI->Chip = ATI_CHIP_88800CX;
             break;
 
         case OldChipID('C', 'T'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('C', 'T'):
             pATI->Chip = ATI_CHIP_264CT;
             pATI->BusType = ATI_BUS_PCI;
@@ -97,6 +100,7 @@ ATIMach64ChipID
 
         case OldChipID('E', 'T'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('E', 'T'):
             pATI->Chip = ATI_CHIP_264ET;
             pATI->BusType = ATI_BUS_PCI;
@@ -104,6 +108,7 @@ ATIMach64ChipID
 
         case OldChipID('V', 'T'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('V', 'T'):
             pATI->Chip = ATI_CHIP_264VT;
             pATI->BusType = ATI_BUS_PCI;
@@ -124,6 +129,7 @@ ATIMach64ChipID
 
         case OldChipID('G', 'T'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'T'):
             pATI->BusType = ATI_BUS_PCI;
             if (!pATI->ChipVersion)
@@ -134,6 +140,7 @@ ATIMach64ChipID
 
         case OldChipID('V', 'U'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('V', 'U'):
             pATI->Chip = ATI_CHIP_264VT3;
             pATI->BusType = ATI_BUS_PCI;
@@ -141,6 +148,7 @@ ATIMach64ChipID
 
         case OldChipID('G', 'U'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'U'):
             pATI->Chip = ATI_CHIP_264GTDVD;
             pATI->BusType = ATI_BUS_PCI;
@@ -148,6 +156,7 @@ ATIMach64ChipID
 
         case OldChipID('L', 'G'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('L', 'G'):
             pATI->Chip = ATI_CHIP_264LT;
             pATI->BusType = ATI_BUS_PCI;
@@ -155,6 +164,7 @@ ATIMach64ChipID
 
         case OldChipID('V', 'V'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('V', 'V'):
             pATI->Chip = ATI_CHIP_264VT4;
             pATI->BusType = ATI_BUS_PCI;
@@ -163,6 +173,7 @@ ATIMach64ChipID
         case OldChipID('G', 'V'):
         case OldChipID('G', 'Y'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'V'):
         case NewChipID('G', 'Y'):
             pATI->Chip = ATI_CHIP_264GT2C;
@@ -172,6 +183,7 @@ ATIMach64ChipID
         case OldChipID('G', 'W'):
         case OldChipID('G', 'Z'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'W'):
         case NewChipID('G', 'Z'):
             pATI->Chip = ATI_CHIP_264GT2C;
@@ -182,6 +194,7 @@ ATIMach64ChipID
         case OldChipID('G', 'P'):
         case OldChipID('G', 'Q'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'I'):
         case NewChipID('G', 'P'):
         case NewChipID('G', 'Q'):
@@ -192,6 +205,7 @@ ATIMach64ChipID
         case OldChipID('G', 'B'):
         case OldChipID('G', 'D'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'B'):
         case NewChipID('G', 'D'):
             pATI->Chip = ATI_CHIP_264GTPRO;
@@ -202,6 +216,7 @@ ATIMach64ChipID
         case OldChipID('L', 'P'):
         case OldChipID('L', 'Q'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('L', 'I'):
         case NewChipID('L', 'P'):
         case NewChipID('L', 'Q'):
@@ -213,6 +228,7 @@ ATIMach64ChipID
         case OldChipID('L', 'B'):
         case OldChipID('L', 'D'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('L', 'B'):
         case NewChipID('L', 'D'):
             pATI->Chip = ATI_CHIP_264LTPRO;
@@ -225,6 +241,7 @@ ATIMach64ChipID
         case OldChipID('G', 'R'):
         case OldChipID('G', 'S'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'L'):
         case NewChipID('G', 'O'):
         case NewChipID('G', 'R'):
@@ -237,6 +254,7 @@ ATIMach64ChipID
         case OldChipID('G', 'M'):
         case OldChipID('G', 'N'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('G', 'M'):
         case NewChipID('G', 'N'):
             pATI->Chip = ATI_CHIP_264XL;
@@ -247,6 +265,7 @@ ATIMach64ChipID
         case OldChipID('L', 'R'):
         case OldChipID('L', 'S'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('L', 'R'):
         case NewChipID('L', 'S'):
             pATI->Chip = ATI_CHIP_MOBILITY;
@@ -257,6 +276,7 @@ ATIMach64ChipID
         case OldChipID('L', 'M'):
         case OldChipID('L', 'N'):
             pATI->ChipType = OldToNewChipID(pATI->ChipType);
+            /* FALLTHROUGH */
         case NewChipID('L', 'M'):
         case NewChipID('L', 'N'):
             pATI->Chip = ATI_CHIP_MOBILITY;

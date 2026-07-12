@@ -70,10 +70,9 @@ BitsSet
     unsigned long data
 )
 {
-    unsigned long mask = 1;
     int           set  = 0;
 
-    for (;  mask;  mask <<= 1)
+    for (unsigned long mask = 1;  mask;  mask <<= 1)
         if (data & mask)
             set++;
 
@@ -131,7 +130,7 @@ ATIDGASetMode
         return FALSE;
     if (!pDGAMode)
         pATI->currentMode = NULL;
-    (*pScreenInfo->AdjustFrame)(ADJUST_FRAME_ARGS(pScreenInfo, frameX0, frameY0));
+    (*pScreenInfo->AdjustFrame)(pScreenInfo, frameX0, frameY0);
 
     return TRUE;
 }
@@ -150,7 +149,7 @@ ATIDGASetViewport
     int         flags
 )
 {
-    (*pScreenInfo->AdjustFrame)(ADJUST_FRAME_ARGS(pScreenInfo, x, y));
+    (*pScreenInfo->AdjustFrame)(pScreenInfo, x, y);
 }
 
 /*
@@ -168,111 +167,6 @@ ATIDGAGetViewport
     return 0;   /* There are never any pending requests */
 }
 
-/*
- * ATIDGAFillRect --
- *
- * This function calls XAA solid fill primitives to fill a rectangle.
- */
-static void
-ATIDGAFillRect
-(
-    ScrnInfoPtr   pScreenInfo,
-    int           x,
-    int           y,
-    int           w,
-    int           h,
-    unsigned long colour
-)
-{
-    ATIPtr        pATI     = ATIPTR(pScreenInfo);
-/*FIXME : use EXA if available */
-#ifdef USE_XAA
-    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
-
-    (*pXAAInfo->SetupForSolidFill)(pScreenInfo, (int)colour, GXcopy,
-                                   (CARD32)(~0));
-    (*pXAAInfo->SubsequentSolidFillRect)(pScreenInfo, x, y, w, h);
-
-    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
-        SET_SYNC_FLAG(pXAAInfo);
-#endif
-}
-
-/*
- * ATIDGABlitRect --
- *
- * This function calls XAA screen-to-screen copy primitives to copy a
- * rectangle.
- */
-static void
-ATIDGABlitRect
-(
-    ScrnInfoPtr pScreenInfo,
-    int         xSrc,
-    int         ySrc,
-    int         w,
-    int         h,
-    int         xDst,
-    int         yDst
-)
-{
-    ATIPtr        pATI     = ATIPTR(pScreenInfo);
-/*FIXME : use EXA if available */
-#ifdef USE_XAA
-    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
-    int           xdir     = ((xSrc < xDst) && (ySrc == yDst)) ? -1 : 1;
-    int           ydir     = (ySrc < yDst) ? -1 : 1;
-
-    (*pXAAInfo->SetupForScreenToScreenCopy)(pScreenInfo,
-        xdir, ydir, GXcopy, (CARD32)(~0), -1);
-    (*pXAAInfo->SubsequentScreenToScreenCopy)(pScreenInfo,
-        xSrc, ySrc, xDst, yDst, w, h);
-
-    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
-        SET_SYNC_FLAG(pXAAInfo);
-#endif
-}
-
-/*
- * ATIDGABlitTransRect --
- *
- * This function calls XAA screen-to-screen copy primitives to transparently
- * copy a rectangle.
- */
-static void
-ATIDGABlitTransRect
-(
-    ScrnInfoPtr   pScreenInfo,
-    int           xSrc,
-    int           ySrc,
-    int           w,
-    int           h,
-    int           xDst,
-    int           yDst,
-    unsigned long colour
-)
-{
-    ATIPtr        pATI     = ATIPTR(pScreenInfo);
-/*FIXME : use EXA if available */
-#ifdef USE_XAA
-    XAAInfoRecPtr pXAAInfo = pATI->pXAAInfo;
-    int           xdir     = ((xSrc < xDst) && (ySrc == yDst)) ? -1 : 1;
-    int           ydir     = (ySrc < yDst) ? -1 : 1;
-
-    pATI->XAAForceTransBlit = TRUE;
-
-    (*pXAAInfo->SetupForScreenToScreenCopy)(pScreenInfo,
-        xdir, ydir, GXcopy, (CARD32)(~0), (int)colour);
-
-    pATI->XAAForceTransBlit = FALSE;
-
-    (*pXAAInfo->SubsequentScreenToScreenCopy)(pScreenInfo,
-        xSrc, ySrc, xDst, yDst, w, h);
-
-    if (pScreenInfo->bitsPerPixel == pATI->bitsPerPixel)
-        SET_SYNC_FLAG(pXAAInfo);
-#endif
-}
 
 /*
  * ATIDGAAddModes --
@@ -341,10 +235,6 @@ ATIDGAAddModes
                     pDGAMode->flags |= DGA_PIXMAP_AVAILABLE;
                     pDGAMode->address = pATI->pMemory;
 
-#ifdef USE_XAA
-                    if (pATI->pXAAInfo)
-                        pDGAMode->flags &= ~DGA_CONCURRENT_ACCESS;
-#endif
                 }
                 if ((pMode->Flags & V_DBLSCAN) || (pMode->VScan > 1))
                     pDGAMode->flags |= DGA_DOUBLESCAN;
@@ -405,9 +295,6 @@ ATIDGAInit
     ATIPtr      pATI
 )
 {
-#ifdef USE_XAA
-    XAAInfoRecPtr pXAAInfo;
-#endif
     int           flags;
 
     if (!pATI->nDGAMode)
@@ -419,25 +306,6 @@ ATIDGAInit
         pATI->ATIDGAFunctions.GetViewport     = ATIDGAGetViewport;
 
         flags = 0;
-#ifdef USE_XAA
-        if ((pXAAInfo = pATI->pXAAInfo))
-        {
-            pATI->ATIDGAFunctions.Sync = pXAAInfo->Sync;
-            if (pXAAInfo->SetupForSolidFill &&
-                pXAAInfo->SubsequentSolidFillRect)
-            {
-                flags |= DGA_FILL_RECT;
-                pATI->ATIDGAFunctions.FillRect = ATIDGAFillRect;
-            }
-            if (pXAAInfo->SetupForScreenToScreenCopy &&
-                pXAAInfo->SubsequentScreenToScreenCopy)
-            {
-                flags |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
-                pATI->ATIDGAFunctions.BlitRect      = ATIDGABlitRect;
-                pATI->ATIDGAFunctions.BlitTransRect = ATIDGABlitTransRect;
-            }
-        }
-#endif
         if (!flags)
             flags = DGA_CONCURRENT_ACCESS;
 

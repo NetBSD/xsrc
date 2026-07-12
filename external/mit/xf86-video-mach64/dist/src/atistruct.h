@@ -55,14 +55,8 @@
 #ifdef USE_EXA
 #include "exa.h"
 #endif
-#ifdef USE_XAA
-#include "xaa.h"
-#endif
 #include "xf86Cursor.h"
 #include "xf86Pci.h"
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
-#include "xf86Resources.h"
-#endif
 
 #include "atipcirename.h"
 
@@ -314,14 +308,11 @@ typedef struct _ATIRec
     unsigned long Block0Base, Block1Base;
 
     /*
-     * XAA interface.
+     * EXA interface.
      */
     Bool useEXA;
 #ifdef USE_EXA
     ExaDriverPtr pExa;
-#endif
-#ifdef USE_XAA
-    XAAInfoRecPtr pXAAInfo;
 #endif
     int nAvailableFIFOEntries, nFIFOEntries, nHostFIFOEntries;
     CARD8 EngineIsBusy, EngineIsLocked, XModifier;
@@ -329,10 +320,6 @@ typedef struct _ATIRec
     CARD32 sc_left_right, sc_top_bottom;
     CARD16 sc_left, sc_right, sc_top, sc_bottom;        /* Current scissors */
     pointer pHOST_DATA; /* Current HOST_DATA_* transfer window address */
-#ifdef USE_XAA
-    CARD32 *ExpansionBitmapScanlinePtr[2];
-    int ExpansionBitmapWidth;
-#endif
 #ifdef USE_EXA
     Bool RenderAccelEnabled;
     Mach64ContextRegs3D m3d;
@@ -400,20 +387,13 @@ typedef struct _ATIRec
     DGAFunctionRec ATIDGAFunctions;
     int nDGAMode;
 
-    /*
-     * XAAForceTransBlit alters the behavior of 'SetupForScreenToScreenCopy',
-     * such that ~0 is interpreted as a legitimate transparency key.
-     */
-    CARD8 XAAForceTransBlit;
-
 #endif /* AVOID_DGA */
 
     /*
      * XVideo-related data.
      */
     DevUnion XVPortPrivate[1];
-    pointer pXVBuffer;		/* USE_EXA: ExaOffscreenArea*
-				   USE_XAA: FBLinearPtr */
+    pointer pXVBuffer;		/* USE_EXA: ExaOffscreenArea */
     RegionRec VideoClip;
     int SurfacePitch, SurfaceOffset;
     CARD8 AutoPaint, DoubleBuffer, CurrentBuffer, ActiveSurface;
@@ -502,12 +482,6 @@ typedef struct _ATIRec
     Bool have3DWindows;
                                                                                 
     /* offscreen memory management */
-#ifdef USE_XAA
-    int               backLines;
-    FBAreaPtr         backArea;
-    int               depthTexLines;
-    FBAreaPtr         depthTexArea;
-#endif
     CARD8 OptionIsPCI;           /* Force PCI mode */
     CARD8 OptionDMAMode;         /* async, sync, mmio */
     CARD8 OptionAGPMode;         /* AGP mode */

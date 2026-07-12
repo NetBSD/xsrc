@@ -819,7 +819,6 @@ Mach64Composite
         int y;
     } srcvert[4];
     float dxy = 0.0, dwh = 0.0;
-    int i;
 
     ATIDRISync(pScreenInfo);
 
@@ -843,7 +842,7 @@ Mach64Composite
     srcvert[3].x = srcX;
     srcvert[3].y = srcY + h;
     if (m3d->transform) {
-        for (i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             v.vector[0] = IntToxFixed(srcvert[i].x);
             v.vector[1] = IntToxFixed(srcvert[i].y);
             v.vector[2] = xFixed1;
