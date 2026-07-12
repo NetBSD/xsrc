@@ -34,6 +34,7 @@
 #include <stdio.h>
 
 #ifdef HAVE_DEV_WSCONS_WSCONSIO_H
+#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #endif
@@ -53,15 +54,6 @@
 #include "r128.h"
 #include "r128_probe.h"
 #include "r128_reg.h"
-#include "xf86Priv.h"
-#include "xf86Privstr.h"
-
-#ifdef __NetBSD__
-#include <sys/time.h>
-#include <sys/ioctl.h>
-#include <dev/wscons/wsconsio.h>
-#endif
-
 
 static void R128ConnectorFindMonitor(ScrnInfoPtr pScrn, xf86OutputPtr output);
 
