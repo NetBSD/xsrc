@@ -709,7 +709,7 @@ char *yytext;
 #include <stdlib.h>
 #include "gram.h"
 #include "constants.h"
-#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__)
+#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT)
 int yylineno;
 #endif
 #line 715 "lex.c"
