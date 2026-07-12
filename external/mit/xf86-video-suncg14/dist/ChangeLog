@@ -1,3 +1,123 @@
+commit 0a25ddf389dfdd9364d944e16aa4b394fe82e3f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 5 11:30:23 2025 -0800
+
+    xf86-video-suncg14 1.2.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 471e04fe84abaf2f868fb85566d99495142692a9
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue May 14 16:03:37 2024 +0200
+
+    drop compat with ancient xservers
+    
+    We're relying on at least 1.18 now.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-suncg14/-/merge_requests/8>
+
+commit e34ad1626bc975d63afc39c400db9a4ab7268a99
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Tue May 14 16:02:55 2024 +0200
+
+    bump minimal xorg version to 1.18
+    
+    1.18 was released a decade ago, so it seems reasonable stop supporting
+    older ones.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-suncg14/-/merge_requests/8>
+
+commit 6eb5c1640e6b7065d1df57050fe056635d85935a
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 8 16:59:17 2024 +0200
+
+    use XNFcallocarray() instead of xnfcalloc macro
+    
+    xnfcalloc is just an alias for XNFcallocarray() that doesn't seem to serve
+    any practical purpose, so it can go away once all drivers stopped using it.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-suncg14/-/merge_requests/7>
+
+commit 896da557444e70237e599725dbe6d58e86047da8
+Author: nia <nia@NetBSD.org>
+Date:   Fri May 3 12:11:39 2024 +0200
+
+    Sync unaccelerated code with NetBSD
+    
+    Adds support for more bit depths, screen blanking from Michael Lorenz.
+    
+    NetBSD also has hardware cursor, acceleration, and shadow fb
+    support for this hardware, but it's a more complicated merge
+    and something for later (the code also needs to be cleaned up
+    for multi-depth support).
+    
+    NetBSD may actually be the last consumer of this driver.
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-suncg14/-/merge_requests/6>
+
+commit e94a73e4e2d60f12c2698b10b1f1eb8d425ef72e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:44:21 2024 -0800
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cc4113a11c8214bb23844716ec22e310b444af07
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:39:58 2024 -0800
+
+    Fix warning: variable ‘pCg14’ set but not used [-Wunused-but-set-variable]
+    
+    cg14_driver.c: In function ‘CG14FreeRec’:
+    cg14_driver.c:165:13: warning: variable ‘pCg14’ set but not used [-Wunused-but-set-variable]
+      165 |     Cg14Ptr pCg14;
+          |             ^~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5831d0db76c60d4199ace375fa7d55179c3e3ce5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:38:33 2024 -0800
+
+    Add X.Org's standard C warning flags to AM_CFLAGS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0be28743294e74f9a3ce6d17716a3d51551718ee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 15 11:33:07 2024 -0800
+
+    configure: Use LT_INIT from libtool 2 instead of deprecated AC_PROG_LIBTOOL
+    
+    AC_PROG_LIBTOOL was replaced by LT_INIT in libtool 2 in 2008,
+    so it's time to rely on it.
+    
+    Clears autoconf warnings:
+    
+    configure.ac:45: warning: The macro 'AC_PROG_LIBTOOL' is obsolete.
+    configure.ac:45: You should run autoupdate.
+    aclocal.m4:3551: AC_PROG_LIBTOOL is expanded from...
+    configure.ac:45: the top level
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 07f3fbcdb1d80926def9b3079ff2f35588668150
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 1 11:17:31 2023 -0700
+
+    gitlab CI: ensure libtool is installed in build container
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 302c058b4a8193780b06650dcb281083e6765d0e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Dec 9 14:56:20 2022 -0800
@@ -494,7 +614,7 @@ Date:   Fri Jul 29 21:22:45 2005 +0000
     - Update modular Xorg version
 
 commit 30a6797409b856a32adc00266080cc10f8d89663
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 26 23:06:30 2005 +0000
 
     Build system for suncg14
