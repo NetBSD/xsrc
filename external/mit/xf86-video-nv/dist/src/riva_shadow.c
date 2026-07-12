@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 1999,  The XFree86 Project Inc. 
+   Copyright (c) 1999,  The XFree86 Project Inc.
    Written by Mark Vojkovich <markv@valinux.com>
 */
 
@@ -20,14 +20,14 @@ RivaRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     RivaPtr pRiva = RivaPTR(pScrn);
     int width, height, Bpp, FBPitch;
     unsigned char *src, *dst;
-   
+
     Bpp = pScrn->bitsPerPixel >> 3;
     FBPitch = BitmapBytePad(pScrn->displayWidth * pScrn->bitsPerPixel);
 
     while(num--) {
 	width = (pbox->x2 - pbox->x1) * Bpp;
 	height = pbox->y2 - pbox->y1;
-	src = pRiva->ShadowPtr + (pbox->y1 * pRiva->ShadowPitch) + 
+	src = pRiva->ShadowPtr + (pbox->y1 * pRiva->ShadowPitch) +
 						(pbox->x1 * Bpp);
 	dst = pRiva->FbStart + (pbox->y1 * FBPitch) + (pbox->x1 * Bpp);
 
@@ -36,10 +36,10 @@ RivaRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	    dst += FBPitch;
 	    src += pRiva->ShadowPitch;
 	}
-	
+
 	pbox++;
     }
-} 
+}
 
 void
 RivaPointerMoved(SCRN_ARG_TYPE arg, int x, int y)
@@ -77,11 +77,11 @@ RivaRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = (y2 - y1) >> 2;  /* in dwords */
 
 	if(pRiva->Rotate == 1) {
-	    dstPtr = pRiva->FbStart + 
+	    dstPtr = pRiva->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - y2;
 	    srcPtr = pRiva->ShadowPtr + ((1 - y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = pRiva->FbStart + 
+	    dstPtr = pRiva->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + y1;
 	    srcPtr = pRiva->ShadowPtr + (y1 * srcPitch) + pbox->x2 - 1;
 	}
@@ -91,8 +91,8 @@ RivaRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	    dst = (CARD32*)dstPtr;
 	    count = height;
 	    while(count--) {
-		*(dst++) = src[0] | (src[srcPitch] << 8) | 
-					(src[srcPitch * 2] << 16) | 
+		*(dst++) = src[0] | (src[srcPitch] << 8) |
+					(src[srcPitch * 2] << 16) |
 					(src[srcPitch * 3] << 24);
 		src += srcPitch * 4;
 	    }
@@ -102,7 +102,7 @@ RivaRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 
 	pbox++;
     }
-} 
+}
 
 
 void
@@ -123,14 +123,14 @@ RivaRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = (y2 - y1) >> 1;  /* in dwords */
 
 	if(pRiva->Rotate == 1) {
-	    dstPtr = (CARD16*)pRiva->FbStart + 
+	    dstPtr = (CARD16*)pRiva->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - y2;
-	    srcPtr = (CARD16*)pRiva->ShadowPtr + 
+	    srcPtr = (CARD16*)pRiva->ShadowPtr +
 			((1 - y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = (CARD16*)pRiva->FbStart + 
+	    dstPtr = (CARD16*)pRiva->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + y1;
-	    srcPtr = (CARD16*)pRiva->ShadowPtr + 
+	    srcPtr = (CARD16*)pRiva->ShadowPtr +
 			(y1 * srcPitch) + pbox->x2 - 1;
 	}
 
@@ -166,14 +166,14 @@ RivaRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = pbox->y2 - pbox->y1;
 
 	if(pRiva->Rotate == 1) {
-	    dstPtr = (CARD32*)pRiva->FbStart + 
+	    dstPtr = (CARD32*)pRiva->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - pbox->y2;
-	    srcPtr = (CARD32*)pRiva->ShadowPtr + 
+	    srcPtr = (CARD32*)pRiva->ShadowPtr +
 			((1 - pbox->y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = (CARD32*)pRiva->FbStart + 
+	    dstPtr = (CARD32*)pRiva->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + pbox->y1;
-	    srcPtr = (CARD32*)pRiva->ShadowPtr + 
+	    srcPtr = (CARD32*)pRiva->ShadowPtr +
 			(pbox->y1 * srcPitch) + pbox->x2 - 1;
 	}
 

@@ -227,7 +227,7 @@ typedef volatile struct
     U032 RenderBufferOffset;
     U032 ZBufferOffset;
 } RivaSurface3D;
-    
+
 /***************************************************************************\
 *                                                                           *
 *                        Virtualized RIVA H/W interface.                    *

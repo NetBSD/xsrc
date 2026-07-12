@@ -48,12 +48,12 @@
                          ((c & 0xff) << 24)
 
 
-static void 
+static void
 ConvertCursor1555(NVPtr pNv, CARD32 *src, CARD16 *dst)
 {
     CARD32 b, m;
     int i, j;
-    
+
     for ( i = 0; i < 32; i++ ) {
         b = *src++;
         m = *src++;
@@ -84,7 +84,7 @@ ConvertCursor8888(NVPtr pNv, CARD32 *src, CARD32 *dst)
 {
     CARD32 b, m;
     int i, j;
-   
+
     for ( i = 0; i < 128; i++ ) {
         b = *src++;
         m = *src++;
@@ -181,13 +181,13 @@ NVSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     if ((pNv->curFg != fore) || (pNv->curBg != back)) {
         pNv->curFg = fore;
         pNv->curBg = back;
-            
+
         TransformCursor(pNv);
     }
 }
 
 
-static void 
+static void
 NVShowCursor(ScrnInfoPtr pScrn)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -203,14 +203,14 @@ NVHideCursor(ScrnInfoPtr pScrn)
     NVShowHideCursor(pNv, 0);
 }
 
-static Bool 
+static Bool
 NVUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 {
     return TRUE;
 }
 
 #ifdef ARGB_CURSOR
-static Bool 
+static Bool
 NVUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs)
 {
     if((pCurs->bits->width <= 64) && (pCurs->bits->height <= 64))
@@ -241,7 +241,7 @@ NVLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
                 tmp = (alpha << 24) |
                          (((*image & 0xff) * alpha) / 255) |
                         ((((*image & 0xff00) * alpha) / 255) & 0xff00) |
-                       ((((*image & 0xff0000) * alpha) / 255) & 0xff0000); 
+                       ((((*image & 0xff0000) * alpha) / 255) & 0xff0000);
              }
              image++;
 #if X_BYTE_ORDER == X_BIG_ENDIAN
@@ -267,7 +267,7 @@ NVLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
 }
 #endif
 
-Bool 
+Bool
 NVCursorInit(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
@@ -276,7 +276,7 @@ NVCursorInit(ScreenPtr pScreen)
 
     infoPtr = xf86CreateCursorInfoRec();
     if(!infoPtr) return FALSE;
-    
+
     pNv->CursorInfoRec = infoPtr;
 
     if(pNv->alphaCursor)
@@ -285,7 +285,7 @@ NVCursorInit(ScreenPtr pScreen)
        infoPtr->MaxWidth = infoPtr->MaxHeight = 32;
 
     infoPtr->Flags = HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
-                     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_32; 
+                     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_32;
     infoPtr->SetCursorColors = NVSetCursorColors;
     infoPtr->SetCursorPosition = NVSetCursorPosition;
     infoPtr->LoadCursorImage = NVLoadCursorImage;

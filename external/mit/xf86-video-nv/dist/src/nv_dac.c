@@ -84,7 +84,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     int vertTotal       =  mode->CrtcVTotal        - 2;
     int vertBlankStart  =  mode->CrtcVDisplay      - 1;
     int vertBlankEnd    =  mode->CrtcVTotal        - 1;
-   
+
     NVPtr pNv = NVPTR(pScrn);
     NVRegPtr nvReg = &pNv->ModeReg;
     NVFBLayout *pLayout = &pNv->CurrentLayout;
@@ -104,15 +104,15 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
      * Set all CRTC values.
      */
 
-    if(mode->Flags & V_INTERLACE) 
+    if(mode->Flags & V_INTERLACE)
         vertTotal |= 1;
 
     if(pNv->FlatPanel == 1) {
-       vertStart = vertTotal - 3;  
+       vertStart = vertTotal - 3;
        vertEnd = vertTotal - 2;
        vertBlankStart = vertStart;
        horizStart = horizTotal - 5;
-       horizEnd = horizTotal - 2;   
+       horizEnd = horizTotal - 2;
        horizBlankEnd = horizTotal + 4;
        if(pNv->Architecture == NV_ARCH_30)
            horizTotal += 2;
@@ -121,7 +121,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pVga->CRTC[0x0]  = NV_Set8Bits(horizTotal);
     pVga->CRTC[0x1]  = NV_Set8Bits(horizDisplay);
     pVga->CRTC[0x2]  = NV_Set8Bits(horizBlankStart);
-    pVga->CRTC[0x3]  = NV_SetBitField(horizBlankEnd,4:0,4:0) 
+    pVga->CRTC[0x3]  = NV_SetBitField(horizBlankEnd,4:0,4:0)
                        | NV_SetBit(7);
     pVga->CRTC[0x4]  = NV_Set8Bits(horizStart);
     pVga->CRTC[0x5]  = NV_SetBitField(horizBlankEnd,5:5,7:7)
@@ -156,7 +156,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                   | NV_SetBitField(vertDisplay,10:10,1:1)
                   | NV_SetBitField(vertTotal,10:10,0:0);
 
-    nvReg->horiz  = NV_SetBitField(horizTotal,8:8,0:0) 
+    nvReg->horiz  = NV_SetBitField(horizTotal,8:8,0:0)
                   | NV_SetBitField(horizDisplay,8:8,1:1)
                   | NV_SetBitField(horizBlankStart,8:8,2:2)
                   | NV_SetBitField(horizStart,8:8,3:3);
@@ -187,19 +187,19 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
             pVga->DAC[(i*3)+2] = i;
         }
     }
-    
+
     /*
      * Calculate the extended registers.
      */
 
-    if(pLayout->depth < 24) 
+    if(pLayout->depth < 24)
 	i = pLayout->depth;
     else i = 32;
 
     if(pNv->Architecture >= NV_ARCH_10)
 	pNv->CURSOR = (U032 *)(pNv->FbStart + pNv->CursorStart);
 
-    NVCalcStateExt(pNv, 
+    NVCalcStateExt(pNv,
                     nvReg,
                     i,
                     pLayout->displayWidth,
@@ -235,15 +235,15 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
        nvReg->crtcOwner = 3;
        nvReg->pllsel |= 0x20000800;
        nvReg->vpll = pNv->PRAMDAC0[0x0508/4];
-       if(pNv->twoStagePLL) 
+       if(pNv->twoStagePLL)
           nvReg->vpllB = pNv->PRAMDAC0[0x0578/4];
-    } else 
+    } else
     if(pNv->twoHeads) {
        nvReg->head  =  pNv->PCRTC0[0x00000860/4] | 0x00001000;
        nvReg->head2 =  pNv->PCRTC0[0x00002860/4] & ~0x00001000;
        nvReg->crtcOwner = 0;
        nvReg->vpll2 = pNv->PRAMDAC0[0x0520/4];
-       if(pNv->twoStagePLL) 
+       if(pNv->twoStagePLL)
           nvReg->vpll2B = pNv->PRAMDAC0[0x057C/4];
     }
 
@@ -251,7 +251,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if(mode->Flags & V_DBLSCAN)
        nvReg->cursorConfig |= (1 << 4);
     if(pNv->alphaCursor) {
-        if((pNv->Chipset & 0x0ff0) != 0x0110) 
+        if((pNv->Chipset & 0x0ff0) != 0x0110)
            nvReg->cursorConfig |= 0x04011000;
         else
            nvReg->cursorConfig |= 0x14011000;
@@ -268,7 +268,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
            nvReg->dither = pNv->PRAMDAC[0x083C/4] & ~1;
            if(pNv->FPDither)
               nvReg->dither |= 1;
-        } 
+        }
     }
 
     nvReg->timingH = 0;
@@ -278,7 +278,7 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     return (TRUE);
 }
 
-void 
+void
 NVDACRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
              Bool primary)
 {
@@ -308,12 +308,12 @@ NVDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
     saveFonts = FALSE;
 #endif
 
-    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | 
+    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE |
                              (saveFonts? VGA_SR_FONTS : 0));
     NVUnloadStateExt(pNv, nvReg);
 
     /* can't read this reliably on NV11 */
-    if((pNv->Chipset & 0x0ff0) == 0x0110) 
+    if((pNv->Chipset & 0x0ff0) == 0x0110)
        nvReg->crtcOwner = pNv->CRTCnumber;
 }
 

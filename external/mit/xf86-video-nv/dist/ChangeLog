@@ -1,3 +1,243 @@
+commit 2d133772b7f89747cc823e575254de695e5df4d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 25 13:08:20 2026 -0700
+
+    xf86-video-nv 2.1.24
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6449fe89ec98ad7c32e8e655cef48505588705ad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 11 11:20:41 2026 -0800
+
+    gitlab CI: drop the ci-fairy check-mr job
+    
+    The only thing this checked was the checkbox for allowing maintainers to
+    edit the MR. Changed permissions checks now fail this job but luckily
+    the setting it checked has been the default for years anyway so we can
+    drop it.
+    
+    https://gitlab.freedesktop.org/freedesktop/ci-templates/-/issues/81
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c5f14b4a0718ee5b019f44427cee582ff03ea355
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 20 16:31:32 2025 -0700
+
+    Strip trailing whitespace from source files
+    
+    Performed with: `git ls-files | xargs perl -i -p -e 's{[ \t]+$}{}'`
+    
+    `git diff -w` & `git diff -b` show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/29>
+
+commit 0a7ac8ce8a96ec4bb37ac19c326bb07febb9c3d5
+Author: b-aaz <b-aazbsd.proton.me>
+Date:   Sat Jun 28 21:15:09 2025 +0000
+
+    FreeBSD: nv_driver: Disable check for pci driver in FreeBSD.
+    
+    Seems like this check is also unnecessary in FreeBSD as in NetBSD.
+    Because the vgapci driver is always attached.
+    
+    Signed-off-by: b-aaz <b-aazbsd.proton.me>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/28>
+
+commit 1e72f5804433382683790441d84312bfcb8c0cfe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 20 12:21:16 2025 -0700
+
+    g80: Avoid segfault if AccelMethod isn't set and XAA isn't built
+    
+    Fixes: b1b6f64 ("g80: dont set accelmethod to xaa when xaa is disabled")
+    Reviewed-by: Yusuf Khan <yusisamerican@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/27>
+
+commit 84d63e8bceaf275e5a4d6007e9d486afc14f1acb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 14:33:00 2025 -0700
+
+    Improve man page formatting
+    
+    More closely follow common style as described on
+    https://man7.org/linux/man-pages/man7/man-pages.7.html
+    and fix warnings raised by `mandoc -T lint` and `groff -rCHECKSTYLE=10`
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/26>
+
+commit a8608636da97fdd880edb1bce919a0d3029f24dd
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Wed Jun 5 09:42:58 2024 -0500
+
+    treewide: replace XNFcallocarray with XNFcalloc and add wrap it
+    
+    Otherwise older xservers complain, also add a wrapper in case XNFcalloc
+    is dead.
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/24>
+
+commit 6db1b9fde7e32f9794fb19d7a95c9f3b52c0fd7a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 14 18:06:05 2024 -0700
+
+    man page: stop claiming to use XAA on Xorg 1.13 & later
+    
+    XAA support was removed from Xorg 1.13, so it's not possible to use it
+    on such releases.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/22>
+
+commit 6c68869907bf3a07df0442c7d5464883410ef86c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 14 17:58:43 2024 -0700
+
+    Don't try to load xaa module if not compiled with XAA support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/22>
+
+commit ea9736afb18573264264c6fa0b1e8d1b01c278c7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 24 12:59:03 2024 -0700
+
+    Quiet -Wredundant-decls from xorg/os.h fallbacks for new libc functions
+    
+    The Xorg headers provide their own versions of strlcat, strlcpy, and
+    timingsafe_memcmp for platforms that don't have them in libc yet, but
+    rely on configure to set HAVE_* defines to determine if they should be
+    defined in the headers.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/22>
+
+commit 5e90ec5ecfa82cae9ed740dec79b6fff9702881e
+Author: nia <nia@NetBSD.org>
+Date:   Sun May 12 16:00:42 2024 +0200
+
+    netbsd: disable not-useful check for an existing kernel driver
+    
+    nv will refuse to work whenever there's a driver other than vga attached to
+    the device we're trying to probe, yet nv works fine on top of gffb or
+    genfb on NetBSD
+    
+    Signed-off-by: Nia Alarie <nia@NetBSD.org>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/20>
+
+commit 8cf3065812e7b8122d4d5983cfe6660154186534
+Author: nia <nia@NetBSD.org>
+Date:   Sun May 12 15:51:57 2024 +0200
+
+    netbsd: Try getting the EDID via wscons if the DDC2 method fails.
+    
+    Helps identifying displays on non-x86 hardware.
+    
+    Patch from Michael Lorenz, autotools'ified by me.
+    
+    Signed-off-by: Nia Alarie <nia@NetBSD.org>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/19>
+
+commit b25b3492c5868671faa7ef327da8f90df5e99e16
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Fri Apr 19 00:52:24 2024 -0500
+
+    nv/man: link the gitlab issue tracker
+    
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/16>
+
+commit 93ac93ed7a8a543644ced80f24d073e3e7c6289e
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Fri Apr 19 00:49:15 2024 -0500
+
+    nv: support GT 320M....hopefully
+    
+    This is gt216 which is a close relative of my gt218 but...it should
+    be closer to the rest of the chipsets enough to work hopefully.
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/16>
+
+commit 714dcafbe2efa0365aca32b7e95d3961cebe1515
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Sun Jan 21 14:21:07 2024 -0800
+
+    g80/output: update known PCI rom sigs
+    
+    See src/common/nvswitch/kernel/inc/rom_nvswitch.h in open-gpu-kernel-modules
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/16>
+
+commit 3d729d58bc85aa3ec53361f4f5fd220edd6a234e
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Sun Jan 21 16:07:49 2024 -0800
+
+    g80/disp: preinit all heads we know in display
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/16>
+
+commit 30c27a60bf9831e765382824c8ea315505c75bad
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Sun Jan 21 15:55:06 2024 -0800
+
+    g80/display: Annotate functions
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/16>
+
+commit fd20c34e7ac7be738a07bbef08b5d4b7e13bd4b7
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 8 16:22:38 2024 +0200
+
+    use XNFcallocarray() instead of xnfcalloc macro
+    
+    xnfcalloc is just an alias for XNFcallocarray() that doesn't seem to serve
+    any practical purpose, so it can go away once all drivers stopped using it.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/18>
+
+commit dd4a6d596bd66169c21b3669832aed71eda9838e
+Author: Enrico Weigelt, metux IT consult <info@metux.net>
+Date:   Wed May 8 13:01:50 2024 +0200
+
+    use XNFalloc() instead of xnfalloc
+    
+    xnfalloc is just an alias for XNFalloc() that doesn't seem to serve
+    any practical purpose, so it can go away once all drivers stopped using it.
+    
+    Signed-off-by: Enrico Weigelt, metux IT consult <info@metux.net>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/18>
+
+commit 63e8ad83c7b7cb131e9213980f6c72df83ae6319
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Thu May 2 00:02:54 2024 -0500
+
+    nv: support 0xf0 device id range
+    
+    inspired by a bugzilla patch:
+    
+    "nv-2.1.12 : patch to add the latest and a lot of Nvidia CPUs (56) (until February 2009)"
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/17>
+
+commit b1b6f64bde0215c13e22615553a79f433368af80
+Author: Yusuf Khan <yusisamerican@gmail.com>
+Date:   Fri Apr 19 00:44:20 2024 -0500
+
+    g80: dont set accelmethod to xaa when xaa is disabled
+    
+    Signed-off-by: Yusuf Khan <yusisamerican@gmail.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/merge_requests/15>
+
 commit 0c96dc00014104edcd890fa2eab3322534b13821
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Mar 24 12:39:44 2024 -0700

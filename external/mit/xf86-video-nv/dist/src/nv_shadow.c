@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 1999,  The XFree86 Project Inc. 
+   Copyright (c) 1999,  The XFree86 Project Inc.
    Written by Mark Vojkovich <markv@valinux.com>
 */
 
@@ -31,14 +31,14 @@ NVRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     NVPtr pNv = NVPTR(pScrn);
     int width, height, Bpp, FBPitch;
     unsigned char *src, *dst;
-   
+
     Bpp = pScrn->bitsPerPixel >> 3;
     FBPitch = BitmapBytePad(pScrn->displayWidth * pScrn->bitsPerPixel);
 
     while(num--) {
 	width = (pbox->x2 - pbox->x1) * Bpp;
 	height = pbox->y2 - pbox->y1;
-	src = pNv->ShadowPtr + (pbox->y1 * pNv->ShadowPitch) + 
+	src = pNv->ShadowPtr + (pbox->y1 * pNv->ShadowPitch) +
 						(pbox->x1 * Bpp);
 	dst = pNv->FbStart + (pbox->y1 * FBPitch) + (pbox->x1 * Bpp);
 
@@ -47,10 +47,10 @@ NVRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	    dst += FBPitch;
 	    src += pNv->ShadowPitch;
 	}
-	
+
 	pbox++;
     }
-} 
+}
 
 void
 NVPointerMoved(SCRN_ARG_TYPE arg, int x, int y)
@@ -93,11 +93,11 @@ NVRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = (y2 - y1) >> 2;  /* in dwords */
 
 	if(pNv->Rotate == 1) {
-	    dstPtr = pNv->FbStart + 
+	    dstPtr = pNv->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - y2;
 	    srcPtr = pNv->ShadowPtr + ((1 - y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = pNv->FbStart + 
+	    dstPtr = pNv->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + y1;
 	    srcPtr = pNv->ShadowPtr + (y1 * srcPitch) + pbox->x2 - 1;
 	}
@@ -107,8 +107,8 @@ NVRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	    dst = (CARD32*)dstPtr;
 	    count = height;
 	    while(count--) {
-		*(dst++) = src[0] | (src[srcPitch] << 8) | 
-					(src[srcPitch * 2] << 16) | 
+		*(dst++) = src[0] | (src[srcPitch] << 8) |
+					(src[srcPitch * 2] << 16) |
 					(src[srcPitch * 3] << 24);
 		src += srcPitch * 4;
 	    }
@@ -118,7 +118,7 @@ NVRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 
 	pbox++;
     }
-} 
+}
 
 
 void
@@ -144,14 +144,14 @@ NVRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = (y2 - y1) >> 1;  /* in dwords */
 
 	if(pNv->Rotate == 1) {
-	    dstPtr = (CARD16*)pNv->FbStart + 
+	    dstPtr = (CARD16*)pNv->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - y2;
-	    srcPtr = (CARD16*)pNv->ShadowPtr + 
+	    srcPtr = (CARD16*)pNv->ShadowPtr +
 			((1 - y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = (CARD16*)pNv->FbStart + 
+	    dstPtr = (CARD16*)pNv->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + y1;
-	    srcPtr = (CARD16*)pNv->ShadowPtr + 
+	    srcPtr = (CARD16*)pNv->ShadowPtr +
 			(y1 * srcPitch) + pbox->x2 - 1;
 	}
 
@@ -192,14 +192,14 @@ NVRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	height = pbox->y2 - pbox->y1;
 
 	if(pNv->Rotate == 1) {
-	    dstPtr = (CARD32*)pNv->FbStart + 
+	    dstPtr = (CARD32*)pNv->FbStart +
 			(pbox->x1 * dstPitch) + pScrn->virtualX - pbox->y2;
-	    srcPtr = (CARD32*)pNv->ShadowPtr + 
+	    srcPtr = (CARD32*)pNv->ShadowPtr +
 			((1 - pbox->y2) * srcPitch) + pbox->x1;
 	} else {
-	    dstPtr = (CARD32*)pNv->FbStart + 
+	    dstPtr = (CARD32*)pNv->FbStart +
 			((pScrn->virtualY - pbox->x2) * dstPitch) + pbox->y1;
-	    srcPtr = (CARD32*)pNv->ShadowPtr + 
+	    srcPtr = (CARD32*)pNv->ShadowPtr +
 			(pbox->y1 * srcPitch) + pbox->x2 - 1;
 	}
 

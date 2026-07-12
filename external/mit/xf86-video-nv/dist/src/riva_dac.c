@@ -45,7 +45,7 @@ RivaDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     int vertTotal       =  mode->CrtcVTotal        - 2;
     int vertBlankStart  =  mode->CrtcVDisplay      - 1;
     int vertBlankEnd    =  mode->CrtcVTotal        - 1;
-   
+
 
     RivaPtr pRiva = RivaPTR(pScrn);
     RivaRegPtr rivaReg = &pRiva->ModeReg;
@@ -64,13 +64,13 @@ RivaDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
      * Set all CRTC values.
      */
 
-    if(mode->Flags & V_INTERLACE) 
+    if(mode->Flags & V_INTERLACE)
         vertTotal |= 1;
 
     pVga->CRTC[0x0]  = RIVA_Set8Bits(horizTotal);
     pVga->CRTC[0x1]  = RIVA_Set8Bits(horizDisplay);
     pVga->CRTC[0x2]  = RIVA_Set8Bits(horizBlankStart);
-    pVga->CRTC[0x3]  = RIVA_SetBitField(horizBlankEnd,4:0,4:0) 
+    pVga->CRTC[0x3]  = RIVA_SetBitField(horizBlankEnd,4:0,4:0)
                        | RIVA_SetBit(7);
     pVga->CRTC[0x4]  = RIVA_Set8Bits(horizStart);
     pVga->CRTC[0x5]  = RIVA_SetBitField(horizBlankEnd,5:5,7:7)
@@ -102,7 +102,7 @@ RivaDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                   | RIVA_SetBitField(vertDisplay,10:10,1:1)
                   | RIVA_SetBitField(vertTotal,10:10,0:0);
 
-    rivaReg->horiz  = RIVA_SetBitField(horizTotal,8:8,0:0) 
+    rivaReg->horiz  = RIVA_SetBitField(horizTotal,8:8,0:0)
                   | RIVA_SetBitField(horizDisplay,8:8,1:1)
                   | RIVA_SetBitField(horizBlankStart,8:8,2:2)
                   | RIVA_SetBitField(horizStart,8:8,3:3);
@@ -132,16 +132,16 @@ RivaDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
             pVga->DAC[(i*3)+2] = i;
         }
     }
-    
+
     /*
      * Calculate the extended registers.
      */
 
-    if(pLayout->depth < 24) 
+    if(pLayout->depth < 24)
 	i = pLayout->depth;
     else i = 32;
 
-    pRiva->riva.CalcStateExt(&pRiva->riva, 
+    pRiva->riva.CalcStateExt(&pRiva->riva,
                            rivaReg,
                            i,
                            pLayout->displayWidth,
@@ -157,7 +157,7 @@ RivaDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     return (TRUE);
 }
 
-void 
+void
 RivaDACRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, RivaRegPtr rivaReg,
              Bool primary)
 {
@@ -182,7 +182,7 @@ RivaDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, RivaRegPtr rivaReg,
 
     pRiva->riva.LockUnlock(&pRiva->riva, 0);
 
-    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | 
+    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE |
                              (saveFonts? VGA_SR_FONTS : 0));
     pRiva->riva.UnloadStateExt(&pRiva->riva, rivaReg);
 }

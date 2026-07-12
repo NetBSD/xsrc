@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-nv],
-        [2.1.23],
+        [2.1.24],
         [https://gitlab.freedesktop.org/xorg/driver/xf86-video-nv/-/issues],
         [xf86-video-nv])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -72,6 +72,8 @@ AM_CONDITIONAL(HAVE_XEXTPROTO_71, [ test "$HAVE_XEXTPROTO_71" = "yes" ])
 save_CFLAGS="$CFLAGS"
 CFLAGS="$XORG_CFLAGS"
 
+AC_CHECK_HEADERS(dev/wscons/wsconsio.h)
+
 # PCI rework
 AC_CHECK_DECL(XSERVER_LIBPCIACCESS,
               [XSERVER_LIBPCIACCESS=yes],[XSERVER_LIBPCIACCESS=no],
@@ -102,6 +104,11 @@ AC_MSG_RESULT([$XAA])
 
 # Substitutions
 AC_SUBST([moduledir])
+
+# Checks for library functions
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
 
 DRIVER_NAME=nv
 AC_SUBST([DRIVER_NAME])

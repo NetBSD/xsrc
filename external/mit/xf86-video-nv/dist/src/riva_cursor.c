@@ -43,12 +43,12 @@
 (((c & 0xf80000) >> 9 ) | ((c & 0xf800) >> 6 ) | ((c & 0xf8) >> 3 ) | 0x8000)
 
 
-static void 
+static void
 RivaConvertCursor1555(RivaPtr pRiva, CARD32 *src, CARD16 *dst)
 {
     CARD32 b, m;
     int i, j;
-    
+
     for ( i = 0; i < 32; i++ ) {
         b = *src++;
         m = *src++;
@@ -112,13 +112,13 @@ RivaSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     if ((pRiva->curFg != fore) || (pRiva->curBg != back)) {
         pRiva->curFg = fore;
         pRiva->curBg = back;
-            
+
         RivaTransformCursor(pRiva);
     }
 }
 
 
-static void 
+static void
 RivaShowCursor(ScrnInfoPtr pScrn)
 {
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -134,14 +134,14 @@ RivaHideCursor(ScrnInfoPtr pScrn)
     pRiva->riva.ShowHideCursor(&pRiva->riva, 0);
 }
 
-static Bool 
+static Bool
 RivaUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 {
     return TRUE;
 }
 
 
-Bool 
+Bool
 RivaCursorInit(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
@@ -150,12 +150,12 @@ RivaCursorInit(ScreenPtr pScreen)
 
     infoPtr = xf86CreateCursorInfoRec();
     if(!infoPtr) return FALSE;
-    
+
     pRiva->CursorInfoRec = infoPtr;
 
     infoPtr->MaxWidth = infoPtr->MaxHeight = 32;
     infoPtr->Flags = HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
-                     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_32; 
+                     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_32;
     infoPtr->SetCursorColors = RivaSetCursorColors;
     infoPtr->SetCursorPosition = RivaSetCursorPosition;
     infoPtr->LoadCursorImage = RivaLoadCursorImage;

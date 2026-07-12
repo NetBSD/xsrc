@@ -155,7 +155,7 @@ static CARD8 RivaReadDacData(vgaHWPtr pVga)
 
 
 
-static xf86MonPtr 
+static xf86MonPtr
 RivaProbeDDC (ScrnInfoPtr pScrn)
 {
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -177,7 +177,7 @@ RivaProbeDDC (ScrnInfoPtr pScrn)
                   "  ... found one\n");
        xf86PrintEDID( MonInfo );
     } else {
-       xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+       xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                   "  ... none found\n");
     }
 
@@ -192,7 +192,7 @@ Riva3Setup(ScrnInfoPtr pScrn)
     CARD32 regBase = pRiva->IOAddress;
     CARD32 frameBase = pRiva->FbAddress;
     xf86MonPtr monitor;
-    
+
     pRiva->Save = RivaDACSave;
     pRiva->Restore = RivaDACRestore;
     pRiva->ModeInit = RivaDACInit;
@@ -226,7 +226,7 @@ Riva3Setup(ScrnInfoPtr pScrn)
      */
     pVga->MMIOBase   = (CARD8 *)pRiva;
     pVga->MMIOOffset = 0;
-    
+
     /*
      * No IRQ in use.
      */
