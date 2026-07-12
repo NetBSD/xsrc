@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 #
 # Copyright (c) 2023, Oracle and/or its affiliates.
 #
@@ -21,7 +22,11 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-project('xorg-cf-files', version: '1.0.8', meson_version: '>=0.60.0')
+project(
+  'xorg-cf-files',
+  version: '1.0.9',
+  meson_version: '>=0.60.0'
+)
 conf = configuration_data()
 conf.set('prefix', get_option('prefix'))
 
@@ -40,7 +45,7 @@ conf.set('FONTROOTDIR', fontrootdir)
 
 # Replaces XORG_FONTSUBDIR([ENCODINGSDIR],[encodingsdir],[encodings])
 # with the substitution to use the FontDir defined in the Imake configs
-encodingsdir = get_option('with-fontrootdir')
+encodingsdir = get_option('with-encodingsdir')
 if encodingsdir == ''
     encodingsdir = 'FontDir' / 'encodings'
 endif

@@ -21,7 +21,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define GNUSourceDefines      -D_POSIX_C_SOURCE=199309L \
                               -D_POSIX_SOURCE -D_XOPEN_SOURCE \
-                              -D_BSD_SOURCE -D_SVID_SOURCE
+                              -D_DEFAULT_SOURCE
 
 XCOMM XXXMB: What about _GNU_SOURCE, see Linux/UseInstalled?
 
@@ -94,6 +94,9 @@ XCOMM Not implemented and will always fail.
 #ifndef LdCmd
 #define LdCmd			ld
 #endif
+#ifndef HasGnuAr
+#define HasGnuAr		YES
+#endif
 
 #define AsmDefines		-D__ELF__
 #define CplusplusCmd		c++
@@ -127,13 +130,26 @@ XCOMM Not implemented and will always fail.
 #define HasVarRun		YES
 #define VarDbDirectory		$(VARDIR)/lib
 
-XCOMM i386Architecture
-#define OptimizedCDebugFlags	DefaultGcc2i386Opt
-#define GNUMachineDefines	-D__i386__
-#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME
-#define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #define HasPlugin		YES
 #define VendorHasX11R6_3libXext	YES
+
+#ifdef i386Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags	DefaultGcc2i386Opt
+# endif
+# define GNUMachineDefines	-D__i386__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* i386Architecture */
+
+#ifdef AMD64Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags	DefaultGcc2AMD64Opt
+# endif
+# define GNUMachineDefines	-D__amd64__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* AMD64Architecture */
 
 #ifndef StandardDefines
 #define StandardDefines		GNUMachineDefines GNUSourceDefines
