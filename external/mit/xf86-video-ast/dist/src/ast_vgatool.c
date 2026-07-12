@@ -1161,7 +1161,7 @@ static void vSetDefExtReg(ScrnInfoPtr pScrn)
 
     /* Enable RAMDAC for A1, ycchen@113005 */
     jReg = 0x04;
-    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST2400))
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST2500))
         jReg |= 0x20;
     SetIndexRegMask(CRTC_PORT,0xB6, 0xFF, jReg);
 
@@ -1270,10 +1270,6 @@ static ULONG MMCTestSingle2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
 
 static int CBRTest_AST2150(PAST2150DRAMParam  param)
 {
-  UCHAR *mmiobase;
-
-  mmiobase = param->pjMMIOVirtualAddress;
-
   if(MMCTestBurst2_AST2150(param, 0) ) return(0);
   if(MMCTestBurst2_AST2150(param, 1) ) return(0);
   if(MMCTestBurst2_AST2150(param, 2) ) return(0);
@@ -1752,9 +1748,6 @@ static int MMCTestSingle2(PAST2300DRAMParam  param, ULONG datagen)
 static int CBRTest(PAST2300DRAMParam  param)
 {
   ULONG data;
-  UCHAR *mmiobase;
-
-  mmiobase = param->pjMMIOVirtualAddress;
 
   data  = MMCTestSingle2(param, 0);  if((data & 0xff) && (data & 0xff00)) return(0);
   data |= MMCTestBurst2(param, 00);  if((data & 0xff) && (data & 0xff00)) return(0);
@@ -1800,9 +1793,6 @@ static int CBRScan(PAST2300DRAMParam  param)
 static ULONG CBRTest2(PAST2300DRAMParam  param)
 {
   ULONG data;
-  UCHAR *mmiobase;
-
-  mmiobase = param->pjMMIOVirtualAddress;
 
   data  = MMCTestBurst2(param, 0);  if(data == 0xffff) return(0);
   data |= MMCTestSingle2(param, 0); if(data == 0xffff) return(0);
@@ -1971,7 +1961,7 @@ FINETUNE_DONE:
 
 static void finetuneDQSI(PAST2300DRAMParam  param)
 {
-  ULONG dlli, dqsip, dqidly, cnt;
+  ULONG dlli, dqsip, dqidly;
   ULONG reg_mcr18, reg_mcr0c, passcnt[2], diff;
   ULONG g_dqidly, g_dqsip, g_margin, g_side;
   unsigned short pass[32][2][2];
@@ -2073,7 +2063,7 @@ static void finetuneDQSI(PAST2300DRAMParam  param)
 
 static Bool CBRDLL2(PAST2300DRAMParam  param)
 {
-  ULONG dllmin[2], dllmax[2], dlli, data, data2, passcnt, retry=0;
+  ULONG dllmin[2], dllmax[2], dlli, data, passcnt, retry=0;
   UCHAR *mmiobase;
   BOOL status = FALSE;
 
@@ -2884,7 +2874,7 @@ static void vInitAST2300DRAMReg(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     AST2300DRAMParam param;
-    ULONG i, ulTemp;
+    ULONG ulTemp;
     UCHAR jReg;
 
     GetIndexRegMask(CRTC_PORT, 0xD0, 0xFF, jReg);
@@ -3594,7 +3584,7 @@ Bool ASTInitVGA(ScrnInfoPtr pScrn, ULONG Flags)
 } /* Init VGA */
 
 /* Get EDID */
-void
+static void
 I2CWriteClock(ASTRecPtr pAST, UCHAR data)
 {
     UCHAR       ujCRB7, jtemp;
@@ -3610,7 +3600,7 @@ I2CWriteClock(ASTRecPtr pAST, UCHAR data)
 
 }
 
-void
+static void
 I2CWriteData(ASTRecPtr pAST, UCHAR data)
 {
     UCHAR       volatile ujCRB7, jtemp;
@@ -3626,7 +3616,7 @@ I2CWriteData(ASTRecPtr pAST, UCHAR data)
 
 }
 
-Bool
+static Bool
 I2CReadClock(ASTRecPtr pAST)
 {
     UCHAR       volatile ujCRB7;
@@ -3637,7 +3627,7 @@ I2CReadClock(ASTRecPtr pAST)
     return ((ujCRB7 & 0x01) ? 1:0);
 }
 
-Bool
+static Bool
 I2CReadData(ASTRecPtr pAST)
 {
     UCHAR	volatile ujCRB7;
@@ -3650,7 +3640,7 @@ I2CReadData(ASTRecPtr pAST)
 }
 
 
-void
+static void
 I2CDelay(ASTRecPtr pAST)
 {
     ULONG 	i;
@@ -3661,7 +3651,7 @@ I2CDelay(ASTRecPtr pAST)
 
 }
 
-void
+static void
 I2CStart(ASTRecPtr pAST)
 {
     I2CWriteClock(pAST, 0x00);				/* Set Clk Low */
@@ -3676,7 +3666,7 @@ I2CStart(ASTRecPtr pAST)
     I2CDelay(pAST);
 }
 
-void
+static void
 I2CStop(ASTRecPtr pAST)
 {
     I2CWriteClock(pAST, 0x00);				/* Set Clk Low */
@@ -3692,7 +3682,7 @@ I2CStop(ASTRecPtr pAST)
 
 }
 
-Bool
+static Bool
 CheckACK(ASTRecPtr pAST)
 {
     UCHAR Data;
@@ -3710,7 +3700,7 @@ CheckACK(ASTRecPtr pAST)
 }
 
 
-void
+static void
 SendACK(ASTRecPtr pAST)
 {
 
@@ -3723,7 +3713,7 @@ SendACK(ASTRecPtr pAST)
 
 }
 
-void
+static void
 SendNACK(ASTRecPtr pAST)
 {
 
@@ -3736,7 +3726,7 @@ SendNACK(ASTRecPtr pAST)
 
 }
 
-void
+static void
 SendI2CDataByte(ASTRecPtr pAST, UCHAR data)
 {
     UCHAR jData;
@@ -3756,7 +3746,7 @@ SendI2CDataByte(ASTRecPtr pAST, UCHAR data)
     }
 }
 
-UCHAR
+static UCHAR
 ReceiveI2CDataByte(ASTRecPtr pAST)
 {
     UCHAR jData=0, jTempData;

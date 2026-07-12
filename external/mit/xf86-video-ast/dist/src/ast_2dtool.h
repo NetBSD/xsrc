@@ -20,6 +20,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef AST_2DTOOL_H
+#define AST_2DTOOL_H
+
 /* Eng Capability Definition */
 #define	ENG_CAP_Sync				0x0001
 #define	ENG_CAP_ScreenToScreenCopy		0x0002
@@ -623,3 +626,5 @@ typedef struct {
       }
 
 Bool bASTGetLineTerm(_LINEInfo *LineInfo, LINEPARAM *dsLineParam);
+
+#endif /* AST_2DTOOL_H */

@@ -493,7 +493,7 @@ Bool
 ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
     ASTRecPtr pAST;
-    VBIOS_MODE_INFO vgamodeinfo;
+    VBIOS_MODE_INFO vgamodeinfo = { 0 };
 
     pAST = ASTPTR(pScrn);
 
@@ -644,10 +644,10 @@ static Bool bGetAST1000VGAModeInfo(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIO
 			loop++;
 			continue;
 		}
-	if (loop->ulRefreshRate <= ulRefreshRate
+		if (loop->ulRefreshRate <= ulRefreshRate
 		    && (!best || loop->ulRefreshRate > best->ulRefreshRate))
 			best = loop;
-			loop++;
+		loop++;
 	}
 	if (best || !check_sync)
 		break;
@@ -1284,8 +1284,6 @@ static UCHAR GetChrontelReg(ASTRecPtr pAST, UCHAR jChannel, UCHAR jIndex)
 
 static void vInitChrontelReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
 {
-
-    PVBIOS_ENHTABLE_STRUCT pEnhModePtr = pVGAModeInfo->pEnhTableEntry;
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulDCLK = 65;					/* todo */
     UCHAR jReg;
