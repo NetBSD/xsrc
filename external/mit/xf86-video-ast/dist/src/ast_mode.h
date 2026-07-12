@@ -20,6 +20,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef AST_MODE_H
+#define AST_MODE_H
+
 /* Mode Limitation */
 #define MAX_HResolution		1920
 #define MAX_VResolution		1200
@@ -132,3 +135,5 @@ typedef struct {
     PVBIOS_ENHTABLE_STRUCT pEnhTableEntry;
 
 } VBIOS_MODE_INFO, *PVBIOS_MODE_INFO;
+
+#endif /* AST_MODE_H */

@@ -20,6 +20,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef AST_VGATOOL_H
+#define AST_VGATOOL_H
+
 /* VRAM Size Definition */
 #define VIDEOMEM_SIZE_08M	0x00800000
 #define VIDEOMEM_SIZE_16M	0x01000000
@@ -170,3 +173,5 @@
 /* Delay */
 #define DelayUS(x)		usleep(x)
 #define DelayMS(x)		DelayUS(1000*x)
+
+#endif /* AST_VGATOOL_H */
