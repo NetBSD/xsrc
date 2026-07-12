@@ -73,7 +73,7 @@ Exit(int code, Display *dpy)
 }
 
 static void _X_NORETURN
-usage(const char *errmsg)
+usage(const char *errmsg, int exitstatus)
 {
     const char *options =
 "where options include:\n"
@@ -90,7 +90,7 @@ usage(const char *errmsg)
 
     fprintf (stderr, "usage:  %s [-option ...]\n%s",
 	     ProgramName, options);
-    Exit (1, NULL);
+    Exit (exitstatus, NULL);
 }
 
 int
@@ -114,20 +114,23 @@ main(int argc, char *argv[])
 	if (arg[0] == '-') {
 	    switch (arg[1]) {
 	      case 'd':			/* -display displayname */
-		if (++i >= argc) usage ("-display requires an argument");
+		if (++i >= argc)
+		    usage ("-display requires an argument", EXIT_FAILURE);
 		displayname = argv[i];
 		continue;
 	      case 'i':			/* -id resourceid */
-		if (++i >= argc) usage ("-id requires an argument");
+		if (++i >= argc)
+		    usage ("-id requires an argument", EXIT_FAILURE);
 		id = strtoul (argv[i], NULL, 0);
 		if (id == 0 || id >= 0xFFFFFFFFU) {
 		    fprintf (stderr, "%s:  invalid id \"%s\"\n",
 			     ProgramName, argv[i]);
-		    Exit (1, dpy);
+		    Exit (EXIT_FAILURE, dpy);
 		}
 		continue;
 	      case 'b':			/* -button number */
-		if (++i >= argc) usage ("-button requires an argument");
+		if (++i >= argc)
+		    usage ("-button requires an argument", EXIT_FAILURE);
 		button_name = argv[i];
 		continue;
 	      case 'f':			/* -frame */
@@ -136,18 +139,31 @@ main(int argc, char *argv[])
 	      case 'a':			/* -all */
 		kill_all = True;
 		continue;
+	      case 'h':
+		if (strcmp(argv[i], "-help") == 0)
+		    usage (NULL, EXIT_SUCCESS);
+		else
+		    goto unknown;
               case 'v':
                 puts(PACKAGE_STRING);
-                exit(0);
+                exit(EXIT_SUCCESS);
+	      case '-':
+		if (strcmp(argv[i], "--help") == 0)
+		    usage (NULL, EXIT_SUCCESS);
+		else if (strcmp(argv[i], "--version") == 0) {
+		    puts(PACKAGE_STRING);
+		    exit(EXIT_SUCCESS);
+		}
+		else
+		    goto unknown;
 	      default:
-                fprintf(stderr, "%s: unrecognized argument %s\n\n",
-                        ProgramName, arg);
-		usage (NULL);
+                goto unknown;
 	    }
 	} else {
-            fprintf(stderr, "%s: unrecognized argument %s\n\n",
-                    ProgramName, arg);
-            usage (NULL);
+	  unknown:
+	    fprintf(stderr, "%s: unrecognized argument %s\n\n",
+		    ProgramName, arg);
+	    usage (NULL, EXIT_FAILURE);
 	}
     }					/* end for */
 
@@ -155,14 +171,14 @@ main(int argc, char *argv[])
     if (!dpy) {
 	fprintf (stderr, "%s:  unable to open display \"%s\"\n",
 		 ProgramName, XDisplayName (displayname));
-	Exit (1, dpy);
+	Exit (EXIT_FAILURE, dpy);
     }
     screenno = DefaultScreen (dpy);
 
     if (kill_all) {
-	if (verify_okay_to_kill (dpy, screenno)) 
+	if (verify_okay_to_kill (dpy, screenno))
 	  kill_all_windows (dpy, screenno, top);
-	Exit (0, dpy);
+	Exit (EXIT_SUCCESS, dpy);
     }
 
     /*
@@ -176,7 +192,7 @@ main(int argc, char *argv[])
 	if (button_name && !parse_button (button_name, &button)) {
 	    fprintf (stderr, "%s:  invalid button specification \"%s\"\n",
 		     ProgramName, button_name);
-	    Exit (1, dpy);
+	    Exit (EXIT_FAILURE, dpy);
 	}
 
 	if (button >= 0 || button == SelectButtonFirst) {
@@ -187,10 +203,10 @@ main(int argc, char *argv[])
 
 	    count = XGetPointerMapping (dpy, pointer_map, 256);
 	    if (count <= 0) {
-		fprintf (stderr, 
+		fprintf (stderr,
 			 "%s:  no pointer mapping, can't select window\n",
 			 ProgramName);
-		Exit (1, dpy);
+		Exit (EXIT_FAILURE, dpy);
 	    }
 
 	    if (button >= 0) {			/* check button */
@@ -203,7 +219,7 @@ main(int argc, char *argv[])
 		    fprintf (stderr,
 	 "%s:  no button number %u in pointer map, can't select window\n",
 			     ProgramName, ub);
-		    Exit (1, dpy);
+		    Exit (EXIT_FAILURE, dpy);
 	        }
 	    } else {				/* get first entry */
 		button = (int) ((unsigned int) pointer_map[0]);
@@ -215,7 +231,7 @@ main(int argc, char *argv[])
 	    else if (!top) {
 		XID indicated = id;
 		if ((id = XmuClientWindow(dpy, indicated)) == indicated) {
-		    
+
 		    /* Try not to kill the window manager when the user
 		     * indicates an icon to xkill.
 		     */
@@ -223,7 +239,7 @@ main(int argc, char *argv[])
 		    if (! wm_state_set(dpy, id) && wm_running(dpy, screenno))
 			id = None;
 
-		} 
+		}
 	    }
 	}
     }
@@ -235,12 +251,12 @@ main(int argc, char *argv[])
 	XSync (dpy, 0);
     }
 
-    Exit (0, dpy);
+    Exit (EXIT_SUCCESS, dpy);
     /*NOTREACHED*/
     return 0;
 }
 
-static int 
+static int
 parse_button(const char *s, int *buttonp)
 {
     if (strcasecmp (s, "any") == 0) {
@@ -257,7 +273,7 @@ parse_button(const char *s, int *buttonp)
     return (1);
 }
 
-static XID 
+static XID
 get_window_id(Display *dpy, int screen, int button, const char *msg)
 {
     Cursor cursor;		/* cursor to use when selecting */
@@ -273,7 +289,7 @@ get_window_id(Display *dpy, int screen, int button, const char *msg)
     if (cursor == None) {
 	fprintf (stderr, "%s:  unable to create selection cursor\n",
 		 ProgramName);
-	Exit (1, dpy);
+	Exit (EXIT_FAILURE, dpy);
     }
 
     printf ("Select %s with ", msg);
@@ -284,10 +300,10 @@ get_window_id(Display *dpy, int screen, int button, const char *msg)
     printf ("....\n");
     XSync (dpy, 0);			/* give xterm a chance */
 
-    if (XGrabPointer (dpy, root, False, MASK, GrabModeSync, GrabModeAsync, 
+    if (XGrabPointer (dpy, root, False, MASK, GrabModeSync, GrabModeAsync,
     		      None, cursor, CurrentTime) != GrabSuccess) {
 	fprintf (stderr, "%s:  unable to grab cursor\n", ProgramName);
-	Exit (1, dpy);
+	Exit (EXIT_FAILURE, dpy);
     }
 
     /* from dsimple.c in xwininfo */
@@ -319,13 +335,13 @@ get_window_id(Display *dpy, int screen, int button, const char *msg)
 }
 
 
-static int 
+static int
 catch_window_errors(_X_UNUSED Display *dpy, _X_UNUSED XErrorEvent *ev)
 {
     return 0;
 }
 
-static int 
+static int
 kill_all_windows(Display *dpy, int screenno, Bool top)
 {
     Window root = RootWindow (dpy, screenno);
@@ -364,7 +380,7 @@ kill_all_windows(Display *dpy, int screenno, Bool top)
 /*
  * ask the user to press in the root with each button in succession
  */
-static int 
+static int
 verify_okay_to_kill(Display *dpy, int screenno)
 {
     unsigned char pointer_map[256];
@@ -393,8 +409,8 @@ verify_okay_to_kill(Display *dpy, int screenno)
 /* Return True if the property WM_STATE is set on the window, otherwise
  * return False.
  */
-static Bool 
-wm_state_set(Display *dpy, Window win) 
+static Bool
+wm_state_set(Display *dpy, Window win)
 {
     Atom wm_state;
     Atom actual_type;
@@ -405,7 +421,7 @@ wm_state_set(Display *dpy, Window win)
 
     wm_state = XInternAtom(dpy, "WM_STATE", True);
     if (wm_state == None) return False;
-    success = XGetWindowProperty(dpy, win, wm_state, 0L, 0L, False, 
+    success = XGetWindowProperty(dpy, win, wm_state, 0L, 0L, False,
 				 AnyPropertyType, &actual_type, &actual_format,
 				 &nitems, &remaining, &prop);
     if (prop) XFree((char *) prop);
@@ -416,7 +432,7 @@ wm_state_set(Display *dpy, Window win)
  * otherwise, return False.
  */
 
-static Bool 
+static Bool
 wm_running(Display *dpy, int screenno)
 {
     XWindowAttributes	xwa;

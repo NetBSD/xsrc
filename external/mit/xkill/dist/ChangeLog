@@ -1,3 +1,81 @@
+commit 6b2948f43fa97824b53b602ee97204d3c2b9658c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 25 10:02:44 2026 -0800
+
+    xkill 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 53d46e31c1f18185f1784d47d13429c3de2dc2fc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 11 11:20:41 2026 -0800
+
+    gitlab CI: drop the ci-fairy check-mr job
+    
+    The only thing this checked was the checkbox for allowing maintainers to
+    edit the MR. Changed permissions checks now fail this job but luckily
+    the setting it checked has been the default for years anyway so we can
+    drop it.
+    
+    https://gitlab.freedesktop.org/freedesktop/ci-templates/-/issues/81
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b803eb22bca91094a476dc630b610e34e3b517f9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Aug 5 17:29:34 2025 -0700
+
+    Strip trailing whitespace from source files
+    
+    Performed with: `git ls-files | xargs perl -i -p -e 's{[ \t]+$}{}'`
+    
+    `git diff -w` & `git diff -b` show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkill/-/merge_requests/7>
+
+commit 053126121964bb12625a83d767a57dbc03d48028
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 09:07:03 2025 -0700
+
+    man page: fix warnings from `mandoc -T lint`
+    
+    mandoc: xkill.1:25:13: WARNING: cannot parse date, using it verbatim: TH xkill 1.0.6
+    mandoc: xkill.1:35:2: WARNING: skipping paragraph macro: PP after SH
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkill/-/merge_requests/6>
+
+commit 170583b92c7461f887c1b64209cf7233f8e78521
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 5 12:39:39 2025 -0700
+
+    Accept --help & --version as aliases to -help & -version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkill/-/merge_requests/5>
+
+commit bff05ac9f910eee57b05b11f68906659487a4462
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 5 12:25:24 2025 -0700
+
+    add -help option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkill/-/merge_requests/5>
+
+commit 943f4d7eb66615dcd786492f46b578a8cd588825
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 9 15:17:42 2025 -0700
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build types
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xkill/-/merge_requests/4>
+
 commit a5f704e4cd30f03859f66bafd609a75aae27cc8c
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Nov 12 16:01:03 2022 -0800
@@ -585,7 +663,7 @@ Date:   Wed Jul 20 19:31:57 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 8d94211de5403640c6fc532952d0c4c923bd90b1
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Tue Jul 5 21:13:49 2005 +0000
 
     build system for xkill
