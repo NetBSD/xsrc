@@ -66,6 +66,12 @@ typedef struct {
  * This should match corresponding definition in Solaris's
  * '/usr/include/sys/cg14io.h'.
  */
+#ifdef __NetBSD__
+#include <dev/sun/fbio.h>
+#include <sys/ioccom.h>
+#define CG14_SET_PIXELMODE	_IOW('M', 3, int)
+#else
 #define CG14_SET_PIXELMODE	(('M' << 8) | 3)
+#endif
 
 #endif /* CG14_H */
