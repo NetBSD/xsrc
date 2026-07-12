@@ -24,8 +24,8 @@ dnl Process this file with autoconf to create configure.
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xclock],
-	[1.1.1],
-	[https://gitlab.freedesktop.org/xorg/app/xclock/issues],
+	[1.2.0],
+	[https://gitlab.freedesktop.org/xorg/app/xclock/-/issues],
 	[xclock])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -39,6 +39,7 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
+AC_CHECK_HEADERS([xlocale.h])
 AC_CHECK_FUNCS([strlcpy getpid nl_langinfo])
 
 AM_ICONV
