@@ -2096,12 +2096,13 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
     if (!pNv->NoAccel) {
 #ifdef HAVE_XAA_H
 	if (!xf86LoadSubModule(pScrn, "xaa"))
-#endif
 	{
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
 	    pNv->NoAccel = 1;
 	    pNv->ShadowFB = 1;
-	} else if (!xf86LoadSubModule(pScrn, "exa")) {
+	} else
+#endif
+	if (!xf86LoadSubModule(pScrn, "exa")) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
 	    pNv->NoAccel = 1;
 	    pNv->ShadowFB = 1;
