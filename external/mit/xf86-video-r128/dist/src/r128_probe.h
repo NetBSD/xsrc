@@ -169,13 +169,13 @@ extern SymTabRec             R128Chipsets[];
 
 /* r128_driver.c */
 extern Bool                  R128PreInit(ScrnInfoPtr, int);
-extern Bool                  R128ScreenInit(SCREEN_INIT_ARGS_DECL);
-extern Bool                  R128SwitchMode(SWITCH_MODE_ARGS_DECL);
-extern void                  R128AdjustFrame(ADJUST_FRAME_ARGS_DECL);
-extern Bool                  R128EnterVT(VT_FUNC_ARGS_DECL);
-extern void                  R128LeaveVT(VT_FUNC_ARGS_DECL);
-extern void                  R128FreeScreen(FREE_SCREEN_ARGS_DECL);
-extern ModeStatus            R128ValidMode(SCRN_ARG_TYPE, DisplayModePtr, Bool, int);
+extern Bool                  R128ScreenInit(ScreenPtr pScreen, int argc, char **argv);
+extern Bool                  R128SwitchMode(ScrnInfoPtr pScrnInfo, DisplayModePtr mode);
+extern void                  R128AdjustFrame(ScrnInfoPtr arg, int x, int y);
+extern Bool                  R128EnterVT(ScrnInfoPtr pScrn);
+extern void                  R128LeaveVT(ScrnInfoPtr pScrn);
+extern void                  R128FreeScreen(ScrnInfoPtr pScrn);
+extern ModeStatus            R128ValidMode(ScrnInfoPtr, DisplayModePtr, Bool, int);
 
 extern const OptionInfoRec * R128OptionsWeak(void);
 

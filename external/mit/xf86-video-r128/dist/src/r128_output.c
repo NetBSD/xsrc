@@ -33,8 +33,15 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef HAVE_DEV_WSCONS_WSCONSIO_H
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#endif
+
 #include "xf86.h"
 #include "xf86Modes.h"
+#include "xf86Priv.h"
+#include "xf86Privstr.h"
 
 #ifdef HAVE_XEXTPROTO_71
 #include "X11/extensions/dpmsconst.h"
@@ -50,7 +57,8 @@
 static void R128ConnectorFindMonitor(ScrnInfoPtr pScrn, xf86OutputPtr output);
 
 /* Define DAC registers for the requested video mode. */
-void R128InitDACRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output)
+static void
+R128InitDACRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output)
 {
     ScrnInfoPtr pScrn = output->scrn;
     R128InfoPtr info = R128PTR(pScrn);
@@ -210,9 +218,20 @@ void R128DPMSSetOn(xf86OutputPtr output)
 
     switch(MonType) {
     case MT_LCD:
-        OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_BLON, ~R128_LVDS_BLON);
-        usleep(r128_output->PanelPwrDly * 1000);
-        OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_ON, ~R128_LVDS_ON);
+#ifdef WSDISPLAYIO_PARAM_BACKLIGHT
+	if (info->HaveBacklightControl) {
+	    struct wsdisplay_param p;
+
+	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+	    p.curval = 1;
+	    ioctl(xf86Info.consoleFd, WSDISPLAYIO_SETPARAM, &p);
+	} else
+#endif
+	{
+	    OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_BLON, ~R128_LVDS_BLON);
+	    usleep(r128_output->PanelPwrDly * 1000);
+	    OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_ON, ~R128_LVDS_ON);
+	}
         save->lvds_gen_cntl |=     (R128_LVDS_ON | R128_LVDS_BLON);
         break;
     case MT_DFP:
@@ -239,7 +258,18 @@ void R128DPMSSetOff(xf86OutputPtr output)
 
     switch(MonType) {
     case MT_LCD:
-        OUTREGP(R128_LVDS_GEN_CNTL, 0, ~(R128_LVDS_BLON | R128_LVDS_ON));
+#ifdef WSDISPLAYIO_PARAM_BACKLIGHT
+	if (info->HaveBacklightControl) {
+	    struct wsdisplay_param p;
+
+	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+	    p.curval = 0;
+	    ioctl(xf86Info.consoleFd, WSDISPLAYIO_SETPARAM, &p);
+	} else
+#endif
+	{
+            OUTREGP(R128_LVDS_GEN_CNTL, 0, ~(R128_LVDS_BLON | R128_LVDS_ON));
+        }
         save->lvds_gen_cntl &=         ~(R128_LVDS_BLON | R128_LVDS_ON);
         break;
     case MT_DFP:
@@ -263,11 +293,31 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
     unsigned char *R128MMIO = info->MMIO;
     R128OutputPrivatePtr r128_output = output->driver_private;
 
-    R128MonitorType MonType = MT_CRT;
+    R128MonitorType MonType = MT_NONE;
     xf86MonPtr *MonInfo = &output->MonInfo;
     uint32_t mask1, mask2;
 
     if (r128_output->type == OUTPUT_LVDS) {
+#ifdef WSDISPLAYIO_GET_EDID
+	if (info->HaveWSDisplay) {
+	    struct wsdisplayio_edid_info ei;
+	    char *buffer;
+	    xf86MonPtr tmp;
+
+	    buffer = malloc(1024);
+	    ei.edid_data = buffer;
+	    ei.buffer_size = 1024;
+	    if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+		xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n",
+	    	ei.data_size);
+	    	tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
+	    	tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	    	*MonInfo = tmp;
+	    	xf86OutputSetEDID(output, tmp);
+	    } else
+	        free(buffer);
+	}
+#endif
         return MT_LCD;
     } else if (r128_output->type == OUTPUT_VGA) {
         mask1 = R128_GPIO_MONID_MASK_1 | (pR128Ent->HasCRTC2 ? R128_GPIO_MONID_MASK_3 : R128_GPIO_MONID_MASK_2);
@@ -283,7 +333,7 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
         /* XXX: Radeon does something here to appease old monitors. */
         OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  |  mask1);
         OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  & ~mask2);
-        *MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), r128_output->pI2CBus);
+        *MonInfo = xf86DoEDID_DDC2(pScrn, r128_output->pI2CBus);
     } else {
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "DDC2/I2C is not properly initialized\n");
         return MT_NONE;
@@ -413,7 +463,8 @@ static Bool R128I2CInit(xf86OutputPtr output, I2CBusPtr *bus_ptr, char *name)
     return TRUE;
 }
 
-void R128GetConnectorInfoFromBIOS(ScrnInfoPtr pScrn, R128OutputType *otypes)
+static void
+R128GetConnectorInfoFromBIOS(ScrnInfoPtr pScrn, R128OutputType *otypes)
 {
     R128InfoPtr info = R128PTR(pScrn);
     uint16_t bios_header, offset;
@@ -425,7 +476,13 @@ void R128GetConnectorInfoFromBIOS(ScrnInfoPtr pScrn, R128OutputType *otypes)
 
     /* non-x86 platform */
     if (!info->VBIOS) {
-        otypes[0] = OUTPUT_VGA;
+        if (info->isDFP) {
+            /* XXX assume LVDS on mobility chips */
+            otypes[0] = OUTPUT_LVDS;
+            otypes[1] = OUTPUT_VGA;
+        } else {
+            otypes[0] = OUTPUT_VGA;
+        }
     }
 
     bios_header = R128_BIOS16(0x48);
@@ -483,7 +540,7 @@ Bool R128SetupConnectors(ScrnInfoPtr pScrn)
         R128I2CBusRec i2c;
         R128OutputPrivatePtr r128_output;
 
-        r128_output = xnfcalloc(sizeof(R128OutputPrivateRec), 1);
+        r128_output = XNFcallocarray(1, sizeof(R128OutputPrivateRec));
         if (!r128_output) return FALSE;
 
         r128_output->MonType = MT_UNKNOWN;

@@ -54,7 +54,8 @@
 
 
 /* Define CRTC registers for requested video mode. */
-Bool R128InitCrtcRegisters(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode)
+static Bool
+R128InitCrtcRegisters(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode)
 {
     ScrnInfoPtr pScrn = crtc->scrn;
     R128InfoPtr info  = R128PTR(pScrn);
@@ -166,7 +167,8 @@ Bool R128InitCrtcRegisters(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mo
 }
 
 /* Define CRTC2 registers for requested video mode. */
-Bool R128InitCrtc2Registers(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode)
+static Bool
+R128InitCrtc2Registers(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode)
 {
     ScrnInfoPtr pScrn = crtc->scrn;
     R128InfoPtr info  = R128PTR(pScrn);
@@ -400,8 +402,9 @@ static void R128InitPLLRegisters(xf86CrtcPtr crtc, R128SavePtr save,
 }
 
 /* Define PLL2 registers for requested video mode. */
-void R128InitPLL2Registers(xf86CrtcPtr crtc, R128SavePtr save,
-                   R128PLLPtr pll, double dot_clock)
+static void
+R128InitPLL2Registers(xf86CrtcPtr crtc, R128SavePtr save,
+                      R128PLLPtr pll, double dot_clock)
 {
 #if R128_DEBUG
     ScrnInfoPtr pScrn  = crtc->scrn;
@@ -637,8 +640,9 @@ void R128RestorePLL2Registers(ScrnInfoPtr pScrn, R128SavePtr restore)
 }
 
 /* Define DDA registers for requested video mode. */
-Bool R128InitDDARegisters(xf86CrtcPtr crtc, R128SavePtr save,
-                 R128PLLPtr pll, DisplayModePtr mode)
+static Bool
+R128InitDDARegisters(xf86CrtcPtr crtc, R128SavePtr save,
+                     R128PLLPtr pll, DisplayModePtr mode)
 {
     ScrnInfoPtr pScrn = crtc->scrn;
     R128InfoPtr info  = R128PTR(pScrn);
@@ -713,8 +717,9 @@ Bool R128InitDDARegisters(xf86CrtcPtr crtc, R128SavePtr save,
 }
 
 /* Define DDA2 registers for requested video mode. */
-Bool R128InitDDA2Registers(xf86CrtcPtr crtc, R128SavePtr save,
-                 R128PLLPtr pll, DisplayModePtr mode)
+static Bool
+R128InitDDA2Registers(xf86CrtcPtr crtc, R128SavePtr save,
+                      R128PLLPtr pll, DisplayModePtr mode)
 {
     ScrnInfoPtr pScrn = crtc->scrn;
     R128InfoPtr info  = R128PTR(pScrn);
@@ -960,9 +965,6 @@ static Bool r128_crtc_lock(xf86CrtcPtr crtc)
     ScreenPtr     pScreen = xf86ScrnToScreen(pScrn);
     R128InfoPtr   info    = R128PTR(pScrn);
 
-#ifdef HAVE_XAA_H
-    if (info->accel) info->accel->Sync(pScrn);
-#endif
 #ifdef USE_EXA
     if (info->ExaDriver) exaWaitSync(pScreen);
 #endif
@@ -976,9 +978,6 @@ static void r128_crtc_unlock(xf86CrtcPtr crtc)
     ScreenPtr     pScreen = xf86ScrnToScreen(pScrn);
     R128InfoPtr   info    = R128PTR(pScrn);
 
-#ifdef HAVE_XAA_H
-    if (info->accel) info->accel->Sync(pScrn);
-#endif
 #ifdef USE_EXA
     if (info->ExaDriver) exaWaitSync(pScreen);
 #endif
@@ -1048,10 +1047,6 @@ static void r128_crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, 
         if (info->ExaDriver)
             exaOffscreenFree(pScreen, (ExaOffscreenArea *) r128_crtc->rotate_mem);
 #endif
-#ifdef HAVE_XAA_H
-        if (info->accel)
-            xf86FreeOffscreenLinear((FBLinearPtr) r128_crtc->rotate_mem);
-#endif
         r128_crtc->rotate_mem = NULL;
     }
 }
@@ -1089,7 +1084,7 @@ Bool R128AllocateControllers(ScrnInfoPtr pScrn)
     if (!pR128Ent->pCrtc[0])
         return FALSE;
 
-    pR128Ent->Controller[0] = xnfcalloc(sizeof(R128CrtcPrivateRec), 1);
+    pR128Ent->Controller[0] = XNFcallocarray(1, sizeof(R128CrtcPrivateRec));
     if (!pR128Ent->Controller[0])
         return FALSE;
 
@@ -1103,7 +1098,7 @@ Bool R128AllocateControllers(ScrnInfoPtr pScrn)
     if (!pR128Ent->pCrtc[1])
         return FALSE;
 
-    pR128Ent->Controller[1] = xnfcalloc(sizeof(R128CrtcPrivateRec), 1);
+    pR128Ent->Controller[1] = XNFcallocarray(1, sizeof(R128CrtcPrivateRec));
     if (!pR128Ent->Controller[1]) {
         free(pR128Ent->Controller[0]);
         return FALSE;

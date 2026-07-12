@@ -36,7 +36,7 @@ R128_EXA_SRCS = \
 	r128_exa_render.c
 endif
 
-AM_CFLAGS = @XORG_CFLAGS@ @DRI_CFLAGS@
+AM_CFLAGS = $(BASE_CFLAGS) $(XORG_CFLAGS) $(DRI_CFLAGS)
 
 r128_drv_la_LTLIBRARIES = r128_drv.la
 r128_drv_la_LDFLAGS = -module -avoid-version

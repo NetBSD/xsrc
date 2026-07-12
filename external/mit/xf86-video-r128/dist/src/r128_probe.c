@@ -44,10 +44,6 @@
 
 #include "xf86.h"
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
-#include "xf86Resources.h"
-#endif
-
 #include "r128_probe.h"
 
 #ifndef XSERVER_LIBPCIACCESS
@@ -269,7 +265,7 @@ r128_get_scrninfo(int entity_num)
 
         if (!pPriv->ptr) {
             R128EntPtr pR128Ent;
-            pPriv->ptr = xnfcalloc(sizeof(R128EntRec), 1);
+            pPriv->ptr = XNFcallocarray(1, sizeof(R128EntRec));
             pR128Ent = pPriv->ptr;
             pR128Ent->HasSecondary = FALSE;
             pR128Ent->IsSecondaryRestored = FALSE;

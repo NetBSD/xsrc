@@ -99,9 +99,6 @@ static void R128EnterServer(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info = R128PTR(pScrn);
 
-#ifdef HAVE_XAA_H
-    if (info->accel) info->accel->NeedToSync = TRUE;
-#endif
 #ifdef USE_EXA
     if (info->ExaDriver) exaMarkSync(pScreen);
     /* EXA and DRI are fighting over control of the texture hardware.
@@ -163,11 +160,6 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
     ScreenPtr   pScreen = pWin->drawable.pScreen;
     ScrnInfoPtr pScrn   = xf86ScreenToScrn(pScreen);
     R128InfoPtr info    = R128PTR(pScrn);
-#ifdef HAVE_XAA_H
-    BoxPtr      pbox, pboxSave;
-    int         nbox, nboxSave;
-    int         depth;
-#endif
 
     /* FIXME: Use accel when CCE 2D code is written
      * EA: What is this code kept for? Radeon doesn't have it and
@@ -176,51 +168,6 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
      */
     if (info->directRenderingEnabled)
 	return;
-#ifdef HAVE_XAA_H
-    /* FIXME: This should be based on the __GLXvisualConfig info */
-    switch (pScrn->bitsPerPixel) {
-    case  8: depth = 0x000000ff; break;
-    case 16: depth = 0x0000ffff; break;
-    case 24: depth = 0x00ffffff; break;
-    case 32: depth = 0xffffffff; break;
-    default: depth = 0x00000000; break;
-    }
-
-    /* FIXME: Copy XAAPaintWindow() and use REGION_TRANSLATE() */
-    /* FIXME: Only initialize the back and depth buffers for contexts
-       that request them */
-
-    pboxSave = pbox = REGION_RECTS(prgn);
-    nboxSave = nbox = REGION_NUM_RECTS(prgn);
-
-    (*info->accel->SetupForSolidFill)(pScrn, 0, GXcopy, (uint32_t)(-1));
-    for (; nbox; nbox--, pbox++) {
-	(*info->accel->SubsequentSolidFillRect)(pScrn,
-						pbox->x1 + info->fbX,
-						pbox->y1 + info->fbY,
-						pbox->x2 - pbox->x1,
-						pbox->y2 - pbox->y1);
-	(*info->accel->SubsequentSolidFillRect)(pScrn,
-						pbox->x1 + info->backX,
-						pbox->y1 + info->backY,
-						pbox->x2 - pbox->x1,
-						pbox->y2 - pbox->y1);
-    }
-
-    pbox = pboxSave;
-    nbox = nboxSave;
-
-    /* FIXME: this needs to consider depth tiling. */
-    (*info->accel->SetupForSolidFill)(pScrn, depth, GXcopy, (uint32_t)(-1));
-    for (; nbox; nbox--, pbox++)
-	(*info->accel->SubsequentSolidFillRect)(pScrn,
-						pbox->x1 + info->depthX,
-						pbox->y1 + info->depthY,
-						pbox->x2 - pbox->x1,
-						pbox->y2 - pbox->y1);
-
-    info->accel->NeedToSync = TRUE;
-#endif
 }
 
 /* Copy the back and depth buffers when the X server moves a window. */
@@ -872,7 +819,7 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->SAREASize = SAREA_MAX;
 #endif
 
-    if (!(pR128DRI = (R128DRIPtr)calloc(sizeof(R128DRIRec),1))) {
+    if (!(pR128DRI = (R128DRIPtr)calloc(1, sizeof(R128DRIRec)))) {
 	DRIDestroyInfoRec(info->pDRIInfo);
 	info->pDRIInfo = NULL;
 	return FALSE;
@@ -1192,13 +1139,6 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     if (!pSAREAPriv->pfAllowPageFlip && pSAREAPriv->pfCurrentPage == 0)
 	return;
 
-#ifdef HAVE_XAA_H
-    if (!info->useEXA) {
-	(*info->accel->SetupForScreenToScreenCopy)(pScrn,
-					       1, 1, GXcopy,
-					       (uint32_t)(-1), -1);
-    }
-#endif
 #ifdef USE_EXA
     if (info->useEXA) {
         uint32_t src_pitch_offset, dst_pitch_offset, datatype;
@@ -1217,15 +1157,6 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 	int ya = max(pbox->y1, 0), yb = min(pbox->y2, pScrn->virtualY-1);
 
 	if (xa <= xb && ya <= yb) {
-#ifdef HAVE_XAA_H
-	    if (!info->useEXA) {
-	        (*info->accel->SubsequentScreenToScreenCopy)(pScrn, xa, ya,
-							 xa + info->backX,
-							 ya + info->backY,
-							 xb - xa + 1,
-							 yb - ya + 1);
-	    }
-#endif
 #ifdef USE_EXA
 	    if (info->useEXA) {
 		(*info->ExaDriver->Copy)(pPix, xa, ya, xa, ya, xb - xa + 1, yb - ya + 1);
@@ -1244,21 +1175,6 @@ static void R128EnablePageFlip(ScreenPtr pScreen)
 
     if (info->allowPageFlip) {
 	/* Duplicate the frontbuffer to the backbuffer */
-#ifdef HAVE_XAA_H
-	if (!info->useEXA) {
-	    (*info->accel->SetupForScreenToScreenCopy)(pScrn,
-						   1, 1, GXcopy,
-						   (uint32_t)(-1), -1);
-
-	    (*info->accel->SubsequentScreenToScreenCopy)(pScrn,
-						     0,
-						     0,
-						     info->backX,
-						     info->backY,
-						     pScrn->virtualX,
-						     pScrn->virtualY);
-	}
-#endif
 #ifdef USE_EXA
 	if (info->useEXA) {
 	    uint32_t src_pitch_offset, dst_pitch_offset, datatype;

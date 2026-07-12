@@ -5,6 +5,9 @@
 /* Define to 1 if you have the <byteswap.h> header file. */
 #undef HAVE_BYTESWAP_H
 
+/* Define to 1 if you have the <dev/wscons/wsconsio.h> header file. */
+#undef HAVE_DEV_WSCONS_WSCONSIO_H
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -34,9 +37,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the <xaa.h> header file. */
-#undef HAVE_XAA_H
 
 /* xextproto 7.1 available */
 #undef HAVE_XEXTPROTO_71
@@ -80,7 +80,7 @@
 /* Enable developmental DRI driver support */
 #undef R128DRI_DEVEL
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS

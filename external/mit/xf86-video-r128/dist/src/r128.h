@@ -48,10 +48,7 @@
 #include "exa.h"
 #endif
 
-				/* XAA and Cursor Support */
-#ifdef HAVE_XAA_H
-#include "xaa.h"
-#endif
+				/* Offscreen & Cursor Support */
 #include "xf86fbman.h"
 #include "xf86Cursor.h"
 
@@ -308,6 +305,11 @@ typedef struct {
 
     Bool              FBDev;
 
+#ifdef HAVE_DEV_WSCONS_WSCONSIO_H
+    Bool              HaveWSDisplay;
+    Bool              HaveBacklightControl;
+#endif
+
     unsigned long     LinearAddr;   /* Frame buffer physical address         */
     unsigned long     MMIOAddr;     /* MMIO region physical address          */
     unsigned long     BIOSAddr;     /* BIOS physical address                 */
@@ -327,14 +329,10 @@ typedef struct {
 
     R128SaveRec       SavedReg;     /* Original (text) mode                  */
     R128SaveRec       ModeReg;      /* Current mode                          */
-    Bool              (*CloseScreen)(CLOSE_SCREEN_ARGS_DECL);
+    Bool              (*CloseScreen)(ScreenPtr pScreen);
     void              (*BlockHandler)(BLOCKHANDLER_ARGS_DECL);
 
     Bool              PaletteSavedOnVT; /* Palette saved on last VT switch   */
-
-#ifdef HAVE_XAA_H
-    XAAInfoRecPtr     accel;
-#endif
 
     Bool              noAccel;
     Bool              accelOn;
@@ -508,6 +506,8 @@ static inline int R128Div(int n, int d)
     return (n + (d / 2)) / d;
 }
 
+extern int         getR128EntityIndex(void);
+
 extern R128EntPtr R128EntPriv(ScrnInfoPtr pScrn);
 extern void        R128WaitForFifoFunction(ScrnInfoPtr pScrn, int entries);
 extern void        R128WaitForIdle(ScrnInfoPtr pScrn);
@@ -517,7 +517,6 @@ extern void        R128EngineFlush(ScrnInfoPtr pScrn);
 extern unsigned    R128INPLL(ScrnInfoPtr pScrn, int addr);
 extern void        R128WaitForVerticalSync(ScrnInfoPtr pScrn);
 
-extern Bool R128XAAAccelInit(ScreenPtr pScreen);
 extern void        R128EngineInit(ScrnInfoPtr pScrn);
 extern Bool        R128CursorInit(ScreenPtr pScreen);
 
