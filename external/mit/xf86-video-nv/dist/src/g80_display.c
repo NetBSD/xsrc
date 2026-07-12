@@ -293,23 +293,32 @@ Bool
 G80DispPreInit(ScrnInfoPtr pScrn)
 {
     G80Ptr pNv = G80PTR(pScrn);
+    xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 
+    /* nouveau guys dont know what this does */
     pNv->reg[0x00610184/4] = pNv->reg[0x00614004/4];
-    pNv->reg[0x00610190/4] = pNv->reg[0x00616100/4];
-    pNv->reg[0x006101a0/4] = pNv->reg[0x00616900/4];
-    pNv->reg[0x00610194/4] = pNv->reg[0x00616104/4];
-    pNv->reg[0x006101a4/4] = pNv->reg[0x00616904/4];
-    pNv->reg[0x00610198/4] = pNv->reg[0x00616108/4];
-    pNv->reg[0x006101a8/4] = pNv->reg[0x00616908/4];
-    pNv->reg[0x0061019C/4] = pNv->reg[0x0061610C/4];
-    pNv->reg[0x006101ac/4] = pNv->reg[0x0061690c/4];
+    /* CRTC capabilities */
+    for(int i = 0; i < xf86_config->num_crtc; i++) {
+        xf86CrtcPtr crtc = xf86_config->crtc[i];
+        const int headOff = 0x800 * G80CrtcGetHead(crtc);
+
+        /* Some photos of G80 cards had more than two of these, I think this can be justified */
+        pNv->reg[(0x00610190 + (G80CrtcGetHead(crtc) * 0x10))/4] = pNv->reg[(0x00616100 + headOff)/4];
+        pNv->reg[(0x00610194 + (G80CrtcGetHead(crtc) * 0x10))/4] = pNv->reg[(0x00616104 + headOff)/4];
+        pNv->reg[(0x00610198 + (G80CrtcGetHead(crtc) * 0x10))/4] = pNv->reg[(0x00616108 + headOff)/4];
+        pNv->reg[(0x0061019C + (G80CrtcGetHead(crtc) * 0x10))/4] = pNv->reg[(0x0061610C + headOff)/4];
+    }
+    /* DAC capabilities */
     pNv->reg[0x006101D0/4] = pNv->reg[0x0061A000/4];
     pNv->reg[0x006101D4/4] = pNv->reg[0x0061A800/4];
     pNv->reg[0x006101D8/4] = pNv->reg[0x0061B000/4];
+    /* SOR capabilities */
     pNv->reg[0x006101E0/4] = pNv->reg[0x0061C000/4];
     pNv->reg[0x006101E4/4] = pNv->reg[0x0061C800/4];
     pNv->reg[0x006101E8/4] = pNv->reg[0x0061D000/4];
     pNv->reg[0x006101EC/4] = pNv->reg[0x0061D800/4];
+
+    /* Setting the rest of the capabilities */
     pNv->reg[0x0061A004/4] = 0x80550000;
     pNv->reg[0x0061A010/4] = 0x00000001;
     pNv->reg[0x0061A804/4] = 0x80550000;
@@ -771,7 +780,7 @@ G80DispCreateCrtcs(ScrnInfoPtr pScrn)
         crtc = xf86CrtcCreate(pScrn, &g80_crtc_funcs);
         if(!crtc) return;
 
-        g80_crtc = xnfcalloc(sizeof(*g80_crtc), 1);
+        g80_crtc = XNFcalloc(sizeof(*g80_crtc));
         g80_crtc->head = head;
         g80_crtc->dither = pNv->Dither;
         crtc->driver_private = g80_crtc;

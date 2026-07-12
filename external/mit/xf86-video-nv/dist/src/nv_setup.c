@@ -25,7 +25,15 @@
 #include "config.h"
 #endif
 
+#include "xf86Priv.h"
+#include "xf86Privstr.h"
 #include "nv_include.h"
+
+#ifdef HAVE_DEV_WSCONS_WSCONSIO_H
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#endif
 
 /*
  * Override VGA I/O routines.
@@ -151,7 +159,7 @@ static CARD8 NVReadDacData(vgaHWPtr pVga)
     return (VGA_RD08(pNv->PDIO, VGA_DAC_DATA));
 }
 
-static Bool 
+static Bool
 NVIsConnected (ScrnInfoPtr pScrn, int output)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -160,7 +168,7 @@ NVIsConnected (ScrnInfoPtr pScrn, int output)
     Bool present;
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-               "Probing for analog device on output %s...\n", 
+               "Probing for analog device on output %s...\n",
                 output ? "B" : "A");
 
     if(output) {
@@ -216,7 +224,7 @@ NVSelectHeadRegisters(ScrnInfoPtr pScrn, int head)
     }
 }
 
-static xf86MonPtr 
+static xf86MonPtr
 NVProbeDDC (ScrnInfoPtr pScrn, int bus)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -226,7 +234,7 @@ NVProbeDDC (ScrnInfoPtr pScrn, int bus)
 
     pNv->DDCBase = bus ? 0x36 : 0x3e;
 
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                "Probing for EDID on I2C bus %s...\n", bus ? "B" : "A");
 
 #ifdef EDID_COMPLETE_RAWDATA
@@ -234,13 +242,33 @@ NVProbeDDC (ScrnInfoPtr pScrn, int bus)
 #else
     MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), pNv->I2C);
 #endif
+#ifdef WSDISPLAYIO_GET_EDID
+    if (!MonInfo) {
+	/* ask wsdisplay */
+	struct wsdisplayio_edid_info ei;
+	char *buffer;
+	xf86MonPtr tmp;
+
+	buffer = malloc(1024);
+	ei.edid_data = buffer;
+	ei.buffer_size = 1024;
+	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n",
+	    	ei.data_size);
+	    tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
+	    tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	    MonInfo = tmp;
+	}
+	free(buffer);
+    }
+#endif
     if (MonInfo) {
        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                   "DDC detected a %s:\n", MonInfo->features.input_type ?
                   "DFP" : "CRT");
        xf86PrintEDID( MonInfo );
     } else {
-       xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+       xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                   "  ... none found\n");
     }
 
@@ -320,7 +348,7 @@ static void nv10GetConfig (NVPtr pNv)
         pNv->RamAmountKBytes = 256*1024;
 
     pNv->CrystalFreqKHz = (pNv->PEXTDEV[0x0000/4] & (1 << 6)) ? 14318 : 13500;
-    
+
     if(pNv->twoHeads && (implementation != 0x0110))
     {
        if(pNv->PEXTDEV[0x0000/4] & (1 << 22))
@@ -505,7 +533,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
            VGA_WR08(pNv->PCIO, 0x03D4, 0x28);
            if(VGA_RD08(pNv->PCIO, 0x03D5) & 0x80) {
               VGA_WR08(pNv->PCIO, 0x03D4, 0x33);
-              if(!(VGA_RD08(pNv->PCIO, 0x03D5) & 0x01)) 
+              if(!(VGA_RD08(pNv->PCIO, 0x03D5) & 0x01))
                  Television = TRUE;
               FlatPanel = 1;
            } else {
@@ -514,14 +542,14 @@ NVCommonSetup(ScrnInfoPtr pScrn)
            xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                          "HW is currently programmed for %s\n",
                           FlatPanel ? (Television ? "TV" : "DFP") : "CRT");
-       } 
+       }
 
        if(pNv->FlatPanel == -1) {
            pNv->FlatPanel = FlatPanel;
            pNv->Television = Television;
        } else {
            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                      "Forcing display type to %s as specified\n", 
+                      "Forcing display type to %s as specified\n",
                        pNv->FlatPanel ? "DFP" : "CRT");
        }
     } else {
@@ -531,11 +559,11 @@ NVCommonSetup(ScrnInfoPtr pScrn)
        Bool analog_on_A, analog_on_B;
        CARD32 oldhead;
        CARD8 cr44;
-      
+
        if(implementation != 0x0110) {
            if(pNv->PRAMDAC0[0x0000052C/4] & 0x100)
                outputAfromCRTC = 1;
-           else            
+           else
                outputAfromCRTC = 0;
            if(pNv->PRAMDAC0[0x0000252C/4] & 0x100)
                outputBfromCRTC = 1;
@@ -570,7 +598,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
        NVLockUnlock(pNv, 0);
 
        VGA_WR08(pNv->PCIO, 0x03D4, 0x28);
-       slaved_on_A = VGA_RD08(pNv->PCIO, 0x03D5) & 0x80; 
+       slaved_on_A = VGA_RD08(pNv->PCIO, 0x03D5) & 0x80;
        if(slaved_on_A) {
            VGA_WR08(pNv->PCIO, 0x03D4, 0x33);
            tvA = !(VGA_RD08(pNv->PCIO, 0x03D5) & 0x01);
@@ -587,7 +615,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
           FlatPanel = 1;
           xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                     "CRTC 0 is currently programmed for DFP\n");
-       } else 
+       } else
        if(slaved_on_B && !tvB) {
           CRTCnumber = 1;
           FlatPanel = 1;
@@ -622,7 +650,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
        } else
        if(monitorA) {
            FlatPanel = monitorA->features.input_type ? 1 : 0;
-       } else 
+       } else
        if(monitorB) {
            FlatPanel = monitorB->features.input_type ? 1 : 0;
        }
@@ -646,7 +674,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
           }
        } else {
            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                      "Forcing display type to %s as specified\n", 
+                      "Forcing display type to %s as specified\n",
                        pNv->FlatPanel ? "DFP" : "CRT");
        }
 
@@ -664,12 +692,12 @@ NVCommonSetup(ScrnInfoPtr pScrn)
            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
                       "Forcing CRTCNumber %i as specified\n", pNv->CRTCnumber);
        }
-     
+
        if(monitorA) {
            if((monitorA->features.input_type && pNv->FlatPanel) ||
               (!monitorA->features.input_type && !pNv->FlatPanel))
            {
-               if(monitorB) { 
+               if(monitorB) {
                   free(monitorB);
                   monitorB = NULL;
                }
@@ -681,7 +709,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
 
        if(monitorB) {
            if((monitorB->features.input_type && !pNv->FlatPanel) ||
-              (!monitorB->features.input_type && pNv->FlatPanel)) 
+              (!monitorB->features.input_type && pNv->FlatPanel))
            {
               free(monitorB);
            } else {
@@ -702,7 +730,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
               "Using %s on CRTC %i\n",
-              pNv->FlatPanel ? (pNv->Television ? "TV" : "DFP") : "CRT", 
+              pNv->FlatPanel ? (pNv->Television ? "TV" : "DFP") : "CRT",
               pNv->CRTCnumber);
 
     if(pNv->FlatPanel && !pNv->Television) {
@@ -729,7 +757,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
         pNv->PRAMDAC0[0x08B0/4] = 0x00010004;
         if(pNv->PRAMDAC0[0x08B4/4] & 1)
            pNv->LVDS = TRUE;
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel is %s\n", 
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel is %s\n",
                    pNv->LVDS ? "LVDS" : "TMDS");
     }
 }

@@ -11,7 +11,7 @@
 #endif
 #include "dgaproc.h"
 
-static Bool Riva_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
+static Bool Riva_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
 					int *, int *, int *);
 static Bool Riva_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  Riva_GetViewport(ScrnInfoPtr);
@@ -19,7 +19,7 @@ static void Riva_SetViewport(ScrnInfoPtr, int, int, int);
 #ifdef HAVE_XAA_H
 static void Riva_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void Riva_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
-static void Riva_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
+static void Riva_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int,
 					unsigned long);
 #endif
 
@@ -74,7 +74,7 @@ SECOND_PASS:
 		(size <= pRiva->FbUsableSize)) {
 
 	    if(secondPitch)
-		pitch = secondPitch; 
+		pitch = secondPitch;
 
 	    if(!(newmodes = realloc(modes, (*num + 1) * sizeof(DGAModeRec))))
 		break;
@@ -111,7 +111,7 @@ SECOND_PASS:
 	    mode->address = pRiva->FbStart;
 	    mode->bytesPerScanline = pitch * Bpp;
 	    mode->imageWidth = pitch;
-	    mode->imageHeight =  pRiva->FbUsableSize / mode->bytesPerScanline; 
+	    mode->imageHeight =  pRiva->FbUsableSize / mode->bytesPerScanline;
 	    mode->pixmapWidth = mode->imageWidth;
 	    mode->pixmapHeight = mode->imageHeight;
 	    mode->maxViewportX = mode->imageWidth - mode->viewportWidth;
@@ -135,26 +135,26 @@ SECOND_PASS:
 
 Bool
 RivaDGAInit(ScreenPtr pScreen)
-{   
+{
    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
    RivaPtr pRiva = RivaPTR(pScrn);
    DGAModePtr modes = NULL;
    int num = 0;
 
    /* 8 */
-   modes = RivaSetupDGAMode (pScrn, modes, &num, 8, 8, 
+   modes = RivaSetupDGAMode (pScrn, modes, &num, 8, 8,
 		(pScrn->bitsPerPixel == 8),
 		(pScrn->bitsPerPixel != 8) ? 0 : pScrn->displayWidth,
 		0, 0, 0, PseudoColor);
 
    /* 15 */
-   modes = RivaSetupDGAMode (pScrn, modes, &num, 16, 15, 
+   modes = RivaSetupDGAMode (pScrn, modes, &num, 16, 15,
 		(pScrn->bitsPerPixel == 16),
 		(pScrn->depth != 15) ? 0 : pScrn->displayWidth,
 		0x7c00, 0x03e0, 0x001f, TrueColor);
 
    /* 32 */
-   modes = RivaSetupDGAMode (pScrn, modes, &num, 32, 24, 
+   modes = RivaSetupDGAMode (pScrn, modes, &num, 32, 24,
 		(pScrn->bitsPerPixel == 32),
 		(pScrn->bitsPerPixel != 32) ? 0 : pScrn->displayWidth,
 		0xff0000, 0x00ff00, 0x0000ff, TrueColor);
@@ -162,18 +162,18 @@ RivaDGAInit(ScreenPtr pScreen)
    pRiva->numDGAModes = num;
    pRiva->DGAModes = modes;
 
-   return DGAInit(pScreen, &Riva_DGAFuncs, modes, num);  
+   return DGAInit(pScreen, &Riva_DGAFuncs, modes, num);
 }
 
 
-static int 
+static int
 BitsSet(unsigned long data)
 {
    unsigned long mask;
    int set = 0;
 
    for(mask = 1; mask; mask <<= 1)
-        if(mask & data) set++;   
+        if(mask & data) set++;
 
    return set;
 }
@@ -191,7 +191,7 @@ Riva_SetMode(
    if(!pMode) { /* restore the original mode */
       if(pRiva->DGAactive)
         memcpy(&pRiva->CurrentLayout, &SavedLayouts[index], sizeof(RivaFBLayout));
-                
+
       pScrn->currentMode = pRiva->CurrentLayout.mode;
       RivaSwitchMode(SWITCH_MODE_ARGS(pScrn, pScrn->currentMode));
       RivaAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
@@ -205,7 +205,7 @@ Riva_SetMode(
       /* update CurrentLayout */
       pRiva->CurrentLayout.bitsPerPixel = pMode->bitsPerPixel;
       pRiva->CurrentLayout.depth = pMode->depth;
-      pRiva->CurrentLayout.displayWidth = pMode->bytesPerScanline / 
+      pRiva->CurrentLayout.displayWidth = pMode->bytesPerScanline /
                               (pMode->bitsPerPixel >> 3);
       pRiva->CurrentLayout.weight.red = BitsSet(pMode->red_mask);
       pRiva->CurrentLayout.weight.green = BitsSet(pMode->green_mask);
@@ -213,13 +213,13 @@ Riva_SetMode(
       /* RivaModeInit() will set the mode field */
       RivaSwitchMode(SWITCH_MODE_ARGS(pScrn, pMode->mode));
    }
-   
+
    return TRUE;
 }
 
 
 
-static int  
+static int
 Riva_GetViewport(
   ScrnInfoPtr pScrn
 ){
@@ -228,10 +228,10 @@ Riva_GetViewport(
     return pRiva->DGAViewportStatus;
 }
 
-static void 
+static void
 Riva_SetViewport(
-   ScrnInfoPtr pScrn, 
-   int x, int y, 
+   ScrnInfoPtr pScrn,
+   int x, int y,
    int flags
 ){
    RivaPtr pRiva = RivaPTR(pScrn);
@@ -241,14 +241,14 @@ Riva_SetViewport(
    while(VGA_RD08(pRiva->riva.PCIO, 0x3da) & 0x08);
    while(!(VGA_RD08(pRiva->riva.PCIO, 0x3da) & 0x08));
 
-   pRiva->DGAViewportStatus = 0;  
+   pRiva->DGAViewportStatus = 0;
 }
 
 #ifdef HAVE_XAA_H
-static void 
+static void
 Riva_FillRect (
-   ScrnInfoPtr pScrn, 
-   int x, int y, int w, int h, 
+   ScrnInfoPtr pScrn,
+   int x, int y, int w, int h,
    unsigned long color
 ){
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -261,11 +261,11 @@ Riva_FillRect (
     SET_SYNC_FLAG(pRiva->AccelInfoRec);
 }
 
-static void 
+static void
 Riva_BlitRect(
-   ScrnInfoPtr pScrn, 
-   int srcx, int srcy, 
-   int w, int h, 
+   ScrnInfoPtr pScrn,
+   int srcx, int srcy,
+   int w, int h,
    int dstx, int dsty
 ){
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -284,11 +284,11 @@ Riva_BlitRect(
 }
 
 
-static void 
+static void
 Riva_BlitTransRect(
-   ScrnInfoPtr pScrn, 
-   int srcx, int srcy, 
-   int w, int h, 
+   ScrnInfoPtr pScrn,
+   int srcx, int srcy,
+   int w, int h,
    int dstx, int dsty,
    unsigned long color
 ){
@@ -296,9 +296,9 @@ Riva_BlitTransRect(
 }
 #endif
 
-static Bool 
+static Bool
 Riva_OpenFramebuffer(
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    char **name,
    unsigned char **mem,
    int *size,

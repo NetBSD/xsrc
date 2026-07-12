@@ -110,7 +110,7 @@ NVDmaKickoff(NVPtr pNv)
    to solve this problem */
 #define SKIPS  8
 
-void 
+void
 NVDmaWait (
    NVPtr pNv,
    int size
@@ -136,7 +136,7 @@ NVDmaWait (
                pNv->dmaCurrent = pNv->dmaPut = SKIPS;
                pNv->dmaFree = dmaGet - (SKIPS + 1);
            }
-       } else 
+       } else
            pNv->dmaFree = dmaGet - pNv->dmaCurrent - 1;
     }
 }
@@ -154,13 +154,13 @@ NVWaitVSync(NVPtr pNv)
     NVDmaNext (pNv, 0);
 }
 
-/* 
+/*
   currentRop =  0-15  solid fill
                16-31  8x8 pattern fill
-               32-47  solid fill with planemask 
+               32-47  solid fill with planemask
 */
 
-static void 
+static void
 NVSetPattern(
    ScrnInfoPtr pScrn,
    CARD32 clr0,
@@ -178,7 +178,7 @@ NVSetPattern(
     NVDmaNext (pNv, pat1);
 }
 
-static void 
+static void
 NVSetRopSolid(ScrnInfoPtr pScrn, CARD32 rop, CARD32 planemask)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -190,7 +190,7 @@ NVSetRopSolid(ScrnInfoPtr pScrn, CARD32 rop, CARD32 planemask)
            NVDmaNext (pNv, NVCopyROP_PM[rop]);
            pNv->currentRop = rop + 32;
         }
-    } else 
+    } else
     if (pNv->currentRop != rop) {
         if(pNv->currentRop >= 16)
              NVSetPattern(pScrn, ~0, ~0, ~0, ~0);
@@ -208,7 +208,7 @@ void NVResetGraphics(ScrnInfoPtr pScrn)
 
     if(pNv->NoAccel) return;
 
-    pitch = pNv->CurrentLayout.displayWidth * 
+    pitch = pNv->CurrentLayout.displayWidth *
             (pNv->CurrentLayout.bitsPerPixel >> 3);
 
     pNv->dmaBase = (CARD32*)(&pNv->FbStart[pNv->FbUsableSize]);
@@ -305,10 +305,10 @@ NVDMAKickoffCallback (ScrnInfoPtr pScrn)
 
 static void
 NVSetupForScreenToScreenCopy(
-   ScrnInfoPtr pScrn, 
-   int xdir, int ydir, 
+   ScrnInfoPtr pScrn,
+   int xdir, int ydir,
    int rop,
-   unsigned planemask, 
+   unsigned planemask,
    int transparency_color
 )
 {
@@ -323,9 +323,9 @@ NVSetupForScreenToScreenCopy(
 
 static void
 NVSubsequentScreenToScreenCopy(
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    int x1, int y1,
-   int x2, int y2, 
+   int x2, int y2,
    int w, int h
 )
 {
@@ -337,13 +337,13 @@ NVSubsequentScreenToScreenCopy(
     NVDmaNext (pNv, (h  << 16) | w);
 
     if((w * h) >= 512)
-       NVDmaKickoff(pNv); 
+       NVDmaKickoff(pNv);
 }
 
 static void
 NVSetupForSolidFill(
-   ScrnInfoPtr pScrn, 
-   int color, 
+   ScrnInfoPtr pScrn,
+   int color,
    int rop,
    unsigned planemask
 )
@@ -374,10 +374,10 @@ NVSubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
 
 static void
 NVSetupForMono8x8PatternFill (
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    int patternx, int patterny,
-   int fg, int bg, 
-   int rop, 
+   int fg, int bg,
+   int rop,
    unsigned planemask
 )
 {
@@ -406,7 +406,7 @@ static void
 NVSubsequentMono8x8PatternFillRect(
    ScrnInfoPtr pScrn,
    int patternx, int patterny,
-   int x, int y, 
+   int x, int y,
    int w, int h
 )
 {
@@ -455,7 +455,7 @@ NVSetupForScanlineCPUToScreenColorExpandFill (
 
 static void
 NVSubsequentScanlineCPUToScreenColorExpandFill (
-    ScrnInfoPtr pScrn, 
+    ScrnInfoPtr pScrn,
     int x, int y,
     int w, int h,
     int skipleft
@@ -484,7 +484,7 @@ NVSubsequentScanlineCPUToScreenColorExpandFill (
       NVDmaNext (pNv, (h << 16) | bw);
       NVDmaNext (pNv, (h << 16) | bw);
       NVDmaNext (pNv, (y << 16) | (x & 0xFFFF));
-      _color_expand_offset = RECT_EXPAND_TWO_COLOR_DATA(0); 
+      _color_expand_offset = RECT_EXPAND_TWO_COLOR_DATA(0);
    }
 
    NVDmaStart(pNv, _color_expand_offset, _color_expand_dwords);
@@ -509,11 +509,11 @@ NVSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
    }
 }
 
-static void 
+static void
 NVSetupForScanlineImageWrite(
-   ScrnInfoPtr pScrn, int rop, 
-   unsigned int planemask, 
-   int trans_color, 
+   ScrnInfoPtr pScrn, int rop,
+   unsigned int planemask,
+   int trans_color,
    int bpp, int depth
 )
 {
@@ -529,11 +529,11 @@ static CARD32 _image_srcpoint;
 static CARD32 _image_dstpoint;
 static CARD32 _image_dstpitch;
 
-static void 
+static void
 NVSubsequentScanlineImageWriteRect(
-   ScrnInfoPtr pScrn, 
-   int x, int y, 
-   int w, int h, 
+   ScrnInfoPtr pScrn,
+   int x, int y,
+   int w, int h,
    int skipleft
 )
 {
@@ -590,7 +590,7 @@ NVSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, unsigned planemask)
     pNv->DMAKickoffCallback = NVDMAKickoffCallback;
 }
 
-static void 
+static void
 NVSubsequentSolidHorVertLine(ScrnInfoPtr pScrn, int x, int y, int len, int dir)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -606,11 +606,11 @@ NVSubsequentSolidHorVertLine(ScrnInfoPtr pScrn, int x, int y, int len, int dir)
     }
 }
 
-static void 
+static void
 NVSubsequentSolidTwoPointLine(
-   ScrnInfoPtr pScrn, 
+   ScrnInfoPtr pScrn,
    int x1, int y1,
-   int x2, int y2, 
+   int x2, int y2,
    int flags
 )
 {
@@ -636,7 +636,7 @@ NVSetClippingRectangle(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)
     int w = x2 - x1 + 1;
 
     NVDmaStart(pNv, CLIP_POINT, 2);
-    NVDmaNext (pNv, (y1 << 16) | x1); 
+    NVDmaNext (pNv, (y1 << 16) | x1);
     NVDmaNext (pNv, (h << 16) | w);
 }
 
@@ -646,7 +646,7 @@ NVDisableClipping(ScrnInfoPtr pScrn)
     NVPtr pNv = NVPTR(pScrn);
 
     NVDmaStart(pNv, CLIP_POINT, 2);
-    NVDmaNext (pNv, 0);              
+    NVDmaNext (pNv, 0);
     NVDmaNext (pNv, 0x7FFF7FFF);
 }
 
@@ -654,7 +654,7 @@ NVDisableClipping(ScrnInfoPtr pScrn)
 
 /* Initialize XAA acceleration info */
 Bool
-NVAccelInit(ScreenPtr pScreen) 
+NVAccelInit(ScreenPtr pScreen)
 {
 #ifdef HAVE_XAA_H
    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
@@ -681,17 +681,17 @@ NVAccelInit(ScreenPtr pScreen)
    accel->SetupForMono8x8PatternFill = NVSetupForMono8x8PatternFill;
    accel->SubsequentMono8x8PatternFillRect = NVSubsequentMono8x8PatternFillRect;
 
-   accel->ScanlineCPUToScreenColorExpandFillFlags = 
+   accel->ScanlineCPUToScreenColorExpandFillFlags =
                                     BIT_ORDER_IN_BYTE_LSBFIRST |
                                     CPU_TRANSFER_PAD_DWORD |
                                     LEFT_EDGE_CLIPPING |
                                     LEFT_EDGE_CLIPPING_NEGATIVE_X;
    accel->NumScanlineColorExpandBuffers = 1;
-   accel->SetupForScanlineCPUToScreenColorExpandFill = 
+   accel->SetupForScanlineCPUToScreenColorExpandFill =
             NVSetupForScanlineCPUToScreenColorExpandFill;
-   accel->SubsequentScanlineCPUToScreenColorExpandFill = 
+   accel->SubsequentScanlineCPUToScreenColorExpandFill =
             NVSubsequentScanlineCPUToScreenColorExpandFill;
-   accel->SubsequentColorExpandScanline = 
+   accel->SubsequentColorExpandScanline =
             NVSubsequentColorExpandScanline;
    accel->ScanlineColorExpandBuffers = _storage_buffer;
 
@@ -712,7 +712,7 @@ NVAccelInit(ScreenPtr pScreen)
    accel->SetClippingRectangle = NVSetClippingRectangle;
    accel->DisableClipping = NVDisableClipping;
    accel->ClippingFlags = HARDWARE_CLIP_SOLID_LINE;
-   
+
    miSetZeroLineBias(pScreen, OCTANT1 | OCTANT3 | OCTANT4 | OCTANT6);
 
    return (XAAInit(pScreen, accel));

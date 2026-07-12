@@ -79,7 +79,15 @@ static Bool G80ReadPortMapping(int scrnIndex, G80Ptr pNv)
     for(i = 0; i < G80_NUM_I2C_PORTS; i++)
         pNv->i2cMap[i].dac = pNv->i2cMap[i].sor = -1;
 
-    if(*(CARD16*)pNv->table1 != 0xaa55) goto fail;
+    /* These are the three possible known rom signatures */
+    switch(*(CARD16*)pNv->table1) {
+        case 0xaa55:
+        case 0x4e56:
+        case 0xbb77:
+            break;
+        default:
+            goto fail;
+    }
 
     a = *(CARD16*)(pNv->table1 + 0x36);
     table2 = (unsigned char*)pNv->table1 + a;

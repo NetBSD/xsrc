@@ -442,7 +442,7 @@ static const xf86OutputFuncsRec G80SorLVDSOutputFuncs = {
 static DisplayModePtr
 ReadLVDSNativeMode(G80Ptr pNv, const int off)
 {
-    DisplayModePtr mode = xnfcalloc(1, sizeof(DisplayModeRec));
+    DisplayModePtr mode = XNFcalloc(sizeof(DisplayModeRec));
     const CARD32 size = pNv->reg[(0x00610B4C+off)/4];
     const int width = size & 0x3fff;
     const int height = (size >> 16) & 0x3fff;
@@ -481,7 +481,7 @@ xf86OutputPtr
 G80CreateSor(ScrnInfoPtr pScrn, ORNum or, PanelType panelType)
 {
     G80Ptr pNv = G80PTR(pScrn);
-    G80OutputPrivPtr pPriv = xnfcalloc(sizeof(*pPriv), 1);
+    G80OutputPrivPtr pPriv = XNFcalloc(sizeof(*pPriv));
     const int off = 0x800 * or;
     xf86OutputPtr output;
     char orName[5];

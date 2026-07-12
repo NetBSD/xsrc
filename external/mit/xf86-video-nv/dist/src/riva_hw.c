@@ -245,7 +245,7 @@ static int nv3_iterate(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_i
                 ainfo->first_vacc = 0;
                 if (last!=cur)
                 {
-                    ns =  1000000 * (vmisses*state->mem_page_miss + state->mem_latency)/state->mclk_khz; 
+                    ns =  1000000 * (vmisses*state->mem_page_miss + state->mem_latency)/state->mclk_khz;
                     vlwm = ns * ainfo->vdrain_rate/ 1000000;
                     vlwm = ainfo->vocc - vlwm;
                 }
@@ -332,7 +332,7 @@ static int nv3_iterate(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_i
         }
     }
 }
-static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_info *ainfo) 
+static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_info *ainfo)
 {
     long ens, vns, mns, gns;
     int mmisses, gmisses, vmisses, eburst_size, mburst_size;
@@ -442,7 +442,7 @@ static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_in
 static char nv3_get_param(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
 {
     int done, g,v, p;
-    
+
     done = 0;
     for (p=0; p < 2; p++)
     {
@@ -451,7 +451,7 @@ static char nv3_get_param(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_ar
             for (v=128; v >=32; v = v>> 1)
             {
                 ainfo->priority = p;
-                ainfo->gburst_size = g;     
+                ainfo->gburst_size = g;
                 ainfo->vburst_size = v;
                 done = nv3_arb(res_info, state,ainfo);
                 if (done && (g==128))
@@ -466,7 +466,7 @@ static char nv3_get_param(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_ar
  Done:
     return done;
 }
-static void nv3CalcArbitration 
+static void nv3CalcArbitration
 (
     nv3_fifo_info * res_info,
     nv3_sim_state * state
@@ -516,8 +516,8 @@ static void nv3CalcArbitration
 }
 static void nv3UpdateArbitrationSettings
 (
-    unsigned      VClk, 
-    unsigned      pixelDepth, 
+    unsigned      VClk,
+    unsigned      pixelDepth,
     unsigned     *burst,
     unsigned     *lwm,
     RIVA_HW_INST *chip
@@ -526,7 +526,7 @@ static void nv3UpdateArbitrationSettings
     nv3_fifo_info fifo_data;
     nv3_sim_state sim_data;
     unsigned int M, N, P, pll, MClk;
-    
+
     pll = chip->PRAMDAC[0x00000504/4];
     M = (pll >> 0) & 0xFF; N = (pll >> 8) & 0xFF; P = (pll >> 16) & 0x0F;
     MClk = (N * chip->CrystalFreqKHz / M) >> P;
@@ -581,16 +581,16 @@ static int CalcVClock
     unsigned DeltaNew, DeltaOld;
     unsigned VClk, Freq;
     unsigned M, N, P;
-    
+
     DeltaOld = 0xFFFFFFFF;
 
     VClk     = (unsigned)clockIn;
-    
+
     if (chip->CrystalFreqKHz == 13500)
     {
         lowM  = 7;
         highM = 12;
-    }                      
+    }
     else
     {
         lowM  = 8;
@@ -627,7 +627,7 @@ static int CalcVClock
     return (DeltaOld != 0xFFFFFFFF);
 }
 /*
- * Calculate extended mode parameters (SVGA) and save in a 
+ * Calculate extended mode parameters (SVGA) and save in a
  * mode state structure.
  */
 static void CalcStateExt
@@ -639,7 +639,7 @@ static void CalcStateExt
     int            hDisplaySize,
     int            height,
     int            dotClock,
-    int		   flags 
+    int		   flags
 )
 {
     int pixelDepth, VClk = 0, m = 0, n = 0, p = 0;
@@ -655,8 +655,8 @@ static void CalcStateExt
     pixelDepth = (bpp + 1)/8;
     CalcVClock(dotClock, &VClk, &m, &n, &p, chip);
 
-    nv3UpdateArbitrationSettings(VClk, 
-                                 pixelDepth * 8, 
+    nv3UpdateArbitrationSettings(VClk,
+                                 pixelDepth * 8,
                                  &(state->arbitration0),
                                  &(state->arbitration1),
                                  chip);
@@ -792,7 +792,7 @@ static void LoadStateExt
     chip->PCRTC[0x00000100/4] = chip->VBlankBit;
     /*
      * Set interrupt enable.
-     */    
+     */
     chip->PMC[0x00000140/4]  = chip->EnableIRQ & 0x01;
     /*
      * Set current state pointer.
@@ -803,7 +803,7 @@ static void LoadStateExt
      */
     chip->FifoFreeCount  = 0;
     /* Free count from first subchannel */
-    chip->FifoEmptyCount = chip->Rop->FifoFree; 
+    chip->FifoEmptyCount = chip->Rop->FifoFree;
 }
 
 static void UnloadStateExt
@@ -895,7 +895,7 @@ static void nv3GetConfig
     {
         if (((chip->PMC[0x00000000/4] & 0xF0) == 0x20)
          && ((chip->PMC[0x00000000/4] & 0x0F) >= 0x02))
-        {        
+        {
             /*
              * SDRAM 128 ZX.
              */
@@ -912,12 +912,12 @@ static void nv3GetConfig
                     chip->RamAmountKBytes = 1024 * 8;
                     break;
             }
-        }            
-        else            
+        }
+        else
         {
             chip->RamBandwidthKBytesPerSec = 1000000;
             chip->RamAmountKBytes          = 1024 * 8;
-        }            
+        }
     }
     else
     {
@@ -937,7 +937,7 @@ static void nv3GetConfig
                 chip->RamAmountKBytes = 1024 * 2;
                 break;
         }
-    }        
+    }
     chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000040) ? 14318 : 13500;
     chip->CURSOR           = &(chip->PRAMIN[0x00008000/4 - 0x0800/4]);
     chip->VBlankBit        = 0x00000100;

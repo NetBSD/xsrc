@@ -87,13 +87,13 @@ static const OptionInfoRec RivaOptions[] = {
  */
 static int pix24bpp = 0;
 
-/* 
+/*
  * ramdac info structure initialization
  */
 static RivaRamdacRec DacInit = {
         FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL,
         0, NULL, NULL, NULL, NULL
-}; 
+};
 
 
 
@@ -108,7 +108,7 @@ RivaGetRec(ScrnInfoPtr pScrn)
     if (pScrn->driverPrivate != NULL)
         return TRUE;
 
-    pScrn->driverPrivate = xnfcalloc(sizeof(RivaRec), 1);
+    pScrn->driverPrivate = XNFcalloc(sizeof(RivaRec));
     /* Initialise it */
 
     RivaPTR(pScrn)->Dac = DacInit;
@@ -172,7 +172,7 @@ RivaSwitchMode(SWITCH_MODE_ARGS_DECL)
  * displayed location in the video memory.
  */
 /* Usually mandatory */
-void 
+void
 RivaAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 {
     SCRN_INFO_PTR(arg);
@@ -180,8 +180,8 @@ RivaAdjustFrame(ADJUST_FRAME_ARGS_DECL)
     RivaPtr pRiva = RivaPTR(pScrn);
     RivaFBLayout *pLayout = &pRiva->CurrentLayout;
 
-    if(pRiva->ShowCache && y && pScrn->vtSema) 
-	y += pScrn->virtualY - 1;	
+    if(pRiva->ShowCache && y && pScrn->vtSema)
+	y += pScrn->virtualY - 1;
 
     startAddr = (((y*pLayout->displayWidth)+x)*(pLayout->bitsPerPixel/8));
     pRiva->riva.SetStartAddress(&pRiva->riva, startAddr);
@@ -323,7 +323,7 @@ Bool RivaI2CInit(ScrnInfoPtr pScrn)
         mod = "ddc";
         if(xf86LoadSubModule(pScrn, mod)) {
             return RivaDACi2cInit(pScrn);
-        } 
+        }
     }
 
     xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
@@ -360,7 +360,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
      * not at the start of each server generation.  This means that
      * only things that are persistent across server generations can
      * be initialised here.  xf86Screens[] is (pScrn is a pointer to one
-     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()  
+     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()
      * are too, and should be used for data that must persist across
      * server generations.
      *
@@ -382,7 +382,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     pRiva->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
     if (pRiva->pEnt->location.type != BUS_PCI)
 	return FALSE;
- 
+
     /* Find the PCI info for this screen */
     pRiva->PciInfo = xf86GetPciInfoForEntity(pRiva->pEnt->index);
 #ifndef XSERVER_LIBPCIACCESS
@@ -394,12 +394,12 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Initialize the card through int10 interface if needed */
     if (xf86LoadSubModule(pScrn, "int10")) {
-#if !defined(__alpha__) 
+#if !defined(__alpha__)
         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
         pRiva->pInt = xf86InitInt10(pRiva->pEnt->index);
 #endif
     }
-   
+
 #ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVgaIo, pRiva->pEnt->index, ResUnusedOpr);
     xf86SetOperatingState(resVgaMem, pRiva->pEnt->index, ResDisableOpr);
@@ -480,7 +480,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86FreeInt10(pRiva->pInt);
 	return FALSE;
     }
-    
+
     /*
      * Allocate a vgaHWRec
      */
@@ -489,7 +489,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
     vgaHWSetStdFuncs(VGAHWPTR(pScrn));
-    
+
     /* We use a programmable clock */
     pScrn->progClock = TRUE;
 
@@ -533,12 +533,12 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     if (xf86ReturnOptValBool(pRiva->Options, OPTION_SHADOW_FB, FALSE)) {
 	pRiva->ShadowFB = TRUE;
 	pRiva->NoAccel = TRUE;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Using \"Shadow Framebuffer\" - acceleration disabled\n");
     }
     if (xf86ReturnOptValBool(pRiva->Options, OPTION_FBDEV, FALSE)) {
 	pRiva->FBDev = TRUE;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Using framebuffer device\n");
     }
     if (pRiva->FBDev) {
@@ -547,7 +547,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	    xf86FreeInt10(pRiva->pInt);
 	    return FALSE;
 	}
-	
+
 	if (!fbdevHWInit(pScrn, pRiva->PciInfo, NULL)) {
 	    xf86FreeInt10(pRiva->pInt);
 	    return FALSE;
@@ -565,7 +565,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	pRiva->NoAccel = TRUE;
 	pRiva->HWCursor = FALSE;
 	pRiva->Rotate = 1;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Rotating screen clockwise - acceleration disabled\n");
       } else
       if(!xf86NameCmp(s, "CCW")) {
@@ -573,12 +573,12 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	pRiva->NoAccel = TRUE;
 	pRiva->HWCursor = FALSE;
 	pRiva->Rotate = -1;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Rotating screen counter clockwise - acceleration disabled\n");
       } else {
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"\"%s\" is not a valid value for Option \"Rotate\"\n", s);
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		"Valid options are \"CW\" or \"CCW\"\n");
       }
     }
@@ -639,7 +639,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
 	       (unsigned long)pRiva->IOAddress);
-     
+
 #ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pRiva->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -668,7 +668,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "VideoRAM: %d kBytes\n",
                pScrn->videoRam);
-	
+
     pRiva->FbMapSize = pScrn->videoRam * 1024;
 
     /*
@@ -695,7 +695,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     pRiva->MinClock = 12000;
     pRiva->MaxClock = pRiva->riva.MaxVClockFreqKHz;
 
-    clockRanges = xnfcalloc(sizeof(ClockRange), 1);
+    clockRanges = XNFcalloc(sizeof(ClockRange));
     clockRanges->next = NULL;
     clockRanges->minClock = pRiva->MinClock;
     clockRanges->maxClock = pRiva->MaxClock;
@@ -824,7 +824,7 @@ RivaMapMem(ScrnInfoPtr pScrn)
 
     /*
      * Map IO registers to virtual address space
-     */ 
+     */
 #ifdef XSERVER_LIBPCIACCESS
     void *tmp;
 
@@ -884,12 +884,12 @@ static Bool
 RivaUnmapMem(ScrnInfoPtr pScrn)
 {
     RivaPtr pRiva;
-    
+
     pRiva = RivaPTR(pScrn);
 
     /*
      * Unmap IO registers to virtual address space
-     */ 
+     */
 #ifdef XSERVER_LIBPCIACCESS
     pci_device_unmap_range(pRiva->PciInfo, pRiva->IOBase, 0x1000000);
     pci_device_unmap_range(pRiva->PciInfo, pRiva->FbBase, pRiva->FbMapSize);
@@ -907,7 +907,7 @@ RivaUnmapMem(ScrnInfoPtr pScrn)
 
 
 /*
- * Initialise a new mode. 
+ * Initialise a new mode.
  */
 
 static Bool
@@ -918,7 +918,7 @@ RivaModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     RivaPtr pRiva = RivaPTR(pScrn);
     RivaRegPtr rivaReg;
 
-    
+
     /* Initialise the ModeReg values */
     if (!vgaHWInit(pScrn, mode))
 	return FALSE;
@@ -949,7 +949,7 @@ RivaModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 /*
  * Restore the initial (text) mode.
  */
-static void 
+static void
 RivaRestore(ScrnInfoPtr pScrn)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
@@ -1015,7 +1015,7 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
     int width, height, displayWidth;
     BoxRec AvailFBArea;
 
-    /* 
+    /*
      * First get the ScrnInfoRec
      */
     pScrn = xf86ScreenToScrn(pScreen);
@@ -1033,7 +1033,7 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
 	if (!RivaMapMem(pScrn))
 	    return FALSE;
     }
-    
+
     /* Map the VGA memory when the primary video */
     if (pRiva->Primary && !pRiva->FBDev) {
 	hwp->MapSize = 0x10000;
@@ -1083,7 +1083,7 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
                                 pScrn->defaultVisual))
               return FALSE;
     } else {
-          if (!miSetVisualTypes(pScrn->depth, 
+          if (!miSetVisualTypes(pScrn->depth,
                                 miGetDefaultVisualMask(pScrn->depth), 8,
                                 pScrn->defaultVisual))
 	  return FALSE;
@@ -1151,7 +1151,7 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
     }
 
     fbPictureInit (pScreen, 0, 0);
-    
+
     xf86SetBlackWhitePixels(pScreen);
 
 
@@ -1161,27 +1161,27 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
     AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (min(pRiva->FbUsableSize, 32*1024*1024)) / 
+    AvailFBArea.y2 = (min(pRiva->FbUsableSize, 32*1024*1024)) /
                      (pScrn->displayWidth * pScrn->bitsPerPixel / 8);
     xf86InitFBManager(pScreen, &AvailFBArea);
-    
+
     if (!pRiva->NoAccel)
 	RivaAccelInit(pScreen);
-    
+
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
 
-    /* Initialize software cursor.  
+    /* Initialize software cursor.
 	Must precede creation of the default colormap */
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
 
-    /* Initialize HW cursor layer. 
+    /* Initialize HW cursor layer.
 	Must follow software cursor initialization*/
-    if (pRiva->HWCursor) { 
+    if (pRiva->HWCursor) {
 	if(!RivaCursorInit(pScreen))
-	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"Hardware cursor initialization failed\n");
     }
 
@@ -1189,15 +1189,15 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
     if (!miCreateDefColormap(pScreen))
 	return FALSE;
 
-    
-    /* Initialize colormap layer.  
+
+    /* Initialize colormap layer.
 	Must follow initialization of the default colormap */
     if(!xf86HandleColormaps(pScreen, 256, 8,
-	(pRiva->FBDev ? fbdevHWLoadPaletteWeak() : Rivadac->LoadPalette), 
+	(pRiva->FBDev ? fbdevHWLoadPaletteWeak() : Rivadac->LoadPalette),
 	NULL, CMAP_RELOAD_ON_MODE_SWITCH | CMAP_PALETTED_TRUECOLOR))
 	return FALSE;
 
-    
+
     if(pRiva->ShadowFB) {
 	RefreshAreaFuncPtr refreshArea = RivaRefreshArea;
 
@@ -1225,7 +1225,7 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
 
     xf86DPMSInit(pScreen, RivaDPMSSet, 0);
 
-    
+
     pScrn->memPhysBase = pRiva->FbAddress;
     pScrn->fbOffset = 0;
 
