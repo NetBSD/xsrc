@@ -33,12 +33,12 @@
 #define __ONE_MICROSECOND__ 100         /* This'll need calibration */
 
 #define ATIDelay(_microseconds)                            \
-    {                                                      \
+    do {                                                   \
         unsigned int _i, _j;                               \
         for (_i = 0;  _i < _microseconds;  _i++)           \
             for (_j = 0;  _j < __ONE_MICROSECOND__;  _j++) \
                 /* Nothing */;                             \
-    }
+    } while (0)
 
 /*
  * Macros to get/set a contiguous bit field.  Arguments should not be

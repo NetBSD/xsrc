@@ -257,7 +257,6 @@ Mach64Probe(DriverPtr pDriver, int flags)
     int     numDevSections;
     int     numUsed;
     Bool    ProbeSuccess = FALSE;
-    int     i;
 
     if (xf86GetPciVideoInfo() == NULL)
         return FALSE;
@@ -279,7 +278,7 @@ Mach64Probe(DriverPtr pDriver, int flags)
     if (flags & PROBE_DETECT) {
         ProbeSuccess = TRUE;
     } else {
-        for (i = 0; i < numUsed; i++) {
+        for (int i = 0; i < numUsed; i++) {
             if (mach64_get_scrninfo(usedChips[i]))
                 ProbeSuccess = TRUE;
         }

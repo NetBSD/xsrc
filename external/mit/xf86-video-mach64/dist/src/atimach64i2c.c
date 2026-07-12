@@ -296,9 +296,7 @@ ATITVAddOnProbe
     I2CBusPtr   pI2CBus
 )
 {
-    I2CDevPtr pI2CDev = xnfcalloc(1, SizeOf(I2CDevRec));
-    int       Index;
-    I2CByte   tmp;
+    I2CDevPtr pI2CDev = XNFcallocarray(1, SizeOf(I2CDevRec));
 
     static const CARD8 ATITVAddOnAddresses[] = {0x70, 0x40, 0x78, 0x72, 0x42};
 
@@ -309,8 +307,10 @@ ATITVAddOnProbe
     pI2CDev->AcknTimeout  = pI2CBus->AcknTimeout;
     pI2CDev->ByteTimeout  = pI2CBus->ByteTimeout;
 
-    for (Index = 0;  Index < NumberOf(ATITVAddOnAddresses);  Index++)
+    for (int Index = 0;  Index < NumberOf(ATITVAddOnAddresses);  Index++)
     {
+        I2CByte   tmp;
+
         pI2CDev->SlaveAddr = ATITVAddOnAddresses[Index];
 
         if (xf86I2CFindDev(pI2CBus, pI2CDev->SlaveAddr))
@@ -426,6 +426,7 @@ ATIMach64I2CPreInit
                 break;
             }
             /* Otherwise, fall through to the older case */
+            /* FALLTHROUGH */
 
         case ATI_CHIP_264VT:
         case ATI_CHIP_264GT:
@@ -449,6 +450,7 @@ ATIMach64I2CPreInit
             if (ATITVAddOnProbe(pScreenInfo, pATI, pI2CBus))
                 break;
             /* Otherwise, fall back to ATI's first I2C implementation */
+            /* FALLTHROUGH */
 
         default:
             /*

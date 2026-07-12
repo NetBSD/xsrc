@@ -510,26 +510,6 @@ ATIMach64XVMemFree
     ATIPtr    pATI
 );
 
-#ifdef USE_XAA
-/*
- * ATIMach64RemoveLinearCallback --
- *
- * This is called by the framebuffer manager to release the offscreen XVideo
- * buffer after the video has been temporarily disabled due to its window being
- * iconified or completely occluded.
- */
-static void
-ATIMach64RemoveLinearCallback
-(
-    FBLinearPtr pLinear
-)
-{
-    ATIPtr pATI = ATIPTR(xf86ScreenToScrn(pLinear->pScreen));
-
-    pATI->pXVBuffer = NULL;
-    outf(OVERLAY_SCALE_CNTL, SCALE_EN);
-}
-#endif /* USE_XAA */
 
 /*
  * ATIMach64StopVideo --
@@ -554,20 +534,6 @@ ATIMach64StopVideo
 
     REGION_EMPTY(pScreen, &pATI->VideoClip);
 
-#ifdef USE_XAA
-    if (!pATI->useEXA && !Cleanup)
-    {
-        /*
-         * Free offscreen buffer if/when its allocation is needed by XAA's
-         * pixmap cache.
-         */
-        FBLinearPtr linear = (FBLinearPtr)pATI->pXVBuffer;
-        if (linear)
-            linear->RemoveLinearCallback =
-                ATIMach64RemoveLinearCallback;
-        return;
-    }
-#endif /* USE_XAA */
 
     ATIMach64XVMemFree(pScreen, pATI->pXVBuffer, pATI);
     pATI->pXVBuffer = NULL;
@@ -1353,7 +1319,6 @@ ATIMach64XVInitialiseAdaptor
     ATIPtr              pATI       = ATIPTR(pScreenInfo);
     XF86VideoAdaptorPtr *ppAdaptor = NULL;
     XF86VideoAdaptorPtr pAdaptor;
-    int                 Index;
 
     XF86VideoEncodingPtr  enc = &(ATIMach64VideoEncoding[0]);
     XF86OffscreenImagePtr surf0 = &(ATIMach64Surface[0]);
@@ -1371,7 +1336,7 @@ ATIMach64XVInitialiseAdaptor
     if (!(pAdaptor = xf86XVAllocateVideoAdaptorRec(pScreenInfo)))
         return 0;
 
-    ppAdaptor = xnfalloc(sizeof(pAdaptor));
+    ppAdaptor = XNFalloc(sizeof(pAdaptor));
     ppAdaptor[0] = pAdaptor;
 
     pAdaptor->nPorts = 1;
@@ -1426,6 +1391,8 @@ ATIMach64XVInitialiseAdaptor
 
     if (ATIMach64XVAtomGeneration != serverGeneration)
     {
+        int                 Index;
+
         /* Refresh static data */
         ATIMach64XVAtomGeneration = serverGeneration;
 
@@ -1562,54 +1529,6 @@ ATICloseXVideo
 
 /* Functions for offscreen memory management */
 
-#ifdef USE_XAA
-static FBLinearPtr
-ATIResizeOffscreenLinear
-(
-    ScreenPtr   pScreen,
-    FBLinearPtr pLinear,
-    int         Size
-)
-{
-    if (Size <= 0)
-    {
-        xf86FreeOffscreenLinear(pLinear);
-        return NULL;
-    }
-
-    if (pLinear)
-    {
-        if ((pLinear->size >= Size) ||
-            xf86ResizeOffscreenLinear(pLinear, Size))
-        {
-            pLinear->MoveLinearCallback = NULL;
-            pLinear->RemoveLinearCallback = NULL;
-            return pLinear;
-        }
-
-        xf86FreeOffscreenLinear(pLinear);
-    }
-
-    pLinear = xf86AllocateOffscreenLinear(pScreen, Size, 16, NULL, NULL, NULL);
-
-    if (!pLinear)
-    {
-        int maxSize;
-
-        xf86QueryLargestOffscreenLinear(pScreen, &maxSize, 16,
-            PRIORITY_EXTREME);
-
-        if (maxSize < Size)
-            return NULL;
-
-        xf86PurgeUnlockedOffscreenAreas(pScreen);
-        pLinear =
-            xf86AllocateOffscreenLinear(pScreen, Size, 16, NULL, NULL, NULL);
-    }
-
-    return pLinear;
-}
-#endif /* USE_XAA */
 
 static pointer
 ATIMach64XVMemAlloc
@@ -1642,23 +1561,6 @@ ATIMach64XVMemAlloc
     }
 #endif /* USE_EXA */
 
-#ifdef USE_XAA
-    if (!pATI->useEXA) {
-        FBLinearPtr linear = (FBLinearPtr)pVideo;
-        int cpp = pATI->AdjustDepth;
-
-        /* XAA allocates in units of pixels at the screen bpp, so adjust size
-         * appropriately.
-         */
-        size = (size + cpp - 1) / cpp;
-
-        linear = ATIResizeOffscreenLinear(pScreen, linear, size);
-        if (linear != NULL) {
-            *offset = linear->offset * cpp;
-            return linear;
-        }
-    }
-#endif /* USE_XAA */
 
     *offset = 0;
     return NULL;
@@ -1681,13 +1583,5 @@ ATIMach64XVMemFree
     }
 #endif /* USE_EXA */
 
-#ifdef USE_XAA
-    if (!pATI->useEXA) {
-        FBLinearPtr linear = (FBLinearPtr)pVideo;
-
-        if (linear != NULL)
-            ATIResizeOffscreenLinear(pScreen, linear, 0);
-    }
-#endif /* USE_XAA */
 }
 

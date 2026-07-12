@@ -25,7 +25,7 @@
 
 #include "xf86str.h"
 
-extern DriverRec MACH64;
+extern _X_EXPORT DriverRec MACH64;
 
 extern SymTabRec Mach64Chipsets[];
 

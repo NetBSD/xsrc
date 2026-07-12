@@ -236,7 +236,7 @@ do {                                                            \
  * Set upon DRISwapContext and when DRI accesses the GPU engine
  * from within the server, see DRIInitBuffers/DRIMoveBuffers.
  *
- * Forces the EXA/XAA software paths to sync before accessing the FB memory.
+ * Forces the EXA software paths to sync before accessing the FB memory.
  */
 static __inline__ void ATIDRIMarkSyncInt(ScrnInfoPtr _pScrInfo)
 {
@@ -245,16 +245,12 @@ static __inline__ void ATIDRIMarkSyncInt(ScrnInfoPtr _pScrInfo)
     if (_pATI->useEXA)
         exaMarkSync(_pScrInfo->pScreen);
 #endif
-#ifdef USE_XAA
-    if (!_pATI->useEXA)
-        SET_SYNC_FLAG(_pATI->pXAAInfo); /* NeedToSync = TRUE */
-#endif
 }
 
 /*
  * Set upon DRISwapContext and when the server acquires the DRI lock.
  *
- * Forces the EXA/XAA accelerated paths to sync before accessing the GPU engine.
+ * Forces the EXA accelerated paths to sync before accessing the GPU engine.
  */
 static __inline__ void ATIDRIMarkSyncExt(ScrnInfoPtr _pScrInfo)
 {
@@ -269,12 +265,6 @@ static __inline__ void ATIDRISync(ScrnInfoPtr _pScrInfo)
     if (_pATI->directRenderingEnabled && _pATI->pExa)
     {
         if (_pATI->NeedDRISync) exaWaitSync(_pScrInfo->pScreen);
-    }
-#endif
-#ifdef USE_XAA
-    if (_pATI->directRenderingEnabled && _pATI->pXAAInfo)
-    {
-        if (_pATI->NeedDRISync) (*_pATI->pXAAInfo->Sync)(_pScrInfo);
     }
 #endif
 }

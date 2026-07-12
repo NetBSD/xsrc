@@ -23,8 +23,8 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-mach64],
-        [6.9.7],
-        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-mach64/issues],
+        [6.10.0],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-mach64/-/issues],
         [xf86-video-mach64])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -40,8 +40,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Initialize libtool
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
@@ -70,7 +69,7 @@ XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Obtain compiler/linker options for the driver dependencies
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.4 xproto fontsproto $REQUIRED_MODULES])
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.18 xproto fontsproto $REQUIRED_MODULES])
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
                   HAVE_XEXTPROTO_71="no")
@@ -196,27 +195,6 @@ if test "x$have_exa_h" = xyes; then
         fi
 fi
 
-AC_ARG_ENABLE(xaa,
-              AS_HELP_STRING([--enable-xaa],
-                             [Enable legacy X Acceleration Architecture (XAA) [default=auto]]),
-              [XAA="$enableval"],
-              [XAA=auto])
-if test "x$XAA" != xno; then
-        save_CFLAGS=$CFLAGS
-        save_CPPFLAGS=$CPPFLAGS
-        CFLAGS=$XORG_CFLAGS
-        CPPFLAGS="$XORG_CFLAGS"
-        AC_CHECK_HEADERS([xaa.h], XAA=yes, XAA=no)
-        CFLAGS=$save_CFLAGS
-        CPPFLAGS=$save_CPPFLAGS
-fi
-AC_MSG_CHECKING([whether to include XAA support])
-AM_CONDITIONAL(XAA, test "x$XAA" = xyes)
-if test "x$XAA" = xyes; then
-        AC_DEFINE(USE_XAA, test "x$XAA" = xyes, [Build support for XAA])
-fi
-AC_MSG_RESULT([$XAA])
-
 AC_CHECK_DECL(XSERVER_LIBPCIACCESS,
 	      [XSERVER_LIBPCIACCESS=yes],[XSERVER_LIBPCIACCESS=no],
 	      [#include "xorg-server.h"])
@@ -233,13 +211,18 @@ AM_CONDITIONAL(XSERVER_LIBPCIACCESS, test "x$XSERVER_LIBPCIACCESS" = xyes)
 
 AC_SUBST([moduledir])
 
+# Checks for library functions
+# We don't use strlcat, strlcpy, or timingsafe_memcmp, but check to quiet
+# -Wredundant-decls warning from xorg/os.h which will otherwise redefine them.
+AC_CHECK_FUNCS([strlcat strlcpy timingsafe_memcmp])
+
 DRIVER_NAME=mach64
 AC_SUBST([DRIVER_NAME])
 
 AC_MSG_NOTICE(
 [Please change the Driver line in xorg.conf from "ati" to "mach64"]
 [ or install the ati wrapper as well:]
-[    git://anongit.freedesktop.org/git/xorg/driver/xf86-video-ati]
+[    https://gitlab.freedesktop.org/xorg/driver/xf86-video-ati]
 )
 
 AC_CONFIG_FILES([

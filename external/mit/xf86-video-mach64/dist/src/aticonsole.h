@@ -35,9 +35,9 @@ extern void ATILeaveGraphics(ScrnInfoPtr, ATIPtr);
 
 extern Bool ATISwitchMode(SWITCH_MODE_ARGS_DECL);
 
-extern Bool ATIEnterVT(VT_FUNC_ARGS_DECL);
-extern void ATILeaveVT(VT_FUNC_ARGS_DECL);
+extern Bool ATIEnterVT(ScrnInfoPtr pScrn);
+extern void ATILeaveVT(ScrnInfoPtr pScrn);
 
-extern void ATIFreeScreen(FREE_SCREEN_ARGS_DECL);
+extern void ATIFreeScreen(ScrnInfoPtr pScrn);
 
 #endif /* ___ATICONSOLE_H___ */

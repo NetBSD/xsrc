@@ -763,7 +763,7 @@
   Thirdly, a scan through the comp.windows.x.i386unix and
   comp.os.linux.x newsgroups, the xorg mailing list archives at
   https://lists.x.org/mailman/listinfo/xorg, and the Xorg bug
-  database at https://bugs.freedesktop.org/enter_bug.cgi?product=xorg
+  database at https://gitlab.freedesktop.org/groups/xorg/-/issues
   can also prove useful in resolving problems.
 
   If you are still experiencing problems, you can send non-HTMLised e-
