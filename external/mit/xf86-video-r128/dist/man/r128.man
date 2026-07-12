@@ -69,14 +69,13 @@ using EXA acceleration and DRI.  The default is to
 Render acceleration.
 .TP
 .BI "Option \*qAccelMethod\*q \*q" "string" \*q
-Chooses between available acceleration architectures.  Valid options are
-.B XAA
-and
-.B EXA.
-XAA is the traditional acceleration architecture and support for it is very
-stable.  EXA is a newer acceleration architecture with better performance for
+Chooses between available acceleration architectures.  The only valid option is
+.BR EXA .
+XAA was the traditional acceleration architecture, but support for it has
+been removed from the Xorg server and this driver.
+EXA is a newer acceleration architecture with better performance for
 the Render and Composite extensions.  The default is
-.B XAA.
+.BR EXA .
 .TP
 .BI "Option \*qVideoKey\*q \*q" integer \*q
 This overrides the default pixel value for the YUV video overlay key.
