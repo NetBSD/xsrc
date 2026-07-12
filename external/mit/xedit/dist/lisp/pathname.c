@@ -10,7 +10,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -1056,8 +1056,8 @@ Lisp_UserHomedirPathname(LispBuiltin *builtin)
  */
 {
     GC_ENTER();
+    int length;
     char *home = getenv("HOME"), data[PATH_MAX + 1];
-    char sepstr[] = {PATH_SEP, '\0'};
     LispObj *result;
 
     LispObj *host;
@@ -1067,15 +1067,21 @@ Lisp_UserHomedirPathname(LispBuiltin *builtin)
     if (host != UNSPEC && !STRINGP(host))
 	LispDestroy("%s: bad hostname %s", STRFUN(builtin), STROBJ(host));
 
+    length = 0;
     if (home) {
-	strlcpy(data, home, sizeof(data));
-	if (data[0] != '\0' && data[strlen(data) - 1] != PATH_SEP)
-		strlcat(data, sepstr, sizeof(data));
-    } else {
-	data[0] = '\0';
+	length = strlen(home);
+	if ((length > 0) && (length < (sizeof(data) - 1))) {
+	    strncpy(data, home, length);
+	    if (home[length - 1] != PATH_SEP)
+		data[length++] = PATH_SEP;
+	}
+	else {
+	    length = 0;
+	}
     }
+    data[length] = '\0';
 
-    result = STRING(data);
+    result = LSTRING(data, length);
     GC_PROTECT(result);
     result = APPLY1(Oparse_namestring, result);
     GC_LEAVE();
