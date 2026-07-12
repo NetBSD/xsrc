@@ -70,6 +70,13 @@
 #include "r128_probe.h"
 #include "r128_reg.h"
 #include "r128_version.h"
+#include "xf86Priv.h"
+
+#ifdef HAVE_DEV_WSCONS_WSCONSIO_H
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#endif
 
 #ifdef R128DRI
 #define _XF86DRI_SERVER_
@@ -85,11 +92,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86RandR12.h"
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
-#include "xf86RAC.h"
-#include "xf86Resources.h"
-#endif
-#include "xf86_OSlib.h"
 #include "xf86cmap.h"
 #include "xf86xv.h"
 #include "vbe.h"
@@ -115,12 +117,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
-#ifdef __NetBSD__
-#include <sys/time.h>
-#include <dev/wscons/wsconsio.h>
-#endif
-
-static Bool R128CloseScreen(CLOSE_SCREEN_ARGS_DECL);
+static Bool R128CloseScreen(ScreenPtr pScreen);
 static Bool R128SaveScreen(ScreenPtr pScreen, int mode);
 static void R128Save(ScrnInfoPtr pScrn);
 static void R128Restore(ScrnInfoPtr pScrn);
@@ -217,7 +214,7 @@ static Bool R128GetRec(ScrnInfoPtr pScrn)
 {
     if (pScrn->driverPrivate) return TRUE;
 
-    pScrn->driverPrivate = xnfcalloc(sizeof(R128InfoRec), 1);
+    pScrn->driverPrivate = XNFcallocarray(1, sizeof(R128InfoRec));
     return TRUE;
 }
 
@@ -512,7 +509,6 @@ void R128GetPanelInfoFromBIOS(xf86OutputPtr output)
 
     if (!FPHeader) goto fallback;
 
-
     /* Assume that only one panel is attached and supported */
     for (i = FPHeader + 20; i < FPHeader + 84; i += 2) {
         if (R128_BIOS16(i) != 0) {
@@ -568,33 +564,35 @@ void R128GetPanelInfoFromBIOS(xf86OutputPtr output)
     if (R128_BIOS8(info->FPBIOSstart + 61) & 1) {
         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel Interface: LVDS\n");
     } else {
-        /* FIXME: Add Non-LVDS flat pael support */
+        /* FIXME: Add Non-LVDS flat panel support */
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
                    "Non-LVDS panel interface detected!  "
                    "This support is untested and may not "
                    "function properly\n");
     }
     return;
+
 fallback:
-#ifdef __NetBSD__
-    if ((!r128_output->PanelXRes || !r128_output->PanelYRes)  &&
+#ifdef WSDISPLAYIO_GINFO
+    if ((!r128_output->PanelXRes || !r128_output->PanelYRes) &&
         (info->HaveWSDisplay)) {
 	/*
 	 * we may not be on x86 so check wsdisplay for panel dimensions
-	 * XXX this assumes that the r128 is the console, although that should
+	 * this assumes that the r128 is the console, although that should
 	 * be the case in the vast majority of cases where an LCD is hooked up
 	 * directly
 	 * We should probably just check the relevant registers but I'm not
 	 * sure they're available at this point.
 	 */
 	struct wsdisplay_fbinfo fbinfo;
-	
+
 	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GINFO, &fbinfo) == 0) {
 	    r128_output->PanelXRes = fbinfo.width;
 	    r128_output->PanelYRes = fbinfo.height;
 	}
     }
 #endif
+    return;
 }
 
 /* Read PLL parameters from BIOS block.  Default to typical values if there
@@ -1472,12 +1470,6 @@ R128PreInitAccel(ScrnInfoPtr pScrn)
 
         if ((!info->useEXA) ||
             ((info->useEXA) && (!info->accelOn))) {
-#ifdef HAVE_XAA_H
-            if (xf86LoadSubModule(pScrn, "xaa")) {
-                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                            "Loading XAA module.\n");
-            }
-#endif
         }
     }
 }
@@ -1486,7 +1478,7 @@ R128PreInitAccel(ScrnInfoPtr pScrn)
 Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 {
     R128InfoPtr      info;
-#ifdef __NetBSD__
+#ifdef WSDISPLAYIO_GET_BUSID
     struct wsdisplayio_bus_id bid;
 #endif
 
@@ -1526,7 +1518,7 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 	       PCI_DEV_DEV(info->PciInfo),
 	       PCI_DEV_FUNC(info->PciInfo));
 
-#ifdef __NetBSD__
+#ifdef WSDISPLAYIO_GET_BUSID
     /* now check if this is the console */
     info->HaveWSDisplay = FALSE;
     info->HaveBacklightControl = FALSE;
@@ -1536,15 +1528,15 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
     	    (bid.ubus.pci.device == PCI_DEV_DEV(info->PciInfo)) &&
     	    (bid.ubus.pci.function == PCI_DEV_FUNC(info->PciInfo))) {
     	    	struct wsdisplay_param p;
-    	    	xf86Msg(X_INFO, "Alright, this is the console\n");
     	    	info->HaveWSDisplay = TRUE;
 
+#ifdef WSDISPLAYIO_PARAM_BACKLIGHT
     	    	/* now see if we have hacklight control */
     	    	p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
 		if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GETPARAM, &p) != -1) {
-		    xf86Msg(X_INFO, "... and we have backlight control\n");
-		    info->HaveBacklightControl = TRUE; 	 
-		}   	
+		    info->HaveBacklightControl = TRUE;
+		}
+#endif
     	}
     }
 #endif
@@ -1731,7 +1723,6 @@ static void R128LoadPalette(ScrnInfoPtr pScrn, int numColors,
 static void
 R128BlockHandler(BLOCKHANDLER_ARGS_DECL)
 {
-    SCREEN_PTR(arg);
     ScrnInfoPtr pScrn   = xf86ScreenToScrn(pScreen);
     R128InfoPtr info    = R128PTR(pScrn);
 
@@ -1750,7 +1741,7 @@ R128BlockHandler(BLOCKHANDLER_ARGS_DECL)
 }
 
 /* Called at the start of each server generation. */
-Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
+Bool R128ScreenInit(ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info   = R128PTR(pScrn);
@@ -1940,44 +1931,38 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
     MemBox.x2 = pScrn->displayWidth;
     MemBox.y2 = scanlines;
 
-	if (!info->useEXA) {
-	    if (!xf86InitFBManager(pScreen, &MemBox)) {
-	        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		           "Memory manager initialization to (%d,%d) (%d,%d) failed\n",
-		           MemBox.x1, MemBox.y1, MemBox.x2, MemBox.y2);
-	        return FALSE;
-	    } else {
-	        int width, height;
+    if (!info->useEXA) {
+        if (!xf86InitFBManager(pScreen, &MemBox)) {
+            xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                       "Memory manager initialization to (%d,%d) (%d,%d) failed\n",
+                       MemBox.x1, MemBox.y1, MemBox.x2, MemBox.y2);
+            return FALSE;
+        } else {
+            int width, height;
 
-	        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-		           "Memory manager initialized to (%d,%d) (%d,%d)\n",
-		           MemBox.x1, MemBox.y1, MemBox.x2, MemBox.y2);
-	        if ((fbarea = xf86AllocateOffscreenArea(pScreen,
-						        pScrn->displayWidth,
-						        2, 0, NULL, NULL, NULL))) {
-		    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-			       "Reserved area from (%d,%d) to (%d,%d)\n",
-			       fbarea->box.x1, fbarea->box.y1,
-			       fbarea->box.x2, fbarea->box.y2);
-	        } else {
-		    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Unable to reserve area\n");
-	        }
-	        if (xf86QueryLargestOffscreenArea(pScreen, &width,
-						  &height, 0, 0, 0)) {
-		    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-			       "Largest offscreen area available: %d x %d\n",
-				width, height);
-	        }
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                       "Memory manager initialized to (%d,%d) (%d,%d)\n",
+                       MemBox.x1, MemBox.y1, MemBox.x2, MemBox.y2);
+            if ((fbarea = xf86AllocateOffscreenArea(pScreen,
+                                                    pScrn->displayWidth,
+                                                    2, 0, NULL, NULL, NULL))) {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                           "Reserved area from (%d,%d) to (%d,%d)\n",
+                           fbarea->box.x1, fbarea->box.y1,
+                           fbarea->box.x2, fbarea->box.y2);
+            } else {
+                xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Unable to reserve area\n");
+            }
+            if (xf86QueryLargestOffscreenArea(pScreen, &width,
+                                              &height, 0, 0, 0)) {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                           "Largest offscreen area available: %d x %d\n",
+                           width, height);
+            }
 
             if (!info->noAccel) {
-                if (R128XAAAccelInit(pScreen)) {
-                    info->accelOn = TRUE;
-                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                                "XAA acceleration enabled.\n");
-                } else {
-                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                                "Acceleration disabled.\n");
-                }
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                           "Acceleration disabled.\n");
             }
         }
     }
@@ -2134,7 +2119,7 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
 #endif
 
     R128SaveScreen(pScreen, SCREEN_SAVER_ON);
-    //pScrn->AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
+    //pScrn->AdjustFrame(pScrn, pScrn->frameX0, pScrn->frameY0);
 
 				/* DGA setup */
 #ifdef XFreeXDGA
@@ -2779,9 +2764,8 @@ static Bool R128SaveScreen(ScreenPtr pScreen, int mode)
  * The workaround is to switch the mode, then switch to another VT, then
  * switch back. --AGD
  */
-Bool R128SwitchMode(SWITCH_MODE_ARGS_DECL)
+Bool R128SwitchMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
-    SCRN_INFO_PTR(arg);
     R128InfoPtr info        = R128PTR(pScrn);
     Bool ret;
 
@@ -2860,10 +2844,9 @@ ModeStatus R128DoValidMode(xf86OutputPtr output, DisplayModePtr mode, int flags)
 }
 
 /* Used to disallow modes that are not supported by the hardware. */
-ModeStatus R128ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
+ModeStatus R128ValidMode(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                    Bool verbose, int flags)
 {
-    SCRN_INFO_PTR(arg);
     R128EntPtr  pR128Ent = R128EntPriv(pScrn);
     xf86OutputPtr output = R128FirstOutput(pR128Ent->pCrtc[0]);
 
@@ -2872,9 +2855,8 @@ ModeStatus R128ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 
 /* Adjust viewport into virtual desktop such that (0,0) in viewport space
    is (x,y) in virtual space. */
-void R128AdjustFrame(ADJUST_FRAME_ARGS_DECL)
+void R128AdjustFrame(ScrnInfoPtr pScrn, int x, int y)
 {
-    SCRN_INFO_PTR(arg);
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     int           Base;
@@ -2901,9 +2883,8 @@ void R128AdjustFrame(ADJUST_FRAME_ARGS_DECL)
 
 /* Called when VT switching back to the X server.  Reinitialize the video
    mode. */
-Bool R128EnterVT(VT_FUNC_ARGS_DECL)
+Bool R128EnterVT(ScrnInfoPtr pScrn)
 {
-    SCRN_INFO_PTR(arg);
     R128InfoPtr info  = R128PTR(pScrn);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -2912,7 +2893,7 @@ Bool R128EnterVT(VT_FUNC_ARGS_DECL)
     pScrn->vtSema = TRUE;
 #ifndef AVOID_FBDEV
     if (info->FBDev) {
-        if (!fbdevHWEnterVT(VT_FUNC_ARGS)) return FALSE;
+        if (!fbdevHWEnterVT(pScrn)) return FALSE;
     } else {
 #endif
 	if (!xf86SetDesiredModes(pScrn)) return FALSE;
@@ -2936,16 +2917,15 @@ Bool R128EnterVT(VT_FUNC_ARGS_DECL)
 #endif
 
     info->PaletteSavedOnVT = FALSE;
-    //pScrn->AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
+    //pScrn->AdjustFrame(pScrn, pScrn->frameX0, pScrn->frameY0);
 
     return TRUE;
 }
 
 /* Called when VT switching away from the X server.  Restore the original
    text mode. */
-void R128LeaveVT(VT_FUNC_ARGS_DECL)
+void R128LeaveVT(ScrnInfoPtr pScrn)
 {
-    SCRN_INFO_PTR(arg);
     R128InfoPtr info  = R128PTR(pScrn);
     R128SavePtr save  = &info->ModeReg;
 
@@ -2965,7 +2945,7 @@ void R128LeaveVT(VT_FUNC_ARGS_DECL)
     info->PaletteSavedOnVT = TRUE;
 #ifndef AVOID_FBDEV
     if (info->FBDev)
-        fbdevHWLeaveVT(VT_FUNC_ARGS);
+        fbdevHWLeaveVT(pScrn);
     else
 #endif
         R128Restore(pScrn);
@@ -2975,7 +2955,7 @@ void R128LeaveVT(VT_FUNC_ARGS_DECL)
 /* Called at the end of each server generation.  Restore the original text
    mode, unmap video memory, and unwrap and call the saved CloseScreen
    function.  */
-static Bool R128CloseScreen(CLOSE_SCREEN_ARGS_DECL)
+static Bool R128CloseScreen(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info  = R128PTR(pScrn);
@@ -2997,16 +2977,10 @@ static Bool R128CloseScreen(CLOSE_SCREEN_ARGS_DECL)
     }
 
 #ifdef USE_EXA
-        if (info->useEXA) {
-	    exaDriverFini(pScreen);
-	    free(info->ExaDriver);
-	} else
-#endif
-#ifdef HAVE_XAA_H
-	{
-            if (info->accel)             XAADestroyInfoRec(info->accel);
-	    info->accel                  = NULL;
-        }
+    if (info->useEXA) {
+	exaDriverFini(pScreen);
+	free(info->ExaDriver);
+    }
 #endif
 
     if (info->scratch_save)      free(info->scratch_save);
@@ -3022,12 +2996,11 @@ static Bool R128CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
     pScreen->BlockHandler = info->BlockHandler;
     pScreen->CloseScreen = info->CloseScreen;
-    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
+    return (*pScreen->CloseScreen)(pScreen);
 }
 
-void R128FreeScreen(FREE_SCREEN_ARGS_DECL)
+void R128FreeScreen(ScrnInfoPtr pScrn)
 {
-    SCRN_INFO_PTR(arg);
     R128InfoPtr   info      = R128PTR(pScrn);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,

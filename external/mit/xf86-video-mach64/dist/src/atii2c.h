@@ -42,7 +42,7 @@ struct _ATII2CRec
 };
 
 extern void      ATII2CPreInit(ScrnInfoPtr, ATIPtr);
-extern I2CBusPtr ATICreateI2CBusRec(int, ATIPtr, char *);
+extern I2CBusPtr ATICreateI2CBusRec(int, ATIPtr, const char *);
 extern void      ATII2CFreeScreen(int);
 
 #endif /* ___ATII2C_H___ */

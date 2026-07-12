@@ -28,7 +28,7 @@
  * This file includes any environment or machine specific values to access the
  * HW.  Put all affected includes, typdefs, etc. here so the riva_hw.* files
  * can stay generic in nature.
- */ 
+ */
 #include "compiler.h"
 #include "xf86_OSproc.h"
 

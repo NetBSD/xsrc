@@ -28,6 +28,10 @@
 #ifndef COMPAT_API_H
 #define COMPAT_API_H
 
+#ifndef XNFcalloc
+#define XNFcalloc(n) XNFcallocarray(n, 1)
+#endif
+
 #ifndef GLYPH_HAS_GLYPH_PICTURE_ACCESSOR
 #define GetGlyphPicture(g, s) GlyphPicture((g))[(s)->myNum]
 #define SetGlyphPicture(g, s, p) GlyphPicture((g))[(s)->myNum] = p

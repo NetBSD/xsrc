@@ -173,19 +173,15 @@ CG14GetRec(ScrnInfoPtr pScrn)
     if (pScrn->driverPrivate != NULL)
 	return TRUE;
 
-    pScrn->driverPrivate = xnfcalloc(sizeof(Cg14Rec), 1);
+    pScrn->driverPrivate = XNFcallocarray(sizeof(Cg14Rec), 1);
     return TRUE;
 }
 
 static void
 CG14FreeRec(ScrnInfoPtr pScrn)
 {
-    Cg14Ptr pCg14;
-
     if (pScrn->driverPrivate == NULL)
 	return;
-
-    pCg14 = GET_CG14_FROM_SCRN(pScrn);
 
     free(pScrn->driverPrivate);
     pScrn->driverPrivate = NULL;
@@ -367,7 +363,6 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     
     if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb|Support32bppFb))
 		return FALSE;
-
     /* Check that the returned depth is one we support */
     switch (pScrn->depth) {
 	case 32:
@@ -784,6 +779,7 @@ CG14CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    int bpp;
     PixmapPtr pPixmap;
 
     if (pCg14->use_shadow) {
@@ -793,9 +789,14 @@ CG14CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 	pCg14->use_shadow = FALSE;
     }
 
+    if (pScrn->bitsPerPixel > 8) {
+	bpp = 32;
+    } else
+	bpp = 8;
     pScrn->vtSema = FALSE;
     CG14ExitCplane24 (pScrn);
-    xf86UnmapSbusMem(pCg14->psdp, pCg14->fb, pCg14->memsize);
+    xf86UnmapSbusMem(pCg14->psdp, pCg14->fb,
+		     (pCg14->psdp->width * pCg14->psdp->height * (bpp >> 3)));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
 		     (pCg14->psdp->width * pCg14->psdp->height));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->xlut, 4096);
@@ -846,6 +847,7 @@ CG14ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 static Bool
 CG14SaveScreen(ScreenPtr pScreen, int mode)
 {
+#ifdef FBIOSVIDEO
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
     int state;
@@ -863,6 +865,7 @@ CG14SaveScreen(ScreenPtr pScreen, int mode)
 	default:
 		return FALSE;
     }
+#endif
     return TRUE;
 }
 

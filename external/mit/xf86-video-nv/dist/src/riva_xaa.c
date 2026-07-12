@@ -73,7 +73,7 @@ RivaSetPattern(RivaPtr pRiva, int clr0, int clr1, int pat0, int pat1)
  */
 static void
 RivaSetRopSolid(RivaPtr pRiva, int rop)
-{    
+{
     if (pRiva->currentRop != rop) {
         if (pRiva->currentRop >= 16)
             RivaSetPattern(pRiva, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
@@ -114,9 +114,9 @@ static void
 RivaSubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
 {
     RivaPtr pRiva = RivaPTR(pScrn);
-    
+
     RIVA_FIFO_FREE(pRiva->riva, Bitmap, 2);
-    pRiva->riva.Bitmap->UnclippedRectangle[0].TopLeft     = (x << 16) | y; 
+    pRiva->riva.Bitmap->UnclippedRectangle[0].TopLeft     = (x << 16) | y;
     write_mem_barrier();
     pRiva->riva.Bitmap->UnclippedRectangle[0].WidthHeight = (w << 16) | h;
     write_mem_barrier();
@@ -206,7 +206,7 @@ RivaResetGraphics(ScrnInfoPtr pScrn)
     if(pRiva->NoAccel) return;
 
     RIVA_FIFO_FREE(pRiva->riva, Patt, 1);
-    pRiva->riva.Patt->Shape = 0; 
+    pRiva->riva.Patt->Shape = 0;
     RivaDisableClipping(pScrn);
     pRiva->currentRop = 16;  /* to force RivaSetRopSolid to reset the pattern */
     RivaSetRopSolid(pRiva, GXcopy);
@@ -228,7 +228,7 @@ void RivaSync(ScrnInfoPtr pScrn)
 /* Color expansion */
 static void
 RivaSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
-                                             int fg, int bg, int rop, 
+                                             int fg, int bg, int rop,
                                              unsigned int planemask)
 {
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -268,8 +268,8 @@ RivaSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
     int t = pRiva->expandWidth;
     CARD32 *pbits = (CARD32*)pRiva->expandBuffer;
     CARD32 *d = (CARD32*)pRiva->expandFifo;
-    
-    while(t >= 16) 
+
+    while(t >= 16)
     {
 	RIVA_FIFO_FREE(pRiva->riva, Bitmap, 16);
 	d[0]  = pbits[0];
@@ -292,7 +292,7 @@ RivaSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
     }
     if(t) {
 	RIVA_FIFO_FREE(pRiva->riva, Bitmap, t);
-	while(t >= 4) 
+	while(t >= 4)
 	{
 	    d[0]  = pbits[0];
 	    d[1]  = pbits[1];
@@ -300,8 +300,8 @@ RivaSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	    d[3]  = pbits[3];
 	    t -= 4; pbits += 4;
 	}
-	while(t--) 
-	    *(d++) = *(pbits++); 
+	while(t--)
+	    *(d++) = *(pbits++);
     }
 
     if (!(--pRiva->expandRows)) { /* hardware bug workaround */
@@ -334,7 +334,7 @@ RivaSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x,
 {
     int bw;
     RivaPtr pRiva = RivaPTR(pScrn);
-    
+
     bw = (w + 31) & ~31;
     pRiva->expandWidth = bw >> 5;
 
@@ -371,11 +371,11 @@ RivaSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x,
 
     if(pRiva->expandWidth > (pRiva->riva.FifoEmptyCount >> 2)) {
 	pRiva->AccelInfoRec->ScanlineColorExpandBuffers = &pRiva->expandBuffer;
-	pRiva->AccelInfoRec->SubsequentColorExpandScanline = 
+	pRiva->AccelInfoRec->SubsequentColorExpandScanline =
 				RivaSubsequentColorExpandScanline;
     } else {
 	pRiva->AccelInfoRec->ScanlineColorExpandBuffers = &pRiva->expandFifo;
-	pRiva->AccelInfoRec->SubsequentColorExpandScanline = 
+	pRiva->AccelInfoRec->SubsequentColorExpandScanline =
 				RivaSubsequentColorExpandScanlineFifo;
 	RIVA_FIFO_FREE(pRiva->riva, Bitmap, pRiva->expandWidth);
     }
@@ -390,7 +390,7 @@ RivaSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, unsigned planemask)
     pRiva->FgColor = color;
 }
 
-static void 
+static void
 RivaSubsequentSolidHorVertLine(ScrnInfoPtr pScrn, int x, int y, int len, int dir)
 {
     RivaPtr pRiva = RivaPTR(pScrn);
@@ -406,7 +406,7 @@ RivaSubsequentSolidHorVertLine(ScrnInfoPtr pScrn, int x, int y, int len, int dir
     write_mem_barrier();
 }
 
-static void 
+static void
 RivaSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1,
                               int x2, int y2, int flags)
 {
@@ -436,7 +436,7 @@ RivaValidatePolyArc(
 ){
    if(pGC->planemask != ~0) return;
 
-   if(!pGC->lineWidth && 
+   if(!pGC->lineWidth &&
 	((pGC->alu != GXcopy) || (pGC->lineStyle != LineSolid)))
    {
         pGC->ops->PolyArc = miZeroPolyArc;
@@ -460,7 +460,7 @@ RivaValidatePolyPoint(
 
 /* Initialize XAA acceleration info */
 Bool
-RivaAccelInit(ScreenPtr pScreen) 
+RivaAccelInit(ScreenPtr pScreen)
 {
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
@@ -501,24 +501,24 @@ RivaAccelInit(ScreenPtr pScreen)
 
     /* Color expansion */
     infoPtr->ScanlineCPUToScreenColorExpandFillFlags =
-				BIT_ORDER_IN_BYTE_LSBFIRST | 
-				NO_PLANEMASK | 
+				BIT_ORDER_IN_BYTE_LSBFIRST |
+				NO_PLANEMASK |
 				CPU_TRANSFER_PAD_DWORD |
-				LEFT_EDGE_CLIPPING | 		
+				LEFT_EDGE_CLIPPING |
 				LEFT_EDGE_CLIPPING_NEGATIVE_X;
 
     infoPtr->NumScanlineColorExpandBuffers = 1;
 
     infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
         RivaSetupForScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
+    infoPtr->SubsequentScanlineCPUToScreenColorExpandFill =
         RivaSubsequentScanlineCPUToScreenColorExpandFill;
 
     pRiva->expandFifo = (unsigned char*)&pRiva->riva.Bitmap->MonochromeData01E;
-    
+
     /* Allocate buffer for color expansion and also image writes in the
        future */
-    pRiva->expandBuffer = xnfalloc(((pScrn->virtualX*pScrn->bitsPerPixel)/8) + 8);
+    pRiva->expandBuffer = XNFalloc(((pScrn->virtualX*pScrn->bitsPerPixel)/8) + 8);
 
 
     infoPtr->ScanlineColorExpandBuffers = &pRiva->expandBuffer;
@@ -528,7 +528,7 @@ RivaAccelInit(ScreenPtr pScreen)
     infoPtr->SetupForSolidLine = RivaSetupForSolidLine;
     infoPtr->SubsequentSolidHorVertLine =
 		RivaSubsequentSolidHorVertLine;
-    infoPtr->SubsequentSolidTwoPointLine = 
+    infoPtr->SubsequentSolidTwoPointLine =
 		RivaSubsequentSolidTwoPointLine;
     infoPtr->SetClippingRectangle = RivaSetClippingRectangle;
     infoPtr->DisableClipping = RivaDisableClipping;
@@ -539,7 +539,7 @@ RivaAccelInit(ScreenPtr pScreen)
     infoPtr->PolyArcMask = GCFunction | GCLineWidth | GCPlaneMask;
     infoPtr->ValidatePolyPoint = RivaValidatePolyPoint;
     infoPtr->PolyPointMask = GCFunction | GCPlaneMask;
-   
+
     RivaResetGraphics(pScrn);
 
     return(XAAInit(pScreen, infoPtr));
