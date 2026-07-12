@@ -1,3 +1,95 @@
+commit 595065c0cf9ac6d137e7f61466ced204b9d0a6c2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 18 14:41:01 2026 -0700
+
+    fstobdf 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6fdedb5fe812905fb185aef621870961f787f739
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Mar 10 19:13:11 2026 -0700
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build types
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fstobdf/-/merge_requests/10>
+
+commit a445d3ac9d5c9b933af22f7949ac28afa53a5cfa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 11 11:20:41 2026 -0800
+
+    gitlab CI: drop the ci-fairy check-mr job
+    
+    The only thing this checked was the checkbox for allowing maintainers to
+    edit the MR. Changed permissions checks now fail this job but luckily
+    the setting it checked has been the default for years anyway so we can
+    drop it.
+    
+    https://gitlab.freedesktop.org/freedesktop/ci-templates/-/issues/81
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fstobdf/-/merge_requests/10>
+
+commit 6af91b5b381d968bbd7cd82961c17b7935fb03b3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 26 13:05:12 2025 -0700
+
+    man pages: fix warnings from `mandoc -T lint` and `groff -rCHECKSTYLE=10`
+    
+    mandoc: man1/fstobdf.1:82:2: WARNING: skipping paragraph macro: br before sp
+    an.tmac:man1/fstobdf.1:71: style: .BR expects at least 2 arguments, got 1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fstobdf/-/merge_requests/9>
+
+commit 840d50ed6c4b3da5dde12c50905744520ff4c89d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 29 15:27:26 2025 -0700
+
+    Improve man page formatting
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/fstobdf/-/merge_requests/8>
+
+commit b4e4a52533fa23de4a48b3200076c382400c9662
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 15:12:54 2023 -0700
+
+    gitlab CI: add libc-dev to required packages in build container
+    
+    Resolves configure failure:
+    configure:3823: checking whether the C compiler works
+    configure:3845: gcc    conftest.c  >&5
+    /usr/bin/ld: cannot find Scrt1.o: No such file or directory
+    /usr/bin/ld: cannot find crti.o: No such file or directory
+    collect2: error: ld returned 1 exit status
+    configure:3849: $? = 1
+    configure:3889: result: no
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c0aaccfc15c0afcdde96c60dbd10aded78eb161c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 13:53:39 2023 -0700
+
+    gitlab CI: add xz-utils to container for "make distcheck"
+    
+    Also update to latest ci-templates to support new Debian "stable" release
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 96762120ec12d1acc5a83b47fb7e455eb246a5bd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 28 17:30:21 2022 -0700
+
+    gitlab CI: stop requiring Signed-off-by in commits
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 0c7273fbc64041ec4f617ce77eeca49f9da4e678
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Oct 5 18:40:55 2022 -0700
@@ -619,7 +711,7 @@ Date:   Wed Jul 20 19:31:48 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit d487591b670d61283aa8482817af8dac6b82badb
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 16:22:21 2005 +0000
 
     Add buildsystem for fstobdf

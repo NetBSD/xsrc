@@ -38,7 +38,7 @@ fstobdf \- generate BDF font from X font server
 .TP
 .B fstobdf \-version
 .SH DESCRIPTION
-The \fIfstobdf\fP program reads a font from a font server and prints a BDF
+The \fBfstobdf\fP program reads a font from a font server and prints a BDF
 file on the standard output that may be used to recreate the font.
 This is useful in testing servers, debugging font metrics, and reproducing
 lost BDF files.
@@ -49,7 +49,9 @@ This option specifies the server from which the font should be read.
 .I servername
 must be specified in one of the formats defined in the
 .I Font Server Names
-section of X(__miscmansuffix__).   If not specified, the server name in the
+section of
+.BR X (__miscmansuffix__).
+If not specified, the server name in the
 .B FONTSERVER
 environment variable is used.
 .TP 8
@@ -65,14 +67,17 @@ a BDF file.
 The default server to use.  The server name must
 be specified in one of the formats defined in the
 .I Font Server Names
-section of X(__miscmansuffix__).
+section of
+.BR X (__miscmansuffix__).
 .SH "SEE ALSO"
-xfs(__appmansuffix__), bdftopcf(__appmansuffix__), showfont(__appmansuffix__),
-fslsfonts(__appmansuffix__), X(__miscmansuffix__).
+.BR xfs (__appmansuffix__),
+.BR bdftopcf (__appmansuffix__),
+.BR showfont (__appmansuffix__),
+.BR fslsfonts (__appmansuffix__),
+.BR X (__miscmansuffix__).
 .SH AUTHOR
 Olaf Brandt, Network Computing Devices
 .br
 Dave Lemke, Network Computing Devices
-.br
 .sp
 Jim Fulton, MIT X Consortium
