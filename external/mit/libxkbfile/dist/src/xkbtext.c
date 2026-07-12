@@ -68,6 +68,20 @@ tbGetBuffer(unsigned size)
 
 /***====================================================================***/
 
+static inline char *
+tbGetBufferString(const char *str)
+{
+    size_t size = strlen(str) + 1;
+    char *rtrn = tbGetBuffer((unsigned) size);
+
+    if (rtrn != NULL)
+        memcpy(rtrn, str, size);
+
+    return rtrn;
+}
+
+/***====================================================================***/
+
 char *
 XkbAtomText(Display *dpy, Atom atm, unsigned format)
 {
@@ -105,7 +119,6 @@ XkbAtomText(Display *dpy, Atom atm, unsigned format)
 char *
 XkbVModIndexText(Display *dpy, XkbDescPtr xkb, unsigned ndx, unsigned format)
 {
-    register int len;
     register Atom *vmodNames;
     char *rtrn, *tmp;
 
@@ -124,17 +137,16 @@ XkbVModIndexText(Display *dpy, XkbDescPtr xkb, unsigned ndx, unsigned format)
         snprintf(tmp, 20, "%d", ndx);
     }
 
-    len = strlen(tmp) + 1;
-    if (format == XkbCFile)
-        len += 5;
-    if (len >= BUFFER_SIZE)
-        len = BUFFER_SIZE - 1;
-    rtrn = tbGetBuffer(len);
     if (format == XkbCFile) {
+        unsigned int len = strlen(tmp) + 6;
+
+        if (len >= BUFFER_SIZE)
+            len = BUFFER_SIZE - 1;
+        rtrn = tbGetBuffer(len);
         snprintf(rtrn, len, "vmod_%s", tmp);
     }
     else
-        strncpy(rtrn, tmp, len);
+        rtrn = tbGetBufferString(tmp);
     _XkbFree(tmp);
     return rtrn;
 }
@@ -176,14 +188,14 @@ XkbVModMaskText(Display *       dpy,
                 len = strlen(tmp) + 1 + (str == buf ? 0 : 1);
                 if (format == XkbCFile)
                     len += 4;
-                if ((str - (buf + len)) <= BUFFER_SIZE) {
-                    if (str != buf) {
-                        if (format == XkbCFile)
-                            *str++ = '|';
-                        else
-                            *str++ = '+';
-                        len--;
-                    }
+                if ((str - buf) + len > BUFFER_SIZE)
+                    continue; /* Skip */
+                if (str != buf) {
+                    if (format == XkbCFile)
+                        *str++ = '|';
+                    else
+                        *str++ = '+';
+                    len--;
                 }
                 if (format == XkbCFile)
                     sprintf(str, "%sMask", tmp);
@@ -236,7 +248,6 @@ static const char *modNames[XkbNumModifiers] = {
 char *
 XkbModIndexText(unsigned ndx, unsigned format)
 {
-    char *rtrn;
     char buf[100];
 
     if (format == XkbCFile) {
@@ -255,9 +266,7 @@ XkbModIndexText(unsigned ndx, unsigned format)
         else
             snprintf(buf, sizeof(buf), "ILLEGAL_%02x", ndx);
     }
-    rtrn = tbGetBuffer(strlen(buf) + 1);
-    strcpy(rtrn, buf);
-    return rtrn;
+    return tbGetBufferString(buf);
 }
 
 char *
@@ -306,9 +315,8 @@ XkbModMaskText(unsigned mask, unsigned format)
 
 /***====================================================================***/
 
-/*ARGSUSED*/
 char *
-XkbConfigText(unsigned config, unsigned format)
+XkbConfigText(unsigned config, _X_UNUSED unsigned format)
 {
     static char *buf;
     const int bufsize = 32;
@@ -399,7 +407,7 @@ XkbKeyNameText(char *name, unsigned format)
 
 /***====================================================================***/
 
-static char *siMatchText[5] = {
+static const char *siMatchText[5] = {
     "NoneOf", "AnyOfOrNone", "AnyOf", "AllOf", "Exactly"
 };
 
@@ -408,7 +416,7 @@ XkbSIMatchText(unsigned type, unsigned format)
 {
     static char buf[40];
 
-    char *rtrn;
+    const char *rtrn;
 
     switch (type & XkbSI_OpMask) {
     case XkbSI_NoneOf:      rtrn = siMatchText[0]; break;
@@ -425,9 +433,11 @@ XkbSIMatchText(unsigned type, unsigned format)
             snprintf(buf, sizeof(buf), "XkbSI_LevelOneOnly|XkbSI_%s", rtrn);
         else
             snprintf(buf, sizeof(buf), "XkbSI_%s", rtrn);
-        rtrn = buf;
     }
-    return rtrn;
+    else {
+        snprintf(buf, sizeof(buf), "%s", rtrn);
+    }
+    return buf;
 }
 
 /***====================================================================***/
@@ -537,7 +547,7 @@ XkbNKNDetailMaskText(unsigned detail, unsigned format)
 {
     char *buf;
     const char *prefix, *suffix;
-    register int i;
+    unsigned int i;
     register unsigned bit;
     int len, plen, slen;
 
@@ -548,9 +558,7 @@ XkbNKNDetailMaskText(unsigned detail, unsigned format)
             tmp = "0";
         else if (format == XkbMessage)
             tmp = "none";
-        buf = tbGetBuffer(strlen(tmp) + 1);
-        strcpy(buf, tmp);
-        return buf;
+        return tbGetBufferString(tmp);
     }
     else if ((detail & XkbAllNewKeyboardEventsMask) ==
              XkbAllNewKeyboardEventsMask) {
@@ -560,9 +568,7 @@ XkbNKNDetailMaskText(unsigned detail, unsigned format)
             tmp = "XkbAllNewKeyboardEventsMask";
         else
             tmp = "all";
-        buf = tbGetBuffer(strlen(tmp) + 1);
-        strcpy(buf, tmp);
-        return buf;
+        return tbGetBufferString(tmp);
     }
     if (format == XkbMessage) {
         prefix = "";
@@ -815,7 +821,7 @@ XkbDoodadTypeText(unsigned type, unsigned format)
     return buf;
 }
 
-static char *actionTypeNames[XkbSA_NumActions] = {
+static const char *actionTypeNames[XkbSA_NumActions] = {
     "NoAction",
     "SetMods",      "LatchMods",    "LockMods",
     "SetGroup",     "LatchGroup",   "LockGroup",
@@ -834,17 +840,17 @@ char *
 XkbActionTypeText(unsigned type, unsigned format)
 {
     static char buf[32];
-    char *rtrn;
 
     if (type <= XkbSA_LastAction) {
-        rtrn = actionTypeNames[type];
-        if (format == XkbCFile) {
+        const char *rtrn = actionTypeNames[type];
+
+        if (format == XkbCFile)
             snprintf(buf, sizeof(buf), "XkbSA_%s", rtrn);
-            return buf;
-        }
-        return rtrn;
+        else
+            snprintf(buf, sizeof(buf), "%s", rtrn);
     }
-    snprintf(buf, sizeof(buf), "Private");
+    else
+        snprintf(buf, sizeof(buf), "Private");
     return buf;
 }
 
@@ -867,10 +873,10 @@ TryCopyStr(char *to, const char *from, int *pLeft)
     return False;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyNoActionArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                 char *buf, int *sz)
+CopyNoActionArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                 _X_UNUSED XkbAction *action,
+                 _X_UNUSED char *buf, _X_UNUSED int *sz)
 {
     return True;
 }
@@ -917,10 +923,9 @@ CopyModActionArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyGroupActionArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                    char *buf, int *sz)
+CopyGroupActionArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                    XkbAction *action, char *buf, int *sz)
 {
     XkbGroupAction *act;
     char tbuf[32];
@@ -943,10 +948,9 @@ CopyGroupActionArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyMovePtrArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                char *buf, int *sz)
+CopyMovePtrArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                XkbAction *action, char *buf, int *sz)
 {
     XkbPtrAction *act;
     int x, y;
@@ -971,10 +975,9 @@ CopyMovePtrArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyPtrBtnArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-               char *buf, int *sz)
+CopyPtrBtnArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+               XkbAction *action, char *buf, int *sz)
 {
     XkbPtrBtnAction *act;
     char tbuf[32];
@@ -994,27 +997,25 @@ CopyPtrBtnArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     if (action->type == XkbSA_LockPtrBtn) {
         switch (act->flags & (XkbSA_LockNoUnlock | XkbSA_LockNoLock)) {
         case XkbSA_LockNoLock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=unlock");
+            TryCopyStr(buf, ",affect=unlock", sz);
             break;
         case XkbSA_LockNoUnlock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=lock");
+            TryCopyStr(buf, ",affect=lock", sz);
             break;
         case XkbSA_LockNoUnlock | XkbSA_LockNoLock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=neither");
+            TryCopyStr(buf, ",affect=neither", sz);
             break;
         default:
-            snprintf(tbuf, sizeof(tbuf), ",affect=both");
+            TryCopyStr(buf, ",affect=both", sz);
             break;
         }
-        TryCopyStr(buf, tbuf, sz);
     }
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopySetPtrDfltArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                   char *buf, int *sz)
+CopySetPtrDfltArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                   XkbAction *action, char *buf, int *sz)
 {
     XkbPtrDfltAction *act;
     char tbuf[32];
@@ -1039,6 +1040,7 @@ CopyISOLockArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     XkbISOAction *act;
     char tbuf[64];
 
+    memset(tbuf, 0, sizeof(tbuf));
     act = &action->iso;
     if (act->flags & XkbSA_ISODfltIsGroup) {
         TryCopyStr(tbuf, "group=", sz);
@@ -1115,10 +1117,9 @@ CopyISOLockArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopySwitchScreenArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                     char *buf, int *sz)
+CopySwitchScreenArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                     XkbAction *action, char *buf, int *sz)
 {
     XkbSwitchScreenAction *act;
     char tbuf[32];
@@ -1136,10 +1137,9 @@ CopySwitchScreenArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopySetLockControlsArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                        char *buf, int *sz)
+CopySetLockControlsArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                        XkbAction *action, char *buf, int *sz)
 {
     XkbCtrlsAction *act;
     unsigned tmp;
@@ -1156,8 +1156,7 @@ CopySetLockControlsArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
         int nOut = 0;
 
         if (tmp & XkbRepeatKeysMask) {
-            snprintf(tbuf, sizeof(tbuf), "%sRepeatKeys", (nOut > 0 ? "+" : ""));
-            TryCopyStr(buf, tbuf, sz);
+            TryCopyStr(buf, "RepeatKeys", sz);
             nOut++;
         }
         if (tmp & XkbSlowKeysMask) {
@@ -1238,10 +1237,9 @@ CopySetLockControlsArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyActionMessageArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                      char *buf, int *sz)
+CopyActionMessageArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                      XkbAction *action, char *buf, int *sz)
 {
     XkbMessageAction *act;
     unsigned all;
@@ -1323,10 +1321,9 @@ CopyRedirectKeyArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyDeviceBtnArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-                  char *buf, int *sz)
+CopyDeviceBtnArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+                  XkbAction *action, char *buf, int *sz)
 {
     XkbDeviceBtnAction *act;
     char tbuf[32];
@@ -1344,27 +1341,25 @@ CopyDeviceBtnArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
     if (action->type == XkbSA_LockDeviceBtn) {
         switch (act->flags & (XkbSA_LockNoUnlock | XkbSA_LockNoLock)) {
         case XkbSA_LockNoLock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=unlock");
+            TryCopyStr(buf, ",affect=unlock", sz);
             break;
         case XkbSA_LockNoUnlock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=lock");
+            TryCopyStr(buf, ",affect=lock", sz);
             break;
         case XkbSA_LockNoUnlock | XkbSA_LockNoLock:
-            snprintf(tbuf, sizeof(tbuf), ",affect=neither");
+            TryCopyStr(buf, ",affect=neither", sz);
             break;
         default:
-            snprintf(tbuf, sizeof(tbuf), ",affect=both");
+            TryCopyStr(buf, ",affect=both", sz);
             break;
         }
-        TryCopyStr(buf, tbuf, sz);
     }
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-CopyOtherArgs(Display *dpy, XkbDescPtr xkb, XkbAction *action,
-              char *buf, int *sz)
+CopyOtherArgs(_X_UNUSED Display *dpy, _X_UNUSED XkbDescPtr xkb,
+              XkbAction *action, char *buf, int *sz)
 {
     XkbAnyAction *act;
     char tbuf[32];
@@ -1424,7 +1419,7 @@ static actionCopy copyActionArgs[XkbSA_NumActions] = {
 char *
 XkbActionText(Display *dpy, XkbDescPtr xkb, XkbAction *action, unsigned format)
 {
-    char buf[ACTION_SZ], *tmp;
+    char buf[ACTION_SZ];
     int sz;
 
     if (format == XkbCFile) {
@@ -1445,16 +1440,13 @@ XkbActionText(Display *dpy, XkbDescPtr xkb, XkbAction *action, unsigned format)
             CopyOtherArgs(dpy, xkb, action, buf, &sz);
         TryCopyStr(buf, ")", &sz);
     }
-    tmp = tbGetBuffer(strlen(buf) + 1);
-    if (tmp != NULL)
-        strcpy(tmp, buf);
-    return tmp;
+    return tbGetBufferString(buf);
 }
 
 char *
 XkbBehaviorText(XkbDescPtr xkb, XkbBehavior * behavior, unsigned format)
 {
-    char buf[256], *tmp;
+    char buf[256];
 
     if (format == XkbCFile) {
         if (behavior->type == XkbKB_Default)
@@ -1509,10 +1501,7 @@ XkbBehaviorText(XkbDescPtr xkb, XkbBehavior * behavior, unsigned format)
                 snprintf(buf, sizeof(buf), "overlay%d= %s", ndx, kn);
         }
     }
-    tmp = tbGetBuffer(strlen(buf) + 1);
-    if (tmp != NULL)
-        strcpy(tmp, buf);
-    return tmp;
+    return tbGetBufferString(buf);
 }
 
 /***====================================================================***/
@@ -1521,7 +1510,7 @@ char *
 XkbIndentText(unsigned size)
 {
     static char buf[32];
-    register int i;
+    unsigned int i;
 
     if (size > 31)
         size = 31;

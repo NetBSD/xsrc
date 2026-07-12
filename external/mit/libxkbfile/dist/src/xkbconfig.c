@@ -30,6 +30,9 @@
 #include <config.h>
 #endif
 
+/* Tell XKBConfig.h to define the field in  _XkbConfigField as const char * */
+#define  _XkbCF_Field_Const
+
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -326,9 +329,9 @@ XkbCFAddModByName(XkbConfigRtrnPtr rtrn, int what, char *name, Bool merge,
 {
     if (rtrn->num_unbound_mods >= rtrn->sz_unbound_mods) {
         rtrn->sz_unbound_mods += 5;
-        rtrn->unbound_mods = _XkbTypedRealloc(rtrn->unbound_mods,
-                                              rtrn->sz_unbound_mods,
-                                              XkbConfigUnboundModRec);
+        rtrn->unbound_mods = _XkbTypedReallocF(rtrn->unbound_mods,
+                                               rtrn->sz_unbound_mods,
+                                               XkbConfigUnboundModRec);
         if (rtrn->unbound_mods == NULL) {
             rtrn->error = XkbCF_BadAlloc;
             return NULL;
@@ -442,12 +445,11 @@ XkbCFApplyMods(XkbConfigRtrnPtr rtrn, int what, XkbConfigModInfoPtr info)
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
 DefaultParser(FILE *             file,
-              XkbConfigFieldsPtr fields,
+              _X_UNUSED XkbConfigFieldsPtr fields,
               XkbConfigFieldPtr  field,
-              XkbDescPtr         xkb,
+              _X_UNUSED XkbDescPtr         xkb,
               XkbConfigRtrnPtr   rtrn)
 {
     int tok;
@@ -466,18 +468,20 @@ DefaultParser(FILE *             file,
     onoff = 0;
     pival = NULL;
     switch (field->field_id) {
-    case _XkbCF_RulesFile:      if (!str) str = &rtrn->rules_file;
-    case _XkbCF_Model:          if (!str) str = &rtrn->model;
-    case _XkbCF_Layout:         if (!str) str = &rtrn->layout;
-    case _XkbCF_Variant:        if (!str) str = &rtrn->variant;
-    case _XkbCF_Options:        if (!str) str = &rtrn->options;
-    case _XkbCF_Keymap:         if (!str) str = &rtrn->keymap;
-    case _XkbCF_Keycodes:       if (!str) str = &rtrn->keycodes;
-    case _XkbCF_Geometry:       if (!str) str = &rtrn->geometry;
-    case _XkbCF_PhysSymbols:    if (!str) str = &rtrn->phys_symbols;
-    case _XkbCF_Symbols:        if (!str) str = &rtrn->symbols;
-    case _XkbCF_Types:          if (!str) str = &rtrn->types;
-    case _XkbCF_CompatMap:      if (!str) str = &rtrn->compat;
+    case _XkbCF_RulesFile:      str = &rtrn->rules_file; goto process_str;
+    case _XkbCF_Model:          str = &rtrn->model; goto process_str;
+    case _XkbCF_Layout:         str = &rtrn->layout; goto process_str;
+    case _XkbCF_Variant:        str = &rtrn->variant; goto process_str;
+    case _XkbCF_Options:        str = &rtrn->options; goto process_str;
+    case _XkbCF_Keymap:         str = &rtrn->keymap; goto process_str;
+    case _XkbCF_Keycodes:       str = &rtrn->keycodes; goto process_str;
+    case _XkbCF_Geometry:       str = &rtrn->geometry; goto process_str;
+    case _XkbCF_PhysSymbols:    str = &rtrn->phys_symbols; goto process_str;
+    case _XkbCF_Symbols:        str = &rtrn->symbols; goto process_str;
+    case _XkbCF_Types:          str = &rtrn->types; goto process_str;
+    case _XkbCF_CompatMap:      str = &rtrn->compat; goto process_str;
+
+    process_str:
         if (tok != XkbCF_Equals) {
             rtrn->error = XkbCF_MissingEquals;
             goto BAILOUT;
@@ -732,27 +736,27 @@ DefaultParser(FILE *             file,
         }
         break;
     case _XkbCF_ClickVolume:
-        if (!pival) {
-            pival = &rtrn->click_volume;
-            onoff = 100;
-        }
+        pival = &rtrn->click_volume;
+        onoff = 100;
+        goto pival;
     case _XkbCF_BellVolume:
-        if (!pival) {
-            pival = &rtrn->bell_volume;
-            onoff = 100;
-        }
-    case _XkbCF_BellPitch:          if (!pival) pival = &rtrn->bell_pitch;
-    case _XkbCF_BellDuration:       if (!pival) pival = &rtrn->bell_duration;
-    case _XkbCF_RepeatDelay:        if (!pival) pival = &rtrn->repeat_delay;
-    case _XkbCF_RepeatInterval:     if (!pival) pival = &rtrn->repeat_interval;
-    case _XkbCF_SlowKeysDelay:      if (!pival) pival = &rtrn->slow_keys_delay;
-    case _XkbCF_DebounceDelay:      if (!pival) pival = &rtrn->debounce_delay;
-    case _XkbCF_MouseKeysDelay:     if (!pival) pival = &rtrn->mk_delay;
-    case _XkbCF_MouseKeysInterval:  if (!pival) pival = &rtrn->mk_interval;
-    case _XkbCF_MouseKeysTimeToMax: if (!pival) pival = &rtrn->mk_time_to_max;
-    case _XkbCF_MouseKeysMaxSpeed:  if (!pival) pival = &rtrn->mk_max_speed;
-    case _XkbCF_MouseKeysCurve:     if (!pival) pival = &rtrn->mk_curve;
-    case _XkbCF_AccessXTimeout:     if (!pival) pival = &rtrn->ax_timeout;
+        pival = &rtrn->bell_volume;
+        onoff = 100;
+        goto pival;
+    case _XkbCF_BellPitch:          pival = &rtrn->bell_pitch; goto pival;
+    case _XkbCF_BellDuration:       pival = &rtrn->bell_duration; goto pival;
+    case _XkbCF_RepeatDelay:        pival = &rtrn->repeat_delay; goto pival;
+    case _XkbCF_RepeatInterval:     pival = &rtrn->repeat_interval; goto pival;
+    case _XkbCF_SlowKeysDelay:      pival = &rtrn->slow_keys_delay; goto pival;
+    case _XkbCF_DebounceDelay:      pival = &rtrn->debounce_delay; goto pival;
+    case _XkbCF_MouseKeysDelay:     pival = &rtrn->mk_delay; goto pival;
+    case _XkbCF_MouseKeysInterval:  pival = &rtrn->mk_interval; goto pival;
+    case _XkbCF_MouseKeysTimeToMax: pival = &rtrn->mk_time_to_max; goto pival;
+    case _XkbCF_MouseKeysMaxSpeed:  pival = &rtrn->mk_max_speed; goto pival;
+    case _XkbCF_MouseKeysCurve:     pival = &rtrn->mk_curve; goto pival;
+    case _XkbCF_AccessXTimeout:     pival = &rtrn->ax_timeout; goto pival;
+
+    pival:
         if (tok != XkbCF_Equals) {
             rtrn->error = XkbCF_MissingEquals;
             goto BAILOUT;
@@ -1037,9 +1041,8 @@ DefaultApplyControls(XkbConfigRtrnPtr rtrn, XkbDescPtr xkb)
     return True;
 }
 
-/*ARGSUSED*/
 static Bool
-DefaultFinish(XkbConfigFieldsPtr fields, XkbDescPtr xkb,
+DefaultFinish(_X_UNUSED XkbConfigFieldsPtr fields, XkbDescPtr xkb,
               XkbConfigRtrnPtr rtrn, int what)
 {
     if ((what == XkbCF_Destroy) || (what == XkbCF_CleanUp))
@@ -1228,10 +1231,10 @@ XkbCFFreeRtrn(XkbConfigRtrnPtr rtrn, XkbConfigFieldsPtr fields, XkbDescPtr xkb)
     }
     for (tmp = rtrn->priv; tmp != NULL; tmp = next) {
         next = tmp->next;
-        bzero((char *) tmp, sizeof(XkbConfigRtrnPrivRec));
+        memset(tmp, 0, sizeof(XkbConfigRtrnPrivRec));
         _XkbFree(tmp);
     }
-    bzero((char *) rtrn, sizeof(XkbConfigRtrnRec));
+    memset(rtrn, 0, sizeof(XkbConfigRtrnRec));
     return;
 }
 
@@ -1248,7 +1251,7 @@ XkbCFParse(FILE *file, XkbConfigFieldsPtr fields,
     for (tok = 0, tmp = fields; tmp != NULL; tmp = tmp->next, tok++) {
         fields->cfg_id = tok;
     }
-    bzero((char *) rtrn, sizeof(XkbConfigRtrnRec));
+    memset(rtrn, 0, sizeof(XkbConfigRtrnRec));
     rtrn->line = 1;
     rtrn->click_volume = -1;
     rtrn->bell_volume = -1;
@@ -1291,7 +1294,6 @@ XkbCFParse(FILE *file, XkbConfigFieldsPtr fields,
     return False;
 }
 
-/*ARGSUSED*/
 void
 XkbCFReportError(FILE *file, char *name, int error, int line)
 {
@@ -1299,49 +1301,49 @@ XkbCFReportError(FILE *file, char *name, int error, int line)
 
     switch (error) {
     case XkbCF_BadAlloc:
-        msg = "allocation failed\n";
+        msg = "allocation failed";
         break;
     case XkbCF_UnterminatedString:
-        msg = "unterminated string on line %d";
+        msg = "unterminated string";
         break;
     case XkbCF_MissingIdent:
-        msg = "expected identifier on line %d";
+        msg = "expected identifier";
         break;
     case XkbCF_MissingEquals:
-        msg = "expected '=' on line %d";
+        msg = "expected '='";
         break;
     case XkbCF_ExpectedEOS:
-        msg = "expected ';' or newline on line %d";
+        msg = "expected ';' or newline";
         break;
     case XkbCF_ExpectedBoolean:
-        msg = "expected a boolean value on line %d";
+        msg = "expected a boolean value";
         break;
     case XkbCF_ExpectedInteger:
-        msg = "expected a numeric value on line %d";
+        msg = "expected a numeric value";
         break;
     case XkbCF_ExpectedString:
-        msg = "expected a string on line %d";
+        msg = "expected a string";
         break;
     case XkbCF_ExpectedModifier:
-        msg = "expected a modifier name on line %d";
+        msg = "expected a modifier name";
         break;
     case XkbCF_ExpectedControl:
-        msg = "expected a control name on line %d";
+        msg = "expected a control name";
         break;
     case XkbCF_ExpectedAXOption:
-        msg = "expected an AccessX option on line %d";
+        msg = "expected an AccessX option";
         break;
     case XkbCF_ExpectedOperator:
-        msg = "expected '+' or '-' on line %d";
+        msg = "expected '+' or '-'";
         break;
     case XkbCF_ExpectedOORGroupBehavior:
-        msg = "expected wrap, clamp or group number on line %d";
+        msg = "expected wrap, clamp or group number";
         break;
     default:
-        msg = "unknown error on line %d";
+        msg = "unknown error";
         break;
     }
-    fprintf(file, msg, line);
+    fprintf(file, "%s on line %d", msg, line);
     if (name)
         fprintf(file, " of %s\n", name);
     else
