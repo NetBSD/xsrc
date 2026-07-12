@@ -73,10 +73,11 @@ static void print_alternate_info(FSServer *svr);
 static char *progname;
 
 static void _X_NORETURN _X_COLD
-usage(void)
+usage(int exitstatus)
 {
-    fprintf(stderr, "usage:  %s [-server server_name] [-version]\n", progname);
-    exit(-1);
+    fprintf(stderr, "usage:  %s [-server server_name] [-help|-version]\n",
+            progname);
+    exit(exitstatus);
 }
 
 int
@@ -92,16 +93,20 @@ main(int argc, char *argv[])
 	    if (++i >= argc) {
 		fprintf (stderr, "%s: %s requires an argument\n",
 			 progname, argv[i-1]);
-		usage();
+		usage(EXIT_FAILURE);
 	    }
 	    servername = argv[i];
-        } else if (strcmp(argv[i], "-version") == 0) {
-            puts(PACKAGE_STRING);
-            exit(0);
+	} else if ((strcmp(argv[i], "-version") == 0) ||
+		   (strcmp(argv[i], "--version") == 0)) {
+	    puts(PACKAGE_STRING);
+	    exit(EXIT_SUCCESS);
+	} else if ((strcmp(argv[i], "-help") == 0) ||
+		   (strcmp(argv[i], "--help") == 0)) {
+	    usage(EXIT_SUCCESS);
 	} else {
 	    fprintf (stderr, "%s: unrecognized argument %s\n",
 		     progname, argv[i]);
-	    usage();
+	    usage(EXIT_FAILURE);
 	}
     }
 
