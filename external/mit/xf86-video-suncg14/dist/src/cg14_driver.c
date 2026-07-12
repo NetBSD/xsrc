@@ -155,19 +155,15 @@ CG14GetRec(ScrnInfoPtr pScrn)
     if (pScrn->driverPrivate != NULL)
 	return TRUE;
 
-    pScrn->driverPrivate = xnfcalloc(sizeof(Cg14Rec), 1);
+    pScrn->driverPrivate = XNFcallocarray(sizeof(Cg14Rec), 1);
     return TRUE;
 }
 
 static void
 CG14FreeRec(ScrnInfoPtr pScrn)
 {
-    Cg14Ptr pCg14;
-
     if (pScrn->driverPrivate == NULL)
 	return;
-
-    pCg14 = GET_CG14_FROM_SCRN(pScrn);
 
     free(pScrn->driverPrivate);
     pScrn->driverPrivate = NULL;
@@ -332,12 +328,13 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     deal with depth
     *********************/
     
-    if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
-	return FALSE;
-    } else {
-	/* Check that the returned depth is one we support */
-	switch (pScrn->depth) {
+    if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb|Support32bppFb))
+		return FALSE;
+    /* Check that the returned depth is one we support */
+    switch (pScrn->depth) {
 	case 32:
+	case 24:
+	case 8:
 	    /* OK */
 	    break;
 	default:
@@ -345,7 +342,6 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 		       "Given depth (%d) is not supported by this driver\n",
 		       pScrn->depth);
 	    return FALSE;
-	}
     }
 
     /* Collect all of the relevant option flags (fill in pScrn->options) */
@@ -361,7 +357,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
      * xf86SetWeight references it.
      */
     if (pScrn->depth > 8) {
-	rgb weight = {10, 11, 11};
+	rgb weight = {0, 0, 0};
 	rgb mask = {0xff, 0xff00, 0xff0000};
                                        
 	if (!xf86SetWeight(pScrn, weight, mask)) {
@@ -467,9 +463,11 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
      */
     miClearVisualTypes();
 
-    /* Setup the visuals we support. */
+    /* Set the bits per RGB for 8bpp mode */
+    pScrn->rgbBits = 8;
 
-    if (!miSetVisualTypes(pScrn->depth, TrueColorMask,
+    /* Setup the visuals we support. */
+    if (!miSetVisualTypes(pScrn->depth, miGetDefaultVisualMask(pScrn->depth),
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
@@ -518,6 +516,9 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
+	return FALSE;
+
+    if(!xf86SbusHandleColormaps(pScreen, pCg14->psdp))
 	return FALSE;
 
     pCg14->CloseScreen = pScreen->CloseScreen;
@@ -599,10 +600,16 @@ CG14CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    int bpp;
 
+    if (pScrn->bitsPerPixel > 8) {
+	bpp = 32;
+    } else
+	bpp = 8;
     pScrn->vtSema = FALSE;
+    CG14ExitCplane24 (pScrn);
     xf86UnmapSbusMem(pCg14->psdp, pCg14->fb,
-		     (pCg14->psdp->width * pCg14->psdp->height * 4));
+		     (pCg14->psdp->width * pCg14->psdp->height * (bpp >> 3)));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
 		     (pCg14->psdp->width * pCg14->psdp->height));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->xlut, 4096);
@@ -640,10 +647,26 @@ CG14ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 /* Mandatory */
 static Bool
 CG14SaveScreen(ScreenPtr pScreen, int mode)
-    /* this function should blank the screen when unblank is FALSE and
-       unblank it when unblank is TRUE -- it doesn't actually seem to be
-       used for much though */
 {
+#ifdef FBIOSVIDEO
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    int state;
+    switch(mode) {
+	case SCREEN_SAVER_ON:
+	case SCREEN_SAVER_CYCLE:
+		state = FBVIDEO_OFF;
+		ioctl(pCg14->psdp->fd, FBIOSVIDEO, &state);
+		break;
+	case SCREEN_SAVER_OFF:
+	case SCREEN_SAVER_FORCER:
+		state = FBVIDEO_ON;
+		ioctl(pCg14->psdp->fd, FBIOSVIDEO, &state);
+		break;
+	default:
+		return FALSE;
+    }
+#endif
     return TRUE;
 }
 
@@ -666,9 +689,12 @@ CG14InitCplane24(ScrnInfoPtr pScrn)
   int size, bpp;
               
   size = pScrn->virtualX * pScrn->virtualY;
-  bpp = 32;
+  if (pScrn->bitsPerPixel > 8) {
+  	bpp = 32;
+  } else
+  	bpp = 8;
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-  memset (pCg14->fb, 0, size * 4);
+  memset (pCg14->fb, 0, size * (bpp >> 3));
   memset (pCg14->x32, 0, size);
   memset (pCg14->xlut, 0, 0x200);
 }                                                  
@@ -683,4 +709,4 @@ CG14ExitCplane24(ScrnInfoPtr pScrn)
   int bpp = 8;
               
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-}                                                  
+}
