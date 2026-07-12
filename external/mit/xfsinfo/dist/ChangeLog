@@ -1,3 +1,68 @@
+commit 522148f2a4c375404eaad30ed479c8449b0036f1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 26 17:19:29 2025 -0700
+
+    xfsinfo 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9bc7436855b5f1d4b0b83925a672518282d59e2e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 25 10:48:30 2025 -0700
+
+    man page: fix warnings from `mandoc -T lint` and `groff -rCHECKSTYLE=10`
+    
+    mandoc: xfsinfo.1:26:15: WARNING: cannot parse date, using it verbatim: TH xfsinfo 1.0.7
+    mandoc: xfsinfo.1:33:2: WARNING: skipping paragraph macro: PP after SH
+    mandoc: xfsinfo.1:41:2: WARNING: skipping paragraph macro: PP empty
+    mandoc: xfsinfo.1:68:2: WARNING: skipping paragraph macro: PP after SH
+    mandoc: xfsinfo.1:88:2: WARNING: skipping paragraph macro: PP empty
+    an.tmac:xfsinfo.1:86: style: blank line in input
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfsinfo/-/merge_requests/8>
+
+commit 0c89a584f1456e57c2326fc3c682874a4109b32d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Mar 25 18:21:58 2025 -0700
+
+    Accept --help & --version as aliases to -help & -version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfsinfo/-/merge_requests/7>
+
+commit 17d82cae72ce896a3702bd223195193ec1a35745
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Mar 25 18:20:20 2025 -0700
+
+    Add -help option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfsinfo/-/merge_requests/7>
+
+commit 23f4757f6508f4f3e11fdfb5a7ce9f0b651cf145
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 9 13:07:37 2025 -0700
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build types
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xfsinfo/-/merge_requests/6>
+
+commit 24879f15b8bab6c5833f0cb09131f7516e1bc289
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 13 15:50:39 2023 -0700
+
+    gitlab CI: Update to latest CI templates & Debian stable release
+    
+    Current template fails to rebuild the CI container with the current
+    Debian stable release (a new release since the last update)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 78e1db4719b33d0fb31e6876b30f95ffb0afaa70
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Oct 21 17:58:25 2022 -0700
@@ -552,7 +617,7 @@ Date:   Wed Jul 20 19:31:56 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit dddb0fc49f851443d9aea595c7c98c109256f407
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Wed Jul 6 14:54:15 2005 +0000
 
     Build system for xfsinfo
