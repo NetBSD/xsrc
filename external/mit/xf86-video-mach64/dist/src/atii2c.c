@@ -328,7 +328,7 @@ ATICreateI2CBusRec
     }
 
     /* Fill in generic structure fields */
-    pI2CBus->BusName           = BusName;
+    pI2CBus->BusName           = (char *)(uintptr_t)BusName;
     pI2CBus->scrnIndex         = iScreen;
 
     pI2CBus->I2CAddress        = ATII2CAddress;
