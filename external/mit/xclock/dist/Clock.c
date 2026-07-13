@@ -698,8 +698,8 @@ XmuCvtStringToXftShape(Display * dpy,
         char msgout[1000];
         ptrdiff_t errpos = p - fromVal->addr;
         int written = snprintf(msgout, 1000,
-                               "Error in shape at position %d: %s.", errpos + 1,
-                               errmsg);
+                               "Error in shape at position %jd: %s.",
+				   (intmax_t)errpos + 1, errmsg);
         if (strlen(fromVal->addr) < 160) {
           snprintf(msgout + written, 1000 - written, "\n%s\n%*s^",
                    fromVal->addr, (int) errpos, "");
