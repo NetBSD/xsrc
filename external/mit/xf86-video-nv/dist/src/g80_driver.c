@@ -444,7 +444,9 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
 	if (pNv->AccelMethod == EXA) {
 #endif
             if(!xf86LoadSubModule(pScrn, "exa")) pNv->NoAccel = 1;
+#ifdef HAVE_XAA_H
             break;
+#endif
         }
     }
 
