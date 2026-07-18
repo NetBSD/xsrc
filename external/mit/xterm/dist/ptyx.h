@@ -2917,6 +2917,9 @@ typedef struct {
 	Char		vt52_save_curss;
 	DECNRCM_codes	vt52_save_gsets[NUM_GSETS2];
 #endif
+#if OPT_WIDE_CHARS
+	DECNRCM_codes	ansi_save_gsets[NUM_GSETS2];
+#endif
 	/* Testing */
 #if OPT_XMC_GLITCH
 	unsigned	xmc_glitch;	/* # of spaces to pad on SGR's	*/

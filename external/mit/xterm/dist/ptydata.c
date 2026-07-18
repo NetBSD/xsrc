@@ -345,6 +345,12 @@ switchPtyData(TScreen *screen, int flag)
 	mk_wcwidth_init(screen->utf8_mode);
 
 	TRACE(("turning UTF-8 mode %s\n", BtoS(flag)));
+	if (flag) {
+	    saveCharsets(screen, screen->ansi_save_gsets);
+	    resetCharsets(screen);
+	} else {
+	    restoreCharsets(screen, screen->ansi_save_gsets);
+	}
 	update_font_utf8_mode();
     }
 }
@@ -654,6 +660,25 @@ Panic(const char *s, int a)
 }
 
 #if OPT_WIDE_CHARS
+void
+saveCharsets(TScreen *screen, DECNRCM_codes * target)
+{
+    (void) screen;
+    (void) target;
+}
+ 
+void
+restoreCharsets(TScreen *screen, const DECNRCM_codes * target)
+{
+    (void) screen;
+    (void) target;
+}
+
+void
+resetCharsets(TScreen *screen)
+{
+    (void) screen;
+}
 
 #ifdef ALLOWLOGGING
 void
