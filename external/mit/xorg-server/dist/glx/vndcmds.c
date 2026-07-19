@@ -162,9 +162,6 @@ static int CommonLoseCurrent(ClientPtr client, GlxContextTagInfo *tagInfo)
             tagInfo->tag, // No old context tag,
             None, None, None, 0);
 
-    if (ret == Success) {
-        GlxFreeContextTag(tagInfo);
-    }
     return ret;
 }
 
@@ -256,6 +253,10 @@ static int CommonMakeCurrent(ClientPtr client,
             if (ret != Success) {
                 return ret;
             }
+            // Free the old tag before calling CommonMakeNewCurrent(),
+            // which may call GlxAllocContextTag() and realloc the
+            // contextTags array, invalidating the oldTag pointer.
+            GlxFreeContextTag(oldTag);
             oldTag = NULL;
         }
 
