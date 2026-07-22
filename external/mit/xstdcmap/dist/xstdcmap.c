@@ -1,7 +1,7 @@
 /*
  * $Xorg: xstdcmap.c,v 1.5 2001/02/09 02:06:01 xorgcvs Exp $
  *
- * 
+ *
 Copyright 1989, 1998  The Open Group
 
 Permission to use, copy, modify, distribute, and sell this software and its
@@ -113,7 +113,7 @@ static XrmOptionDescRec optionTable[]=
 
 static void usage(Status status);
 
-static void 
+static void
 parse(int argc, char **argv)
 {
     XrmDatabase		database = NULL;
@@ -157,7 +157,7 @@ parse(int argc, char **argv)
 		propertyTable[i].delete++;
 	}
     }
-		
+
     snprintf(option, sizeof(option), "%s%s", program_name, ".display");
     if (XrmGetResource(database, option, (char *) NULL, &type, &value))
 	display_name = value.addr;
@@ -204,7 +204,7 @@ usage(Status status)
 }
 
 /* Determine the visual of greatest depth in a given visual class.
- * If no such visual exists, return NULL.  
+ * If no such visual exists, return NULL.
  */
 static XVisualInfo *
 getDeepestVisual(int visual_class,   /* specifies the desired visual class */
@@ -213,7 +213,7 @@ getDeepestVisual(int visual_class,   /* specifies the desired visual class */
 {
     int			maxdepth = 0;
     XVisualInfo		*v = NULL;
-    
+
     for (int i = 0; i < nvisuals; i++, vinfo++) {
 	if (vinfo->class == visual_class && vinfo->depth > maxdepth)
 	{
@@ -231,7 +231,7 @@ static XVisualInfo *
 getBestVisual(Atom property,	/* specifies the standard colormap */
 	      XVisualInfo *vinfo, /* specifies all visuals of the screen */
 	      int nvisuals)	/* specifies number of visuals of screen */
-{	
+{
     XVisualInfo	*v1, *v2;
 
     if (vinfo == NULL)		 /* unexpected: a screen with no visuals */
@@ -272,13 +272,13 @@ visualStringFromClass(int class)
     return "unknown visual class";
 }
 
-static int 
+static int
 doIndividualColormaps(void)
 {
     int			screen, nvisuals;
     Status		status = -1;
     XVisualInfo		*vinfo, *v = NULL, template;
-    
+
     screen = DefaultScreen(dpy);
     template.screen = screen;
     vinfo = XGetVisualInfo(dpy, VisualScreenMask, &template, &nvisuals);
@@ -293,9 +293,9 @@ doIndividualColormaps(void)
 			program_name, propertyTable[i].name);
 	}
 
-	if (! propertyTable[i].create)	
+	if (! propertyTable[i].create)
 	    continue;
-	
+
 	/* which visual is best for this property? */
 	v = getBestVisual(propertyTable[i].property, vinfo, nvisuals);
 	if (v == NULL) {
@@ -312,7 +312,7 @@ doIndividualColormaps(void)
 			   "%s: making %s on a %s visual of depth %u.\n",
 			   program_name, propertyTable[i].name,
 			   visualStringFromClass(v->class), v->depth);
-	
+
 	status = XmuLookupStandardColormap(dpy, screen, v->visualid,
 					   v->depth,
 					   propertyTable[i].property,
@@ -340,6 +340,22 @@ main(int argc, char *argv[])
 	program_name++;
     else
 	program_name = *argv;
+
+    /* Handle args that don't require opening a display or initializing Xrm */
+    for (int n = 1; n < argc; n++) {
+        const char *argn = argv[n];
+        /* accept single or double dash for -help & -version */
+        if (argn[0] == '-' && argn[1] == '-') {
+            argn++;
+        }
+        if (strcmp(argn, "-help") == 0) {
+            usage(0);
+        }
+        if (strcmp(argn, "-version") == 0) {
+            puts(PACKAGE_STRING);
+            exit(0);
+        }
+    }
 
     parse(argc, argv);
 
@@ -371,7 +387,7 @@ main(int argc, char *argv[])
     else {
 	status = doIndividualColormaps();
 	if (!status && verbose)
-	    (void) fprintf(stderr, 
+	    (void) fprintf(stderr,
 		    "Not all new colormap definitions will be retained.\n");
     }
     Exit((status == 0) ? 1 : 0);

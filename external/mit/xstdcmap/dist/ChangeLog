@@ -1,3 +1,93 @@
+commit 65dd902e8e0b23d2895aa1ad7484b448c25bf839
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 11 15:39:54 2026 -0700
+
+    xstdcmap 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ef74e27b51432fe7e820b4b4e208bb434fef88c2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 16 18:43:59 2026 -0700
+
+    meson: Add option to build with meson
+    
+    Also updates the gitlab CI config to test both build types
+    and compare the generated output/installed files.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/7>
+
+commit 03b058361090c7aeed57f0c1a9755c96169cc79a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 16 18:29:07 2026 -0700
+
+    Strip trailing whitespace from source files
+    
+    Performed with: `git ls-files | xargs perl -i -p -e 's{[ \t]+$}{}'`
+    
+    `git diff -w` & `git diff -b` show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/7>
+
+commit 93667370c73792a06903074c9db473184ab05517
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 11 11:20:41 2026 -0800
+
+    gitlab CI: drop the ci-fairy check-mr job
+    
+    The only thing this checked was the checkbox for allowing maintainers to
+    edit the MR. Changed permissions checks now fail this job but luckily
+    the setting it checked has been the default for years anyway so we can
+    drop it.
+    
+    https://gitlab.freedesktop.org/freedesktop/ci-templates/-/issues/81
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/7>
+
+commit 3b68fb604f8d3695aff02835a6ebae8f1f4a9c0a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 13:00:12 2025 -0700
+
+    man page: fix warnings from `mandoc -T lint` and `groff -rCHECKSTYLE=10`
+    
+    mandoc: xstdcmap.1:44:116: STYLE: input text line longer than 80 bytes: [\fB\-all\fP] [\fB\-...
+    mandoc: xstdcmap.1:39:16: WARNING: cannot parse date, using it verbatim: TH xstdcmap 1.0.5
+    mandoc: xstdcmap.1:45:2: WARNING: skipping paragraph macro: br before text line with leading blank
+    mandoc: xstdcmap.1:48:2: WARNING: skipping paragraph macro: PP after SH
+    mandoc: xstdcmap.1:56:2: WARNING: skipping paragraph macro: PP after SH
+    mandoc: xstdcmap.1:110:2: WARNING: skipping paragraph macro: PP empty
+    an.tmac:xstdcmap.1:46: style: 9 leading space(s) on input line
+    an.tmac:xstdcmap.1:118: style: blank line in input
+    an.tmac:xstdcmap.1:119: style: blank line in input
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/6>
+
+commit ab005a9249ea75608f265ce4331f8359d6419933
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 12 14:05:37 2025 -0700
+
+    Improve man page formatting
+    
+    More closely follow common style as described on
+    https://man7.org/linux/man-pages/man7/man-pages.7.html
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/5>
+
+commit cf28e3bf739cda49e038cd53e8bb241fc1c2e81d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 12 15:09:32 2024 -0700
+
+    Bypass Xrm for handling -help & -version arguments
+    
+    Closes: #1
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Part-of: <https://gitlab.freedesktop.org/xorg/app/xstdcmap/-/merge_requests/4>
+
 commit ea263607d3fbe4eca3319a3824c3f641dade4871
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Dec 3 16:19:36 2022 -0800
@@ -150,7 +240,7 @@ Date:   Tue Jun 3 23:29:48 2014 -0700
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
 commit 16959f67461cb3bceb5d9428759bc6f8925aa1ee
-Author: Stéphane Aulery  <lkppo@free.fr>
+Author: Stéphane Aulery <lkppo@free.fr>
 Date:   Thu Jul 4 00:40:01 2013 +0200
 
     Use the same parameter names in the help.
@@ -502,13 +592,13 @@ Date:   Wed Jul 20 19:32:04 2005 +0000
         configure cache, you cache it, and the cached value is probably wrong.
 
 commit 1b024ee5c3ddf09fb5d900cc8e1733d2ba0679d1
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Thu Jul 14 22:40:16 2005 +0000
 
     Add _BSD_SOURCE to lots of applications - patch from Stefan Dirsch
 
 commit 8b9becb78c06d7d99e00750a18ccf9bceb5d2b2b
-Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
 Date:   Fri Jul 1 20:09:09 2005 +0000
 
     xtrap.pc.in: s/Xfixes/XTrap/ xi.pc.in: s/Xt/Xi/ Xv/src/Makefile.am: remove

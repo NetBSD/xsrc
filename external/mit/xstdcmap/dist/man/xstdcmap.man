@@ -1,4 +1,4 @@
-.\" $Xorg: xstdcmap.man,v 1.4 2001/02/09 02:06:01 xorgcvs Exp $
+.\"
 .\" Copyright 1989, 1994, 1998  The Open Group
 .\"
 .\" Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,94 +23,79 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xstdcmap/xstdcmap.man,v 1.7 2001/01/27 18:21:24 dawes Exp $
-.\"
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
-.TH XSTDCMAP 1 __xorgversion__
+.TH XSTDCMAP 1 2013-07-04 __xorgversion__
 .SH NAME
 xstdcmap - X standard colormap utility
 .SH SYNOPSIS
-.B xstdcmap
-[-all] [-best] [-blue] [-default] [-delete \fImap\fP] [-display \fIdpy\fP]
-[-gray] [-green] [-help] [-red] [-verbose] [-version]
+.nf
+\fBxstdcmap\fP [\fB\-all\fP] [\fB\-best\fP] [\fB\-blue\fP] [\fB\-default\fP] [\fB\-delete\fP \fImap\fP] [\fB\-display\fP \fIdpy\fP]
+         [\fB\-gray\fP] [\fB\-green\fP] [\fB\-help\fP] [\fB\-red\fP] [\fB\-verbose\fP] [\fB\-version\fP]
+.fi
 .SH DESCRIPTION
-.PP
-The \fIxstdcmap\fP utility can be used to selectively define standard colormap
-properties.  It is intended to be run from a user's X startup script to
+The \fBxstdcmap\fP utility can be used to selectively define standard colormap
+properties.
+It is intended to be run from a user's X startup script to
 create standard colormap definitions in order to facilitate sharing of
-scarce colormap resources among clients.  Where at all possible, colormaps
-are created with read-only allocations.
+scarce colormap resources among clients.
+Where at all possible, colormaps are created with read-only allocations.
 .SH OPTIONS
-.PP
-The following options may be used with \fIxstdcmap\fP:
+The following options may be used with \fBxstdcmap\fP:
 .TP 8
 .B \-all
 This option indicates that all six standard colormap properties should be
-defined on each screen of the display.  Not all screens will support
-visuals under which all six standard colormap properties are meaningful.
-\fIxstdcmap\fP will determine the best
-allocations and visuals for the colormap properties of a screen. Any
-previously existing standard colormap properties will be replaced.
+defined on each screen of the display.
+Not all screens will support visuals under which
+all six standard colormap properties are meaningful.
+\fBxstdcmap\fP will determine the best
+allocations and visuals for the colormap properties of a screen.
+Any previously existing standard colormap properties will be replaced.
 .TP 8
 .B \-best
-This option indicates that the RGB_BEST_MAP should be defined.
+This option indicates that the \fBRGB_BEST_MAP\fP should be defined.
 .TP 8
 .B \-blue
-This option indicates that the RGB_BLUE_MAP should be defined.
+This option indicates that the \fBRGB_BLUE_MAP\fP should be defined.
 .TP 8
 .B \-default
-This option indicates that the RGB_DEFAULT_MAP should be defined.
+This option indicates that the \fBRGB_DEFAULT_MAP\fP should be defined.
 .TP 8
 .B \-delete \fImap\fP
 This option specifies that a specific standard colormap property, or
 all such properties, should be removed.
-\fImap\fP may be one of: default, best, red, green, blue, gray, or all.
+\fImap\fP may be one of: \fBdefault\fP, \fBbest\fP, \fBred\fP, \fBgreen\fP,
+\fBblue\fP, \fBgray\fP, or \fBall\fP.
 .TP 8
 .B \-display \fIdpy\fP
-This option specifies the host and display to use; see \fIX(__miscmansuffix__)\fP.
+This option specifies the host and display to use; see
+.BR X (__miscmansuffix__).
 .TP 8
 .B \-gray
-This option indicates that the RGB_GRAY_MAP should be defined.
+This option indicates that the \fBRGB_GRAY_MAP\fP should be defined.
 .TP 8
 .B \-green
-This option indicates that the RGB_GREEN_MAP should be defined.
+This option indicates that the \fBRGB_GREEN_MAP\fP should be defined.
 .TP 8
 .B \-help
 This option indicates that a brief description of the command line arguments
-should be printed on the standard error.  This will be done whenever an
-unhandled argument is given to
-.I xstdcmap.
+should be printed on the standard error.
+This will be done whenever an unhandled argument is given to
+.B xstdcmap.
 .TP 8
 .B \-red
-This option indicates that the RGB_RED_MAP should be defined.
+This option indicates that the \fBRGB_RED_MAP\fP should be defined.
 .TP 8
 .B \-verbose
-This option indicates that \fIxstdcmap\fP should
+This option indicates that \fBxstdcmap\fP should
 print logging information as it parses its input and defines the
 standard colormap properties.
 .TP 8
 .B \-version
-This option indicates that \fIxstdcmap\fP should print its version and exit.
+This option indicates that \fBxstdcmap\fP should print its version and exit.
 .SH ENVIRONMENT
-.PP
 .TP 8
 .B DISPLAY
 to get default host and display number.
 .SH SEE ALSO
-X(__miscmansuffix__)
+.BR X (__miscmansuffix__)
 .SH AUTHOR
 Donna Converse, MIT X Consortium
-
-
