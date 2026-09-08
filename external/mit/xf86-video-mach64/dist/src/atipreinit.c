@@ -977,11 +977,9 @@ ATIPreInit
             }
         }
 
-#if defined(__sparc__)
 	/* make PGX64 work by default */
 	if (pATI->Chip == ATI_CHIP_264XL)
 		pATI->refclk = 29498000;
-#endif
 
         ati_bios_clock(pScreenInfo, pATI, BIOS, ClockTable, pGDev);
         ati_bios_mmedia(pScreenInfo, pATI, BIOS, VideoTable, HardwareTable);
