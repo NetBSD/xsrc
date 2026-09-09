@@ -47,6 +47,7 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#include "shadow.h"
 
 #if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(25, 2)
 #include "xf86RamDac.h"
@@ -71,6 +72,10 @@ typedef struct {
 	int			rotate;
 	Bool			shadowFB;
 	void *			shadow;
+	ShadowUpdateProc	damageUpdate;
+	DamagePtr		damage;
+	ScreenBlockHandlerProcPtr BlockHandler;
+	Bool			damageFailed;
 	Bool			HWCursor;
 	Bool			useSwap32;
 	Bool			useRGB16ToYUY2;
