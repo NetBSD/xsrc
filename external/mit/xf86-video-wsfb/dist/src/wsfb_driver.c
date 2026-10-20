@@ -136,6 +136,10 @@ static Bool WsfbDGAInit(ScrnInfoPtr, ScreenPtr);
 static void WsfbShadowUpdateRGB16ToYUY2(ScreenPtr, shadowBufPtr);
 static void WsfbShadowUpdateSwap32(ScreenPtr, shadowBufPtr);
 static void WsfbShadowUpdateSplit(ScreenPtr, shadowBufPtr);
+static void WsfbShadowUpdateDamage(ScreenPtr, shadowBufPtr);
+static Bool WsfbDamageInit(ScreenPtr);
+static void WsfbDamageBlockHandler(ScreenPtr, void *);
+static void WsfbReportDamage(ScreenPtr, RegionPtr);
 
 static Bool WsfbDriverFunc(ScrnInfoPtr, xorgDriverFuncOp, pointer);
 
@@ -852,6 +856,44 @@ wsfbUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
     shadowUpdatePacked(pScreen, pBuf);
 }
 
+/* Copy shadow damage to the framebuffer, then tell the device to scan it. */
+static void
+WsfbShadowUpdateDamage(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+	RegionPtr damage = DamageRegion(pBuf->pDamage);
+	WsfbPtr fPtr = WSFBPTR(xf86ScreenToScrn(pScreen));
+
+	fPtr->damageUpdate(pScreen, pBuf);
+	WsfbReportDamage(pScreen, damage);
+}
+
+/* Report one bounding rectangle. */
+static void
+WsfbReportDamage(ScreenPtr pScreen, RegionPtr damage)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+	BoxPtr extents;
+	struct wsdisplay_damage d;
+
+	if (!RegionNotEmpty(damage))
+		return;
+
+	extents = RegionExtents(damage);
+	d.flags = 0;
+	d.x = extents->x1;
+	d.y = extents->y1;
+	d.width = extents->x2 - extents->x1;
+	d.height = extents->y2 - extents->y1;
+
+	if (ioctl(fPtr->fd, WSDISPLAYIO_DAMAGE, &d) == -1 &&
+	    !fPtr->damageFailed) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		    "ioctl WSDISPLAYIO_DAMAGE: %s\n", strerror(errno));
+		fPtr->damageFailed = TRUE;
+	}
+}
+
 static Bool
 WsfbCreateScreenResources(ScreenPtr pScreen)
 {
@@ -870,6 +912,17 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 		return FALSE;
 
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
+	if ((fPtr->fbi.fbi_flags & WSFB_VRAM_NEEDS_DAMAGE) &&
+	    !fPtr->shadowFB) {
+		fPtr->damage = DamageCreate(NULL, NULL, DamageReportNone, TRUE,
+		    pScreen, pScreen);
+		if (fPtr->damage == NULL)
+			return FALSE;
+		DamageRegister(&pPixmap->drawable, fPtr->damage);
+		fPtr->BlockHandler = pScreen->BlockHandler;
+		pScreen->BlockHandler = WsfbDamageBlockHandler;
+		return TRUE;
+	}
 	if (fPtr->fbi.fbi_flags & WSFB_VRAM_IS_SPLIT) {
 		shadowproc = WsfbShadowUpdateSplit;
 	} else if (fPtr->useRGB16ToYUY2) {
@@ -918,6 +971,10 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	{
 		shadowproc = wsfbUpdatePacked;
 	}
+	if (fPtr->fbi.fbi_flags & WSFB_VRAM_NEEDS_DAMAGE) {
+		fPtr->damageUpdate = shadowproc;
+		shadowproc = WsfbShadowUpdateDamage;
+	}
 	
 	if (!shadowAdd(pScreen, pPixmap, shadowproc,
 		windowproc, fPtr->rotate, NULL)) {
@@ -934,6 +991,38 @@ WsfbShadowInit(ScreenPtr pScreen)
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 
 	if (!shadowSetup(pScreen))
+		return FALSE;
+	fPtr->CreateScreenResources = pScreen->CreateScreenResources;
+	pScreen->CreateScreenResources = WsfbCreateScreenResources;
+
+	return TRUE;
+}
+
+static void
+WsfbDamageBlockHandler(ScreenPtr pScreen, void *timeout)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+	RegionPtr damage = DamageRegion(fPtr->damage);
+
+	if (RegionNotEmpty(damage)) {
+		WsfbReportDamage(pScreen, damage);
+		DamageEmpty(fPtr->damage);
+	}
+
+	pScreen->BlockHandler = fPtr->BlockHandler;
+	pScreen->BlockHandler(pScreen, timeout);
+	fPtr->BlockHandler = pScreen->BlockHandler;
+	pScreen->BlockHandler = WsfbDamageBlockHandler;
+}
+
+static Bool
+WsfbDamageInit(ScreenPtr pScreen)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+
+	if (!DamageSetup(pScreen))
 		return FALSE;
 	fPtr->CreateScreenResources = pScreen->CreateScreenResources;
 	pScreen->CreateScreenResources = WsfbCreateScreenResources;
@@ -1164,6 +1253,13 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    "shadow framebuffer initialization failed\n");
 		return FALSE;
 	}
+	if (!fPtr->shadowFB &&
+	    (fPtr->fbi.fbi_flags & WSFB_VRAM_NEEDS_DAMAGE) &&
+	    !WsfbDamageInit(pScreen)) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		    "damage tracking initialization failed\n");
+		return FALSE;
+	}
 
 #ifdef XFreeXDGA
 	if (!fPtr->rotate)
@@ -1284,6 +1380,12 @@ WsfbCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
 	if (fPtr->shadowFB)
 		shadowRemove(pScreen, pPixmap);
+	if (fPtr->damage != NULL) {
+		pScreen->BlockHandler = fPtr->BlockHandler;
+		DamageUnregister(fPtr->damage);
+		DamageDestroy(fPtr->damage);
+		fPtr->damage = NULL;
+	}
 
 	if (pScrn->vtSema) {
 		WsfbRestore(pScrn);
@@ -1398,6 +1500,19 @@ WsfbEnterVT(VT_FUNC_ARGS_DECL)
 	if (ioctl(fPtr->fd, WSDISPLAYIO_SMODE, &mode) == -1) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "error setting graphics mode %s\n", strerror(errno));
+	}
+	if (fPtr->fbi.fbi_flags & WSFB_VRAM_NEEDS_DAMAGE) {
+		struct wsdisplay_damage d = {
+			.flags = 0,
+			.x = 0,
+			.y = 0,
+			.width = fPtr->fbi.fbi_width,
+			.height = fPtr->fbi.fbi_height,
+		};
+
+		if (ioctl(fPtr->fd, WSDISPLAYIO_DAMAGE, &d) == -1)
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			    "ioctl WSDISPLAYIO_DAMAGE: %s\n", strerror(errno));
 	}
 
 	TRACE_EXIT("EnterVT");
