@@ -221,7 +221,7 @@ sna_mode_resize(ScrnInfoPtr scrn, int width, int height)
 }
 
 static const xf86CrtcConfigFuncsRec sna_mode_funcs = {
-	sna_mode_resize
+	.resize = sna_mode_resize,
 };
 
 static bool add_fake_output(struct sna *sna, bool late)

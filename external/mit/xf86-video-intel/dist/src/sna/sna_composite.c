@@ -649,15 +649,15 @@ sna_composite(CARD8 op,
 	      CARD16 width, CARD16 height)
 {
 	PixmapPtr pixmap = get_drawable_pixmap(dst->pDrawable);
-	struct sna *sna = to_sna_from_pixmap(pixmap);
 	struct sna_pixmap *priv;
 	struct sna_composite_op tmp;
 	RegionRec region;
+	struct sna *sna;
 	int dx, dy;
 
 	DBG(("%s(pixmap=%ld, op=%d, src=%ld+(%d, %d), mask=%ld+(%d, %d), dst=%ld+(%d, %d)+(%d, %d), size=(%d, %d)\n",
 	     __FUNCTION__,
-	     pixmap->drawable.serialNumber, op,
+	     pixmap ? pixmap->drawable.serialNumber : 0, op,
 	     get_picture_id(src), src_x, src_y,
 	     get_picture_id(mask), mask_x, mask_y,
 	     get_picture_id(dst), dst_x, dst_y,
@@ -672,8 +672,7 @@ sna_composite(CARD8 op,
 	if (op == PictOpClear) {
 		DBG(("%s: discarding source and mask for clear\n", __FUNCTION__));
 		mask = NULL;
-		if (sna->clear)
-			src = sna->clear;
+		src = NULL;
 	}
 
 	if (!sna_compute_composite_region(&region,
@@ -694,11 +693,6 @@ sna_composite(CARD8 op,
 	if (NO_COMPOSITE)
 		goto fallback;
 
-	if (wedged(sna)) {
-		DBG(("%s: fallback -- wedged\n", __FUNCTION__));
-		goto fallback;
-	}
-
 	if (!can_render_to_picture(dst)) {
 		DBG(("%s: fallback due to unhandled picture\n", __FUNCTION__));
 		goto fallback;
@@ -710,6 +704,15 @@ sna_composite(CARD8 op,
 		     __FUNCTION__, pixmap->drawable.serialNumber));
 		goto fallback;
 	}
+
+	sna = to_sna_from_pixmap(pixmap);
+	if (wedged(sna)) {
+		DBG(("%s: fallback -- wedged\n", __FUNCTION__));
+		goto fallback;
+	}
+
+	if (op == PictOpClear)
+		src = sna->clear;
 
 	if (use_cpu(pixmap, priv, op, width, height) &&
 	    !picture_is_gpu(sna, src, PREFER_GPU_RENDER) &&
@@ -1074,7 +1077,7 @@ sna_composite_rectangles(CARD8		 op,
 		}
 	} else {
 		for (i = 0; i < num_boxes; i++) {
-			RegionRec tmp = { boxes[i] };
+			RegionRec tmp = { .extents = boxes[i], };
 			if (pixman_region_intersect(&tmp, &tmp, dst->pCompositeClip)) {
 				int n = 0;
 

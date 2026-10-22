@@ -302,6 +302,7 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 					hint |= INTEL_CREATE_PIXMAP_TILING_Y;
 					break;
 				}
+				/* fall through */
 			case DRI2BufferAccum:
 			case DRI2BufferBackLeft:
 			case DRI2BufferBackRight:

@@ -2084,11 +2084,6 @@ try_blt(struct sna *sna,
 {
 	struct kgem_bo *bo;
 
-	if (sna->kgem.mode == KGEM_BLT) {
-		DBG(("%s: already performing BLT\n", __FUNCTION__));
-		goto execute;
-	}
-
 	if (too_large(width, height)) {
 		DBG(("%s: operation too large for 3D pipe (%d, %d)\n",
 		     __FUNCTION__, width, height));
@@ -2129,7 +2124,7 @@ try_blt(struct sna *sna,
 			goto execute;
 	}
 
-	if (sna->kgem.ring == KGEM_BLT) {
+	if (sna->kgem.mode == KGEM_BLT) {
 		DBG(("%s: already performing BLT\n", __FUNCTION__));
 		goto execute;
 	}
@@ -2410,7 +2405,7 @@ gen8_render_composite(struct sna *sna,
 	case 0:
 		if (!gen4_channel_init_solid(sna, &tmp->src, 0))
 			goto cleanup_dst;
-		/* fall through to fixup */
+		/* fall through */
 	case 1:
 		/* Did we just switch rings to prepare the source? */
 		if (mask == NULL &&
@@ -2466,7 +2461,7 @@ gen8_render_composite(struct sna *sna,
 			case 0:
 				if (!gen4_channel_init_solid(sna, &tmp->mask, 0))
 					goto cleanup_src;
-				/* fall through to fixup */
+				/* fall through */
 			case 1:
 				if (!gen8_composite_channel_convert(&tmp->mask))
 					goto cleanup_mask;
@@ -2701,7 +2696,7 @@ gen8_render_composite_spans(struct sna *sna,
 	case 0:
 		if (!gen4_channel_init_solid(sna, &tmp->base.src, 0))
 			goto cleanup_dst;
-		/* fall through to fixup */
+		/* fall through */
 	case 1:
 		if (!gen8_composite_channel_convert(&tmp->base.src))
 			goto cleanup_src;
@@ -2796,40 +2791,53 @@ prefer_blt_copy(struct sna *sna,
 		struct kgem_bo *dst_bo,
 		unsigned flags)
 {
-	if (sna->kgem.mode == KGEM_BLT)
-		return true;
-
 	assert((flags & COPY_SYNC) == 0);
 
 	if (untiled_tlb_miss(src_bo) ||
-	    untiled_tlb_miss(dst_bo))
+	    untiled_tlb_miss(dst_bo)) {
+		DBG(("%s: TLB miss -> blt\n", __func__));
 		return true;
+	}
 
-	if (flags & COPY_DRI && !sna->kgem.has_semaphores)
+	if (flags & COPY_DRI && !sna->kgem.has_semaphores) {
+		DBG(("%s: DRI -> render\n", __func__));
 		return false;
+	}
 
-	if (force_blt_ring(sna, dst_bo))
+	if (force_blt_ring(sna, dst_bo, src_bo)) {
+		DBG(("%s: force BLT -> blt\n", __func__));
 		return true;
+	}
 
 	if ((flags & COPY_SMALL ||
 	     (sna->render_state.gt < 3 && src_bo == dst_bo)) &&
-	    can_switch_to_blt(sna, dst_bo, flags))
+	    can_switch_to_blt(sna, dst_bo, flags)) {
+		DBG(("%s: small/self copy -> blt\n", __func__));
 		return true;
+	}
 
 	if (kgem_bo_is_render(dst_bo) ||
-	    kgem_bo_is_render(src_bo))
+	    kgem_bo_is_render(src_bo)) {
+		DBG(("%s: render bo -> render\n", __func__));
 		return false;
+	}
 
 	if (flags & COPY_LAST &&
 	    sna->render_state.gt < 3 &&
-            can_switch_to_blt(sna, dst_bo, flags))
+            can_switch_to_blt(sna, dst_bo, flags)) {
+		DBG(("%s: copy last -> blt\n", __func__));
 		return true;
+	}
 
-	if (prefer_render_ring(sna, dst_bo))
+	if (prefer_render_ring(sna, dst_bo)) {
+		DBG(("%s: prefer render -> render\n", __func__));
 		return false;
+	}
 
-	if (!prefer_blt_ring(sna, dst_bo, flags))
+	if (!prefer_blt_ring(sna, dst_bo, flags)) {
+		DBG(("%s: !prefer blt -> render\n", __func__));
 		return false;
+	}
 
 	return prefer_blt_bo(sna, src_bo, dst_bo);
 }
@@ -3116,6 +3124,7 @@ gen8_render_copy(struct sna *sna, uint8_t alu,
 	    unaligned(src_bo, src->drawable.bitsPerPixel) ||
 	    unaligned(dst_bo, dst->drawable.bitsPerPixel)) {
 fallback:
+		DBG(("%s: blt fallback\n", __func__));
 		if (!sna_blt_compare_depth(&src->drawable, &dst->drawable))
 			return false;
 

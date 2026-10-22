@@ -657,7 +657,7 @@ mono_init(struct mono *c, int num_edges)
 
 	c->head.dy = 0;
 	c->head.height_left = INT_MAX;
-	c->head.x.quo = INT16_MIN << 16;
+	c->head.x.quo = (uint32_t)INT16_MIN << 16;
 	c->head.prev = NULL;
 	c->head.next = &c->tail;
 	c->tail.prev = &c->head;

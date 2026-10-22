@@ -1404,6 +1404,7 @@ memcpy_xor(const void *src, void *dst, int bpp,
 				width /= 2;
 				or |= or << 8;
 			}
+			/* fall through */
 		case 2:
 			if (width & 1) {
 				do {
@@ -1421,6 +1422,7 @@ memcpy_xor(const void *src, void *dst, int bpp,
 				width /= 2;
 				or |= or << 16;
 			}
+			/* fall through */
 		case 4:
 			w = width;
 			if (w * 4 == dst_stride && dst_stride == src_stride) {
