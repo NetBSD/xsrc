@@ -459,7 +459,18 @@ static bool enable_tear_free(struct sna *sna)
 	if (sna->flags & SNA_LINEAR_FB)
 		return false;
 
-	/* Under certain conditions, we should enable TearFree by default,
+	/*
+	 * On recent HW, where the display surfaces are in a seperate GTT
+	 * to userspace, there is much less contention on global resources
+	 * and also we can assume there is much more memory bandwidth
+	 * available (i.e. gen8+). This HW should rarely be under such
+	 * constaints as to need to disable TearFree, so enable by default.
+	 */
+	if (sna->kgem.has_full_ppgtt)
+		return true;
+
+	/*
+	 * Under certain conditions, we should enable TearFree by default,
 	 * for example when the hardware requires pageflipping to run within
 	 * its power/performance budget.
 	 */
@@ -603,6 +614,7 @@ static Bool sna_pre_init(ScrnInfoPtr scrn, int probe)
 		if ((sna->flags & SNA_IS_HOSTED) ||
 		    fb_supports_depth(fd, scrn->depth))
 			break;
+		/* fall through */
 	default:
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
 			   "Given depth (%d) is not supported by the Intel driver and this chipset.\n",

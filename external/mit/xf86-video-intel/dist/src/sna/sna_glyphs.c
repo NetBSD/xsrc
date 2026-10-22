@@ -85,8 +85,11 @@
 #define NO_ATLAS ((PicturePtr)-1)
 #define GLYPH_TOLERANCE 3
 
-#define glyph_valid(g) *((uint32_t *)&(g)->info.width)
-#define glyph_copy_size(r, g) *(uint32_t *)&(r)->width = *(uint32_t *)&g->info.width
+#define glyph_valid(g) ((g)->info.width || (g)->info.height)
+#define glyph_copy_size(r, g) do { \
+	(r)->width = (g)->info.width; \
+	(r)->height = (g)->info.height; \
+} while (0)
 
 #if HAS_PIXMAN_GLYPHS
 static  pixman_glyph_cache_t *__global_glyph_cache;

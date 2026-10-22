@@ -823,7 +823,7 @@ sna_get_pixel_from_rgba(uint32_t * pixel,
 	switch (format) {
 	case PICT_x8r8g8b8:
 		alpha = 0xffff;
-		/* fall through to re-use a8r8g8b8 expansion */
+		/* fall through */
 	case PICT_a8r8g8b8:
 		*pixel = ((alpha >> 8 << 24) |
 			  (red >> 8 << 16) |

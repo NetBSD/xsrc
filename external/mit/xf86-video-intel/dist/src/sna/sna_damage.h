@@ -152,6 +152,7 @@ static inline bool sna_damage_is_all(struct sna_damage **_damage,
 		return false;
 	default:
 		assert(0);
+		/* fall through */
 	case DAMAGE_ADD:
 		if (damage->extents.x2 < width  || damage->extents.x1 > 0)
 			return false;

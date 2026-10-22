@@ -58,7 +58,6 @@ uxa = static_library('uxa',
 		     include_directories : inc,
 		     c_args : [
 		       '-Wno-deprecated-declarations',
-		       '-Wno-shift-negative-value',
 		       '-Wno-unused-parameter',
 		       '-Wno-sign-compare',
 		     ],

@@ -39,12 +39,13 @@ fbFillSpans(DrawablePtr drawable, GCPtr gc,
 	while (n--) {
 		BoxRec box;
 
-		*(DDXPointPtr)&box = *pt++;
+		memcpy(&box, pt, sizeof(box));
 		box.x2 = box.x1 + *width++;
 		box.y2 = box.y1 + 1;
 
 		/* XXX fSorted */
 		fbDrawableRun(drawable, gc, &box, fbFillSpan, NULL);
+		pt++;
 	}
 }
 
@@ -91,7 +92,8 @@ fbSetSpans(DrawablePtr drawable, GCPtr gc,
 	while (n--) {
 		BoxRec box;
 
-		*(DDXPointPtr)&box = data.pt = *pt;
+		memcpy(&box, pt, sizeof(box));
+		data.pt = *pt;
 		box.x2 = box.x1 + *width;
 		box.y2 = box.y1 + 1;
 

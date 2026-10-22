@@ -142,6 +142,22 @@ static const struct intel_device_info intel_coffeelake_info = {
 	.gen = 0114,
 };
 
+static const struct intel_device_info intel_cannonlake_info = {
+	.gen = 0120,
+};
+
+static const struct intel_device_info intel_icelake_info = {
+	.gen = 0130,
+};
+
+static const struct intel_device_info intel_elkhartlake_info = {
+	.gen = 0131,
+};
+
+static const struct intel_device_info intel_tigerlake_info = {
+	.gen = 0140,
+};
+
 static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_I810,				"i810"},
 	{PCI_CHIP_I810_DC100,			"i810-dc100"},
@@ -307,7 +323,7 @@ static const SymTabRec intel_chipsets[] = {
 	{0x5916, "HD Graphics 620"},
 	{0x591E, "HD Graphics 615"},
 
-	/*Coffeelake*/
+	/* Coffeelake */
 	{0x3E90, "HD Graphics"},
 	{0x3E93, "HD Graphics"},
 	{0x3E99, "HD Graphics"},
@@ -315,8 +331,10 @@ static const SymTabRec intel_chipsets[] = {
 	{0x3E92, "HD Graphics"},
 	{0x3E96, "HD Graphics"},
 	{0x3E9A, "HD Graphics"},
+	{0x3E9C, "HD Graphics"},
 	{0x3E9B, "HD Graphics"},
 	{0x3E94, "HD Graphics"},
+	{0x3E98, "HD Graphics"},
 	{0x3EA1, "HD Graphics"},
 	{0x3EA4, "HD Graphics"},
 	{0x3EA0, "HD Graphics"},
@@ -327,6 +345,75 @@ static const SymTabRec intel_chipsets[] = {
 	{0x3EA6, "HD Graphics"},
 	{0x3EA7, "HD Graphics"},
 	{0x3EA8, "HD Graphics"},
+	{0x87CA, "HD Graphics"},
+	{0x9BA5, "HD Graphics"},
+	{0x9BA8, "HD Graphics"},
+	{0x9BA4, "HD Graphics"},
+	{0x9BA2, "HD Graphics"},
+	{0x9BC5, "HD Graphics"},
+	{0x9BC8, "HD Graphics"},
+	{0x9BC4, "HD Graphics"},
+	{0x9BC2, "HD Graphics"},
+	{0x9BC6, "HD Graphics"},
+	{0x9BE6, "HD Graphics"},
+	{0x9BF6, "HD Graphics"},
+	{0x9B21, "HD Graphics"},
+	{0x9BAA, "HD Graphics"},
+	{0x9BAC, "HD Graphics"},
+	{0x9B41, "HD Graphics"},
+	{0x9BCA, "HD Graphics"},
+	{0x9BCC, "HD Graphics"},
+
+	/* CannonLake */
+	{0x5A54, "HD Graphics"},
+	{0x5A5C, "HD Graphics"},
+	{0x5A44, "HD Graphics"},
+	{0x5A4C, "HD Graphics"},
+	{0x5A51, "HD Graphics"},
+	{0x5A59, "HD Graphics"},
+	{0x5A41, "HD Graphics"},
+	{0x5A49, "HD Graphics"},
+	{0x5A52, "HD Graphics"},
+	{0x5A5A, "HD Graphics"},
+	{0x5A42, "HD Graphics"},
+	{0x5A4A, "HD Graphics"},
+	{0x5A50, "HD Graphics"},
+	{0x5A40, "HD Graphics"},
+
+	/* IceLake */
+	{0x8A50, "HD Graphics"},
+	{0x8A5C, "HD Graphics"},
+	{0x8A59, "HD Graphics"},
+	{0x8A58, "HD Graphics"},
+	{0x8A52, "HD Graphics"},
+	{0x8A5A, "HD Graphics"},
+	{0x8A5B, "HD Graphics"},
+	{0x8A57, "HD Graphics"},
+	{0x8A56, "HD Graphics"},
+	{0x8A71, "HD Graphics"},
+	{0x8A70, "HD Graphics"},
+	{0x8A53, "HD Graphics"},
+	{0x8A54, "HD Graphics"},
+	{0x8A51, "HD Graphics"},
+	{0x8A5D, "HD Graphics"},
+
+	/* ElkhartLake */
+	{0x4500, "HD Graphics"},
+	{0x4571, "HD Graphics"},
+	{0x4551, "HD Graphics"},
+	{0x4541, "HD Graphics"},
+	{0x4E71, "HD Graphics"},
+	{0x4E61, "HD Graphics"},
+	{0x4E51, "HD Graphics"},
+
+	/* TigerLake */
+	{0x9A49, "HD Graphics"},
+	{0x9A40, "HD Graphics"},
+	{0x9A59, "HD Graphics"},
+	{0x9A60, "HD Graphics"},
+	{0x9A68, "HD Graphics"},
+	{0x9A70, "HD Graphics"},
+	{0x9A78, "HD Graphics"},
 
 	/* When adding new identifiers, also update:
 	 * 1. intel_identify()
@@ -357,7 +444,8 @@ static const struct pci_id_match intel_device_match[] = {
 	INTEL_I945GM_IDS(&intel_i945_info),
 
 	INTEL_G33_IDS(&intel_g33_info),
-	INTEL_PINEVIEW_IDS(&intel_g33_info),
+	INTEL_PINEVIEW_G_IDS(&intel_g33_info),
+	INTEL_PINEVIEW_M_IDS(&intel_g33_info),
 
 	INTEL_I965G_IDS(&intel_i965_info),
 	INTEL_I965GM_IDS(&intel_i965_info),
@@ -376,19 +464,27 @@ static const struct pci_id_match intel_device_match[] = {
 
 	INTEL_HSW_IDS(&intel_haswell_info),
 	INTEL_VLV_IDS(&intel_valleyview_info),
+
 	INTEL_BDW_IDS(&intel_broadwell_info),
 	INTEL_CHV_IDS(&intel_cherryview_info),
+
 	INTEL_SKL_IDS(&intel_skylake_info),
 	INTEL_BXT_IDS(&intel_broxton_info),
 	INTEL_KBL_IDS(&intel_kabylake_info),
 	INTEL_GLK_IDS(&intel_geminilake_info),
-
 	INTEL_CFL_IDS(&intel_coffeelake_info),
+
+	INTEL_CNL_IDS(&intel_cannonlake_info),
+
+	INTEL_ICL_11_IDS(&intel_icelake_info),
+	INTEL_EHL_IDS(&intel_elkhartlake_info),
+
+	INTEL_TGL_12_IDS(&intel_tigerlake_info),
 
 	INTEL_VGA_DEVICE(PCI_MATCH_ANY, &intel_generic_info),
 #endif
 
-	{ 0, 0, 0 },
+	{},
 };
 
 void
@@ -692,6 +788,7 @@ static Bool intel_pci_probe(DriverPtr		driver,
 		case PCI_CHIP_I815:
 			if (!hosted())
 				break;
+			/* fall through */
 		default:
 			return FALSE;
 		}

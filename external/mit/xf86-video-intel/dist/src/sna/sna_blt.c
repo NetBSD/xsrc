@@ -154,12 +154,7 @@ static bool sna_blt_fill_init(struct sna *sna,
 	}
 
 	blt->br13 |= 1<<31 | (fill_ROP[alu] << 16);
-	switch (bpp) {
-	default: assert(0);
-	case 32: blt->br13 |= 1 << 25; /* RGB8888 */
-	case 16: blt->br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	blt->br13 |= sna_br13_color_depth(bpp);
 
 	blt->pixel = pixel;
 	blt->bpp = bpp;
@@ -372,12 +367,7 @@ static bool sna_blt_copy_init(struct sna *sna,
 
 	blt->overwrites = alu == GXcopy || alu == GXclear || alu == GXset;
 	blt->br13 = (copy_ROP[alu] << 16) | blt->pitch[1];
-	switch (bpp) {
-	default: assert(0);
-	case 32: blt->br13 |= 1 << 25; /* RGB8888 */
-	case 16: blt->br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	blt->br13 |= sna_br13_color_depth(bpp);
 
 	kgem_set_mode(kgem, KGEM_BLT, dst);
 	if (!kgem_check_many_bo_fenced(kgem, src, dst, NULL)) {
@@ -425,13 +415,10 @@ static bool sna_blt_alpha_fixup_init(struct sna *sna,
 
 	blt->overwrites = 1;
 	blt->br13 = (0xfc << 16) | blt->pitch[1];
-	switch (bpp) {
-	default: assert(0);
-	case 32: blt->cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		 blt->br13 |= 1 << 25; /* RGB8888 */
-	case 16: blt->br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	blt->br13 |= sna_br13_color_depth(bpp);
+	if (bpp == 32)
+		blt->cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
+
 	blt->pixel = alpha;
 
 	kgem_set_mode(kgem, KGEM_BLT, dst);
@@ -3356,13 +3343,9 @@ static bool sna_blt_fill_box(struct sna *sna, uint8_t alu,
 	assert(br13 <= MAXSHORT);
 
 	br13 |= fill_ROP[alu] << 16;
-	switch (bpp) {
-	default: assert(0);
-	case 32: cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		 br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(bpp);
+	if (bpp == 32)
+		cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
 
 	/* All too frequently one blt completely overwrites the previous */
 	overwrites = alu == GXcopy || alu == GXclear || alu == GXset;
@@ -3517,12 +3500,7 @@ bool sna_blt_fill_boxes(struct sna *sna, uint8_t alu,
 	assert(br13 <= MAXSHORT);
 
 	br13 |= 1<<31 | fill_ROP[alu] << 16;
-	switch (bpp) {
-	default: assert(0);
-	case 32: br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(bpp);
 
 	kgem_set_mode(kgem, KGEM_BLT, bo);
 	if (!kgem_check_batch(kgem, 14) ||
@@ -3739,12 +3717,7 @@ bool sna_blt_copy_boxes(struct sna *sna, uint8_t alu,
 	assert(br13 <= MAXSHORT);
 
 	br13 |= copy_ROP[alu] << 16;
-	switch (bpp) {
-	default: assert(0);
-	case 32: br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(bpp);
 
 	/* Compare first box against a previous fill */
 	if ((alu == GXcopy || alu == GXclear || alu == GXset) &&
@@ -4086,12 +4059,7 @@ bool sna_blt_copy_boxes__with_alpha(struct sna *sna, uint8_t alu,
 	assert(br13 <= MAXSHORT);
 
 	br13 |= copy_ROP[alu] << 16;
-	switch (bpp) {
-	default: assert(0);
-	case 32: br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(bpp);
 
 	kgem_set_mode(kgem, KGEM_BLT, dst_bo);
 	if (!kgem_check_many_bo_fenced(kgem, dst_bo, src_bo, NULL)) {

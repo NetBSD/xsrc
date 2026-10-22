@@ -260,4 +260,12 @@ static inline void FreePixmap(PixmapPtr pixmap)
 #define RemoveNotifyFd(fd) RemoveGeneralSocket(fd)
 #endif
 
+#if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(25, 2)
+#define PixmapDirtyDst(d) ((d)->secondary_dst)
+#define PixmapDirtyPrimary(d) (PixmapDirtyDst(d)->primary_pixmap)
+#else
+#define PixmapDirtyDst(d) ((d)->slave_dst)
+#define PixmapDirtyPrimary(d) (PixmapDirtyDst(d)->master_pixmap)
+#endif
+
 #endif

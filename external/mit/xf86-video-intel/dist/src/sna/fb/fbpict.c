@@ -313,8 +313,10 @@ image_from_pict_internal(PicturePtr pict, Bool has_clip, int *xoff, int *yoff,
 {
 	pixman_image_t *image = NULL;
 
-	if (!pict)
+	if (!pict) {
+		*xoff = *yoff = 0;
 		return NULL;
+	}
 
 	if (pict->pDrawable) {
 		image = create_bits_picture(pict, has_clip, xoff, yoff);
@@ -335,6 +337,8 @@ image_from_pict_internal(PicturePtr pict, Bool has_clip, int *xoff, int *yoff,
 			else if (sp->type == SourcePictTypeConical)
 				image = create_conical_gradient_image(gradient);
 		}
+		*xoff = *yoff = 0;
+	} else {
 		*xoff = *yoff = 0;
 	}
 

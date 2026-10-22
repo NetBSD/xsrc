@@ -17,7 +17,6 @@ if with_tools
 	     ],
 	     c_args : [
 	       '-Wno-unused-parameter',
-	       '-Wno-sign-compare',
 	     ],
 	     install : true)
 
@@ -81,7 +80,6 @@ if with_backlight_helper
 	     install_mode : [ 'rws--x--x', 'root', 'root' ],
 	     c_args : [
 	       '-DMAJOR_IN_SYSMACROS',
-	       '-Wno-sign-compare',
 	     ],
 	     install : true)
 

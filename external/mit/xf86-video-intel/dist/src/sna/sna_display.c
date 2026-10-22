@@ -127,6 +127,7 @@ struct local_mode_obj_get_properties {
 	uint32_t obj_type;
 	uint32_t pad;
 };
+#define LOCAL_MODE_OBJECT_CRTC 0xcccccccc
 #define LOCAL_MODE_OBJECT_PLANE 0xeeeeeeee
 
 struct local_mode_set_plane {
@@ -215,6 +216,7 @@ struct sna_crtc {
 	uint32_t rotation;
 	struct plane {
 		uint32_t id;
+		uint32_t type;
 		struct {
 			uint32_t prop;
 			uint32_t supported;
@@ -227,6 +229,11 @@ struct sna_crtc {
 		struct list link;
 	} primary;
 	struct list sprites;
+
+	struct drm_color_lut *gamma_lut;
+	uint64_t gamma_lut_prop;
+	uint64_t gamma_lut_blob;
+	uint32_t gamma_lut_size;
 
 	uint32_t mode_serial, flip_serial;
 
@@ -316,6 +323,9 @@ static void __sna_output_dpms(xf86OutputPtr output, int dpms, int fixup);
 static void sna_crtc_disable_cursor(struct sna *sna, struct sna_crtc *crtc);
 static bool sna_crtc_flip(struct sna *sna, struct sna_crtc *crtc,
 			  struct kgem_bo *bo, int x, int y);
+static void sna_crtc_gamma_set(xf86CrtcPtr crtc,
+			       CARD16 *red, CARD16 *green,
+			       CARD16 *blue, int size);
 
 static bool is_zaphod(ScrnInfoPtr scrn)
 {
@@ -3149,11 +3159,9 @@ sna_crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 	       mode->VDisplay <= sna->mode.max_crtc_height);
 
 #if HAS_GAMMA
-	drmModeCrtcSetGamma(sna->kgem.fd, __sna_crtc_id(sna_crtc),
-			    crtc->gamma_size,
-			    crtc->gamma_red,
-			    crtc->gamma_green,
-			    crtc->gamma_blue);
+	sna_crtc_gamma_set(crtc,
+			   crtc->gamma_red, crtc->gamma_green,
+			   crtc->gamma_blue, crtc->gamma_size);
 #endif
 
 	saved_kmode = sna_crtc->kmode;
@@ -3211,12 +3219,44 @@ void sna_mode_adjust_frame(struct sna *sna, int x, int y)
 
 static void
 sna_crtc_gamma_set(xf86CrtcPtr crtc,
-		       CARD16 *red, CARD16 *green, CARD16 *blue, int size)
+		   CARD16 *red, CARD16 *green, CARD16 *blue, int size)
 {
-	assert(to_sna_crtc(crtc));
-	drmModeCrtcSetGamma(to_sna(crtc->scrn)->kgem.fd,
-			    sna_crtc_id(crtc),
-			    size, red, green, blue);
+	struct sna *sna = to_sna(crtc->scrn);
+	struct sna_crtc *sna_crtc = to_sna_crtc(crtc);
+	struct drm_color_lut *lut = sna_crtc->gamma_lut;
+	uint32_t blob_size = size * sizeof(lut[0]);
+	uint32_t blob_id;
+	int ret, i;
+
+	DBG(("%s: gamma_size %d\n", __FUNCTION__, size));
+
+	if (!lut) {
+		assert(size == 256);
+
+		drmModeCrtcSetGamma(to_sna(crtc->scrn)->kgem.fd,
+				    sna_crtc_id(crtc),
+				    size, red, green, blue);
+		return;
+	}
+
+	assert(size == sna_crtc->gamma_lut_size);
+
+	for (i = 0; i < size; i++) {
+		lut[i].red = red[i];
+		lut[i].green = green[i];
+		lut[i].blue = blue[i];
+	}
+
+	ret = drmModeCreatePropertyBlob(sna->kgem.fd, lut, blob_size, &blob_id);
+	if (ret)
+		return;
+
+	ret = drmModeObjectSetProperty(sna->kgem.fd,
+				       sna_crtc->id, DRM_MODE_OBJECT_CRTC,
+				       sna_crtc->gamma_lut_prop,
+				       blob_id);
+
+	drmModeDestroyPropertyBlob(sna->kgem.fd, blob_id);
 }
 
 static void
@@ -3227,6 +3267,8 @@ sna_crtc_destroy(xf86CrtcPtr crtc)
 
 	if (sna_crtc == NULL)
 		return;
+
+	free(sna_crtc->gamma_lut);
 
 	list_for_each_entry_safe(sprite, sn, &sna_crtc->sprites, link)
 		free(sprite);
@@ -3391,33 +3433,40 @@ void sna_crtc_set_sprite_colorspace(xf86CrtcPtr crtc,
 				 p->color_encoding.values[colorspace]);
 }
 
-static int plane_details(struct sna *sna, struct plane *p)
+typedef void (*parse_prop_func)(struct sna *sna,
+				struct drm_mode_get_property *prop,
+				uint64_t value,
+				void *data);
+static void parse_props(struct sna *sna,
+		       uint32_t obj_type, uint32_t obj_id,
+		       parse_prop_func parse_prop,
+		       void *data)
 {
 #define N_STACK_PROPS 32 /* must be a multiple of 2 */
 	struct local_mode_obj_get_properties arg;
 	uint64_t stack[N_STACK_PROPS + N_STACK_PROPS/2];
 	uint64_t *values = stack;
 	uint32_t *props = (uint32_t *)(values + N_STACK_PROPS);
-	int i, type = DRM_PLANE_TYPE_OVERLAY;
+	int i;
 
 	memset(&arg, 0, sizeof(struct local_mode_obj_get_properties));
-	arg.obj_id = p->id;
-	arg.obj_type = LOCAL_MODE_OBJECT_PLANE;
+	arg.obj_id = obj_id;
+	arg.obj_type = obj_type;
 
 	arg.props_ptr = (uintptr_t)props;
 	arg.prop_values_ptr = (uintptr_t)values;
 	arg.count_props = N_STACK_PROPS;
 
 	if (drmIoctl(sna->kgem.fd, LOCAL_IOCTL_MODE_OBJ_GETPROPERTIES, &arg))
-		return -1;
+		return;
 
 	DBG(("%s: object %d (type %x) has %d props\n", __FUNCTION__,
-	     p->id, LOCAL_MODE_OBJECT_PLANE, arg.count_props));
+	     obj_id, obj_type, arg.count_props));
 
 	if (arg.count_props > N_STACK_PROPS) {
 		values = malloc(2*sizeof(uint64_t)*arg.count_props);
 		if (values == NULL)
-			return -1;
+			return;
 
 		props = (uint32_t *)(values + arg.count_props);
 
@@ -3444,25 +3493,46 @@ static int plane_details(struct sna *sna, struct plane *p)
 		DBG(("%s: prop[%d] .id=%ld, .name=%s, .flags=%x, .value=%ld\n", __FUNCTION__, i,
 		     (long)props[i], prop.name, (unsigned)prop.flags, (long)values[i]));
 
-		if (strcmp(prop.name, "type") == 0) {
-			type = values[i];
-		} else if (prop_is_rotation(&prop)) {
-			parse_rotation_prop(sna, p, &prop, values[i]);
-		} else if (prop_is_color_encoding(&prop)) {
-			parse_color_encoding_prop(sna, p, &prop, values[i]);
-		}
+		parse_prop(sna, &prop, values[i], data);
 	}
+
+	if (values != stack)
+		free(values);
+
+#undef N_STACK_PROPS
+}
+
+static bool prop_is_type(const struct drm_mode_get_property *prop)
+{
+	return prop_has_type_and_name(prop, 3, "type");
+}
+
+static void plane_parse_prop(struct sna *sna,
+			     struct drm_mode_get_property *prop,
+			     uint64_t value, void *data)
+{
+	struct plane *p = data;
+
+	if (prop_is_type(prop))
+		p->type = value;
+	else if (prop_is_rotation(prop))
+		parse_rotation_prop(sna, p, prop, value);
+	else if (prop_is_color_encoding(prop))
+		parse_color_encoding_prop(sna, p, prop, value);
+}
+
+static int plane_details(struct sna *sna, struct plane *p)
+{
+	parse_props(sna, LOCAL_MODE_OBJECT_PLANE, p->id,
+		    plane_parse_prop, p);
 
 	p->rotation.supported &= DBG_NATIVE_ROTATION;
 	if (!xf86ReturnOptValBool(sna->Options, OPTION_ROTATION, TRUE))
 		p->rotation.supported = RR_Rotate_0;
 
-	if (values != stack)
-		free(values);
+	DBG(("%s: plane=%d type=%d\n", __FUNCTION__, p->id, p->type));
 
-	DBG(("%s: plane=%d type=%d\n", __FUNCTION__, p->id, type));
-	return type;
-#undef N_STACK_PROPS
+	return p->type;
 }
 
 static void add_sprite_plane(struct sna_crtc *crtc,
@@ -3634,6 +3704,55 @@ bool sna_has_sprite_format(struct sna *sna, uint32_t format)
 	return false;
 }
 
+inline static bool prop_is_gamma_lut(const struct drm_mode_get_property *prop)
+{
+	return prop_has_type_and_name(prop, 4, "GAMMA_LUT");
+}
+
+inline static bool prop_is_gamma_lut_size(const struct drm_mode_get_property *prop)
+{
+	return prop_has_type_and_name(prop, 1, "GAMMA_LUT_SIZE");
+}
+
+static void sna_crtc_parse_prop(struct sna *sna,
+				struct drm_mode_get_property *prop,
+				uint64_t value, void *data)
+{
+	struct sna_crtc *crtc = data;
+
+	if (prop_is_gamma_lut(prop)) {
+		crtc->gamma_lut_prop = prop->prop_id;
+		crtc->gamma_lut_blob = value;
+	} else if (prop_is_gamma_lut_size(prop)) {
+		crtc->gamma_lut_size = value;
+	}
+}
+
+static void
+sna_crtc_init__props(struct sna *sna, struct sna_crtc *crtc)
+{
+	ScrnInfoPtr scrn = sna->scrn;
+
+	parse_props(sna, LOCAL_MODE_OBJECT_CRTC, crtc->id,
+		    sna_crtc_parse_prop, crtc);
+
+	/* use high precision gamma LUT for > 8bpc */
+	/* X-Server < 1.20 mishandles > 256 slots / > 8 bpc color maps. */
+	if (scrn->rgbBits <= 8 ||
+	    XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,20,0,0,0))
+		crtc->gamma_lut_size = 0;
+
+	if (crtc->gamma_lut_size) {
+		crtc->gamma_lut = calloc(max(crtc->gamma_lut_size, 256),
+					 sizeof(crtc->gamma_lut[0]));
+		if (!crtc->gamma_lut)
+			crtc->gamma_lut_size = 0;
+	}
+
+	DBG(("%s: CRTC:%d, gamma_lut_size=%d\n", __FUNCTION__,
+	     __sna_crtc_id(crtc), crtc->gamma_lut_size));
+}
+
 static void
 sna_crtc_init__rotation(struct sna *sna, struct sna_crtc *crtc)
 {
@@ -3694,6 +3813,9 @@ sna_crtc_add(ScrnInfoPtr scrn, unsigned id)
 
 	list_init(&sna_crtc->sprites);
 	sna_crtc_init__rotation(sna, sna_crtc);
+
+	sna_crtc_init__props(sna, sna_crtc);
+
 	sna_crtc_find_planes(sna, sna_crtc);
 
 	DBG(("%s: CRTC:%d [pipe=%d], primary id=%x: supported-rotations=%x, current-rotation=%x\n",
@@ -7194,7 +7316,7 @@ next_crtc:
 }
 
 static const xf86CrtcConfigFuncsRec sna_mode_funcs = {
-	sna_mode_resize
+	.resize = sna_mode_resize,
 };
 
 static void set_size_range(struct sna *sna)
@@ -7245,36 +7367,108 @@ static void output_set_gamma(xf86OutputPtr output, xf86CrtcPtr crtc)
 			  mon->mon_gamma_blue);
 }
 
+static bool
+crtc_get_gamma_lut(xf86CrtcPtr crtc,
+		   CARD16 *red, CARD16 *green, CARD16 *blue, int size)
+{
+
+	struct sna *sna = to_sna(crtc->scrn);
+	struct sna_crtc *sna_crtc = to_sna_crtc(crtc);
+	struct drm_color_lut *lut = sna_crtc->gamma_lut;
+	struct drm_mode_get_blob blob;
+	int lut_size, i;
+
+	DBG(("%s: gamma_size %d\n", __FUNCTION__, size));
+
+	memset(&blob, 0, sizeof(blob));
+	blob.blob_id = sna_crtc->gamma_lut_blob;
+
+	if (drmIoctl(sna->kgem.fd, DRM_IOCTL_MODE_GETPROPBLOB, &blob))
+		return false;
+
+	lut_size = blob.length / sizeof(lut[0]);
+
+	if (lut_size == 0 ||
+	    lut_size > max(sna_crtc->gamma_lut_size, 256))
+		return false;
+
+	blob.data = (uintptr_t)lut;
+
+	if (drmIoctl(sna->kgem.fd, DRM_IOCTL_MODE_GETPROPBLOB, &blob))
+		return false;
+
+	for (i = 0; i < size; i++) {
+		struct drm_color_lut *entry =
+			&lut[i * (lut_size - 1) / (size - 1)];
+
+		red[i] = entry->red;
+		green[i] = entry->green;
+		blue[i] = entry->blue;
+	}
+
+	return red[size - 1] &&
+		green[size - 1] &&
+		blue[size - 1];
+}
+
+static bool crtc_get_gamma_legacy(xf86CrtcPtr crtc,
+				  CARD16 *red,
+				  CARD16 *green,
+				  CARD16 *blue,
+				  int size)
+{
+	struct sna *sna = to_sna(crtc->scrn);
+	struct sna_crtc *sna_crtc = to_sna_crtc(crtc);
+	struct drm_mode_crtc_lut lut = {
+		.crtc_id = __sna_crtc_id(sna_crtc),
+		.gamma_size = size,
+		.red = (uintptr_t)red,
+		.green = (uintptr_t)green,
+		.blue = (uintptr_t)blue,
+	};
+
+	if (drmIoctl(sna->kgem.fd, DRM_IOCTL_MODE_GETGAMMA, &lut) != 0)
+		return false;
+
+	VG(VALGRIND_MAKE_MEM_DEFINED(red, size*sizeof(red[0])));
+	VG(VALGRIND_MAKE_MEM_DEFINED(green, size*sizeof(green[0])));
+	VG(VALGRIND_MAKE_MEM_DEFINED(blue, size*sizeof(blue[0])));
+
+	return red[size - 1] &&
+		green[size - 1] &&
+		blue[size - 1];
+}
+
 static void crtc_init_gamma(xf86CrtcPtr crtc)
 {
+	struct sna_crtc *sna_crtc = to_sna_crtc(crtc);
 	uint16_t *gamma;
+	int size;
+
+	assert(sna_crtc);
+
+	size = sna_crtc->gamma_lut_size;
+	if (!size)
+		size = 256;
 
 	/* Initialize the gamma ramps */
 	gamma = NULL;
-	if (crtc->gamma_size == 256)
+	if (crtc->gamma_size == size)
 		gamma = crtc->gamma_red;
 	if (gamma == NULL)
-		gamma = malloc(3 * 256 * sizeof(uint16_t));
+		gamma = malloc(3 * size * sizeof(uint16_t));
 	if (gamma) {
-		struct sna *sna = to_sna(crtc->scrn);
-		struct sna_crtc *sna_crtc = to_sna_crtc(crtc);
-		struct drm_mode_crtc_lut lut;
-		bool gamma_set = false;
+		uint16_t *red = gamma;
+		uint16_t *green = gamma + size;
+		uint16_t *blue = gamma + 2 * size;
+		bool gamma_set;
 
-		assert(sna_crtc);
-
-		lut.crtc_id = __sna_crtc_id(sna_crtc);
-		lut.gamma_size = 256;
-		lut.red = (uintptr_t)(gamma);
-		lut.green = (uintptr_t)(gamma + 256);
-		lut.blue = (uintptr_t)(gamma + 2 * 256);
-		if (drmIoctl(sna->kgem.fd, DRM_IOCTL_MODE_GETGAMMA, &lut) == 0) {
-			VG(VALGRIND_MAKE_MEM_DEFINED(gamma, 3*256*sizeof(gamma[0])));
-			gamma_set =
-				gamma[256 - 1] &&
-				gamma[2*256 - 1] &&
-				gamma[3*256 - 1];
-		}
+		if (sna_crtc->gamma_lut_size)
+			gamma_set = crtc_get_gamma_lut(crtc, red,
+						       green, blue, size);
+		else
+			gamma_set = crtc_get_gamma_legacy(crtc, red,
+							  green, blue, size);
 
 		DBG(("%s: CRTC:%d, pipe=%d: gamma set?=%d\n",
 		     __FUNCTION__, __sna_crtc_id(sna_crtc), __sna_crtc_pipe(sna_crtc),
@@ -7282,19 +7476,21 @@ static void crtc_init_gamma(xf86CrtcPtr crtc)
 		if (!gamma_set) {
 			int i;
 
-			for (i = 0; i < 256; i++) {
-				gamma[i] = i << 8;
-				gamma[256 + i] = i << 8;
-				gamma[2*256 + i] = i << 8;
+			for (i = 0; i < size; i++) {
+				uint16_t val = i * 0xffff / (size - 1);
+
+				red[i] = val;
+				green[i] = val;
+				blue[i] = val;
 			}
 		}
 
-		if (gamma != crtc->gamma_red) {
+		if (red != crtc->gamma_red) {
 			free(crtc->gamma_red);
-			crtc->gamma_red = gamma;
-			crtc->gamma_green = gamma + 256;
-			crtc->gamma_blue = gamma + 2*256;
-			crtc->gamma_size = 256;
+			crtc->gamma_red = red;
+			crtc->gamma_green = green;
+			crtc->gamma_blue = blue;
+			crtc->gamma_size = size;
 		}
 	}
 }
@@ -7586,7 +7782,7 @@ static bool has_flip__async(struct sna *sna)
 	struct local_get_cap {
 		uint64_t name;
 		uint64_t value;
-	} cap = { DRM_CAP_ASYNC_PAGE_FLIP };
+	} cap = { .name = DRM_CAP_ASYNC_PAGE_FLIP, };
 
 	if (sna->flags & SNA_NO_FLIP)
 		return false;
@@ -8034,7 +8230,7 @@ sna_covering_crtc(struct sna *sna, const BoxRec *box, xf86CrtcPtr desired)
 		     __FUNCTION__, c,
 		     crtc->bounds.x1, crtc->bounds.y1,
 		     crtc->bounds.x2, crtc->bounds.y2));
-		if (*(const uint64_t *)box == *(uint64_t *)&crtc->bounds) {
+		if (!memcmp(box, &crtc->bounds, sizeof(*box))) {
 			DBG(("%s: box exactly matches crtc [%d]\n",
 			     __FUNCTION__, c));
 			return crtc;
@@ -8111,7 +8307,7 @@ static bool sna_emit_wait_for_scanline_hsw(struct sna *sna,
 	sna->kgem.nbatch += 17;
 
 	switch (pipe) {
-	default: assert(0);
+	default: assert(0); /* fall through */
 	case 0: event = 1 << 0; break;
 	case 1: event = 1 << 8; break;
 	case 2: event = 1 << 14; break;
@@ -8127,7 +8323,7 @@ static bool sna_emit_wait_for_scanline_hsw(struct sna *sna,
 	/* The documentation says that the LOAD_SCAN_LINES command
 	 * always comes in pairs. Don't ask me why. */
 	switch (pipe) {
-	default: assert(0);
+	default: assert(0); /* fall through */
 	case 0: event = 0 << 19; break;
 	case 1: event = 1 << 19; break;
 	case 2: event = 4 << 19; break;
@@ -8136,7 +8332,7 @@ static bool sna_emit_wait_for_scanline_hsw(struct sna *sna,
 	b[9] = b[7] = (y1 << 16) | (y2-1);
 
 	switch (pipe) {
-	default: assert(0);
+	default: assert(0); /* fall through */
 	case 0: event = 1 << 0; break;
 	case 1: event = 1 << 8; break;
 	case 2: event = 1 << 14; break;
@@ -8176,6 +8372,7 @@ static bool sna_emit_wait_for_scanline_ivb(struct sna *sna,
 	switch (pipe) {
 	default:
 		assert(0);
+		/* fall through */
 	case 0:
 		event = 1 << (full_height ? 3 : 0);
 		break;
@@ -9483,7 +9680,7 @@ fixup_flip:
 			     __FUNCTION__, __sna_crtc_id(crtc), crtc->flip_bo->handle, crtc->flip_bo->active_scanout, crtc->flip_serial));
 
 			{
-				struct drm_i915_gem_busy busy = { flip_bo->handle };
+				struct drm_i915_gem_busy busy = { .handle = flip_bo->handle, };
 				if (drmIoctl(sna->kgem.fd, DRM_IOCTL_I915_GEM_BUSY, &busy) == 0) {
 					if (busy.busy) {
 						int mode = KGEM_RENDER;

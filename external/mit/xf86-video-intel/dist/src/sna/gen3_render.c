@@ -131,9 +131,14 @@ static inline uint32_t gen3_buf_tiling(uint32_t tiling)
 {
 	uint32_t v = 0;
 	switch (tiling) {
-	case I915_TILING_Y: v |= BUF_3D_TILE_WALK_Y;
-	case I915_TILING_X: v |= BUF_3D_TILED_SURFACE;
-	case I915_TILING_NONE: break;
+	case I915_TILING_Y:
+		v |= BUF_3D_TILE_WALK_Y;
+		/* fall through */
+	case I915_TILING_X:
+		v |= BUF_3D_TILED_SURFACE;
+		/* fall through */
+	case I915_TILING_NONE:
+		break;
 	}
 	return v;
 }
@@ -400,6 +405,7 @@ static uint32_t gen3_filter(uint32_t filter)
 	switch (filter) {
 	default:
 		assert(0);
+		/* fall through */
 	case PictFilterNearest:
 		return (FILTER_NEAREST << SS2_MAG_FILTER_SHIFT |
 			FILTER_NEAREST << SS2_MIN_FILTER_SHIFT |
@@ -1884,9 +1890,14 @@ static uint32_t gen3_ms_tiling(uint32_t tiling)
 {
 	uint32_t v = 0;
 	switch (tiling) {
-	case I915_TILING_Y: v |= MS3_TILE_WALK;
-	case I915_TILING_X: v |= MS3_TILED_SURFACE;
-	case I915_TILING_NONE: break;
+	case I915_TILING_Y:
+		v |= MS3_TILE_WALK;
+		/* fall through */
+	case I915_TILING_X:
+		v |= MS3_TILED_SURFACE;
+		/* fall through */
+	case I915_TILING_NONE:
+		break;
 	}
 	return v;
 }
@@ -4981,6 +4992,7 @@ gen3_render_composite_spans(struct sna *sna,
 	switch (tmp->base.src.u.gen3.type) {
 	case SHADER_NONE:
 		assert(0);
+		/* fall through */
 	case SHADER_ZERO:
 		if (no_offset) {
 			tmp->prim_emit = gen3_emit_composite_spans_primitive_zero_no_offset;

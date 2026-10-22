@@ -185,11 +185,13 @@ typedef int FbStride;
 	FbStorePart(dst,sizeof (FbBits) - 3,CARD8,xor); \
 	FbStorePart(dst,sizeof (FbBits) - 2,CARD8,xor); \
 	break; \
+    case sizeof (FbBits) - 3: \
+	FbStorePart(dst,sizeof (FbBits) - 3,CARD8,xor); \
+	FbStorePart(dst,sizeof (FbBits) - 2,CARD16,xor); \
+	break; \
     case (sizeof (FbBits) - 2) | (1 << (FB_SHIFT - 3)): \
 	FbStorePart(dst,sizeof (FbBits) - 2,CARD8,xor); \
 	break; \
-    case sizeof (FbBits) - 3: \
-	FbStorePart(dst,sizeof (FbBits) - 3,CARD8,xor); \
     case sizeof (FbBits) - 2: \
 	FbStorePart(dst,sizeof (FbBits) - 2,CARD16,xor); \
 	break; \

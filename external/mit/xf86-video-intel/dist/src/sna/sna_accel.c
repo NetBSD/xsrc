@@ -121,6 +121,7 @@
 
 #if XFONT2_CLIENT_FUNCS_VERSION >= 1
 #define AllocateFontPrivateIndex() xfont2_allocate_font_private_index()
+#undef FontSetPrivate
 #define FontSetPrivate(font, idx, data) xfont2_font_set_private(font, idx, data)
 #endif
 
@@ -2118,6 +2119,11 @@ static inline bool operate_inplace(struct sna_pixmap *priv, unsigned flags)
 	if (!USE_INPLACE)
 		return false;
 
+	if (flags & __MOVE_FORCE) {
+		DBG(("%s: no, inplace operation denied by force\n", __FUNCTION__));
+		return false;
+	}
+
 	if ((flags & MOVE_INPLACE_HINT) == 0) {
 		DBG(("%s: no, inplace operation not suitable\n", __FUNCTION__));
 		return false;
@@ -2326,7 +2332,7 @@ skip_inplace_map:
 
 	sna_pixmap_unmap(pixmap, priv);
 
-	if (USE_INPLACE &&
+	if (USE_INPLACE && !(flags & __MOVE_FORCE) &&
 	    (flags & MOVE_WRITE ? (void *)priv->gpu_bo : (void *)priv->gpu_damage) && priv->cpu_damage == NULL &&
 	    priv->gpu_bo->tiling == I915_TILING_NONE &&
 	    (flags & MOVE_READ || kgem_bo_can_map__cpu(&sna->kgem, priv->gpu_bo, flags & MOVE_WRITE)) &&
@@ -4954,6 +4960,7 @@ try_upload__inplace(PixmapPtr pixmap, RegionRec *region,
 	case I915_TILING_X:
 		if (!sna->kgem.memcpy_to_tiled_x)
 			break;
+		/* fall through */
 	default:
 		if (try_upload__tiled_x(pixmap, region, x, y, w, h, bits, stride))
 			goto done;
@@ -8718,6 +8725,7 @@ sna_copy_plane_blt(DrawablePtr source, DrawablePtr drawable, GCPtr gc,
 				}
 			default:
 				assert(0);
+				/* fall through */
 			case 8:
 				{
 					uint8_t *src = src_pixmap->devPrivate.ptr;
@@ -10122,6 +10130,7 @@ spans_fallback:
 			switch (gc->lineStyle) {
 			default:
 				assert(0);
+				/* fall through */
 			case LineSolid:
 				if (gc->lineWidth == 0) {
 					DBG(("%s: miZeroLine\n", __FUNCTION__));
@@ -17405,7 +17414,10 @@ void sna_accel_flush(struct sna *sna)
 			     priv->pixmap->refcnt));
 			assert(!priv->flush);
 			ret = sna_pixmap_move_to_cpu(priv->pixmap,
-						     MOVE_READ | MOVE_WRITE);
+						     MOVE_READ |
+						     MOVE_WRITE |
+						     MOVE_WHOLE_HINT |
+						     __MOVE_FORCE);
 			assert(!ret || priv->gpu_bo == NULL);
 			if (priv->pixmap->refcnt == 0) {
 				sna_damage_destroy(&priv->cpu_damage);
@@ -17514,7 +17526,11 @@ static bool has_offload_slaves(struct sna *sna)
 	PixmapDirtyUpdatePtr dirty;
 
 	xorg_list_for_each_entry(dirty, &screen->pixmap_dirty_list, ent) {
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+		assert(dirty->src == &sna->front->drawable);
+#else
 		assert(dirty->src == sna->front);
+#endif
 		if (RegionNotEmpty(DamageRegion(dirty->damage)))
 			return true;
 	}
@@ -17675,8 +17691,12 @@ static void sna_accel_post_damage(struct sna *sna)
 		if (RegionNil(damage))
 			continue;
 
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+		src = get_drawable_pixmap(dirty->src);
+#else
 		src = dirty->src;
-		dst = dirty->slave_dst->master_pixmap;
+#endif
+		dst = PixmapDirtyPrimary(dirty);
 
 		region.extents.x1 = dirty->x;
 		region.extents.x2 = dirty->x + dst->drawable.width;
@@ -17703,7 +17723,7 @@ static void sna_accel_post_damage(struct sna *sna)
 		dy += dirty->dst_y;
 #endif
 		RegionTranslate(&region, dx, dy);
-		DamageRegionAppend(&dirty->slave_dst->drawable, &region);
+		DamageRegionAppend(&PixmapDirtyDst(dirty)->drawable, &region);
 
 		DBG(("%s: slave:  ((%d, %d), (%d, %d))x%d\n", __FUNCTION__,
 		     region.extents.x1, region.extents.y1,
@@ -17780,7 +17800,7 @@ fallback:
 			kgem_bo_sync__gtt(&sna->kgem, __sna_pixmap_get_bo(dst));
 		}
 
-		DamageRegionProcessPending(&dirty->slave_dst->drawable);
+		DamageRegionProcessPending(&PixmapDirtyDst(dirty)->drawable);
 skip:
 		RegionUninit(&region);
 		DamageEmpty(dirty->damage);
@@ -17926,9 +17946,15 @@ migrate_dirty_tracking(PixmapPtr old_front, PixmapPtr new_front)
 	PixmapDirtyUpdatePtr dirty, safe;
 
 	xorg_list_for_each_entry_safe(dirty, safe, &screen->pixmap_dirty_list, ent) {
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+		assert(dirty->src == &old_front->drawable);
+		if (dirty->src != &old_front->drawable)
+			continue;
+#else
 		assert(dirty->src == old_front);
 		if (dirty->src != old_front)
 			continue;
+#endif
 
 		DamageUnregister(&dirty->src->drawable, dirty->damage);
 		DamageDestroy(dirty->damage);
@@ -17943,7 +17969,11 @@ migrate_dirty_tracking(PixmapPtr old_front, PixmapPtr new_front)
 		}
 
 		DamageRegister(&new_front->drawable, dirty->damage);
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+		dirty->src = &new_front->drawable;
+#else
 		dirty->src = new_front;
+#endif
 	}
 #endif
 }
@@ -18093,9 +18123,6 @@ static bool sna_option_accel_none(struct sna *sna)
 	if (!xf86ReturnOptValBool(sna->Options, OPTION_ACCEL_ENABLE, TRUE))
 		return true;
 
-	if (sna->kgem.gen >= 0120)
-		return true;
-
 	if (!intel_option_cast_to_bool(sna->Options,
 				       OPTION_ACCEL_METHOD,
 				       !IS_DEFAULT_ACCEL_METHOD(NOACCEL)))
@@ -18215,6 +18242,8 @@ bool sna_accel_init(ScreenPtr screen, struct sna *sna)
 		sna_render_mark_wedged(sna);
 	} else if (sna_option_accel_blt(sna))
 		(void)backend;
+	else if (sna->kgem.gen >= 0120)
+		(void)backend; /* no render backend written yet */
 	else if (sna->kgem.gen >= 0110)
 		backend = gen9_render_init(sna, backend);
 	else if (sna->kgem.gen >= 0100)

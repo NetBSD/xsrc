@@ -1397,4 +1397,23 @@ static inline void add_shm_flush(struct sna *sna, struct sna_pixmap *priv)
 	sna->needs_shm_flush = true;
 }
 
+static inline uint32_t sna_br13_color_depth(int bpp)
+{
+	uint32_t br13 = 0;
+
+	switch (bpp) {
+	default:
+		assert(0);
+		/* fall through */
+	case 32:
+		br13 |= 1 << 25; /* RGB8888 */
+		/* fall through */
+	case 16:
+		br13 |= 1 << 24; /* RGB565 */
+		/* fall through */
+	case 8:
+		return br13;
+	}
+}
+
 #endif /* _SNA_H */

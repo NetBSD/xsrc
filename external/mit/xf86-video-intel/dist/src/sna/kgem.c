@@ -520,7 +520,7 @@ static bool gem_set_caching(int fd, uint32_t handle, int caching)
 	return do_ioctl(fd, LOCAL_IOCTL_I915_GEM_SET_CACHING, &arg) == 0;
 }
 
-static uint32_t gem_userptr(int fd, void *ptr, int size, int read_only)
+static uint32_t gem_userptr(int fd, void *ptr, size_t size, int read_only)
 {
 	struct local_i915_gem_userptr arg;
 
@@ -1538,8 +1538,8 @@ static bool test_has_dirtyfb(struct kgem *kgem)
 	create.width = 32;
 	create.height = 32;
 	create.pitch = 4*32;
-	create.bpp = 24;
-	create.depth = 32; /* {bpp:24, depth:32} -> x8r8g8b8 */
+	create.bpp = 32;
+	create.depth = 24; /* {bpp:32, depth:24} -> x8r8g8b8 */
 	create.handle = gem_create(kgem->fd, 1);
 	if (create.handle == 0)
 		return false;
@@ -1944,6 +1944,19 @@ static uint64_t get_gtt_size(int fd)
 	return aperture.aper_size;
 }
 
+static int get_gtt_type(int fd)
+{
+        struct drm_i915_getparam p;
+        int val = 0;
+
+        memset(&p, 0, sizeof(p));
+        p.param = I915_PARAM_HAS_ALIASING_PPGTT;
+        p.value = &val;
+
+	drmIoctl(fd, DRM_IOCTL_I915_GETPARAM, &p);
+	return val;
+}
+
 void kgem_init(struct kgem *kgem, int fd, struct pci_device *dev, unsigned gen)
 {
 	size_t totalram;
@@ -2107,6 +2120,8 @@ void kgem_init(struct kgem *kgem, int fd, struct pci_device *dev, unsigned gen)
 	DBG(("%s: cpu bo enabled %d: llc? %d, set-cache-level? %d, userptr? %d\n", __FUNCTION__,
 	     !DBG_NO_CPU && (kgem->has_llc | kgem->has_userptr | kgem->has_caching),
 	     kgem->has_llc, kgem->has_caching, kgem->has_userptr));
+
+	kgem->has_full_ppgtt = get_gtt_type(fd) > 1;
 
 	gtt_size = get_gtt_size(fd);
 	kgem->aperture_total = gtt_size;
@@ -7016,6 +7031,30 @@ uint32_t kgem_bo_flink(struct kgem *kgem, struct kgem_bo *bo)
 	return flink.name;
 }
 
+static bool probe(struct kgem *kgem, uint32_t handle)
+{
+	struct drm_i915_gem_set_domain arg = {
+		.handle = handle,
+		.read_domains = I915_GEM_DOMAIN_CPU,
+	};
+
+	return do_ioctl(kgem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &arg) == 0;
+}
+
+static uint32_t probe_userptr(struct kgem *kgem,
+			      void *ptr, size_t size, int read_only)
+{
+	uint32_t handle;
+
+	handle = gem_userptr(kgem->fd, ptr, size, read_only);
+	if (handle && !probe(kgem, handle)) {
+		gem_close(kgem->fd, handle);
+		handle = 0;
+	}
+
+	return handle;
+}
+
 struct kgem_bo *kgem_create_map(struct kgem *kgem,
 				void *ptr, uint32_t size,
 				bool read_only)
@@ -7038,30 +7077,16 @@ struct kgem_bo *kgem_create_map(struct kgem *kgem,
 	last_page &= ~(uintptr_t)(PAGE_SIZE-1);
 	assert(last_page > first_page);
 
-	handle = gem_userptr(kgem->fd,
-			     (void *)first_page, last_page-first_page,
-			     read_only);
+	handle = probe_userptr(kgem,
+			       (void *)first_page, last_page-first_page,
+			       read_only);
+	if (handle == 0 && read_only && kgem->has_wc_mmap)
+		handle = probe_userptr(kgem,
+				       (void *)first_page, last_page-first_page,
+				       false);
 	if (handle == 0) {
-		if (read_only && kgem->has_wc_mmap) {
-			struct drm_i915_gem_set_domain set_domain;
-
-			handle = gem_userptr(kgem->fd,
-					     (void *)first_page, last_page-first_page,
-					     false);
-
-			VG_CLEAR(set_domain);
-			set_domain.handle = handle;
-			set_domain.read_domains = I915_GEM_DOMAIN_GTT;
-			set_domain.write_domain = 0;
-			if (do_ioctl(kgem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain)) {
-				gem_close(kgem->fd, handle);
-				handle = 0;
-			}
-		}
-		if (handle == 0) {
-			DBG(("%s: import failed, errno=%d\n", __FUNCTION__, errno));
-			return NULL;
-		}
+		DBG(("%s: import failed, errno=%d\n", __FUNCTION__, errno));
+		return NULL;
 	}
 
 	bo = __kgem_bo_alloc(handle, (last_page - first_page) / PAGE_SIZE);
@@ -8148,13 +8173,9 @@ kgem_replace_bo(struct kgem *kgem,
 	}
 
 	br13 |= 0xcc << 16;
-	switch (bpp) {
-	default:
-	case 32: br00 |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		 br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(bpp);
+	if (bpp == 32)
+		br00 |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
 
 	b = kgem->batch + kgem->nbatch;
 	if (kgem->gen >= 0100) {
