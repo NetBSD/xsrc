@@ -129,15 +129,12 @@ XReadBitmapFileData (
     int hx = -1;			/* x hotspot */
     int hy = -1;			/* y hotspot */
 
-#ifdef __UNIXOS2__
-    filename = __XOS2RedirRoot(filename);
-#endif
     if (!(fstream = fopen(filename, "r")))
 	return BitmapOpenFailed;
 
     /* error cleanup and return macro	*/
 #define	RETURN(code) \
-{ Xfree (bits); fclose (fstream); return code; }
+    do { Xfree (bits); fclose (fstream); return code; } while (0)
 
     while (fgets(line, MAX_SIZE, fstream)) {
 	if (strlen(line) == MAX_SIZE-1)

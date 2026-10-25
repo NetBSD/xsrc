@@ -248,7 +248,6 @@ FirstCmp(const void *p1, const void *p2)
 /*
  *	DESCRIPTION
  *		Compares the color names of XcmsColorTuples.
- *		This routine is public to allow access from qsort???.
  *
  *	RETURNS
  *		0 if equal;
@@ -734,9 +733,6 @@ LoadColornameDB(void)
     if ((pathname = getenv("XCMSDB")) == NULL) {
 	pathname = XCMSDB;
     }
-#ifdef __UNIXOS2__
-    pathname = __XOS2RedirRoot(pathname);
-#endif
 
     length = (int)strlen(pathname);
     if ((length == 0) || (length >= (BUFSIZ - 5))){

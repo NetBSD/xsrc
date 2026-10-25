@@ -63,6 +63,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "Ximint.h"
 
 #include <limits.h>
+#include <stdlib.h>
+#include <strings.h>
 
 int
 _XimCheckDataSize(
@@ -301,7 +303,7 @@ _XimPreConnectionIM(
 
     /* server name check */
     if( !(str = XGetAtomName( display, selection )) )
-	return False;
+	goto Error;
     if(!_XimCheckServerName(im, str)) {
 	XFree( (XPointer)str );
 	goto Error;
@@ -400,6 +402,7 @@ _XimPreConnect(
     Atom	   *atoms;
     Window	    im_window = 0;
     register int    i;
+    const char	   *env_enable_fabricated_order;
 
     if((imserver = XInternAtom(display, XIM_SERVERS, True)) == (Atom)None)
 	return False;
@@ -430,6 +433,16 @@ _XimPreConnect(
 	return False;
 
     im->private.proto.im_window = im_window;
+    im->private.proto.fabricated_serial = 0;
+    im->private.proto.fabricated_time = 0;
+    im->private.proto.enable_fabricated_order = True;
+    env_enable_fabricated_order = getenv("LIBX11_ENABLE_FABRICATED_ORDER");
+    if (env_enable_fabricated_order && *env_enable_fabricated_order) {
+	if (!strncasecmp(env_enable_fabricated_order, "0", 2) ||
+	    !strncasecmp(env_enable_fabricated_order, "false", 6)) {
+	    im->private.proto.enable_fabricated_order = False;
+	}
+    }
     return True;
 }
 
@@ -854,6 +867,15 @@ _XimOpen(
 
     im->private.proto.imid = buf_s[0];		/* imid */
 
+    if (len < (INT16)(XIM_HEADER_SIZE + sizeof(CARD16))) {
+	if (reply != preply)
+	    Xfree(preply);
+	return False;
+    }
+    /* remaining OPEN_REPLY bytes after imid; read by _XimGetAttributeID */
+    im->private.proto.open_attr_length =
+	(CARD16)((size_t)len - XIM_HEADER_SIZE - sizeof(CARD16));
+
     if (!(_XimGetAttributeID(im, &buf_s[1]))) {
 	if(reply != preply)
 	    Xfree(preply);
@@ -980,34 +1002,30 @@ _XimProtoIMFree(
     Xim		  im)
 {
     /* XIMPrivateRec */
-    if (im->private.proto.im_onkeylist) {
-	Xfree(im->private.proto.im_onkeylist);
-	im->private.proto.im_onkeylist = NULL;
-    }
-    if (im->private.proto.im_offkeylist) {
-	Xfree(im->private.proto.im_offkeylist);
-	im->private.proto.im_offkeylist = NULL;
-    }
+
+    Xfree(im->private.proto.im_onkeylist);
+    im->private.proto.im_onkeylist = NULL;
+
+    Xfree(im->private.proto.im_offkeylist);
+    im->private.proto.im_offkeylist = NULL;
+
     if (im->private.proto.intrproto) {
-	_XimFreeProtoIntrCallback(im);
-	im->private.proto.intrproto = NULL;
+      _XimFreeProtoIntrCallback(im);
+      im->private.proto.intrproto = NULL;
     }
-    if (im->private.proto.im_inner_resources) {
-	Xfree(im->private.proto.im_inner_resources);
-	im->private.proto.im_inner_resources = NULL;
-    }
-    if (im->private.proto.ic_inner_resources) {
-	Xfree(im->private.proto.ic_inner_resources);
-	im->private.proto.ic_inner_resources = NULL;
-    }
-    if (im->private.proto.hold_data) {
-	Xfree(im->private.proto.hold_data);
-	im->private.proto.hold_data = NULL;
-    }
-    if (im->private.proto.locale_name) {
-	Xfree(im->private.proto.locale_name);
-	im->private.proto.locale_name = NULL;
-    }
+
+    Xfree(im->private.proto.im_inner_resources);
+    im->private.proto.im_inner_resources = NULL;
+
+    Xfree(im->private.proto.ic_inner_resources);
+    im->private.proto.ic_inner_resources = NULL;
+
+    Xfree(im->private.proto.hold_data);
+    im->private.proto.hold_data = NULL;
+
+    Xfree(im->private.proto.locale_name);
+    im->private.proto.locale_name = NULL;
+
     if (im->private.proto.ctom_conv) {
 	_XlcCloseConverter(im->private.proto.ctom_conv);
 	im->private.proto.ctom_conv = NULL;
@@ -1047,48 +1065,37 @@ _XimProtoIMFree(
     }
 #endif /* XIM_CONNECTABLE */
 
-    if (im->private.proto.saved_imvalues) {
-        Xfree(im->private.proto.saved_imvalues);
-        im->private.proto.saved_imvalues = NULL;
-    }
-    if (im->private.proto.default_styles) {
-	Xfree(im->private.proto.default_styles);
-	im->private.proto.default_styles = NULL;
-    }
+    Xfree(im->private.proto.saved_imvalues);
+    im->private.proto.saved_imvalues = NULL;
+
+    Xfree(im->private.proto.default_styles);
+    im->private.proto.default_styles = NULL;
 
     /* core */
-    if (im->core.res_name) {
-        Xfree(im->core.res_name);
-	im->core.res_name = NULL;
-    }
-    if (im->core.res_class) {
-        Xfree(im->core.res_class);
-	im->core.res_class = NULL;
-    }
-    if (im->core.im_values_list) {
-	Xfree(im->core.im_values_list);
-	im->core.im_values_list = NULL;
-    }
-    if (im->core.ic_values_list) {
-	Xfree(im->core.ic_values_list);
-	im->core.ic_values_list = NULL;
-    }
-    if (im->core.im_name) {
-	Xfree(im->core.im_name);
-	im->core.im_name = NULL;
-    }
-    if (im->core.styles) {
-	Xfree(im->core.styles);
-	im->core.styles = NULL;
-    }
-    if (im->core.im_resources) {
-        Xfree(im->core.im_resources);
-	im->core.im_resources = NULL;
-    }
-    if (im->core.ic_resources) {
-        Xfree(im->core.ic_resources);
-	im->core.ic_resources = NULL;
-    }
+
+    Xfree(im->core.res_name);
+    im->core.res_name = NULL;
+
+    Xfree(im->core.res_class);
+    im->core.res_class = NULL;
+
+    Xfree(im->core.im_values_list);
+    im->core.im_values_list = NULL;
+
+    Xfree(im->core.ic_values_list);
+    im->core.ic_values_list = NULL;
+
+    Xfree(im->core.im_name);
+    im->core.im_name = NULL;
+
+    Xfree(im->core.styles);
+    im->core.styles = NULL;
+
+    Xfree(im->core.im_resources);
+    im->core.im_resources = NULL;
+
+    Xfree(im->core.ic_resources);
+    im->core.ic_resources = NULL;
 
     return;
 }
@@ -1329,8 +1336,11 @@ _XimProtoSetIMValues(
     }
     _XimSetCurrentIMValues(im, &im_values);
 
-    if (!total)
-	return (char *)NULL;
+    if (!total) {
+        if (buf != tmp_buf)
+	    Xfree(buf);
+        return (char *)NULL;
+    }
 
     buf_s = (CARD16 *)&buf[XIM_HEADER_SIZE];
     buf_s[0] = im->private.proto.imid;
@@ -1727,7 +1737,7 @@ _XimEncodingNegotiation(
 	+ sizeof(CARD16)
 	+ detail_len;
 
-    if (!(buf = Xcalloc(XIM_HEADER_SIZE + len, 1)))
+    if (!(buf = Xcalloc(1, XIM_HEADER_SIZE + len)))
 	goto free_detail_ptr;
 
     buf_s = (CARD16 *)&buf[XIM_HEADER_SIZE];

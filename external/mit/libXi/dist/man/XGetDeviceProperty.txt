@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 
    #include <X11/extensions/XInput.h>
- 
+
    int XGetDeviceProperty( Display *display,
                            XDevice *device,
                            Atom property,
@@ -32,7 +32,7 @@ SYNOPSIS
                                Atom type,
                                int format,
                                int mode,
-                               const char *data,
+                               const unsigned char *data,
                                int nelements)
 
    void XDeleteDeviceProperty( Display *display,

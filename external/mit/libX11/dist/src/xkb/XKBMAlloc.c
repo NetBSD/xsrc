@@ -436,8 +436,10 @@ XkbResizeKeyType(XkbDescPtr xkb,
         nResize = 0;
         for (nTotal = 1, i = xkb->min_key_code; i <= xkb->max_key_code; i++) {
             width = XkbKeyGroupsWidth(xkb, i);
-            if (width < type->num_levels)
+            if (width < type->num_levels || width >= new_num_lvls) {
+                nTotal += XkbKeyNumSyms(xkb,i);
                 continue;
+            }
             for (match = 0, g = XkbKeyNumGroups(xkb, i) - 1;
                  (g >= 0) && (!match); g--) {
                 if (XkbKeyKeyTypeIndex(xkb, i, g) == type_ndx) {
@@ -445,7 +447,7 @@ XkbResizeKeyType(XkbDescPtr xkb,
                     match = 1;
                 }
             }
-            if ((!match) || (width >= new_num_lvls))
+            if (!match)
                 nTotal += XkbKeyNumSyms(xkb, i);
             else {
                 nTotal += XkbKeyNumGroups(xkb, i) * new_num_lvls;
@@ -455,7 +457,7 @@ XkbResizeKeyType(XkbDescPtr xkb,
         if (nResize > 0) {
             int nextMatch;
 
-            xkb->map->size_syms = (nTotal * 12) / 10;
+            xkb->map->size_syms = (nTotal * 15) / 10;
             newSyms = _XkbTypedCalloc(xkb->map->size_syms, KeySym);
             if (newSyms == NULL)
                 return BadAlloc;
@@ -795,7 +797,7 @@ XkbResizeKeyActions(XkbDescPtr xkb, int key, int needed)
     register int i, nActs;
     XkbAction *newActs;
 
-    if (needed == 0) {
+    if (needed <= 0) {
         xkb->server->key_acts[key] = 0;
         return NULL;
     }

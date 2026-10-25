@@ -31,6 +31,80 @@ For patch submission instructions, see:
 
   https://www.x.org/wiki/Development/Documentation/SubmittingPatches
 
+## Release 1.8.14
+
+ * ximcp: bound XIM_OPEN_REPLY attribute lengths (CVE-2026-94283) (!310)
+ * ximcp: bound XIM_REGISTER_TRIGGERKEYS keylist lengths (CVE-2026-94284) (!310)
+ * lcGenConv: bound byteM_parse_codeset() reads (CVE-2026-94285) (!310)
+ * xkb: Check the keysym range in _XkbReadKeyActions (CVE-2026-88806) (!309)
+ * OpenDisplay: avoid NULL dereference in out-of-memory error path (!307)
+ * XSetFontPath: zero-initialize packed font path buffer (#248, !306)
+ * _XSend: treat xcb_writev returning 0 as failure (!305)
+ * _XSend: discard the output buffer after an I/O error (!305)
+ * XkbSetIndicatorMap: avoid undefined behavior due to left shift (#246, !304)
+ * nls: Add ca_ES.UTF-8@valencia locale (#234, !303)
+ * Xutil.h: add include of Xresource.h (#242, !302)
+ * xkb: fix incorrect size check when growing doodads in a section (!300)
+ * XlibInt.c: use correct type for Win32 in SocketBytesReadable() (!299)
+ * XlibInt.h: prevent Win32 CreateWindow macro from leaking into our code (!299)
+
+## Release 1.8.13
+
+ * Ignore XkbMapNotify events that don't belong to the core keyboard (!293)
+ * xkb: Fix invalid level names count for key types without level names (!292)
+ * xkb: Fix default key types (!292)
+ * Drop vestiges of OS/2 support (!291)
+ * xkb: fix include of config.h and drop unused DEBUG check (!290)
+ * xcb_io: fix build with configure --disable-xthreads (#232, !289)
+ * Improve man page formatting (!286)
+ * imDefIc: Clear fabricated state on unfocus. (!283)
+ * Avoid memory leak in XKeysymToString (!282)
+
+## Release 1.8.12
+
+ * x11.pc: Add URL field (!280)
+ * xkb: Bring over fixes from Xserver to shared XKB source files (!279)
+
+## Release 1.8.11
+
+ * Close xcb connection after freeing display structure to avoid XIO error
+   when running synchronized (!264)
+ * Don't allocate memory for a zero-sized list of directories when
+   `SetFontPath()` is called with `ndirs == 0` (!266)
+ * Fix `-Werror=array-bounds` build failures with gcc 14.2 when
+   `MALLOC_0_RETURNS_NULL` is defined (!267)
+ * Set `data` field to 0 when initializing new requests (!268)
+ * ximcp: don't leak window if `XGetAtomName()` fails (!269)
+ * ximcp: allow XNArea with OnTheSpot (!270)
+ * ximcp: hide internal functions added in 1.8.10 (!271)
+ * Handle `-Wextra-semi-stmt` warnings from clang (!272)
+ * xkb: avoid undefined behavior due to left shift overflow (#225, !273)
+ * Fix misuse of `UCSConvertCase()` in `XConvertCase()` (!274)
+ * drop `pthread-stubs` dependency on Dragonfly, FreeBSD, & NetBSD (!277)
+
+## Release 1.8.10
+
+ * Re-fix XIM input sometimes jumbled (#205, #206, #207, #208, !246)
+ * Fix various static analysis errors (!250)
+ * Add compose sequences for Arabic hamza (!218), Ezh (!221), and
+   hryvnia currency (!259)
+ * Make colormap private interfaces thread safe (#215, !254)
+ * Fix deadlock in XRebindKeysym() (!256)
+ * Assorted memory handling cleanups (!251, !258)
+ * Restore VAX support still in use by NetBSD (!257)
+
+## Release 1.8.9
+
+ * Fix regressions introduced in 1.8.8 (!245, !248) - this includes reverting
+   for now the previous "Fix XIM input sometimes jumbled (#198, !236)"
+
+## Release 1.8.8
+
+ * Fix XIM input sometimes jumbled (#198, !236)
+ * Fix _XkbReadGetDeviceInfoReply for nButtons == dev->buttons (!237)
+ * Drop ifdefs for platforms that are no longer supported (!242, !243)
+ * Assorted memory handling cleanups
+
 ## Release 1.8.7
 
  * Security fixes and hardening in XImage and pixmap handling code

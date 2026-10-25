@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.70])
-AC_INIT([libX11], [1.8.7],
+AC_INIT([libX11], [1.8.14],
         [https://gitlab.freedesktop.org/xorg/lib/libx11/-/issues], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
@@ -99,19 +99,12 @@ XTRANS_CONNECTION_FLAGS
 
 # Check for dlopen
 AC_SEARCH_LIBS(dlopen,[dl svld])
-if test "x$ac_cv_search_dlopen" = xno; then
-	AC_SEARCH_LIBS(shl_load,[dld])
-	if test "x$ac_cv_search_shl_load" != xno; then
-		AC_DEFINE(HAVE_SHL_LOAD,1,
-			  [Use shl_load to load shared libraries])
-		AC_CHECK_HEADERS([dl.h])
-	fi
-else
+if test "x$ac_cv_search_dlopen" != xno; then
 	AC_DEFINE(HAVE_DLOPEN,1,[Use dlopen to load shared libraries])
 	AC_CHECK_HEADERS([dlfcn.h])
 fi
 AC_MSG_CHECKING([if run-time linking is supported])
-if test "x$ac_cv_header_dlfcn_h" = xyes -o "x$ac_cv_header_dl_h" = xyes; then
+if test "x$ac_cv_header_dlfcn_h" = xyes; then
 	HAVE_LOADABLE_MODULES=yes
 else
 	HAVE_LOADABLE_MODULES=no
@@ -184,13 +177,7 @@ AC_CHECK_FUNC([shmat], AC_DEFINE(HAS_SHM,1,[Has shm*() functions]))
 
 # arch specific things
 WCHAR32="1"
-case $host_os in
-  os2*) os2="true" ; WCHAR32="0" ;;
-  *) ;;
-esac
 AC_SUBST(WCHAR32)
-
-AM_CONDITIONAL(OS2, test x$os2 = xtrue)
 
 AC_ARG_WITH(launchd, AS_HELP_STRING([--with-launchd], [Build with support for Apple's launchd (default: auto)]), [LAUNCHD=$withval], [LAUNCHD=auto])
 if test "x$LAUNCHD" = xauto; then
@@ -247,7 +234,7 @@ if test "x$USE_THREAD_SAFETY_CONSTRUCTOR" = "xyes"; then
 else
     # This should be kept in sync with libxcb
     case $host_os in
-    linux*|darwin*|solaris*) ;;
+    linux*|darwin*|solaris*|dragonfly*|freebsd*|netbsd*) ;;
          *) X11_REQUIRES="$X11_REQUIRES pthread-stubs" ;;
     esac
 fi
