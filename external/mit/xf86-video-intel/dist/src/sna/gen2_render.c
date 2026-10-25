@@ -116,10 +116,17 @@ gen2_buf_tiling(uint32_t tiling)
 {
 	uint32_t v = 0;
 	switch (tiling) {
-	default: assert(0);
-	case I915_TILING_Y: v |= BUF_3D_TILE_WALK_Y;
-	case I915_TILING_X: v |= BUF_3D_TILED_SURFACE;
-	case I915_TILING_NONE: break;
+	default:
+		assert(0);
+		/* fall through */
+	case I915_TILING_Y:
+		v |= BUF_3D_TILE_WALK_Y;
+		/* fall through */
+	case I915_TILING_X:
+		v |= BUF_3D_TILED_SURFACE;
+		/* fall through */
+	case I915_TILING_NONE:
+		break;
 	}
 	return v;
 }
@@ -131,6 +138,7 @@ gen2_get_dst_format(uint32_t format)
 	switch (format) {
 	default:
 		assert(0);
+		/* fall through */
 	case PICT_a8r8g8b8:
 	case PICT_x8r8g8b8:
 		return COLR_BUF_ARGB8888 | BIAS;
@@ -219,10 +227,13 @@ gen2_sampler_tiling_bits(uint32_t tiling)
 	switch (tiling) {
 	default:
 		assert(0);
+		/* fall through */
 	case I915_TILING_Y:
 		bits |= TM0S1_TILE_WALK;
+		/* fall through */
 	case I915_TILING_X:
 		bits |= TM0S1_TILED_SURFACE;
+		/* fall through */
 	case I915_TILING_NONE:
 		break;
 	}
@@ -277,6 +288,7 @@ gen2_emit_texture(struct sna *sna,
 	switch (channel->repeat) {
 	default:
 		assert(0);
+		/* fall through */
 	case RepeatNone:
 		wrap_mode_u = TEXCOORDMODE_CLAMP_BORDER;
 		break;
@@ -298,6 +310,7 @@ gen2_emit_texture(struct sna *sna,
 	switch (channel->filter) {
 	default:
 		assert(0);
+		/* fall through */
 	case PictFilterNearest:
 		filter = (FILTER_NEAREST << TM0S3_MAG_FILTER_SHIFT |
 			  FILTER_NEAREST << TM0S3_MIN_FILTER_SHIFT |

@@ -465,13 +465,9 @@ fallback:
 	}
 
 	br13 = 0xcc << 16;
-	switch (cpp) {
-	default:
-	case 4: cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		br13 |= 1 << 25; /* RGB8888 */
-	case 2: br13 |= 1 << 24; /* RGB565 */
-	case 1: break;
-	}
+	br13 |= sna_br13_color_depth(cpp * 8);
+	if (cpp == 4)
+		cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
 
 	kgem_set_mode(kgem, KGEM_BLT, dst_bo);
 	if (!kgem_check_batch(kgem, 10) ||
@@ -495,7 +491,7 @@ fallback:
 			nbox_this_time = tmp_nbox;
 			rem = kgem_batch_space(kgem);
 			if (10*nbox_this_time > rem)
-				nbox_this_time = rem / 8;
+				nbox_this_time = rem / 10;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1042,13 +1038,9 @@ tile:
 		br13 >>= 2;
 	}
 	br13 |= 0xcc << 16;
-	switch (dst->drawable.bitsPerPixel) {
-	default:
-	case 32: cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		 br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(dst->drawable.bitsPerPixel);
+	if (dst->drawable.bitsPerPixel == 32)
+		cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
 
 	kgem_set_mode(kgem, KGEM_BLT, dst_bo);
 	if (!kgem_check_batch(kgem, 10) ||
@@ -1069,7 +1061,7 @@ tile:
 			nbox_this_time = nbox;
 			rem = kgem_batch_space(kgem);
 			if (10*nbox_this_time > rem)
-				nbox_this_time = rem / 8;
+				nbox_this_time = rem / 10;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1548,13 +1540,9 @@ tile:
 		br13 >>= 2;
 	}
 	br13 |= 0xcc << 16;
-	switch (dst->drawable.bitsPerPixel) {
-	default:
-	case 32: cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
-		 br13 |= 1 << 25; /* RGB8888 */
-	case 16: br13 |= 1 << 24; /* RGB565 */
-	case 8: break;
-	}
+	br13 |= sna_br13_color_depth(dst->drawable.bitsPerPixel);
+	if (dst->drawable.bitsPerPixel == 32)
+		cmd |= BLT_WRITE_ALPHA | BLT_WRITE_RGB;
 
 	kgem_set_mode(kgem, KGEM_BLT, dst_bo);
 	if (!kgem_check_batch(kgem, 10) ||
@@ -1575,7 +1563,7 @@ tile:
 			nbox_this_time = nbox;
 			rem = kgem_batch_space(kgem);
 			if (10*nbox_this_time > rem)
-				nbox_this_time = rem / 8;
+				nbox_this_time = rem / 10;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);

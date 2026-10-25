@@ -378,7 +378,7 @@ static void i965_post_draw_debug(ScrnInfoPtr scrn)
 #define URB_SF_ENTRY_SIZE     2
 
 #define URB_CS_ENTRIES	      0
-#define URB_CS_ENTRY_SIZE     0
+#define URB_CS_ENTRY_SIZE     1
 
 static void i965_create_dst_surface_state(ScrnInfoPtr scrn,
 					PixmapPtr pixmap,

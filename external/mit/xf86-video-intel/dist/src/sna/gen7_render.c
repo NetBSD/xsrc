@@ -2576,7 +2576,7 @@ gen7_render_composite(struct sna *sna,
 	case 0:
 		if (!gen4_channel_init_solid(sna, &tmp->src, 0))
 			goto cleanup_dst;
-		/* fall through to fixup */
+		/* fall through */
 	case 1:
 		/* Did we just switch rings to prepare the source? */
 		if (mask == NULL &&
@@ -2629,7 +2629,7 @@ gen7_render_composite(struct sna *sna,
 			case 0:
 				if (!gen4_channel_init_solid(sna, &tmp->mask, 0))
 					goto cleanup_src;
-				/* fall through to fixup */
+				/* fall through */
 			case 1:
 				gen7_composite_channel_convert(&tmp->mask);
 				break;
@@ -2863,7 +2863,7 @@ gen7_render_composite_spans(struct sna *sna,
 	case 0:
 		if (!gen4_channel_init_solid(sna, &tmp->base.src, 0))
 			goto cleanup_dst;
-		/* fall through to fixup */
+		/* fall through */
 	case 1:
 		gen7_composite_channel_convert(&tmp->base.src);
 		break;
@@ -2957,42 +2957,10 @@ prefer_blt_copy(struct sna *sna,
 		struct kgem_bo *dst_bo,
 		unsigned flags)
 {
-	if (sna->kgem.mode == KGEM_BLT)
-		return true;
-
-	assert((flags & COPY_SYNC) == 0);
-
-	if (untiled_tlb_miss(src_bo) ||
-	    untiled_tlb_miss(dst_bo))
-		return true;
-
-	if (flags & COPY_DRI && !sna->kgem.has_semaphores)
+	if (sna->kgem.ring != KGEM_BLT)
 		return false;
 
-	if (force_blt_ring(sna, dst_bo))
-		return true;
-
-	if ((flags & COPY_SMALL ||
-	     (sna->render_state.gt < 3 && src_bo == dst_bo)) &&
-            can_switch_to_blt(sna, dst_bo, flags))
-		return true;
-
-	if (kgem_bo_is_render(dst_bo) ||
-	    kgem_bo_is_render(src_bo))
-		return false;
-
-	if (flags & COPY_LAST &&
-	    sna->render_state.gt < 3 &&
-            can_switch_to_blt(sna, dst_bo, flags))
-		return true;
-
-	if (prefer_render_ring(sna, dst_bo))
-		return false;
-
-	if (!prefer_blt_ring(sna, dst_bo, flags))
-		return false;
-
-	return prefer_blt_bo(sna, src_bo, dst_bo);
+	return true; /* avoid clear-residuals context overhead */
 }
 
 static bool

@@ -1823,7 +1823,7 @@ error_out:
 }
 
 static const xf86CrtcConfigFuncsRec intel_xf86crtc_config_funcs = {
-	intel_xf86crtc_resize
+	.resize = intel_xf86crtc_resize,
 };
 
 /*

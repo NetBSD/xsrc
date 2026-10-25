@@ -1246,8 +1246,8 @@ static __inline__ void renderFieldinField(uint **datay,uint **datau,
   *dy++ = (1<<30) | (3<<28) | dw1;
   *dy++ = xy;
   *dy++ = (16<<16) | 16;
-  *dy++ = *(uint *)fmv;
-  *dy++ = *(uint *)bmv;
+  *dy++ = fmv[1] << 16 | fmv[0];
+  *dy++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dy,block_ptr,ysize);
   block_ptr = (short *)((unsigned long)block_ptr + ysize);
   /* End Y Blocks */
@@ -1263,8 +1263,8 @@ static __inline__ void renderFieldinField(uint **datay,uint **datau,
   *du++ = (2<<30) | (1<<28) | dw1;
   *du++ = xy;
   *du++ = (8<<16) | 8;
-  *du++ = *(uint *)fmv;
-  *du++ = *(uint *)bmv;
+  *du++ = fmv[1] << 16 | fmv[0];
+  *du++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(du,block_ptr,usize);
   block_ptr = (short *)((unsigned long)block_ptr + usize);
 
@@ -1273,8 +1273,8 @@ static __inline__ void renderFieldinField(uint **datay,uint **datau,
   *dv++ = (3<<30) | (1<<28) | dw1;
   *dv++ = xy;
   *dv++ = (8<<16) | 8;
-  *dv++ = *(uint *)fmv;
-  *dv++ = *(uint *)bmv;
+  *dv++ = fmv[1] << 16 | fmv[0];
+  *dv++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dv,block_ptr,vsize);
   block_ptr = (short *)((unsigned long)block_ptr + vsize);
 
@@ -1394,8 +1394,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *dy++ = (1<<30) | (2<<28) | dw1[0];
   *dy++ = xy;
   *dy++ = (8<<16) | 16;
-  *dy++ = *(uint *)fmv;
-  *dy++ = *(uint *)bmv;
+  *dy++ = fmv[1] << 16 | fmv[0];
+  *dy++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dy,block_ptr,y1size);
   block_ptr = (short *)((unsigned long)block_ptr + y1size);
 
@@ -1404,8 +1404,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *dy++ = (1<<30) | (2<<28) | dw1[1];
   *dy++ = (xy + 8);
   *dy++ = (8<<16) | 16;
-  *dy++ = *(uint *)&fmv[2];
-  *dy++ = *(uint *)&bmv[2];
+  *dy++ = fmv[3] << 16 | fmv[2];
+  *dy++ = bmv[3] << 16 | bmv[2];
   PACK_CORR_DATA(dy,block_ptr,y2size);
   block_ptr = (short *)((unsigned long)block_ptr + y2size);
   /* End Y Blocks */
@@ -1427,8 +1427,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *du++ = (2<<30) | (1<<28) | dw1[0];
   *du++ = xy;
   *du++ = (4<<16) | 8;
-  *du++ = *(uint *)fmv;
-  *du++ = *(uint *)bmv;
+  *du++ = fmv[1] << 16 | fmv[0];
+  *du++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(du,block_ptr,usize);
   block_ptr = (short *)((unsigned long)block_ptr + usize);
 
@@ -1437,8 +1437,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *du++ = (2<<30) | (1<<28) | dw1[1];
   *du++ = (xy + 4);
   *du++ = (4<<16) | 8;
-  *du++ = *(uint *)&fmv[2];
-  *du++ = *(uint *)&bmv[2];
+  *du++ = fmv[3] << 16 | fmv[2];
+  *du++ = bmv[3] << 16 | bmv[2];
   PACK_CORR_DATA(du,block_ptr,usize);
   block_ptr = (short *)((unsigned long)block_ptr + usize);
   /* End U Blocks */
@@ -1448,8 +1448,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *dv++ = (3<<30) | (1<<28) | dw1[0];
   *dv++ = xy;
   *dv++ = (4<<16) | 8;
-  *dv++ = *(uint *)fmv;
-  *dv++ = *(uint *)bmv;
+  *dv++ = fmv[1] << 16 | fmv[0];
+  *dv++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dv,block_ptr,vsize);
   block_ptr = (short *)((unsigned long)block_ptr + vsize);
 
@@ -1458,8 +1458,8 @@ static __inline__ void render16x8inField(uint **datay,uint **datau,
   *dv++ = (3<<30) | (1<<28) | dw1[1];
   *dv++ = (xy + 4);
   *dv++ = (4<<16) | 8;
-  *dv++ = *(uint *)&fmv[2];
-  *dv++ = *(uint *)&bmv[2];
+  *dv++ = fmv[3] << 16 | fmv[2];
+  *dv++ = bmv[3] << 16 | bmv[2];
   PACK_CORR_DATA(dv,block_ptr,vsize);
   block_ptr = (short *)((unsigned long)block_ptr + vsize);
   /* End V Blocks */
@@ -1513,8 +1513,8 @@ static __inline__ void renderDualPrimeinField(uint **datay,uint **datau,
   *dy++ = (1<<30) | (3<<28) | dw1;
   *dy++ = xy;
   *dy++ = (16<<16) | 16;
-  *dy++ = *(uint *)fmv;
-  *dy++ = *(uint *)bmv;
+  *dy++ = fmv[1] << 16 | fmv[0];
+  *dy++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dy,block_ptr,ysize);
   block_ptr = (short *)((unsigned long)block_ptr + ysize);
   /* End Y Blocks */
@@ -1530,8 +1530,8 @@ static __inline__ void renderDualPrimeinField(uint **datay,uint **datau,
   *du++ = (2<<30) | (1<<28) | dw1;
   *du++ = xy;
   *du++ = (8<<16) | 8;
-  *du++ = *(uint *)fmv;
-  *du++ = *(uint *)bmv;
+  *du++ = fmv[1] << 16 | fmv[0];
+  *du++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(du,block_ptr,usize);
   block_ptr = (short *)((unsigned long)block_ptr + usize);
 
@@ -1540,8 +1540,8 @@ static __inline__ void renderDualPrimeinField(uint **datay,uint **datau,
   *dv++ = (3<<30) | (1<<28) | dw1;
   *dv++ = xy;
   *dv++ = (8<<16) | 8;
-  *dv++ = *(uint *)fmv;
-  *dv++ = *(uint *)bmv;
+  *dv++ = fmv[1] << 16 | fmv[0];
+  *dv++ = bmv[1] << 16 | bmv[0];
   PACK_CORR_DATA(dv,block_ptr,vsize);
   block_ptr = (short *)((unsigned long)block_ptr + vsize);
 

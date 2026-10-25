@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
 	if (snprintf(buf, sizeof(buf),
 		     "/sys/class/backlight/%s/brightness",
-		     argv[1]) >= sizeof(buf))
+		     argv[1]) >= (int)sizeof(buf))
 		die("Invalid interface '%s': name too long\n", argv[1]);
 
 	fd = open(buf, O_RDWR);

@@ -198,6 +198,7 @@ struct dri2_window {
 	int64_t msc_delta;
 	struct list cache;
 	uint32_t cache_size;
+	bool cache_scanout;
 };
 
 static struct dri2_window *dri2_window(WindowPtr win)
@@ -229,8 +230,9 @@ sna_dri2_get_back(struct sna *sna,
 	struct kgem_bo *bo;
 	struct dri_bo *c;
 	uint32_t name;
-	int flags;
+	bool scanout;
 	bool reuse;
+	int flags;
 
 	DBG(("%s: draw size=%dx%d, back buffer handle=%d size=%dx%d, is-scanout? %d, active?=%d, pitch=%d, front pitch=%d\n",
 	     __FUNCTION__, draw->width, draw->height,
@@ -241,8 +243,9 @@ sna_dri2_get_back(struct sna *sna,
 	     back->pitch, front_pitch(draw)));
 	assert(priv);
 
+	scanout = use_scanout(sna, draw, priv);
 	size = draw->height << 16 | draw->width;
-	if (size != priv->cache_size) {
+	if (size != priv->cache_size || scanout != priv->cache_scanout) {
 		while (!list_is_empty(&priv->cache)) {
 			c = list_first_entry(&priv->cache, struct dri_bo, link);
 			list_del(&c->link);
@@ -254,11 +257,12 @@ sna_dri2_get_back(struct sna *sna,
 			free(c);
 		}
 		priv->cache_size = size;
+		priv->cache_scanout = scanout;
 	}
 
 	reuse = size == get_private(back)->size;
 	if (reuse)
-		reuse = get_private(back)->bo->scanout == use_scanout(sna, draw, priv);
+		reuse = get_private(back)->bo->scanout >= scanout;
 	DBG(("%s: reuse backbuffer? %d\n", __FUNCTION__, reuse));
 	if (reuse) {
 		bo = get_private(back)->bo;
@@ -601,7 +605,7 @@ sna_dri2_create_buffer(DrawablePtr draw,
 	struct sna_dri2_private *private;
 	PixmapPtr pixmap;
 	struct kgem_bo *bo;
-	unsigned bpp = format ?: draw->bitsPerPixel;
+	unsigned bpp = format ? BitsPerPixel(format) : draw->bitsPerPixel;
 	unsigned flags = CREATE_EXACT;
 	uint32_t size;
 
@@ -676,6 +680,7 @@ sna_dri2_create_buffer(DrawablePtr draw,
 			    (sna->flags & (SNA_LINEAR_FB | SNA_NO_WAIT | SNA_NO_FLIP)) == 0)
 				flags |= CREATE_SCANOUT;
 		}
+		/* fall through */
 	case DRI2BufferBackRight:
 	case DRI2BufferFrontRight:
 	case DRI2BufferFakeFrontLeft:
@@ -1416,24 +1421,29 @@ sna_dri2_copy_region(DrawablePtr draw,
 	PixmapPtr pixmap = get_drawable_pixmap(draw);
 	struct sna *sna = to_sna_from_pixmap(pixmap);
 
-	DBG(("%s: pixmap=%ld, src=%u (refs=%d/%d, flush=%d, attach=%d) , dst=%u (refs=%d/%d, flush=%d, attach=%d)\n",
+	DBG(("%s: pixmap=%ld, src=%u (attach=%d, refs=%d/%d, flush=%d, stale=%d) , dst=%u (attach=%d, refs=%d/%d, flush=%d, stale=%d)\n",
 	     __FUNCTION__,
 	     pixmap->drawable.serialNumber,
 	     get_private(src)->bo->handle,
+	     src->attachment,
 	     get_private(src)->refcnt,
 	     get_private(src)->bo->refcnt,
 	     get_private(src)->bo->flush,
-	     src->attachment,
+	     get_private(src)->stale,
 	     get_private(dst)->bo->handle,
+	     dst->attachment,
 	     get_private(dst)->refcnt,
 	     get_private(dst)->bo->refcnt,
 	     get_private(dst)->bo->flush,
-	     dst->attachment));
+	     get_private(dst)->stale));
 
 	assert(src != dst);
 
 	assert(get_private(src)->refcnt);
 	assert(get_private(dst)->refcnt);
+
+	if (get_private(src)->stale)
+		return;
 
 	assert(get_private(src)->bo != get_private(dst)->bo);
 
@@ -2597,7 +2607,7 @@ void sna_dri2_vblank_handler(struct drm_event_vblank *event)
 		    sna_dri2_flip(info))
 			return;
 
-		/* else fall through to blit */
+		/* fall through */
 	case SWAP:
 		assert(info->signal);
 		if (can_xchg(info->sna, draw, info->front, info->back)) {
@@ -2619,7 +2629,7 @@ void sna_dri2_vblank_handler(struct drm_event_vblank *event)
 		DBG(("%s -- requeue failed, errno=%d\n", __FUNCTION__, errno));
 		assert(info->pending.bo == NULL);
 		assert(info->keepalive == 1);
-		/* fall through to SwapComplete */
+		/* fall through */
 	case SWAP_COMPLETE:
 		DBG(("%s: %d complete, frame=%d tv=%d.%06d\n",
 		     __FUNCTION__, info->type,
@@ -2940,6 +2950,7 @@ static void sna_dri2_flip_event(struct sna_dri2_event *flip)
 			DBG(("%s: triple buffer swap complete, unblocking client\n", __FUNCTION__));
 			frame_swap_complete(flip, DRI2_FLIP_COMPLETE);
 		}
+		/* fall through */
 	case FLIP_COMPLETE:
 		assert(!flip->signal);
 		if (sna->dri2.flip_pending) {
@@ -3284,7 +3295,7 @@ sna_dri2_schedule_swap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	CARD64 current_msc;
 	bool immediate;
 
-	DBG(("%s: draw=%lu %dx%d, pixmap=%ld %dx%d, back=%u (refs=%d/%d, flush=%d, active=%d) , front=%u (refs=%d/%d, flush=%d, active=%d)\n",
+	DBG(("%s: draw=%lu %dx%d, pixmap=%ld %dx%d, back=%u (refs=%d/%d, flush=%d, active=%d, stale=%d) , front=%u (refs=%d/%d, flush=%d, active=%d)\n",
 	     __FUNCTION__,
 	     (long)draw->id, draw->width, draw->height,
 	     get_drawable_pixmap(draw)->drawable.serialNumber,
@@ -3295,6 +3306,7 @@ sna_dri2_schedule_swap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	     get_private(back)->bo->refcnt,
 	     get_private(back)->bo->flush,
 	     get_private(back)->bo->active_scanout,
+	     get_private(back)->stale,
 	     get_private(front)->bo->handle,
 	     get_private(front)->refcnt,
 	     get_private(front)->bo->refcnt,
@@ -3313,13 +3325,6 @@ sna_dri2_schedule_swap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	assert(get_private(front)->refcnt);
 	assert(get_private(back)->refcnt);
 
-	assert(get_private(back)->bo != get_private(front)->bo);
-	assert(get_private(front)->bo->refcnt);
-	assert(get_private(back)->bo->refcnt);
-
-	assert(get_private(front)->bo->active_scanout);
-	assert(!get_private(back)->bo->active_scanout);
-
 	if (get_private(front)->pixmap != get_drawable_pixmap(draw)) {
 		DBG(("%s: decoupled DRI2 front pixmap=%ld, actual pixmap=%ld\n",
 		     __FUNCTION__,
@@ -3332,6 +3337,13 @@ sna_dri2_schedule_swap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 		DBG(("%s: stale back buffer\n", __FUNCTION__));
 		goto skip;
 	}
+
+	assert(get_private(back)->bo != get_private(front)->bo);
+	assert(get_private(front)->bo->refcnt);
+	assert(get_private(back)->bo->refcnt);
+
+	assert(get_private(front)->bo->active_scanout);
+	assert(!get_private(back)->bo->active_scanout);
 
 	if (draw->type != DRAWABLE_PIXMAP) {
 		WindowPtr win = (WindowPtr)draw;

@@ -301,9 +301,9 @@ static int open_cloexec(const char *path)
 #ifdef __linux__
 static int __intel_open_device__major_minor(int _major, int _minor)
 {
-	char path[256];
 	DIR *dir;
 	struct dirent *de;
+	char path[9+sizeof(de->d_name)];
 	int base, fd = -1;
 
 	base = sprintf(path, "/dev/dri/");

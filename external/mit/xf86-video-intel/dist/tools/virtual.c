@@ -121,7 +121,7 @@ struct display {
 	int cursor_y;
 	int cursor_moved;
 	int cursor_visible;
-	int cursor;
+	Cursor cursor;
 
 	int flush;
 	int send;
@@ -148,7 +148,7 @@ struct output {
 	Pixmap pixmap;
 	GC gc;
 
-	long serial;
+	unsigned long serial;
 	int use_shm;
 	int use_shm_pixmap;
 	XShmSegmentInfo shm;
@@ -166,7 +166,7 @@ struct clone {
 	struct clone *active;
 
 	struct output src, dst;
-	long timestamp;
+	Time timestamp;
 
 	XShmSegmentInfo shm;
 	XImage image;
@@ -194,8 +194,8 @@ struct context {
 
 	int timer_active;
 
-	long timestamp;
-	long configTimestamp;
+	Time timestamp;
+	Time configTimestamp;
 
 	Atom singleton;
 	char command[1024];
@@ -597,7 +597,7 @@ static int mode_equal(const XRRModeInfo *a, const XRRModeInfo *b)
 		a->modeFlags == b->modeFlags);
 }
 
-static XRRModeInfo *lookup_mode(XRRScreenResources *res, int id)
+static XRRModeInfo *lookup_mode(XRRScreenResources *res, RRMode id)
 {
 	int i;
 
@@ -3055,7 +3055,7 @@ static int first_display_send_command(struct context *ctx, int timeout,
 	va_start(va, format);
 	len = vsnprintf(buf+4, sizeof(buf)-4, format, va)+5;
 	va_end(va);
-	assert(len < sizeof(buf));
+	assert(len < (int)sizeof(buf));
 
 	DBG(X11, ("%s: send command '%s'\n", DisplayString(display->dpy), buf));
 
@@ -3063,7 +3063,7 @@ static int first_display_send_command(struct context *ctx, int timeout,
 	while (len) {
 		XClientMessageEvent msg;
 		int n = len;
-		if (n > sizeof(msg.data.b))
+		if (n > (int)sizeof(msg.data.b))
 			n = sizeof(msg.data.b);
 		len -= n;
 
@@ -3113,7 +3113,7 @@ static void first_display_handle_command(struct context *ctx,
 	for (len = 0; len < 20 && msg[len]; len++)
 		;
 
-	if (ctx->command_continuation + len > sizeof(ctx->command)) {
+	if (ctx->command_continuation + len > (int)sizeof(ctx->command)) {
 		ctx->command_continuation = 0;
 		return;
 	}

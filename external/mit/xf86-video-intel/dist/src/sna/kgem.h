@@ -191,6 +191,7 @@ struct kgem {
 	uint32_t has_pinned_batches :1;
 	uint32_t has_caching :1;
 	uint32_t has_coherent_mmap_gtt :1;
+	uint32_t has_full_ppgtt :1;
 	uint32_t has_llc :1;
 	uint32_t has_wt :1;
 	uint32_t has_no_reloc :1;
@@ -686,9 +687,12 @@ static inline bool __kgem_bo_is_busy(struct kgem *kgem, struct kgem_bo *bo)
 
 static inline bool kgem_bo_is_render(struct kgem_bo *bo)
 {
-	DBG(("%s: handle=%d, rq? %d [%d]\n", __FUNCTION__,
-	     bo->handle, bo->rq != NULL, (int)RQ_RING(bo->rq)));
+	DBG(("%s: handle=%d, tiling=%d, rq? %d [%d]\n", __FUNCTION__,
+	     bo->handle, bo->tiling, bo->rq != NULL, (int)RQ_RING(bo->rq)));
 	assert(bo->refcnt);
+	if (bo->tiling >= I915_TILING_Y)
+		return true;
+
 	return bo->rq && RQ_RING(bo->rq) != KGEM_BLT;
 }
 

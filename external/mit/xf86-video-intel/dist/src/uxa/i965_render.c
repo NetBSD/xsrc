@@ -277,7 +277,7 @@ i965_check_composite_texture(ScreenPtr screen, PicturePtr picture)
 /* Set up a default static partitioning of the URB, which is supposed to
  * allow anything we would want to do, at potentially lower performance.
  */
-#define URB_CS_ENTRY_SIZE     0
+#define URB_CS_ENTRY_SIZE     1
 #define URB_CS_ENTRIES	      0
 
 #define URB_VS_ENTRY_SIZE     1	// each 512-bit row
