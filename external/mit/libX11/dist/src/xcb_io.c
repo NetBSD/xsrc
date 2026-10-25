@@ -30,6 +30,7 @@
 	assert(!_var); \
 } while (0)
 
+#ifdef XTHREADS
 #define throw_thread_fail_assert(_message, _var) do { \
 	fprintf(stderr, "[xcb] " _message "\n"); \
         if (_Xglobal_lock) { \
@@ -40,6 +41,14 @@
         } \
 	xcb_fail_assert(_message, _var); \
 } while (0)
+#else
+#define throw_thread_fail_assert(_message, _var) do { \
+        fprintf(stderr, "[xcb] " _message "\n"); \
+        fprintf(stderr, "[xcb] The libX11 library was built without " \
+                        "multi-threading support\n"); \
+        xcb_fail_assert(_message, _var); \
+} while (0)
+#endif
 
 /* XXX: It would probably be most useful if we stored the last-processed
  *      request, so we could find the offender from the message. */
@@ -546,8 +555,16 @@ void _XSend(Display *dpy, const char *data, long size)
 	uint64_t dpy_request;
 	_XExtension *ext;
 	xcb_connection_t *c = dpy->xcb->connection;
-	if(dpy->flags & XlibDisplayIOError)
+	if(dpy->flags & XlibDisplayIOError) {
+		/* The connection is dead; buffered data can never be
+		 * written.  Discard it rather than leave the buffer full:
+		 * writers that loop until space appears (_XData32,
+		 * _XData16) otherwise spin forever, and _XGetRequest
+		 * returns NULL to its callers once bufptr reaches
+		 * bufmax. */
+		dpy->bufptr = dpy->buffer;
 		return;
+	}
 
 	if(dpy->bufptr == dpy->buffer && !size)
 		return;
@@ -584,8 +601,11 @@ void _XSend(Display *dpy, const char *data, long size)
 				ext->before_flush(dpy, &ext->codes, vec[i].iov_base, vec[i].iov_len);
 	}
 
-	if(xcb_writev(c, vec, 3, requests) < 0) {
+	if(xcb_writev(c, vec, 3, requests) <= 0) {
 		_XIOError(dpy);
+		/* If the exit handler returned, discard the buffer now:
+		 * the flag check above only protects later calls. */
+		dpy->bufptr = dpy->buffer;
 		return;
 	}
 	dpy->bufptr = dpy->buffer;
